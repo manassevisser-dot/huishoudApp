@@ -57,9 +57,10 @@ const HouseholdMemberRepeater: React.FC = () => {
   );
   const aantalKinderen = Math.max(0, aantalMensen - aantalVolwassen);
 
-  const leden: Member[] = Array.isArray(state.C4?.leden)
-    ? (state.C4!.leden as Member[])
-    : [];
+  const leden: Member[] = React.useMemo(() => {
+    const arr = state.C4?.leden as Member[] | undefined;
+    return Array.isArray(arr) ? arr : [];
+  }, [state.C4?.leden]);
 
   const burgerlijkeStaat: BurgerlijkeStaat | undefined =
     state.C4?.burgerlijkeStaat;
