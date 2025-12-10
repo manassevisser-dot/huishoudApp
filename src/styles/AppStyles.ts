@@ -1,5 +1,3 @@
-
-//======
 // src/styles/AppStyles.ts
 
 import { StyleSheet } from 'react-native';
@@ -9,7 +7,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F2F2F7',
   },
-  // NEW P2: Dark mode container
   containerDark: {
     flex: 1,
     backgroundColor: '#1C1C1E',
@@ -105,6 +102,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 
+  // --- P4: Warning Styles ---
+  warningTextOrange: {
+    color: '#FF9500',
+    fontSize: 14,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  warningTextRed: {
+    color: '#FF3B30',
+    fontSize: 14,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: '600',
+  },
+
+  // --- P4: Navigation Hint ---
+  navigationHint: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'right',
+    marginTop: 12,
+    marginRight: 8,
+    fontStyle: 'italic',
+  },
+
   // --- Grid for Categories ---
   gridContainer: {
     flexDirection: 'row',
@@ -112,7 +134,7 @@ const styles = StyleSheet.create({
     marginHorizontal: -5,
   },
   gridItem: {
-    width: '30%', // Approx 3 cols
+    width: '30%',
     flexGrow: 1,
     backgroundColor: '#FFFFFF',
     paddingVertical: 16,
