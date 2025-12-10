@@ -1,9 +1,10 @@
+// src/types/household.ts
 export type Member = {
   id: string;
   memberType: 'adult' | 'child';
   naam?: string;
   leeftijd?: number;
-  gender?: 'man' | 'vrouw' | 'anders' | 'geen antwoord';
+  gender?: 'man' | 'vrouw' | 'anders' | 'n.v.t.'; // CHANGED: 'geen antwoord' → 'n.v.t.'
   geboortejaar?: number;
 };
 
