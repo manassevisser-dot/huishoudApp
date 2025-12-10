@@ -107,4 +107,5 @@ const CsvUploadScreen: React.FC<Props> = ({ onClose }) => {
   );
 };
 
-export default 
+
+export default CsvUploadScreen
