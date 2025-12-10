@@ -1,3 +1,4 @@
+// src/screens/Wizard/WizardPage.tsx
 import * as React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -117,6 +118,55 @@ const WizardPage: React.FC<PageProps> = ({
               />
             </ConditionalField>
 
+            {/* P4: WARNING 1 - aantalMensen */}
+            {page.id === 'C1' && 
+             field.id === 'aantalMensen' && 
+             evaluateCondition(field.conditional, currentPageState, page.id) && 
+             (() => {
+               const val = Number(currentPageData.aantalMensen ?? 0);
+               if (val >= 10) {
+                 return (
+                   <Text style={styles.warningTextRed}>
+                     maximaal aantal personen bereikt
+                   </Text>
+                 );
+               }
+               if (val >= 7 && val <= 9) {
+                 return (
+                   <Text style={styles.warningTextOrange}>
+                     u nadert het maximaal aantal
+                   </Text>
+                 );
+               }
+               return null;
+             })()
+            }
+
+            {/* P4: WARNING 2 - aantalVolwassen */}
+            {page.id === 'C1' && 
+             field.id === 'aantalVolwassen' && 
+             evaluateCondition(field.conditional, currentPageState, page.id) && 
+             (() => {
+               const val = Number(currentPageData.aantalVolwassen ?? 0);
+               if (val >= 7) {
+                 return (
+                   <Text style={styles.warningTextRed}>
+                     maximaal aantal personen bereikt
+                   </Text>
+                 );
+               }
+               if (val >= 5 && val <= 6) {
+                 return (
+                   <Text style={styles.warningTextOrange}>
+                     u nadert het maximaal aantal
+                   </Text>
+                 );
+               }
+               return null;
+             })()
+            }
+
+            {/* Existing kinderen count display */}
             {page.id === 'C1' && field.id === 'aantalVolwassen' && (() => {
               const mensen = Number(currentPageData.aantalMensen ?? 0);
               const volwassen = Number(currentPageData.aantalVolwassen ?? 0);
