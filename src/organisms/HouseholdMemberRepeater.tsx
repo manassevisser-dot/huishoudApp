@@ -1,19 +1,20 @@
+// src/organisms/HouseholdMemberRepeater.tsx
 import * as React from 'react';
 import { View, Text, TextInput, ScrollView } from 'react-native';
 import styles from '../styles/AppStyles';
 import ChipButton from '../components/ChipButton';
 import { useFormContext } from '../context/FormContext';
-import { Member, BurgerlijkeStaat, WoningType, HuisdierenYesNo, AutoCount } from '../types/household';
+import { Member, BurgerlijkeStaat, WoningType } from '../types/household';
 import { onlyDigits, stripEmojiAndLimit } from '../utils/numbers';
 
-// Constants kept local or could be in utils/constants.ts. 
-// For now, keeping them here as they are tightly coupled to the form UI options.
+// P4: Updated GENDER_OPTIONS - 'geen antwoord' → 'n.v.t.'
 const GENDER_OPTIONS: Member['gender'][] = [
   'man',
   'vrouw',
   'anders',
-  'geen antwoord',
+  'n.v.t.',
 ];
+
 const BURGERLIJKE_OPTIONS: Exclude<BurgerlijkeStaat, 'Alleenstaand'>[] = [
   'Gehuwd',
   'Fiscaal Partners',
@@ -21,13 +22,13 @@ const BURGERLIJKE_OPTIONS: Exclude<BurgerlijkeStaat, 'Alleenstaand'>[] = [
   'Bevriend',
   'Anders',
 ];
+
 const WONING_OPTIONS: WoningType[] = ['Koop', 'Huur', 'Kamer', 'Anders'];
-const JA_NEE: HuisdierenYesNo[] = ['Ja', 'Nee'];
-const AUTO_OPTIONS: AutoCount[] = ['Nee', 'Één', 'Twee'];
 
 const HouseholdMemberRepeater: React.FC = () => {
   const { state, dispatch } = useFormContext();
 
+  // Keep C1→C4 sync logic intact (reads C1, writes C4 state)
   React.useEffect(() => {
     const c1Auto = state.C1?.auto;
     const c1Huisdieren = state.C1?.huisdieren;
@@ -66,8 +67,6 @@ const HouseholdMemberRepeater: React.FC = () => {
     state.C4?.burgerlijkeStaat;
   const woning: WoningType | undefined = state.C4?.woning;
   const postcode: string | undefined = state.C4?.postcode;
-  const huisdieren: HuisdierenYesNo | undefined = state.C4?.huisdieren;
-  const auto: AutoCount | undefined = state.C4?.auto;
 
   const countLeadingAdults = (arr: Member[]) => {
     let n = 0;
@@ -203,16 +202,6 @@ const HouseholdMemberRepeater: React.FC = () => {
       data: { postcode: clean },
     });
   };
-
-  const setHuisdieren = (val: HuisdierenYesNo) =>
-    dispatch({
-      type: 'SET_PAGE_DATA',
-      pageId: 'C4',
-      data: { huisdieren: val },
-    });
-
-  const setAuto = (val: AutoCount) =>
-    dispatch({ type: 'SET_PAGE_DATA', pageId: 'C4', data: { auto: val } });
 
   let adultDisplayIndex = 0;
   let childDisplayIndex = 0;
@@ -368,28 +357,7 @@ const HouseholdMemberRepeater: React.FC = () => {
           </ScrollView>
         </View>
 
-        {aantalKinderen > 0 && (
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Geboortejaar</Text>
-            <TextInput
-              style={styles.numericInput}
-              value={
-                m.geboortejaar !== undefined && m.geboortejaar !== null
-                  ? String(m.geboortejaar)
-                  : ''
-              }
-              keyboardType="number-pad"
-              maxLength={4}
-              onChangeText={(text) => {
-                const clean = onlyDigits(text).slice(0, 4);
-                const n = clean.length ? Number(clean) : undefined;
-                updateMember(index, { geboortejaar: n });
-              }}
-              placeholder="YYYY"
-              accessibilityLabel={`Geboortejaar voor ${title}`}
-            />
-          </View>
-        )}
+        {/* P4: REMOVED geboortejaar field entirely */}
       </View>
     );
   };
@@ -426,7 +394,7 @@ const HouseholdMemberRepeater: React.FC = () => {
       <Text style={styles.summaryLabelBold}>Wonen</Text>
 
       <View style={styles.fieldContainer}>
-        <Text style={styles.label}>Woning</Text>
+        <Text style={styles.label}>soort woning:</Text>
         <ScrollView
           horizontal
           contentContainerStyle={styles.chipContainer}
@@ -443,7 +411,7 @@ const HouseholdMemberRepeater: React.FC = () => {
         </ScrollView>
       </View>
 
-      {/* PHASE 3: Postcode only shown when aantalVolwassen <= 1 */}
+      {/* Postcode only shown when aantalVolwassen <= 1 */}
       {aantalVolwassen <= 1 && (
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Postcode (4 cijfers)</Text>
@@ -459,41 +427,8 @@ const HouseholdMemberRepeater: React.FC = () => {
         </View>
       )}
 
-      <View style={styles.fieldContainer}>
-        <Text style={styles.label}>Huisdier(en)</Text>
-        <ScrollView
-          horizontal
-          contentContainerStyle={styles.chipContainer}
-          showsHorizontalScrollIndicator={false}>
-          {JA_NEE.map((v) => (
-            <ChipButton
-              key={v}
-              label={v}
-              selected={huisdieren === v}
-              onPress={() => setHuisdieren(v)}
-              accessibilityLabel={`Huisdier(en): ${v}`}
-            />
-          ))}
-        </ScrollView>
-      </View>
-
-      <View style={styles.fieldContainer}>
-        <Text style={styles.label}>Auto</Text>
-        <ScrollView
-          horizontal
-          contentContainerStyle={styles.chipContainer}
-          showsHorizontalScrollIndicator={false}>
-          {AUTO_OPTIONS.map((a) => (
-            <ChipButton
-              key={a}
-              label={a}
-              selected={auto === a}
-              onPress={() => setAuto(a)}
-              accessibilityLabel={`Auto: ${a}`}
-            />
-          ))}
-        </ScrollView>
-      </View>
+      {/* P4: REMOVED Huisdieren section - C1 is source of truth */}
+      {/* P4: REMOVED Auto section - C1 is source of truth */}
     </View>
   );
 

@@ -1,5 +1,6 @@
+// src/organisms/IncomeRepeater.tsx
 import * as React from 'react';
-import { View, Text, TextInput, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import styles from '../styles/AppStyles';
 import ChipButton from '../components/ChipButton';
 import { useFormContext } from '../context/FormContext';
@@ -16,6 +17,10 @@ import {
 import { Member } from '../types/household';
 import { onlyDigitsDotsComma } from '../utils/numbers';
 
+// P4: Card dimensions for swipe
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const CARD_WIDTH = SCREEN_WIDTH * 0.85;
+
 const CATEGORY_OPTIONS: (keyof IncomeCategories)[] = ['geen', 'werk', 'uitkering', 'anders'];
 const FREQUENCIES: IncomeFrequency[] = ['week', '4wk', 'month', 'quarter', 'year'];
 
@@ -28,6 +33,9 @@ const isAdult = (m: Member) => m.memberType === 'adult';
 
 const IncomeRepeater: React.FC = () => {
   const { state, dispatch } = useFormContext();
+
+  // P4: Collapsible state for per-adult toeslagen (keyed by adult ID)
+  const [toelagenExpanded, setToelagenExpanded] = React.useState<Record<string, boolean>>({});
 
   const c4 = state.C4;
   const c7 = state.C7;
@@ -205,6 +213,7 @@ const IncomeRepeater: React.FC = () => {
 
   const renderWerk = (id: string, rec: IncomeMember, title: string) => {
     if (!rec.categories?.werk) return null;
+    
     return (
       <View style={styles.dashboardCard}>
         <Text style={styles.summaryLabelBold}>Inkomen uit werk</Text>
@@ -236,34 +245,51 @@ const IncomeRepeater: React.FC = () => {
           </ScrollView>
         </View>
 
+        {/* P4: COLLAPSIBLE PER-ADULT TOESLAGEN */}
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Toeslagen</Text>
-          <View style={{ gap: 12 }}>
-            <TextInput
-              style={styles.numericInput}
-              value={typeof rec.toeslagen?.zorgtoeslag === 'number' ? String(rec.toeslagen?.zorgtoeslag) : ''}
-              keyboardType="number-pad"
-              onChangeText={(t) => setWerkField(id, 'toeslagen.zorgtoeslag', t)}
-              placeholder="Zorgtoeslag (€/mnd)"
-              accessibilityLabel={`Zorgtoeslag voor ${title}`}
-            />
-            <TextInput
-              style={styles.numericInput}
-              value={typeof rec.toeslagen?.reiskosten === 'number' ? String(rec.toeslagen?.reiskosten) : ''}
-              keyboardType="number-pad"
-              onChangeText={(t) => setWerkField(id, 'toeslagen.reiskosten', t)}
-              placeholder="Reiskostenvergoeding (€/mnd)"
-              accessibilityLabel={`Reiskostenvergoeding voor ${title}`}
-            />
-            <TextInput
-              style={styles.numericInput}
-              value={typeof rec.toeslagen?.overige === 'number' ? String(rec.toeslagen?.overige) : ''}
-              keyboardType="number-pad"
-              onChangeText={(t) => setWerkField(id, 'toeslagen.overige', t)}
-              placeholder="Overige inkomsten (€/mnd)"
-              accessibilityLabel={`Overige inkomsten voor ${title}`}
-            />
-          </View>
+          <TouchableOpacity 
+            onPress={() => setToelagenExpanded({ 
+              ...toelagenExpanded, 
+              [id]: !toelagenExpanded[id] 
+            })}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <Text style={styles.label}>
+              Toeslagen
+            </Text>
+            <Text style={styles.summaryLabel}>
+              {toelagenExpanded[id] ? '▼' : '▶'}
+            </Text>
+          </TouchableOpacity>
+          
+          {toelagenExpanded[id] && (
+            <View style={{ gap: 12, marginTop: 12 }}>
+              <TextInput
+                style={styles.numericInput}
+                value={typeof rec.toeslagen?.zorgtoeslag === 'number' ? String(rec.toeslagen?.zorgtoeslag) : ''}
+                keyboardType="number-pad"
+                onChangeText={(t) => setWerkField(id, 'toeslagen.zorgtoeslag', t)}
+                placeholder="Zorgtoeslag (€/mnd)"
+                accessibilityLabel={`Zorgtoeslag voor ${title}`}
+              />
+              <TextInput
+                style={styles.numericInput}
+                value={typeof rec.toeslagen?.reiskosten === 'number' ? String(rec.toeslagen?.reiskosten) : ''}
+                keyboardType="number-pad"
+                onChangeText={(t) => setWerkField(id, 'toeslagen.reiskosten', t)}
+                placeholder="Reiskostenvergoeding (€/mnd)"
+                accessibilityLabel={`Reiskostenvergoeding voor ${title}`}
+              />
+              <TextInput
+                style={styles.numericInput}
+                value={typeof rec.toeslagen?.overige === 'number' ? String(rec.toeslagen?.overige) : ''}
+                keyboardType="number-pad"
+                onChangeText={(t) => setWerkField(id, 'toeslagen.overige', t)}
+                placeholder="Overige inkomsten (€/mnd)"
+                accessibilityLabel={`Overige inkomsten voor ${title}`}
+              />
+            </View>
+          )}
         </View>
 
         <View style={styles.fieldContainer}>
@@ -427,6 +453,7 @@ const IncomeRepeater: React.FC = () => {
     );
   };
 
+  // renderHouseholdBenefits() stays UNCHANGED - always visible (NOT collapsible)
   const renderHouseholdBenefits = () => (
     <View style={styles.dashboardCard}>
       <Text style={styles.summaryLabelBold}>Toeslagen (huishouden)</Text>
@@ -553,31 +580,76 @@ const IncomeRepeater: React.FC = () => {
     );
   }
 
-  let adultDisplayIndex = 0;
-
   return (
     <View style={styles.pageContainer}>
       {renderHouseholdBenefits()}
       
       {renderVermogen()}
 
-      {adults.map((m) => {
-        const rec = inkomsten[m.id] ?? { id: m.id, categories: { geen: false, werk: false, uitkering: false, anders: false } };
-        const idx = ++adultDisplayIndex;
-        const title = m.naam?.trim() ? `Inkomen voor ${m.naam}` : `Volwassene ${idx}`;
+      {/* P4: SWIPE PATTERN FOR ADULTS (if > 1 adult) */}
+      {adults.length > 1 ? (
+        <ScrollView
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingRight: 20 }}
+          snapToInterval={CARD_WIDTH + 20}
+          decelerationRate="fast"
+        >
+          {adults.map((m, idx) => {
+            const rec = inkomsten[m.id] ?? { 
+              id: m.id, 
+              categories: { geen: false, werk: false, uitkering: false, anders: false } 
+            };
+            const title = m.naam?.trim() ? `Inkomen voor ${m.naam}` : `Volwassene ${idx + 1}`;
 
-        return (
-          <View key={m.id} style={styles.dashboardCard}>
-            <Text style={styles.summaryLabelBold}>{title}</Text>
+            return (
+              <View 
+                key={m.id}
+                style={[
+                  styles.dashboardCard,
+                  { 
+                    width: CARD_WIDTH,
+                    marginRight: 20,
+                  }
+                ]}
+              >
+                <Text style={styles.summaryLabelBold}>{title}</Text>
 
-            {renderCategoryChips(m.id, rec, title)}
+                {renderCategoryChips(m.id, rec, title)}
+                {renderWerk(m.id, rec, title)}
+                {renderUitkeringen(m.id, rec, m, title)}
+                {renderAnders(m.id, rec, title)}
 
-            {renderWerk(m.id, rec, title)}
-            {renderUitkeringen(m.id, rec, m, title)}
-            {renderAnders(m.id, rec, title)}
-          </View>
-        );
-      })}
+                {/* P4: Navigation hint (not on last card) */}
+                {idx < adults.length - 1 && (
+                  <Text style={styles.navigationHint}>volgende inkomen →</Text>
+                )}
+              </View>
+            );
+          })}
+        </ScrollView>
+      ) : (
+        // Single adult - no swipe
+        adults.map((m, idx) => {
+          const rec = inkomsten[m.id] ?? { 
+            id: m.id, 
+            categories: { geen: false, werk: false, uitkering: false, anders: false } 
+          };
+          const title = m.naam?.trim() ? `Inkomen voor ${m.naam}` : `Volwassene ${idx + 1}`;
+
+          return (
+            <View key={m.id} style={styles.dashboardCard}>
+              <Text style={styles.summaryLabelBold}>{title}</Text>
+
+              {renderCategoryChips(m.id, rec, title)}
+              {renderWerk(m.id, rec, title)}
+              {renderUitkeringen(m.id, rec, m, title)}
+              {renderAnders(m.id, rec, title)}
+            </View>
+          );
+        })
+      )}
     </View>
   );
 };
