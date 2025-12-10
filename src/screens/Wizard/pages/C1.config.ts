@@ -1,3 +1,4 @@
+// src/screens/Wizard/pages/C1.config.ts
 import { PageConfig } from '../../../types/form';
 
 export const C1Config: PageConfig = {
@@ -21,6 +22,18 @@ export const C1Config: PageConfig = {
       conditional: { field: 'C1.aantalMensen', operator: '>', value: 1 },
       validation: { min: 0, max: 7 },
     },
+    // P4: REORDERED - Huisdieren now comes BEFORE Auto
+    {
+      id: 'huisdieren',
+      label: 'Huisdier(en)',
+      type: 'radio-chips',
+      required: true,
+      defaultValue: 'Nee',
+      options: [
+        { label: 'Ja', value: 'Ja' },
+        { label: 'Nee', value: 'Nee' },
+      ],
+    },
     {
       id: 'auto',
       label: 'Auto',
@@ -31,17 +44,6 @@ export const C1Config: PageConfig = {
         { label: 'Nee', value: 'Nee' },
         { label: 'Één', value: 'Één' },
         { label: 'Twee', value: 'Twee' },
-      ],
-    },
-    {
-      id: 'huisdieren',
-      label: 'Huisdier(en)',
-      type: 'radio-chips',
-      required: true,
-      defaultValue: 'Nee',
-      options: [
-        { label: 'Ja', value: 'Ja' },
-        { label: 'Nee', value: 'Nee' },
       ],
     },
   ],
