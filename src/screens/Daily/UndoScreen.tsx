@@ -1,13 +1,11 @@
-//=====
 // src/screens/Daily/UndoScreen.tsx
 import * as React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import styles from '../../styles/AppStyles';
+import { useAppStyles } from '../../styles/useAppStyles';
 import { TransactionService } from '../../services/transactionService';
 import { DailyTransaction } from '../../types/transaction';
 import { formatCurrency } from '../../utils/numbers';
-import { useTheme } from '../../context/ThemeContext';
 
 type Props = {
   onClose: () => void;
@@ -15,7 +13,7 @@ type Props = {
 
 const UndoScreen: React.FC<Props> = ({ onClose }) => {
   const insets = useSafeAreaInsets();
-  const { theme } = useTheme();
+  const styles = useAppStyles();
   const [transactions, setTransactions] = React.useState<DailyTransaction[]>([]);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -64,7 +62,7 @@ const UndoScreen: React.FC<Props> = ({ onClose }) => {
   };
   
   return (
-    <View style={theme === 'dark' ? styles.containerDark : styles.container}>
+    <View style={styles.container}>
       <View style={styles.pageContainer}>
         <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}>
           <Text style={styles.pageTitle}>Herstel laatste uitgave</Text>
@@ -88,47 +86,48 @@ const UndoScreen: React.FC<Props> = ({ onClose }) => {
               <Text style={styles.summaryDetail}>
                 Selecteer 1 of meer transacties om te verwijderen:
               </Text>
-              {transactions.map((t) => (
-                <TouchableOpacity
-                  key={t.id}
-                  style={[
-                    styles.dashboardCard,
-                    { marginBottom: 12 },
-                    selectedIds.includes(t.id || '') && { borderColor: '#007AFF', borderWidth: 2 },
-                  ]}
-                  onPress={() => toggleSelection(t.id || '')}
-                >
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.label}>{t.category}</Text>
-                      <Text style={styles.summaryDetail}>
-                        {t.date} • {t.paymentMethod}
-                      </Text>
+              {transactions.map((t) => {
+                const isSelected = selectedIds.includes(t.id || '');
+                
+                return (
+                  <TouchableOpacity
+                    key={t.id}
+                    style={[
+                      styles.dashboardCard,
+                      { marginBottom: 12 },
+                      isSelected && { borderColor: Colors[theme].primary, borderWidth: 2 },
+                    ]}
+                    onPress={() => toggleSelection(t.id || '')}
+                  >
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.label}>{t.category}</Text>
+                        <Text style={styles.summaryDetail}>
+                          {t.date} • {t.paymentMethod}
+                        </Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={[styles.summaryValue, { color: Colors[theme].error }]}>
+                          {formatCurrency(t.amount)}
+                        </Text>
+                        {/* UPDATED: Use theme-aware checkbox styles */}
+                        <View
+                          style={[
+                            styles.checkbox,
+                            isSelected && styles.checkboxSelected,
+                            { marginTop: 8 }
+                          ]}
+                        />
+                      </View>
                     </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={[styles.summaryValue, { color: '#FF3B30' }]}>
-                        {formatCurrency(t.amount)}
-                      </Text>
-                      <View
-                        style={{
-                          width: 24,
-                          height: 24,
-                          borderRadius: 4,
-                          borderWidth: 2,
-                          borderColor: selectedIds.includes(t.id || '') ? '#007AFF' : '#D1D1D6',
-                          backgroundColor: selectedIds.includes(t.id || '') ? '#007AFF' : '#FFF',
-                          marginTop: 8,
-                        }}
-                      />
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                );
+              })}
               
               <TouchableOpacity
                 style={[
                   styles.button,
-                  { backgroundColor: '#FF3B30', marginTop: 16, marginLeft: 0 },
+                  { backgroundColor: Colors[theme].error, marginTop: 16, marginLeft: 0 },
                   selectedIds.length === 0 && { opacity: 0.5 },
                 ]}
                 onPress={handleDelete}
