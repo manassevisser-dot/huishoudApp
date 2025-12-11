@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import styles from '../../styles/AppStyles';
+import { getAppStyles } from '../../styles/AppStyles';
 import { useTheme } from '../../context/ThemeContext';
 
 type Props = {
@@ -14,6 +14,7 @@ type Props = {
 const ResetScreen: React.FC<Props> = ({ onClose, onWissen, onHerstel }) => {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const styles = getAppStyles(theme);
   
   const handleWissen = () => {
     Alert.alert(
@@ -45,7 +46,7 @@ const ResetScreen: React.FC<Props> = ({ onClose, onWissen, onHerstel }) => {
   };
   
   return (
-    <View style={theme === 'dark' ? styles.containerDark : styles.container}>
+    <View style={styles.container}>
       <View style={styles.pageContainer}>
         <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}>
           <Text style={styles.pageTitle}>Reset Opties</Text>

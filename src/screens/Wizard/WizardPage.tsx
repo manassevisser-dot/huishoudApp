@@ -2,10 +2,11 @@
 import * as React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import styles from '../../styles/AppStyles';
+import { getAppStyles } from '../../styles/AppStyles';
 import FormField from '../../components/FormField';
 import ConditionalField from '../../components/ConditionalField';
 import { useFormContext } from '../../context/FormContext';
+import { useTheme } from '../../context/ThemeContext';
 import { validateField } from '../../utils/validation';
 import { evaluateCondition } from '../../utils/conditions';
 import { PageConfig } from '../../types/form';
@@ -27,6 +28,8 @@ const WizardPage: React.FC<PageProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const { state, dispatch } = useFormContext();
+  const { theme } = useTheme();
+  const styles = getAppStyles(theme);
   const [errors, setErrors] = React.useState<Record<string, string | null>>({});
   const currentPageData = state[page.id] ?? {};
   const currentPageState = state;

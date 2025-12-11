@@ -1,28 +1,19 @@
 //====
 // src/screens/Settings/SettingsScreen.tsx
-
 import * as React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { getAppStyles } from '../../styles/AppStyles';
-
-type Props = {
-  onClose: () => void;
-};
-
-const SettingsScreen: React.FC<Props> = ({ onClose }) => {
-  const insets = useSafeAreaInsets();
-  const { theme, setTheme } = useTheme();
-  const styles = getAppStyles(theme);
-
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-  };
-
-  return (
-    <View style={styles.container}>
+const SettingsScreen = ({ onClose }) => {
+    const insets = useSafeAreaInsets();
+    const { theme, setTheme } = useTheme();
+    const styles = getAppStyles(theme);
+    const toggleTheme = () => {
+        const newTheme = theme === 'light' ? 'dark' : 'light';
+        setTheme(newTheme);
+    };
+    return (<View style={styles.container}>
       <View style={styles.pageContainer}>
         <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}>
           <Text style={styles.pageTitle}>Settings</Text>
@@ -46,8 +37,6 @@ const SettingsScreen: React.FC<Props> = ({ onClose }) => {
           <Text style={styles.secondaryButtonText}>Terug</Text>
         </TouchableOpacity>
       </View>
-    </View>
-  );
+    </View>);
 };
-
 export default SettingsScreen;

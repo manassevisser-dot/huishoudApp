@@ -1,0 +1,13 @@
+export const C7Config = {
+    id: 'C7',
+    title: 'Inkomsten',
+    fields: [
+        {
+            id: 'inkomsten',
+            label: 'Inkomsten per volwassene',
+            type: 'income-repeater',
+            required: false,
+            defaultValue: {},
+        },
+    ],
+};

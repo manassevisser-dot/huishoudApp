@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
-import styles from '../styles/AppStyles';
+import { useTheme } from '../context/ThemeContext';
+import { getAppStyles } from '../styles/AppStyles';
 
 export type ToggleSwitchProps = {
   value: boolean;
@@ -17,6 +18,9 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   labelFalse = 'Nee',
   accessibilityLabel,
 }) => {
+  const { theme } = useTheme();
+  const styles = getAppStyles(theme);
+
   return (
     <View style={styles.toggleWrapper}>
       <TouchableOpacity

@@ -1,7 +1,8 @@
 // src/organisms/IncomeRepeater.tsx
 import * as React from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import styles from '../styles/AppStyles';
+import { useTheme } from '../context/ThemeContext';
+import { getAppStyles } from '../styles/AppStyles';
 import ChipButton from '../components/ChipButton';
 import { useFormContext } from '../context/FormContext';
 import { 
@@ -33,6 +34,8 @@ const isAdult = (m: Member) => m.memberType === 'adult';
 
 const IncomeRepeater: React.FC = () => {
   const { state, dispatch } = useFormContext();
+  const { theme } = useTheme();
+  const styles = getAppStyles(theme);
 
   // P4: Collapsible state for per-adult toeslagen (keyed by adult ID)
   const [toelagenExpanded, setToelagenExpanded] = React.useState<Record<string, boolean>>({});

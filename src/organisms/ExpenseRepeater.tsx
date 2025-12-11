@@ -1,7 +1,8 @@
 // src/organisms/ExpenseRepeater.tsx
 import * as React from 'react';
 import { View, Text, TextInput, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
-import styles from '../styles/AppStyles';
+import { useTheme } from '../context/ThemeContext';
+import { getAppStyles } from '../styles/AppStyles';
 import ChipButton from '../components/ChipButton';
 import { useFormContext } from '../context/FormContext';
 import { Member, WoningType, AutoCount } from '../types/household';
@@ -27,6 +28,8 @@ const isChildUnder15 = (m: Member) =>
 
 const ExpenseRepeater: React.FC = () => {
   const { state, dispatch } = useFormContext();
+  const { theme } = useTheme();
+  const styles = getAppStyles(theme);
 
   // P4: Collapsible states
   const [abonnementenExpanded, setAbonnementenExpanded] = React.useState(false);
@@ -271,11 +274,6 @@ const ExpenseRepeater: React.FC = () => {
     );
   };
 
-  // Continue in Part 2...
-  // ExpenseRepeater.tsx - Part 2: Verzekeringen, Abonnementen, Per Persoon, Auto
-// (This continues from Part 1 - add these methods to the component)
-
-  // P4: Verzekeringen - COLLAPSIBLE + renamed to "Overige verzekeringen"
   const renderVerzekeringen = () => {
     const id = 'verzekeringen';
     

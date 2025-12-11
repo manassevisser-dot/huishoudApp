@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, ScrollView } from 'react-native';
-import styles from '../styles/AppStyles';
+import { useTheme } from '../context/ThemeContext';
+import { getAppStyles } from '../styles/AppStyles';
 import ChipButton from './ChipButton';
 import ToggleSwitch from './ToggleSwitch';
 import InputCounter from './InputCounter';
@@ -29,6 +30,8 @@ const FormField: React.FC<FormFieldProps> = ({
   errorColor,
   state,
 }) => {
+  const { theme } = useTheme();
+  const styles = getAppStyles(theme);
   const displayLabel = field.labelDynamic ? value : field.label;
 
   const handleChange = (newValue: any) => {

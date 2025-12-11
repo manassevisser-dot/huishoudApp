@@ -12,12 +12,13 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import styles from '../../styles/AppStyles';
+import { getAppStyles } from '../../styles/AppStyles';
 import ChipButton from '../../components/ChipButton';
 import { TransactionService } from '../../services/transactionService';
 import { DailyTransaction, PaymentMethod, TransactionCategory } from '../../types/transaction';
 import { getCurrentDateISO, getISOWeek } from '../../utils/date';
 import { onlyDigitsDotsComma } from '../../utils/numbers';
+import { useTheme } from '../../context/ThemeContext';
 
 type Props = {
   onBack: () => void;
@@ -36,6 +37,8 @@ const PAYMENT_METHODS: PaymentMethod[] = ['pin', 'contant', 'creditcard'];
 
 const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
+  const styles = getAppStyles(theme);
   
   // Form State
   const [date, setDate] = React.useState(getCurrentDateISO());

@@ -1,13 +1,13 @@
 // src/organisms/HouseholdMemberRepeater.tsx
 import * as React from 'react';
 import { View, Text, TextInput, ScrollView } from 'react-native';
-import styles from '../styles/AppStyles';
+import { useTheme } from '../context/ThemeContext'; // NEW: For theme
+import { getAppStyles } from '../styles/AppStyles'; // NEW: For styles
 import ChipButton from '../components/ChipButton';
 import { useFormContext } from '../context/FormContext';
 import { Member, BurgerlijkeStaat, WoningType } from '../types/household';
 import { onlyDigits, stripEmojiAndLimit } from '../utils/numbers';
 
-// P4: Updated GENDER_OPTIONS - 'geen antwoord' → 'n.v.t.'
 const GENDER_OPTIONS: Member['gender'][] = [
   'man',
   'vrouw',
@@ -27,6 +27,10 @@ const WONING_OPTIONS: WoningType[] = ['Koop', 'Huur', 'Kamer', 'Anders'];
 
 const HouseholdMemberRepeater: React.FC = () => {
   const { state, dispatch } = useFormContext();
+  const { theme } = useTheme(); // NEW: Get theme
+  const styles = getAppStyles(theme); // NEW: Get styles
+
+  // ... (rest of the logic is the same)
 
   // Keep C1→C4 sync logic intact (reads C1, writes C4 state)
   React.useEffect(() => {
@@ -56,7 +60,6 @@ const HouseholdMemberRepeater: React.FC = () => {
     0,
     Math.min(Number(state.C1?.aantalVolwassen ?? 0), aantalMensen)
   );
-  const aantalKinderen = Math.max(0, aantalMensen - aantalVolwassen);
 
   const leden: Member[] = React.useMemo(() => {
     const arr = state.C4?.leden as Member[] | undefined;
@@ -357,7 +360,6 @@ const HouseholdMemberRepeater: React.FC = () => {
           </ScrollView>
         </View>
 
-        {/* P4: REMOVED geboortejaar field entirely */}
       </View>
     );
   };
@@ -411,7 +413,6 @@ const HouseholdMemberRepeater: React.FC = () => {
         </ScrollView>
       </View>
 
-      {/* Postcode only shown when aantalVolwassen <= 1 */}
       {aantalVolwassen <= 1 && (
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Postcode (4 cijfers)</Text>
@@ -427,8 +428,6 @@ const HouseholdMemberRepeater: React.FC = () => {
         </View>
       )}
 
-      {/* P4: REMOVED Huisdieren section - C1 is source of truth */}
-      {/* P4: REMOVED Auto section - C1 is source of truth */}
     </View>
   );
 
@@ -485,7 +484,7 @@ const HouseholdMemberRepeater: React.FC = () => {
         </ScrollView>
       ) : (
         children.map((m) => {
-          const originalIndex = currentMembers.findIndex((x) => x.id === m.id);
+          const originalIndex = currentMembers.findIndex((x).id === m.id);
           return renderChildCard(m, originalIndex);
         })
       )}

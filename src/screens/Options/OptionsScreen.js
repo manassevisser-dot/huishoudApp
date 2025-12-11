@@ -5,21 +5,11 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { getAppStyles } from '../../styles/AppStyles';
-
-type Props = {
-  onClose: () => void;
-  onSettings: () => void;
-  onCsvUpload: () => void;
-  onReset: () => void;
-};
-
-const OptionsScreen: React.FC<Props> = ({ onClose, onSettings, onCsvUpload, onReset }) => {
-  const insets = useSafeAreaInsets();
-  const { theme } = useTheme();
-  const styles = getAppStyles(theme);
-  
-  return (
-    <View style={styles.container}>
+const OptionsScreen = ({ onClose, onSettings, onCsvUpload, onReset }) => {
+    const insets = useSafeAreaInsets();
+    const { theme } = useTheme();
+    const styles = getAppStyles(theme);
+    return (<View style={styles.container}>
       <View style={styles.pageContainer}>
         <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}>
           <Text style={styles.pageTitle}>Options</Text>
@@ -43,8 +33,6 @@ const OptionsScreen: React.FC<Props> = ({ onClose, onSettings, onCsvUpload, onRe
           <Text style={styles.secondaryButtonText}>Terug naar Dashboard</Text>
         </TouchableOpacity>
       </View>
-    </View>
-  );
+    </View>);
 };
-
 export default OptionsScreen;

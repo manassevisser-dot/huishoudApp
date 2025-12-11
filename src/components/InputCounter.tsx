@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import styles from '../styles/AppStyles';
+import { useTheme } from '../context/ThemeContext';
+import { getAppStyles } from '../styles/AppStyles';
 
 export type InputCounterProps = {
   value: number;
@@ -17,6 +18,8 @@ const InputCounter: React.FC<InputCounterProps> = ({
   max,
   accessibilityLabel,
 }) => {
+  const { theme } = useTheme();
+  const styles = getAppStyles(theme);
   const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
   const canDecrement = numericValue > min;
   const canIncrement = max === undefined || numericValue < max;

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import styles from '../../styles/AppStyles';
+import { getAppStyles } from '../../styles/AppStyles';
 import { csvService } from '../../services/csvService';
 import { TransactionService } from '../../services/transactionService';
 import { useTheme } from '../../context/ThemeContext';
@@ -16,6 +16,7 @@ type Props = {
 const CsvUploadScreen: React.FC<Props> = ({ onClose }) => {
   const insets = useSafeAreaInsets();
   const { theme } = useTheme();
+  const styles = getAppStyles(theme);
   const [csvText, setCsvText] = React.useState('');
   const [isUploading, setIsUploading] = React.useState(false);
   
@@ -72,7 +73,7 @@ const CsvUploadScreen: React.FC<Props> = ({ onClose }) => {
   };
   
   return (
-    <View style={theme === 'dark' ? styles.containerDark : styles.container}>
+    <View style={styles.container}>
       <View style={styles.pageContainer}>
         <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}>
           <Text style={styles.pageTitle}>CSV Upload</Text>
