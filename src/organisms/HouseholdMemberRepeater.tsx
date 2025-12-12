@@ -273,7 +273,7 @@ const HouseholdMemberRepeater: React.FC = () => {
             {GENDER_OPTIONS.map((g) => (
               <ChipButton
                 key={g}
-                label={g}
+                label={g ?? ''}
                 selected={m.gender === g}
                 onPress={() => updateMember(index, { gender: g })}
                 accessibilityLabel={`Gender ${g} voor ${title}`}
@@ -348,7 +348,7 @@ const HouseholdMemberRepeater: React.FC = () => {
             {GENDER_OPTIONS.map((g) => (
               <ChipButton
                 key={g}
-                label={g}
+                label={g ?? ''}
                 selected={m.gender === g}
                 onPress={() => updateMember(index, { gender: g })}
                 accessibilityLabel={`Gender ${g} voor ${title}`}

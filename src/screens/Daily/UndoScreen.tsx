@@ -2,7 +2,9 @@
 import * as React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAppStyles } from '../../styles/useAppStyles';
+import { useTheme } from '../../context/ThemeContext';
+import { getAppStyles } from '../../styles/useAppStyles';
+import { Colors } from '../../styles/Colors'; // Zorg dat deze import aanwezig is;
 import { TransactionService } from '../../services/transactionService';
 import { DailyTransaction } from '../../types/transaction';
 import { formatCurrency } from '../../utils/numbers';
@@ -13,7 +15,8 @@ type Props = {
 
 const UndoScreen: React.FC<Props> = ({ onClose }) => {
   const insets = useSafeAreaInsets();
-  const styles = useAppStyles();
+  const { theme } = useTheme();
+  const styles = getAppStyles(theme);
   const [transactions, setTransactions] = React.useState<DailyTransaction[]>([]);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState(true);

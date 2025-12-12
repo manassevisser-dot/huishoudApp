@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import styles from '../../styles/AppStyles';
+import getAppStyles from '../../styles/useAppStyles';
 import { csvService } from '../../services/csvService';
 import { TransactionService } from '../../services/transactionService';
 import { useTheme } from '../../context/ThemeContext';
@@ -12,6 +12,7 @@ import { getISOWeek } from '../../utils/date';
 type Props = {
   onClose: () => void;
 };
+const styles = getAppStyles(theme);
 
 const CsvUploadScreen: React.FC<Props> = ({ onClose }) => {
   const insets = useSafeAreaInsets();

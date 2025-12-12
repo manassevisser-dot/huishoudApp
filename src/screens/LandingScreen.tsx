@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import styles from '../styles/AppStyles';
+import getAppStyles from '../styles/useAppStyles';
+const styles = getAppStyles(theme);
 
 type Props = {
   onSignup: () => void; // Start wizard at C1

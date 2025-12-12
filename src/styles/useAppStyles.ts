@@ -370,4 +370,4 @@ export function getAppStyles(theme: Theme) {
 }
 
 // Backwards compatibility fallback
-export default getAppStyles('light');
+export function getAppStyles(theme: Theme) { ... }

@@ -1,7 +1,8 @@
 // src/styles/AppStyles.ts
 
 import { StyleSheet } from 'react-native';
-
+import { useTheme } from '../context/ThemeContext'; // Zorg dat het pad klopt
+import { getAppStyles } from '../styles/useAppStyles'; // Zorg dat het pad klopt
 const styles = StyleSheet.create({
   container: {
     flex: 1,
