@@ -1,3 +1,8 @@
+
+// index.tsx
+import React from 'react';
+import { registerRootComponent } from 'expo';
 import App from './App';
-// Snack verwacht een default export in het entry-bestand
-export default App;
+
+// App.tsx bevat al ThemeProvider; index.tsx registreert alleen de App
+registerRootComponent(App);
