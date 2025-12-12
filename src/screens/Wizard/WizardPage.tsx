@@ -2,7 +2,8 @@
 import * as React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import styles from '../../styles/AppStyles';
+import getAppStyles from '../../styles/useAppStyles';
+const styles = getAppStyles(theme);
 import FormField from '../../components/FormField';
 import ConditionalField from '../../components/ConditionalField';
 import { useFormContext } from '../../context/FormContext';

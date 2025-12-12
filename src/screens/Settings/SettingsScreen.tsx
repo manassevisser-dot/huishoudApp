@@ -3,7 +3,8 @@
 import * as React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import styles from '../../styles/AppStyles';
+import getAppStyles from '../../styles/useAppStyles';
+const styles = getAppStyles(theme);
 import { useTheme } from '../../context/ThemeContext';
 
 type Props = {
