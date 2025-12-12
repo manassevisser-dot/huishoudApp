@@ -5,7 +5,7 @@ import * as React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStyles } from '../../styles/useAppStyles';
-const styles = useAppStyles();
+const { styles, colors } = useAppStyles();
 import { useFormContext } from '../../context/FormContext';
 import { calculateFinancialSummary } from '../../utils/finance';
 import { formatCurrency } from '../../utils/numbers';

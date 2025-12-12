@@ -2,7 +2,7 @@ import * as React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStyles } from '../styles/useAppStyles';
-const styles = useAppStyles();
+const { styles, colors } = useAppStyles();
 
 type Props = {
   onSignup: () => void; // Start wizard at C1

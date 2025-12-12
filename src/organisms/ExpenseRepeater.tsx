@@ -17,7 +17,7 @@ const isChildUnder15 = (m: Member) =>
   m.memberType === 'child' && typeof m.leeftijd === 'number' && m.leeftijd < 15;
 
 const ExpenseRepeater: React.FC = () => {
-  const styles = useAppStyles();
+  const { styles, colors } = useAppStyles();
   const { state, dispatch } = useFormContext();
 
   const [abonnementenExpanded, setAbonnementenExpanded] = React.useState(false);

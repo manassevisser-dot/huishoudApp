@@ -11,7 +11,7 @@ type Props = {
 
 const SettingsScreen: React.FC<Props> = ({ onClose }) => {
   const insets = useSafeAreaInsets();
-  const styles = useAppStyles();
+  const { styles, colors } = useAppStyles();
   const { theme, setTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(false);
 

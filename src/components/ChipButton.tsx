@@ -17,7 +17,7 @@ const ChipButton: React.FC<ChipButtonProps> = ({
   onPress,
   accessibilityLabel,
 }) => {
-  const styles = useAppStyles();
+  const { styles, colors } = useAppStyles();
 
   return (
     <TouchableOpacity
