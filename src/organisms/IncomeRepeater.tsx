@@ -142,7 +142,7 @@ const IncomeRepeater: React.FC = () => {
 
   const toggleCategory = (id: string, cat: keyof IncomeCategories) => {
     const rec = inkomsten[id] ?? { id, categories: { geen: false, werk: false, uitkering: false, anders: false, DUO: false } };
-    let categories = { ...rec.categories, [cat]: !rec.categories?.[cat] };
+    let categories = { ...(rec.categories || {}), [cat]: !rec.categories?.[cat] };
     
     if (cat === 'geen' && categories.geen) {
       categories = { geen: true, werk: false, uitkering: false, anders: false, DUO: false };
