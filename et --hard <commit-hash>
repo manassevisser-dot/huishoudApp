@@ -1,0 +1,34 @@
+[33ma1ec6bc[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m retry 12-12
+[33m9c86aee[m dontknow
+[33m21c56da[m googo
+[33mea9c0cd[m sleg changed
+[33mf76e003[m go
+[33m66c63b1[m downgrade
+[33m5d4125f[m Delete index.js
+[33m2fe6465[m Delete App.js
+[33mcc5f780[m Improved C7 page
+[33mae36ac7[m no need for js
+[33ma81dfbc[m Tried to fix some issues.
+[33m0415f67[m[33m ([m[1;31morigin/commit_test[m[33m)[m Refactor UndoScreen to use theme-aware styles
+[33mc591565[m Feat: useAppStyles to getAppStyles - Midnight Blue palette
+[33m970136e[m Add useAppStyles feat: - Midnight Blue palette
+[33me5844f1[m feat: Add Colors.ts - Midnight Blue palette
+[33m96b03fc[m  fixed missing functions
+[33me5b0d34[m Upadated files
+[33mff2b88e[m Refactor index.tsx to export App as default
+[33m680ab4e[m Rename Transaction.ts to transaction.ts
+[33ma9528aa[m Missing export fix
+[33mee40072[m Missing file upload
+[33m7586c5e[m Rename scvService.ts to csvService.ts
+[33m5770585[m update 10-12-2025
+[33m970b1f7[m update 10-12-2025
+[33mb970411[m update 10-12-2025
+[33m55908ae[m Update 10-12-2025
+[33mfdc41fd[m improved use of usememo
+[33m7dc5879[m Add files via upload
+[33md1d9eec[m update
+[33m5e855a0[m Delete src directory Wrongful dump
+[33m40d8112[m Add .gitignore file with common exclusions
+[33m8310602[m New Features -
+[33mc31749b[m Add files via upload
+[33m0fbe4dd[m Baseline Code
