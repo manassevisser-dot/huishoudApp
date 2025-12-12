@@ -1,7 +1,8 @@
 export type IncomeFrequency = 'week' | '4wk' | 'month' | 'quarter' | 'year';
 
+// DUO removed from here
 export type UitkeringKey =
-  | 'DUO' | 'Bijstand' | 'WW' | 'ZW' | 'WAO' | 'WGA' | 'WIA' | 'IVA' | 'WAJONG'
+  | 'Bijstand' | 'WW' | 'ZW' | 'WAO' | 'WGA' | 'WIA' | 'IVA' | 'WAJONG'
   | 'Pensioen' | 'AOW' | 'IOW' | 'anders';
 
 export type UitkeringEntry = {
@@ -23,6 +24,7 @@ export type IncomeCategories = {
   werk: boolean;
   uitkering: boolean;
   anders: boolean;
+  DUO: boolean; // Added DUO
 };
 
 export type IncomeMember = {
@@ -36,9 +38,13 @@ export type IncomeMember = {
     reiskosten?: number;
   };
   vakantiegeldPerJaar?: number;
-  vakantiegeldPerMaand?: number;
+  vakantiegeldPerMaand?: number; // This will be deprecated in logic.
   uitkeringen?: Partial<Record<UitkeringKey, UitkeringEntry>>;
   anders?: AndersEntry[];
+  duo?: { // Added duo object
+    basisbeurs?: number;
+    lening?: number;
+  };
 };
 
 export type HouseholdBenefits = {

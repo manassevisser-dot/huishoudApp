@@ -1,6 +1,7 @@
-// src/organisms/IncomeRepeater.tsx
+
+// src/organisms/IncomeRepeater.new.tsx
 import * as React from 'react';
-import { View, Text, TextInput, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, TextInput, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { getAppStyles } from '../styles/AppStyles';
 import ChipButton from '../components/ChipButton';
@@ -18,37 +19,57 @@ import {
 import { Member } from '../types/household';
 import { onlyDigitsDotsComma } from '../utils/numbers';
 
-// P4: Card dimensions for swipe
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_WIDTH = SCREEN_WIDTH * 0.85;
 
-const CATEGORY_OPTIONS: (keyof IncomeCategories)[] = ['geen', 'werk', 'uitkering', 'anders'];
-const FREQUENCIES: IncomeFrequency[] = ['week', '4wk', 'month', 'quarter', 'year'];
+const CATEGORY_OPTIONS: (keyof IncomeCategories)[] = ['geen', 'werk', 'uitkering', 'DUO', 'anders'];
+const FREQUENCIES: IncomeFrequency[] = ['week', '4wk', 'month'];
 
 const UITKERING_KEYS_BASE: UitkeringKey[] = [
-  'DUO', 'Bijstand', 'WW', 'ZW', 'WAO', 'WGA', 'WIA', 'IVA', 'WAJONG', 'IOW', 'anders'
+  'Bijstand', 'WW', 'ZW', 'WAO', 'WGA', 'WIA', 'IVA', 'WAJONG', 'IOW', 'anders'
 ];
 const RETIREMENT_KEYS: UitkeringKey[] = ['Pensioen', 'AOW'];
 
 const isAdult = (m: Member) => m.memberType === 'adult';
+const getAge = (member: Member): number => member.leeftijd || 0;
+
+const getUitkeringChipsForAge = (age: number): UitkeringKey[] => {
+  if (age > 66) return RETIREMENT_KEYS;
+  if (age >= 60) return ['IOW', ...UITKERING_KEYS_BASE.filter(k => !RETIREMENT_KEYS.includes(k))];
+  return UITKERING_KEYS_BASE.filter(k => !RETIREMENT_KEYS.includes(k) && k !== 'IOW');
+};
+
+const isBijstandAanvullend = (rec: IncomeMember): boolean => {
+  if (!rec.categories.uitkering) return false;
+  const uitkeringen = rec.uitkeringen || {};
+  const bijstandEnabled = uitkeringen['Bijstand']?.enabled;
+  if (!bijstandEnabled) return false;
+  
+  return Object.keys(uitkeringen).some(key => key !== 'Bijstand' && uitkeringen[key]?.enabled);
+};
+
+const shouldShowVakantiegeld = (rec: IncomeMember): boolean => {
+  if (rec.categories.geen) return false;
+  if (rec.categories.DUO) return false;
+
+  if (rec.categories.uitkering) {
+    if (isBijstandAanvullend(rec)) return false;
+  }
+  
+  return rec.categories.werk || rec.categories.uitkering || rec.categories.anders;
+};
+
 
 const IncomeRepeater: React.FC = () => {
   const { state, dispatch } = useFormContext();
   const { theme } = useTheme();
   const styles = getAppStyles(theme);
 
-  // P4: Collapsible state for per-adult toeslagen (keyed by adult ID)
-  const [toelagenExpanded, setToelagenExpanded] = React.useState<Record<string, boolean>>({});
-
   const c4 = state.C4;
   const c7 = state.C7;
   const c1 = state.C1;
 
-  const leden: Member[] = React.useMemo(() => {
-    const arr = c4?.leden as Member[] | undefined;
-    return Array.isArray(arr) ? arr : [];
-  }, [c4]);
-
+  const leden: Member[] = React.useMemo(() => (Array.isArray(c4?.leden) ? c4.leden : []), [c4]);
   const adults: Member[] = React.useMemo(() => leden.filter(isAdult), [leden]);
   const adultIds: string[] = React.useMemo(() => adults.map((m) => m.id), [adults]);
 
@@ -66,7 +87,7 @@ const IncomeRepeater: React.FC = () => {
     () => (c7?.vermogen ?? { hasVermogen: false }) as VermogenData,
     [c7]
   );
-
+    
   const hasChildren = React.useMemo(() => {
     const people = Number(c1?.aantalMensen ?? 0);
     const adultsCount = Number(c1?.aantalVolwassen ?? 0);
@@ -81,6 +102,7 @@ const IncomeRepeater: React.FC = () => {
 
   const woningIsHuur = React.useMemo(() => c4?.woning === 'Huur', [c4]);
 
+
   React.useEffect(() => {
     let changed = false;
     const next: Record<string, IncomeMember> = { ...inkomsten };
@@ -88,9 +110,10 @@ const IncomeRepeater: React.FC = () => {
       if (!next[id]) {
         next[id] = {
           id,
-          categories: { geen: false, werk: false, uitkering: false, anders: false },
+          categories: { geen: false, werk: false, uitkering: false, anders: false, DUO: false },
           uitkeringen: {},
           anders: [],
+          duo: {},
         };
         changed = true;
       }
@@ -102,10 +125,10 @@ const IncomeRepeater: React.FC = () => {
 
   const setMemberIncome = (id: string, patch: Partial<IncomeMember>) => {
     const current = (state.C7?.inkomsten ?? {}) as Record<string, IncomeMember>;
-    const next = { ...current, [id]: { ...(current[id] ?? { id, categories: { geen: false, werk: false, uitkering: false, anders: false } }), ...patch } };
+    const next = { ...current, [id]: { ...(current[id] ?? { id, categories: { geen: false, werk: false, uitkering: false, anders: false, DUO: false } }), ...patch } };
     dispatch({ type: 'SET_PAGE_DATA', pageId: 'C7', data: { inkomsten: next } });
   };
-
+  
   const setHouseholdBenefits = (patch: Partial<HouseholdBenefits>) => {
     const current = (state.C7?.householdBenefits ?? {}) as HouseholdBenefits;
     dispatch({ type: 'SET_PAGE_DATA', pageId: 'C7', data: { householdBenefits: { ...current, ...patch } } });
@@ -116,123 +139,124 @@ const IncomeRepeater: React.FC = () => {
     dispatch({ type: 'SET_PAGE_DATA', pageId: 'C7', data: { vermogen: { ...current, ...patch } } });
   };
 
+
   const toggleCategory = (id: string, cat: keyof IncomeCategories) => {
-    const rec = inkomsten[id] ?? { id, categories: { geen: false, werk: false, uitkering: false, anders: false } };
-    const categories = { ...rec.categories, [cat]: !rec.categories?.[cat] };
+    const rec = inkomsten[id] ?? { id, categories: { geen: false, werk: false, uitkering: false, anders: false, DUO: false } };
+    let categories = { ...rec.categories, [cat]: !rec.categories?.[cat] };
+    
     if (cat === 'geen' && categories.geen) {
-      categories.werk = false; categories.uitkering = false; categories.anders = false;
+      categories = { geen: true, werk: false, uitkering: false, anders: false, DUO: false };
     } else if (cat !== 'geen' && categories[cat]) {
       categories.geen = false;
     }
-    setMemberIncome(id, { categories });
-  };
-
-  const setVakantiegeldPerJaar = (id: string, text: string) => {
-    const clean = onlyDigitsDotsComma(text);
-    const perYear = clean.length ? Number(clean) : undefined;
-    const perMonth = typeof perYear === 'number' && Number.isFinite(perYear) ? perYear / 12 : undefined;
-    setMemberIncome(id, { vakantiegeldPerJaar: perYear, vakantiegeldPerMaand: perMonth });
-  };
-
-  const setWerkField = (id: string, field: 'nettoSalaris' | 'frequentie' | 'toeslagen.zorgtoeslag' | 'toeslagen.overige' | 'toeslagen.reiskosten', value: any) => {
-    const rec = inkomsten[id];
-    if (!rec) return;
-    if (field === 'frequentie') {
-      setMemberIncome(id, { frequentie: value as IncomeFrequency });
-      return;
-    }
-    const [group, sub] = field.split('.');
-    if (group === 'toeslagen' && sub) {
-      const t = { ...(rec.toeslagen ?? {}) } as NonNullable<IncomeMember['toeslagen']>;
-      if (sub === 'zorgtoeslag' || sub === 'overige' || sub === 'reiskosten') {
-        t[sub] = typeof value === 'string' ? (onlyDigitsDotsComma(value).length ? Number(onlyDigitsDotsComma(value)) : undefined) : value;
-      }
-      setMemberIncome(id, { toeslagen: t });
-    } else {
-      const num = typeof value === 'string' ? (onlyDigitsDotsComma(value).length ? Number(onlyDigitsDotsComma(value)) : undefined) : value;
-      setMemberIncome(id, { nettoSalaris: num });
-    }
-  };
-
-  const setUitkeringToggle = (id: string, key: UitkeringKey) => {
-    const rec = inkomsten[id]!;
-    const map = { ...(rec.uitkeringen ?? {}) };
-    const entry = map[key] ?? { enabled: false } as UitkeringEntry;
-    entry.enabled = !entry.enabled;
-    map[key] = entry;
-    setMemberIncome(id, { uitkeringen: map });
-  };
-
-  const setUitkeringField = (id: string, key: UitkeringKey, patch: Partial<UitkeringEntry>) => {
-    const rec = inkomsten[id]!;
-    const map = { ...(rec.uitkeringen ?? {}) };
-    const entry = map[key] ?? { enabled: true } as UitkeringEntry;
-    const next: UitkeringEntry = { ...entry, ...patch };
-    map[key] = next;
-    setMemberIncome(id, { uitkeringen: map });
-  };
-
-  const addAnders = (id: string) => {
-    const rec = inkomsten[id]!;
-    const list = Array.isArray(rec.anders) ? rec.anders.slice() : [];
-    list.push({ id: `a-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` });
-    setMemberIncome(id, { anders: list });
-  };
-
-  const setAndersField = (id: string, itemId: string, patch: Partial<AndersEntry>) => {
-    const rec = inkomsten[id]!;
-    const list = Array.isArray(rec.anders) ? rec.anders.slice() : [];
-    const idx = list.findIndex((x) => x.id === itemId);
-    if (idx >= 0) {
-      const next = { ...list[idx], ...patch };
-      list[idx] = next;
-      setMemberIncome(id, { anders: list });
-    }
-  };
-
-  const removeAnders = (id: string, itemId: string) => {
-    const rec = inkomsten[id]!;
-    const list = Array.isArray(rec.anders) ? rec.anders.slice() : [];
-    const next = list.filter((x) => x.id !== itemId);
-    setMemberIncome(id, { anders: next });
-  };
-
-  const renderCategoryChips = (id: string, rec: IncomeMember, title: string) => (
-    <View style={styles.fieldContainer}>
-      <Text style={styles.label}>Ik heb</Text>
-      <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIndicator={false}>
-        {CATEGORY_OPTIONS.map((c) => (
-          <ChipButton
-            key={c}
-            label={c}
-            selected={!!rec.categories?.[c]}
-            onPress={() => toggleCategory(id, c)}
-            accessibilityLabel={`Categorie ${c} voor ${title}`}
-          />
-        ))}
-      </ScrollView>
-    </View>
-  );
-
-  const renderWerk = (id: string, rec: IncomeMember, title: string) => {
-    if (!rec.categories?.werk) return null;
     
-    return (
-      <View style={styles.dashboardCard}>
-        <Text style={styles.summaryLabelBold}>Inkomen uit werk</Text>
+    if (cat === 'DUO' && categories.DUO) {
+        categories.uitkering = false;
+        const newUitkeringen = { ...rec.uitkeringen };
+        if (newUitkeringen['Bijstand']) {
+          newUitkeringen['Bijstand'] = { ...newUitkeringen['Bijstand'], enabled: false };
+        }
+        setMemberIncome(id, { categories, uitkeringen: newUitkeringen });
+    } else if (cat === 'uitkering' && categories.uitkering && rec.categories.DUO){
+        categories.DUO = false;
+        setMemberIncome(id, { categories });
+    } else {
+      setMemberIncome(id, { categories });
+    }
+  };
+  
+  const renderPerAdultIncome = () => {
+    return adults.map((m, idx) => {
+        const rec = inkomsten[m.id] ?? { 
+          id: m.id, 
+          categories: { geen: false, werk: false, uitkering: false, anders: false, DUO: false } 
+        };
+        const title = m.naam?.trim() ? `Inkomen voor ${m.naam}` : `Volwassene ${idx + 1}`;
+        const age = getAge(m);
 
+        return (
+            <View key={m.id} style={[styles.dashboardCard, { width: CARD_WIDTH, marginRight: 20 }]}>
+              <Text style={styles.summaryLabelBold}>{title}</Text>
+              {renderCategoryChips(m.id, rec, title, age)}
+              {rec.categories.werk && renderWerkSection(m.id, rec, title)}
+              {rec.categories.uitkering && renderUitkeringSection(m.id, rec, m, title)}
+              {rec.categories.DUO && renderDuoSection(m.id, rec, title)}
+              {rec.categories.anders && renderAndersSection(m.id, rec, title)}
+
+              {!rec.categories.geen && (
+                <View style={styles.fieldContainer}>
+                  <Text style={styles.label}>Zorgtoeslag (€/mnd)</Text>
+                  <TextInput
+                    style={styles.numericInput}
+                    value={typeof rec.toeslagen?.zorgtoeslag === 'number' ? String(rec.toeslagen.zorgtoeslag) : ''}
+                    keyboardType="number-pad"
+                    onChangeText={t => {
+                        const currentToeslagen = rec.toeslagen || {};
+                        setMemberIncome(m.id, { toeslagen: { ...currentToeslagen, zorgtoeslag: onlyDigitsDotsComma(t).length ? Number(onlyDigitsDotsComma(t)) : undefined } });
+                    }}
+                    placeholder="0.00"
+                    accessibilityLabel={`Zorgtoeslag voor ${title}`}
+                  />
+                </View>
+              )}
+              
+              {shouldShowVakantiegeld(rec) && (
+                <View style={styles.fieldContainer}>
+                  <Text style={styles.label}>Vakantiegeld (per jaar)</Text>
+                  <TextInput
+                    style={styles.numericInput}
+                    value={typeof rec.vakantiegeldPerJaar === 'number' ? String(rec.vakantiegeldPerJaar) : ''}
+                    keyboardType="number-pad"
+                    onChangeText={t => setMemberIncome(m.id, { vakantiegeldPerJaar: onlyDigitsDotsComma(t).length ? Number(onlyDigitsDotsComma(t)) : undefined })}
+                    placeholder="0.00"
+                    accessibilityLabel={`Vakantiegeld per jaar voor ${title}`}
+                  />
+                </View>
+              )}
+
+              {idx < adults.length - 1 && (
+                  <Text style={styles.navigationHint}>→ volgende volwassene</Text>
+              )}
+            </View>
+        );
+    });
+  };
+  
+  const renderCategoryChips = (id: string, rec: IncomeMember, title: string, age: number) => {
+    const availableCategories = CATEGORY_OPTIONS.filter(c => c !== 'DUO' || age < 37);
+
+    return (
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Ik heb</Text>
+          <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIndicator={false}>
+            {availableCategories.map((c) => (
+              <ChipButton
+                key={c}
+                label={c}
+                selected={!!rec.categories?.[c]}
+                onPress={() => toggleCategory(id, c)}
+                accessibilityLabel={`Categorie ${c} voor ${title}`}
+              />
+            ))}
+          </ScrollView>
+        </View>
+    );
+  };
+  
+  const renderWerkSection = (id: string, rec: IncomeMember, title: string) => (
+    <View>
+        <Text style={styles.summaryLabelBold}>Inkomen uit werk</Text>
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Netto salaris</Text>
           <TextInput
             style={styles.numericInput}
             value={typeof rec.nettoSalaris === 'number' ? String(rec.nettoSalaris) : ''}
             keyboardType="number-pad"
-            onChangeText={(t) => setWerkField(id, 'nettoSalaris', t)}
+            onChangeText={(t) => setMemberIncome(id, { nettoSalaris: onlyDigitsDotsComma(t).length ? Number(onlyDigitsDotsComma(t)) : undefined })}
             placeholder="0.00"
             accessibilityLabel={`Netto salaris voor ${title}`}
           />
         </View>
-
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Frequentie</Text>
           <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIndicator={false}>
@@ -241,222 +265,179 @@ const IncomeRepeater: React.FC = () => {
                 key={f}
                 label={f}
                 selected={rec.frequentie === f}
-                onPress={() => setWerkField(id, 'frequentie', f)}
+                onPress={() => setMemberIncome(id, { frequentie: f })}
                 accessibilityLabel={`Frequentie ${f} voor ${title}`}
               />
             ))}
           </ScrollView>
         </View>
+    </View>
+  );
 
-        {/* P4: COLLAPSIBLE PER-ADULT TOESLAGEN */}
-        <View style={styles.fieldContainer}>
-          <TouchableOpacity 
-            onPress={() => setToelagenExpanded({ 
-              ...toelagenExpanded, 
-              [id]: !toelagenExpanded[id] 
-            })}
-            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-          >
-            <Text style={styles.label}>
-              Toeslagen
-            </Text>
-            <Text style={styles.summaryLabel}>
-              {toelagenExpanded[id] ? '▼' : '▶'}
-            </Text>
-          </TouchableOpacity>
-          
-          {toelagenExpanded[id] && (
-            <View style={{ gap: 12, marginTop: 12 }}>
-              <TextInput
-                style={styles.numericInput}
-                value={typeof rec.toeslagen?.zorgtoeslag === 'number' ? String(rec.toeslagen?.zorgtoeslag) : ''}
-                keyboardType="number-pad"
-                onChangeText={(t) => setWerkField(id, 'toeslagen.zorgtoeslag', t)}
-                placeholder="Zorgtoeslag (€/mnd)"
-                accessibilityLabel={`Zorgtoeslag voor ${title}`}
-              />
-              <TextInput
-                style={styles.numericInput}
-                value={typeof rec.toeslagen?.reiskosten === 'number' ? String(rec.toeslagen?.reiskosten) : ''}
-                keyboardType="number-pad"
-                onChangeText={(t) => setWerkField(id, 'toeslagen.reiskosten', t)}
-                placeholder="Reiskostenvergoeding (€/mnd)"
-                accessibilityLabel={`Reiskostenvergoeding voor ${title}`}
-              />
-              <TextInput
-                style={styles.numericInput}
-                value={typeof rec.toeslagen?.overige === 'number' ? String(rec.toeslagen?.overige) : ''}
-                keyboardType="number-pad"
-                onChangeText={(t) => setWerkField(id, 'toeslagen.overige', t)}
-                placeholder="Overige inkomsten (€/mnd)"
-                accessibilityLabel={`Overige inkomsten voor ${title}`}
-              />
+  const renderUitkeringSection = (id: string, rec: IncomeMember, m: Member, title: string) => {
+    const age = getAge(m);
+    const availableUitkeringen = getUitkeringChipsForAge(age);
+    const aanvullend = isBijstandAanvullend(rec);
+
+    const setUitkeringToggle = (key: UitkeringKey) => {
+        if ((key === 'Bijstand' && rec.categories.DUO)) {
+            Alert.alert('Niet toegestaan', 'DUO en Bijstand kunnen niet samen worden geselecteerd.');
+            return;
+        }
+        if((key === 'WAJONG' && rec.uitkeringen?.['Bijstand']?.enabled) || (key === 'Bijstand' && rec.uitkeringen?.['WAJONG']?.enabled)){
+            Alert.alert('Niet toegestaan', 'WAJONG en Bijstand kunnen niet samen worden geselecteerd.');
+            return;
+        }
+
+        const map = { ...(rec.uitkeringen ?? {}) };
+        const entry = map[key] ?? { enabled: false } as UitkeringEntry;
+        entry.enabled = !entry.enabled;
+        map[key] = entry;
+        setMemberIncome(id, { uitkeringen: map });
+    };
+
+    const setUitkeringField = (key: UitkeringKey, patch: Partial<UitkeringEntry>) => {
+        const map = { ...(rec.uitkeringen ?? {}) };
+        const entry = map[key] ?? { enabled: true } as UitkeringEntry;
+        map[key] = { ...entry, ...patch };
+        setMemberIncome(id, { uitkeringen: map });
+    };
+
+    const renderUitkeringInput = (key: UitkeringKey, isAanvullendBijstand: boolean = false) => {
+        const entry = rec.uitkeringen?.[key];
+        if (!entry?.enabled) return null;
+
+        return (
+            <View key={key} style={styles.fieldContainer}>
+                <Text style={styles.label}>{isAanvullendBijstand ? "Mijn aanvullende bijstand is (€/mnd)" : `${key} (€/mnd)`}</Text>
+                <TextInput
+                  style={styles.numericInput}
+                  value={typeof entry.amount === 'number' ? String(entry.amount) : ''}
+                  keyboardType="number-pad"
+                  onChangeText={t => setUitkeringField(key, { amount: onlyDigitsDotsComma(t).length ? Number(onlyDigitsDotsComma(t)) : undefined })}
+                  placeholder="0.00"
+                />
+                {key === 'ZW' && (
+                    <View style={styles.fieldContainer}>
+                        <Text style={styles.label}>Frequentie</Text>
+                        <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIndicator={false}>
+                            {FREQUENCIES.map(f => (
+                                <ChipButton
+                                    key={f}
+                                    label={f}
+                                    selected={entry.frequentie === f}
+                                    onPress={() => setUitkeringField(key, { frequentie: f })}
+                                />
+                            ))}
+                        </ScrollView>
+                    </View>
+                )}
             </View>
-          )}
-        </View>
-
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Vakantiegeld (per jaar)</Text>
-          <TextInput
-            style={styles.numericInput}
-            value={typeof rec.vakantiegeldPerJaar === 'number' ? String(rec.vakantiegeldPerJaar) : ''}
-            keyboardType="number-pad"
-            onChangeText={(t) => setVakantiegeldPerJaar(id, t)}
-            placeholder="0.00"
-            accessibilityLabel={`Vakantiegeld per jaar voor ${title}`}
-          />
-        </View>
-      </View>
-    );
-  };
-
-  const renderUitkeringen = (
-    id: string,
-    rec: IncomeMember,
-    m: Member,
-    title: string
-  ) => {
-    if (!rec.categories?.uitkering) return null;
-
-    const keys: UitkeringKey[] = (() => {
-      const base = [...UITKERING_KEYS_BASE];
-      if (typeof m.leeftijd === 'number' && m.leeftijd > 67) {
-        base.push(...RETIREMENT_KEYS);
-      }
-      return base;
-    })();
-
-    const entryFor = (k: UitkeringKey) =>
-      (rec.uitkeringen?.[k] ?? ({ enabled: false } as UitkeringEntry));
+        );
+    };
 
     return (
-      <View style={styles.dashboardCard}>
-        <Text style={styles.summaryLabelBold}>Uitkeringen</Text>
-
-        <View style={styles.fieldContainer}>
-          <ScrollView
-            horizontal
-            contentContainerStyle={styles.chipContainer}
-            showsHorizontalScrollIndicator={false}
-          >
-            {keys.map((k) => (
-              <ChipButton
-                key={k}
-                label={k}
-                selected={!!entryFor(k).enabled}
-                onPress={() => setUitkeringToggle(id, k)}
-                accessibilityLabel={`Uitkering ${k} voor ${title}`}
-              />
-            ))}
-          </ScrollView>
-        </View>
-
-        {keys.map((k) => {
-          const ent = entryFor(k);
-          if (!ent.enabled) return null;
-
-          return (
-            <View key={`uk-${k}`} style={styles.fieldContainer}>
-              {k === 'anders' && (
-                <TextInput
-                  style={styles.input}
-                  value={ent.omschrijving ?? ''}
-                  onChangeText={(t) => setUitkeringField(id, 'anders', { omschrijving: t })}
-                  placeholder="Soort uitkering (omschrijving)"
-                  accessibilityLabel={`Soort uitkering (anders) voor ${title}`}
-                />
-              )}
-
-              <TextInput
-                style={styles.numericInput}
-                value={typeof ent.amount === 'number' ? String(ent.amount) : ''}
-                keyboardType="number-pad"
-                onChangeText={(t) => {
-                  const clean = onlyDigitsDotsComma(t);
-                  setUitkeringField(id, k, { amount: clean.length ? Number(clean) : undefined });
-                }}
-                placeholder="Netto uitkering (€/periode)"
-                accessibilityLabel={`Netto uitkering voor ${k} (${title})`}
-              />
-
-              <ScrollView
-                horizontal
-                contentContainerStyle={styles.chipContainer}
-                showsHorizontalScrollIndicator={false}
-              >
-                {FREQUENCIES.map((f) => (
+        <View>
+            <Text style={styles.summaryLabelBold}>Uitkeringen</Text>
+            <View style={styles.fieldContainer}>
+              <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIndicator={false}>
+                {availableUitkeringen.map((k) => (
                   <ChipButton
-                    key={`ukf-${k}-${f}`}
-                    label={f}
-                    selected={ent.frequentie === f}
-                    onPress={() => setUitkeringField(id, k, { frequentie: f })}
-                    accessibilityLabel={`Frequentie ${f} voor ${k} (${title})`}
+                    key={k}
+                    label={k}
+                    selected={!!rec.uitkeringen?.[k]?.enabled}
+                    onPress={() => setUitkeringToggle(k)}
                   />
                 ))}
               </ScrollView>
             </View>
-          );
-        })}
-      </View>
+            {availableUitkeringen.filter(k => k !== 'Bijstand').map(k => renderUitkeringInput(k))}
+            {aanvullend ? null : renderUitkeringInput('Bijstand')}
+            {aanvullend && renderUitkeringInput('Bijstand', true)}
+        </View>
     );
   };
+  
+  const renderDuoSection = (id: string, rec: IncomeMember, title: string) => {
+      const setDuoField = (patch: Partial<IncomeMember['duo']>) => {
+          const currentDuo = rec.duo || {};
+          setMemberIncome(id, { duo: { ...currentDuo, ...patch } });
+      };
 
-  const renderAnders = (id: string, rec: IncomeMember, title: string) => {
-    if (!rec.categories?.anders) return null;
-    const list = Array.isArray(rec.anders) ? rec.anders : [];
+      return (
+        <View>
+            <Text style={styles.summaryLabelBold}>DUO</Text>
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>Basisbeurs (€/mnd)</Text>
+              <TextInput
+                style={styles.numericInput}
+                value={typeof rec.duo?.basisbeurs === 'number' ? String(rec.duo.basisbeurs) : ''}
+                keyboardType="number-pad"
+                onChangeText={t => setDuoField({ basisbeurs: onlyDigitsDotsComma(t).length ? Number(onlyDigitsDotsComma(t)) : undefined })}
+                placeholder="0.00"
+              />
+            </View>
+            <View style={styles.fieldContainer}>
+              <Text style={styles.label}>Lening (€/mnd)</Text>
+              <TextInput
+                style={styles.numericInput}
+                value={typeof rec.duo?.lening === 'number' ? String(rec.duo.lening) : ''}
+                keyboardType="number-pad"
+                onChangeText={t => setDuoField({ lening: onlyDigitsDotsComma(t).length ? Number(onlyDigitsDotsComma(t)) : undefined })}
+                placeholder="0.00"
+              />
+            </View>
+        </View>
+      );
+  };
+  
+  const renderAndersSection = (id: string, rec: IncomeMember, title: string) => {
+    const addAnders = () => {
+        const list = rec.anders ? [...rec.anders] : [];
+        list.push({ id: `a-${Date.now()}` });
+        setMemberIncome(id, { anders: list });
+    };
+
+    const removeAnders = (itemId: string) => {
+        const list = rec.anders ? rec.anders.filter(item => item.id !== itemId) : [];
+        setMemberIncome(id, { anders: list });
+    };
+
+    const setAndersField = (itemId: string, patch: Partial<AndersEntry>) => {
+        const list = rec.anders ? rec.anders.map(item => item.id === itemId ? { ...item, ...patch } : item) : [];
+        setMemberIncome(id, { anders: list });
+    };
 
     return (
-      <View style={styles.dashboardCard}>
-        <Text style={styles.summaryLabelBold}>Anders</Text>
-
-        {list.map((row) => (
-          <View key={row.id} style={styles.fieldContainer}>
-            <TextInput
-              style={styles.input}
-              value={row.label ?? ''}
-              onChangeText={(t) => setAndersField(id, row.id, { label: t })}
-              placeholder="Waarvoor?"
-              accessibilityLabel={`Ander inkomen (omschrijving) voor ${title}`}
-            />
-            <TextInput
-              style={styles.numericInput}
-              value={typeof row.amount === 'number' ? String(row.amount) : ''}
-              keyboardType="number-pad"
-              onChangeText={(t) => {
-                const clean = onlyDigitsDotsComma(t);
-                setAndersField(id, row.id, { amount: clean.length ? Number(clean) : undefined });
-              }}
-              placeholder="Bedrag (€/periode)"
-              accessibilityLabel={`Ander inkomen (bedrag) voor ${title}`}
-            />
-            <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIndicator={false}>
-              {FREQUENCIES.map((f) => (
-                <ChipButton
-                  key={`af-${row.id}-${f}`}
-                  label={f}
-                  selected={row.frequentie === f}
-                  onPress={() => setAndersField(id, row.id, { frequentie: f })}
-                  accessibilityLabel={`Frequentie ${f} (anders) voor ${title}`}
-                />
-              ))}
-            </ScrollView>
-
-            <TouchableOpacity onPress={() => removeAnders(id, row.id)} accessibilityRole="button" accessibilityLabel={`Verwijder ander inkomen voor ${title}`}>
-              <Text style={styles.secondaryButtonText}>Verwijder</Text>
+        <View>
+            <Text style={styles.summaryLabelBold}>Ik verdien:</Text>
+            {rec.anders?.map(item => (
+                <View key={item.id} style={styles.fieldContainer}>
+                    <TextInput
+                      style={styles.input}
+                      value={item.label || ''}
+                      onChangeText={t => setAndersField(item.id, { label: t })}
+                      placeholder="Met"
+                    />
+                    <TextInput
+                      style={styles.numericInput}
+                      value={typeof item.amount === 'number' ? String(item.amount) : ''}
+                      keyboardType="number-pad"
+                      onChangeText={t => setAndersField(item.id, { amount: onlyDigitsDotsComma(t).length ? Number(onlyDigitsDotsComma(t)) : undefined })}
+                      placeholder="Verdienste (€/mnd)"
+                    />
+                    <TouchableOpacity onPress={() => removeAnders(item.id)}>
+                        <Text style={styles.secondaryButtonText}>Verwijder</Text>
+                    </TouchableOpacity>
+                </View>
+            ))}
+            <TouchableOpacity style={styles.button} onPress={addAnders}>
+                <Text style={styles.buttonText}>+ Toevoegen</Text>
             </TouchableOpacity>
-          </View>
-        ))}
-
-        <View style={styles.fieldContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => addAnders(id)} accessibilityRole="button" accessibilityLabel={`Voeg ander inkomen toe voor ${title}`}>
-            <Text style={styles.buttonText}>+ Toevoegen</Text>
-          </TouchableOpacity>
         </View>
-      </View>
     );
   };
-
-  // renderHouseholdBenefits() stays UNCHANGED - always visible (NOT collapsible)
+  
   const renderHouseholdBenefits = () => (
     <View style={styles.dashboardCard}>
       <Text style={styles.summaryLabelBold}>Toeslagen (huishouden)</Text>
@@ -575,6 +556,7 @@ const IncomeRepeater: React.FC = () => {
     </View>
   );
 
+
   if (!adults.length) {
     return (
       <View style={styles.pageContainer}>
@@ -585,11 +567,6 @@ const IncomeRepeater: React.FC = () => {
 
   return (
     <View style={styles.pageContainer}>
-      {renderHouseholdBenefits()}
-      
-      {renderVermogen()}
-
-      {/* P4: SWIPE PATTERN FOR ADULTS (if > 1 adult) */}
       {adults.length > 1 ? (
         <ScrollView
           horizontal
@@ -599,60 +576,13 @@ const IncomeRepeater: React.FC = () => {
           snapToInterval={CARD_WIDTH + 20}
           decelerationRate="fast"
         >
-          {adults.map((m, idx) => {
-            const rec = inkomsten[m.id] ?? { 
-              id: m.id, 
-              categories: { geen: false, werk: false, uitkering: false, anders: false } 
-            };
-            const title = m.naam?.trim() ? `Inkomen voor ${m.naam}` : `Volwassene ${idx + 1}`;
-
-            return (
-              <View 
-                key={m.id}
-                style={[
-                  styles.dashboardCard,
-                  { 
-                    width: CARD_WIDTH,
-                    marginRight: 20,
-                  }
-                ]}
-              >
-                <Text style={styles.summaryLabelBold}>{title}</Text>
-
-                {renderCategoryChips(m.id, rec, title)}
-                {renderWerk(m.id, rec, title)}
-                {renderUitkeringen(m.id, rec, m, title)}
-                {renderAnders(m.id, rec, title)}
-
-                {/* P4: Navigation hint (not on last card) */}
-                {idx < adults.length - 1 && (
-                  <Text style={styles.navigationHint}>volgende inkomen →</Text>
-                )}
-              </View>
-            );
-          })}
+          {renderPerAdultIncome()}
         </ScrollView>
       ) : (
-        // Single adult - no swipe
-        adults.map((m, idx) => {
-          const rec = inkomsten[m.id] ?? { 
-            id: m.id, 
-            categories: { geen: false, werk: false, uitkering: false, anders: false } 
-          };
-          const title = m.naam?.trim() ? `Inkomen voor ${m.naam}` : `Volwassene ${idx + 1}`;
-
-          return (
-            <View key={m.id} style={styles.dashboardCard}>
-              <Text style={styles.summaryLabelBold}>{title}</Text>
-
-              {renderCategoryChips(m.id, rec, title)}
-              {renderWerk(m.id, rec, title)}
-              {renderUitkeringen(m.id, rec, m, title)}
-              {renderAnders(m.id, rec, title)}
-            </View>
-          );
-        })
+        renderPerAdultIncome()
       )}
+      {renderHouseholdBenefits()}
+      {renderVermogen()}
     </View>
   );
 };

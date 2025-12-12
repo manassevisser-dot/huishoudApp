@@ -1,0 +1,223 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C7 Gedetailleerde Preview met Commentaar</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background-color: #ccc; }
+        .theme-wrapper { display: flex; justify-content: space-between; flex-wrap: wrap; }
+        .theme-container { width: 100%; max-width: 600px; margin: 0 auto 20px auto; padding: 1%; box-sizing: border-box; }
+        @media (min-width: 1200px) { .theme-container { width: 48%; } }
+        .theme-title { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
+        .page-container { padding-top: 10px; }
+        .dashboard-card { border-radius: 12px; margin-bottom: 24px; padding: 20px; position: relative; border: 1px dashed transparent;}
+        .summary-label-bold { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+        .field-container { margin-bottom: 20px; padding: 10px; border: 1px dotted transparent; position: relative; }
+        .label { font-size: 17px; font-weight: 600; margin-bottom: 8px; display: block; }
+        .input, .numeric-input { border-radius: 10px; padding: 14px; font-size: 17px; border-width: 1px; border-style: solid; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+        .chip-container { display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px; padding-top: 4px;}
+        .chip { padding: 10px 16px; border-radius: 20px; border-width: 1px; border-style: solid; display: inline-block; cursor: pointer; position: relative; }
+        .chip-text { font-size: 15px; font-weight: 500; }
+        .button { padding: 16px; border-radius: 10px; text-align: center; margin-top: 10px; cursor: pointer; position: relative; }
+        .button-text { font-size: 17px; font-weight: 700; }
+        .secondary-button-text { font-size: 14px; font-weight: 600; text-align: center; margin-top: 10px; cursor: pointer; }
+        .collapsible-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .collapsible-content { margin-top: 12px; padding-left: 10px; border-left: 2px solid; }
+        .component-label { position: absolute; top: 2px; left: 2px; font-size: 10px; font-family: monospace; padding: 2px 4px; border-radius: 3px; z-index: 10;}
+        .comment-label { font-family: monospace; font-size: 12px; padding: 4px 8px; border-radius: 4px; margin-bottom: 10px; display: inline-block; border-width: 1px; border-style: solid;}
+
+        /* Light Theme */
+        .light { background-color: #F2F2F7; color: #1C1C1E; }
+        .light .theme-title { color: #1C1C1E; }
+        .light .dashboard-card { background-color: #FFFFFF; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-color: #c5c5c7;}
+        .light .summary-label-bold, .light .label { color: #1C1C1E; }
+        .light .input, .light .numeric-input { background-color: #FFFFFF; border-color: #D1D1D6; color: #1C1C1E; }
+        .light .chip { background-color: #E5E5EA; border-color: #D1D1D6; }
+        .light .chip-selected { background-color: #007AFF; border-color: #007AFF; }
+        .light .chip-text { color: #1C1C1E; }
+        .light .chip-text-selected { color: #FFFFFF; font-weight: 600; }
+        .light .button { background-color: #007AFF; }
+        .light .button-text { color: #FFFFFF; }
+        .light .secondary-button-text { color: #007AFF; }
+        .light .collapsible-content { border-color: #E5E5EA; }
+        .light .component-label { background-color: rgba(0, 122, 255, 0.1); color: #007AFF; border: 1px solid rgba(0, 122, 255, 0.2); }
+        .light .comment-label { background-color: #fffbe5; color: #FF9500; border-color: #FF9500; }
+
+        /* Dark Theme */
+        .dark { background-color: #000000; color: #FFFFFF; }
+        .dark .theme-title { color: #FFFFFF; }
+        .dark .dashboard-card { background-color: #1C1C1E; box-shadow: 0 2px 8px rgba(0,0,0,0.2); border-color: #444;}
+        .dark .summary-label-bold, .dark .label { color: #FFFFFF; }
+        .dark .input, .dark .numeric-input { background-color: #2C2C2E; border-color: #38383A; color: #FFFFFF; }
+        .dark .chip { background-color: #2C2C2E; border-color: #38383A; }
+        .dark .chip-selected { background-color: #0A84FF; border-color: #0A84FF; }
+        .dark .chip-text { color: #FFFFFF; }
+        .dark .chip-text-selected { color: #FFFFFF; font-weight: 600; }
+        .dark .button { background-color: #0A84FF; }
+        .dark .button-text { color: #FFFFFF; }
+        .dark .secondary-button-text { color: #0A84FF; }
+        .dark .collapsible-content { border-color: #38383A; }
+        .dark .component-label { background-color: rgba(10, 132, 255, 0.2); color: #0A84FF; border: 1px solid rgba(10, 132, 255, 0.3); }
+        .dark .comment-label { background-color: #3d3d3d; color: #FFD60A; border-color: #FFD60A; }
+    </style>
+</head>
+<body>
+
+    <div class="theme-wrapper">
+        <!-- Light Theme -->
+        <div class="theme-container light">
+            <h2 class="theme-title">Light Theme</h2>
+            <div class="page-container">
+                <div class="comment-label">// renderHouseholdBenefits() stays UNCHANGED</div>
+                <div class="dashboard-card"><div class="component-label">Card</div>
+                    <p class="summary-label-bold">Toeslagen (huishouden)</p>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">Huurtoeslag (€/mnd)</p>
+                        <input class="numeric-input" placeholder="0.00" value="350">
+                    </div>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">KindgebondenBudget (€/mnd)</p>
+                        <input class="numeric-input" placeholder="0.00" value="210">
+                    </div>
+                </div>
+
+                <div class="dashboard-card"><div class="component-label">Card</div>
+                    <p class="summary-label-bold">Vermogen (huishouden)</p>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">Heeft u vermogen?</p>
+                        <div class="chip-container">
+                            <div class="chip"><div class="component-label">Chip</div><p class="chip-text">Nee</p></div>
+                            <div class="chip chip-selected"><div class="component-label">Chip</div><p class="chip-text chip-text-selected">Ja</p></div>
+                        </div>
+                    </div>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">Totale waarde vermogen (€)</p>
+                        <input class="numeric-input" placeholder="0.00" value="15000">
+                    </div>
+                </div>
+                 <div class="comment-label">// P4: SWIPE PATTERN FOR ADULTS (if > 1 adult)</div>
+                <div class="dashboard-card"><div class="component-label">Card</div>
+                    <p class="summary-label-bold">Inkomen voor Volwassene 1</p>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">Ik heb</p>
+                        <div class="chip-container">
+                            <div class="chip"><p class="chip-text">geen</p></div>
+                            <div class="chip chip-selected"><p class="chip-text chip-text-selected">werk</p></div>
+                            <div class="chip chip-selected"><p class="chip-text chip-text-selected">uitkering</p></div>
+                            <div class="chip chip-selected"><p class="chip-text chip-text-selected">anders</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card"><div class="component-label">Card</div>
+                    <p class="summary-label-bold">Inkomen uit werk</p>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">Netto salaris</p>
+                        <input class="numeric-input" placeholder="0.00" value="2500">
+                    </div>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">Frequentie</p>
+                        <div class="chip-container">
+                            <div class="chip"><p class="chip-text">week</p></div>
+                            <div class="chip"><p class="chip-text">4wk</p></div>
+                            <div class="chip chip-selected"><p class="chip-text chip-text-selected">month</p></div>
+                        </div>
+                    </div>
+                    <div class="comment-label">// P4: COLLAPSIBLE PER-ADULT TOESLAGEN</div>
+                    <div class="field-container collapsible-header"><div class="component-label">Field</div>
+                        <p class="label">Toeslagen</p>
+                        <p class="label">▼</p>
+                    </div>
+                    <div class="collapsible-content">
+                        <input class="numeric-input" placeholder="Zorgtoeslag (€/mnd)" value="120">
+                        <input class="numeric-input" placeholder="Reiskostenvergoeding (€/mnd)" value="75">
+                    </div>
+                     <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label" style="margin-top: 20px;">Vakantiegeld (per jaar)</p>
+                        <input class="numeric-input" placeholder="0.00" value="1900">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dark Theme -->
+        <div class="theme-container dark">
+            <h2 class="theme-title">Dark Theme</h2>
+            <div class="page-container">
+                 <div class="comment-label">// renderHouseholdBenefits() stays UNCHANGED</div>
+                <div class="dashboard-card"><div class="component-label">Card</div>
+                    <p class="summary-label-bold">Toeslagen (huishouden)</p>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">Huurtoeslag (€/mnd)</p>
+                        <input class="numeric-input" placeholder="0.00" value="350">
+                    </div>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">KindgebondenBudget (€/mnd)</p>
+                        <input class="numeric-input" placeholder="0.00" value="210">
+                    </div>
+                </div>
+
+                <div class="dashboard-card"><div class="component-label">Card</div>
+                    <p class="summary-label-bold">Vermogen (huishouden)</p>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">Heeft u vermogen?</p>
+                        <div class="chip-container">
+                            <div class="chip"><p class="chip-text">Nee</p></div>
+                            <div class="chip chip-selected"><p class="chip-text chip-text-selected">Ja</p></div>
+                        </div>
+                    </div>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">Totale waarde vermogen (€)</p>
+                        <input class="numeric-input" placeholder="0.00" value="15000">
+                    </div>
+                </div>
+                <div class="comment-label">// P4: SWIPE PATTERN FOR ADULTS (if > 1 adult)</div>
+                <div class="dashboard-card"><div class="component-label">Card</div>
+                    <p class="summary-label-bold">Inkomen voor Volwassene 1</p>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">Ik heb</p>
+                        <div class="chip-container">
+                            <div class="chip"><p class="chip-text">geen</p></div>
+                            <div class="chip chip-selected"><p class="chip-text chip-text-selected">werk</p></div>
+                            <div class="chip chip-selected"><p class="chip-text chip-text-selected">uitkering</p></div>
+                            <div class="chip chip-selected"><p class="chip-text chip-text-selected">anders</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card"><div class="component-label">Card</div>
+                    <p class="summary-label-bold">Inkomen uit werk</p>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">Netto salaris</p>
+                        <input class="numeric-input" placeholder="0.00" value="2500">
+                    </div>
+                    <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label">Frequentie</p>
+                        <div class="chip-container">
+                            <div class="chip"><p class="chip-text">week</p></div>
+                            <div class="chip"><p class="chip-text">4wk</p></div>
+                            <div class="chip chip-selected"><p class="chip-text chip-text-selected">month</p></div>
+                        </div>
+                    </div>
+                     <div class="comment-label">// P4: COLLAPSIBLE PER-ADULT TOESLAGEN</div>
+                    <div class="field-container collapsible-header"><div class="component-label">Field</div>
+                        <p class="label">Toeslagen</p>
+                        <p class="label">▼</p>
+                    </div>
+                    <div class="collapsible-content">
+                        <input class="numeric-input" placeholder="Zorgtoeslag (€/mnd)" value="120">
+                        <input class="numeric-input" placeholder="Reiskostenvergoeding (€/mnd)" value="75">
+                    </div>
+                     <div class="field-container"><div class="component-label">Field</div>
+                        <p class="label" style="margin-top: 20px;">Vakantiegeld (per jaar)</p>
+                        <input class="numeric-input" placeholder="0.00" value="1900">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

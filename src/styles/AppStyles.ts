@@ -35,12 +35,12 @@ const AppColors = {
 };
 
 export const getAppStyles = (theme: 'light' | 'dark') => {
-  const Colors = AppColors[theme];
+  const c = AppColors[theme];
 
   return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: Colors.background,
+      backgroundColor: c.background,
     },
     pageContainer: {
       flex: 1,
@@ -53,7 +53,7 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
       fontSize: 28,
       fontWeight: '700',
       marginBottom: 24,
-      color: Colors.text,
+      color: c.text,
     },
     headerBar: {
       flexDirection: 'row',
@@ -62,20 +62,20 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
       paddingHorizontal: 16,
       paddingVertical: 12,
       borderBottomWidth: 1,
-      borderBottomColor: Colors.border,
-      backgroundColor: Colors.card,
+      borderBottomColor: c.border,
+      backgroundColor: c.card,
     },
     headerTitle: {
       fontSize: 17,
       fontWeight: '600',
-      color: Colors.text,
+      color: c.text,
     },
     headerButton: {
       padding: 8,
     },
     headerButtonText: {
       fontSize: 17,
-      color: Colors.primary,
+      color: c.primary,
     },
     fieldContainer: {
       marginBottom: 20,
@@ -83,58 +83,58 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
     label: {
       fontSize: 17,
       fontWeight: '600',
-      color: Colors.text,
+      color: c.text,
       marginBottom: 8,
     },
     labelError: {
-      color: Colors.error,
+      color: c.error,
     },
     input: {
-      backgroundColor: Colors.input,
+      backgroundColor: c.input,
       borderRadius: 10,
       padding: 14,
       fontSize: 17,
-      color: Colors.text,
+      color: c.text,
       borderWidth: 1,
-      borderColor: Colors.border,
+      borderColor: c.border,
     },
     numericWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: Colors.input,
+      backgroundColor: c.input,
       borderRadius: 10,
       borderWidth: 1,
-      borderColor: Colors.border,
+      borderColor: c.border,
       paddingHorizontal: 14,
     },
     currencyPrefix: {
       fontSize: 17,
-      color: Colors.subtleText,
+      color: c.subtleText,
       marginRight: 4,
     },
     numericInput: {
       flex: 1,
       paddingVertical: 14,
       fontSize: 17,
-      color: Colors.text,
+      color: c.text,
     },
     inputError: {
-      borderColor: Colors.error,
+      borderColor: c.error,
       borderWidth: 2,
     },
     errorText: {
-      color: Colors.error,
+      color: c.error,
       marginTop: 6,
       fontSize: 13,
     },
     warningTextOrange: {
-      color: Colors.warning,
+      color: c.warning,
       fontSize: 14,
       marginTop: 4,
       marginLeft: 4,
     },
     warningTextRed: {
-      color: Colors.error,
+      color: c.error,
       fontSize: 14,
       marginTop: 4,
       marginLeft: 4,
@@ -142,7 +142,7 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
     },
     navigationHint: {
       fontSize: 14,
-      color: Colors.subtleText,
+      color: c.subtleText,
       textAlign: 'right',
       marginTop: 12,
       marginRight: 8,
@@ -156,7 +156,7 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
     gridItem: {
       width: '30%',
       flexGrow: 1,
-      backgroundColor: Colors.card,
+      backgroundColor: c.card,
       paddingVertical: 16,
       paddingHorizontal: 8,
       margin: 5,
@@ -164,16 +164,16 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
       alignItems: 'center',
       justifyContent: 'center',
       borderWidth: 1,
-      borderColor: Colors.border,
+      borderColor: c.border,
     },
     gridItemSelected: {
-      backgroundColor: Colors.primary,
-      borderColor: Colors.primary,
+      backgroundColor: c.primary,
+      borderColor: c.primary,
     },
     gridItemText: {
       fontSize: 14,
       fontWeight: '600',
-      color: Colors.text,
+      color: c.text,
       textAlign: 'center',
     },
     gridItemTextSelected: {
@@ -187,13 +187,13 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
       flexDirection: 'row',
       justifyContent: 'space-between',
       padding: 20,
-      backgroundColor: Colors.background,
+      backgroundColor: c.background,
       borderTopWidth: 1,
-      borderTopColor: Colors.border,
+      borderTopColor: c.border,
     },
     button: {
       flex: 1,
-      backgroundColor: Colors.primary,
+      backgroundColor: c.primary,
       padding: 16,
       borderRadius: 10,
       alignItems: 'center',
@@ -205,12 +205,12 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
       fontWeight: '700',
     },
     secondaryButton: {
-      backgroundColor: Colors.secondary,
+      backgroundColor: c.secondary,
       marginLeft: 0,
       marginRight: 10,
     },
     secondaryButtonText: {
-      color: Colors.secondaryText,
+      color: c.secondaryText,
       fontSize: 17,
       fontWeight: '600',
     },
@@ -226,10 +226,10 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
       alignItems: 'center',
     },
     toggleActive: {
-      backgroundColor: Colors.success,
+      backgroundColor: c.success,
     },
     toggleInactive: {
-      backgroundColor: Colors.secondary,
+      backgroundColor: c.secondary,
     },
     toggleText: {
       fontSize: 17,
@@ -241,25 +241,25 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
       paddingVertical: 4,
     },
     chip: {
-      backgroundColor: Colors.secondary,
+      backgroundColor: c.secondary,
       paddingVertical: 10,
       paddingHorizontal: 16,
       borderRadius: 20,
       marginRight: 10,
       borderWidth: 1,
-      borderColor: Colors.border,
+      borderColor: c.border,
     },
     chipSelected: {
-      backgroundColor: Colors.primary,
-      borderColor: Colors.primary,
+      backgroundColor: c.primary,
+      borderColor: c.primary,
     },
     chipError: {
-      borderColor: Colors.error,
+      borderColor: c.error,
       borderWidth: 2,
     },
     chipText: {
       fontSize: 15,
-      color: Colors.text,
+      color: c.text,
       fontWeight: '500',
     },
     chipTextSelected: {
@@ -267,33 +267,37 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
       fontWeight: '600',
     },
     dashboardCard: {
-      backgroundColor: Colors.card,
+      backgroundColor: c.card,
       padding: 20,
       borderRadius: 12,
-      marginBottom: 24,
+      marginBottom: 10,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: theme === 'light' ? 0.1 : 0.2,
       shadowRadius: 8,
+      borderLeftWidth: 5,
+      borderLeftColor: c.primary,
+      borderBottomWidth: 5,
+      borderBottomColor: c.primary,
     },
     dashboardLabel: {
       fontSize: 16,
-      color: Colors.subtleText,
+      color: c.subtleText,
       marginBottom: 8,
     },
     dashboardKPI: {
       fontSize: 48,
       fontWeight: '700',
       marginBottom: 16,
-      color: Colors.text,
+      color: c.text,
     },
     dashboardMessage: {
       fontSize: 16,
-      color: Colors.text,
+      color: c.text,
       lineHeight: 24,
     },
     summarySection: {
-      backgroundColor: Colors.card,
+      backgroundColor: c.card,
       padding: 20,
       borderRadius: 12,
       marginBottom: 24,
@@ -303,7 +307,7 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
       justifyContent: 'space-between',
       paddingVertical: 12,
       borderBottomWidth: 1,
-      borderBottomColor: Colors.border,
+      borderBottomColor: c.border,
     },
     summaryRowTotal: {
       flexDirection: 'row',
@@ -311,30 +315,30 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
       paddingVertical: 12,
       marginTop: 8,
       borderTopWidth: 2,
-      borderTopColor: Colors.border,
+      borderTopColor: c.border,
     },
     summaryLabel: {
       fontSize: 16,
-      color: Colors.subtleText,
+      color: c.subtleText,
     },
     summaryLabelBold: {
       fontSize: 16,
       fontWeight: '700',
-      color: Colors.text,
+      color: c.text,
     },
     summaryValue: {
       fontSize: 16,
       fontWeight: '600',
-      color: Colors.text,
+      color: c.text,
     },
     summaryValueBold: {
       fontSize: 18,
       fontWeight: '700',
-      color: Colors.text,
+      color: c.text,
     },
     summaryDetail: {
       fontSize: 14,
-      color: Colors.subtleText,
+      color: c.subtleText,
       marginBottom: 20,
     },
     checkbox: {
@@ -342,16 +346,16 @@ export const getAppStyles = (theme: 'light' | 'dark') => {
       height: 24,
       borderRadius: 4,
       borderWidth: 2,
-      borderColor: Colors.border,
+      borderColor: c.border,
       backgroundColor: 'transparent',
     },
     checkboxSelected: {
-      backgroundColor: Colors.primary,
-      borderColor: Colors.primary,
+      backgroundColor: c.primary,
+      borderColor: c.primary,
     },
     loadingText: {
         marginTop: 10,
-        color: Colors.text
+        color: c.text
     }
   });
 };
