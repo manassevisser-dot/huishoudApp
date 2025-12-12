@@ -12,8 +12,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import getAppStyles from '../../styles/useAppStyles';
-const styles = getAppStyles(theme);
+import { useAppStyles } from '../../styles/useAppStyles';
+const styles = useAppStyles();
 import ChipButton from '../../components/ChipButton';
 import { TransactionService } from '../../services/transactionService';
 import { DailyTransaction, PaymentMethod, TransactionCategory } from '../../types/transaction';

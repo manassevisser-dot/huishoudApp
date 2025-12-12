@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
-import styles from '../styles/AppStyles';
+import { useAppStyles } from '../styles/AppStyles';
 
 export type ToggleSwitchProps = {
   value: boolean;
@@ -17,6 +17,8 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   labelFalse = 'Nee',
   accessibilityLabel,
 }) => {
+  const styles = useAppStyles();
+
   return (
     <View style={styles.toggleWrapper}>
       <TouchableOpacity
@@ -27,7 +29,8 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
         onPress={onToggle}
         accessibilityRole="switch"
         accessibilityLabel={accessibilityLabel}
-        accessibilityState={{ checked: value }}>
+        accessibilityState={{ checked: value }}
+      >
         <Text style={styles.toggleText}>{value ? labelTrue : labelFalse}</Text>
       </TouchableOpacity>
     </View>

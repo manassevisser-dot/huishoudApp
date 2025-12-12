@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, TextInput, ScrollView } from 'react-native';
-import styles from '../styles/AppStyles';
+import { useAppStyles } from '../styles/AppStyles';
 import ChipButton from './ChipButton';
 import ToggleSwitch from './ToggleSwitch';
 import InputCounter from './InputCounter';
 import HouseholdMemberRepeater from '../organisms/HouseholdMemberRepeater';
-import IncomeRepeater from '../organisms/IncomeRepeater'; 
+import IncomeRepeater from '../organisms/IncomeRepeater';
 import ExpenseRepeater from '../organisms/ExpenseRepeater';
 import { FieldConfig } from '../types/form';
 import { validateField } from '../utils/validation';
@@ -17,7 +17,7 @@ export type FormFieldProps = {
   onChange: (fieldId: string, value: any) => void;
   error: string | null;
   errorColor?: string | null;
-  state?: any; 
+  state?: any;
 };
 
 const FormField: React.FC<FormFieldProps> = ({
@@ -29,10 +29,10 @@ const FormField: React.FC<FormFieldProps> = ({
   errorColor,
   state,
 }) => {
+  const styles = useAppStyles();
   const displayLabel = field.labelDynamic ? value : field.label;
 
   const handleChange = (newValue: any) => {
-    // Validate on change if needed, but error comes from prop
     onChange(field.id, newValue);
   };
 
@@ -42,7 +42,7 @@ const FormField: React.FC<FormFieldProps> = ({
       return (
         <TextInput
           style={[styles.input, error && styles.inputError]}
-          onChangeText={(text) => handleChange(text)}
+          onChangeText={handleChange}
           value={value}
           placeholder={field.placeholder ?? 'Voer tekst in'}
           accessibilityLabel={displayLabel}
@@ -52,8 +52,7 @@ const FormField: React.FC<FormFieldProps> = ({
 
     // 2. Numeric
     if (field.type === 'numeric') {
-      const numericValue =
-        value !== undefined && value !== null ? String(value) : '';
+      const numericValue = value != null ? String(value) : '';
       return (
         <View style={styles.numericWrapper}>
           <Text style={styles.currencyPrefix}>€</Text>
@@ -80,7 +79,8 @@ const FormField: React.FC<FormFieldProps> = ({
         <ScrollView
           horizontal
           contentContainerStyle={styles.chipContainer}
-          showsHorizontalScrollIndicator={false}>
+          showsHorizontalScrollIndicator={false}
+        >
           {field.options.map((opt) => (
             <ChipButton
               key={opt.value}
@@ -110,8 +110,7 @@ const FormField: React.FC<FormFieldProps> = ({
     // 5. Counter
     if (field.type === 'counter') {
       const min = field.validation?.min ?? 0;
-      const numericValue =
-        typeof value === 'number' ? value : Number(value ?? 0);
+      const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
       const staticMax = field.validation?.max;
       const dynamicAdultsMax =
         field.id === 'aantalVolwassen'
@@ -124,26 +123,20 @@ const FormField: React.FC<FormFieldProps> = ({
           value={numericValue}
           min={min}
           max={max}
-          onValueChange={(next) => handleChange(next)}
+          onValueChange={handleChange}
           accessibilityLabel={displayLabel}
         />
       );
     }
 
     // 6. Repeater-array (C4 members)
-    if (field.type === 'repeater-array') {
-      return <HouseholdMemberRepeater />;
-    }
+    if (field.type === 'repeater-array') return <HouseholdMemberRepeater />;
 
     // 7. Income repeater (C7)
-    if (field.type === 'income-repeater') {
-      return <IncomeRepeater />;
-    }
+    if (field.type === 'income-repeater') return <IncomeRepeater />;
 
     // 8. Expense repeater (C10)
-    if (field.type === 'expense-repeater') {
-      return <ExpenseRepeater />;
-    }
+    if (field.type === 'expense-repeater') return <ExpenseRepeater />;
 
     return (
       <Text style={styles.errorText}>Onbekend veldtype: {field.type}</Text>
@@ -152,15 +145,26 @@ const FormField: React.FC<FormFieldProps> = ({
 
   return (
     <View style={styles.fieldContainer}>
-      <Text style={[
-        styles.label, 
-        error && styles.labelError, 
-        errorColor ? { color: errorColor } : {}
-      ]}>
+      <Text
+        style={[
+          styles.label,
+          error && styles.labelError,
+          errorColor ? { color: errorColor } : {},
+        ]}
+      >
         {displayLabel}
       </Text>
       {renderInput()}
-      {error && <Text style={[styles.errorText, errorColor ? { color: errorColor } : {}]}>{error}</Text>}
+      {error && (
+        <Text
+          style={[
+            styles.errorText,
+            errorColor ? { color: errorColor } : {},
+          ]}
+        >
+          {error}
+        </Text>
+      )}
     </View>
   );
 };

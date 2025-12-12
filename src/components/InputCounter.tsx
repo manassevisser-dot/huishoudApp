@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import styles from '../styles/AppStyles';
+import { useAppStyles } from '../styles/AppStyles';
 
 export type InputCounterProps = {
   value: number;
   onValueChange: (next: number) => void;
   min?: number;
-  max?: number; // <-- nieuw: optionele bovengrens
+  max?: number;
   accessibilityLabel?: string;
 };
 
@@ -17,6 +17,7 @@ const InputCounter: React.FC<InputCounterProps> = ({
   max,
   accessibilityLabel,
 }) => {
+  const styles = useAppStyles();
   const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
   const canDecrement = numericValue > min;
   const canIncrement = max === undefined || numericValue < max;
@@ -43,13 +44,15 @@ const InputCounter: React.FC<InputCounterProps> = ({
         accessibilityRole="button"
         accessibilityLabel={
           accessibilityLabel ? `Verlaag ${accessibilityLabel}` : 'Verlaag'
-        }>
+        }
+      >
         <Text style={styles.chipText}>-</Text>
       </TouchableOpacity>
 
       <Text
         style={[styles.label, { marginHorizontal: 12 }]}
-        accessibilityLabel={accessibilityLabel}>
+        accessibilityLabel={accessibilityLabel}
+      >
         {numericValue}
       </Text>
 
@@ -60,7 +63,8 @@ const InputCounter: React.FC<InputCounterProps> = ({
         accessibilityRole="button"
         accessibilityLabel={
           accessibilityLabel ? `Verhoog ${accessibilityLabel}` : 'Verhoog'
-        }>
+        }
+      >
         <Text style={styles.chipText}>+</Text>
       </TouchableOpacity>
     </View>
