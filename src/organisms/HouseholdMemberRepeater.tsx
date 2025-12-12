@@ -244,11 +244,7 @@ const HouseholdMemberRepeater: React.FC = () => {
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Leeftijd</Text>
           <TextInput
-            style={
-              ageError
-                ? [styles.numericInput, styles.inputError]
-                : styles.numericInput
-            }
+            style={[styles.numericInput, ageError ? styles.inputError : null]}
             value={
               m.leeftijd !== undefined && m.leeftijd !== null
                 ? String(m.leeftijd)
@@ -319,11 +315,7 @@ const HouseholdMemberRepeater: React.FC = () => {
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Leeftijd</Text>
           <TextInput
-            style={
-              ageError
-                ? [styles.numericInput, styles.inputError]
-                : styles.numericInput
-            }
+            style={[styles.numericInput, ageError ? styles.inputError : null]}
             value={
               m.leeftijd !== undefined && m.leeftijd !== null
                 ? String(m.leeftijd)
@@ -484,7 +476,7 @@ const HouseholdMemberRepeater: React.FC = () => {
         </ScrollView>
       ) : (
         children.map((m) => {
-          const originalIndex = currentMembers.findIndex((x).id === m.id);
+          const originalIndex = currentMembers.findIndex((x) => x.id === m.id);
           return renderChildCard(m, originalIndex);
         })
       )}

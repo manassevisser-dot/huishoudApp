@@ -44,7 +44,7 @@ const FormField: React.FC<FormFieldProps> = ({
     if (field.type === 'text') {
       return (
         <TextInput
-          style={[styles.input, error && styles.inputError]}
+          style={[styles.input, error ? styles.inputError : null]}
           onChangeText={(text) => handleChange(text)}
           value={value}
           placeholder={field.placeholder ?? 'Voer tekst in'}
@@ -61,7 +61,7 @@ const FormField: React.FC<FormFieldProps> = ({
         <View style={styles.numericWrapper}>
           <Text style={styles.currencyPrefix}>€</Text>
           <TextInput
-            style={[styles.numericInput, error && styles.inputError]}
+            style={[styles.numericInput, error ? styles.inputError : null]}
             onChangeText={(text) => {
               const cleanText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
               const numberValue =
@@ -157,13 +157,13 @@ const FormField: React.FC<FormFieldProps> = ({
     <View style={styles.fieldContainer}>
       <Text style={[
         styles.label, 
-        error && styles.labelError, 
-        errorColor ? { color: errorColor } : {}
+        error ? styles.labelError : null,
+        errorColor ? { color: errorColor } : null
       ]}>
         {displayLabel}
       </Text>
       {renderInput()}
-      {error && <Text style={[styles.errorText, errorColor ? { color: errorColor } : {}]}>{error}</Text>}
+      {error && <Text style={[styles.errorText, errorColor ? { color: errorColor } : null]}>{error}</Text>}
     </View>
   );
 };

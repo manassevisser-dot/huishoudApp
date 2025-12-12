@@ -1,41 +1,9 @@
 // src/styles/AppStyles.ts
 import { StyleSheet } from 'react-native';
-
-const AppColors = {
-  light: {
-    background: '#F2F2F7',
-    text: '#1C1C1E',
-    primary: '#007AFF',
-    secondary: '#E5E5EA',
-    secondaryText: '#1C1C1E',
-    card: '#FFFFFF',
-    border: '#D1D1D6',
-    error: '#FF3B30',
-    success: '#34C759',
-    warning: '#FF9500',
-    subtleText: '#6E6E73',
-    input: '#FFFFFF',
-    placeholder: '#8E8E93',
-  },
-  dark: {
-    background: '#000000',
-    text: '#FFFFFF',
-    primary: '#0A84FF',
-    secondary: '#1C1C1E',
-    secondaryText: '#FFFFFF',
-    card: '#1C1C1E',
-    border: '#38383A',
-    error: '#FF453A',
-    success: '#30D158',
-    warning: '#FFD60A',
-    subtleText: '#8E8E93',
-    input: '#2C2C2E',
-    placeholder: '#8E8E93',
-  },
-};
+import Colors from './Colors';
 
 export const getAppStyles = (theme: 'light' | 'dark') => {
-  const c = AppColors[theme];
+  const c = Colors[theme];
 
   return StyleSheet.create({
     container: {
