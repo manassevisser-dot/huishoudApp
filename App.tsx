@@ -15,7 +15,7 @@ import {
 } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import styles from './src/styles/AppStyles';
+import { useAppStyles } from './src/styles/AppStyles'; // GEMIGREERD
 import {
   FormProvider,
   useFormContext,
@@ -48,6 +48,7 @@ const WIZARD_PAGES: PageConfig[] = [
 const AppContent: React.FC = () => {
   const { state, dispatch } = useFormContext();
   const { theme } = useTheme();
+  const styles = useAppStyles(); // GEMIGREERD
   const insets = useSafeAreaInsets();
   
   // === ALL HOOKS AT TOP LEVEL (NO CONDITIONALS) ===
@@ -242,7 +243,7 @@ const AppContent: React.FC = () => {
   
   if (isLoading) {
     return (
-      <View style={[theme === 'dark' ? styles.containerDark : styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color="#007AFF" />
         <Text style={{ marginTop: 10 }}>Laden...</Text>
       </View>
@@ -296,7 +297,7 @@ const AppContent: React.FC = () => {
   // PRIORITY 4: Dashboard
   if (atDashboard) {
     return (
-      <View style={theme === 'dark' ? styles.containerDark : styles.container}>
+      <View style={styles.container}>
         <DashboardScreen
           onAddTransaction={() => setShowDailyInput(true)}
           onLogout={handleLogout}
@@ -310,7 +311,7 @@ const AppContent: React.FC = () => {
   // PRIORITY 5: Wizard (fallback)
   const currentPage = WIZARD_PAGES[currentPageIndex];
   return (
-    <View style={theme === 'dark' ? styles.containerDark : styles.container}>
+    <View style={styles.container}>
       <WizardPage
         page={currentPage}
         onNext={navigateNext}

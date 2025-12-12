@@ -16,7 +16,9 @@ const ConditionalField: React.FC<ConditionalFieldProps> = ({
 }) => {
   const { state } = useFormContext();
   const visible = evaluateCondition(conditional, state, pageId);
+
   if (!visible) return null;
+
   return <>{children}</>;
 };
 

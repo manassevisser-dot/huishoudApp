@@ -1,7 +1,7 @@
 // src/organisms/HouseholdMemberRepeater.tsx
 import * as React from 'react';
 import { View, Text, TextInput, ScrollView } from 'react-native';
-import styles from '../styles/AppStyles';
+import { useAppStyles } from '../styles/useAppStyles';
 import ChipButton from '../components/ChipButton';
 import { useFormContext } from '../context/FormContext';
 import { Member, BurgerlijkeStaat, WoningType } from '../types/household';
@@ -26,6 +26,7 @@ const BURGERLIJKE_OPTIONS: Exclude<BurgerlijkeStaat, 'Alleenstaand'>[] = [
 const WONING_OPTIONS: WoningType[] = ['Koop', 'Huur', 'Kamer', 'Anders'];
 
 const HouseholdMemberRepeater: React.FC = () => {
+  const styles = useAppStyles();
   const { state, dispatch } = useFormContext();
 
   // Keep C1→C4 sync logic intact (reads C1, writes C4 state)
@@ -356,8 +357,6 @@ const HouseholdMemberRepeater: React.FC = () => {
             ))}
           </ScrollView>
         </View>
-
-        {/* P4: REMOVED geboortejaar field entirely */}
       </View>
     );
   };
@@ -411,7 +410,6 @@ const HouseholdMemberRepeater: React.FC = () => {
         </ScrollView>
       </View>
 
-      {/* Postcode only shown when aantalVolwassen <= 1 */}
       {aantalVolwassen <= 1 && (
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Postcode (4 cijfers)</Text>
@@ -426,9 +424,6 @@ const HouseholdMemberRepeater: React.FC = () => {
           />
         </View>
       )}
-
-      {/* P4: REMOVED Huisdieren section - C1 is source of truth */}
-      {/* P4: REMOVED Auto section - C1 is source of truth */}
     </View>
   );
 

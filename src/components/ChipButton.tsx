@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text } from 'react-native';
-import styles from '../styles/AppStyles';
+import { useAppStyles } from '../styles/useAppStyles';
 
 export type ChipButtonProps = {
   label: string;
@@ -17,6 +17,8 @@ const ChipButton: React.FC<ChipButtonProps> = ({
   onPress,
   accessibilityLabel,
 }) => {
+  const styles = useAppStyles();
+
   return (
     <TouchableOpacity
       style={[
@@ -27,7 +29,8 @@ const ChipButton: React.FC<ChipButtonProps> = ({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ selected }}>
+      accessibilityState={{ selected }}
+    >
       <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
         {label}
       </Text>

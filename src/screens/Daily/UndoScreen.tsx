@@ -2,21 +2,17 @@
 import * as React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTheme } from '../../context/ThemeContext';
-import { getAppStyles } from '../../styles/useAppStyles';
-import { Colors } from '../../styles/Colors'; // Zorg dat deze import aanwezig is;
 import { TransactionService } from '../../services/transactionService';
 import { DailyTransaction } from '../../types/transaction';
 import { formatCurrency } from '../../utils/numbers';
-
+import { useAppStyles } from '../../styles/useAppStyles';
 type Props = {
   onClose: () => void;
 };
 
 const UndoScreen: React.FC<Props> = ({ onClose }) => {
   const insets = useSafeAreaInsets();
-  const { theme } = useTheme();
-  const styles = getAppStyles(theme);
+  const styles = useAppStyles();
   const [transactions, setTransactions] = React.useState<DailyTransaction[]>([]);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -98,7 +94,7 @@ const UndoScreen: React.FC<Props> = ({ onClose }) => {
                     style={[
                       styles.dashboardCard,
                       { marginBottom: 12 },
-                      isSelected && { borderColor: Colors[theme].primary, borderWidth: 2 },
+                      isSelected && { borderColor: styles.primary.color, borderWidth: 2 },
                     ]}
                     onPress={() => toggleSelection(t.id || '')}
                   >
@@ -110,7 +106,7 @@ const UndoScreen: React.FC<Props> = ({ onClose }) => {
                         </Text>
                       </View>
                       <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={[styles.summaryValue, { color: Colors[theme].error }]}>
+                        <Text style={[styles.summaryValue, { color: styles.error.color }]}>
                           {formatCurrency(t.amount)}
                         </Text>
                         {/* UPDATED: Use theme-aware checkbox styles */}
@@ -130,7 +126,7 @@ const UndoScreen: React.FC<Props> = ({ onClose }) => {
               <TouchableOpacity
                 style={[
                   styles.button,
-                  { backgroundColor: Colors[theme].error, marginTop: 16, marginLeft: 0 },
+                  { backgroundColor: styles.error.color, marginTop: 16, marginLeft: 0 },
                   selectedIds.length === 0 && { opacity: 0.5 },
                 ]}
                 onPress={handleDelete}

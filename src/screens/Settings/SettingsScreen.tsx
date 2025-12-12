@@ -1,10 +1,8 @@
-//=====
 // src/screens/Settings/SettingsScreen.tsx
 import * as React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import getAppStyles from '../../styles/useAppStyles';
-const styles = getAppStyles(theme);
+import { useAppStyles } from '../../styles/useAppStyles';
 import { useTheme } from '../../context/ThemeContext';
 
 type Props = {
@@ -13,15 +11,17 @@ type Props = {
 
 const SettingsScreen: React.FC<Props> = ({ onClose }) => {
   const insets = useSafeAreaInsets();
+  const styles = useAppStyles();
   const { theme, setTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = React.useState(false);
-  
+
   return (
-    <View style={theme === 'dark' ? styles.containerDark : styles.container}>
+    <View style={styles.container}>
       <View style={styles.pageContainer}>
         <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}>
           <Text style={styles.pageTitle}>Settings</Text>
-          
+
+          {/* Dark Mode Toggle */}
           <View style={[styles.dashboardCard, { marginBottom: 16 }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={styles.label}>Dark mode</Text>
@@ -34,7 +34,8 @@ const SettingsScreen: React.FC<Props> = ({ onClose }) => {
               Status: {theme === 'dark' ? 'Aan' : 'Uit'}
             </Text>
           </View>
-          
+
+          {/* Notifications Toggle */}
           <View style={[styles.dashboardCard, { marginBottom: 16 }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={styles.label}>Meldingen</Text>
@@ -47,9 +48,11 @@ const SettingsScreen: React.FC<Props> = ({ onClose }) => {
               Status: {notificationsEnabled ? 'Aan' : 'Uit'} (Placeholder functie)
             </Text>
           </View>
+
         </ScrollView>
       </View>
-      
+
+      {/* Footer */}
       <View style={[styles.buttonContainer, { bottom: insets.bottom, paddingBottom: Math.max(20, insets.bottom + 8) }]}>
         <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onClose}>
           <Text style={styles.secondaryButtonText}>Terug naar Options</Text>
