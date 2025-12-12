@@ -1,6 +1,6 @@
+
 //====
 // ./src/screens/DailyInput/DailyInputScreen.tsx
-
 import * as React from 'react';
 import {
   View,
@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStyles } from '../../styles/useAppStyles';
-const { styles, colors } = useAppStyles();
 import ChipButton from '../../components/ChipButton';
 import { TransactionService } from '../../services/transactionService';
 import { DailyTransaction, PaymentMethod, TransactionCategory } from '../../types/transaction';
@@ -37,19 +36,23 @@ const PAYMENT_METHODS: PaymentMethod[] = ['pin', 'contant', 'creditcard'];
 
 const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
   const insets = useSafeAreaInsets();
-  
+  const { styles, colors } = useAppStyles(); // ✅ verplaatst naar binnen
+
   // Form State
   const [date, setDate] = React.useState(getCurrentDateISO());
   const [amount, setAmount] = React.useState('');
-  const [category, setCategory] = React.useState<TransactionCategory | null>(null);
+  const [category, setCategory] =
+    React.useState<TransactionCategory | null>(null);
   const [subcategory, setSubcategory] = React.useState('');
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>('pin');
-  
   const [isSaving, setIsSaving] = React.useState(false);
-  
+
   // Derived State
-  const isDirty = amount !== '' || category !== null || subcategory !== '';
-  
+  const isDirty =
+    amount !== '' &&
+    category !== null &&
+    subcategory !== '';
+
   const handleBack = () => {
     if (isDirty) {
       Alert.alert(
@@ -67,7 +70,8 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
 
   const handleSavePress = () => {
     // Basic Validation
-    if (!amount || parseFloat(amount.replace(',', '.')) <= 0) {
+    if (!amount ||
+        parseFloat(amount.replace(',', '.')) <= 0) {
       Alert.alert('Fout', 'Vul een geldig bedrag in.');
       return;
     }
@@ -75,7 +79,6 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
       Alert.alert('Fout', 'Kies een categorie.');
       return;
     }
-
     Alert.alert(
       'Opslaan',
       'Data wordt opgeslagen.',
@@ -88,10 +91,8 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
 
   const executeSave = async () => {
     setIsSaving(true);
-    
     const numAmount = parseFloat(amount.replace(',', '.'));
     const d = new Date(date);
-    
     const transaction: DailyTransaction = {
       date: date,
       amount: numAmount,
@@ -111,8 +112,7 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
       setSubcategory('');
       setPaymentMethod('pin');
       // Keep date as is, user might be logging multiple for same day
-      
-      // Optional: Toast or simple visual cue could go here. 
+      // Optional: Toast or simple visual cue could go here.
       // For now, we just rely on the form clearing as feedback.
     } else {
       Alert.alert('Fout', 'Er is iets misgegaan bij het opslaan. Probeer het opnieuw.');
@@ -126,11 +126,10 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
           <Text style={styles.headerButtonText}>← Terug</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nieuwe Uitgave</Text>
-        <View style={{ width: 60 }} /> 
+        <View style={{ width: 60 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
         {/* Date Field */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Datum (YYYY-MM-DD)</Text>
@@ -211,7 +210,6 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
             ))}
           </ScrollView>
         </View>
-
       </ScrollView>
 
       {/* Footer Action */}
@@ -229,7 +227,6 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
         </TouchableOpacity>
       </View>
     </View>
-  );
+   );
 };
 
-export default DailyInputScreen;

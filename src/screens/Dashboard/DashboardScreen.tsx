@@ -1,11 +1,10 @@
+
 //====
 // src/screens/Dashboard/DashboardScreen.tsx
-
 import * as React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStyles } from '../../styles/useAppStyles';
-const { styles, colors } = useAppStyles();
 import { useFormContext } from '../../context/FormContext';
 import { calculateFinancialSummary } from '../../utils/finance';
 import { formatCurrency } from '../../utils/numbers';
@@ -18,13 +17,14 @@ type Props = {
   onOpenUndo: () => void;
 };
 
-const DashboardScreen: React.FC<Props> = ({ 
-  onAddTransaction, 
-  onLogout, 
-  onOpenOptions, 
-  onOpenUndo 
+const DashboardScreen: React.FC<Props> = ({
+  onAddTransaction,
+  onLogout,
+  onOpenOptions,
+  onOpenUndo
 }) => {
   const insets = useSafeAreaInsets();
+  const { styles, colors } = useAppStyles(); // ✅ verplaatst naar binnen
   const { state } = useFormContext();
   const [variableExpenses, setVariableExpenses] = React.useState(0);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -33,7 +33,7 @@ const DashboardScreen: React.FC<Props> = ({
     () => calculateFinancialSummary(state.C7, state.C10),
     [state.C7, state.C10]
   );
-  
+
   const fetchTransactions = React.useCallback(async () => {
     const data = await TransactionService.fetchSummary();
     setVariableExpenses(data.totalVariableMonth);
@@ -48,7 +48,7 @@ const DashboardScreen: React.FC<Props> = ({
     setRefreshing(true);
     fetchTransactions();
   }, [fetchTransactions]);
-  
+
   const totalExpenses = summary.lastenTotaalVast + variableExpenses;
   const remainingBudget = summary.inkomenTotaalMaand - totalExpenses;
   const isPositive = remainingBudget >= 0;
@@ -89,7 +89,8 @@ const DashboardScreen: React.FC<Props> = ({
             style={[
               styles.dashboardKPI,
               { color: isPositive ? '#34C759' : '#FF3B30' },
-            ]}>
+            ]}
+          >
             {formatCurrency(remainingBudget)}
           </Text>
           <Text style={styles.dashboardMessage}>
@@ -107,7 +108,7 @@ const DashboardScreen: React.FC<Props> = ({
               {formatCurrency(summary.inkomenTotaalMaand)}
             </Text>
           </View>
-          
+
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Vaste Lasten</Text>
             <Text style={[styles.summaryValue, { color: '#FF3B30' }]}>
@@ -131,23 +132,26 @@ const DashboardScreen: React.FC<Props> = ({
         </View>
 
         <Text style={styles.summaryDetail}>
-          Gebruik de "+ Nieuwe Uitgave" knop om uw dagelijkse boodschappen en andere variabele kosten toe te voegen.
+          Gebruik de "+ Nieuwe Uitgave" knop om uw dagelijkse boodschappen en andere
+          variabele kosten toe te voegen.
         </Text>
       </ScrollView>
-      
+
       {/* NEW P1: Footer with Uitloggen + Nieuwe Uitgave */}
-      <View style={[styles.buttonContainer, { bottom: insets.bottom, paddingBottom: Math.max(20, insets.bottom + 8) }]}>
+      <View
+        style={[
+          styles.buttonContainer,
+          { bottom: insets.bottom, paddingBottom: Math.max(20, insets.bottom + 8) },
+        ]}
+      >
         <TouchableOpacity
           style={[styles.button, styles.secondaryButton]}
           onPress={onLogout}
         >
           <Text style={styles.secondaryButtonText}>Uitloggen</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.button}
-          onPress={onAddTransaction}
-        >
+
+        <TouchableOpacity style={styles.button} onPress={onAddTransaction}>
           <Text style={styles.buttonText}>+ Nieuwe Uitgave</Text>
         </TouchableOpacity>
       </View>
@@ -155,4 +159,3 @@ const DashboardScreen: React.FC<Props> = ({
   );
 };
 
-export default DashboardScreen;
