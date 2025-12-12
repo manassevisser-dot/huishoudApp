@@ -230,3 +230,4 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
    );
 };
 
+export default DailyInputScreen

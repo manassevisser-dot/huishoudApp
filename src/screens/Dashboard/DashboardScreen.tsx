@@ -158,4 +158,4 @@ const DashboardScreen: React.FC<Props> = ({
     </View>
   );
 };
-
+export default DashboardScreen;
