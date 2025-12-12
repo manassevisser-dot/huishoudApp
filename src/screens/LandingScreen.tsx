@@ -1,8 +1,8 @@
+
 import * as React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStyles } from '../styles/useAppStyles';
-const { styles, colors } = useAppStyles();
 
 type Props = {
   onSignup: () => void; // Start wizard at C1
@@ -10,6 +10,7 @@ type Props = {
 };
 
 const LandingScreen: React.FC<Props> = ({ onSignup, onSignin }) => {
+  const { styles, colors } = useAppStyles(); // ✅ verplaatst naar binnen
   const insets = useSafeAreaInsets();
 
   return (
@@ -17,11 +18,12 @@ const LandingScreen: React.FC<Props> = ({ onSignup, onSignin }) => {
       style={[
         styles.container,
         { paddingBottom: Math.max(20, insets.bottom + 8) },
-      ]}>
+      ]}
+    >
       <View style={styles.pageContainer}>
         <Text style={styles.pageTitle}>Welkom</Text>
         <Text style={styles.summaryDetail}>
-          Start met het instellen van uw huishouding of ga direct naar het
+                   Start met het instellen van uw huishouding of ga direct naar het
           dashboard als u al bekend bent.
         </Text>
       </View>
@@ -31,7 +33,8 @@ const LandingScreen: React.FC<Props> = ({ onSignup, onSignin }) => {
           style={styles.button}
           onPress={onSignup}
           accessibilityRole="button"
-          accessibilityLabel="Aanmelden en starten met setup">
+          accessibilityLabel="Aanmelden en starten met setup"
+        >
           <Text style={styles.buttonText}>Aanmelden</Text>
         </TouchableOpacity>
 
@@ -39,7 +42,8 @@ const LandingScreen: React.FC<Props> = ({ onSignup, onSignin }) => {
           style={[styles.button, styles.secondaryButton]}
           onPress={onSignin}
           accessibilityRole="button"
-          accessibilityLabel="Inloggen en ga naar dashboard">
+          accessibilityLabel="Inloggen en ga naar dashboard"
+        >
           <Text style={styles.secondaryButtonText}>Inloggen</Text>
         </TouchableOpacity>
       </View>
