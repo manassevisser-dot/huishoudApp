@@ -15,7 +15,7 @@ import {
 } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { useAppStyles } from './src/styles/AppStyles'; // GEMIGREERD
+import { useAppStyles } from './src/styles/useAppStyles'; // FIXED PATH
 import {
   FormProvider,
   useFormContext,
@@ -48,7 +48,7 @@ const WIZARD_PAGES: PageConfig[] = [
 const AppContent: React.FC = () => {
   const { state, dispatch } = useFormContext();
   const { theme } = useTheme();
-  const styles = useAppStyles(); // GEMIGREERD
+  const { styles, colors } = useAppStyles(); // Destructure styles and colors
   const insets = useSafeAreaInsets();
   
   // === ALL HOOKS AT TOP LEVEL (NO CONDITIONALS) ===

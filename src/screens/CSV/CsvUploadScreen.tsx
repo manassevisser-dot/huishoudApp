@@ -13,7 +13,7 @@ type Props = {
 
 const CsvUploadScreen: React.FC<Props> = ({ onClose }) => {
   const insets = useSafeAreaInsets();
-  const styles = useAppStyles();
+  const { styles, colors } = useAppStyles();
   const [csvText, setCsvText] = React.useState('');
   const [isUploading, setIsUploading] = React.useState(false);
   

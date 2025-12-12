@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TextInput, ScrollView } from 'react-native';
-import { useAppStyles } from '../styles/AppStyles';
+import { useAppStyles } from '../styles/useAppStyles';
 import ChipButton from './ChipButton';
 import ToggleSwitch from './ToggleSwitch';
 import InputCounter from './InputCounter';
@@ -29,7 +29,7 @@ const FormField: React.FC<FormFieldProps> = ({
   errorColor,
   state,
 }) => {
-  const styles = useAppStyles();
+  const { styles, colors } = useAppStyles();
   const displayLabel = field.labelDynamic ? value : field.label;
 
   const handleChange = (newValue: any) => {
@@ -139,7 +139,7 @@ const FormField: React.FC<FormFieldProps> = ({
     if (field.type === 'expense-repeater') return <ExpenseRepeater />;
 
     return (
-      <Text style={styles.errorText}>Onbekend veldtype: {field.type}</Text>
+      <Text style={styles.errorTextStyle}>Onbekend veldtype: {field.type}</Text>
     );
   };
 
@@ -158,7 +158,7 @@ const FormField: React.FC<FormFieldProps> = ({
       {error && (
         <Text
           style={[
-            styles.errorText,
+            styles.errorTextStyle,
             errorColor ? { color: errorColor } : {},
           ]}
         >

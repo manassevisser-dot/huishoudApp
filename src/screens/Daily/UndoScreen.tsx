@@ -6,13 +6,14 @@ import { TransactionService } from '../../services/transactionService';
 import { DailyTransaction } from '../../types/transaction';
 import { formatCurrency } from '../../utils/numbers';
 import { useAppStyles } from '../../styles/useAppStyles';
+
 type Props = {
   onClose: () => void;
 };
 
 const UndoScreen: React.FC<Props> = ({ onClose }) => {
   const insets = useSafeAreaInsets();
-  const styles = useAppStyles();
+  const { styles, colors } = useAppStyles();
   const [transactions, setTransactions] = React.useState<DailyTransaction[]>([]);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -94,7 +95,7 @@ const UndoScreen: React.FC<Props> = ({ onClose }) => {
                     style={[
                       styles.dashboardCard,
                       { marginBottom: 12 },
-                      isSelected && { borderColor: styles.primary.color, borderWidth: 2 },
+                      isSelected && { borderColor: colors.primary, borderWidth: 2 },
                     ]}
                     onPress={() => toggleSelection(t.id || '')}
                   >
@@ -106,7 +107,7 @@ const UndoScreen: React.FC<Props> = ({ onClose }) => {
                         </Text>
                       </View>
                       <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={[styles.summaryValue, { color: styles.error.color }]}>
+                        <Text style={[styles.summaryValue, { color: colors.error }]}>
                           {formatCurrency(t.amount)}
                         </Text>
                         {/* UPDATED: Use theme-aware checkbox styles */}
@@ -126,7 +127,7 @@ const UndoScreen: React.FC<Props> = ({ onClose }) => {
               <TouchableOpacity
                 style={[
                   styles.button,
-                  { backgroundColor: styles.error.color, marginTop: 16, marginLeft: 0 },
+                  { backgroundColor: colors.error, marginTop: 16, marginLeft: 0 },
                   selectedIds.length === 0 && { opacity: 0.5 },
                 ]}
                 onPress={handleDelete}

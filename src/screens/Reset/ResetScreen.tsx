@@ -12,7 +12,7 @@ type Props = {
 
 const ResetScreen: React.FC<Props> = ({ onClose, onWissen, onHerstel }) => {
   const insets = useSafeAreaInsets();
-  const styles = useAppStyles();
+  const { styles, colors } = useAppStyles();
 
   const handleWissen = () => {
     Alert.alert(

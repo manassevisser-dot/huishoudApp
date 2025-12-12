@@ -26,7 +26,7 @@ const BURGERLIJKE_OPTIONS: Exclude<BurgerlijkeStaat, 'Alleenstaand'>[] = [
 const WONING_OPTIONS: WoningType[] = ['Koop', 'Huur', 'Kamer', 'Anders'];
 
 const HouseholdMemberRepeater: React.FC = () => {
-  const styles = useAppStyles();
+  const { styles, colors } = useAppStyles();
   const { state, dispatch } = useFormContext();
 
   // Keep C1→C4 sync logic intact (reads C1, writes C4 state)
@@ -262,7 +262,7 @@ const HouseholdMemberRepeater: React.FC = () => {
             placeholder="18 of ouder"
             accessibilityLabel={`Leeftijd voor ${title}`}
           />
-          {ageError && <Text style={styles.errorText}>{ageError}</Text>}
+          {ageError && <Text style={styles.errorTextStyle}>{ageError}</Text>}
         </View>
 
         <View style={styles.fieldContainer}>
@@ -337,7 +337,7 @@ const HouseholdMemberRepeater: React.FC = () => {
             placeholder="Jonger dan 18"
             accessibilityLabel={`Leeftijd voor ${title}`}
           />
-          {ageError && <Text style={styles.errorText}>{ageError}</Text>}
+          {ageError && <Text style={styles.errorTextStyle}>{ageError}</Text>}
         </View>
 
         <View style={styles.fieldContainer}>

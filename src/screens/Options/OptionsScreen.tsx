@@ -13,7 +13,7 @@ type Props = {
 
 const OptionsScreen: React.FC<Props> = ({ onClose, onSettings, onCsvUpload, onReset }) => {
   const insets = useSafeAreaInsets();
-  const styles = useAppStyles();
+  const { styles, colors } = useAppStyles();
 
   return (
     <View style={styles.container}>

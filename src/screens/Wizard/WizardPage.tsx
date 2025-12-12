@@ -20,7 +20,7 @@ type PageProps = {
 
 const WizardPage: React.FC<PageProps> = ({ page, onNext, onPrev, isFirst, isLast }) => {
   const insets = useSafeAreaInsets();
-  const styles = useAppStyles();
+  const { styles, colors } = useAppStyles();
   const { state, dispatch } = useFormContext();
   const [errors, setErrors] = React.useState<Record<string, string | null>>({});
   const currentPageData = state[page.id] ?? {};

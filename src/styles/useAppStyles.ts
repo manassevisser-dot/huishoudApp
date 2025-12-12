@@ -1,6 +1,7 @@
-// src/styles/AppStyles.ts
+// src/styles/useAppStyles.ts
 
 import { StyleSheet } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
 import { Colors, Theme } from './Colors';
 
 // StyleSheet cache - prevents recreation on every render
@@ -64,7 +65,7 @@ export function getAppStyles(theme: Theme) {
     currencyPrefix: { fontSize: 17, color: c.textTertiary, marginRight: 4 },
     numericInput: { flex: 1, paddingVertical: 14, fontSize: 17, color: c.textPrimary },
     inputError: { borderColor: c.error, borderWidth: 2 },
-    errorText: { color: c.error, marginTop: 6, fontSize: 13 },
+    errorTextStyle: { color: c.error, marginTop: 6, fontSize: 13 },
 
     // === WARNINGS ===
     warningTextOrange: { color: c.warning, fontSize: 14, marginTop: 4, marginLeft: 4 },
@@ -153,3 +154,21 @@ export function getAppStyles(theme: Theme) {
 
 // Type alias voor autocompletion en type safety
 export type AppStyles = ReturnType<typeof getAppStyles>;
+
+/**
+ * React hook for accessing theme-aware styles AND raw colors
+ * 
+ * Usage:
+ *   const { styles, colors } = useAppStyles();
+ *   <View style={styles.container} />
+ *   <View style={{ borderColor: colors.primary }} />
+ * 
+ * @returns Object with styles (StyleSheet) and colors (raw theme colors)
+ */
+export function useAppStyles() {
+  const { theme } = useTheme();
+  return {
+    styles: getAppStyles(theme),
+    colors: Colors[theme]
+  };
+}
