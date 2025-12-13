@@ -65,11 +65,18 @@ const formatDigitsToDDMMYYYY = (digits: string): string => {
     }
   }, [state.C1?.auto, state.C1?.huisdieren, state.C4?.auto, state.C4?.huisdieren, dispatch]);
 
+
   const aantalMensen = Math.max(0, Number(state.C1?.aantalMensen ?? 0));
+
+  // Fallback: als aantalMensen > 0 en adults undefined, dan minimaal 1 volwassene
+  const rawVolwassen = state.C1?.aantalVolwassen;
+  const volwassenDefault = aantalMensen > 0 && rawVolwassen == null ? 1 : 0;
+  
   const aantalVolwassen = Math.max(
     0,
-    Math.min(Number(state.C1?.aantalVolwassen ?? 0), aantalMensen)
+    Math.min(Number(rawVolwassen ?? volwassenDefault), aantalMensen)
   );
+  
   const aantalKinderen = Math.max(0, aantalMensen - aantalVolwassen);
 
   const leden: Member[] = React.useMemo(() => {
