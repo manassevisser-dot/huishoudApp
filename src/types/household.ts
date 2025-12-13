@@ -3,9 +3,10 @@ export type Member = {
   id: string;
   memberType: 'adult' | 'child';
   naam?: string;
-  leeftijd?: number;
-  gender?: 'man' | 'vrouw' | 'anders' | 'n.v.t.'; // CHANGED: 'geen antwoord' → 'n.v.t.'
-  geboortejaar?: number;
+  leeftijd?: number; // COMPUTED: Age calculated from dateOfBirth, kept for backward compatibility
+  dateOfBirth?: string; // CANONICAL: ISO YYYY-MM-DD format (e.g., "1985-03-15")
+  gender?: 'man' | 'vrouw' | 'anders' | 'n.v.t.';
+  geboorteDatum?: string; // DEPRECATED: Use dateOfBirth instead, kept temporarily for migration
 };
 
 export type BurgerlijkeStaat =
