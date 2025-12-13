@@ -1,170 +1,91 @@
-import React from 'react';
-import { View, Text, TextInput, ScrollView } from 'react-native';
+// src/components/FormField.tsx
+import * as React from 'react';
+import { View, Text, TextInput } from 'react-native';
 import { useAppStyles } from '../styles/useAppStyles';
-import ChipButton from './ChipButton';
-import ToggleSwitch from './ToggleSwitch';
-import InputCounter from './InputCounter';
-import HouseholdMemberRepeater from '../organisms/HouseholdMemberRepeater';
-import IncomeRepeater from '../organisms/IncomeRepeater';
-import ExpenseRepeater from '../organisms/ExpenseRepeater';
-import { FieldConfig } from '../types/form';
-import { validateField } from '../utils/validation';
+import { onlyDigits, stripEmojiAndLimit } from '../utils/numbers';
+import { parseDDMMYYYYtoISO, calculateAge, formatDate } from '../utils/date';
 
-export type FormFieldProps = {
-  pageId: string;
-  field: FieldConfig;
-  value: any;
-  onChange: (fieldId: string, value: any) => void;
-  error: string | null;
-  errorColor?: string | null;
-  state?: any;
-};
+interface FormFieldProps {
+  label: string;
+  value?: string | number;
+  type?: 'text' | 'number' | 'date';
+  maxLength?: number;
+  onChange: (val: string | number | undefined) => void;
+  placeholder?: string;
+  accessibilityLabel?: string;
+}
 
 const FormField: React.FC<FormFieldProps> = ({
-  pageId,
-  field,
+  label,
   value,
+  type = 'text',
+  maxLength,
   onChange,
-  error,
-  errorColor,
-  state,
+  placeholder,
+  accessibilityLabel,
 }) => {
-  const { styles, colors } = useAppStyles();
-  const displayLabel = field.labelDynamic ? value : field.label;
+  const { styles } = useAppStyles();
 
-  const handleChange = (newValue: any) => {
-    onChange(field.id, newValue);
-  };
+  const [internalValue, setInternalValue] = React.useState<string>(
+    type === 'date' && typeof value === 'string'
+      ? formatDate(value, 'dd-mm-yyyy')
+      : value?.toString() ?? ''
+  );
 
-  const renderInput = () => {
-    // 1. Text
-    if (field.type === 'text') {
-      return (
-        <TextInput
-          style={[styles.input, error && styles.inputError]}
-          onChangeText={handleChange}
-          value={value}
-          placeholder={field.placeholder ?? 'Voer tekst in'}
-          accessibilityLabel={displayLabel}
-        />
-      );
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (type === 'date' && typeof value === 'string') {
+      setInternalValue(formatDate(value, 'dd-mm-yyyy'));
+    } else {
+      setInternalValue(value?.toString() ?? '');
     }
+  }, [value, type]);
 
-    // 2. Numeric
-    if (field.type === 'numeric') {
-      const numericValue = value != null ? String(value) : '';
-      return (
-        <View style={styles.numericWrapper}>
-          <Text style={styles.currencyPrefix}>€</Text>
-          <TextInput
-            style={[styles.numericInput, error && styles.inputError]}
-            onChangeText={(text) => {
-              const cleanText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
-              const numberValue =
-                parseFloat(cleanText) || (cleanText === '' ? '' : 0);
-              handleChange(numberValue);
-            }}
-            value={numericValue}
-            keyboardType="numeric"
-            placeholder={field.placeholder ?? '0.00'}
-            accessibilityLabel={displayLabel}
-          />
-        </View>
-      );
+  const handleChange = (text: string) => {
+    setInternalValue(text);
+
+    if (type === 'number') {
+      const clean = onlyDigits(text).slice(0, maxLength);
+      const num = clean.length ? Number(clean) : undefined;
+      if (num !== undefined && !Number.isInteger(num)) {
+        setError('Alleen gehele getallen toegestaan.');
+      } else {
+        setError(null);
+      }
+      onChange(num);
+    } else if (type === 'date') {
+      const iso = parseDDMMYYYYtoISO(text);
+      if (iso) {
+        const age = calculateAge(iso);
+        if (age !== undefined) {
+          if (age < 0) setError('Datum in de toekomst niet toegestaan.');
+          else setError(null);
+        }
+        onChange(iso);
+      } else {
+        setError('Ongeldige datum. Gebruik DD-MM-YYYY');
+        onChange(undefined);
+      }
+    } else {
+      onChange(stripEmojiAndLimit(text, maxLength ?? 255));
+      setError(null);
     }
-
-    // 3. Radio chips
-    if (field.type === 'radio-chips' && field.options) {
-      return (
-        <ScrollView
-          horizontal
-          contentContainerStyle={styles.chipContainer}
-          showsHorizontalScrollIndicator={false}
-        >
-          {field.options.map((opt) => (
-            <ChipButton
-              key={opt.value}
-              label={opt.label}
-              selected={value === opt.value}
-              error={!!error}
-              onPress={() => handleChange(opt.value)}
-              accessibilityLabel={`${displayLabel}: ${opt.label}`}
-            />
-          ))}
-        </ScrollView>
-      );
-    }
-
-    // 4. Toggle
-    if (field.type === 'toggle') {
-      const isTrue = value === true;
-      return (
-        <ToggleSwitch
-          value={isTrue}
-          onToggle={() => handleChange(!isTrue)}
-          accessibilityLabel={displayLabel}
-        />
-      );
-    }
-
-    // 5. Counter
-    if (field.type === 'counter') {
-      const min = field.validation?.min ?? 0;
-      const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
-      const staticMax = field.validation?.max;
-      const dynamicAdultsMax =
-        field.id === 'aantalVolwassen'
-          ? Math.min(Number(state?.C1?.aantalMensen ?? Infinity), 7)
-          : undefined;
-      const max = field.id === 'aantalVolwassen' ? dynamicAdultsMax : staticMax;
-
-      return (
-        <InputCounter
-          value={numericValue}
-          min={min}
-          max={max}
-          onValueChange={handleChange}
-          accessibilityLabel={displayLabel}
-        />
-      );
-    }
-
-    // 6. Repeater-array (C4 members)
-    if (field.type === 'repeater-array') return <HouseholdMemberRepeater />;
-
-    // 7. Income repeater (C7)
-    if (field.type === 'income-repeater') return <IncomeRepeater />;
-
-    // 8. Expense repeater (C10)
-    if (field.type === 'expense-repeater') return <ExpenseRepeater />;
-
-    return (
-      <Text style={styles.errorTextStyle}>Onbekend veldtype: {field.type}</Text>
-    );
   };
 
   return (
     <View style={styles.fieldContainer}>
-      <Text
-        style={[
-          styles.label,
-          error && styles.labelError,
-          errorColor ? { color: errorColor } : {},
-        ]}
-      >
-        {displayLabel}
-      </Text>
-      {renderInput()}
-      {error && (
-        <Text
-          style={[
-            styles.errorTextStyle,
-            errorColor ? { color: errorColor } : {},
-          ]}
-        >
-          {error}
-        </Text>
-      )}
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={error ? [styles.input, styles.inputError] : styles.input}
+        value={internalValue}
+        placeholder={placeholder}
+        keyboardType={type === 'number' ? 'number-pad' : 'default'}
+        maxLength={maxLength}
+        onChangeText={handleChange}
+        accessibilityLabel={accessibilityLabel ?? label}
+      />
+      {error && <Text style={styles.errorTextStyle}>{error}</Text>}
     </View>
   );
 };
