@@ -30,6 +30,18 @@ const HouseholdMemberRepeater: React.FC = () => {
   const { styles, colors } = useAppStyles();
   const { state, dispatch } = useFormContext();
 
+// --- DOB auto-format (per lid): we tonen tijdens typen DD-MM-YYYY en zetten bij 8 cijfers ISO in state ---//
+const [dobDraft, setDobDraft] = React.useState<Record<string, string>>({});
+
+const formatDigitsToDDMMYYYY = (digits: string): string => {
+  const d = digits.slice(0, 8);
+  const parts = [d.slice(0, 2), d.slice(2, 4), d.slice(4, 8)].filter(Boolean);
+  return parts.join('-');
+};
+
+
+
+
   // Keep C1→C4 sync logic intact (reads C1, writes C4 state)
   React.useEffect(() => {
     const c1Auto = state.C1?.auto;
@@ -184,6 +196,35 @@ const HouseholdMemberRepeater: React.FC = () => {
     dispatch({ type: 'SET_PAGE_DATA', pageId: 'C4', data: { leden: next } });
   };
 
+  const handleDobChange = (memberId: string, index: number) => (text: string) => {
+    // alleen cijfers uit de invoer
+    const digits = onlyDigits(text);
+    
+    const display = formatDigitsToDDMMYYYY(digits);
+
+    // toon draft tijdens typen
+    setDobDraft((prev) => ({ ...prev, [memberId]: display }));
+
+    if (digits.length === 8) {
+      const iso = parseDDMMYYYYtoISO(display);
+      if (iso) {
+        const age = calculateAge(iso);
+        // schrijf naar state (ISO + afgeleide leeftijd)
+        updateMember(index, { dateOfBirth: iso, leeftijd: age ?? undefined });
+
+        // draft opruimen zodat daarna de canonical ISO -> NL via formatDate wordt getoond
+        setDobDraft((prev) => {
+          const { [memberId]: _, ...rest } = prev;
+          return rest;
+        });
+        return;
+      }
+    }
+
+    // zolang het geen geldige 8 cijfers zijn, houden we dateOfBirth leeg
+    updateMember(index, { dateOfBirth: undefined, leeftijd: undefined });
+  };
+
   const setBurgerlijkeStaat = (val: BurgerlijkeStaat) =>
     dispatch({
       type: 'SET_PAGE_DATA',
@@ -240,22 +281,19 @@ const HouseholdMemberRepeater: React.FC = () => {
 
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Geboortedatum</Text>
-          <TextInput
-            style={[styles.input, ageError && styles.inputError]}
-            value={m.dateOfBirth ? formatDate(m.dateOfBirth, 'dd-mm-yyyy') : ''}
-            onChangeText={(text) => {
-              const iso = parseDDMMYYYYtoISO(text);
-              if (iso) {
-                const age = calculateAge(iso);
-                updateMember(index, { dateOfBirth: iso, leeftijd: age ?? undefined });
-              } else {
-                updateMember(index, { dateOfBirth: undefined, leeftijd: undefined });
-              }
-            }}
-            placeholder="DD-MM-YYYY"
-            keyboardType="number-pad"
-            maxLength={10}
-            accessibilityLabel={`Geboortedatum voor ${title}`}
+          
+<TextInput
+  style={[styles.input, ageError && styles.inputError]}
+  value={
+    dobDraft[m.id] ??
+    (m.dateOfBirth ? formatDate(m.dateOfBirth, 'dd-mm-yyyy') : '')
+  }
+  onChangeText={handleDobChange(m.id, index)}
+  placeholder="DD-MM-YYYY"
+  keyboardType="number-pad"
+  maxLength={10}
+  accessibilityLabel={`Geboortedatum voor ${title}`}
+
           />
         </View>
 
@@ -311,22 +349,19 @@ const HouseholdMemberRepeater: React.FC = () => {
 
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Geboortedatum</Text>
-          <TextInput
-            style={[styles.input, ageError && styles.inputError]}
-            value={m.dateOfBirth ? formatDate(m.dateOfBirth, 'dd-mm-yyyy') : ''}
-            onChangeText={(text) => {
-              const iso = parseDDMMYYYYtoISO(text);
-              if (iso) {
-                const age = calculateAge(iso);
-                updateMember(index, { dateOfBirth: iso, leeftijd: age ?? undefined });
-              } else {
-                updateMember(index, { dateOfBirth: undefined, leeftijd: undefined });
-              }
-            }}
-            placeholder="DD-MM-YYYY"
-            keyboardType="number-pad"
-            maxLength={10}
-            accessibilityLabel={`Geboortedatum voor ${title}`}
+          
+<TextInput
+  style={[styles.input, ageError && styles.inputError]}
+  value={
+    dobDraft[m.id] ??
+    (m.dateOfBirth ? formatDate(m.dateOfBirth, 'dd-mm-yyyy') : '')
+  }
+  onChangeText={handleDobChange(m.id, index)}
+  placeholder="DD-MM-YYYY"
+  keyboardType="number-pad"
+  maxLength={10}
+  accessibilityLabel={`Geboortedatum voor ${title}`}
+
           />
         </View>
 
