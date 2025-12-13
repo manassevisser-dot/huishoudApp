@@ -24,26 +24,33 @@ export function parseDDMMYYYYtoISO(input: string): string | null {
 export function formatDate(input: Date | string, formatType: 'dd-mm-yyyy' | 'weekday' | 'short' | 'full' = 'dd-mm-yyyy'): string {
   const date = typeof input === 'string' ? new Date(input) : input;
   const options: Intl.DateTimeFormatOptions = {};
+  
   switch (formatType) {
-    case 'dd-mm-yyyy':
+    case 'dd-mm-yyyy': {
       const dd = String(date.getDate()).padStart(2, '0');
       const mm = String(date.getMonth() + 1).padStart(2, '0');
       const yyyy = date.getFullYear();
       return `${dd}-${mm}-${yyyy}`;
-    case 'weekday':
+    }
+    case 'weekday': {
       options.weekday = 'short';
       return date.toLocaleDateString('nl-NL', options);
-    case 'short':
+    }
+    case 'short': {
       options.day = 'numeric';
       options.month = 'short';
       options.year = '2-digit';
       return date.toLocaleDateString('nl-NL', options);
-    case 'full':
+    }
+    case 'full': {
       options.weekday = 'long';
       options.day = 'numeric';
       options.month = 'long';
       options.year = 'numeric';
       return date.toLocaleDateString('nl-NL', options);
+    }
+    default:
+      return date.toLocaleDateString('nl-NL');
   }
 }
 
