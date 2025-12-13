@@ -8,6 +8,9 @@ import { Member, BurgerlijkeStaat, WoningType } from '../types/household';
 import { onlyDigits, stripEmojiAndLimit } from '../utils/numbers';
 import { parseDDMMYYYYtoISO, calculateAge, formatDate } from '../utils/date';
 import { validateDobNL } from '../utils/validation';
+import DateField from '../components/DateField';
+import { calculateAge } from '../utils/date';
+
 
 // P4: Updated GENDER_OPTIONS - 'geen antwoord' → 'n.v.t.'
 const GENDER_OPTIONS: Member['gender'][] = [
@@ -281,147 +284,173 @@ setDobDraft((prev: Record<string, string>) => {
   let adultDisplayIndex = 0;
   let childDisplayIndex = 0;
 
-  const renderAdultCard = (m: Member, index: number) => {
-    const idx = ++adultDisplayIndex;
-    const title = m.naam?.trim()
-      ? `Volwassene ${idx}: ${m.naam}`
-      : `Volwassene ${idx}`;
+ 
+const renderAdultCard = (m: Member, index: number) => {
+  const idx = ++adultDisplayIndex;
+  const title = m.naam?.trim()
+    ? `Volwassene ${idx}: ${m.naam}`
+    : `Volwassene ${idx}`;
 
-    let ageError: string | null = null;
-    if (typeof m.leeftijd === 'number') {
-      if (m.leeftijd < 18)
-        ageError =
-          'Leeftijd moet ≥ 18 voor volwassenen. Voor leeftijd 17 moet u deze persoon als kind registreren.';
-      if (!Number.isInteger(m.leeftijd))
-        ageError = 'Leeftijd moet een geheel getal zijn (geen decimalen).';
-    }
-
-    return (
-      <View key={m.id} style={styles.dashboardCard}>
-        <Text style={styles.summaryLabelBold}>{title}</Text>
-
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Naam</Text>
-          <TextInput
-            style={styles.input}
-            value={m.naam ?? ''}
-            onChangeText={(text) =>
-              updateMember(index, { naam: stripEmojiAndLimit(text, 25) })
-            }
-            placeholder="naam"
-            accessibilityLabel={`Naam voor ${title}`}
-          />
-        </View>
-
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Geboortedatum</Text>
-          
-<TextInput
-  style={[styles.input, ageError && styles.inputError]}
-  value={
-    dobDraft[m.id] ??
-    (m.dateOfBirth ? formatDate(m.dateOfBirth, 'dd-mm-yyyy') : '')
+  // Leeftijd-afgeleide fout (blijft zoals je had)
+  let ageError: string | null = null;
+  if (typeof m.leeftijd === 'number') {
+    if (m.leeftijd < 18)
+      ageError =
+        'Leeftijd moet ≥ 18 voor volwassenen. Voor leeftijd 17 moet u deze persoon als kind registreren.';
+    if (!Number.isInteger(m.leeftijd))
+      ageError = 'Leeftijd moet een geheel getal zijn (geen decimalen).';
   }
-  onChangeText={handleDobChange(m.id, index)}
-  placeholder="DD-MM-YYYY"
-  keyboardType="number-pad"
-  maxLength={10}
-  accessibilityLabel={`Geboortedatum voor ${title}`}
 
-          />
-          {dobError[m.id] && <Text style={styles.errorTextStyle}>{dobError[m.id]}</Text>}
-        </View>
+  return (
+    <View key={m.id} style={styles.dashboardCard}>
+      <Text style={styles.summaryLabelBold}>{title}</Text>
 
-
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Gender</Text>
-          <ScrollView
-            horizontal
-            contentContainerStyle={styles.chipContainer}
-            showsHorizontalScrollIndicator={false}>
-            {GENDER_OPTIONS.map((g) => (
-              <ChipButton
-                key={g}
-                label={g ?? ''}
-                selected={m.gender === g}
-                onPress={() => updateMember(index, { gender: g })}
-                accessibilityLabel={`Gender ${g} voor ${title}`}
-              />
-            ))}
-          </ScrollView>
-        </View>
+      {/* Naam */}
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Naam</Text>
+        <TextInput
+          style={styles.input}
+          value={m.naam ?? ''}
+          onChangeText={(text) =>
+            updateMember(index, { naam: stripEmojiAndLimit(text, 25) })
+          }
+          placeholder="naam"
+          accessibilityLabel={`Naam voor ${title}`}
+        />
       </View>
-    );
-  };
 
-  const renderChildCard = (m: Member, index: number) => {
-    const idx = ++childDisplayIndex;
-    const title = m.naam?.trim() ? `Kind ${idx}: ${m.naam}` : `Kind ${idx}`;
+      {/* Geboortedatum — vervanging met DateField (native datepicker      {/* Geboortedatum — vervanging met DateField (native datepicker) */}
+      <DateField
+        label="Geboortedatum"
+        valueISO={m.dateOfBirth}
+        onChangeISO={(iso) => {
+          if (iso) {
+            const age = calculateAge(iso) ?? undefined;
+            updateMember(index, { dateOfBirth: iso, leeftijd: age });
+          } else {
+            updateMember(index, { dateOfBirth: undefined, leeftijd: undefined });
+          }
+        }}
+        // Toon eventueel gecombineerde fout: eerst DOB-fout (centrale validator),
+        // daarna leeftijdsfout (afgeleid); kies de tekst die je bovenaan wilt tonen.
+        errorText={dobError?.[m.id] || ageError || null}
+        accessibilityLabel={`Geboortedatum voor ${title}`}
+      />
 
-    let ageError: string | null = null;
-    if (typeof m.leeftijd === 'number') {
-      if (m.leeftijd >= 18) ageError = 'Leeftijd moet < 18 voor kinderen.';
-      if (!Number.isInteger(m.leeftijd))
-        ageError = 'Leeftijd moet een geheel getal zijn (geen decimalen).';
+      {/* Eventueel: als je DOB- en leeftijdsfout afzonderlijk wil tonen, voeg dan dit toe:
+          {dobError?.[m.id] && (
+            <Text style={styles.errorTextStyle}>{dobError[m.id]}</Text>
+          )}
+          {ageError && (
+            <Text style={styles.errorTextStyle}>{ageError}</Text>
+          )}
+      */}
+
+      {/* Gender */}
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Gender</Text>
+        <ScrollView
+          horizontal
+          contentContainerStyle={styles.chipContainer}
+          showsHorizontalScrollIndicator={false}
+        >
+          {GENDER_OPTIONS.map((g) => (
+            <ChipButton
+              key={g}
+              label={g ?? ''}
+              selected={m.gender === g}
+              onPress={() => updateMember(index, { gender: g })}
+              accessibilityLabel={`Gender ${g} voor ${title}`}
+            />
+          ))}
+        </ScrollView>
+      </View>
+    </View>
+  );
+
+ 
+const renderChildCard = (m: Member, index: number) => {
+  const idx = ++childDisplayIndex;
+  const title = m.naam?.trim() ? `Kind ${idx}: ${m.naam}` : `Kind ${idx}`;
+
+  // Leeftijd-afgeleide fout: een kind moet < 18 zijn
+  let ageError: string | null = null;
+  if (typeof m.leeftijd === 'number') {
+    if (m.leeftijd >= 18) {
+      ageError = 'Leeftijd moet < 18 voor kinderen.';
     }
-
-    return (
-      <View key={m.id} style={styles.dashboardCard}>
-        <Text style={styles.summaryLabelBold}>{title}</Text>
-
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Naam</Text>
-          <TextInput
-            style={styles.input}
-            value={m.naam ?? ''}
-            onChangeText={(text) =>
-              updateMember(index, { naam: stripEmojiAndLimit(text, 25) })
-            }
-            placeholder="naam"
-            accessibilityLabel={`Naam voor ${title}`}
-          />
-        </View>
-
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Geboortedatum</Text>
-          
-<TextInput
-  style={[styles.input, ageError && styles.inputError]}
-  value={
-    dobDraft[m.id] ??
-    (m.dateOfBirth ? formatDate(m.dateOfBirth, 'dd-mm-yyyy') : '')
+    if (!Number.isInteger(m.leeftijd)) {
+      ageError = 'Leeftijd moet een geheel getal zijn (geen decimalen).';
+    }
   }
-  onChangeText={handleDobChange(m.id, index)}
-  placeholder="DD-MM-YYYY"
-  keyboardType="number-pad"
-  maxLength={10}
-  accessibilityLabel={`Geboortedatum voor ${title}`}
 
-          />
-          {dobError[m.id] && <Text style={styles.errorTextStyle}>{dobError[m.id]}</Text>}
-        </View>
+  return (
+    <View key={m.id} style={styles.dashboardCard}>
+      <Text style={styles.summaryLabelBold}>{title}</Text>
 
-
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Gender</Text>
-          <ScrollView
-            horizontal
-            contentContainerStyle={styles.chipContainer}
-            showsHorizontalScrollIndicator={false}>
-            {GENDER_OPTIONS.map((g) => (
-              <ChipButton
-                key={g}
-                label={g ?? ''}
-                selected={m.gender === g}
-                onPress={() => updateMember(index, { gender: g })}
-                accessibilityLabel={`Gender ${g} voor ${title}`}
-              />
-            ))}
-          </ScrollView>
-        </View>
+      {/* Naam */}
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Naam</Text>
+        <TextInput
+          style={styles.input}
+          value={m.naam ?? ''}
+          onChangeText={(text) =>
+            updateMember(index, { naam: stripEmojiAndLimit(text, 25) })
+          }
+          placeholder="naam"
+          accessibilityLabel={`Naam voor ${title}`}
+        />
       </View>
-    );
-  };
+
+      {/* Geboortedatum — native datepicker via DateField */}
+      <DateField
+        label="Geboortedatum"
+        valueISO={m.dateOfBirth}
+        onChangeISO={(iso) => {
+          if (iso) {
+            const age = calculateAge(iso) ?? undefined;
+            updateMember(index, { dateOfBirth: iso, leeftijd: age });
+          } else {
+            updateMember(index, { dateOfBirth: undefined, leeftijd: undefined });
+          }
+        }}
+        // Eén gecombineerde foutregel: eerst DOB-fout (centrale validator),
+        // daarna leeftijdsfout (afgeleid). Pas desgewenst de volgorde aan.
+        errorText={dobError?.[m.id] || ageError || null}
+        accessibilityLabel={`Geboortedatum voor ${title}`}
+      />
+
+      {/* Wil je DOB- en leeftijdfout apart tonen? Gebruik dit i.p.v. errorText:
+          {dobError?.[m.id] && (
+            <Text style={styles.errorTextStyle}>{dobError[m.id]}</Text>
+          )}
+          {ageError && (
+            <Text style={styles.errorTextStyle}>{ageError}</Text>
+          )}
+      */}
+
+      {/* Gender */}
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Gender</Text>
+        <ScrollView
+          horizontal
+          contentContainerStyle={styles.chipContainer}
+          shows          showsHorizontalScrollIndicator={false}
+        >
+          {GENDER_OPTIONS.map((g) => (
+            <ChipButton
+              key={g}
+              label={g ?? ''}
+              selected={m.gender === g}
+              onPress={() => updateMember(index, { gender: g })}
+              accessibilityLabel={`Gender ${g} voor ${title}`}
+            />
+          ))}
+        </ScrollView>
+      </View>
+    </View>
+  );
+
 
   const renderBurgerlijkeStaat = () => {
     if (aantalVolwassen === 1) return null;
@@ -551,3 +580,4 @@ setDobDraft((prev: Record<string, string>) => {
 };
 
 export default HouseholdMemberRepeater;
+
