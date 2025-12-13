@@ -259,7 +259,6 @@ const HouseholdMemberRepeater: React.FC = () => {
           />
         </View>
 
-        <View style={styles.fieldContainer}>
 
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Gender</Text>
@@ -331,7 +330,6 @@ const HouseholdMemberRepeater: React.FC = () => {
           />
         </View>
 
-        <View style={styles.fieldContainer}>
 
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Gender</Text>
