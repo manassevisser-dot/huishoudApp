@@ -1,71 +1,95 @@
-import React from 'react';
+// src/components/InputCounter.tsx
+import * as React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useAppStyles } from '../styles/useAppStyles';
 
-export type InputCounterProps = {
+type Props = {
   value: number;
-  onValueChange: (next: number) => void;
   min?: number;
   max?: number;
+  onValueChange: (value: number) => void;
   accessibilityLabel?: string;
 };
 
-const InputCounter: React.FC<InputCounterProps> = ({
+const InputCounter: React.FC<Props> = ({
   value,
-  onValueChange,
   min = 0,
   max,
+  onValueChange,
   accessibilityLabel,
 }) => {
   const { styles, colors } = useAppStyles();
-  const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
-  const canDecrement = numericValue > min;
-  const canIncrement = max === undefined || numericValue < max;
+  
+  // Ensure value is always a valid number
+  const safeValue = typeof value === 'number' && !isNaN(value) ? value : min;
 
   const handleDecrement = () => {
-    if (!canDecrement) return;
-    const next = Math.max(min, numericValue - 1);
-    onValueChange(next);
+    const newValue = safeValue - 1;
+    if (newValue >= min) {
+      onValueChange(newValue);
+    }
   };
 
   const handleIncrement = () => {
-    if (!canIncrement) return;
-    const next =
-      max !== undefined ? Math.min(max, numericValue + 1) : numericValue + 1;
-    onValueChange(next);
+    const newValue = safeValue + 1;
+    if (max === undefined || newValue <= max) {
+      onValueChange(newValue);
+    }
   };
 
+  const canDecrement = safeValue > min;
+  const canIncrement = max === undefined || safeValue < max;
+
   return (
-    <View style={styles.chipContainer}>
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
       <TouchableOpacity
-        style={[styles.chip, !canDecrement && { opacity: 0.5 }]}
         onPress={handleDecrement}
         disabled={!canDecrement}
+        style={{
+          backgroundColor: canDecrement ? colors.primary : colors.secondary,
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          borderRadius: 8,
+          opacity: canDecrement ? 1 : 0.5,
+        }}
         accessibilityRole="button"
-        accessibilityLabel={
-          accessibilityLabel ? `Verlaag ${accessibilityLabel}` : 'Verlaag'
-        }
+        accessibilityLabel={`${accessibilityLabel || 'Waarde'} verlagen`}
       >
-        <Text style={styles.chipText}>-</Text>
+        <Text style={{ color: canDecrement ? colors.primaryText : colors.textSecondary, fontSize: 20, fontWeight: 'bold' }}>
+          −
+        </Text>
       </TouchableOpacity>
 
       <Text
-        style={[styles.label, { marginHorizontal: 12 }]}
+        style={{
+          marginHorizontal: 20,
+          fontSize: 24,
+          fontWeight: 'bold',
+          minWidth: 40,
+          textAlign: 'center',
+          color: colors.textPrimary,
+        }}
         accessibilityLabel={accessibilityLabel}
       >
-        {numericValue}
+        {safeValue}
       </Text>
 
       <TouchableOpacity
-        style={[styles.chip, !canIncrement && { opacity: 0.5 }]}
         onPress={handleIncrement}
         disabled={!canIncrement}
+        style={{
+          backgroundColor: canIncrement ? colors.primary : colors.secondary,
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          borderRadius: 8,
+          opacity: canIncrement ? 1 : 0.5,
+        }}
         accessibilityRole="button"
-        accessibilityLabel={
-          accessibilityLabel ? `Verhoog ${accessibilityLabel}` : 'Verhoog'
-        }
+        accessibilityLabel={`${accessibilityLabel || 'Waarde'} verhogen`}
       >
-        <Text style={styles.chipText}>+</Text>
+        <Text style={{ color: canIncrement ? colors.primaryText : colors.textSecondary, fontSize: 20, fontWeight: 'bold' }}>
+          +
+        </Text>
       </TouchableOpacity>
     </View>
   );

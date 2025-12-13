@@ -110,19 +110,31 @@ const FormField: React.FC<FormFieldProps> = ({
     // 5. Counter
     if (field.type === 'counter') {
       const min = field.validation?.min ?? 0;
-      const numericValue = typeof value === 'number' ? value : Number(value ?? 0);
+      const max = field.validation?.max;
+      
+      // Ensure value is always a valid number (never NaN or undefined)
+      let numericValue: number;
+      if (typeof value === 'number' && !isNaN(value)) {
+        numericValue = value;
+      } else if (typeof value === 'string' && value !== '') {
+        const parsed = Number(value);
+        numericValue = !isNaN(parsed) ? parsed : min;
+      } else {
+        numericValue = min;
+      }
+
       const staticMax = field.validation?.max;
       const dynamicAdultsMax =
         field.id === 'aantalVolwassen'
           ? Math.min(Number(state?.C1?.aantalMensen ?? Infinity), 7)
           : undefined;
-      const max = field.id === 'aantalVolwassen' ? dynamicAdultsMax : staticMax;
+      const finalMax = field.id === 'aantalVolwassen' ? dynamicAdultsMax : staticMax;
 
       return (
         <InputCounter
           value={numericValue}
           min={min}
-          max={max}
+          max={finalMax}
           onValueChange={handleChange}
           accessibilityLabel={displayLabel}
         />
