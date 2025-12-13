@@ -88,7 +88,7 @@ const WizardPage: React.FC<PageProps> = ({ page, onNext, onPrev, isFirst, isLast
                 pageId={page.id}
                 field={field}
                 value={currentPageData[field.id] ?? field.defaultValue ?? ''}
-                onChange={handleChange}
+                onChange={(value) => handleChange(field.id, value)}
                 error={errors[field.id]}
                 state={state}
               />
