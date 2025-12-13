@@ -6,6 +6,7 @@ import ChipButton from '../components/ChipButton';
 import { useFormContext } from '../context/FormContext';
 import { Member, BurgerlijkeStaat, WoningType } from '../types/household';
 import { onlyDigits, stripEmojiAndLimit } from '../utils/numbers';
+import { parseDDMMYYYYtoISO, calculateAge, formatDate } from '../utils/date';
 
 // P4: Updated GENDER_OPTIONS - 'geen antwoord' → 'n.v.t.'
 const GENDER_OPTIONS: Member['gender'][] = [
@@ -64,8 +65,7 @@ const HouseholdMemberRepeater: React.FC = () => {
     return Array.isArray(arr) ? arr : [];
   }, [state.C4?.leden]);
 
-  const burgerlijkeStaat: BurgerlijkeStaat | undefined =
-    state.C4?.burgerlijkeStaat;
+  const burgerlijkeStaat: BurgerlijkeStaat | undefined = state.C4?.burgerlijkeStaat;
   const woning: WoningType | undefined = state.C4?.woning;
   const postcode: string | undefined = state.C4?.postcode;
 
@@ -109,7 +109,7 @@ const HouseholdMemberRepeater: React.FC = () => {
             naam: '',
             leeftijd: undefined,
             gender: undefined,
-            geboortejaar: undefined,
+            geboorteDatum: undefined,
           });
         }
       }
@@ -141,8 +141,7 @@ const HouseholdMemberRepeater: React.FC = () => {
       }
 
       for (let i = 0; i < next.length; i++) {
-        const shouldType: Member['memberType'] =
-          i < targetAdults ? 'adult' : 'child';
+        const shouldType: Member['memberType'] = i < targetAdults ? 'adult' : 'child';
         if (next[i]?.memberType !== shouldType) {
           next[i] = { ...next[i], memberType: shouldType };
         }
@@ -240,6 +239,27 @@ const HouseholdMemberRepeater: React.FC = () => {
         </View>
 
         <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Geboortedatum</Text>
+          <TextInput
+            style={[styles.input, ageError && styles.inputError]}
+            value={m.geboorteDatum ? formatDate(m.geboorteDatum, 'dd-mm-yyyy') : ''}
+            onChangeText={(text) => {
+              const iso = parseDDMMYYYYtoISO(text);
+              if (iso) {
+                const age = calculateAge(iso);
+                updateMember(index, { geboorteDatum: iso, leeftijd: age ?? undefined });
+              } else {
+                updateMember(index, { geboorteDatum: undefined, leeftijd: undefined });
+              }
+            }}
+            placeholder="DD-MM-YYYY"
+            keyboardType="numbers-and-punctuation"
+            maxLength={10}
+            accessibilityLabel={`Geboortedatum voor ${title}`}
+          />
+        </View>
+
+        <View style={styles.fieldContainer}>
           <Text style={styles.label}>Leeftijd</Text>
           <TextInput
             style={
@@ -311,6 +331,27 @@ const HouseholdMemberRepeater: React.FC = () => {
             }
             placeholder="naam"
             accessibilityLabel={`Naam voor ${title}`}
+          />
+        </View>
+
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Geboortedatum</Text>
+          <TextInput
+            style={[styles.input, ageError && styles.inputError]}
+            value={m.geboorteDatum ? formatDate(m.geboorteDatum, 'dd-mm-yyyy') : ''}
+            onChangeText={(text) => {
+              const iso = parseDDMMYYYYtoISO(text);
+              if (iso) {
+                const age = calculateAge(iso);
+                updateMember(index, { geboorteDatum: iso, leeftijd: age ?? undefined });
+              } else {
+                updateMember(index, { geboorteDatum: undefined, leeftijd: undefined });
+              }
+            }}
+            placeholder="DD-MM-YYYY"
+            keyboardType="numbers-and-punctuation"
+            maxLength={10}
+            accessibilityLabel={`Geboortedatum voor ${title}`}
           />
         </View>
 

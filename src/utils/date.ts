@@ -1,26 +1,79 @@
+// src/utils/date.ts
+
 /**
-* Format Date naar ISO-YYYY-MM-DD (alleen datumdeel)
-*/
-export function formatDateISO(date: Date): string {
-return date.toISOString().split('T')[0];
+ * Parse DD-MM-YYYY string naar ISO-YYYY-MM-DD
+ */
+export function parseDDMMYYYYtoISO(input: string): string | null {
+  const match = input.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (!match) return null;
+  const [, dd, mm, yyyy] = match;
+  const day = Number(dd);
+  const month = Number(mm);
+  const year = Number(yyyy);
+  const date = new Date(year, month - 1, day);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null; // invalid date
+  }
+  return formatDateISO(date);
 }
 
 /**
- * Huidige datum als ISO-YYYY-MM-DD
+ * Format date object of ISO string naar verschillende weergaven
+ * 'dd-mm-yyyy' | 'weekday' | 'short' | 'full'
  */
+export function formatDate(input: Date | string, formatType: 'dd-mm-yyyy' | 'weekday' | 'short' | 'full' = 'dd-mm-yyyy'): string {
+  const date = typeof input === 'string' ? new Date(input) : input;
+  const options: Intl.DateTimeFormatOptions = {};
+  switch (formatType) {
+    case 'dd-mm-yyyy':
+      const dd = String(date.getDate()).padStart(2, '0');
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const yyyy = date.getFullYear();
+      return `${dd}-${mm}-${yyyy}`;
+    case 'weekday':
+      options.weekday = 'short';
+      return date.toLocaleDateString('nl-NL', options);
+    case 'short':
+      options.day = 'numeric';
+      options.month = 'short';
+      options.year = '2-digit';
+      return date.toLocaleDateString('nl-NL', options);
+    case 'full':
+      options.weekday = 'long';
+      options.day = 'numeric';
+      options.month = 'long';
+      options.year = 'numeric';
+      return date.toLocaleDateString('nl-NL', options);
+  }
+}
+
+/**
+ * Bereken leeftijd op basis van ISO string
+ */
+export function calculateAge(isoDate: string): number | null {
+  const birth = new Date(isoDate);
+  if (isNaN(birth.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+// Bestaande functies blijven ongewijzigd
+export function formatDateISO(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
+
 export function getCurrentDateISO(): string {
   return formatDateISO(new Date());
 }
 
- /**
-  * Get ISO week number for a given date
-  * ISO weeks start on Monday and week 1 is the first week with Thursday in it
-  */
- export function getISOWeek(date: Date): number {
-   const d = new Date(date.getTime());
-   d.setHours(0, 0, 0, 0);
-   d.setDate(d.getDate() + 4 - (d.getDay() || 7));
-   const yearStart = new Date(d.getFullYear(), 0, 1);
-   const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-   return weekNo;
- }
+export function getISOWeek(date: Date): number {
+  const d = new Date(date.getTime());
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + 4 - (d.getDay() || 7));
+  const yearStart = new Date(d.getFullYear(), 0, 1);
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return weekNo;
+}
