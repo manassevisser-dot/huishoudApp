@@ -18,7 +18,13 @@ type PageProps = {
   isLast: boolean;
 };
 
-const WizardPage: React.FC<PageProps> = ({ page, onNext, onPrev, isFirst, isLast }) => {
+const WizardPage: React.FC<PageProps> = ({
+  page,
+  onNext,
+  onPrev,
+  isFirst,
+  isLast,
+}) => {
   const insets = useSafeAreaInsets();
   const { styles, colors } = useAppStyles();
   const { state, dispatch } = useFormContext();
@@ -31,10 +37,19 @@ const WizardPage: React.FC<PageProps> = ({ page, onNext, onPrev, isFirst, isLast
     if (page.id !== 'C1') return;
     const mensen = Number(state.C1?.aantalMensen ?? 0);
     const volwassen = Number(state.C1?.aantalVolwassen ?? 0);
+
     if (volwassen > mensen) {
-      dispatch({ type: 'SET_PAGE_DATA', pageId: 'C1', data: { aantalVolwassen: mensen } });
+      dispatch({
+        type: 'SET_PAGE_DATA',
+        pageId: 'C1',
+        data: { aantalVolwassen: mensen },
+      });
     } else if (volwassen > 7) {
-      dispatch({ type: 'SET_PAGE_DATA', pageId: 'C1', data: { aantalVolwassen: 7 } });
+      dispatch({
+        type: 'SET_PAGE_DATA',
+        pageId: 'C1',
+        data: { aantalVolwassen: 7 },
+      });
     }
   }, [page.id, state.C1?.aantalMensen, state.C1?.aantalVolwassen, dispatch]);
 
@@ -44,7 +59,11 @@ const WizardPage: React.FC<PageProps> = ({ page, onNext, onPrev, isFirst, isLast
     newErrors[fieldId] = validateField(field, value, state);
     setErrors(newErrors);
 
-    dispatch({ type: 'SET_PAGE_DATA', pageId: page.id, data: { [fieldId]: value } });
+    dispatch({
+      type: 'SET_PAGE_DATA',
+      pageId: page.id,
+      data: { [fieldId]: value },
+    });
   };
 
   const handleNext = () => {
@@ -79,8 +98,10 @@ const WizardPage: React.FC<PageProps> = ({ page, onNext, onPrev, isFirst, isLast
 
       <ScrollView
         ref={scrollViewRef}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
-      >
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: 120 + insets.bottom },
+        ]}>
         {page.fields.map((field) => (
           <React.Fragment key={field.id}>
             <ConditionalField conditional={field.conditional} pageId={page.id}>
@@ -95,44 +116,77 @@ const WizardPage: React.FC<PageProps> = ({ page, onNext, onPrev, isFirst, isLast
             </ConditionalField>
 
             {/* Waarschuwingen C1 */}
-            {page.id === 'C1' && evaluateCondition(field.conditional, state, page.id) && (
-              <>
-                {(field.id === 'aantalMensen' || field.id === 'aantalVolwassen') && (() => {
-                  const val = Number(currentPageData[field.id] ?? 0);
-                  if ((field.id === 'aantalMensen' && val >= 10) || (field.id === 'aantalVolwassen' && val >= 7)) {
-                    return <Text style={styles.warningTextRed}>maximaal aantal personen bereikt</Text>;
-                  }
-                  if ((field.id === 'aantalMensen' && val >= 7) || (field.id === 'aantalVolwassen' && val >= 5)) {
-                    return <Text style={styles.warningTextOrange}>u nadert het maximaal aantal</Text>;
-                  }
-                  return null;
-                })()}
+            {page.id === 'C1' &&
+              evaluateCondition(field.conditional, state, page.id) && (
+                <>
+                  {(field.id === 'aantalMensen' ||
+                    field.id === 'aantalVolwassen') &&
+                    (() => {
+                      const val = Number(currentPageData[field.id] ?? 0);
+                      if (
+                        (field.id === 'aantalMensen' && val >= 10) ||
+                        (field.id === 'aantalVolwassen' && val >= 7)
+                      ) {
+                        return (
+                          <Text style={styles.warningTextRed}>
+                            maximaal aantal personen bereikt
+                          </Text>
+                        );
+                      }
+                      if (
+                        (field.id === 'aantalMensen' && val >= 7) ||
+                        (field.id === 'aantalVolwassen' && val >= 5)
+                      ) {
+                        return (
+                          <Text style={styles.warningTextOrange}>
+                            u nadert het maximaal aantal
+                          </Text>
+                        );
+                      }
+                      return null;
+                    })()}
 
-                {/* Totaal aantal kinderen */}
-                {field.id === 'aantalVolwassen' && (() => {
-                  const mensen = Number(currentPageData.aantalMensen ?? 0);
-                  const volwassen = Number(currentPageData.aantalVolwassen ?? 0);
-                  const kinderen = Math.max(0, mensen - volwassen);
-                  return kinderen > 0 ? (
-                    <View style={styles.fieldContainer}>
-                      <Text style={styles.summaryLabelBold}>Totaal aantal kinderen: {kinderen}</Text>
-                    </View>
-                  ) : null;
-                })()}
-              </>
-            )}
+                  {/* Totaal aantal kinderen */}
+                  {field.id === 'aantalVolwassen' &&
+                    (() => {
+                      const mensen = Number(currentPageData.aantalMensen ?? 0);
+                      const volwassen = Number(
+                        currentPageData.aantalVolwassen ?? 0
+                      );
+                      const kinderen = Math.max(0, mensen - volwassen);
+                      return kinderen > 0 ? (
+                        <View style={styles.fieldContainer}>
+                          <Text style={styles.summaryLabelBold}>
+                            Totaal aantal kinderen: {kinderen}
+                          </Text>
+                        </View>
+                      ) : null;
+                    })()}
+                </>
+              )}
           </React.Fragment>
         ))}
       </ScrollView>
 
-      <View style={[styles.buttonContainer, { bottom: insets.bottom, paddingBottom: Math.max(20, insets.bottom + 8) }]}>
+      <View
+        style={[
+          styles.buttonContainer,
+          {
+            bottom: insets.bottom,
+            paddingBottom: Math.max(20, insets.bottom + 8),
+          },
+        ]}>
         {!isFirst && (
-          <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onPrev}>
+          <TouchableOpacity
+            style={[styles.button, styles.secondaryButton]}
+            onPress={onPrev}>
             <Text style={styles.secondaryButtonText}>Vorige</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>{isLast ? 'Bekijk Resultaat' : 'Volgende'}</Text>
+          <Text style={styles.buttonText}>
+            {isLast ? 'Bekijk Resultaat' : 'Volgende'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
