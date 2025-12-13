@@ -6,3 +6,5 @@ import App from './App';
 
 // App.tsx bevat al ThemeProvider; index.tsx registreert alleen de App
 registerRootComponent(App);
+
+export default App;
