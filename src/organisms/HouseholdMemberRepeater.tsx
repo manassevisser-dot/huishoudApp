@@ -109,7 +109,7 @@ const HouseholdMemberRepeater: React.FC = () => {
             naam: '',
             leeftijd: undefined,
             gender: undefined,
-            geboorteDatum: undefined,
+            dateOfBirth: undefined,
           });
         }
       }
@@ -242,48 +242,24 @@ const HouseholdMemberRepeater: React.FC = () => {
           <Text style={styles.label}>Geboortedatum</Text>
           <TextInput
             style={[styles.input, ageError && styles.inputError]}
-            value={m.geboorteDatum ? formatDate(m.geboorteDatum, 'dd-mm-yyyy') : ''}
+            value={m.dateOfBirth ? formatDate(m.dateOfBirth, 'dd-mm-yyyy') : ''}
             onChangeText={(text) => {
               const iso = parseDDMMYYYYtoISO(text);
               if (iso) {
                 const age = calculateAge(iso);
-                updateMember(index, { geboorteDatum: iso, leeftijd: age ?? undefined });
+                updateMember(index, { dateOfBirth: iso, leeftijd: age ?? undefined });
               } else {
-                updateMember(index, { geboorteDatum: undefined, leeftijd: undefined });
+                updateMember(index, { dateOfBirth: undefined, leeftijd: undefined });
               }
             }}
             placeholder="DD-MM-YYYY"
-            keyboardType="numbers-and-punctuation"
+            keyboardType="number-pad"
             maxLength={10}
             accessibilityLabel={`Geboortedatum voor ${title}`}
           />
         </View>
 
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Leeftijd</Text>
-          <TextInput
-            style={
-              ageError
-                ? [styles.numericInput, styles.inputError]
-                : styles.numericInput
-            }
-            value={
-              m.leeftijd !== undefined && m.leeftijd !== null
-                ? String(m.leeftijd)
-                : ''
-            }
-            keyboardType="number-pad"
-            maxLength={2}
-            onChangeText={(text) => {
-              const clean = onlyDigits(text).slice(0, 2);
-              const n = clean.length ? Number(clean) : undefined;
-              updateMember(index, { leeftijd: n });
-            }}
-            placeholder="18 of ouder"
-            accessibilityLabel={`Leeftijd voor ${title}`}
-          />
-          {ageError && <Text style={styles.errorTextStyle}>{ageError}</Text>}
-        </View>
 
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Gender</Text>
@@ -338,48 +314,24 @@ const HouseholdMemberRepeater: React.FC = () => {
           <Text style={styles.label}>Geboortedatum</Text>
           <TextInput
             style={[styles.input, ageError && styles.inputError]}
-            value={m.geboorteDatum ? formatDate(m.geboorteDatum, 'dd-mm-yyyy') : ''}
+            value={m.dateOfBirth ? formatDate(m.dateOfBirth, 'dd-mm-yyyy') : ''}
             onChangeText={(text) => {
               const iso = parseDDMMYYYYtoISO(text);
               if (iso) {
                 const age = calculateAge(iso);
-                updateMember(index, { geboorteDatum: iso, leeftijd: age ?? undefined });
+                updateMember(index, { dateOfBirth: iso, leeftijd: age ?? undefined });
               } else {
-                updateMember(index, { geboorteDatum: undefined, leeftijd: undefined });
+                updateMember(index, { dateOfBirth: undefined, leeftijd: undefined });
               }
             }}
             placeholder="DD-MM-YYYY"
-            keyboardType="numbers-and-punctuation"
+            keyboardType="number-pad"
             maxLength={10}
             accessibilityLabel={`Geboortedatum voor ${title}`}
           />
         </View>
 
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Leeftijd</Text>
-          <TextInput
-            style={
-              ageError
-                ? [styles.numericInput, styles.inputError]
-                : styles.numericInput
-            }
-            value={
-              m.leeftijd !== undefined && m.leeftijd !== null
-                ? String(m.leeftijd)
-                : ''
-            }
-            keyboardType="number-pad"
-            maxLength={2}
-            onChangeText={(text) => {
-              const clean = onlyDigits(text).slice(0, 2);
-              const n = clean.length ? Number(clean) : undefined;
-              updateMember(index, { leeftijd: n });
-            }}
-            placeholder="Jonger dan 18"
-            accessibilityLabel={`Leeftijd voor ${title}`}
-          />
-          {ageError && <Text style={styles.errorTextStyle}>{ageError}</Text>}
-        </View>
 
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Gender</Text>
