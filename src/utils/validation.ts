@@ -1,4 +1,6 @@
 import { FieldConfig } from '../types/form';
+import { onlyDigits } from '../utils/numbers';
+import { isDigitsDatePlausible, parseDDMMYYYYtoISO } from '../utils/date';
 
 export const validateField = (
   field: FieldConfig,
@@ -49,3 +51,28 @@ export const validateField = (
 
   return null;
 };
+
+
+/**
+ * Valideer een NL geboortedatum invoer * Valideer een NL geboortedatum invoer (DD-MM-YYYY of alleen cijfers).
+ * @returns null als geldig, anders fouttekst.
+ */
+export function validateDobNL(input: string): string | null {
+  const raw = input ?? '';
+  const digits = onlyDigits(raw);
+
+  if (digits.length < 8) {
+    return 'Vul een volledige datum in (DD-MM-YYYY).';
+  }
+  if (!isDigitsDatePlausible(digits)) {
+    return 'Ongeldige datum (dag/maand/jaar niet plausibel).';
+  }
+
+  // Zet cijfers om naar NL weergave en parse om echte kalender-validatie te doen
+  const display = `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4, 8)}`;
+  const iso = parseDDMMYYYYtoISO(display);
+  if (!iso) {
+    return 'Ongeldige datum (bestaat niet in kalender).';
+  }
+  return null; // geldig 
+}

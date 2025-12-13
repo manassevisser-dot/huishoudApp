@@ -84,3 +84,17 @@ export function getISOWeek(date: Date): number {
   const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
   return weekNo;
 }
+
+
+
+export function isDigitsDatePlausible(digits: string): boolean {
+  if (digits.length !== 8) return false;
+  const dd = Number(digits.slice(0, 2));
+  const mm = Number(digits.slice(2, 4));
+  const yyyy = Number(digits.slice(4, 8));
+  if (!Number.isInteger(dd) || !Number.isInteger(mm) || !Number.isInteger(yyyy)) return false;
+  if (dd < 1 || dd > 31) return false;
+  if (mm < 1 || mm > 12) return false;
+  if (yyyy < 1900 || yyyy > 2099) return false;
+  return true;
+}

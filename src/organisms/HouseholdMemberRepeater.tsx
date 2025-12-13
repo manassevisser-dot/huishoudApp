@@ -7,6 +7,7 @@ import { useFormContext } from '../context/FormContext';
 import { Member, BurgerlijkeStaat, WoningType } from '../types/household';
 import { onlyDigits, stripEmojiAndLimit } from '../utils/numbers';
 import { parseDDMMYYYYtoISO, calculateAge, formatDate } from '../utils/date';
+import { validateDobNL } from '../utils/validation';
 
 // P4: Updated GENDER_OPTIONS - 'geen antwoord' → 'n.v.t.'
 const GENDER_OPTIONS: Member['gender'][] = [
@@ -32,6 +33,9 @@ const HouseholdMemberRepeater: React.FC = () => {
 
 // --- DOB auto-format (per lid): we tonen tijdens typen DD-MM-YYYY en zetten bij 8 cijfers ISO in state ---//
 const [dobDraft, setDobDraft] = React.useState<Record<string, string>>({});
+
+// --- DOB fouten (centrale validator) ---
+const [dobError, setDobError] = React.useState<Record<string, string | null>>({});
 
 const formatDigitsToDDMMYYYY = (digits: string): string => {
   const d = digits.slice(0, 8);
@@ -203,30 +207,48 @@ const formatDigitsToDDMMYYYY = (digits: string): string => {
     dispatch({ type: 'SET_PAGE_DATA', pageId: 'C4', data: { leden: next } });
   };
 
-  const handleDobChange = (memberId: string, index: number) => (text: string) => {
-    // alleen cijfers uit de invoer
-    const digits = onlyDigits(text);
-    
-    const display = formatDigitsToDDMMYYYY(digits);
+//==== nieuw
 
-    // toon draft tijdens typen
-    setDobDraft((prev) => ({ ...prev, [memberId]: display }));
+const handleDobChange = (memberId: string, index: number) => (text: string) => {
+  const digits = onlyDigits(text);
+  const display = formatDigitsToDDMMYYYY(digits);
 
-    if (digits.length === 8) {
-      const iso = parseDDMMYYYYtoISO(display);
-      if (iso) {
-        const age = calculateAge(iso);
-        // schrijf naar state (ISO + afgeleide leeftijd)
-        updateMember(index, { dateOfBirth: iso, leeftijd: age ?? undefined });
+  // draft tonen tijdens typen
+ 
+setDobDraft((prev: Record<string, string>) => {
+  const next = { ...prev };
+  delete next[memberId];
+  return next;
+});
 
-        // draft opruimen zodat daarna de canonical ISO -> NL via formatDate wordt getoond
-        setDobDraft((prev) => {
-          const { [memberId]: _, ...rest } = prev;
-          return rest;
-        });
-        return;
-      }
-    }
+  // Gebruik centrale validator (geeft null of fouttekst)
+  const err = validateDobNL(display);
+
+  if (err) {
+    setDobError((prev) => ({ ...prev, [memberId]: err }));
+    // state leeghouden zolang ongeldig
+    updateMember(index, { dateOfBirth: undefined, leeftijd: undefined });
+    return;
+   }
+ 
+   // geldig → parse naar ISO + leeftijd berekenen en opslaan
+   const iso = parseDDMMYYYYtoISO(display)!;        // validator garandeert dat dit niet null is
+   const age = calculateAge(iso) ?? undefined;
+   setDobError((prev) => ({ ...prev, [memberId]: null }));
+   updateMember(index, { dateOfBirth: iso, leeftijd: age });
+
+   // draft opruimen zodat daarna canonical ISO -> NL via formatDate zichtbaar is
+   
+setDobDraft((prev: Record<string, string>) => {
+  const next = { ...prev };
+  delete next[memberId];
+  return next;
+});
+
+  
+
+
+
 
     // zolang het geen geldige 8 cijfers zijn, houden we dateOfBirth leeg
     updateMember(index, { dateOfBirth: undefined, leeftijd: undefined });
@@ -302,6 +324,7 @@ const formatDigitsToDDMMYYYY = (digits: string): string => {
   accessibilityLabel={`Geboortedatum voor ${title}`}
 
           />
+          {dobError[m.id] && <Text style={styles.errorTextStyle}>{dobError[m.id]}</Text>}
         </View>
 
 
@@ -370,6 +393,7 @@ const formatDigitsToDDMMYYYY = (digits: string): string => {
   accessibilityLabel={`Geboortedatum voor ${title}`}
 
           />
+          {dobError[m.id] && <Text style={styles.errorTextStyle}>{dobError[m.id]}</Text>}
         </View>
 
 
