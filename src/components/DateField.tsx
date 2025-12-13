@@ -91,5 +91,9 @@ const DateField: React.FC<Props> = ({
       {errorText && <Text style={styles.errorTextStyle}>{errorText}</Text>}
     </View>
   );
+<<<<<<< HEAD
 };
 
+=======
+};
+>>>>>>> 23a885b (C4: native DateField toegevoegd; DOB picker voor volwassene/kind; leeftijd afgeleid)
