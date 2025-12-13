@@ -234,7 +234,12 @@ setDobDraft((prev: Record<string, string>) => {
    // geldig → parse naar ISO + leeftijd berekenen en opslaan
    const iso = parseDDMMYYYYtoISO(display)!;        // validator garandeert dat dit niet null is
    const age = calculateAge(iso) ?? undefined;
-   setDobError((prev) => ({ ...prev, [memberId]: null }));
+   
+setDobError((prev: Record<string, string | null>) => ({ ...prev, [memberId]: err }));
+// … en voor reset:
+setDobError((prev: Record<string, string | null>) => ({ ...prev, [memberId]: null }));
+
+
    updateMember(index, { dateOfBirth: iso, leeftijd: age });
 
    // draft opruimen zodat daarna canonical ISO -> NL via formatDate zichtbaar is
