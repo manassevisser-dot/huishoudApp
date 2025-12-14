@@ -99,7 +99,7 @@ export const TransactionService = {
       const existingRaw = await AsyncStorage.getItem(STORAGE_KEY);
       const existing: DailyTransaction[] = existingRaw ? JSON.parse(existingRaw) : [];
       // FIX 2: Check that t.id is defined before comparing to the input 'id' (string | undefined vs string)
-      const filtered = existing.filter((t: DailyTransaction) => t.id && t.id !== id);
+      const filtered = existing.filter((t: DailyTransaction) => !t.id || t.id !== id);
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
       return true;
     } catch (error) {
@@ -120,7 +120,7 @@ export const TransactionService = {
       const existing: DailyTransaction[] = existingRaw ? JSON.parse(existingRaw) : [];
       const idsSet = new Set(ids);
       // FIX 3: Check that t.id is defined before checking if the set has it
-      const filtered = existing.filter((t: DailyTransaction) => t.id && !idsSet.has(t.id));
+      const filtered = existing.filter((t: DailyTransaction) => !t.id || !idsSet.has(t.id));
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
       return true;
     } catch (error) {
