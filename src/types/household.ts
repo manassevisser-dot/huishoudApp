@@ -28,3 +28,9 @@ export type BurgerlijkeStaat =
 export type WoningType = 'Koop' | 'Huur' | 'Kamer' | 'Anders';
 export type HuisdierenYesNo = 'Ja' | 'Nee';
 export type AutoCount = 'Nee' | 'Één' | 'Twee';
+
+export const BURGERLIJKE_OPTIONS: Exclude<BurgerlijkeStaat, 'Alleenstaand'>[] = [
+  'Gehuwd', 'Fiscaal Partners', 'Samenwonend', 'Bevriend', 'Anders',
+];
+
+export const WONING_OPTIONS: WoningType[] = ['Koop', 'Huur', 'Kamer', 'Anders'];
