@@ -1,12 +1,20 @@
+
 {
-  "license": "0BSD",
-  "main": "index.tsx",
-  "scripts": {
-    "start": "expo start",
+    "name": "huishoudapp",
+    "private": true,
+    "type": "module", 
+    "license": "0BSD",
+    "main": "index.tsx",
+    "scripts": {
+      "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
-  },
+    "web": "expo start --web",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "tsc": "tsc",
+    "prepare": "husky install"
+    },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
@@ -18,7 +26,15 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/parser": "^8.49.0",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4",
     "typescript": "~5.9.2"
-  },
-  "private": true
+  }
+  
 }

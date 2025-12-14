@@ -9,12 +9,12 @@ export const GENDER_OPTIONS: Gender[] = ['man', 'vrouw', 'anders', 'n.v.t.'];
 
 // Pas de Member type aan om het type alias te gebruiken (houdt de structuur schoon)
 export type Member = {
-  id: string;
-  memberType: 'adult' | 'child';
-  naam?: string;
-  leeftijd?: number; 
-  dateOfBirth?: string; 
-  gender?: Gender; // Gebruikt nu het geëxporteerde type
+  id: string;
+  memberType: 'adult' | 'child';
+  naam?: string;
+  leeftijd?: number;
+  dateOfBirth?: string;
+  gender?: Gender; // Gebruikt nu het geëxporteerde type
 };
 
 export type BurgerlijkeStaat =
