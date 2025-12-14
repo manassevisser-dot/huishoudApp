@@ -98,3 +98,41 @@ export function isDigitsDatePlausible(digits: string): boolean {
   if (yyyy < 1900 || yyyy > 2099) return false;
   return true;
 }
+
+// === Grenzen t.o.v. vandaag (UTC-noon) voor DOB ===
+
+/** Vandaag op 12:00 UTC (noon), om TZ-dagverschuivingen te voorkomen. */
+export function todayUtcNoon(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0));
+}
+
+/** YYYY-MM-DD uit een UTC Date (zonder tijdcomponenten). */
+export function toISOFromUTC(dateUtc: Date): string {
+  const y = dateUtc.getUTCFullYear();
+  const m = String(dateUtc.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(dateUtc.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/** Max DOB voor VOLWASSENE: vandaag - 18 jaar. */
+export function getAdultMaxISO(base?: Date): string {
+  const baseUtc = base ?? todayUtcNoon();
+  const d = new Date(baseUtc);
+  d.setUTCFullYear(d.getUTCFullYear() - 18);
+  return toISOFromUTC(d);
+}
+
+/** Min DOB voor KIND: (vandaag - 18 jaar) + 1 dag (voorkomt exact 18). */
+export function getChildMinISO(base?: Date): string {
+  const baseUtc = base ?? todayUtcNoon();
+  const d = new Date(baseUtc);
+  d.setUTCFullYear(d.getUTCFullYear() - 18);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return toISOFromUTC(d);
+}
+
+/** Max DOB voor KIND: vandaag (UTC-noon). */
+export function getChildMaxISO(base?: Date): string {
+  return toISOFromUTC(base ?? todayUtcNoon());
+}

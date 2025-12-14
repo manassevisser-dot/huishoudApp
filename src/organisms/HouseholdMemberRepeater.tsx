@@ -9,6 +9,7 @@ import { onlyDigits, stripEmojiAndLimit } from '../utils/numbers';
 import { parseDDMMYYYYtoISO, calculateAge, formatDate } from '../utils/date';
 import { validateDobNL } from '../utils/validation';
 import DateField from '../components/DateField';
+import { getAdultMaxISO, getChildMinISO, getChildMaxISO } from '../utils/date';
 
 
 // P4: Updated GENDER_OPTIONS - 'geen antwoord' → 'n.v.t.'
@@ -322,6 +323,8 @@ const renderAdultCard = (m: Member, index: number) => {
       <DateField
         label="Geboortedatum"
         valueISO={m.dateOfBirth}
+        minISO="1920-01-01"
+        maxISO={getAdultMaxISO()}
         onChangeISO={(iso: string | undefined) => {
           if (iso) {
             const age = calculateAge(iso) ?? undefined;
@@ -406,6 +409,8 @@ const renderChildCard = (m: Member, index: number) => {
       <DateField
         label="Geboortedatum"
         valueISO={m.dateOfBirth}
+        minISO={getChildMinISO()}
+        maxISO={getChildMaxISO()}
         onChangeISO={(iso: string | undefined) => {
           if (iso) {
             const age = calculateAge(iso) ?? undefined;
