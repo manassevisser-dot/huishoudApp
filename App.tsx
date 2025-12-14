@@ -2,13 +2,7 @@
 // App.tsx
 
 import * as React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-} from 'react-native';
+import { View, Text, ActivityIndicator, Alert } from 'react-native';
 import {
   useSafeAreaInsets,
   SafeAreaProvider,
