@@ -3,15 +3,11 @@
 
 import * as React from 'react';
 import { View, Text, ActivityIndicator, Alert } from 'react-native';
-import {
-  useSafeAreaInsets,
-  SafeAreaProvider,
-} from 'react-native-safe-area-context';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 import { useAppStyles } from './src/styles/useAppStyles'; // FIXED PATH
 import { FormProvider, useFormContext } from './src/context/FormContext';
-import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { ThemeProvider } from './src/context/ThemeContext';
 import { Storage } from './src/services/storage';
 import LandingScreen from './src/screens/LandingScreen';
 import WizardPage from './src/screens/Wizard/WizardPage';
@@ -33,30 +29,23 @@ const WIZARD_PAGES: PageConfig[] = [C1Config, C4Config, C7Config, C10Config];
 
 const AppContent: React.FC = () => {
   const { state, dispatch } = useFormContext();
-  const { theme: _theme } = useTheme();
-  const { styles, colors: _colors } = useAppStyles(); // Destructure styles and colors
-  const _insets = useSafeAreaInsets();
-
+  const { styles } = useAppStyles(); // only styles are used in this file
   // === ALL HOOKS AT TOP LEVEL (NO CONDITIONALS) ===
   const [currentPageIndex, setCurrentPageIndex] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(true);
-
   // Existing flags
   const [showLanding, setShowLanding] = React.useState(true);
   const [showDailyInput, setShowDailyInput] = React.useState(false);
-
   // NEW P0 flags
   const [showOptions, setShowOptions] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
   const [showCsvUpload, setShowCsvUpload] = React.useState(false);
   const [showReset, setShowReset] = React.useState(false);
   const [showUndo, setShowUndo] = React.useState(false);
-
   const c4Index = React.useMemo(
     () => WIZARD_PAGES.findIndex((p) => p.id === 'C4'),
     [],
   );
-
   const atDashboard = currentPageIndex === WIZARD_PAGES.length;
   const summary = React.useMemo(
     () => calculateFinancialSummary(state.C7, state.C10),
