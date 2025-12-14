@@ -9,7 +9,6 @@ import { onlyDigits, stripEmojiAndLimit } from '../utils/numbers';
 import { parseDDMMYYYYtoISO, calculateAge, formatDate } from '../utils/date';
 import { validateDobNL } from '../utils/validation';
 import DateField from '../components/DateField';
-import { calculateAge } from '../utils/date';
 
 
 // P4: Updated GENDER_OPTIONS - 'geen antwoord' → 'n.v.t.'
@@ -323,7 +322,7 @@ const renderAdultCard = (m: Member, index: number) => {
       <DateField
         label="Geboortedatum"
         valueISO={m.dateOfBirth}
-        onChangeISO={(iso) => {
+        onChangeISO={(iso: string | undefined) => {
           if (iso) {
             const age = calculateAge(iso) ?? undefined;
             updateMember(index, { dateOfBirth: iso, leeftijd: age });
@@ -367,6 +366,7 @@ const renderAdultCard = (m: Member, index: number) => {
       </View>
     </View>
   );
+  };
 
  
 const renderChildCard = (m: Member, index: number) => {
@@ -406,7 +406,7 @@ const renderChildCard = (m: Member, index: number) => {
       <DateField
         label="Geboortedatum"
         valueISO={m.dateOfBirth}
-        onChangeISO={(iso) => {
+        onChangeISO={(iso: string | undefined) => {
           if (iso) {
             const age = calculateAge(iso) ?? undefined;
             updateMember(index, { dateOfBirth: iso, leeftijd: age });
@@ -435,7 +435,7 @@ const renderChildCard = (m: Member, index: number) => {
         <ScrollView
           horizontal
           contentContainerStyle={styles.chipContainer}
-          shows          showsHorizontalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
         >
           {GENDER_OPTIONS.map((g) => (
             <ChipButton
@@ -450,6 +450,7 @@ const renderChildCard = (m: Member, index: number) => {
       </View>
     </View>
   );
+  };
 
 
   const renderBurgerlijkeStaat = () => {
