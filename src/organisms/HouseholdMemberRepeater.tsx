@@ -5,8 +5,6 @@ import ChipButton from '../components/ChipButton';
 import { useFormContext } from '../context/FormContext';
 import {
   Member,
-  BurgerlijkeStaat,
-  WoningType,
   GENDER_OPTIONS,
 } from '../types/household';
 import { stripEmojiAndLimit } from '../utils/numbers';
@@ -17,18 +15,6 @@ import {
   getChildMaxISO,
 } from '../utils/date';
 import DateField from '../components/DateField';
-
-const BURGERLIJKE_OPTIONS: Exclude<BurgerlijkeStaat, 'Alleenstaand'>[] = [
-  'Gehuwd',
-  'Fiscaal Partners',
-  'Samenwonend',
-  'Bevriend',
-  'Anders',
-];
-
-
-const WONING_OPTIONS: WoningType[] = ['Koop', 'Huur', 'Kamer', 'Anders'];
-
 
 const HouseholdMemberRepeater: React.FC = () => {
   const { styles } = useAppStyles();
@@ -73,12 +59,6 @@ const HouseholdMemberRepeater: React.FC = () => {
   const leden: Member[] = Array.isArray(state.C4?.leden)
     ? (state.C4!.leden as Member[])
     : [];
-
-    const burgerlijkeStaat: BurgerlijkeStaat | undefined = state.C4?.burgerlijkeStaat;
-    const woning: WoningType | undefined = state.C4?.woning;
-    const postcode: string | undefined = state.C4?.postcode;
-    
-    
 
   const updateMember = (index: number, patch: Partial<Member>) => {
     const next = leden.map((m, i) => (i === index ? { ...m, ...patch } : m));
