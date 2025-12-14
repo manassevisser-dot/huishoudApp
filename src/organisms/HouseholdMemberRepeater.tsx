@@ -26,7 +26,9 @@ const BURGERLIJKE_OPTIONS: Exclude<BurgerlijkeStaat, 'Alleenstaand'>[] = [
   'Anders',
 ];
 
+
 const WONING_OPTIONS: WoningType[] = ['Koop', 'Huur', 'Kamer', 'Anders'];
+
 
 const HouseholdMemberRepeater: React.FC = () => {
   const { styles } = useAppStyles();
@@ -72,9 +74,11 @@ const HouseholdMemberRepeater: React.FC = () => {
     ? (state.C4!.leden as Member[])
     : [];
 
-  const burgerlijkeStaat = state.C4?.burgerlijkeStaat;
-  const woning = state.C4?.woning;
-  const postcode = state.C4?.postcode;
+    const burgerlijkeStaat: BurgerlijkeStaat | undefined = state.C4?.burgerlijkeStaat;
+    const woning: WoningType | undefined = state.C4?.woning;
+    const postcode: string | undefined = state.C4?.postcode;
+    
+    
 
   const updateMember = (index: number, patch: Partial<Member>) => {
     const next = leden.map((m, i) => (i === index ? { ...m, ...patch } : m));
