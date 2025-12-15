@@ -51,7 +51,7 @@ type NavigatorProps = {
   onPrev: () => void;
 };
 
-const Navigator: React.FC<NavigatorProps> = ({
+export default function Navigator({
   isLoading,
   showUndo,
   showReset,
@@ -81,7 +81,7 @@ const Navigator: React.FC<NavigatorProps> = ({
   pageIndex,
   onNext,
   onPrev,
-}) => {
+}: NavigatorProps) {
   const { styles } = useAppStyles();
 
   // PRIORITY 0: Loading
@@ -138,4 +138,4 @@ const Navigator: React.FC<NavigatorProps> = ({
       <WizardController pages={pages} pageIndex={pageIndex} onNext={onNext} onPrev={onPrev} />
     </View>
   );
-};
+}
