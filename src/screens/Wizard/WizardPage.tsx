@@ -16,6 +16,9 @@ type PageProps = {
   onPrev: () => void;
   isFirst: boolean;
   isLast: boolean;
+  // Nieuw: progress-indicator props (aangeleverd door WizardController)
+  totalPages?: number;
+  currentPageIndex?: number;
 };
 
 const WizardPage: React.FC<PageProps> = ({
@@ -24,6 +27,8 @@ const WizardPage: React.FC<PageProps> = ({
   onPrev,
   isFirst,
   isLast,
+  totalPages,
+  currentPageIndex,
 }) => {
   const insets = useSafeAreaInsets();
   const { styles, colors } = useAppStyles();
@@ -96,12 +101,34 @@ const WizardPage: React.FC<PageProps> = ({
     <View style={styles.pageContainer}>
       <Text style={styles.pageTitle}>{page.title}</Text>
 
+      {/*
+        TODO(feature-flag): Onderstaande indicator conditioneel maken via features.showWizardProgress
+        zodra er een features.ts bestaat. Voor nu: render indien props aanwezig zijn.
+      */}
+      {typeof totalPages === 'number' && typeof currentPageIndex === 'number' && totalPages > 1 && (
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 16 }}>
+          {Array.from({ length: totalPages }).map((_, i) => (
+            <View
+              // Stabiele key op index; het is een vaste reeks punten (geen data-id)
+              key={i}
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: 4,
+                marginHorizontal: 4,
+                backgroundColor: i === currentPageIndex ? colors.primary : colors.border,
+              }}
+              accessibilityLabel={`Wizard stap ${i + 1} van ${totalPages}${i === currentPageIndex ? ' (actief)' : ''}`}
+              accessible
+            />
+          ))}
+        </View>
+      )}
+
       <ScrollView
         ref={scrollViewRef}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: 120 + insets.bottom },
-        ]}>
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
+      >
         {page.fields.map((field) => (
           <React.Fragment key={field.id}>
             <ConditionalField conditional={field.conditional} pageId={page.id}>
@@ -116,54 +143,46 @@ const WizardPage: React.FC<PageProps> = ({
             </ConditionalField>
 
             {/* Waarschuwingen C1 */}
-            {page.id === 'C1' &&
-              evaluateCondition(field.conditional, state, page.id) && (
-                <>
-                  {(field.id === 'aantalMensen' ||
-                    field.id === 'aantalVolwassen') &&
-                    (() => {
-                      const val = Number(currentPageData[field.id] ?? 0);
-                      if (
-                        (field.id === 'aantalMensen' && val >= 10) ||
-                        (field.id === 'aantalVolwassen' && val >= 7)
-                      ) {
-                        return (
-                          <Text style={styles.warningTextRed}>
-                            maximaal aantal personen bereikt
-                          </Text>
-                        );
-                      }
-                      if (
-                        (field.id === 'aantalMensen' && val >= 7) ||
-                        (field.id === 'aantalVolwassen' && val >= 5)
-                      ) {
-                        return (
-                          <Text style={styles.warningTextOrange}>
-                            u nadert het maximaal aantal
-                          </Text>
-                        );
-                      }
-                      return null;
-                    })()}
-
-                  {/* Totaal aantal kinderen */}
-                  {field.id === 'aantalVolwassen' &&
-                    (() => {
-                      const mensen = Number(currentPageData.aantalMensen ?? 0);
-                      const volwassen = Number(
-                        currentPageData.aantalVolwassen ?? 0
+            {page.id === 'C1' && evaluateCondition(field.conditional, state, page.id) && (
+              <>
+                {(field.id === 'aantalMensen' || field.id === 'aantalVolwassen') &&
+                  (() => {
+                    const val = Number(currentPageData[field.id] ?? 0);
+                    if (
+                      (field.id === 'aantalMensen' && val >= 10) ||
+                      (field.id === 'aantalVolwassen' && val >= 7)
+                    ) {
+                      return (
+                        <Text style={styles.warningTextRed}>maximaal aantal personen bereikt</Text>
                       );
-                      const kinderen = Math.max(0, mensen - volwassen);
-                      return kinderen > 0 ? (
-                        <View style={styles.fieldContainer}>
-                          <Text style={styles.summaryLabelBold}>
-                            Totaal aantal kinderen: {kinderen}
-                          </Text>
-                        </View>
-                      ) : null;
-                    })()}
-                </>
-              )}
+                    }
+                    if (
+                      (field.id === 'aantalMensen' && val >= 7) ||
+                      (field.id === 'aantalVolwassen' && val >= 5)
+                    ) {
+                      return (
+                        <Text style={styles.warningTextOrange}>u nadert het maximaal aantal</Text>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                {/* Totaal aantal kinderen */}
+                {field.id === 'aantalVolwassen' &&
+                  (() => {
+                    const mensen = Number(currentPageData.aantalMensen ?? 0);
+                    const volwassen = Number(currentPageData.aantalVolwassen ?? 0);
+                    const kinderen = Math.max(0, mensen - volwassen);
+                    return kinderen > 0 ? (
+                      <View style={styles.fieldContainer}>
+                        <Text style={styles.summaryLabelBold}>
+                          Totaal aantal kinderen: {kinderen}
+                        </Text>
+                      </View>
+                    ) : null;
+                  })()}
+              </>
+            )}
           </React.Fragment>
         ))}
       </ScrollView>
@@ -175,18 +194,15 @@ const WizardPage: React.FC<PageProps> = ({
             bottom: insets.bottom,
             paddingBottom: Math.max(20, insets.bottom + 8),
           },
-        ]}>
+        ]}
+      >
         {!isFirst && (
-          <TouchableOpacity
-            style={[styles.button, styles.secondaryButton]}
-            onPress={onPrev}>
+          <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onPrev}>
             <Text style={styles.secondaryButtonText}>Vorige</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity style={styles.button} onPress={handleNext}>
-          <Text style={styles.buttonText}>
-            {isLast ? 'Bekijk Resultaat' : 'Volgende'}
-          </Text>
+          <Text style={styles.buttonText}>{isLast ? 'Bekijk Resultaat' : 'Volgende'}</Text>
         </TouchableOpacity>
       </View>
     </View>
