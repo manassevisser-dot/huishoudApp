@@ -13,19 +13,33 @@ import { C10Config } from './pages/C10.config';
 // De wizard-flow (volgorde conform handover)
 const PAGES: PageConfig[] = [C1Config, C4Config, C7Config, C10Config];
 
-const WizardController: React.FC = () => {
-  const [currentPageIndex, setCurrentPageIndex] = React.useState(0);
-  const totalPages = PAGES.length;
+type WizardControllerProps = {
+  pages?: PageConfig[];
+  pageIndex?: number;
+  onNext?: () => void;
+  onPrev?: () => void;
+};
+
+const WizardController: React.FC<WizardControllerProps> = (props) => {
+  const effectivePages = props.pages ?? PAGES;
+  const totalPages = effectivePages.length;
+  const isControlled = typeof props.pageIndex === 'number' && !!props.onNext && !!props.onPrev;
+
+  // Uncontrolled fallback
+  const [uncontrolledIndex, setUncontrolledIndex] = React.useState(0);
+  const currentPageIndex = isControlled ? (props.pageIndex as number) : uncontrolledIndex;
 
   const handleNext = React.useCallback(() => {
-    setCurrentPageIndex((prev) => Math.min(prev + 1, totalPages - 1));
-  }, [totalPages]);
+    if (isControlled) return props.onNext!();
+    setUncontrolledIndex((prev) => Math.min(prev + 1, totalPages - 1));
+  }, [isControlled, props, totalPages]);
 
   const handlePrev = React.useCallback(() => {
-    setCurrentPageIndex((prev) => Math.max(prev - 1, 0));
-  }, []);
+    if (isControlled) return props.onPrev!();
+    setUncontrolledIndex((prev) => Math.max(prev - 1, 0));
+  }, [isControlled, props]);
 
-  const page = PAGES[currentPageIndex];
+  const page = effectivePages[currentPageIndex];
   const isFirst = currentPageIndex === 0;
   const isLast = currentPageIndex === totalPages - 1;
 
