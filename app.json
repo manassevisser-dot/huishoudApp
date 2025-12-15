@@ -1,11 +1,12 @@
 {
   "expo": {
     "name": "huishoudapp",
-    "slug": "snack-dcecf871-d9ab-41f5-bc89-0493582f4435",
+    "slug": "huishoudapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "entryPoint": "index.tsx",
     "ios": {
       "supportsTablet": true
     },
