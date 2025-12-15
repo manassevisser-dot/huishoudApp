@@ -3,21 +3,13 @@
 
 import * as React from 'react';
 import { View, Text, ActivityIndicator, Alert } from 'react-native';
-import {SafeAreaProvider} from 'react-native-safe-area-context';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppStyles } from './src/styles/useAppStyles'; // FIXED PATH
 import { FormProvider, useFormContext } from './src/context/FormContext';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { Storage } from './src/services/storage';
-import LandingScreen from './src/screens/LandingScreen';
-import WizardPage from './src/screens/Wizard/WizardPage';
-import DashboardScreen from './src/screens/Dashboard/DashboardScreen';
-import DailyInputScreen from './src/screens/DailyInput/DailyInputScreen';
-import OptionsScreen from './src/screens/Options/OptionsScreen';
-import SettingsScreen from './src/screens/Settings/SettingsScreen';
-import CsvUploadScreen from './src/screens/CSV/CsvUploadScreen';
-import ResetScreen from './src/screens/Reset/ResetScreen';
-import UndoScreen from './src/screens/Daily/UndoScreen';
+import Navigator from './src/navigation/Navigator';
 import { C1Config } from './src/screens/Wizard/pages/C1.config';
 import { C4Config } from './src/screens/Wizard/pages/C4.config';
 import { C7Config } from './src/screens/Wizard/pages/C7.config';
@@ -42,17 +34,13 @@ const AppContent: React.FC = () => {
   const [showCsvUpload, setShowCsvUpload] = React.useState(false);
   const [showReset, setShowReset] = React.useState(false);
   const [showUndo, setShowUndo] = React.useState(false);
-  const c4Index = React.useMemo(
-    () => WIZARD_PAGES.findIndex((p) => p.id === 'C4'),
-    [],
-  );
+  const c4Index = React.useMemo(() => WIZARD_PAGES.findIndex((p) => p.id === 'C4'), []);
   const atDashboard = currentPageIndex === WIZARD_PAGES.length;
   const summary = React.useMemo(
     () => calculateFinancialSummary(state.C7, state.C10),
     [state.C7, state.C10],
   );
-  const hasMinimumData =
-    summary.inkomenTotaalMaand > 0 && summary.lastenTotaalVast > 0;
+  const hasMinimumData = summary.inkomenTotaalMaand > 0 && summary.lastenTotaalVast > 0;
 
   // Load saved state on mount
   React.useEffect(() => {
@@ -221,93 +209,39 @@ const AppContent: React.FC = () => {
       setCurrentPageIndex((prev) => prev - 1);
     }
   };
-
-  // === RENDERING LOGIC (PRIORITY ORDER) ===
-
-  if (isLoading) {
-    return (
-      <View
-        style={[
-          styles.container,
-          { justifyContent: 'center', alignItems: 'center' },
-        ]}
-      >
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={{ marginTop: 10 }}>Laden...</Text>
-      </View>
-    );
-  }
-
-  // PRIORITY 1: Management screens
-  if (showUndo) {
-    return <UndoScreen onClose={handleCloseUndo} />;
-  }
-
-  if (showReset) {
-    return (
-      <ResetScreen
-        onClose={handleCloseReset}
-        onWissen={handleWissen}
-        onHerstel={handleHerstel}
-      />
-    );
-  }
-
-  if (showCsvUpload) {
-    return <CsvUploadScreen onClose={handleCloseCsvUpload} />;
-  }
-
-  if (showSettings) {
-    return <SettingsScreen onClose={handleCloseSettings} />;
-  }
-
-  if (showOptions) {
-    return (
-      <OptionsScreen
-        onClose={handleCloseOptions}
-        onSettings={handleOpenSettings}
-        onCsvUpload={handleOpenCsvUpload}
-        onReset={handleOpenReset}
-      />
-    );
-  }
-
-  // PRIORITY 2: Daily Input
-  if (showDailyInput) {
-    return <DailyInputScreen onBack={() => setShowDailyInput(false)} />;
-  }
-
-  // PRIORITY 3: Landing
-  if (showLanding) {
-    return <LandingScreen onSignup={handleSignup} onSignin={handleSignin} />;
-  }
-
-  // PRIORITY 4: Dashboard
-  if (atDashboard) {
-    return (
-      <View style={styles.container}>
-        <DashboardScreen
-          onAddTransaction={() => setShowDailyInput(true)}
-          onLogout={handleLogout}
-          onOpenOptions={handleOpenOptions}
-          onOpenUndo={handleOpenUndo}
-        />
-      </View>
-    );
-  }
-
-  // PRIORITY 5: Wizard (fallback)
-  const currentPage = WIZARD_PAGES[currentPageIndex];
+  // === RENDERING LOGIC → gedelegeerd aan Navigator (presentational)
   return (
-    <View style={styles.container}>
-      <WizardPage
-        page={currentPage}
-        onNext={navigateNext}
-        onPrev={navigatePrev}
-        isFirst={currentPageIndex === 0}
-        isLast={currentPageIndex === WIZARD_PAGES.length - 1}
-      />
-    </View>
+    <Navigator
+      isLoading={isLoading}
+      showUndo={showUndo}
+      showReset={showReset}
+      showCsvUpload={showCsvUpload}
+      showSettings={showSettings}
+      showOptions={showOptions}
+      showDailyInput={showDailyInput}
+      showLanding={showLanding}
+      atDashboard={atDashboard}
+      onCloseUndo={handleCloseUndo}
+      onCloseReset={handleCloseReset}
+      onWissen={handleWissen}
+      onHerstel={handleHerstel}
+      onCloseCsvUpload={handleCloseCsvUpload}
+      onCloseSettings={handleCloseSettings}
+      onCloseOptions={handleCloseOptions}
+      onOpenOptions={handleOpenOptions}
+      onOpenSettings={handleOpenSettings}
+      onOpenCsvUpload={handleOpenCsvUpload}
+      onOpenReset={handleOpenReset}
+      onOpenUndo={handleOpenUndo}
+      onLogout={handleLogout}
+      onDailyInputBack={() => setShowDailyInput(false)}
+      onSignup={handleSignup}
+      onSignin={handleSignin}
+      pages={WIZARD_PAGES}
+      pageIndex={currentPageIndex}
+      onNext={navigateNext}
+      onPrev={navigatePrev}
+    />
   );
 };
 
