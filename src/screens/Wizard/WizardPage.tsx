@@ -9,6 +9,7 @@ import { useFormContext } from '../../context/FormContext';
 import { validateField } from '../../utils/validation';
 import { evaluateCondition } from '../../utils/conditions';
 import { PageConfig } from '../../types/form';
+import { showWizardProgress } from '../../config/features';
 
 type PageProps = {
   page: PageConfig;
@@ -105,25 +106,29 @@ const WizardPage: React.FC<PageProps> = ({
         TODO(feature-flag): Onderstaande indicator conditioneel maken via features.showWizardProgress
         zodra er een features.ts bestaat. Voor nu: render indien props aanwezig zijn.
       */}
-      {typeof totalPages === 'number' && typeof currentPageIndex === 'number' && totalPages > 1 && (
-        <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 16 }}>
-          {Array.from({ length: totalPages }).map((_, i) => (
-            <View
-              // Stabiele key op index; het is een vaste reeks punten (geen data-id)
-              key={i}
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 4,
-                marginHorizontal: 4,
-                backgroundColor: i === currentPageIndex ? colors.primary : colors.border,
-              }}
-              accessibilityLabel={`Wizard stap ${i + 1} van ${totalPages}${i === currentPageIndex ? ' (actief)' : ''}`}
-              accessible
-            />
-          ))}
-        </View>
-      )}
+
+      {showWizardProgress &&
+        typeof totalPages === 'number' &&
+        typeof currentPageIndex === 'number' &&
+        totalPages > 1 && (
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 16 }}>
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <View
+                // Stabiele key op index; het is een vaste reeks punten (geen data-id)
+                key={i}
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  marginHorizontal: 4,
+                  backgroundColor: i === currentPageIndex ? colors.primary : colors.border,
+                }}
+                accessibilityLabel={`Wizard stap ${i + 1} van ${totalPages}${i === currentPageIndex ? ' (actief)' : ''}`}
+                accessible
+              />
+            ))}
+          </View>
+        )}
 
       <ScrollView
         ref={scrollViewRef}
