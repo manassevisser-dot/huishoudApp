@@ -1,16 +1,21 @@
+// Time conversion constants used throughout finance calculations.
+// Keep logic unchanged; centralize values to avoid magic numbers.
+export const WEEKS_PER_YEAR = 52; // Aantal weken per jaar voor conversies
+export const MONTHS_PER_YEAR = 12; // Aantal maanden per jaar voor conversies
+
 export const calculateFinancialSummary = (c7: any, c10: any) => {
   const F = (freq?: string) => {
     switch (freq) {
       case 'week':
-        return 52 / 12;
+        return WEEKS_PER_YEAR / MONTHS_PER_YEAR;
       case '4wk':
-        return 13;
+        return 13 / 12;
       case 'month':
         return 1;
       case 'quarter':
         return 1 / 3;
       case 'year':
-        return 1 / 12;
+        return 1 / MONTHS_PER_YEAR;
       default:
         return 1;
     }
@@ -24,21 +29,13 @@ export const calculateFinancialSummary = (c7: any, c10: any) => {
 
         if (categories.werk) {
           const freq = rec.frequentie;
-          const netto =
-            typeof rec.nettoSalaris === 'number' ? rec.nettoSalaris : 0;
+          const netto = typeof rec.nettoSalaris === 'number' ? rec.nettoSalaris : 0;
           s += netto * F(freq);
           const zorg =
-            typeof rec?.toeslagen?.zorgtoeslag === 'number'
-              ? rec.toeslagen.zorgtoeslag
-              : 0;
-          const over =
-            typeof rec?.toeslagen?.overige === 'number'
-              ? rec.toeslagen.overige
-              : 0;
+            typeof rec?.toeslagen?.zorgtoeslag === 'number' ? rec.toeslagen.zorgtoeslag : 0;
+          const over = typeof rec?.toeslagen?.overige === 'number' ? rec.toeslagen.overige : 0;
           const reis =
-            typeof rec?.toeslagen?.reiskosten === 'number'
-              ? rec.toeslagen.reiskosten
-              : 0;
+            typeof rec?.toeslagen?.reiskosten === 'number' ? rec.toeslagen.reiskosten : 0;
           s += zorg + over + reis;
         }
 
@@ -61,8 +58,8 @@ export const calculateFinancialSummary = (c7: any, c10: any) => {
           typeof rec?.vakantiegeldPerMaand === 'number'
             ? rec.vakantiegeldPerMaand
             : typeof rec?.vakantiegeldPerJaar === 'number'
-            ? rec.vakantiegeldPerJaar / 12
-            : 0;
+              ? rec.vakantiegeldPerJaar / MONTHS_PER_YEAR
+              : 0;
         s += vg;
 
         return sum + s;
