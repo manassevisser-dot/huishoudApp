@@ -2,10 +2,9 @@
 // App.tsx
 
 import * as React from 'react';
-import { View, Text, ActivityIndicator, Alert } from 'react-native';
+import { Alert } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAppStyles } from './src/styles/useAppStyles'; // FIXED PATH
 import { FormProvider, useFormContext } from './src/context/FormContext';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { Storage } from './src/services/storage';
@@ -21,7 +20,6 @@ const WIZARD_PAGES: PageConfig[] = [C1Config, C4Config, C7Config, C10Config];
 
 const AppContent: React.FC = () => {
   const { state, dispatch } = useFormContext();
-  const { styles } = useAppStyles(); // only styles are used in this file
   // === ALL HOOKS AT TOP LEVEL (NO CONDITIONALS) ===
   const [currentPageIndex, setCurrentPageIndex] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(true);
