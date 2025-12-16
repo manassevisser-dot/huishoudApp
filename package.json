@@ -1,12 +1,11 @@
-
 {
-    "name": "huishoudapp",
-    "private": true,
-    "type": "module", 
-    "license": "0BSD",
-    "main": "index.tsx",
-    "scripts": {
-      "start": "expo start",
+  "name": "huishoudapp",
+  "private": true,
+  "type": "module",
+  "license": "0BSD",
+  "main": "index.tsx",
+  "scripts": {
+    "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
@@ -14,14 +13,14 @@
     "format": "prettier --write .",
     "tsc": "tsc",
     "prepare": "husky install"
-    },
+  },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-community/datetimepicker": "8.4.4",
     "expo": "~54.0.27",
     "expo-status-bar": "~3.0.9",
     "react": "19.1.0",
-    "react-native": "0.81.5",
+    "react-native": "0.81.4",
     "react-native-safe-area-context": "~5.6.0"
   },
   "devDependencies": {
@@ -36,5 +35,4 @@
     "prettier": "^3.7.4",
     "typescript": "~5.9.2"
   }
-  
 }
