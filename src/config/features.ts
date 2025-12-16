@@ -5,7 +5,7 @@
  * Controls visibility of the Wizard progress indicator (Phase 3).
  * When true, dots are rendered in WizardPage.
  */
-export const showWizardProgress = false;
+export const showWizardProgress = true;
 
 /**
  * Controls success feedback after save operations (Phase 3 follow-up).
