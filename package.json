@@ -1,9 +1,7 @@
 {
   "name": "huishoudapp",
   "private": true,
-  "type": "module",
   "license": "0BSD",
-  "main": "index.tsx",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
