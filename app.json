@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "entryPoint": "index.tsx",
     "ios": {
       "supportsTablet": true
     },
