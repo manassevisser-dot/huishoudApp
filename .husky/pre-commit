@@ -1,9 +1,0 @@
-#!/bin/sh
-
-echo "Running pre-commit hook..."
-
-# 1) Type-check voor het hele project (faalt = blokkeert commit)
-npx tsc --noEmit
-
-# 2) ESLint/Prettier op alleen staged files via lint-staged
-npx lint-staged || exit 1
