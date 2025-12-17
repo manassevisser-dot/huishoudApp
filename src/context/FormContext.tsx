@@ -79,16 +79,27 @@ const formReducer = (state: FormState, action: FormAction): FormState => {
     // (c) Voeg reducer-case toe in formReducer (boven default):
     case 'ALIGN_HOUSEHOLD_MEMBERS': {
       const { aantalMensen, aantalVolwassen } = action.payload;
+
       const current = state?.C4?.leden;
+
+      console.log('[REDUCER] ALIGN start', {
+        currentLen: Array.isArray(current) ? current.length : 0,
+        payload: { aantalMensen, aantalVolwassen },
+      });
+
       const aligned = alignMembers(current, aantalMensen, aantalVolwassen);
+
+      console.log('[REDUCER] ALIGN done', {
+        alignedLen: aligned.length,
+        adultsCount: aligned.filter((m) => m.memberType === 'adult').length,
+        childrenCount: aligned.filter((m) => m.memberType === 'child').length,
+      });
+
       return {
         ...state,
         C4: { ...(state.C4 ?? {}), leden: aligned },
       };
     }
-
-    default:
-      return state;
   }
 };
 
