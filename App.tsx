@@ -5,14 +5,18 @@ import * as React from 'react';
 import { Alert } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { FormProvider, useFormContext } from './src/context/FormContext';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { Storage } from './src/services/storage';
+
 import Navigator from './src/navigation/Navigator';
+
 import { C1Config } from './src/screens/Wizard/pages/C1.config';
 import { C4Config } from './src/screens/Wizard/pages/C4.config';
 import { C7Config } from './src/screens/Wizard/pages/C7.config';
 import { C10Config } from './src/screens/Wizard/pages/C10.config';
+
 import { calculateFinancialSummary } from './src/utils/finance';
 import { PageConfig } from './src/types/form';
 
@@ -20,33 +24,43 @@ const WIZARD_PAGES: PageConfig[] = [C1Config, C4Config, C7Config, C10Config];
 
 const AppContent: React.FC = () => {
   const { state, dispatch } = useFormContext();
-  // === ALL HOOKS AT TOP LEVEL (NO CONDITIONALS) ===
+
+  // === ALL HOOKS AT TOP LEVEL ===
   const [currentPageIndex, setCurrentPageIndex] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(true);
-  // Existing flags
+
   const [showLanding, setShowLanding] = React.useState(true);
   const [showDailyInput, setShowDailyInput] = React.useState(false);
-  // NEW P0 flags
+
   const [showOptions, setShowOptions] = React.useState(false);
   const [showSettings, setShowSettings] = React.useState(false);
   const [showCsvUpload, setShowCsvUpload] = React.useState(false);
   const [showReset, setShowReset] = React.useState(false);
   const [showUndo, setShowUndo] = React.useState(false);
+
   const c4Index = React.useMemo(() => WIZARD_PAGES.findIndex((p) => p.id === 'C4'), []);
+
   const atDashboard = currentPageIndex === WIZARD_PAGES.length;
+
   const summary = React.useMemo(
     () => calculateFinancialSummary(state.C7, state.C10),
     [state.C7, state.C10],
   );
+
   const hasMinimumData = summary.inkomenTotaalMaand > 0 && summary.lastenTotaalVast > 0;
 
-  // Load saved state on mount
+  // =========================================================
+  // Load saved state on mount + one-time C4 alignment
+  // =========================================================
   React.useEffect(() => {
     const loadAndInit = async () => {
       const savedState = await Storage.loadState();
+
       if (savedState) {
         dispatch({ type: 'LOAD_SAVED_STATE', data: savedState });
       }
+
+      // Apply defaults where nothing was stored
       WIZARD_PAGES.forEach((page) => {
         page.fields.forEach((field) => {
           if (
@@ -61,15 +75,31 @@ const AppContent: React.FC = () => {
           }
         });
       });
-      setIsLoading(false);
 
-      // CRITICAL P0: Force landing screen after state restoration
+      setIsLoading(false);
       setShowLanding(true);
+
+      // ✅ Deterministic post-hydration alignment (no timing tricks)
+      if (savedState?.C1) {
+        const aantalMensen = Math.max(1, Number(savedState.C1.aantalMensen ?? 1));
+        const aantalVolwassen = Math.min(
+          aantalMensen,
+          Math.max(1, Number(savedState.C1.aantalVolwassen ?? 1)),
+        );
+
+        dispatch({
+          type: 'ALIGN_HOUSEHOLD_MEMBERS',
+          payload: { aantalMensen, aantalVolwassen },
+        });
+      }
     };
+
     loadAndInit();
   }, [dispatch]);
 
-  // Validate minimum data when reaching dashboard
+  // =========================================================
+  // Dashboard validation (separate effect)
+  // =========================================================
   React.useEffect(() => {
     if (atDashboard && !hasMinimumData) {
       Alert.alert(
@@ -85,8 +115,9 @@ const AppContent: React.FC = () => {
     }
   }, [atDashboard, hasMinimumData]);
 
-  // === HANDLERS (AFTER ALL HOOKS) ===
-
+  // =========================================================
+  // HANDLERS
+  // =========================================================
   const handleSignup = () => {
     setShowLanding(false);
     setCurrentPageIndex(0);
@@ -97,7 +128,6 @@ const AppContent: React.FC = () => {
     setCurrentPageIndex(WIZARD_PAGES.length);
   };
 
-  // NEW P0: Logout handler (closes session, keeps data)
   const handleLogout = () => {
     setShowOptions(false);
     setShowSettings(false);
@@ -106,52 +136,23 @@ const AppContent: React.FC = () => {
     setShowUndo(false);
     setShowDailyInput(false);
     setShowLanding(true);
-    // NO AsyncStorage clear
-    // NO dispatch RESET_STATE
   };
 
-  // NEW P0: Options navigation
-  const handleOpenOptions = () => {
-    setShowOptions(true);
-  };
+  const handleOpenOptions = () => setShowOptions(true);
+  const handleCloseOptions = () => setShowOptions(false);
 
-  const handleCloseOptions = () => {
-    setShowOptions(false);
-  };
+  const handleOpenSettings = () => setShowSettings(true);
+  const handleCloseSettings = () => setShowSettings(false);
 
-  const handleOpenSettings = () => {
-    setShowSettings(true);
-  };
+  const handleOpenCsvUpload = () => setShowCsvUpload(true);
+  const handleCloseCsvUpload = () => setShowCsvUpload(false);
 
-  const handleCloseSettings = () => {
-    setShowSettings(false);
-  };
+  const handleOpenReset = () => setShowReset(true);
+  const handleCloseReset = () => setShowReset(false);
 
-  const handleOpenCsvUpload = () => {
-    setShowCsvUpload(true);
-  };
+  const handleOpenUndo = () => setShowUndo(true);
+  const handleCloseUndo = () => setShowUndo(false);
 
-  const handleCloseCsvUpload = () => {
-    setShowCsvUpload(false);
-  };
-
-  const handleOpenReset = () => {
-    setShowReset(true);
-  };
-
-  const handleCloseReset = () => {
-    setShowReset(false);
-  };
-
-  const handleOpenUndo = () => {
-    setShowUndo(true);
-  };
-
-  const handleCloseUndo = () => {
-    setShowUndo(false);
-  };
-
-  // NEW P2: WISSEN handler (nuclear option - delete EVERYTHING)
   const handleWissen = async () => {
     await AsyncStorage.removeItem('@CashflowWizardState');
     await AsyncStorage.removeItem('@MockTransactions');
@@ -162,7 +163,6 @@ const AppContent: React.FC = () => {
     setShowLanding(true);
   };
 
-  // NEW P2: HERSTEL handler (reset wizard, keep transactions)
   const handleHerstel = () => {
     dispatch({ type: 'RESET_STATE' });
     setShowReset(false);
@@ -175,11 +175,11 @@ const AppContent: React.FC = () => {
       const currentPage = WIZARD_PAGES[currentPageIndex];
 
       if (currentPage.id === 'C1') {
-        const volwassen = Number(state.C1?.aantalVolwassen ?? 0);
-        if (volwassen > 4) {
+        const volwassenen = Number(state.C1?.aantalVolwassen ?? 0);
+        if (volwassenen > 4) {
           Alert.alert(
             'Weet je zeker dat dit klopt?',
-            `Je geeft aan dat er ${volwassen} volwassenen in het huishouden zijn.`,
+            `Je geeft aan dat er ${volwassenen} volwassenen in het huishouden zijn.`,
             [
               {
                 text: 'Nee',
@@ -190,7 +190,7 @@ const AppContent: React.FC = () => {
                 text: 'Ja',
                 onPress: () => {
                   if (c4Index >= 0) setCurrentPageIndex(c4Index);
-                  else setCurrentPageIndex((prev) => prev + 1);
+                  else setCurrentPageIndex((p) => p + 1);
                 },
               },
             ],
@@ -198,16 +198,20 @@ const AppContent: React.FC = () => {
           return;
         }
       }
-      setCurrentPageIndex((prev) => prev + 1);
+
+      setCurrentPageIndex((p) => p + 1);
     }
   };
 
   const navigatePrev = () => {
     if (currentPageIndex > 0) {
-      setCurrentPageIndex((prev) => prev - 1);
+      setCurrentPageIndex((p) => p - 1);
     }
   };
-  // === RENDERING LOGIC → gedelegeerd aan Navigator (presentational)
+
+  // =========================================================
+  // RENDER
+  // =========================================================
   return (
     <Navigator
       isLoading={isLoading}
