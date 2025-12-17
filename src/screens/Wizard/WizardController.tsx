@@ -49,6 +49,9 @@ const WizardController: React.FC<WizardControllerProps> = (props) => {
   // A2 FIX: Just-in-time ALIGN bij page-enter C4
   // ============================================
 
+  // ============================================
+  // A2 FIX: Just-in-time ALIGN bij page-enter C4
+  // ============================================
   React.useEffect(() => {
     console.log('[WIZARD] enter page', {
       id: page?.id,
@@ -70,20 +73,12 @@ const WizardController: React.FC<WizardControllerProps> = (props) => {
         payload: { aantalMensen, aantalVolwassen },
       });
     }
-  }, [
-    page?.id,
-    currentPageIndex,
-    totalPages,
-    state.C1?.aantalMensen,
-    state.C1?.aantalVolwassen,
-    dispatch,
-  ]);
+  }, [page?.id]);
 
   // ============================================
   // RENDER
   // ============================================
   if (!page) {
-    // Buiten bereik: render niets (defensief)
     return <View />;
   }
 
@@ -94,7 +89,6 @@ const WizardController: React.FC<WizardControllerProps> = (props) => {
       isLast={isLast}
       onNext={handleNext}
       onPrev={handlePrev}
-      // Nieuwe props voor progress-indicator (commit 2 gebruikt dit)
       totalPages={totalPages}
       currentPageIndex={currentPageIndex}
     />
