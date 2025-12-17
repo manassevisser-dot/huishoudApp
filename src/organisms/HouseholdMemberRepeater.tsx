@@ -3,17 +3,9 @@ import { View, Text, TextInput, ScrollView } from 'react-native';
 import { useAppStyles } from '../styles/useAppStyles';
 import ChipButton from '../components/ChipButton';
 import { useFormContext } from '../context/FormContext';
-import {
-  Member,
-  GENDER_OPTIONS,
-} from '../types/household';
+import { Member, GENDER_OPTIONS } from '../types/household';
 import { stripEmojiAndLimit } from '../utils/numbers';
-import {
-  calculateAge,
-  getAdultMaxISO,
-  getChildMinISO,
-  getChildMaxISO,
-} from '../utils/date';
+import { calculateAge, getAdultMaxISO, getChildMinISO, getChildMaxISO } from '../utils/date';
 import DateField from '../components/DateField';
 
 const HouseholdMemberRepeater: React.FC = () => {
@@ -36,13 +28,7 @@ const HouseholdMemberRepeater: React.FC = () => {
         data: { huisdieren: state.C1.huisdieren },
       });
     }
-  }, [
-    state.C1?.auto,
-    state.C1?.huisdieren,
-    state.C4?.auto,
-    state.C4?.huisdieren,
-    dispatch,
-  ]);
+  }, [state.C1?.auto, state.C1?.huisdieren, state.C4?.auto, state.C4?.huisdieren, dispatch]);
 
   const aantalMensen = Math.max(0, Number(state.C1?.aantalMensen ?? 0));
 
@@ -56,14 +42,18 @@ const HouseholdMemberRepeater: React.FC = () => {
 
   const aantalKinderen = Math.max(0, aantalMensen - aantalVolwassen);
 
-  const leden: Member[] = Array.isArray(state.C4?.leden)
-    ? (state.C4!.leden as Member[])
-    : [];
+  const leden: Member[] = Array.isArray(state.C4?.leden) ? (state.C4!.leden as Member[]) : [];
 
   const updateMember = (index: number, patch: Partial<Member>) => {
     const next = leden.map((m, i) => (i === index ? { ...m, ...patch } : m));
     dispatch({ type: 'SET_PAGE_DATA', pageId: 'C4', data: { leden: next } });
   };
+  console.log('[C4-REPEATER] intake', {
+    aantalMensen,
+    aantalVolwassen,
+    aantalKinderen,
+    ledenLen: Array.isArray(leden) ? leden.length : 0,
+  });
 
   // ---- render helpers ----
   let adultDisplayIndex = 0;
@@ -71,15 +61,12 @@ const HouseholdMemberRepeater: React.FC = () => {
 
   const renderAdultCard = (m: Member, index: number) => {
     const idx = ++adultDisplayIndex;
-    const title = m.naam?.trim()
-      ? `Volwassene ${idx}: ${m.naam}`
-      : `Volwassene ${idx}`;
+    const title = m.naam?.trim() ? `Volwassene ${idx}: ${m.naam}` : `Volwassene ${idx}`;
 
     let ageError: string | null = null;
     if (typeof m.leeftijd === 'number') {
       if (m.leeftijd < 18) {
-        ageError =
-          'Leeftijd moet ≥ 18 voor volwassenen. Registreer deze persoon anders als kind.';
+        ageError = 'Leeftijd moet ≥ 18 voor volwassenen. Registreer deze persoon anders als kind.';
       } else if (!Number.isInteger(m.leeftijd)) {
         ageError = 'Leeftijd moet een geheel getal zijn.';
       }
@@ -94,9 +81,7 @@ const HouseholdMemberRepeater: React.FC = () => {
           <TextInput
             style={styles.input}
             value={m.naam ?? ''}
-            onChangeText={(text) =>
-              updateMember(index, { naam: stripEmojiAndLimit(text, 25) })
-            }
+            onChangeText={(text) => updateMember(index, { naam: stripEmojiAndLimit(text, 25) })}
           />
         </View>
 
@@ -160,9 +145,7 @@ const HouseholdMemberRepeater: React.FC = () => {
           <TextInput
             style={styles.input}
             value={m.naam ?? ''}
-            onChangeText={(text) =>
-              updateMember(index, { naam: stripEmojiAndLimit(text, 25) })
-            }
+            onChangeText={(text) => updateMember(index, { naam: stripEmojiAndLimit(text, 25) })}
           />
         </View>
 
@@ -205,17 +188,21 @@ const HouseholdMemberRepeater: React.FC = () => {
   };
 
   if (aantalMensen <= 0) {
+    console.log('[C4-REPEATER] early return — C1.aantalMensen <= 0');
+
     return (
       <View style={styles.pageContainer}>
-        <Text style={styles.summaryDetail}>
-          Vul eerst het aantal personen in op C1.
-        </Text>
+        <Text style={styles.summaryDetail}>Vul eerst het aantal personen in op C1.</Text>
       </View>
     );
   }
 
   const adults = leden.filter((m) => m.memberType === 'adult');
   const children = leden.filter((m) => m.memberType === 'child');
+  console.log('[C4-REPEATER] render cards', {
+    adultsLen: adults.length,
+    childrenLen: children.length,
+  });
 
   return (
     <View style={styles.pageContainer}>
