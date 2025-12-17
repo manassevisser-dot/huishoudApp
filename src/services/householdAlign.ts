@@ -23,6 +23,7 @@ export function alignMembers(
   } else if (next.length < targetLen) {
     // Vul adults eerst (vooraan), vervolgens children
     let leadingAdults = next.filter((m) => m?.memberType === 'adult').length;
+
     while (leadingAdults < targetAdults && next.length < targetLen) {
       const idx = leadingAdults;
       next.splice(idx, 0, {
@@ -35,6 +36,7 @@ export function alignMembers(
       });
       leadingAdults++; // exact één increment per insert
     }
+
     while (next.length < targetLen) {
       const idx = next.length;
       next.push({
@@ -51,9 +53,11 @@ export function alignMembers(
   // 2) Hard-set type per index (eerste N = adult, rest = child)
   for (let i = 0; i < next.length; i++) {
     const shouldType: Member['memberType'] = i < targetAdults ? 'adult' : 'child';
+
     if (next[i]?.memberType !== shouldType) {
       next[i] = { ...next[i], memberType: shouldType };
     }
   }
+
   return next;
 }
