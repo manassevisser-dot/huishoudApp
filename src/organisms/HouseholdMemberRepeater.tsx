@@ -1,223 +1,280 @@
+// src/organisms/HouseholdMemberRepeater.tsx
 import * as React from 'react';
-import { View, Text, TextInput, ScrollView } from 'react-native';
-import { useAppStyles } from '../styles/useAppStyles';
-import ChipButton from '../components/ChipButton';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useFormContext } from '../context/FormContext';
-import { Member, GENDER_OPTIONS } from '../types/household';
-import { stripEmojiAndLimit } from '../utils/numbers';
-import { calculateAge, getAdultMaxISO, getChildMinISO, getChildMaxISO } from '../utils/date';
-import DateField from '../components/DateField';
+import { Member } from '../types/household';
 
-const HouseholdMemberRepeater: React.FC = () => {
-  const { styles } = useAppStyles();
+type HouseholdMemberRepeaterProps = {
+  // Props indien nodig
+};
+
+const HouseholdMemberRepeater: React.FC<HouseholdMemberRepeaterProps> = () => {
   const { state, dispatch } = useFormContext();
 
-  // ---- C1 → C4 sync ----
-  React.useEffect(() => {
-    if (state.C1?.auto && state.C1.auto !== state.C4?.auto) {
-      dispatch({
-        type: 'SET_PAGE_DATA',
-        pageId: 'C4',
-        data: { auto: state.C1.auto },
-      });
-    }
-    if (state.C1?.huisdieren && state.C1.huisdieren !== state.C4?.huisdieren) {
-      dispatch({
-        type: 'SET_PAGE_DATA',
-        pageId: 'C4',
-        data: { huisdieren: state.C1.huisdieren },
-      });
-    }
-  }, [state.C1?.auto, state.C1?.huisdieren, state.C4?.auto, state.C4?.huisdieren, dispatch]);
+  // Haal data uit state
+  const aantalMensen = Number(state.C1?.aantalMensen ?? 0);
+  const aantalVolwassen = Number(state.C1?.aantalVolwassen ?? 0);
+  const leden = (state.C4?.leden ?? []) as Member[];
 
-  const aantalMensen = Math.max(0, Number(state.C1?.aantalMensen ?? 0));
-
-  const rawVolwassen = state.C1?.aantalVolwassen;
-  const volwassenDefault = aantalMensen > 0 && rawVolwassen == null ? 1 : 0;
-
-  const aantalVolwassen = Math.max(
-    0,
-    Math.min(Number(rawVolwassen ?? volwassenDefault), aantalMensen),
-  );
-
-  const aantalKinderen = Math.max(0, aantalMensen - aantalVolwassen);
-
-  const leden: Member[] = Array.isArray(state.C4?.leden) ? (state.C4!.leden as Member[]) : [];
-
-  const adultsWithIndex = leden
-    .map((m, i) => ({ m, i }))
-    .filter(({ m }) => m.memberType === 'adult');
-  const childrenWithIndex = leden
-    .map((m, i) => ({ m, i }))
-    .filter(({ m }) => m.memberType === 'child');
-
-  const currentMembers = leden; // alias voor duidelijkheid bij lookups
-  const updateMember = (index: number, patch: Partial<Member>) => {
-    const next = leden.map((m, i) => (i === index ? { ...m, ...patch } : m));
-    dispatch({ type: 'SET_PAGE_DATA', pageId: 'C4', data: { leden: next } });
-  };
   console.log('[C4-REPEATER] intake', {
     aantalMensen,
     aantalVolwassen,
-    aantalKinderen,
-    ledenLen: Array.isArray(leden) ? leden.length : 0,
+    ledenLen: leden.length,
   });
 
-  // ---- render helpers ----
-  let adultDisplayIndex = 0;
-  let childDisplayIndex = 0;
-
-  const renderAdultCard = (m: Member, index: number) => {
-    const idx = ++adultDisplayIndex;
-    const title = m.naam?.trim() ? `Volwassene ${idx}: ${m.naam}` : `Volwassene ${idx}`;
-
-    let ageError: string | null = null;
-    if (typeof m.leeftijd === 'number') {
-      if (m.leeftijd < 18) {
-        ageError = 'Leeftijd moet ≥ 18 voor volwassenen. Registreer deze persoon anders als kind.';
-      } else if (!Number.isInteger(m.leeftijd)) {
-        ageError = 'Leeftijd moet een geheel getal zijn.';
-      }
-    }
-
-    return (
-      <View key={`${m.id}-${index}`} style={styles.dashboardCard}>
-        <Text style={styles.summaryLabelBold}>{title}</Text>
-
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Naam</Text>
-          <TextInput
-            style={styles.input}
-            value={m.naam ?? ''}
-            onChangeText={(text) => updateMember(index, { naam: stripEmojiAndLimit(text, 25) })}
-          />
-        </View>
-
-        <DateField
-          label="Geboortedatum"
-          valueISO={m.dateOfBirth}
-          minISO="1920-01-01"
-          maxISO={getAdultMaxISO()}
-          onChangeISO={(iso) => {
-            if (iso) {
-              updateMember(index, {
-                dateOfBirth: iso,
-                leeftijd: calculateAge(iso) ?? undefined,
-              });
-            } else {
-              updateMember(index, {
-                dateOfBirth: undefined,
-                leeftijd: undefined,
-              });
-            }
-          }}
-          errorText={ageError}
-        />
-
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Gender</Text>
-          <ScrollView horizontal contentContainerStyle={styles.chipContainer}>
-            {GENDER_OPTIONS.map((g) => (
-              <ChipButton
-                key={g}
-                label={g ?? ''}
-                selected={m.gender === g}
-                onPress={() => updateMember(index, { gender: g })}
-              />
-            ))}
-          </ScrollView>
-        </View>
-      </View>
-    );
-  };
-
-  const renderChildCard = (m: Member, index: number) => {
-    const idx = ++childDisplayIndex;
-    const title = m.naam?.trim() ? `Kind ${idx}: ${m.naam}` : `Kind ${idx}`;
-
-    let ageError: string | null = null;
-    if (typeof m.leeftijd === 'number') {
-      if (m.leeftijd >= 18) {
-        ageError = 'Leeftijd moet < 18 voor kinderen.';
-      } else if (!Number.isInteger(m.leeftijd)) {
-        ageError = 'Leeftijd moet een geheel getal zijn.';
-      }
-    }
-
-    return (
-      <View key={`${m.id}-${index}`} style={styles.dashboardCard}>
-        <Text style={styles.summaryLabelBold}>{title}</Text>
-
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Naam</Text>
-          <TextInput
-            style={styles.input}
-            value={m.naam ?? ''}
-            onChangeText={(text) => updateMember(index, { naam: stripEmojiAndLimit(text, 25) })}
-          />
-        </View>
-
-        <DateField
-          label="Geboortedatum"
-          valueISO={m.dateOfBirth}
-          minISO={getChildMinISO()}
-          maxISO={getChildMaxISO()}
-          onChangeISO={(iso) => {
-            if (iso) {
-              updateMember(index, {
-                dateOfBirth: iso,
-                leeftijd: calculateAge(iso) ?? undefined,
-              });
-            } else {
-              updateMember(index, {
-                dateOfBirth: undefined,
-                leeftijd: undefined,
-              });
-            }
-          }}
-          errorText={ageError}
-        />
-
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Gender</Text>
-          <ScrollView horizontal contentContainerStyle={styles.chipContainer}>
-            {GENDER_OPTIONS.map((g) => (
-              <ChipButton
-                key={g}
-                label={g ?? ''}
-                selected={m.gender === g}
-                onPress={() => updateMember(index, { gender: g })}
-              />
-            ))}
-          </ScrollView>
-        </View>
-      </View>
-    );
-  };
-
-  if (aantalMensen <= 0) {
-    console.log('[C4-REPEATER] early return — C1.aantalMensen <= 0');
-
-    return (
-      <View style={styles.pageContainer}>
-        <Text style={styles.summaryDetail}>Vul eerst het aantal personen in op C1.</Text>
-      </View>
-    );
-  }
-
+  // Split in volwassenen en kinderen
   const adults = leden.filter((m) => m.memberType === 'adult');
   const children = leden.filter((m) => m.memberType === 'child');
+
   console.log('[C4-REPEATER] render cards', {
     adultsLen: adults.length,
     childrenLen: children.length,
   });
 
   return (
-    <View style={styles.pageContainer}>
-      {adultsWithIndex.map(({ m, i }) => renderAdultCard(m, i))}
-      {childrenWithIndex.map(({ m, i }) => renderChildCard(m, i))}
+    <View style={styles.container}>
+      {/* Volwassenen sectie */}
+      {adults.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Volwassenen ({adults.length})
+          </Text>
+          {adults.map((member, idx) => {
+            const index = leden.indexOf(member);
+            return (
+              <MemberCard
+                key={`adult-${index}`}
+                member={member}
+                index={index}
+              />
+            );
+          })}
+        </View>
+      )}
+
+      {/* Kinderen sectie */}
+      {children.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Kinderen ({children.length})
+          </Text>
+          {children.map((member, idx) => {
+            const index = leden.indexOf(member);
+            return (
+              <MemberCard
+                key={`child-${index}`}
+                member={member}
+                index={index}
+              />
+            );
+          })}
+        </View>
+      )}
+
+      {/* Debug info (verwijder in productie) */}
+      {__DEV__ && (
+        <View style={styles.debugBox}>
+          <Text style={styles.debugText}>
+            Debug: {leden.length} leden totaal
+          </Text>
+        </View>
+      )}
     </View>
   );
 };
+
+// ============================================
+// MEMBER CARD COMPONENT
+// ============================================
+
+type MemberCardProps = {
+  member: Member;
+  index: number;
+};
+
+const MemberCard: React.FC<MemberCardProps> = ({ member: m, index }) => {
+  const { dispatch } = useFormContext();
+
+  return (
+    <View style={styles.card}>
+      {/* Naam veld */}
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Naam</Text>
+        <TextInput
+          style={styles.input}
+          value={m.naam ?? ''}
+          placeholder="Bijv. Jan de Vries"
+          onChangeText={(text: string) =>
+            dispatch({
+              type: 'UPDATE_MEMBER_FIELD',
+              payload: {
+                index,
+                field: 'naam',
+                value: text,
+                meta: { phase: 'change' },
+              },
+            })
+          }
+          onBlur={() =>
+            dispatch({
+              type: 'UPDATE_MEMBER_FIELD',
+              payload: {
+                index,
+                field: 'naam',
+                value: m.naam ?? '',
+                meta: { phase: 'blur' },
+              },
+            })
+          }
+        />
+      </View>
+
+      {/* Geboortedatum veld */}
+      <View style={styles.fieldContainer}>
+        <Text style={styles.label}>Geboortedatum</Text>
+        <TextInput
+          style={styles.input}
+          value={m.dateOfBirth ?? ''}
+          placeholder="DD-MM-YYYY"
+          keyboardType="numeric"
+          maxLength={10}
+          onChangeText={(text: string) =>
+            dispatch({
+              type: 'UPDATE_MEMBER_FIELD',
+              payload: { index, field: 'dateOfBirth', value: text },
+            })
+          }
+        />
+        {m.leeftijd !== undefined && (
+          <Text style={styles.helperText}>Leeftijd: {m.leeftijd} jaar</Text>
+        )}
+      </View>
+
+      
+
+
+{/* Geslacht veld */}
+<View style={styles.fieldContainer}>
+  <Text style={styles.label}>Geslacht</Text>
+  <View style={styles.buttonGroup}>
+    {(['man', 'vrouw', 'anders', 'n.v.t.'] as const).map((g) => {
+      const label = g === 'n.v.t.' ? 'n.v.t.' : g.charAt(0).toUpperCase() + g.slice(1);
+      return (
+        <TouchableOpacity
+          key={g}
+          style={[styles.button, m.gender === g && styles.buttonActive]}
+          onPress={() =>
+            dispatch({
+              type: 'UPDATE_MEMBER_FIELD',
+              payload: { index, field: 'gender', value: g },
+            })
+          }
+        >
+          <Text style={[styles.buttonText, m.gender === g && styles.buttonTextActive]}>
+            {label}
+          </Text>
+        </TouchableOpacity>
+      );
+    })}
+  </View>
+</View>
+
+
+    </View>
+  );
+};
+
+// ============================================
+// STYLES
+// ============================================
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: '#333',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  fieldContainer: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#555',
+    marginBottom: 8,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+    fontStyle: 'italic',
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#f9f9f9',
+    alignItems: 'center',
+  },
+  buttonActive: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  buttonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  buttonTextActive: {
+    color: '#fff',
+  },
+  debugBox: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#fff3cd',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ffc107',
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#856404',
+    fontFamily: 'monospace',
+  },
+});
 
 export default HouseholdMemberRepeater;

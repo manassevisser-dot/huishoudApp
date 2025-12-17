@@ -55,6 +55,7 @@ const AppContent: React.FC = () => {
   React.useEffect(() => {
     const loadAndInit = async () => {
       const savedState = await Storage.loadState();
+      console.log('[INIT] savedState:', JSON.stringify(savedState ?? null));
 
       if (savedState) {
         dispatch({ type: 'LOAD_SAVED_STATE', data: savedState });
@@ -86,11 +87,18 @@ const AppContent: React.FC = () => {
           aantalMensen,
           Math.max(1, Number(savedState.C1.aantalVolwassen ?? 1)),
         );
-
+        console.log('[ALIGN-TRIGGER] payload from savedState:', {
+          aantalMensen,
+          aantalVolwassen,
+        });
         dispatch({
           type: 'ALIGN_HOUSEHOLD_MEMBERS',
           payload: { aantalMensen, aantalVolwassen },
         });
+        console.log('[ALIGN-TRIGGER] dispatched');
+  } else {
+    console.log('[ALIGN-TRIGGER] skipped — no savedState.C1 present');
+  
       }
     };
 

@@ -20,17 +20,36 @@ export type SetPageDataAction = {
   pageId: PageId;
   data: Record<string, any>;
 };
-export type LoadSavedStateAction = { type: 'LOAD_SAVED_STATE'; data: FormState };
-export type SetUserIdAction = { type: 'SET_USER_ID'; userId: string | null };
-export type ResetStateAction = { type: 'RESET_STATE' };
+
+export type LoadSavedStateAction = { 
+  type: 'LOAD_SAVED_STATE'; 
+  data: FormState 
+};
+
+export type SetUserIdAction = { 
+  type: 'SET_USER_ID'; 
+  userId: string | null 
+};
+
+export type ResetStateAction = { 
+  type: 'RESET_STATE' 
+};
+
 export type AlignHouseholdAction = {
   type: 'ALIGN_HOUSEHOLD_MEMBERS';
   payload: { aantalMensen: number; aantalVolwassen: number };
 };
+
 export type UpdateMemberFieldAction = {
   type: 'UPDATE_MEMBER_FIELD';
-  payload: { index: number; field: keyof Member; value: any };
+  payload: {
+    index: number;
+    field: keyof Member;
+    value: any;
+    meta?: { phase?: 'change' | 'blur' };
+  };
 };
+
 
 export type FormAction =
   | SetPageDataAction
@@ -38,7 +57,7 @@ export type FormAction =
   | SetUserIdAction
   | ResetStateAction
   | AlignHouseholdAction
-  | UpdateMemberFieldAction; // Puntkomma verwijderd
+  | UpdateMemberFieldAction;
 
 export type FormContextValue = {
   state: FormState;
@@ -62,15 +81,50 @@ const formReducer = (state: FormState, action: FormAction): FormState => {
         [action.pageId]: { ...(state[action.pageId] ?? {}), ...action.data },
       };
 
+<<<<<<< Updated upstream
+    
+
+      case 'UPDATE_MEMBER_FIELD': {
+        const { index, field, value, meta } = action.payload;
+        const current = Array.isArray(state?.C4?.leden) ? (state.C4!.leden as Member[]) : [];
+        if (index < 0 || index >= current.length) return state;
+      
+        const isBlur = meta?.phase === 'blur';
+        let updatedMember = { ...current[index] };
+      
+        if (field === 'naam') {
+          // onChange: rauw opslaan; onBlur: schoon opslaan
+          updatedMember.naam = isBlur ? cleanName(value, 25) : String(value ?? '');
+        } else if (field === 'dateOfBirth') {
+          const val = typeof value === 'string' ? value.trim() : '';
+          updatedMember.dateOfBirth = val || undefined;
+          updatedMember.leeftijd = val ? (calculateAge(val) ?? undefined) : undefined;
+        } else {
+          (updatedMember as any)[field] = value;
+        }
+      
+        const nextLeden = current.map((m, i) => (i === index ? updatedMember : m));
+      
+        return {
+          ...state,
+          isSpecialStatus: checkSpecialStatus(nextLeden),
+          C4: { ...(state.C4 ?? {}), leden: nextLeden },
+        };
+      }
+      
+
+=======
     case 'UPDATE_MEMBER_FIELD': {
-      const { index, field, value } = action.payload;
-      const current = Array.isArray(state?.C4?.leden) ? (state.C4.leden as Member[]) : [];
+      const { index, field, value, meta } = action.payload;
+      const current = Array.isArray(state?.C4?.leden) ? (state.C4!.leden as Member[]) : [];
       if (index < 0 || index >= current.length) return state;
-
+    
+      const isBlur = meta?.phase === 'blur';
       let updatedMember = { ...current[index] };
-
+    
       if (field === 'naam') {
-        updatedMember.naam = cleanName(value, 25);
+        // onChange: rauw opslaan; onBlur: schoon opslaan
+        updatedMember.naam = isBlur ? cleanName(value, 25) : String(value ?? '');
       } else if (field === 'dateOfBirth') {
         const val = typeof value === 'string' ? value.trim() : '';
         updatedMember.dateOfBirth = val || undefined;
@@ -78,24 +132,36 @@ const formReducer = (state: FormState, action: FormAction): FormState => {
       } else {
         (updatedMember as any)[field] = value;
       }
-
+    
       const nextLeden = current.map((m, i) => (i === index ? updatedMember : m));
-
+    
       return {
         ...state,
-        isSpecialStatus: checkSpecialStatus(nextLeden), // Update status
+        isSpecialStatus: checkSpecialStatus(nextLeden),
         C4: { ...(state.C4 ?? {}), leden: nextLeden },
       };
     }
+>>>>>>> Stashed changes
 
     case 'ALIGN_HOUSEHOLD_MEMBERS': {
       const { aantalMensen, aantalVolwassen } = action.payload;
       const current = state?.C4?.leden;
       const aligned = alignMembers(current, aantalMensen, aantalVolwassen);
 
+      console.log('[REDUCER] ALIGN start', {
+        currentLen: Array.isArray(current) ? current.length : 0,
+        payload: { aantalMensen, aantalVolwassen }
+      });
+
+      console.log('[REDUCER] ALIGN done', {
+        alignedLen: aligned.length,
+        adultsCount: aligned.filter(m => m.memberType === 'adult').length,
+        childrenCount: aligned.filter(m => m.memberType === 'child').length
+      });
+
       return {
         ...state,
-        isSpecialStatus: checkSpecialStatus(aligned), // Update status
+        isSpecialStatus: checkSpecialStatus(aligned),
         C4: { ...(state.C4 ?? {}), leden: aligned },
       };
     }
@@ -110,17 +176,21 @@ const formReducer = (state: FormState, action: FormAction): FormState => {
       return { userId: null };
 
     default:
-      return state; // Essentieel!
+      return state;
   }
 };
 
 // ============================================================================
-// PROVIDER (Blijft grotendeels gelijk, maar met default state {} )
+// PROVIDER
 // ============================================================================
 const FormContext = React.createContext<FormContextValue | undefined>(undefined);
 
 export const FormProvider = ({ children }: { children: React.ReactNode }) => {
-  const [state, dispatch] = React.useReducer(formReducer, {});
+<<<<<<< Updated upstream
+  const [state, dispatch] = React.useReducer<FormState, FormAction>(formReducer, {} as FormState);
+=======
+  const [state, dispatch] = React.useReducer(formReducer, {} as FormState);
+>>>>>>> Stashed changes
 
   const hasHydratedRef = React.useRef(false);
 
