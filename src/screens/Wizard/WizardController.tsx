@@ -3,6 +3,7 @@ import * as React from 'react';
 import { View } from 'react-native';
 import WizardPage from './WizardPage';
 import { PageConfig } from '../../types/form';
+import { useFormContext } from '../../context/FormContext';
 
 // Importeer de bestaande PageConfigs (feiten uit repo)
 import { C1Config } from './pages/C1.config';
@@ -21,6 +22,7 @@ type WizardControllerProps = {
 };
 
 const WizardController: React.FC<WizardControllerProps> = (props) => {
+  const { state, dispatch } = useFormContext();
   const effectivePages = props.pages ?? PAGES;
   const totalPages = effectivePages.length;
   const isControlled = typeof props.pageIndex === 'number' && !!props.onNext && !!props.onPrev;
@@ -43,6 +45,43 @@ const WizardController: React.FC<WizardControllerProps> = (props) => {
   const isFirst = currentPageIndex === 0;
   const isLast = currentPageIndex === totalPages - 1;
 
+  // ============================================
+  // A2 FIX: Just-in-time ALIGN bij page-enter C4
+  // ============================================
+  React.useEffect(() => {
+    console.log('[WIZARD] enter page', {
+      id: page?.id,
+      pageIndex: currentPageIndex,
+      totalPages,
+    });
+
+    if (page?.id === 'C4') {
+      console.log('[WIZARD] entering C4 – aligning household members');
+
+      const aantalMensen = Math.max(1, Number(state.C1?.aantalMensen ?? 1));
+      const aantalVolwassen = Math.min(
+        aantalMensen,
+        Math.max(1, Number(state.C1?.aantalVolwassen ?? 1)),
+      );
+
+      // ALIGN happens AFTER all SET_PAGE_DATA writes from C4 init
+      dispatch({
+        type: 'ALIGN_HOUSEHOLD_MEMBERS',
+        payload: { aantalMensen, aantalVolwassen },
+      });
+    }
+  }, [
+    page?.id,
+    currentPageIndex,
+    totalPages,
+    state.C1?.aantalMensen,
+    state.C1?.aantalVolwassen,
+    dispatch,
+  ]);
+
+  // ============================================
+  // RENDER
+  // ============================================
   if (!page) {
     // Buiten bereik: render niets (defensief)
     return <View />;
