@@ -1,6 +1,7 @@
 // src/context/FormContext.tsx
 import * as React from 'react';
 import { Storage } from '../services/storage';
+import { alignMembers } from '../services/householdAlign';
 
 // React Native runtime note: use __DEV__ for dev-only logs; setTimeout/clearTimeout are globals.
 
@@ -29,12 +30,6 @@ export type ResetStateAction = {
   type: 'RESET_STATE';
 };
 
-export type FormAction =
-  | SetPageDataAction
-  | LoadSavedStateAction
-  | SetUserIdAction
-  | ResetStateAction;
-
 export type FormState = Record<string, any>;
 
 export type FormContextValue = {
@@ -42,6 +37,18 @@ export type FormContextValue = {
   dispatch: React.Dispatch<FormAction>;
 };
 
+// (b) Voeg nieuw actietype toe en breid de union uit:
+export type AlignHouseholdAction = {
+  type: 'ALIGN_HOUSEHOLD_MEMBERS';
+  payload: { aantalMensen: number; aantalVolwassen: number };
+};
+
+export type FormAction =
+  | SetPageDataAction
+  | LoadSavedStateAction
+  | SetUserIdAction
+  | ResetStateAction
+  | AlignHouseholdAction;
 // ============================================================================
 // REDUCER
 // ============================================================================
@@ -68,6 +75,17 @@ const formReducer = (state: FormState, action: FormAction): FormState => {
     case 'RESET_STATE':
       // Reset betekent ook: lege basis
       return { userId: null };
+
+    // (c) Voeg reducer-case toe in formReducer (boven default):
+    case 'ALIGN_HOUSEHOLD_MEMBERS': {
+      const { aantalMensen, aantalVolwassen } = action.payload;
+      const current = state?.C4?.leden;
+      const aligned = alignMembers(current, aantalMensen, aantalVolwassen);
+      return {
+        ...state,
+        C4: { ...(state.C4 ?? {}), leden: aligned },
+      };
+    }
 
     default:
       return state;
