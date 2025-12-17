@@ -1,5 +1,4 @@
 // src/types/household.ts
-// household.ts
 
 // Optioneel maar beter: Creëer een type alias
 export type Gender = 'man' | 'vrouw' | 'anders' | 'n.v.t.';
@@ -30,7 +29,11 @@ export type HuisdierenYesNo = 'Ja' | 'Nee';
 export type AutoCount = 'Nee' | 'Één' | 'Twee';
 
 export const BURGERLIJKE_OPTIONS: Exclude<BurgerlijkeStaat, 'Alleenstaand'>[] = [
-  'Gehuwd', 'Fiscaal Partners', 'Samenwonend', 'Bevriend', 'Anders',
+  'Gehuwd',
+  'Fiscaal Partners',
+  'Samenwonend',
+  'Bevriend',
+  'Anders',
 ];
 
 export const WONING_OPTIONS: WoningType[] = ['Koop', 'Huur', 'Kamer', 'Anders'];
