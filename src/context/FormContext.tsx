@@ -22,21 +22,6 @@ export type SetPageDataAction = {
   data: Record<string, any>;
 };
 
-<<<<<<< Updated upstream
-export type LoadSavedStateAction = { 
-  type: 'LOAD_SAVED_STATE'; 
-  data: FormState 
-};
-
-export type SetUserIdAction = { 
-  type: 'SET_USER_ID'; 
-  userId: string | null 
-};
-
-export type ResetStateAction = { 
-  type: 'RESET_STATE' 
-};
-=======
 export type LoadSavedStateAction = {
   type: 'LOAD_SAVED_STATE';
   data: FormState;
@@ -48,7 +33,6 @@ export type SetUserIdAction = {
 };
 
 export type ResetStateAction = { type: 'RESET_STATE' };
->>>>>>> Stashed changes
 
 export type AlignHouseholdAction = {
   type: 'ALIGN_HOUSEHOLD_MEMBERS';
@@ -65,7 +49,6 @@ export type UpdateMemberFieldAction = {
   };
 };
 
-
 export type FormAction =
   | SetPageDataAction
   | LoadSavedStateAction
@@ -79,7 +62,7 @@ export type FormContextValue = {
   dispatch: React.Dispatch<FormAction>;
 };
 
-// Helper: speciale status bij >5 adults
+// Helper: speciale status bij >5 adults (Project Eis 2025)
 const checkSpecialStatus = (leden: Member[]): boolean => {
   const adultCount = leden.filter((m) => m.memberType === 'adult').length;
   return adultCount > 5;
@@ -88,10 +71,13 @@ const checkSpecialStatus = (leden: Member[]): boolean => {
 // ============================================================================
 // REDUCER
 // ============================================================================
-const formReducer: React.Reducer<FormState, FormAction> = (state: FormState, action: FormAction): FormState => {
+const formReducer: React.Reducer<FormState, FormAction> = (
+  state: FormState,
+  action: FormAction,
+): FormState => {
   switch (action.type) {
     case 'SET_PAGE_DATA': {
-           const { pageId, data } = action;
+      const { pageId, data } = action;
       return {
         ...state,
         [pageId]: {
@@ -101,59 +87,16 @@ const formReducer: React.Reducer<FormState, FormAction> = (state: FormState, act
       };
     }
 
-<<<<<<< Updated upstream
-    
-
-      case 'UPDATE_MEMBER_FIELD': {
-        const { index, field, value, meta } = action.payload;
-        const current = Array.isArray(state?.C4?.leden) ? (state.C4!.leden as Member[]) : [];
-        if (index < 0 || index >= current.length) return state;
-      
-        const isBlur = meta?.phase === 'blur';
-        let updatedMember = { ...current[index] };
-      
-        if (field === 'naam') {
-          // onChange: rauw opslaan; onBlur: schoon opslaan
-          updatedMember.naam = isBlur ? cleanName(value, 25) : String(value ?? '');
-        } else if (field === 'dateOfBirth') {
-          const val = typeof value === 'string' ? value.trim() : '';
-          updatedMember.dateOfBirth = val || undefined;
-          updatedMember.leeftijd = val ? (calculateAge(val) ?? undefined) : undefined;
-        } else {
-          (updatedMember as any)[field] = value;
-        }
-      
-        const nextLeden = current.map((m, i) => (i === index ? updatedMember : m));
-      
-        return {
-          ...state,
-          isSpecialStatus: checkSpecialStatus(nextLeden),
-          C4: { ...(state.C4 ?? {}), leden: nextLeden },
-        };
-      }
-      
-
-=======
     case 'UPDATE_MEMBER_FIELD': {
       const { index, field, value, meta } = action.payload;
       const current = Array.isArray(state?.C4?.leden) ? (state.C4!.leden as Member[]) : [];
       if (index < 0 || index >= current.length) return state;
-<<<<<<< Updated upstream
-    
-      const isBlur = meta?.phase === 'blur';
-      let updatedMember = { ...current[index] };
-    
-      if (field === 'naam') {
-        // onChange: rauw opslaan; onBlur: schoon opslaan
-=======
 
       const isBlur = meta?.phase === 'blur';
       let updatedMember: Member = { ...current[index] };
 
       if (field === 'naam') {
-        // onChange -> rauw opslaan (cursor blijft stabiel)
-        // onBlur -> schoon opslaan (emoji/whitespace/trim)
->>>>>>> Stashed changes
+        // UX: onChange -> rauw (cursor stabiel), onBlur -> schoon (data integriteit)
         updatedMember.naam = isBlur ? cleanName(value, 25) : String(value ?? '');
       } else if (field === 'dateOfBirth') {
         const val = typeof value === 'string' ? value.trim() : '';
@@ -162,39 +105,21 @@ const formReducer: React.Reducer<FormState, FormAction> = (state: FormState, act
       } else {
         (updatedMember as any)[field] = value;
       }
-    
+
       const nextLeden = current.map((m, i) => (i === index ? updatedMember : m));
-<<<<<<< Updated upstream
-    
-=======
->>>>>>> Stashed changes
+
       return {
         ...state,
         isSpecialStatus: checkSpecialStatus(nextLeden),
         C4: { ...(state.C4 ?? {}), leden: nextLeden },
       };
     }
->>>>>>> Stashed changes
 
     case 'ALIGN_HOUSEHOLD_MEMBERS': {
       const { aantalMensen, aantalVolwassen } = action.payload;
       const current = state?.C4?.leden;
       const aligned = alignMembers(current, aantalMensen, aantalVolwassen);
-<<<<<<< Updated upstream
 
-      console.log('[REDUCER] ALIGN start', {
-        currentLen: Array.isArray(current) ? current.length : 0,
-        payload: { aantalMensen, aantalVolwassen }
-      });
-
-      console.log('[REDUCER] ALIGN done', {
-        alignedLen: aligned.length,
-        adultsCount: aligned.filter(m => m.memberType === 'adult').length,
-        childrenCount: aligned.filter(m => m.memberType === 'child').length
-      });
-
-=======
->>>>>>> Stashed changes
       return {
         ...state,
         isSpecialStatus: checkSpecialStatus(aligned),
@@ -222,16 +147,7 @@ const formReducer: React.Reducer<FormState, FormAction> = (state: FormState, act
 const FormContext = React.createContext<FormContextValue | undefined>(undefined);
 
 export const FormProvider = ({ children }: { children: React.ReactNode }) => {
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-  const [state, dispatch] = React.useReducer<FormState, FormAction>(formReducer, {} as FormState);
-=======
   const [state, dispatch] = React.useReducer(formReducer, {} as FormState);
->>>>>>> Stashed changes
-=======
-  const [state, dispatch] = React.useReducer(formReducer, {} as FormState);
->>>>>>> Stashed changes
-
   const hasHydratedRef = React.useRef(false);
 
   // 1) Hydrate
@@ -266,10 +182,7 @@ export const FormProvider = ({ children }: { children: React.ReactNode }) => {
         });
     }, 400);
     return () => {
-      if (saveTimer.current) {
-        clearTimeout(saveTimer.current);
-        saveTimer.current = null;
-      }
+      if (saveTimer.current) clearTimeout(saveTimer.current);
     };
   }, [state]);
 
@@ -277,9 +190,6 @@ export const FormProvider = ({ children }: { children: React.ReactNode }) => {
   return <FormContext.Provider value={value}>{children}</FormContext.Provider>;
 };
 
-// ============================================================================
-// HOOK
-// ============================================================================
 export const useFormContext = (): FormContextValue => {
   const context = React.useContext(FormContext);
   if (!context) throw new Error('useFormContext must be used within FormProvider');
