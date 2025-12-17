@@ -48,6 +48,7 @@ const WizardController: React.FC<WizardControllerProps> = (props) => {
   // ============================================
   // A2 FIX: Just-in-time ALIGN bij page-enter C4
   // ============================================
+
   React.useEffect(() => {
     console.log('[WIZARD] enter page', {
       id: page?.id,
@@ -64,7 +65,6 @@ const WizardController: React.FC<WizardControllerProps> = (props) => {
         Math.max(1, Number(state.C1?.aantalVolwassen ?? 1)),
       );
 
-      // ALIGN happens AFTER all SET_PAGE_DATA writes from C4 init
       dispatch({
         type: 'ALIGN_HOUSEHOLD_MEMBERS',
         payload: { aantalMensen, aantalVolwassen },
