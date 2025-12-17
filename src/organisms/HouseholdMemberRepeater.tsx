@@ -43,7 +43,7 @@ const HouseholdMemberRepeater: React.FC = () => {
   const aantalKinderen = Math.max(0, aantalMensen - aantalVolwassen);
 
   const leden: Member[] = Array.isArray(state.C4?.leden) ? (state.C4!.leden as Member[]) : [];
-
+  const currentMembers = leden; // alias voor duidelijkheid bij lookups
   const updateMember = (index: number, patch: Partial<Member>) => {
     const next = leden.map((m, i) => (i === index ? { ...m, ...patch } : m));
     dispatch({ type: 'SET_PAGE_DATA', pageId: 'C4', data: { leden: next } });
@@ -204,11 +204,17 @@ const HouseholdMemberRepeater: React.FC = () => {
     childrenLen: children.length,
   });
 
-  return (
-    <View style={styles.pageContainer}>
-      {adults.map((m, i) => renderAdultCard(m, i))}
-      {children.map((m, i) => renderChildCard(m, i))}
-    </View>
+    return (
+        <View style={styles.pageContainer}>
+          {adults.map((m) => {
+            const originalIndex = currentMembers.findIndex((x) => x.id === m.id);
+            return renderAdultCard(m, originalIndex >= 0 ? originalIndex : 0);
+          })}
+          {children.map((m) => {
+            const originalIndex = currentMembers.findIndex((x) => x.id === m.id);
+            return renderChildCard(m, originalIndex >= 0 ? originalIndex : 0);
+         })}
+        </View>
   );
 };
 
