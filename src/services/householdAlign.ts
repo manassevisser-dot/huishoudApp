@@ -33,7 +33,7 @@ export function alignMembers(
         dateOfBirth: next[idx]?.dateOfBirth,
         leeftijd: next[idx]?.leeftijd,
       });
-      leadingAdults++;
+      leadingAdults++; // exact één increment per insert
     }
     while (next.length < targetLen) {
       const idx = next.length;
