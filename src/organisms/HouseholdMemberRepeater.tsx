@@ -24,48 +24,6 @@ const HouseholdMemberRepeater: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      {/* ===================== WONEN ===================== */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Wonen</Text>
-
-        <View style={styles.fieldContainer}>
-          <Text style={styles.label}>{woning ? `Type: ${woning}` : 'Kies woningtype'}</Text>
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipContainer}
-        >
-          {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((w) => (
-            <ChipButton
-              key={w}
-              label={w}
-              selected={woning === w}
-              onPress={() =>
-                state &&
-                state.C4 &&
-                state.C4 !== undefined &&
-                state !== undefined &&
-                state !== null &&
-                state.C4 !== null &&
-                state.C4 !== undefined &&
-                state &&
-                state !== null &&
-                state !== undefined &&
-                state.C4 &&
-                state.C4 !== null &&
-                state.C4 !== undefined &&
-                state !== undefined
-                  ? state
-                  : null
-              }
-              accessibilityLabel={`Woning: ${w}`}
-            />
-          ))}
-        </ScrollView>
-      </View>
-
       {/* ===================== VOLWASSENEN ===================== */}
       {adults.length > 0 && (
         <View style={styles.section}>

@@ -10,6 +10,8 @@ import { validateField } from '../../utils/validation';
 import { evaluateCondition } from '../../utils/conditions';
 import { PageConfig } from '../../types/form';
 import { showWizardProgress } from '../../config/features';
+import ChipButton from '../../components/ChipButton';
+import { WoningType } from '../../types/household';
 
 type PageProps = {
   page: PageConfig;
@@ -101,6 +103,34 @@ const WizardPage: React.FC<PageProps> = ({
   return (
     <View style={styles.pageContainer}>
       <Text style={styles.pageTitle}>{page.title}</Text>
+
+      {/* C4 — Wonen chips boven 'Leden van het huishouden' */}
+      {page.id === 'C4' && (
+        <View style={{ marginBottom: 16 }}>
+          <Text style={styles.summaryLabelBold}>Wonen</Text>
+          <View style={styles.fieldContainer}>
+            <Text style={styles.label}>
+              {typeof state.C4?.woning === 'string'
+                ? `Type: ${state.C4?.woning}`
+                : 'Kies woningtype'}
+            </Text>
+          </View>
+          <View style={styles.chipContainer}>
+            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((w) => (
+              <ChipButton
+                key={w}
+                label={w}
+                selected={state.C4?.woning === w}
+                onPress={() => {
+                  if (__DEV__) console.log('[C4] set woning', w);
+                  dispatch({ type: 'SET_PAGE_DATA', pageId: 'C4', data: { woning: w } });
+                }}
+                accessibilityLabel={`Woning: ${w}`}
+              />
+            ))}
+          </View>
+        </View>
+      )}
 
       {/*
         TODO(feature-flag): Onderstaande indicator conditioneel maken via features.showWizardProgress
