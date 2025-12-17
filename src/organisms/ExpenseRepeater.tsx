@@ -76,7 +76,7 @@ const ExpenseRepeater: React.FC = () => {
         return 'Wonen';
     }
   };
-
+  console.log('[C10] read woning from C4:', woning);
   const renderWonen = () => {
     const id = 'wonen';
     return (
