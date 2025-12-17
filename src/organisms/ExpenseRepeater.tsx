@@ -11,7 +11,15 @@ import { onlyDigitsDotsComma } from '../utils/numbers';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_WIDTH = SCREEN_WIDTH * 0.85;
 
-const STREAMING_KEYS = ['videoland','hbo','netflix','npostart','kijk','disneyPlus','ytPremium'] as const;
+const STREAMING_KEYS = [
+  'videoland',
+  'hbo',
+  'netflix',
+  'npostart',
+  'kijk',
+  'disneyPlus',
+  'ytPremium',
+] as const;
 
 const isChildUnder15 = (m: Member) =>
   m.memberType === 'child' && typeof m.leeftijd === 'number' && m.leeftijd < 15;
@@ -29,7 +37,7 @@ const ExpenseRepeater: React.FC = () => {
   const woning: WoningType | undefined = c4?.woning;
   const auto: AutoCount | undefined = c4?.auto;
 
-  const leden: Member[] = React.useMemo(() => Array.isArray(c4?.leden) ? c4.leden : [], [c4]);
+  const leden: Member[] = React.useMemo(() => (Array.isArray(c4?.leden) ? c4.leden : []), [c4]);
   const lasten: ExpenseItem[] = Array.isArray(c10?.lasten) ? c10.lasten : [];
 
   const readField = (itemId: string, key: string): number | undefined => {
@@ -39,22 +47,33 @@ const ExpenseRepeater: React.FC = () => {
   };
 
   const updateExpense = (itemId: string, key: string, raw: string | number | undefined) => {
-    const val = typeof raw === 'string' ? (onlyDigitsDotsComma(raw).length ? Number(onlyDigitsDotsComma(raw)) : undefined) : raw;
+    const val =
+      typeof raw === 'string'
+        ? onlyDigitsDotsComma(raw).length
+          ? Number(onlyDigitsDotsComma(raw))
+          : undefined
+        : raw;
     const next = [...lasten];
     const idx = next.findIndex((x) => x.id === itemId);
-    const item = idx >= 0 ? { ...next[idx] } : { id: itemId } as ExpenseItem;
+    const item = idx >= 0 ? { ...next[idx] } : ({ id: itemId } as ExpenseItem);
     item[key] = val;
-    if (idx >= 0) next[idx] = item; else next.push(item);
+    if (idx >= 0) next[idx] = item;
+    else next.push(item);
     dispatch({ type: 'SET_PAGE_DATA', pageId: 'C10', data: { lasten: next } });
   };
 
   const getWoningLabel = (woningType: WoningType | undefined) => {
     switch (woningType) {
-      case 'Koop': return 'lasten bij een koopwoning:';
-      case 'Huur': return 'lasten bij een huurwoning:';
-      case 'Kamer': return 'woonlasten';
-      case 'Anders': return 'Wonen';
-      default: return 'Wonen';
+      case 'Koop':
+        return 'lasten bij een koopwoning:';
+      case 'Huur':
+        return 'lasten bij een huurwoning:';
+      case 'Kamer':
+        return 'woonlasten';
+      case 'Anders':
+        return 'Wonen';
+      default:
+        return 'Wonen';
     }
   };
 
@@ -68,44 +87,68 @@ const ExpenseRepeater: React.FC = () => {
         </View>
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Type</Text>
-          <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIndicator={false}>
+          <ScrollView
+            horizontal
+            contentContainerStyle={styles.chipContainer}
+            showsHorizontalScrollIndicator={false}
+          >
             {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((w) => (
               <ChipButton
                 key={w}
                 label={w}
                 selected={woning === w}
-                onPress={() => dispatch({ type: 'SET_PAGE_DATA', pageId: 'C4', data: { woning: w } })}
-                accessibilityLabel={`Woning: ${w}`}
+                // READ-ONLY in C10 (Phase 0.5 UI-decoupling):
+                // C10 mag C4 niet meer schrijven. Woningtype wordt gewijzigd op C4;
+                // hier tonen we alleen de huidige waarde voor conditionele weergave.
+                onPress={() => {}}
               />
             ))}
           </ScrollView>
         </View>
 
-        {woning === 'Huur' && ['kaleHuur','servicekosten','gemeentebelastingen','waterschapsbelasting'].map((k) => (
-          <View key={k} style={styles.fieldContainer}>
-            <Text style={styles.label}>{k === 'kaleHuur' ? 'Kale Huur (€/mnd)' : k === 'servicekosten' ? 'Servicekosten huurhuis (€/mnd)' : k === 'gemeentebelastingen' ? 'Gemeentebelastingen (€/mnd)' : 'Waterschapsbelasting (€/mnd)'}</Text>
-            <TextInput
-              style={styles.numericInput}
-              value={readField(id, k)?.toString() ?? ''}
-              keyboardType="number-pad"
-              onChangeText={(t) => updateExpense(id, k, t)}
-              placeholder="0.00"
-            />
-          </View>
-        ))}
+        {woning === 'Huur' &&
+          ['kaleHuur', 'servicekosten', 'gemeentebelastingen', 'waterschapsbelasting'].map((k) => (
+            <View key={k} style={styles.fieldContainer}>
+              <Text style={styles.label}>
+                {k === 'kaleHuur'
+                  ? 'Kale Huur (€/mnd)'
+                  : k === 'servicekosten'
+                    ? 'Servicekosten huurhuis (€/mnd)'
+                    : k === 'gemeentebelastingen'
+                      ? 'Gemeentebelastingen (€/mnd)'
+                      : 'Waterschapsbelasting (€/mnd)'}
+              </Text>
+              <TextInput
+                style={styles.numericInput}
+                value={readField(id, k)?.toString() ?? ''}
+                keyboardType="number-pad"
+                onChangeText={(t) => updateExpense(id, k, t)}
+                placeholder="0.00"
+              />
+            </View>
+          ))}
 
-        {woning === 'Koop' && ['hypotheekBruto','ozb','gemeentebelastingen','waterschapsbelasting'].map((k) => (
-          <View key={k} style={styles.fieldContainer}>
-            <Text style={styles.label}>{k === 'hypotheekBruto' ? 'Hypotheek (bruto) (€/mnd)' : k === 'ozb' ? 'Onroerende Zaak Belasting (€/mnd)' : k === 'gemeentebelastingen' ? 'Gemeentebelastingen (€/mnd)' : 'Waterschapsbelasting (€/mnd)'}</Text>
-            <TextInput
-              style={styles.numericInput}
-              value={readField(id, k)?.toString() ?? ''}
-              keyboardType="number-pad"
-              onChangeText={(t) => updateExpense(id, k, t)}
-              placeholder="0.00"
-            />
-          </View>
-        ))}
+        {woning === 'Koop' &&
+          ['hypotheekBruto', 'ozb', 'gemeentebelastingen', 'waterschapsbelasting'].map((k) => (
+            <View key={k} style={styles.fieldContainer}>
+              <Text style={styles.label}>
+                {k === 'hypotheekBruto'
+                  ? 'Hypotheek (bruto) (€/mnd)'
+                  : k === 'ozb'
+                    ? 'Onroerende Zaak Belasting (€/mnd)'
+                    : k === 'gemeentebelastingen'
+                      ? 'Gemeentebelastingen (€/mnd)'
+                      : 'Waterschapsbelasting (€/mnd)'}
+              </Text>
+              <TextInput
+                style={styles.numericInput}
+                value={readField(id, k)?.toString() ?? ''}
+                keyboardType="number-pad"
+                onChangeText={(t) => updateExpense(id, k, t)}
+                placeholder="0.00"
+              />
+            </View>
+          ))}
 
         {woning === 'Kamer' && (
           <View style={styles.fieldContainer}>
@@ -152,9 +195,11 @@ const ExpenseRepeater: React.FC = () => {
             />
           </View>
         ) : (
-          ['energieGas','water'].map((k) => (
+          ['energieGas', 'water'].map((k) => (
             <View key={k} style={styles.fieldContainer}>
-              <Text style={styles.label}>{k === 'energieGas' ? 'Energie/Gas (€/mnd)' : 'Water (€/mnd)'}</Text>
+              <Text style={styles.label}>
+                {k === 'energieGas' ? 'Energie/Gas (€/mnd)' : 'Water (€/mnd)'}
+              </Text>
               <TextInput
                 style={styles.numericInput}
                 value={readField(id, k)?.toString() ?? ''}
@@ -171,47 +216,60 @@ const ExpenseRepeater: React.FC = () => {
 
   const renderVerzekeringen = () => {
     const id = 'verzekeringen';
-    const toggleInsurance = (key: string) => updateExpense(id, `${key}_enabled`, !readField(id, `${key}_enabled`) ? 1 : 0);
+    const toggleInsurance = (key: string) =>
+      updateExpense(id, `${key}_enabled`, !readField(id, `${key}_enabled`) ? 1 : 0);
     const isEnabled = (key: string) => !!readField(id, `${key}_enabled`);
 
     return (
       <View style={styles.dashboardCard}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => setVerzekeringenExpanded(!verzekeringenExpanded)}
-          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 12,
+          }}
         >
           <Text style={styles.summaryLabelBold}>Overige verzekeringen</Text>
           <Text style={styles.summaryLabel}>{verzekeringenExpanded ? '▼' : '▶'}</Text>
         </TouchableOpacity>
 
-        {verzekeringenExpanded && ['aansprakelijkheid','reis','opstal','uitvaart'].map((v) => (
-          <View key={v} style={styles.fieldContainer}>
-            <Text style={styles.label}>{v === 'uitvaart' ? 'Uitvaart/Levens' : v.charAt(0).toUpperCase() + v.slice(1)}</Text>
-            <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIndicator={false}>
-              <ChipButton
-                label="Nee"
-                selected={!isEnabled(v)}
-                onPress={() => updateExpense(id, `${v}_enabled`, 0)}
-                accessibilityLabel={`${v}: Nee`}
-              />
-              <ChipButton
-                label="Ja"
-                selected={isEnabled(v)}
-                onPress={() => toggleInsurance(v)}
-                accessibilityLabel={`${v}: Ja`}
-              />
-            </ScrollView>
-            {isEnabled(v) && (
-              <TextInput
-                style={styles.numericInput}
-                value={readField(id, v)?.toString() ?? ''}
-                keyboardType="number-pad"
-                onChangeText={(t) => updateExpense(id, v, t)}
-                placeholder="Premie (€/mnd)"
-              />
-            )}
-          </View>
-        ))}
+        {verzekeringenExpanded &&
+          ['aansprakelijkheid', 'reis', 'opstal', 'uitvaart'].map((v) => (
+            <View key={v} style={styles.fieldContainer}>
+              <Text style={styles.label}>
+                {v === 'uitvaart' ? 'Uitvaart/Levens' : v.charAt(0).toUpperCase() + v.slice(1)}
+              </Text>
+              <ScrollView
+                horizontal
+                contentContainerStyle={styles.chipContainer}
+                showsHorizontalScrollIndicator={false}
+              >
+                <ChipButton
+                  label="Nee"
+                  selected={!isEnabled(v)}
+                  onPress={() => updateExpense(id, `${v}_enabled`, 0)}
+                  accessibilityLabel={`${v}: Nee`}
+                />
+                <ChipButton
+                  label="Ja"
+                  selected={isEnabled(v)}
+                  onPress={() => toggleInsurance(v)}
+                  accessibilityLabel={`${v}: Ja`}
+                />
+              </ScrollView>
+              {isEnabled(v) && (
+                <TextInput
+                  style={styles.numericInput}
+                  value={readField(id, v)?.toString() ?? ''}
+                  keyboardType="number-pad"
+                  onChangeText={(t) => updateExpense(id, v, t)}
+                  placeholder="Premie (€/mnd)"
+                />
+              )}
+            </View>
+          ))}
       </View>
     );
   };
@@ -220,9 +278,14 @@ const ExpenseRepeater: React.FC = () => {
     const id = 'abonnementen';
     return (
       <View style={styles.dashboardCard}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => setAbonnementenExpanded(!abonnementenExpanded)}
-          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 12,
+          }}
         >
           <Text style={styles.summaryLabelBold}>Abonnementen</Text>
           <Text style={styles.summaryLabel}>{abonnementenExpanded ? '▼' : '▶'}</Text>
@@ -230,9 +293,15 @@ const ExpenseRepeater: React.FC = () => {
 
         {abonnementenExpanded && (
           <>
-            {['internetTv','sport','lezen'].map((k) => (
+            {['internetTv', 'sport', 'lezen'].map((k) => (
               <View key={k} style={styles.fieldContainer}>
-                <Text style={styles.label}>{k === 'internetTv' ? 'Internet/TV (€/mnd)' : k === 'sport' ? 'Sport (€/mnd)' : 'Lezen (€/mnd)'}</Text>
+                <Text style={styles.label}>
+                  {k === 'internetTv'
+                    ? 'Internet/TV (€/mnd)'
+                    : k === 'sport'
+                      ? 'Sport (€/mnd)'
+                      : 'Lezen (€/mnd)'}
+                </Text>
                 <TextInput
                   style={styles.numericInput}
                   value={readField(id, k)?.toString() ?? ''}
@@ -245,31 +314,44 @@ const ExpenseRepeater: React.FC = () => {
 
             <View style={styles.fieldContainer}>
               <Text style={styles.label}>Streaming</Text>
-              <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIndicator={false}>
+              <ScrollView
+                horizontal
+                contentContainerStyle={styles.chipContainer}
+                showsHorizontalScrollIndicator={false}
+              >
                 {STREAMING_KEYS.map((p) => (
                   <ChipButton
                     key={p}
                     label={p}
                     selected={!!readField(id, `streaming_${p}_enabled`)}
-                    onPress={() => updateExpense(id, `streaming_${p}_enabled`, readField(id, `streaming_${p}_enabled`) ? 0 : 1)}
+                    onPress={() =>
+                      updateExpense(
+                        id,
+                        `streaming_${p}_enabled`,
+                        readField(id, `streaming_${p}_enabled`) ? 0 : 1,
+                      )
+                    }
                     accessibilityLabel={`Streaming ${p}`}
                   />
                 ))}
               </ScrollView>
             </View>
 
-            {STREAMING_KEYS.map((p) => !!readField(id, `streaming_${p}_enabled`) && (
-              <View key={`streaming_${p}`} style={styles.fieldContainer}>
-                <Text style={styles.label}>{p} (€/mnd)</Text>
-                <TextInput
-                  style={styles.numericInput}
-                  value={readField(id, `streaming_${p}_amount`)?.toString() ?? ''}
-                  keyboardType="number-pad"
-                  onChangeText={(t) => updateExpense(id, `streaming_${p}_amount`, t)}
-                  placeholder="0.00"
-                />
-              </View>
-            ))}
+            {STREAMING_KEYS.map(
+              (p) =>
+                !!readField(id, `streaming_${p}_enabled`) && (
+                  <View key={`streaming_${p}`} style={styles.fieldContainer}>
+                    <Text style={styles.label}>{p} (€/mnd)</Text>
+                    <TextInput
+                      style={styles.numericInput}
+                      value={readField(id, `streaming_${p}_amount`)?.toString() ?? ''}
+                      keyboardType="number-pad"
+                      onChangeText={(t) => updateExpense(id, `streaming_${p}_amount`, t)}
+                      placeholder="0.00"
+                    />
+                  </View>
+                ),
+            )}
 
             <View style={styles.fieldContainer}>
               <Text style={styles.label}>Contributie vereniging (€/mnd)</Text>
@@ -288,21 +370,36 @@ const ExpenseRepeater: React.FC = () => {
   };
 
   const renderPerPerson = () => {
-    const adults = leden.filter(m => m.memberType === 'adult');
-    const children = leden.filter(m => m.memberType === 'child');
+    const adults = leden.filter((m) => m.memberType === 'adult');
+    const children = leden.filter((m) => m.memberType === 'child');
 
     const renderAdultExpenses = (m: Member, idx: number) => {
       const id = `pers-${m.id}`;
       const display = m.naam?.trim() ? m.naam : `Volwassene ${idx + 1}`;
       return (
-        <View key={id} style={adults.length > 1 ? [styles.dashboardCard, { width: CARD_WIDTH, marginRight: 20 }] : styles.fieldContainer}>
+        <View
+          key={id}
+          style={
+            adults.length > 1
+              ? [styles.dashboardCard, { width: CARD_WIDTH, marginRight: 20 }]
+              : styles.fieldContainer
+          }
+        >
           <Text style={styles.summaryLabelBold}>{display}</Text>
-          {['ziektekostenPremie','telefoon','ov'].map((k) => (
+          {['ziektekostenPremie', 'telefoon', 'ov'].map((k) => (
             <View key={k} style={styles.fieldContainer}>
               <Text style={styles.label}>
-                {k === 'ziektekostenPremie' ? 'Ziektekosten (Premie) (€/mnd)' : k === 'telefoon' ? 'Telefoon (€/mnd)' : 'OV (€/mnd) (optioneel)'}
+                {k === 'ziektekostenPremie'
+                  ? 'Ziektekosten (Premie) (€/mnd)'
+                  : k === 'telefoon'
+                    ? 'Telefoon (€/mnd)'
+                    : 'OV (€/mnd) (optioneel)'}
               </Text>
-              {k === 'ziektekostenPremie' && <Text style={styles.summaryDetail}>Eigen risico: €385/jaar wordt automatisch berekend.</Text>}
+              {k === 'ziektekostenPremie' && (
+                <Text style={styles.summaryDetail}>
+                  Eigen risico: €385/jaar wordt automatisch berekend.
+                </Text>
+              )}
               <TextInput
                 style={styles.numericInput}
                 value={readField(id, k)?.toString() ?? ''}
@@ -312,7 +409,9 @@ const ExpenseRepeater: React.FC = () => {
               />
             </View>
           ))}
-          {adults.length > 1 && idx < adults.length - 1 && <Text style={styles.navigationHint}>volgende →</Text>}
+          {adults.length > 1 && idx < adults.length - 1 && (
+            <Text style={styles.navigationHint}>volgende →</Text>
+          )}
         </View>
       );
     };
@@ -323,10 +422,13 @@ const ExpenseRepeater: React.FC = () => {
       const display = m.naam?.trim() ? m.naam : 'Kind';
       return (
         <View key={id} style={styles.fieldContainer}>
-          {['telefoon','ov'].map((k) => (
+          {['telefoon', 'ov'].map((k) => (
             <View key={k} style={styles.fieldContainer}>
               <Text style={styles.label}>
-                {k === 'telefoon' ? `Telefoon (€/mnd)${isChild15Optional ? ' (optioneel)' : ''}` : 'OV (€/mnd) (optioneel)'} — {display}
+                {k === 'telefoon'
+                  ? `Telefoon (€/mnd)${isChild15Optional ? ' (optioneel)' : ''}`
+                  : 'OV (€/mnd) (optioneel)'}{' '}
+                — {display}
               </Text>
               <TextInput
                 style={styles.numericInput}
@@ -356,7 +458,9 @@ const ExpenseRepeater: React.FC = () => {
           >
             {adults.map((m, idx) => renderAdultExpenses(m, idx))}
           </ScrollView>
-        ) : adults.map((m, idx) => renderAdultExpenses(m, idx))}
+        ) : (
+          adults.map((m, idx) => renderAdultExpenses(m, idx))
+        )}
         {children.map((m) => renderChildExpenses(m))}
       </View>
     );
@@ -366,7 +470,7 @@ const ExpenseRepeater: React.FC = () => {
     // Bepaal aantal auto's
     const count = auto === 'Één' ? 1 : auto === 'Twee' ? 2 : 0;
     if (count === 0) return null;
-  
+
     // Velden per auto
     const autoFields: { key: string; label: string; optional?: boolean }[] = [
       { key: 'wegenbelasting', label: 'Wegenbelasting' },
@@ -376,11 +480,11 @@ const ExpenseRepeater: React.FC = () => {
       { key: 'lease', label: 'Leasekosten', optional: true },
       { key: 'afschrijving', label: 'Afschrijving', optional: true },
     ];
-  
+
     return (
       <View style={styles.dashboardCard}>
         <Text style={styles.summaryLabelBold}>Autokosten</Text>
-  
+
         <ScrollView
           horizontal
           pagingEnabled
@@ -393,11 +497,15 @@ const ExpenseRepeater: React.FC = () => {
           {Array.from({ length: count }).map((_, i) => {
             const idx = i + 1;
             const id = `auto-${idx}`;
-  
+
             return (
               <View
                 key={id}
-                style={count > 1 ? [styles.dashboardCard, { width: CARD_WIDTH, marginRight: 20 }] : styles.fieldContainer}
+                style={
+                  count > 1
+                    ? [styles.dashboardCard, { width: CARD_WIDTH, marginRight: 20 }]
+                    : styles.fieldContainer
+                }
               >
                 {autoFields.map((f) => (
                   <View key={`${id}-${f.key}`} style={styles.fieldContainer}>
@@ -420,7 +528,6 @@ const ExpenseRepeater: React.FC = () => {
       </View>
     );
   };
-  
 
   return (
     <View style={styles.pageContainer}>
@@ -435,4 +542,3 @@ const ExpenseRepeater: React.FC = () => {
 };
 
 export default ExpenseRepeater;
-
