@@ -43,6 +43,7 @@ const HouseholdMemberRepeater: React.FC = () => {
   const aantalKinderen = Math.max(0, aantalMensen - aantalVolwassen);
 
   const leden: Member[] = Array.isArray(state.C4?.leden) ? (state.C4!.leden as Member[]) : [];
+
   const adultsWithIndex = leden
     .map((m, i) => ({ m, i }))
     .filter(({ m }) => m.memberType === 'adult');
