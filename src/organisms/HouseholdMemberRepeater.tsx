@@ -1,6 +1,6 @@
 // src/organisms/HouseholdMemberRepeater.tsx
 import * as React from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 
 import { useFormContext } from '../context/FormContext';
 import { Member, WoningType } from '../types/household';
@@ -22,6 +22,12 @@ const HouseholdMemberRepeater: React.FC = () => {
   const adults = leden.filter((m) => m.memberType === 'adult');
   const children = leden.filter((m) => m.memberType === 'child');
 
+  const total = leden.length;
+  // Reuse the established swipe pattern from Expense/Income:
+  // CARD_WIDTH = SCREEN_WIDTH * 0.85; snapToInterval = CARD_WIDTH + 20; paddingRight: 20
+  const SCREEN_WIDTH = Dimensions.get('window').width;
+  const CARD_WIDTH = SCREEN_WIDTH * 0.85;
+
   return (
     <View style={styles.container}>
       {/* ===================== VOLWASSENEN ===================== */}
@@ -29,13 +35,42 @@ const HouseholdMemberRepeater: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Volwassenen ({adults.length})</Text>
 
-          {adults.map((member) => (
-            <MemberCard
-              key={`adult-${leden.indexOf(member)}`}
-              member={member}
-              index={leden.indexOf(member)}
-            />
-          ))}
+          {adults.length > 1 ? (
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingRight: 20 }}
+              snapToInterval={CARD_WIDTH + 20}
+              decelerationRate="fast"
+              style={{ marginVertical: 12 }}
+            >
+              {adults.map((member) => {
+                const idx = leden.indexOf(member);
+                return (
+                  <View
+                    key={`adult-${idx}`}
+                    style={[styles.cardSwipe, { width: CARD_WIDTH, marginRight: 20 }]}
+                  >
+                    <MemberCard member={member} index={idx} />
+                    {idx < total - 1 && total > 1 && (
+                      <Text style={[styles.navigationHint, styles.hintOverlayBottomRight]}>
+                        ----&gt; volgende
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
+            </ScrollView>
+          ) : (
+            adults.map((member) => (
+              <MemberCard
+                key={`adult-${leden.indexOf(member)}`}
+                member={member}
+                index={leden.indexOf(member)}
+              />
+            ))
+          )}
         </View>
       )}
 
@@ -44,13 +79,42 @@ const HouseholdMemberRepeater: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Kinderen ({children.length})</Text>
 
-          {children.map((member) => (
-            <MemberCard
-              key={`child-${leden.indexOf(member)}`}
-              member={member}
-              index={leden.indexOf(member)}
-            />
-          ))}
+          {children.length > 1 ? (
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingRight: 20 }}
+              snapToInterval={CARD_WIDTH + 20}
+              decelerationRate="fast"
+              style={{ marginVertical: 12 }}
+            >
+              {children.map((member) => {
+                const idx = leden.indexOf(member);
+                return (
+                  <View
+                    key={`child-${idx}`}
+                    style={[styles.cardSwipe, { width: CARD_WIDTH, marginRight: 20 }]}
+                  >
+                    <MemberCard member={member} index={idx} />
+                    {idx < total - 1 && total > 1 && (
+                      <Text style={[styles.navigationHint, styles.hintOverlayBottomRight]}>
+                        ----&gt; volgende
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
+            </ScrollView>
+          ) : (
+            children.map((member) => (
+              <MemberCard
+                key={`child-${leden.indexOf(member)}`}
+                member={member}
+                index={leden.indexOf(member)}
+              />
+            ))
+          )}
         </View>
       )}
     </View>
