@@ -101,7 +101,19 @@ export function getAppStyles(theme: Theme) {
       bottom: 6,
       right: 12,
     },
-
+    // Badge linksboven met nummering (1, 2, 3, ...)
+    cardBadge: {
+      position: 'absolute',
+      top: 8,
+      left: 12,
+      backgroundColor: '#00000033', // half-transparant
+      color: '#fff',
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 12,
+      fontSize: 12,
+      overflow: 'hidden',
+    },
     // === GRID FOR CATEGORIES ===
     gridContainer: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
     gridItem: {
