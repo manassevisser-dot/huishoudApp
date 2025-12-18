@@ -95,6 +95,13 @@ export function getAppStyles(theme: Theme) {
       fontStyle: 'italic',
     },
 
+    // === HINT OVERLAY POSITIONERING (nieuw, klein en doelgericht) ===
+    hintOverlayBottomRight: {
+      position: 'absolute',
+      bottom: 6,
+      right: 12,
+    },
+
     // === GRID FOR CATEGORIES ===
     gridContainer: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
     gridItem: {
@@ -182,6 +189,8 @@ export function getAppStyles(theme: Theme) {
       shadowRadius: 4,
       elevation: 3,
     },
+    // cards voor swipe
+    cardSwipe: { marginBottom: 12, paddingBottom: 22, position: 'relative' },
 
     section: {
       marginBottom: 24,
