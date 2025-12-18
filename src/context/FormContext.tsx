@@ -78,6 +78,7 @@ const formReducer: React.Reducer<FormState, FormAction> = (
   switch (action.type) {
     case 'SET_PAGE_DATA': {
       const { pageId, data } = action;
+      if (__DEV__) console.log('[CTX] SET_PAGE_DATA', pageId, data);
       return {
         ...state,
         [pageId]: {

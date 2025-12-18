@@ -9,12 +9,12 @@ const styleCache: Partial<Record<Theme, ReturnType<typeof StyleSheet.create>>> =
 
 /**
  * Dynamic style factory - creates theme-aware StyleSheet
- * 
+ *
  * Performance:
  *   - First call per theme: Creates and caches StyleSheet (~5-10ms)
  *   - Subsequent calls: Returns cached reference (~0.01ms)
  *   - Memory: 2 StyleSheets total (light + dark)
- * 
+ *
  * @param theme - 'light' or 'dark'
  * @returns Cached StyleSheet for the specified theme
  */
@@ -23,7 +23,7 @@ export function getAppStyles(theme: Theme) {
   if (styleCache[theme]) {
     return styleCache[theme]!;
   }
-  
+
   const c = Colors[theme];
 
   const styles = StyleSheet.create({
@@ -52,7 +52,15 @@ export function getAppStyles(theme: Theme) {
     fieldContainer: { marginBottom: 20 },
     label: { fontSize: 17, fontWeight: '600', color: c.textPrimary, marginBottom: 8 },
     labelError: { color: c.error },
-    input: { backgroundColor: c.inputBackground, borderRadius: 10, padding: 14, fontSize: 17, color: c.textPrimary, borderWidth: 1, borderColor: c.border },
+    input: {
+      backgroundColor: c.inputBackground,
+      borderRadius: 10,
+      padding: 14,
+      fontSize: 17,
+      color: c.textPrimary,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
     numericWrapper: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -69,10 +77,23 @@ export function getAppStyles(theme: Theme) {
 
     // === WARNINGS ===
     warningTextOrange: { color: c.warning, fontSize: 14, marginTop: 4, marginLeft: 4 },
-    warningTextRed: { color: c.error, fontSize: 14, marginTop: 4, marginLeft: 4, fontWeight: '600' },
+    warningTextRed: {
+      color: c.error,
+      fontSize: 14,
+      marginTop: 4,
+      marginLeft: 4,
+      fontWeight: '600',
+    },
 
     // === NAVIGATION HINT ===
-    navigationHint: { fontSize: 14, color: c.textTertiary, textAlign: 'right', marginTop: 12, marginRight: 8, fontStyle: 'italic' },
+    navigationHint: {
+      fontSize: 14,
+      color: c.textTertiary,
+      textAlign: 'right',
+      marginTop: 12,
+      marginRight: 8,
+      fontStyle: 'italic',
+    },
 
     // === GRID FOR CATEGORIES ===
     gridContainer: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
@@ -110,37 +131,147 @@ export function getAppStyles(theme: Theme) {
       borderTopWidth: 1,
       borderTopColor: c.border,
     },
-    button: { flex: 1, backgroundColor: c.primary, padding: 16, borderRadius: 10, alignItems: 'center', marginLeft: 10 },
+    button: {
+      flex: 1,
+      backgroundColor: c.primary,
+      padding: 16,
+      borderRadius: 10,
+      alignItems: 'center',
+      marginLeft: 10,
+    },
     buttonText: { color: c.primaryText, fontSize: 17, fontWeight: '700' },
     secondaryButton: { backgroundColor: c.secondary, marginLeft: 0, marginRight: 10 },
     secondaryButtonText: { color: c.secondaryText, fontSize: 17, fontWeight: '600' },
 
     // === TOGGLES & CHIPS ===
     toggleWrapper: { flexDirection: 'row', justifyContent: 'flex-start' },
-    toggleButton: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8, minWidth: 80, alignItems: 'center' },
+    toggleButton: {
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 8,
+      minWidth: 80,
+      alignItems: 'center',
+    },
     toggleActive: { backgroundColor: c.success },
     toggleInactive: { backgroundColor: c.secondary },
     toggleText: { fontSize: 17, fontWeight: '600', color: c.successText },
     chipContainer: { flexDirection: 'row', paddingVertical: 4 },
-    chip: { backgroundColor: c.secondary, paddingVertical: 10, paddingHorizontal: 16, borderRadius: 20, marginRight: 10, borderWidth: 1, borderColor: c.border },
+    chip: {
+      backgroundColor: c.secondary,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 20,
+      marginRight: 10,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
     chipSelected: { backgroundColor: c.selected, borderColor: c.selected },
     chipError: { borderColor: c.error, borderWidth: 2 },
     chipText: { fontSize: 15, color: c.textPrimary, fontWeight: '500' },
     chipTextSelected: { color: c.selectedText, fontWeight: '600' },
 
+    // === REPEATER / SECTIONS ===
+    card: {
+      backgroundColor: '#fff',
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 12,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+
+    section: {
+      marginBottom: 24,
+    },
+
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      marginBottom: 12,
+      color: c.textPrimary,
+    },
+
+    // === BUTTON GROUP ===
+    buttonGroup: {
+      flexDirection: 'row',
+      marginTop: 12,
+    },
+
+    buttonActive: {
+      backgroundColor: c.primary,
+    },
+
+    buttonTextActive: {
+      color: c.primaryText,
+      fontWeight: '700',
+    },
+
+    // === HELP / DEBUG ===
+    helperText: {
+      fontSize: 13,
+      color: c.textSecondary,
+      marginTop: 4,
+    },
+
+    debugBox: {
+      backgroundColor: c.secondary,
+      padding: 8,
+      borderRadius: 6,
+      marginTop: 12,
+    },
+
+    debugText: {
+      fontSize: 12,
+      color: c.textSecondary,
+    },
+
     // === CHECKBOXES ===
-    checkbox: { width: 24, height: 24, borderRadius: 4, borderWidth: 2, borderColor: c.border, backgroundColor: c.card },
+    checkbox: {
+      width: 24,
+      height: 24,
+      borderRadius: 4,
+      borderWidth: 2,
+      borderColor: c.border,
+      backgroundColor: c.card,
+    },
     checkboxSelected: { borderColor: c.primary, backgroundColor: c.primary },
 
     // === DASHBOARD ===
-    dashboardCard: { backgroundColor: c.card, padding: 20, borderRadius: 12, marginBottom: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8 },
+    dashboardCard: {
+      backgroundColor: c.card,
+      padding: 20,
+      borderRadius: 12,
+      marginBottom: 24,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+    },
     dashboardLabel: { fontSize: 16, color: c.textSecondary, marginBottom: 8 },
     dashboardKPI: { fontSize: 48, fontWeight: '700', marginBottom: 16 },
     dashboardMessage: { fontSize: 16, color: c.textPrimary, lineHeight: 24 },
 
     summarySection: { backgroundColor: c.card, padding: 20, borderRadius: 12, marginBottom: 24 },
-    summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: c.borderLight },
-    summaryRowTotal: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 0, paddingTop: 16, marginTop: 8, borderTopWidth: 2, borderTopColor: c.border },
+    summaryRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: c.borderLight,
+    },
+    summaryRowTotal: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+      borderBottomWidth: 0,
+      paddingTop: 16,
+      marginTop: 8,
+      borderTopWidth: 2,
+      borderTopColor: c.border,
+    },
     summaryLabel: { fontSize: 16, color: c.textSecondary },
     summaryLabelBold: { fontSize: 16, fontWeight: '700', color: c.textPrimary },
     summaryValue: { fontSize: 16, fontWeight: '600', color: c.textPrimary },
@@ -157,18 +288,18 @@ export type AppStyles = ReturnType<typeof getAppStyles>;
 
 /**
  * React hook for accessing theme-aware styles AND raw colors
- * 
+ *
  * Usage:
  *   const { styles, colors } = useAppStyles();
  *   <View style={styles.container} />
  *   <View style={{ borderColor: colors.primary }} />
- * 
+ *
  * @returns Object with styles (StyleSheet) and colors (raw theme colors)
  */
 export function useAppStyles() {
   const { theme } = useTheme();
   return {
     styles: getAppStyles(theme),
-    colors: Colors[theme]
+    colors: Colors[theme],
   };
 }
