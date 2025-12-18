@@ -92,17 +92,23 @@ const ExpenseRepeater: React.FC = () => {
             contentContainerStyle={styles.chipContainer}
             showsHorizontalScrollIndicator={false}
           >
-            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((w) => (
-              <ChipButton
-                key={w}
-                label={w}
-                selected={woning === w}
-                // READ-ONLY in C10 (Phase 0.5 UI-decoupling):
-                // C10 mag C4 niet meer schrijven. Woningtype wordt gewijzigd op C4;
-                // hier tonen we alleen de huidige waarde voor conditionele weergave.
-                onPress={() => {}}
-              />
-            ))}
+            <View
+              style={{
+                backgroundColor: '#f0f0f0',
+                padding: 12,
+                borderRadius: 8,
+                marginBottom: 16,
+                borderLeftWidth: 4,
+                borderLeftColor: '#007AFF',
+              }}
+            >
+              <Text style={{ fontSize: 12, color: '#666', marginBottom: 4 }}>
+                Gekozen woningtype (op C4):
+              </Text>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#333' }}>
+                {woning || 'Niet opgegeven'}
+              </Text>
+            </View>
           </ScrollView>
         </View>
 
