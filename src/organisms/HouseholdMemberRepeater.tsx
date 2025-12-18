@@ -26,7 +26,9 @@ const HouseholdMemberRepeater: React.FC = () => {
   // Reuse the established swipe pattern from Expense/Income:
   // CARD_WIDTH = SCREEN_WIDTH * 0.85; snapToInterval = CARD_WIDTH + 20; paddingRight: 20
   const SCREEN_WIDTH = Dimensions.get('window').width;
-  const CARD_WIDTH = SCREEN_WIDTH * 0.85;
+  // Iets groter: ~90% van schermbreedte
+  const CARD_WIDTH = SCREEN_WIDTH * 0.9;
+  const CARD_GAP = 20; // tussenruimte zoals in Expense/Income
 
   return (
     <View style={styles.container}>
@@ -40,8 +42,9 @@ const HouseholdMemberRepeater: React.FC = () => {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingRight: 20 }}
-              snapToInterval={CARD_WIDTH + 20}
+              contentContainerStyle={{ paddingRight: CARD_GAP }}
+              snapToInterval={CARD_WIDTH + CARD_GAP}
+              snapToAlignment="start"
               decelerationRate="fast"
               style={{ marginVertical: 12 }}
             >
@@ -50,8 +53,10 @@ const HouseholdMemberRepeater: React.FC = () => {
                 return (
                   <View
                     key={`adult-${idx}`}
-                    style={[styles.cardSwipe, { width: CARD_WIDTH, marginRight: 20 }]}
+                    style={[styles.card, { width: CARD_WIDTH, marginRight: 20 }]}
                   >
+                    {/* Nummerbadge linksboven */}
+                    <Text style={styles.cardBadge}>{idx + 1}</Text>
                     <MemberCard member={member} index={idx} />
                     {idx < total - 1 && total > 1 && (
                       <Text style={[styles.navigationHint, styles.hintOverlayBottomRight]}>
@@ -84,8 +89,9 @@ const HouseholdMemberRepeater: React.FC = () => {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingRight: 20 }}
-              snapToInterval={CARD_WIDTH + 20}
+              contentContainerStyle={{ paddingRight: CARD_GAP }}
+              snapToInterval={CARD_WIDTH + CARD_GAP}
+              snapToAlignment="start"
               decelerationRate="fast"
               style={{ marginVertical: 12 }}
             >
@@ -94,8 +100,10 @@ const HouseholdMemberRepeater: React.FC = () => {
                 return (
                   <View
                     key={`child-${idx}`}
-                    style={[styles.cardSwipe, { width: CARD_WIDTH, marginRight: 20 }]}
+                    style={[styles.card, { width: CARD_WIDTH, marginRight: 20 }]}
                   >
+                    {/* Nummerbadge linksboven */}
+                    <Text style={styles.cardBadge}>{idx + 1}</Text>
                     <MemberCard member={member} index={idx} />
                     {idx < total - 1 && total > 1 && (
                       <Text style={[styles.navigationHint, styles.hintOverlayBottomRight]}>
