@@ -1,144 +1,81 @@
-//=====
-// src/services/storage.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { FormState } from '../context/FormContext';
+import { FormStateSchema, type FormStateV1 } from '../state/schemas/FormStateSchema';
+import { parseToCents } from '../utils/numbers';
 
 const STORAGE_KEY = '@CashflowWizardState';
+export const SCHEMA_VERSION = 2 as const;
 
 /**
- * Schema versioning
- * - Verhoog dit nummer wanneer de structuur van FormState verandert
+ * ADR-15/16: Normaliseert bedragen naar centen-integers.
+ * Regel: Integers zijn ALTIJD centen. Alleen floats worden gezien als euro's.
  */
-export const SCHEMA_VERSION = 1 as const;
-
-/**
- * Envelope type voor opslag: versie + FormState
- */
-interface StoredState {
-  version: number;
-  state: FormState;
+function toCents(val: any): number {
+  if (typeof val === 'number') {
+    if (!Number.isFinite(val)) return 0;
+    // Phoenix-regel: Een float (12.5) is legacy euro's -> naar centen.
+    // Een integer (50) is al een Phoenix-minor-unit (50 cent).
+    if (!Number.isInteger(val)) return Math.round(Math.abs(val) * 100);
+    return Math.abs(val);
+  }
+  if (typeof val === 'string') return parseToCents(val);
+  return 0;
 }
 
 /**
- * Migratie placeholder
- * - Nu: pass-through
- * - Later: per versie migreren
+ * Migreert legacy data (v0/v1) naar Phoenix v1.0 (centen + schemaVersion)
  */
-const migrateSchema = (storedState: StoredState): FormState => {
-  // Voorbeeld voor later:
-  // if (storedState.version === 0) { ... }
-  // if (storedState.version === 1) { ... }
-  return storedState.state;
+const migrateToPhoenix = (oldState: any): any => {
+  const next = { ...oldState, schemaVersion: '1.0' };
+
+  const migrateList = (obj: any) => {
+    const rawList = Array.isArray(obj?.items)
+      ? obj.items
+      : Array.isArray(obj?.list)
+        ? obj.list
+        : [];
+    return {
+      items: rawList.map((it: any, index: number) => ({
+        // Stabiele ID generatie ter voorkoming van analytics-breaks
+        id: String(it?.id ?? `migrated-${Date.now()}-${index}`),
+        amount: toCents(it?.amount ?? it?.value ?? 0),
+      })),
+    };
+  };
+
+  if (next.C7) next.C7 = migrateList(next.C7);
+  if (next.C10) next.C10 = migrateList(next.C10);
+
+  return next;
 };
 
 export const Storage = {
-  /**
-   * Save: sla FormState op als versioned envelope
-   */
-  async saveState(state: FormState): Promise<void> {
+  async saveState(state: any): Promise<void> {
     try {
-      const storedState: StoredState = {
-        version: SCHEMA_VERSION,
-        state,
-      };
-      await AsyncStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(storedState)
-      );
+      const validated = FormStateSchema.parse({ ...state, schemaVersion: '1.0' });
+      const envelope = { version: SCHEMA_VERSION, state: validated };
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(envelope));
     } catch (e) {
-      console.error('Failed to save state to storage', e);
+      console.error('❌ Phoenix Save Blocked: Data corruptie voorkomen', e);
     }
   },
 
-  /**
-   * Load:
-   * - herkent legacy (onversioned) data
-   * - migreert indien nodig
-   * - retourneert altijd FormState of null
-   */
-  async loadState(): Promise<FormState | null> {
+  async loadState(): Promise<FormStateV1 | null> {
     try {
-      const serializedState = await AsyncStorage.getItem(STORAGE_KEY);
-      if (serializedState === null) {
-        return null;
+      const raw = await AsyncStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+
+      const envelope = JSON.parse(raw);
+      let data = envelope.version ? envelope.state : envelope;
+
+      if (!envelope.version || envelope.version < SCHEMA_VERSION) {
+        data = migrateToPhoenix(data);
+        await this.saveState(data); // Direct normaliseren
       }
 
-      const rawData: unknown = JSON.parse(serializedState);
-
-      const isNewFormat =
-        typeof rawData === 'object' &&
-        rawData !== null &&
-        'version' in rawData &&
-        'state' in rawData &&
-        typeof (rawData as any).version === 'number';
-
-      const storedData: StoredState = isNewFormat
-        ? (rawData as StoredState)
-        : {
-            // Legacy: oude platte FormState → behandel als versie 0
-            version: 0,
-            state: rawData as FormState,
-          };
-
-      // Nieuwere dan ondersteunde versie → as-is (defensief)
-      if (storedData.version > SCHEMA_VERSION) {
-        console.warn(
-          `Stored state version (${storedData.version}) is newer than supported (${SCHEMA_VERSION}). Using stored state as-is.`
-        );
-        return storedData.state;
-      }
-
-      // Legacy (lager dan huidig) → migratie
-      if (storedData.version < SCHEMA_VERSION) {
-        const migrated = migrateSchema(storedData);
-
-        /**
-         * 🔒 COMMENT-GUARD — NORMALISATIE (UIT)
-         * ------------------------------------------------
-         * Wanneer er echte migraties bestaan (bijv. SCHEMA_VERSION = 2),
-         * kan onderstaande block worden geactiveerd zodat:
-         * - migratie slechts één keer gebeurt
-         * - storage daarna altijd genormaliseerd is
-         *
-         * Nu UIT om overkill en extra IO te vermijden.
-         */
-        /*
-        try {
-          const normalized: StoredState = {
-            version: SCHEMA_VERSION,
-            state: migrated,
-          };
-          await AsyncStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify(normalized)
-          );
-        } catch (e) {
-          console.error('Failed to persist normalized migrated state', e);
-        }
-        */
-
-        return migrated;
-      }
-
-      // Exacte match
-      return storedData.state;
+      return FormStateSchema.parse(data);
     } catch (e) {
-      console.error(
-        'Failed to load state from storage (or migration failed)',
-        e
-      );
+      console.error('❌ Phoenix Load/Migration Failed', e);
       return null;
-    }
-  },
-
-  /**
-   * Clear all persisted state
-   */
-  async clearAllState(): Promise<void> {
-    try {
-      await AsyncStorage.removeItem(STORAGE_KEY);
-    } catch (e) {
-      console.error('Failed to clear state from storage', e);
     }
   },
 };

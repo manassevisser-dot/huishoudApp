@@ -5,7 +5,7 @@ import * as React from 'react';
 import { Alert } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { FormStateV1 } from './src/state/schemas/FormStateSchema';
 import { FormProvider, useFormContext } from './src/context/FormContext';
 import { ThemeProvider } from './src/context/ThemeContext';
 import { Storage } from './src/services/storage';
@@ -44,63 +44,56 @@ const AppContent: React.FC = () => {
 
   const summary = React.useMemo(() => computeSummary(state.C7, state.C10), [state.C7, state.C10]);
 
-  const hasMinimumData = summary.totalIncome > 0 && summary.totalExpenses > 0;
-
+  const hasMinimumData = summary.totalIncome > 0 && summary.totalExpenses > 0; // Load saved state on mount + one-time C4 alignment
   // =========================================================
-  // Load saved state on mount + one-time C4 alignment
+
   // =========================================================
   React.useEffect(() => {
     const loadAndInit = async () => {
+      // STAP 1: Haal de data op via de nieuwe Storage Guard (WAI-005B)
       const savedState = await Storage.loadState();
-      console.log('[INIT] savedState:', JSON.stringify(savedState ?? null));
+      console.log('[INIT] savedState geladen en gevalideerd');
 
       if (savedState) {
+        // STAP 2: Update de globale context
         dispatch({ type: 'LOAD_SAVED_STATE', data: savedState });
-      }
 
-      // Apply defaults where nothing was stored
-      WIZARD_PAGES.forEach((page) => {
-        page.fields.forEach((field) => {
-          if (
-            field.defaultValue !== undefined &&
-            (!savedState || savedState[page.id]?.[field.id] === undefined)
-          ) {
-            dispatch({
-              type: 'SET_PAGE_DATA',
-              pageId: page.id,
-              data: { [field.id]: field.defaultValue },
-            });
-          }
+        // STAP 3: Apply defaults (Phoenix-style met type-casting)
+        WIZARD_PAGES.forEach((page) => {
+          const pageId = page.id as keyof FormStateV1;
+          page.fields.forEach((field) => {
+            const currentSection = savedState[pageId];
+            const hasValue = currentSection && (currentSection as any)[field.id] !== undefined;
+            if (field.defaultValue !== undefined && !hasValue) {
+              dispatch({
+                type: 'SET_PAGE_DATA',
+                pageId: page.id,
+                data: { [field.id]: field.defaultValue },
+              });
+            }
+          });
         });
-      });
+
+        // STAP 4: C4 Alignment (Zorgt dat het aantal leden klopt met C1)
+        if (savedState.C1) {
+          const aantalMensen = Math.max(1, Number(savedState.C1.aantalMensen ?? 1));
+          const aantalVolwassen = Math.min(
+            aantalMensen,
+            Math.max(1, Number(savedState.C1.aantalVolwassen ?? 1)),
+          );
+          dispatch({
+            type: 'ALIGN_HOUSEHOLD_MEMBERS',
+            payload: { aantalMensen, aantalVolwassen },
+          });
+        }
+      }
 
       setIsLoading(false);
       setShowLanding(true);
-
-      // ✅ Deterministic post-hydration alignment (no timing tricks)
-      if (savedState?.C1) {
-        const aantalMensen = Math.max(1, Number(savedState.C1.aantalMensen ?? 1));
-        const aantalVolwassen = Math.min(
-          aantalMensen,
-          Math.max(1, Number(savedState.C1.aantalVolwassen ?? 1)),
-        );
-        console.log('[ALIGN-TRIGGER] payload from savedState:', {
-          aantalMensen,
-          aantalVolwassen,
-        });
-        dispatch({
-          type: 'ALIGN_HOUSEHOLD_MEMBERS',
-          payload: { aantalMensen, aantalVolwassen },
-        });
-        console.log('[ALIGN-TRIGGER] dispatched');
-      } else {
-        console.log('[ALIGN-TRIGGER] skipped — no savedState.C1 present');
-      }
     };
 
     loadAndInit();
   }, [dispatch]);
-
   // =========================================================
   // Dashboard validation (separate effect)
   // =========================================================
