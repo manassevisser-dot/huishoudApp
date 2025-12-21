@@ -4,7 +4,7 @@ import { View, Text, TextInput, ScrollView, TouchableOpacity, Dimensions } from 
 import { useAppStyles } from '../styles/useAppStyles';
 import ChipButton from '../components/ChipButton';
 import { useFormContext } from '../context/FormContext';
-import { Member, WoningType, AutoCount } from '../types/household';
+import { Member, WoningType, AutoCount } from '../types/OUDhousehold';
 import { ExpenseItem } from '../types/expenses';
 import { onlyDigitsDotsComma } from '../utils/numbers';
 

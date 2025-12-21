@@ -3,7 +3,7 @@ import * as React from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 
 import { useFormContext } from '../context/FormContext';
-import { Member, WoningType } from '../types/household';
+import { Member, WoningType } from '../types/OUDhousehold';
 import ChipButton from '../components/ChipButton';
 import { useAppStyles } from '../styles/useAppStyles';
 

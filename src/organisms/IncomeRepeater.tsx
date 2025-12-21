@@ -4,17 +4,17 @@ import { View, Text, TextInput, ScrollView, TouchableOpacity, Dimensions } from 
 import { useAppStyles } from '../styles/useAppStyles';
 import ChipButton from '../components/ChipButton';
 import { useFormContext } from '../context/FormContext';
-import { 
-  IncomeFrequency, 
-  UitkeringKey, 
-  UitkeringEntry, 
-  AndersEntry, 
-  IncomeCategories, 
-  IncomeMember, 
-  HouseholdBenefits, 
-  VermogenData 
+import {
+  IncomeFrequency,
+  UitkeringKey,
+  UitkeringEntry,
+  AndersEntry,
+  IncomeCategories,
+  IncomeMember,
+  HouseholdBenefits,
+  VermogenData,
 } from '../types/income';
-import { Member } from '../types/household';
+import { Member } from '../types/OUDhousehold';
 import { onlyDigitsDotsComma } from '../utils/numbers';
 
 // P4: Card dimensions for swipe
@@ -25,7 +25,17 @@ const CATEGORY_OPTIONS: (keyof IncomeCategories)[] = ['geen', 'werk', 'uitkering
 const FREQUENCIES: IncomeFrequency[] = ['week', '4wk', 'month', 'quarter', 'year'];
 
 const UITKERING_KEYS_BASE: UitkeringKey[] = [
-  'DUO', 'Bijstand', 'WW', 'ZW', 'WAO', 'WGA', 'WIA', 'IVA', 'WAJONG', 'IOW', 'anders'
+  'DUO',
+  'Bijstand',
+  'WW',
+  'ZW',
+  'WAO',
+  'WGA',
+  'WIA',
+  'IVA',
+  'WAJONG',
+  'IOW',
+  'anders',
 ];
 const RETIREMENT_KEYS: UitkeringKey[] = ['Pensioen', 'AOW'];
 
@@ -52,17 +62,17 @@ const IncomeRepeater: React.FC = () => {
 
   const inkomsten: Record<string, IncomeMember> = React.useMemo(
     () => (c7?.inkomsten ?? {}) as Record<string, IncomeMember>,
-    [c7]
+    [c7],
   );
 
   const benefits: HouseholdBenefits = React.useMemo(
     () => (c7?.householdBenefits ?? {}) as HouseholdBenefits,
-    [c7]
+    [c7],
   );
 
   const vermogen: VermogenData = React.useMemo(
     () => (c7?.vermogen ?? { hasVermogen: false }) as VermogenData,
-    [c7]
+    [c7],
   );
 
   const hasChildren = React.useMemo(() => {
@@ -74,7 +84,9 @@ const IncomeRepeater: React.FC = () => {
   const anyChildUnder13 = React.useMemo(() => {
     const arr = c4?.leden as Member[] | undefined;
     if (!Array.isArray(arr)) return false;
-    return arr.some((m) => m.memberType === 'child' && typeof m.leeftijd === 'number' && m.leeftijd < 13);
+    return arr.some(
+      (m) => m.memberType === 'child' && typeof m.leeftijd === 'number' && m.leeftijd < 13,
+    );
   }, [c4]);
 
   const woningIsHuur = React.useMemo(() => c4?.woning === 'Huur', [c4]);
@@ -100,13 +112,26 @@ const IncomeRepeater: React.FC = () => {
 
   const setMemberIncome = (id: string, patch: Partial<IncomeMember>) => {
     const current = (state.C7?.inkomsten ?? {}) as Record<string, IncomeMember>;
-    const next = { ...current, [id]: { ...(current[id] ?? { id, categories: { geen: false, werk: false, uitkering: false, anders: false } }), ...patch } };
+    const next = {
+      ...current,
+      [id]: {
+        ...(current[id] ?? {
+          id,
+          categories: { geen: false, werk: false, uitkering: false, anders: false },
+        }),
+        ...patch,
+      },
+    };
     dispatch({ type: 'SET_PAGE_DATA', pageId: 'C7', data: { inkomsten: next } });
   };
 
   const setHouseholdBenefits = (patch: Partial<HouseholdBenefits>) => {
     const current = (state.C7?.householdBenefits ?? {}) as HouseholdBenefits;
-    dispatch({ type: 'SET_PAGE_DATA', pageId: 'C7', data: { householdBenefits: { ...current, ...patch } } });
+    dispatch({
+      type: 'SET_PAGE_DATA',
+      pageId: 'C7',
+      data: { householdBenefits: { ...current, ...patch } },
+    });
   };
 
   const setVermogen = (patch: Partial<VermogenData>) => {
@@ -115,10 +140,15 @@ const IncomeRepeater: React.FC = () => {
   };
 
   const toggleCategory = (id: string, cat: keyof IncomeCategories) => {
-    const rec = inkomsten[id] ?? { id, categories: { geen: false, werk: false, uitkering: false, anders: false } };
+    const rec = inkomsten[id] ?? {
+      id,
+      categories: { geen: false, werk: false, uitkering: false, anders: false },
+    };
     const categories = { ...rec.categories, [cat]: !rec.categories?.[cat] };
     if (cat === 'geen' && categories.geen) {
-      categories.werk = false; categories.uitkering = false; categories.anders = false;
+      categories.werk = false;
+      categories.uitkering = false;
+      categories.anders = false;
     } else if (cat !== 'geen' && categories[cat]) {
       categories.geen = false;
     }
@@ -128,11 +158,21 @@ const IncomeRepeater: React.FC = () => {
   const setVakantiegeldPerJaar = (id: string, text: string) => {
     const clean = onlyDigitsDotsComma(text);
     const perYear = clean.length ? Number(clean) : undefined;
-    const perMonth = typeof perYear === 'number' && Number.isFinite(perYear) ? perYear / 12 : undefined;
+    const perMonth =
+      typeof perYear === 'number' && Number.isFinite(perYear) ? perYear / 12 : undefined;
     setMemberIncome(id, { vakantiegeldPerJaar: perYear, vakantiegeldPerMaand: perMonth });
   };
 
-  const setWerkField = (id: string, field: 'nettoSalaris' | 'frequentie' | 'toeslagen.zorgtoeslag' | 'toeslagen.overige' | 'toeslagen.reiskosten', value: any) => {
+  const setWerkField = (
+    id: string,
+    field:
+      | 'nettoSalaris'
+      | 'frequentie'
+      | 'toeslagen.zorgtoeslag'
+      | 'toeslagen.overige'
+      | 'toeslagen.reiskosten',
+    value: any,
+  ) => {
     const rec = inkomsten[id];
     if (!rec) return;
     if (field === 'frequentie') {
@@ -143,11 +183,21 @@ const IncomeRepeater: React.FC = () => {
     if (group === 'toeslagen' && sub) {
       const t = { ...(rec.toeslagen ?? {}) } as NonNullable<IncomeMember['toeslagen']>;
       if (sub === 'zorgtoeslag' || sub === 'overige' || sub === 'reiskosten') {
-        t[sub] = typeof value === 'string' ? (onlyDigitsDotsComma(value).length ? Number(onlyDigitsDotsComma(value)) : undefined) : value;
+        t[sub] =
+          typeof value === 'string'
+            ? onlyDigitsDotsComma(value).length
+              ? Number(onlyDigitsDotsComma(value))
+              : undefined
+            : value;
       }
       setMemberIncome(id, { toeslagen: t });
     } else {
-      const num = typeof value === 'string' ? (onlyDigitsDotsComma(value).length ? Number(onlyDigitsDotsComma(value)) : undefined) : value;
+      const num =
+        typeof value === 'string'
+          ? onlyDigitsDotsComma(value).length
+            ? Number(onlyDigitsDotsComma(value))
+            : undefined
+          : value;
       setMemberIncome(id, { nettoSalaris: num });
     }
   };
@@ -155,7 +205,7 @@ const IncomeRepeater: React.FC = () => {
   const setUitkeringToggle = (id: string, key: UitkeringKey) => {
     const rec = inkomsten[id]!;
     const map = { ...(rec.uitkeringen ?? {}) };
-    const entry = map[key] ?? { enabled: false } as UitkeringEntry;
+    const entry = map[key] ?? ({ enabled: false } as UitkeringEntry);
     entry.enabled = !entry.enabled;
     map[key] = entry;
     setMemberIncome(id, { uitkeringen: map });
@@ -164,7 +214,7 @@ const IncomeRepeater: React.FC = () => {
   const setUitkeringField = (id: string, key: UitkeringKey, patch: Partial<UitkeringEntry>) => {
     const rec = inkomsten[id]!;
     const map = { ...(rec.uitkeringen ?? {}) };
-    const entry = map[key] ?? { enabled: true } as UitkeringEntry;
+    const entry = map[key] ?? ({ enabled: true } as UitkeringEntry);
     const next: UitkeringEntry = { ...entry, ...patch };
     map[key] = next;
     setMemberIncome(id, { uitkeringen: map });
@@ -200,7 +250,11 @@ const IncomeRepeater: React.FC = () => {
   const renderCategoryChips = (id: string, rec: IncomeMember, title: string) => (
     <View style={styles.fieldContainer}>
       <Text style={styles.label}>Ik heb</Text>
-      <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIndicator={false}>
+      <ScrollView
+        horizontal
+        contentContainerStyle={styles.chipContainer}
+        showsHorizontalScrollIndicator={false}
+      >
         {CATEGORY_OPTIONS.map((c) => (
           <ChipButton
             key={c}
@@ -216,7 +270,7 @@ const IncomeRepeater: React.FC = () => {
 
   const renderWerk = (id: string, rec: IncomeMember, title: string) => {
     if (!rec.categories?.werk) return null;
-    
+
     return (
       <View style={styles.dashboardCard}>
         <Text style={styles.summaryLabelBold}>Inkomen uit werk</Text>
@@ -235,7 +289,11 @@ const IncomeRepeater: React.FC = () => {
 
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Frequentie</Text>
-          <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIndicator={false}>
+          <ScrollView
+            horizontal
+            contentContainerStyle={styles.chipContainer}
+            showsHorizontalScrollIndicator={false}
+          >
             {FREQUENCIES.map((f) => (
               <ChipButton
                 key={f}
@@ -250,26 +308,28 @@ const IncomeRepeater: React.FC = () => {
 
         {/* P4: COLLAPSIBLE PER-ADULT TOESLAGEN */}
         <View style={styles.fieldContainer}>
-          <TouchableOpacity 
-            onPress={() => setToelagenExpanded({ 
-              ...toelagenExpanded, 
-              [id]: !toelagenExpanded[id] 
-            })}
+          <TouchableOpacity
+            onPress={() =>
+              setToelagenExpanded({
+                ...toelagenExpanded,
+                [id]: !toelagenExpanded[id],
+              })
+            }
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
           >
-            <Text style={styles.label}>
-              Toeslagen
-            </Text>
-            <Text style={styles.summaryLabel}>
-              {toelagenExpanded[id] ? '▼' : '▶'}
-            </Text>
+            <Text style={styles.label}>Toeslagen</Text>
+            <Text style={styles.summaryLabel}>{toelagenExpanded[id] ? '▼' : '▶'}</Text>
           </TouchableOpacity>
-          
+
           {toelagenExpanded[id] && (
             <View style={{ gap: 12, marginTop: 12 }}>
               <TextInput
                 style={styles.numericInput}
-                value={typeof rec.toeslagen?.zorgtoeslag === 'number' ? String(rec.toeslagen?.zorgtoeslag) : ''}
+                value={
+                  typeof rec.toeslagen?.zorgtoeslag === 'number'
+                    ? String(rec.toeslagen?.zorgtoeslag)
+                    : ''
+                }
                 keyboardType="number-pad"
                 onChangeText={(t) => setWerkField(id, 'toeslagen.zorgtoeslag', t)}
                 placeholder="Zorgtoeslag (€/mnd)"
@@ -277,7 +337,11 @@ const IncomeRepeater: React.FC = () => {
               />
               <TextInput
                 style={styles.numericInput}
-                value={typeof rec.toeslagen?.reiskosten === 'number' ? String(rec.toeslagen?.reiskosten) : ''}
+                value={
+                  typeof rec.toeslagen?.reiskosten === 'number'
+                    ? String(rec.toeslagen?.reiskosten)
+                    : ''
+                }
                 keyboardType="number-pad"
                 onChangeText={(t) => setWerkField(id, 'toeslagen.reiskosten', t)}
                 placeholder="Reiskostenvergoeding (€/mnd)"
@@ -285,7 +349,9 @@ const IncomeRepeater: React.FC = () => {
               />
               <TextInput
                 style={styles.numericInput}
-                value={typeof rec.toeslagen?.overige === 'number' ? String(rec.toeslagen?.overige) : ''}
+                value={
+                  typeof rec.toeslagen?.overige === 'number' ? String(rec.toeslagen?.overige) : ''
+                }
                 keyboardType="number-pad"
                 onChangeText={(t) => setWerkField(id, 'toeslagen.overige', t)}
                 placeholder="Overige inkomsten (€/mnd)"
@@ -299,7 +365,9 @@ const IncomeRepeater: React.FC = () => {
           <Text style={styles.label}>Vakantiegeld (per jaar)</Text>
           <TextInput
             style={styles.numericInput}
-            value={typeof rec.vakantiegeldPerJaar === 'number' ? String(rec.vakantiegeldPerJaar) : ''}
+            value={
+              typeof rec.vakantiegeldPerJaar === 'number' ? String(rec.vakantiegeldPerJaar) : ''
+            }
             keyboardType="number-pad"
             onChangeText={(t) => setVakantiegeldPerJaar(id, t)}
             placeholder="0.00"
@@ -310,12 +378,7 @@ const IncomeRepeater: React.FC = () => {
     );
   };
 
-  const renderUitkeringen = (
-    id: string,
-    rec: IncomeMember,
-    m: Member,
-    title: string
-  ) => {
+  const renderUitkeringen = (id: string, rec: IncomeMember, m: Member, title: string) => {
     if (!rec.categories?.uitkering) return null;
 
     const keys: UitkeringKey[] = (() => {
@@ -327,7 +390,7 @@ const IncomeRepeater: React.FC = () => {
     })();
 
     const entryFor = (k: UitkeringKey) =>
-      (rec.uitkeringen?.[k] ?? ({ enabled: false } as UitkeringEntry));
+      rec.uitkeringen?.[k] ?? ({ enabled: false } as UitkeringEntry);
 
     return (
       <View style={styles.dashboardCard}>
@@ -429,7 +492,11 @@ const IncomeRepeater: React.FC = () => {
               placeholder="Bedrag (€/periode)"
               accessibilityLabel={`Ander inkomen (bedrag) voor ${title}`}
             />
-            <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIndicator={false}>
+            <ScrollView
+              horizontal
+              contentContainerStyle={styles.chipContainer}
+              showsHorizontalScrollIndicator={false}
+            >
               {FREQUENCIES.map((f) => (
                 <ChipButton
                   key={`af-${row.id}-${f}`}
@@ -441,14 +508,23 @@ const IncomeRepeater: React.FC = () => {
               ))}
             </ScrollView>
 
-            <TouchableOpacity onPress={() => removeAnders(id, row.id)} accessibilityRole="button" accessibilityLabel={`Verwijder ander inkomen voor ${title}`}>
+            <TouchableOpacity
+              onPress={() => removeAnders(id, row.id)}
+              accessibilityRole="button"
+              accessibilityLabel={`Verwijder ander inkomen voor ${title}`}
+            >
               <Text style={styles.secondaryButtonText}>Verwijder</Text>
             </TouchableOpacity>
           </View>
         ))}
 
         <View style={styles.fieldContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => addAnders(id)} accessibilityRole="button" accessibilityLabel={`Voeg ander inkomen toe voor ${title}`}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => addAnders(id)}
+            accessibilityRole="button"
+            accessibilityLabel={`Voeg ander inkomen toe voor ${title}`}
+          >
             <Text style={styles.buttonText}>+ Toevoegen</Text>
           </TouchableOpacity>
         </View>
@@ -468,7 +544,9 @@ const IncomeRepeater: React.FC = () => {
             keyboardType="number-pad"
             onChangeText={(t) =>
               setHouseholdBenefits({
-                huurtoeslag: onlyDigitsDotsComma(t).length ? Number(onlyDigitsDotsComma(t)) : undefined,
+                huurtoeslag: onlyDigitsDotsComma(t).length
+                  ? Number(onlyDigitsDotsComma(t))
+                  : undefined,
               })
             }
             placeholder="0.00"
@@ -482,11 +560,17 @@ const IncomeRepeater: React.FC = () => {
           <Text style={styles.label}>KindgebondenBudget (€/mnd)</Text>
           <TextInput
             style={styles.numericInput}
-            value={typeof benefits.kindgebondenBudget === 'number' ? String(benefits.kindgebondenBudget) : ''}
+            value={
+              typeof benefits.kindgebondenBudget === 'number'
+                ? String(benefits.kindgebondenBudget)
+                : ''
+            }
             keyboardType="number-pad"
             onChangeText={(t) =>
               setHouseholdBenefits({
-                kindgebondenBudget: onlyDigitsDotsComma(t).length ? Number(onlyDigitsDotsComma(t)) : undefined,
+                kindgebondenBudget: onlyDigitsDotsComma(t).length
+                  ? Number(onlyDigitsDotsComma(t))
+                  : undefined,
               })
             }
             placeholder="0.00"
@@ -500,11 +584,17 @@ const IncomeRepeater: React.FC = () => {
           <Text style={styles.label}>Kinderopvangtoeslag (€/mnd)</Text>
           <TextInput
             style={styles.numericInput}
-            value={typeof benefits.kinderopvangtoeslag === 'number' ? String(benefits.kinderopvangtoeslag) : ''}
+            value={
+              typeof benefits.kinderopvangtoeslag === 'number'
+                ? String(benefits.kinderopvangtoeslag)
+                : ''
+            }
             keyboardType="number-pad"
             onChangeText={(t) =>
               setHouseholdBenefits({
-                kinderopvangtoeslag: onlyDigitsDotsComma(t).length ? Number(onlyDigitsDotsComma(t)) : undefined,
+                kinderopvangtoeslag: onlyDigitsDotsComma(t).length
+                  ? Number(onlyDigitsDotsComma(t))
+                  : undefined,
               })
             }
             placeholder="0.00"
@@ -522,7 +612,9 @@ const IncomeRepeater: React.FC = () => {
             keyboardType="number-pad"
             onChangeText={(t) =>
               setHouseholdBenefits({
-                kinderbijslag: onlyDigitsDotsComma(t).length ? Number(onlyDigitsDotsComma(t)) : undefined,
+                kinderbijslag: onlyDigitsDotsComma(t).length
+                  ? Number(onlyDigitsDotsComma(t))
+                  : undefined,
               })
             }
             placeholder="0.00"
@@ -536,10 +628,14 @@ const IncomeRepeater: React.FC = () => {
   const renderVermogen = () => (
     <View style={styles.dashboardCard}>
       <Text style={styles.summaryLabelBold}>Vermogen (huishouden)</Text>
-      
+
       <View style={styles.fieldContainer}>
         <Text style={styles.label}>Heeft u vermogen?</Text>
-        <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIndicator={false}>
+        <ScrollView
+          horizontal
+          contentContainerStyle={styles.chipContainer}
+          showsHorizontalScrollIndicator={false}
+        >
           <ChipButton
             label="Nee"
             selected={!vermogen.hasVermogen}
@@ -579,7 +675,9 @@ const IncomeRepeater: React.FC = () => {
   if (!adults.length) {
     return (
       <View style={styles.pageContainer}>
-        <Text style={styles.summaryDetail}>Geen volwassenen gevonden. Stel eerst uw huishouden in op C4/C1.</Text>
+        <Text style={styles.summaryDetail}>
+          Geen volwassenen gevonden. Stel eerst uw huishouden in op C4/C1.
+        </Text>
       </View>
     );
   }
@@ -587,7 +685,7 @@ const IncomeRepeater: React.FC = () => {
   return (
     <View style={styles.pageContainer}>
       {renderHouseholdBenefits()}
-      
+
       {renderVermogen()}
 
       {/* P4: SWIPE PATTERN FOR ADULTS (if > 1 adult) */}
@@ -601,21 +699,21 @@ const IncomeRepeater: React.FC = () => {
           decelerationRate="fast"
         >
           {adults.map((m, idx) => {
-            const rec = inkomsten[m.id] ?? { 
-              id: m.id, 
-              categories: { geen: false, werk: false, uitkering: false, anders: false } 
+            const rec = inkomsten[m.id] ?? {
+              id: m.id,
+              categories: { geen: false, werk: false, uitkering: false, anders: false },
             };
             const title = m.naam?.trim() ? `Inkomen voor ${m.naam}` : `Volwassene ${idx + 1}`;
 
             return (
-              <View 
+              <View
                 key={m.id}
                 style={[
                   styles.dashboardCard,
-                  { 
+                  {
                     width: CARD_WIDTH,
                     marginRight: 20,
-                  }
+                  },
                 ]}
               >
                 <Text style={styles.summaryLabelBold}>{title}</Text>
@@ -636,9 +734,9 @@ const IncomeRepeater: React.FC = () => {
       ) : (
         // Single adult - no swipe
         adults.map((m, idx) => {
-          const rec = inkomsten[m.id] ?? { 
-            id: m.id, 
-            categories: { geen: false, werk: false, uitkering: false, anders: false } 
+          const rec = inkomsten[m.id] ?? {
+            id: m.id,
+            categories: { geen: false, werk: false, uitkering: false, anders: false },
           };
           const title = m.naam?.trim() ? `Inkomen voor ${m.naam}` : `Volwassene ${idx + 1}`;
 

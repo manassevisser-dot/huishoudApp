@@ -11,7 +11,7 @@ import { evaluateCondition } from '../../utils/conditions';
 import { PageConfig } from '../../types/form';
 import { showWizardProgress } from '../../config/features';
 import ChipButton from '../../components/ChipButton';
-import { WoningType } from '../../types/household';
+import { WoningType } from '../../types/OUDhousehold';
 
 type PageProps = {
   page: PageConfig;

@@ -7,7 +7,7 @@
  * - Behoudt bestaande invoer waar mogelijk (type-safe)
  */
 
-import { Member } from '../types/household';
+import { Member } from '../types/OUDhousehold';
 
 // Genereer unieke IDs (deterministisch genoeg voor UI; geen conflict met bestaande IDs)
 const makeId = (prefix: 'm', idx: number) => `m-${idx}-${Date.now()}`;

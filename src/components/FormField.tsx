@@ -1,9 +1,10 @@
-import React from 'react';
+import * as React from 'react';
 import { View, Text, TextInput, ScrollView } from 'react-native';
 import { useAppStyles } from '../styles/useAppStyles';
 import ChipButton from './ChipButton';
 import ToggleSwitch from './ToggleSwitch';
-import InputCounter from './InputCounter';
+// Verander de import:
+import InputCounter from './InputCounter'; // Weg met OUDInputCounter
 import HouseholdMemberRepeater from '../organisms/HouseholdMemberRepeater';
 import IncomeRepeater from '../organisms/IncomeRepeater';
 import ExpenseRepeater from '../organisms/ExpenseRepeater';
@@ -60,8 +61,7 @@ const FormField: React.FC<FormFieldProps> = ({
             style={[styles.numericInput, error && styles.inputError]}
             onChangeText={(text) => {
               const cleanText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
-              const numberValue =
-                parseFloat(cleanText) || (cleanText === '' ? '' : 0);
+              const numberValue = parseFloat(cleanText) || (cleanText === '' ? '' : 0);
               handleChange(numberValue);
             }}
             value={numericValue}
@@ -111,7 +111,7 @@ const FormField: React.FC<FormFieldProps> = ({
     if (field.type === 'counter') {
       const min = field.validation?.min ?? 0;
       const max = field.validation?.max;
-      
+
       // Ensure value is always a valid number (never NaN or undefined)
       let numericValue: number;
       if (typeof value === 'number' && !isNaN(value)) {
@@ -150,30 +150,19 @@ const FormField: React.FC<FormFieldProps> = ({
     // 8. Expense repeater (C10)
     if (field.type === 'expense-repeater') return <ExpenseRepeater />;
 
-    return (
-      <Text style={styles.errorTextStyle}>Onbekend veldtype: {field.type}</Text>
-    );
+    return <Text style={styles.errorTextStyle}>Onbekend veldtype: {field.type}</Text>;
   };
 
   return (
     <View style={styles.fieldContainer}>
       <Text
-        style={[
-          styles.label,
-          error && styles.labelError,
-          errorColor ? { color: errorColor } : {},
-        ]}
+        style={[styles.label, error && styles.labelError, errorColor ? { color: errorColor } : {}]}
       >
         {displayLabel}
       </Text>
       {renderInput()}
       {error && (
-        <Text
-          style={[
-            styles.errorTextStyle,
-            errorColor ? { color: errorColor } : {},
-          ]}
-        >
+        <Text style={[styles.errorTextStyle, errorColor ? { color: errorColor } : {}]}>
           {error}
         </Text>
       )}

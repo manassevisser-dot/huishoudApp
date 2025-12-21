@@ -1,21 +1,19 @@
-// eslint.config.cjs — ESLint v9 flat config (CommonJS)
-// Geen ESM imports; geen comments die JSON-parsers in editors triggeren// Geen ESM imports; geen comments die JSON-parsers in editors triggeren.
-
 const js = require('@eslint/js');
 const tsParser = require('@typescript-eslint/parser');
 const tsPlugin = require('@typescript-eslint/eslint-plugin');
 const react = require('eslint-plugin-react');
 const prettier = require('eslint-config-prettier');
+const globals = require('globals'); // Meestal standaard aanwezig in v9 omgevingen
 
 module.exports = [
-  // 1) Globale ignores (vervangt .eslintignore)
+  // 1) Globale ignores
   {
     ignores: [
-      'node_modules',
-      'dist',
-      'build',
-      'coverage',
-      '.expo',
+      'node_modules/',
+      'dist/',
+      'build/',
+      'coverage/',
+      '.expo/',
       'package-lock.json',
     ],
   },
@@ -23,25 +21,21 @@ module.exports = [
   // 2) Baseline JS rules
   js.configs.recommended,
 
-  // 3) TypeScript + React
+  // 3) TypeScript + React + Testing
   {
-    files: ['**/*.ts', '**/*.tsx'],
+    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.cjs'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './tsconfig.json',
       },
-      // ✅ Voeg minimale globals toe (geen extra dependency nodig)
+      // ✅ In v9 Flat Config vervangt dit de 'env' sectie
       globals: {
-        console: true,
-        setTimeout: true,
-        clearTimeout: true,
-        setInterval: true,
-        clearInterval: true,
-        // Als je RN globals gebruikt (via Metro):
-        __DEV__: true,
+        ...globals.node,    // Herkent 'module', 'require', 'process'
+        ...globals.jest,    // Herkent 'describe', 'it', 'expect', 'jest'
+        ...globals.browser, // Herkent 'window', 'document'
+        __DEV__: true,      // Specifiek voor React Native
       },
     },
     plugins: {
@@ -51,11 +45,7 @@ module.exports = [
     rules: {
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       'react/prop-types': 'off',
-      // ✅ Tijdelijke tolerantie voor "unused" variabelen, mits met underscore
-      'no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
-      ],
+      'no-unused-vars': 'off', // Uitgezet ten gunste van TS versie
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
@@ -63,6 +53,6 @@ module.exports = [
     },
   },
 
-  // 4) Prettier integratie (zet conflicterende ESLint-regels uit)
+  // 4) Prettier integratie
   prettier,
 ];
