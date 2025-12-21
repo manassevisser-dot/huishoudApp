@@ -1,15 +1,27 @@
-export const onlyDigits = (s: string) => s.replace(/[^0-9]/g, '');
+/**
+ * Alleen numerieke helpers (geen string/emoji opschoning)
+ */
 
-export const onlyDigitsDotsComma = (s: string) => 
-  s.replace(/[^0-9.,]/g, '').replace(',', '.');
+export const onlyDigits = (val: string): string => val.replace(/\D/g, '');
 
-export const stripEmojiAndLimit = (s: string, max = 25) => {
-  const noEmoji = s.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '');
-  return noEmoji.slice(0, max);
-};
+export const onlyDigitsDotsComma = (val: string): string => val.replace(/[^0-9.,]/g, '');
 
-export const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat('nl-NL', {
+export const formatCurrency = (amount: number | string): string => {
+  const num = typeof amount === 'string' ? parseFloat(amount.replace(',', '.')) : amount;
+  if (isNaN(num)) return '€ 0,00';
+  return new Intl.NumberFormat('nl-NL', {
     style: 'currency',
     currency: 'EUR',
-  }).format(amount);
+  }).format(num);
+};
+
+/**
+ * parseToCents: Zet een bedrag (string of number) om naar centen (integer).
+ * Voorkomt floating point fouten door af te ronden.
+ */
+export const parseToCents = (value: string | number): number => {
+  if (typeof value === 'number') return Math.round(value * 100);
+  const normalized = value.replace(',', '.');
+  const parsed = parseFloat(normalized);
+  return isNaN(parsed) ? 0 : Math.round(parsed * 100);
+};
