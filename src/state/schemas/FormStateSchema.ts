@@ -1,61 +1,54 @@
-// WAI-005A — Zod State-Freeze (v1.0)
 import { z } from 'zod';
 
-// --- Primitives ---
-// ADR-15: Minor units (integers) & ADR-16: Non-negative
-export const Cents = z.number().int().nonnegative();
-export const Id = z.string().min(1);
+// 1. Individueel item (centen!)
+const MoneyItemSchema = z.object({
+  id: z.string(),
+  label: z.string().optional(),
+  amount: z.number().int(), // Moet integer zijn (Phoenix-eis)
+});
 
-// --- C1: Huishouden ---
-// Gekozen voor Optie B: velden verplicht binnen object, object zelf is partial
-export const C1Schema = z
+// 2. De lijst-structuur met harde defaults
+// Dit voorkomt de ".map is not a function" error
+const MoneyListSchema = z
   .object({
-    aantalMensen: z.number().int().min(1),
-    aantalVolwassen: z.number().int().min(1),
+    items: z.array(MoneyItemSchema).default([]),
   })
-  .partial();
+  .default({ items: [] });
 
-// --- C4: Leden ---
-// MemberSchema bevat PII (naam/datum) - uitsluitend voor intern gebruik (niet voor export)
-export const MemberSchema = z.object({
-  id: Id.optional(),
-  memberType: z.enum(['adult', 'child']),
-  naam: z.string().optional(),
-  leeftijd: z.number().int().nonnegative().optional(),
-  dateOfBirth: z.string().optional(),
-  gender: z.string().optional(),
-});
-
-export const C4Schema = z.object({
-  leden: z.array(MemberSchema).default([]),
-});
-
-// --- C7/C10: Inkomsten/Lasten (centen) ---
-export const MoneyItemSchema = z.object({
-  id: Id,
-  amount: Cents,
-});
-
-// Geen .partial() meer: items array is leidend
-export const C7Schema = z.object({
-  items: z.array(MoneyItemSchema).default([]),
-});
-
-export const C10Schema = z.object({
-  items: z.array(MoneyItemSchema).default([]),
-});
-
-// --- FormState v1.0 ---
+// 3. Het hoofd-schema
 export const FormStateSchema = z
   .object({
-    schemaVersion: z.literal('1.0'),
-    C1: C1Schema.optional(),
-    C4: C4Schema.optional(),
-    C7: C7Schema.optional(),
-    C10: C10Schema.optional(),
-    isSpecialStatus: z.boolean().optional(),
-    userId: z.string().nullable().optional(),
+    schemaVersion: z.string().default('1.0'),
+    isSpecialStatus: z.boolean().default(false),
+
+    // Huishouden
+    C1: z
+      .object({
+        aantalMensen: z.number().default(1),
+        aantalVolwassen: z.number().default(1),
+      })
+      .default({ aantalMensen: 1, aantalVolwassen: 1 }),
+
+    // Leden (Privacy-proof)
+    C4: z
+      .object({
+        leden: z
+          .array(
+            z.object({
+              id: z.string(),
+              memberType: z.string(),
+              leeftijd: z.number().optional(),
+              gender: z.string().optional(),
+            }),
+          )
+          .default([]),
+      })
+      .default({ leden: [] }),
+
+    // Financiën (Hier gaat het vaak mis bij de .map)
+    C7: MoneyListSchema, // Inkomsten
+    C10: MoneyListSchema, // Lasten
   })
-  .passthrough(); // Bewust voor backwards-compat tijdens migratie
+  .passthrough(); // Staat extra velden toe zonder te crashen
 
 export type FormStateV1 = z.infer<typeof FormStateSchema>;

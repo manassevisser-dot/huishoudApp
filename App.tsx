@@ -63,7 +63,11 @@ const AppContent: React.FC = () => {
           const pageId = page.id as keyof FormStateV1;
           page.fields.forEach((field) => {
             const currentSection = savedState[pageId];
-            const hasValue = currentSection && (currentSection as any)[field.id] !== undefined;
+
+            const hasValue =
+              currentSection &&
+              typeof currentSection === 'object' &&
+              (currentSection as any)[field.id] !== undefined;
             if (field.defaultValue !== undefined && !hasValue) {
               dispatch({
                 type: 'SET_PAGE_DATA',

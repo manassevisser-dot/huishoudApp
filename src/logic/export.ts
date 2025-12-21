@@ -1,44 +1,31 @@
 import { FormStateV1 } from '../state/schemas/FormStateSchema';
 
 /**
- * WAI-005C: Aggregeert state naar een audit-proof export.
- * Voldoet aan: Privacy (PII stripping) & Special Status (Household > 5)
+ * WAI-005C: Export Aggregator (Phoenix Clean Version)
+ * Doel: Export van de gevalideerde cent-integers zonder PII.
  */
 export const aggregateExportData = (state: FormStateV1) => {
-  // 1. Shadow Logic: Special Status (User Instruction [2024-12-07])
-  // We berekenen dit hier live om zeker te zijn van de export-integriteit
+  // Alleen de shadow-flag voor speciale status conform instructie [2025-12-07]
   const volwassenen = state.C1?.aantalVolwassen ?? 0;
-  const isSpecialStatus = volwassenen > 5;
-
-  // 2. Privacy Filter: PII Stripping (Geen namen/geboortedatums)
-  const anonymizedMembers =
-    state.C4?.leden.map((member, index) => ({
-      id: member.id ?? `member-${index}`,
-      memberType: member.memberType,
-      leeftijd: member.leeftijd,
-      gender: member.gender,
-      // Naam en DateOfBirth worden hier bewust NIET opgenomen (Privacy by Design)
-    })) || [];
-
-  // 3. District-level Metadata (User Instruction [2024-12-19])
-  const metadata = {
-    scope: 'district-level',
-    provincesIncluded: 4, // Verwerkt 4 provincies tegelijk zoals gevraagd
-    exportTimestamp: new Date().toISOString(),
-  };
 
   return {
-    version: '1.0-export',
+    version: '1.0-phoenix-export',
     schemaVersion: state.schemaVersion,
-    metadata,
-    isSpecialStatus,
+    exportDate: new Date().toISOString(),
+    isSpecialStatus: volwassenen > 5,
+
+    // Core data (Clean & Anonymized)
     household: {
-      totalMembers: state.C1?.aantalMensen,
       totalAdults: volwassenen,
-      members: anonymizedMembers,
+      members:
+        state.C4?.leden.map((m) => ({
+          type: m.memberType,
+          leeftijd: m.leeftijd,
+        })) || [],
     },
+
     finances: {
-      // Inkomsten en Uitgaven zijn al in centen (Phoenix-standaard)
+      // De gegarandeerde integers uit de Phoenix migratie
       income: state.C7?.items || [],
       expenses: state.C10?.items || [],
     },
