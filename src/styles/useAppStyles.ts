@@ -259,7 +259,30 @@ export function getAppStyles(theme: Theme) {
       backgroundColor: c.card,
     },
     checkboxSelected: { borderColor: c.primary, backgroundColor: c.primary },
-
+    // Voeg deze toe aan je StyleSheet.create in useAppStyles.ts
+    inputMoneyRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: '#D1D5DB', // Pas aan naar je thema-kleur
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      backgroundColor: '#FFFFFF',
+      height: 48,
+    },
+    moneyPrefix: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: '#374151',
+      marginRight: 4,
+    },
+    moneyTextInput: {
+      flex: 1,
+      height: '100%',
+      fontSize: 16,
+      color: '#111827',
+      paddingVertical: 0, // Voorkomt padding-verschillen op Android
+    },
     // === DASHBOARD ===
     dashboardCard: {
       backgroundColor: c.card,

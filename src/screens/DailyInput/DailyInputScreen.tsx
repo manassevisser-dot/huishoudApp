@@ -1,4 +1,3 @@
-
 //====
 // ./src/screens/DailyInput/DailyInputScreen.tsx
 import * as React from 'react';
@@ -17,7 +16,7 @@ import ChipButton from '../../components/ChipButton';
 import { TransactionService } from '../../services/transactionService';
 import { DailyTransaction, PaymentMethod, TransactionCategory } from '../../types/transaction';
 import { getCurrentDateISO, getISOWeek } from '../../utils/date';
-import { onlyDigitsDotsComma } from '../../utils/numbers';
+import { formatDutchValue } from '../../utils/numbers';
 
 type Props = {
   onBack: () => void;
@@ -41,17 +40,13 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
   // Form State
   const [date, setDate] = React.useState(getCurrentDateISO());
   const [amount, setAmount] = React.useState('');
-  const [category, setCategory] =
-    React.useState<TransactionCategory | null>(null);
+  const [category, setCategory] = React.useState<TransactionCategory | null>(null);
   const [subcategory, setSubcategory] = React.useState('');
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>('pin');
   const [isSaving, setIsSaving] = React.useState(false);
 
   // Derived State
-  const isDirty =
-    amount !== '' &&
-    category !== null &&
-    subcategory !== '';
+  const isDirty = amount !== '' && category !== null && subcategory !== '';
 
   const handleBack = () => {
     if (isDirty) {
@@ -61,7 +56,7 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
         [
           { text: 'Annuleren', style: 'cancel' },
           { text: 'Ja, terug', style: 'destructive', onPress: onBack },
-        ]
+        ],
       );
     } else {
       onBack();
@@ -70,8 +65,7 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
 
   const handleSavePress = () => {
     // Basic Validation
-    if (!amount ||
-        parseFloat(amount.replace(',', '.')) <= 0) {
+    if (!amount || parseFloat(amount.replace(',', '.')) <= 0) {
       Alert.alert('Fout', 'Vul een geldig bedrag in.');
       return;
     }
@@ -79,14 +73,10 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
       Alert.alert('Fout', 'Kies een categorie.');
       return;
     }
-    Alert.alert(
-      'Opslaan',
-      'Data wordt opgeslagen.',
-      [
-        { text: 'Nee', style: 'cancel' },
-        { text: 'Ok', onPress: executeSave },
-      ]
-    );
+    Alert.alert('Opslaan', 'Data wordt opgeslagen.', [
+      { text: 'Nee', style: 'cancel' },
+      { text: 'Ok', onPress: executeSave },
+    ]);
   };
 
   const executeSave = async () => {
@@ -149,9 +139,12 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
           <View style={[styles.numericWrapper, { borderColor: '#007AFF', borderWidth: 2 }]}>
             <Text style={[styles.currencyPrefix, { fontSize: 24, fontWeight: 'bold' }]}>€</Text>
             <TextInput
-              style={[styles.numericInput, { fontSize: 24, fontWeight: 'bold', paddingVertical: 12 }]}
+              style={[
+                styles.numericInput,
+                { fontSize: 24, fontWeight: 'bold', paddingVertical: 12 },
+              ]}
               value={amount}
-              onChangeText={(t) => setAmount(onlyDigitsDotsComma(t))}
+              onChangeText={(t) => setAmount(formatDutchValue(t))}
               placeholder="0,00"
               keyboardType="numeric"
               autoFocus
@@ -166,17 +159,11 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
             {CATEGORIES.map((cat) => (
               <TouchableOpacity
                 key={cat}
-                style={[
-                  styles.gridItem,
-                  category === cat && styles.gridItemSelected,
-                ]}
+                style={[styles.gridItem, category === cat && styles.gridItemSelected]}
                 onPress={() => setCategory(cat)}
               >
                 <Text
-                  style={[
-                    styles.gridItemText,
-                    category === cat && styles.gridItemTextSelected,
-                  ]}
+                  style={[styles.gridItemText, category === cat && styles.gridItemTextSelected]}
                 >
                   {cat}
                 </Text>
@@ -227,7 +214,7 @@ const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
         </TouchableOpacity>
       </View>
     </View>
-   );
+  );
 };
 
-export default DailyInputScreen
+export default DailyInputScreen;

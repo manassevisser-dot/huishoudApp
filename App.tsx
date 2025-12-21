@@ -17,7 +17,7 @@ import { C4Config } from './src/screens/Wizard/pages/C4.config';
 import { C7Config } from './src/screens/Wizard/pages/C7.config';
 import { C10Config } from './src/screens/Wizard/pages/C10.config';
 
-import { calculateFinancialSummary } from './src/utils/finance';
+import { computeSummary } from './src/logic/finance';
 import { PageConfig } from './src/types/form';
 
 const WIZARD_PAGES: PageConfig[] = [C1Config, C4Config, C7Config, C10Config];
@@ -42,12 +42,9 @@ const AppContent: React.FC = () => {
 
   const atDashboard = currentPageIndex === WIZARD_PAGES.length;
 
-  const summary = React.useMemo(
-    () => calculateFinancialSummary(state.C7, state.C10),
-    [state.C7, state.C10],
-  );
+  const summary = React.useMemo(() => computeSummary(state.C7, state.C10), [state.C7, state.C10]);
 
-  const hasMinimumData = summary.inkomenTotaalMaand > 0 && summary.lastenTotaalVast > 0;
+  const hasMinimumData = summary.totalIncome > 0 && summary.totalExpenses > 0;
 
   // =========================================================
   // Load saved state on mount + one-time C4 alignment
@@ -96,9 +93,8 @@ const AppContent: React.FC = () => {
           payload: { aantalMensen, aantalVolwassen },
         });
         console.log('[ALIGN-TRIGGER] dispatched');
-  } else {
-    console.log('[ALIGN-TRIGGER] skipped — no savedState.C1 present');
-  
+      } else {
+        console.log('[ALIGN-TRIGGER] skipped — no savedState.C1 present');
       }
     };
 

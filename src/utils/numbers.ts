@@ -1,27 +1,63 @@
+// WAI-004A — NumericParser & NL-formatters (non-negative)
+// -------------------------------------------------------
+import { cleanName } from './strings';
+
 /**
- * Alleen numerieke helpers (geen string/emoji opschoning)
+ * Tijdens typen: sta alleen cijfers, komma en punt toe.
+ * Gebruikt cleanName voor emoji-stripping en limitering.
+ * Verwijdert ook '-' conform de non-negative policy.
  */
+export function formatDutchValue(raw: string): string {
+  return cleanName(String(raw ?? ''), 256)
+    .replace(/\s+/g, '')
+    .replace(/-/g, '') // minus altijd weg
+    .replace(/[^0-9,.]/g, ''); // alleen [0-9], ',' en '.'
+}
 
-export const onlyDigits = (val: string): string => val.replace(/\D/g, '');
+/**
+ * NL-parser: string/number → cents (integer, altijd ≥ 0).
+ * Elimineert floating-point errors via integers.
+ */
+export function parseToCents(input: string | number): number {
+  if (typeof input === 'number') {
+    return Math.round(Math.abs(input) * 100);
+  }
+  if (!input) return 0;
 
-export const onlyDigitsDotsComma = (val: string): string => val.replace(/[^0-9.,]/g, '');
+  let s = formatDutchValue(input);
+  s = s.replace(/\./g, ''); // duizendtallen weg
 
-export const formatCurrency = (amount: number | string): string => {
-  const num = typeof amount === 'string' ? parseFloat(amount.replace(',', '.')) : amount;
-  if (isNaN(num)) return '€ 0,00';
+  const lastComma = s.lastIndexOf(',');
+  if (lastComma >= 0) {
+    s = s.slice(0, lastComma).replace(/,/g, '') + '.' + s.slice(lastComma + 1).replace(/,/g, '');
+  } else {
+    s = s.replace(/,/g, '');
+  }
+
+  const val = parseFloat(s);
+  if (isNaN(val)) return 0;
+
+  return Math.max(0, Math.round(val * 100));
+}
+
+/**
+ * Formatter: cents → "1.250,50" (zonder €), altijd 2 decimalen.
+ */
+export function formatCentsToDutch(cents: number): string {
+  const euros = (Number.isFinite(cents) ? cents : 0) / 100;
+  return new Intl.NumberFormat('nl-NL', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(euros);
+}
+
+/**
+ * Read-only currency formatter (met €).
+ * Niet gebruiken in input-context.
+ */
+export function formatCurrency(amountCents: number): string {
   return new Intl.NumberFormat('nl-NL', {
     style: 'currency',
     currency: 'EUR',
-  }).format(num);
-};
-
-/**
- * parseToCents: Zet een bedrag (string of number) om naar centen (integer).
- * Voorkomt floating point fouten door af te ronden.
- */
-export const parseToCents = (value: string | number): number => {
-  if (typeof value === 'number') return Math.round(value * 100);
-  const normalized = value.replace(',', '.');
-  const parsed = parseFloat(normalized);
-  return isNaN(parsed) ? 0 : Math.round(parsed * 100);
-};
+  }).format(amountCents / 100);
+}

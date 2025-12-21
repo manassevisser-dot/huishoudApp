@@ -6,7 +6,7 @@ import ChipButton from '../components/ChipButton';
 import { useFormContext } from '../context/FormContext';
 import { Member, WoningType, AutoCount } from '../types/OUDhousehold';
 import { ExpenseItem } from '../types/expenses';
-import { onlyDigitsDotsComma } from '../utils/numbers';
+import { formatDutchValue } from '../utils/numbers';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_WIDTH = SCREEN_WIDTH * 0.85;
@@ -49,8 +49,8 @@ const ExpenseRepeater: React.FC = () => {
   const updateExpense = (itemId: string, key: string, raw: string | number | undefined) => {
     const val =
       typeof raw === 'string'
-        ? onlyDigitsDotsComma(raw).length
-          ? Number(onlyDigitsDotsComma(raw))
+        ? formatDutchValue(raw).length
+          ? Number(formatDutchValue(raw))
           : undefined
         : raw;
     const next = [...lasten];

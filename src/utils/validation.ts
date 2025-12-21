@@ -1,16 +1,9 @@
 import { FieldConfig } from '../types/form';
-import { onlyDigits } from '../utils/numbers';
+import { formatDutchValue } from '../utils/numbers';
 import { isDigitsDatePlausible, parseDDMMYYYYtoISO } from '../utils/date';
 
-export const validateField = (
-  field: FieldConfig,
-  value: any,
-  state: any
-): string | null => {
-  if (
-    field.required &&
-    (value === undefined || value === null || value === '')
-  ) {
+export const validateField = (field: FieldConfig, value: any, state: any): string | null => {
+  if (field.required && (value === undefined || value === null || value === '')) {
     return 'Dit veld is verplicht.';
   }
   if (field.validation) {
@@ -28,20 +21,13 @@ export const validateField = (
     ) {
       return `Waarde mag maximaal ${field.validation.max} zijn.`;
     }
-    if (
-      field.validation.postcode &&
-      typeof value === 'string' &&
-      !/^\d{4}$/.test(value.trim())
-    ) {
+    if (field.validation.postcode && typeof value === 'string' && !/^\d{4}$/.test(value.trim())) {
       return 'Ongeldige postcode (formaat: 4 cijfers, bijv. 1234).';
     }
   }
 
   // Cross-page array length validation (declarative)
-  if (
-    Array.isArray(value) &&
-    typeof field.validation?.lengthEqualsTo === 'string'
-  ) {
+  if (Array.isArray(value) && typeof field.validation?.lengthEqualsTo === 'string') {
     const [tPage, tField] = field.validation.lengthEqualsTo.split('.');
     const expected = Number(state?.[tPage]?.[tField] ?? 0);
     if (value.length !== expected) {
@@ -52,14 +38,13 @@ export const validateField = (
   return null;
 };
 
-
 /**
  * Valideer een NL geboortedatum invoer * Valideer een NL geboortedatum invoer (DD-MM-YYYY of alleen cijfers).
  * @returns null als geldig, anders fouttekst.
  */
 export function validateDobNL(input: string): string | null {
   const raw = input ?? '';
-  const digits = onlyDigits(raw);
+  const digits = formatDutchValue(raw);
 
   if (digits.length < 8) {
     return 'Vul een volledige datum in (DD-MM-YYYY).';
@@ -74,5 +59,5 @@ export function validateDobNL(input: string): string | null {
   if (!iso) {
     return 'Ongeldige datum (bestaat niet in kalender).';
   }
-  return null; // geldig 
+  return null; // geldig
 }

@@ -1,4 +1,3 @@
-
 //====
 // src/screens/Dashboard/DashboardScreen.tsx
 import * as React from 'react';
@@ -6,7 +5,7 @@ import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStyles } from '../../styles/useAppStyles';
 import { useFormContext } from '../../context/FormContext';
-import { calculateFinancialSummary } from '../../utils/finance';
+import { computeSummary } from '../../logic/finance';
 import { formatCurrency } from '../../utils/numbers';
 import { TransactionService } from '../../services/transactionService';
 
@@ -21,7 +20,7 @@ const DashboardScreen: React.FC<Props> = ({
   onAddTransaction,
   onLogout,
   onOpenOptions,
-  onOpenUndo
+  onOpenUndo,
 }) => {
   const insets = useSafeAreaInsets();
   const { styles, colors } = useAppStyles(); // ✅ verplaatst naar binnen
@@ -29,10 +28,7 @@ const DashboardScreen: React.FC<Props> = ({
   const [variableExpenses, setVariableExpenses] = React.useState(0);
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const summary = React.useMemo(
-    () => calculateFinancialSummary(state.C7, state.C10),
-    [state.C7, state.C10]
-  );
+  const summary = React.useMemo(() => computeSummary(state.C7, state.C10), [state.C7, state.C10]);
 
   const fetchTransactions = React.useCallback(async () => {
     const data = await TransactionService.fetchSummary();
@@ -49,20 +45,15 @@ const DashboardScreen: React.FC<Props> = ({
     fetchTransactions();
   }, [fetchTransactions]);
 
-  const totalExpenses = summary.lastenTotaalVast + variableExpenses;
-  const remainingBudget = summary.inkomenTotaalMaand - totalExpenses;
+  const totalExpenses = summary.totalExpenses + variableExpenses;
+  const remainingBudget = summary.totalIncome - totalExpenses;
   const isPositive = remainingBudget >= 0;
 
   return (
     <View style={styles.pageContainer}>
       <ScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: 120 + insets.bottom },
-        ]}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <Text style={styles.pageTitle}>Dashboard</Text>
 
@@ -85,12 +76,7 @@ const DashboardScreen: React.FC<Props> = ({
         {/* Financial Overview Card */}
         <View style={styles.dashboardCard}>
           <Text style={styles.dashboardLabel}>Resterend Budget (Deze Maand)</Text>
-          <Text
-            style={[
-              styles.dashboardKPI,
-              { color: isPositive ? '#34C759' : '#FF3B30' },
-            ]}
-          >
+          <Text style={[styles.dashboardKPI, { color: isPositive ? '#34C759' : '#FF3B30' }]}>
             {formatCurrency(remainingBudget)}
           </Text>
           <Text style={styles.dashboardMessage}>
@@ -105,14 +91,14 @@ const DashboardScreen: React.FC<Props> = ({
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Inkomen (Maand)</Text>
             <Text style={[styles.summaryValue, { color: '#34C759' }]}>
-              {formatCurrency(summary.inkomenTotaalMaand)}
+              {formatCurrency(summary.totalIncome)}
             </Text>
           </View>
 
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Vaste Lasten</Text>
             <Text style={[styles.summaryValue, { color: '#FF3B30' }]}>
-              {formatCurrency(summary.lastenTotaalVast)}
+              {formatCurrency(summary.totalExpenses)}
             </Text>
           </View>
 
@@ -125,15 +111,13 @@ const DashboardScreen: React.FC<Props> = ({
 
           <View style={styles.summaryRowTotal}>
             <Text style={styles.summaryLabelBold}>Totaal Uitgaven</Text>
-            <Text style={styles.summaryValueBold}>
-              {formatCurrency(totalExpenses)}
-            </Text>
+            <Text style={styles.summaryValueBold}>{formatCurrency(totalExpenses)}</Text>
           </View>
         </View>
 
         <Text style={styles.summaryDetail}>
-          Gebruik de "+ Nieuwe Uitgave" knop om uw dagelijkse boodschappen en andere
-          variabele kosten toe te voegen.
+          Gebruik de "+ Nieuwe Uitgave" knop om uw dagelijkse boodschappen en andere variabele
+          kosten toe te voegen.
         </Text>
       </ScrollView>
 
@@ -144,10 +128,7 @@ const DashboardScreen: React.FC<Props> = ({
           { bottom: insets.bottom, paddingBottom: Math.max(20, insets.bottom + 8) },
         ]}
       >
-        <TouchableOpacity
-          style={[styles.button, styles.secondaryButton]}
-          onPress={onLogout}
-        >
+        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onLogout}>
           <Text style={styles.secondaryButtonText}>Uitloggen</Text>
         </TouchableOpacity>
 

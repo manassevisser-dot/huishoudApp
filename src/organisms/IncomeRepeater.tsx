@@ -15,7 +15,7 @@ import {
   VermogenData,
 } from '../types/income';
 import { Member } from '../types/OUDhousehold';
-import { onlyDigitsDotsComma } from '../utils/numbers';
+import { formatDutchValue } from '../utils/numbers';
 
 // P4: Card dimensions for swipe
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -156,7 +156,7 @@ const IncomeRepeater: React.FC = () => {
   };
 
   const setVakantiegeldPerJaar = (id: string, text: string) => {
-    const clean = onlyDigitsDotsComma(text);
+    const clean = formatDutchValue(text);
     const perYear = clean.length ? Number(clean) : undefined;
     const perMonth =
       typeof perYear === 'number' && Number.isFinite(perYear) ? perYear / 12 : undefined;
@@ -185,8 +185,8 @@ const IncomeRepeater: React.FC = () => {
       if (sub === 'zorgtoeslag' || sub === 'overige' || sub === 'reiskosten') {
         t[sub] =
           typeof value === 'string'
-            ? onlyDigitsDotsComma(value).length
-              ? Number(onlyDigitsDotsComma(value))
+            ? formatDutchValue(value).length
+              ? Number(formatDutchValue(value))
               : undefined
             : value;
       }
@@ -194,8 +194,8 @@ const IncomeRepeater: React.FC = () => {
     } else {
       const num =
         typeof value === 'string'
-          ? onlyDigitsDotsComma(value).length
-            ? Number(onlyDigitsDotsComma(value))
+          ? formatDutchValue(value).length
+            ? Number(formatDutchValue(value))
             : undefined
           : value;
       setMemberIncome(id, { nettoSalaris: num });
@@ -435,7 +435,7 @@ const IncomeRepeater: React.FC = () => {
                 value={typeof ent.amount === 'number' ? String(ent.amount) : ''}
                 keyboardType="number-pad"
                 onChangeText={(t) => {
-                  const clean = onlyDigitsDotsComma(t);
+                  const clean = formatDutchValue(t);
                   setUitkeringField(id, k, { amount: clean.length ? Number(clean) : undefined });
                 }}
                 placeholder="Netto uitkering (€/periode)"
@@ -486,7 +486,7 @@ const IncomeRepeater: React.FC = () => {
               value={typeof row.amount === 'number' ? String(row.amount) : ''}
               keyboardType="number-pad"
               onChangeText={(t) => {
-                const clean = onlyDigitsDotsComma(t);
+                const clean = formatDutchValue(t);
                 setAndersField(id, row.id, { amount: clean.length ? Number(clean) : undefined });
               }}
               placeholder="Bedrag (€/periode)"
@@ -544,9 +544,7 @@ const IncomeRepeater: React.FC = () => {
             keyboardType="number-pad"
             onChangeText={(t) =>
               setHouseholdBenefits({
-                huurtoeslag: onlyDigitsDotsComma(t).length
-                  ? Number(onlyDigitsDotsComma(t))
-                  : undefined,
+                huurtoeslag: formatDutchValue(t).length ? Number(formatDutchValue(t)) : undefined,
               })
             }
             placeholder="0.00"
@@ -568,8 +566,8 @@ const IncomeRepeater: React.FC = () => {
             keyboardType="number-pad"
             onChangeText={(t) =>
               setHouseholdBenefits({
-                kindgebondenBudget: onlyDigitsDotsComma(t).length
-                  ? Number(onlyDigitsDotsComma(t))
+                kindgebondenBudget: formatDutchValue(t).length
+                  ? Number(formatDutchValue(t))
                   : undefined,
               })
             }
@@ -592,8 +590,8 @@ const IncomeRepeater: React.FC = () => {
             keyboardType="number-pad"
             onChangeText={(t) =>
               setHouseholdBenefits({
-                kinderopvangtoeslag: onlyDigitsDotsComma(t).length
-                  ? Number(onlyDigitsDotsComma(t))
+                kinderopvangtoeslag: formatDutchValue(t).length
+                  ? Number(formatDutchValue(t))
                   : undefined,
               })
             }
@@ -612,9 +610,7 @@ const IncomeRepeater: React.FC = () => {
             keyboardType="number-pad"
             onChangeText={(t) =>
               setHouseholdBenefits({
-                kinderbijslag: onlyDigitsDotsComma(t).length
-                  ? Number(onlyDigitsDotsComma(t))
-                  : undefined,
+                kinderbijslag: formatDutchValue(t).length ? Number(formatDutchValue(t)) : undefined,
               })
             }
             placeholder="0.00"
@@ -659,7 +655,7 @@ const IncomeRepeater: React.FC = () => {
             value={typeof vermogen.waarde === 'number' ? String(vermogen.waarde) : ''}
             keyboardType="number-pad"
             onChangeText={(t) => {
-              const clean = onlyDigitsDotsComma(t);
+              const clean = formatDutchValue(t);
               setVermogen({ waarde: clean.length ? Number(clean) : undefined });
             }}
             placeholder="0.00"
