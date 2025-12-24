@@ -1,0 +1,243 @@
+{
+  "version": "1.0",
+  "date_generated": "2025-12-21T00:23:28",
+  "scenarios": [
+    {
+      "id": "GM-001",
+      "cluster": "Domain & Types",
+      "title": "Euro NumericParser — Baseline (Komma-bug eliminatie)",
+      "description": "Verifieert Nederlandse valuta parsing met duizendtallen en decimale komma.",
+      "inputs": [
+        {
+          "amount_input": "1.250,50"
+        },
+        {
+          "amount_input": "50,00"
+        },
+        {
+          "amount_input": "1.000"
+        },
+        {
+          "amount_input": "10.000,99"
+        }
+      ],
+      "expected": [
+        {
+          "amount_cents": 125050
+        },
+        {
+          "amount_cents": 5000
+        },
+        {
+          "amount_cents": 100000
+        },
+        {
+          "amount_cents": 1000099
+        }
+      ]
+    },
+    {
+      "id": "GM-002",
+      "cluster": "Domain & Types",
+      "title": "Sanitisatie + Parser — whitespace/emoji + duizendtallen",
+      "description": "Sanitisatie van invoer gevolgd door parsing; emoji en whitespace mogen parsing niet beïnvloeden.",
+      "inputs": [
+        {
+          "amount_input": "  2.345,70  "
+        },
+        {
+          "amount_input": "🏠1.000,00"
+        }
+      ],
+      "expected": [
+        {
+          "amount_cents": 234570
+        },
+        {
+          "amount_cents": 100000
+        }
+      ]
+    },
+    {
+      "id": "GM-003",
+      "cluster": "Domain & Types",
+      "title": "Negatieve bedragen — behoud van teken",
+      "description": "Parser moet het negatieve teken behouden en juiste minor units leveren.",
+      "inputs": [
+        {
+          "amount_input": "-1.250,00"
+        },
+        {
+          "amount_input": "-0,99"
+        }
+      ],
+      "expected": [
+        {
+          "amount_cents": 125000
+        },
+        {
+          "amount_cents": 99
+        }
+      ]
+    },
+    {
+      "id": "GM-004",
+      "cluster": "Domain & Types",
+      "title": "Extreem groot bedrag",
+      "description": "Parser moet grote bedragen correct verwerken zonder precisieverlies in minor units.",
+      "inputs": [
+        {
+          "amount_input": "123.456.789,01"
+        }
+      ],
+      "expected": [
+        {
+          "amount_cents": 12345678901
+        }
+      ]
+    },
+    {
+      "id": "GM-005",
+      "cluster": "Domain & Types",
+      "title": "Fallbacks en ambiguïteit",
+      "description": "Ongeldige invoer valt terug naar 0; ambigue duizendenpunten worden geneutraliseerd.",
+      "inputs": [
+        {
+          "amount_input": ""
+        },
+        {
+          "amount_input": "—"
+        },
+        {
+          "amount_input": "abc"
+        },
+        {
+          "amount_input": "12..34"
+        }
+      ],
+      "expected": [
+        {
+          "amount_cents": 0
+        },
+        {
+          "amount_cents": 0
+        },
+        {
+          "amount_cents": 0
+        },
+        {
+          "amount_cents": 123400
+        }
+      ]
+    },
+    {
+      "id": "GM-006",
+      "cluster": "Screens & I/O",
+      "title": "CSV Aggregatie — netto resultaat",
+      "description": "Aggregatie gebruikt NumericParser; geen lokale parse in de buitenschil.",
+      "inputs": {
+        "income": [
+          {
+            "input": "3.200,00"
+          },
+          {
+            "input": "1.100,50"
+          }
+        ],
+        "expense": [
+          {
+            "input": "750,00"
+          },
+          {
+            "input": "300,25"
+          }
+        ]
+      },
+      "expected": {
+        "income_cents": 430050,
+        "expense_cents": 105025,
+        "net_cents": 325025
+      }
+    },
+    {
+      "id": "GM-007",
+      "cluster": "State Layer",
+      "title": "Speciale Status vlag isolatie",
+      "description": ">5 volwassenen triggert isSpecialStatus=true; vlag blijft geisoleerd in Domain/State.",
+      "inputs": {
+        "adults_count": 6
+      },
+      "expected": {
+        "isSpecialStatus": true
+      }
+    },
+    {
+      "id": "GM-008",
+      "cluster": "Domain & Types",
+      "title": "UTC-Noon leeftijdsbepaling",
+      "description": "Leeftijd wordt bepaald met UTC-Noon om off-by-one fouten te voorkomen.",
+      "inputs": [
+        {
+          "dob": "2005-12-21T00:30:00+01:00"
+        },
+        {
+          "dob": "2005-12-20T23:30:00+01:00"
+        }
+      ],
+      "expected": [
+        {
+          "age_years": 20
+        },
+        {
+          "age_years": 20
+        }
+      ]
+    },
+    {
+      "id": "GM-009",
+      "cluster": "State Layer",
+      "title": "UUID injectie",
+      "description": "Elke transactie krijgt een UUIDv4; geen indices als ID.",
+      "inputs": [
+        {
+          "name": "Salary",
+          "amount_input": "2.500,00"
+        },
+        {
+          "name": "Rent",
+          "amount_input": "-1.100,00"
+        }
+      ],
+      "expected": {
+        "id_pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+        "distinct": true,
+        "amount_cents": [
+          250000,
+          110000
+        ]
+      }
+    },
+    {
+      "id": "GM-010",
+      "cluster": "Wizard & Business Rules",
+      "title": "Auto-Purge orphan mortgage data",
+      "description": "Switch van Koop naar Huur moet hypotheekvelden verwijderen na waarschuwing.",
+      "inputs": {
+        "previous_mode": "Koop",
+        "next_mode": "Huur",
+        "mortgage": {
+          "principal_input": "250.000,00",
+          "rate_input": "4,20"
+        }
+      },
+      "expected": {
+        "removed_fields": [
+          "mortgage.principal",
+          "mortgage.rate"
+        ],
+        "purge_confirmed": true
+      }
+    }
+  ],
+  "currency_minor_units": "cent"
+}
