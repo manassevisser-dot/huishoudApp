@@ -24,7 +24,7 @@
         "src/services/*"
       ],
       "@assets/*": [
-        "assets/*"
+        "_assets/*"
       ],
       "@logic/*": [
         "src/logic/*"

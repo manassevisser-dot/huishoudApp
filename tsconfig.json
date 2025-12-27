@@ -13,7 +13,7 @@
       "@app/*": ["src/app/*"],
       "@utils/*": ["src/utils/*"],
       "@services/*": ["src/services/*"],
-      "@assets/*": ["assets/*"],
+      "@assets/*": ["_assets/*"],
       "@logic/*": ["src/logic/*"],
       "@config/*": ["src/config/*"],
       "@context/*": ["src/app/context/*"],
