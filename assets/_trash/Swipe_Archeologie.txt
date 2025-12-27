@@ -1,0 +1,951 @@
+]633;E;for b in $(git branch --format='%(refname:short)');f772c50e-c4b4-4e03-a727-d18ad8d4e6fa]633;C===== BRANCH: c4-swipe-archeology/251218-0653 =====
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-432-              </Text>
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-433-              <TextInput
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-434-                style={styles.numericInput}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-435-                value={readField(id, k)?.toString() ?? ''}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-436-                keyboardType="number-pad"
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-437-                onChangeText={(t) => updateExpense(id, k, t)}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-438-                placeholder="0.00"
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-439-              />
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-440-            </View>
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-441-          ))}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-442-        </View>
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-443-      );
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-444-    };
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-445-
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-446-    return (
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-447-      <View style={styles.dashboardCard}>
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-448-        <Text style={styles.summaryLabelBold}>Vaste lasten per persoon</Text>
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-449-        {adults.length > 1 ? (
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-450-          <ScrollView
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-451-            horizontal
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx:452:            pagingEnabled
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-453-            showsHorizontalScrollIndicator={false}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-454-            contentContainerStyle={{ paddingRight: 20 }}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx:455:            snapToInterval={CARD_WIDTH + 20}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-456-            decelerationRate="fast"
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-457-            style={{ marginVertical: 12 }}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-458-          >
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-459-            {adults.map((m, idx) => renderAdultExpenses(m, idx))}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-460-          </ScrollView>
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-461-        ) : (
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-462-          adults.map((m, idx) => renderAdultExpenses(m, idx))
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-463-        )}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-464-        {children.map((m) => renderChildExpenses(m))}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-465-      </View>
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-466-    );
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-467-  };
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-468-
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-469-  const renderAutoKosten = () => {
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-470-    // Bepaal aantal auto's
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-471-    const count = auto === 'Één' ? 1 : auto === 'Twee' ? 2 : 0;
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-472-    if (count === 0) return null;
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-473-
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-474-    // Velden per auto
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-475-    const autoFields: { key: string; label: string; optional?: boolean }[] = [
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-476-      { key: 'wegenbelasting', label: 'Wegenbelasting' },
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-477-      { key: 'brandstofOfLaden', label: 'Benzine/opladen' },
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-478-      { key: 'apk', label: 'APK' },
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-479-      { key: 'onderhoudReservering', label: 'Reservering onderhoud', optional: true },
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-480-      { key: 'lease', label: 'Leasekosten', optional: true },
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-481-      { key: 'afschrijving', label: 'Afschrijving', optional: true },
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-482-    ];
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-483-
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-484-    return (
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-485-      <View style={styles.dashboardCard}>
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-486-        <Text style={styles.summaryLabelBold}>Autokosten</Text>
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-487-
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-488-        <ScrollView
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-489-          horizontal
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx:490:          pagingEnabled
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-491-          showsHorizontalScrollIndicator={false}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-492-          contentContainerStyle={{ paddingRight: 20 }}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx:493:          snapToInterval={CARD_WIDTH + 20}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-494-          decelerationRate="fast"
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-495-          style={{ marginVertical: 12 }}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-496-        >
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-497-          {Array.from({ length: count }).map((_, i) => {
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-498-            const idx = i + 1;
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-499-            const id = `auto-${idx}`;
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-500-
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-501-            return (
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-502-              <View
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-503-                key={id}
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-504-                style={
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-505-                  count > 1
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-506-                    ? [styles.dashboardCard, { width: CARD_WIDTH, marginRight: 20 }]
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-507-                    : styles.fieldContainer
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-508-                }
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-509-              >
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-510-                {autoFields.map((f) => (
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-511-                  <View key={`${id}-${f.key}`} style={styles.fieldContainer}>
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-512-                    <Text style={styles.label}>
+c4-swipe-archeology/251218-0653:src/organisms/ExpenseRepeater.tsx-513-                      {f.label} (€/mnd){f.optional ? ' (optioneel)' : ''} — Auto {idx}
+--
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-7-import ChipButton from '../components/ChipButton';
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-8-import { useAppStyles } from '../styles/useAppStyles';
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-9-
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-10-// ============================================================
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-11-// MAIN COMPONENT
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-12-// ============================================================
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-13-
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-14-const HouseholdMemberRepeater: React.FC = () => {
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-15-  const { state } = useFormContext();
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-16-  const { styles } = useAppStyles();
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-17-
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-18-  const woning = (state.C4?.woning ?? null) as WoningType | null;
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-19-
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-20-  const leden = (state.C4?.leden ?? []) as Member[];
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-21-
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-22-  const adults = leden.filter((m) => m.memberType === 'adult');
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-23-  const children = leden.filter((m) => m.memberType === 'child');
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-24-
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-25-  const total = leden.length;
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-26-  // Reuse the established swipe pattern from Expense/Income:
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx:27:  // CARD_WIDTH = SCREEN_WIDTH * 0.85; snapToInterval = CARD_WIDTH + 20; paddingRight: 20
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-28-  const SCREEN_WIDTH = Dimensions.get('window').width;
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-29-  // Iets groter: ~90% van schermbreedte
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-30-  const CARD_WIDTH = SCREEN_WIDTH * 0.9;
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-31-  const CARD_GAP = 20; // tussenruimte zoals in Expense/Income
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-32-
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-33-  return (
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-34-    <View style={styles.container}>
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-35-      {/* ===================== VOLWASSENEN ===================== */}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-36-      {adults.length > 0 && (
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-37-        <View style={styles.section}>
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-38-          <Text style={styles.sectionTitle}>Volwassenen ({adults.length})</Text>
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-39-
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-40-          {adults.length > 1 ? (
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-41-            <ScrollView
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-42-              horizontal
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx:43:              pagingEnabled
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-44-              showsHorizontalScrollIndicator={false}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-45-              contentContainerStyle={{ paddingRight: CARD_GAP }}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx:46:              snapToInterval={CARD_WIDTH + CARD_GAP}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-47-              snapToAlignment="start"
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-48-              decelerationRate="fast"
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-49-              style={{ marginVertical: 12 }}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-50-            >
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-51-              {adults.map((member) => {
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-52-                const idx = leden.indexOf(member);
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-53-                return (
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-54-                  <View
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-55-                    key={`adult-${idx}`}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-56-                    style={[styles.card, { width: CARD_WIDTH, marginRight: 20 }]}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-57-                  >
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-58-                    {/* Nummerbadge linksboven */}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-59-                    <Text style={styles.cardBadge}>{idx + 1}</Text>
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-60-                    <MemberCard member={member} index={idx} />
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-61-                    {idx < total - 1 && total > 1 && (
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-62-                      <Text style={[styles.navigationHint, styles.hintOverlayBottomRight]}>
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-63-                        ----&gt; volgende
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-64-                      </Text>
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-65-                    )}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-66-                  </View>
+--
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-70-          ) : (
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-71-            adults.map((member) => (
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-72-              <MemberCard
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-73-                key={`adult-${leden.indexOf(member)}`}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-74-                member={member}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-75-                index={leden.indexOf(member)}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-76-              />
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-77-            ))
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-78-          )}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-79-        </View>
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-80-      )}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-81-
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-82-      {/* ===================== KINDEREN ===================== */}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-83-      {children.length > 0 && (
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-84-        <View style={styles.section}>
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-85-          <Text style={styles.sectionTitle}>Kinderen ({children.length})</Text>
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-86-
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-87-          {children.length > 1 ? (
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-88-            <ScrollView
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-89-              horizontal
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx:90:              pagingEnabled
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-91-              showsHorizontalScrollIndicator={false}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-92-              contentContainerStyle={{ paddingRight: CARD_GAP }}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx:93:              snapToInterval={CARD_WIDTH + CARD_GAP}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-94-              snapToAlignment="start"
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-95-              decelerationRate="fast"
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-96-              style={{ marginVertical: 12 }}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-97-            >
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-98-              {children.map((member) => {
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-99-                const idx = leden.indexOf(member);
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-100-                return (
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-101-                  <View
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-102-                    key={`child-${idx}`}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-103-                    style={[styles.card, { width: CARD_WIDTH, marginRight: 20 }]}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-104-                  >
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-105-                    {/* Nummerbadge linksboven */}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-106-                    <Text style={styles.cardBadge}>{idx + 1}</Text>
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-107-                    <MemberCard member={member} index={idx} />
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-108-                    {idx < total - 1 && total > 1 && (
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-109-                      <Text style={[styles.navigationHint, styles.hintOverlayBottomRight]}>
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-110-                        ----&gt; volgende
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-111-                      </Text>
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-112-                    )}
+c4-swipe-archeology/251218-0653:src/organisms/HouseholdMemberRepeater.tsx-113-                  </View>
+--
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-577-  // ========== MAIN RENDER ==========
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-578-
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-579-  if (!adults.length) {
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-580-    return (
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-581-      <View style={styles.pageContainer}>
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-582-        <Text style={styles.summaryDetail}>Geen volwassenen gevonden. Stel eerst uw huishouden in op C4/C1.</Text>
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-583-      </View>
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-584-    );
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-585-  }
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-586-
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-587-  return (
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-588-    <View style={styles.pageContainer}>
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-589-      {renderHouseholdBenefits()}
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-590-      
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-591-      {renderVermogen()}
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-592-
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-593-      {/* P4: SWIPE PATTERN FOR ADULTS (if > 1 adult) */}
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-594-      {adults.length > 1 ? (
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-595-        <ScrollView
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-596-          horizontal
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx:597:          pagingEnabled
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-598-          showsHorizontalScrollIndicator={false}
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-599-          contentContainerStyle={{ paddingRight: 20 }}
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx:600:          snapToInterval={CARD_WIDTH + 20}
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-601-          decelerationRate="fast"
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-602-        >
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-603-          {adults.map((m, idx) => {
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-604-            const rec = inkomsten[m.id] ?? { 
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-605-              id: m.id, 
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-606-              categories: { geen: false, werk: false, uitkering: false, anders: false } 
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-607-            };
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-608-            const title = m.naam?.trim() ? `Inkomen voor ${m.naam}` : `Volwassene ${idx + 1}`;
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-609-
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-610-            return (
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-611-              <View 
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-612-                key={m.id}
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-613-                style={[
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-614-                  styles.dashboardCard,
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-615-                  { 
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-616-                    width: CARD_WIDTH,
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-617-                    marginRight: 20,
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-618-                  }
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-619-                ]}
+c4-swipe-archeology/251218-0653:src/organisms/IncomeRepeater.tsx-620-              >
+
+===== BRANCH: feat/c4-woning-buttons =====
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-432-              </Text>
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-433-              <TextInput
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-434-                style={styles.numericInput}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-435-                value={readField(id, k)?.toString() ?? ''}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-436-                keyboardType="number-pad"
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-437-                onChangeText={(t) => updateExpense(id, k, t)}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-438-                placeholder="0.00"
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-439-              />
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-440-            </View>
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-441-          ))}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-442-        </View>
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-443-      );
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-444-    };
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-445-
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-446-    return (
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-447-      <View style={styles.dashboardCard}>
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-448-        <Text style={styles.summaryLabelBold}>Vaste lasten per persoon</Text>
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-449-        {adults.length > 1 ? (
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-450-          <ScrollView
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-451-            horizontal
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx:452:            pagingEnabled
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-453-            showsHorizontalScrollIndicator={false}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-454-            contentContainerStyle={{ paddingRight: 20 }}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx:455:            snapToInterval={CARD_WIDTH + 20}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-456-            decelerationRate="fast"
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-457-            style={{ marginVertical: 12 }}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-458-          >
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-459-            {adults.map((m, idx) => renderAdultExpenses(m, idx))}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-460-          </ScrollView>
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-461-        ) : (
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-462-          adults.map((m, idx) => renderAdultExpenses(m, idx))
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-463-        )}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-464-        {children.map((m) => renderChildExpenses(m))}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-465-      </View>
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-466-    );
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-467-  };
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-468-
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-469-  const renderAutoKosten = () => {
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-470-    // Bepaal aantal auto's
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-471-    const count = auto === 'Één' ? 1 : auto === 'Twee' ? 2 : 0;
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-472-    if (count === 0) return null;
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-473-
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-474-    // Velden per auto
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-475-    const autoFields: { key: string; label: string; optional?: boolean }[] = [
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-476-      { key: 'wegenbelasting', label: 'Wegenbelasting' },
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-477-      { key: 'brandstofOfLaden', label: 'Benzine/opladen' },
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-478-      { key: 'apk', label: 'APK' },
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-479-      { key: 'onderhoudReservering', label: 'Reservering onderhoud', optional: true },
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-480-      { key: 'lease', label: 'Leasekosten', optional: true },
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-481-      { key: 'afschrijving', label: 'Afschrijving', optional: true },
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-482-    ];
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-483-
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-484-    return (
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-485-      <View style={styles.dashboardCard}>
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-486-        <Text style={styles.summaryLabelBold}>Autokosten</Text>
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-487-
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-488-        <ScrollView
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-489-          horizontal
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx:490:          pagingEnabled
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-491-          showsHorizontalScrollIndicator={false}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-492-          contentContainerStyle={{ paddingRight: 20 }}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx:493:          snapToInterval={CARD_WIDTH + 20}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-494-          decelerationRate="fast"
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-495-          style={{ marginVertical: 12 }}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-496-        >
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-497-          {Array.from({ length: count }).map((_, i) => {
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-498-            const idx = i + 1;
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-499-            const id = `auto-${idx}`;
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-500-
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-501-            return (
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-502-              <View
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-503-                key={id}
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-504-                style={
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-505-                  count > 1
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-506-                    ? [styles.dashboardCard, { width: CARD_WIDTH, marginRight: 20 }]
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-507-                    : styles.fieldContainer
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-508-                }
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-509-              >
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-510-                {autoFields.map((f) => (
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-511-                  <View key={`${id}-${f.key}`} style={styles.fieldContainer}>
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-512-                    <Text style={styles.label}>
+feat/c4-woning-buttons:src/organisms/ExpenseRepeater.tsx-513-                      {f.label} (€/mnd){f.optional ? ' (optioneel)' : ''} — Auto {idx}
+--
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-577-  // ========== MAIN RENDER ==========
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-578-
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-579-  if (!adults.length) {
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-580-    return (
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-581-      <View style={styles.pageContainer}>
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-582-        <Text style={styles.summaryDetail}>Geen volwassenen gevonden. Stel eerst uw huishouden in op C4/C1.</Text>
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-583-      </View>
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-584-    );
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-585-  }
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-586-
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-587-  return (
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-588-    <View style={styles.pageContainer}>
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-589-      {renderHouseholdBenefits()}
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-590-      
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-591-      {renderVermogen()}
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-592-
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-593-      {/* P4: SWIPE PATTERN FOR ADULTS (if > 1 adult) */}
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-594-      {adults.length > 1 ? (
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-595-        <ScrollView
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-596-          horizontal
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx:597:          pagingEnabled
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-598-          showsHorizontalScrollIndicator={false}
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-599-          contentContainerStyle={{ paddingRight: 20 }}
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx:600:          snapToInterval={CARD_WIDTH + 20}
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-601-          decelerationRate="fast"
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-602-        >
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-603-          {adults.map((m, idx) => {
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-604-            const rec = inkomsten[m.id] ?? { 
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-605-              id: m.id, 
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-606-              categories: { geen: false, werk: false, uitkering: false, anders: false } 
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-607-            };
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-608-            const title = m.naam?.trim() ? `Inkomen voor ${m.naam}` : `Volwassene ${idx + 1}`;
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-609-
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-610-            return (
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-611-              <View 
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-612-                key={m.id}
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-613-                style={[
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-614-                  styles.dashboardCard,
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-615-                  { 
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-616-                    width: CARD_WIDTH,
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-617-                    marginRight: 20,
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-618-                  }
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-619-                ]}
+feat/c4-woning-buttons:src/organisms/IncomeRepeater.tsx-620-              >
+
+===== BRANCH: fix/c10-remove-cross-page-write =====
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-432-              </Text>
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-433-              <TextInput
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-434-                style={styles.numericInput}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-435-                value={readField(id, k)?.toString() ?? ''}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-436-                keyboardType="number-pad"
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-437-                onChangeText={(t) => updateExpense(id, k, t)}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-438-                placeholder="0.00"
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-439-              />
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-440-            </View>
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-441-          ))}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-442-        </View>
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-443-      );
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-444-    };
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-445-
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-446-    return (
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-447-      <View style={styles.dashboardCard}>
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-448-        <Text style={styles.summaryLabelBold}>Vaste lasten per persoon</Text>
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-449-        {adults.length > 1 ? (
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-450-          <ScrollView
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-451-            horizontal
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx:452:            pagingEnabled
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-453-            showsHorizontalScrollIndicator={false}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-454-            contentContainerStyle={{ paddingRight: 20 }}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx:455:            snapToInterval={CARD_WIDTH + 20}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-456-            decelerationRate="fast"
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-457-            style={{ marginVertical: 12 }}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-458-          >
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-459-            {adults.map((m, idx) => renderAdultExpenses(m, idx))}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-460-          </ScrollView>
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-461-        ) : (
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-462-          adults.map((m, idx) => renderAdultExpenses(m, idx))
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-463-        )}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-464-        {children.map((m) => renderChildExpenses(m))}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-465-      </View>
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-466-    );
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-467-  };
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-468-
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-469-  const renderAutoKosten = () => {
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-470-    // Bepaal aantal auto's
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-471-    const count = auto === 'Één' ? 1 : auto === 'Twee' ? 2 : 0;
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-472-    if (count === 0) return null;
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-473-
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-474-    // Velden per auto
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-475-    const autoFields: { key: string; label: string; optional?: boolean }[] = [
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-476-      { key: 'wegenbelasting', label: 'Wegenbelasting' },
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-477-      { key: 'brandstofOfLaden', label: 'Benzine/opladen' },
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-478-      { key: 'apk', label: 'APK' },
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-479-      { key: 'onderhoudReservering', label: 'Reservering onderhoud', optional: true },
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-480-      { key: 'lease', label: 'Leasekosten', optional: true },
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-481-      { key: 'afschrijving', label: 'Afschrijving', optional: true },
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-482-    ];
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-483-
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-484-    return (
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-485-      <View style={styles.dashboardCard}>
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-486-        <Text style={styles.summaryLabelBold}>Autokosten</Text>
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-487-
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-488-        <ScrollView
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-489-          horizontal
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx:490:          pagingEnabled
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-491-          showsHorizontalScrollIndicator={false}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-492-          contentContainerStyle={{ paddingRight: 20 }}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx:493:          snapToInterval={CARD_WIDTH + 20}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-494-          decelerationRate="fast"
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-495-          style={{ marginVertical: 12 }}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-496-        >
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-497-          {Array.from({ length: count }).map((_, i) => {
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-498-            const idx = i + 1;
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-499-            const id = `auto-${idx}`;
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-500-
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-501-            return (
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-502-              <View
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-503-                key={id}
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-504-                style={
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-505-                  count > 1
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-506-                    ? [styles.dashboardCard, { width: CARD_WIDTH, marginRight: 20 }]
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-507-                    : styles.fieldContainer
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-508-                }
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-509-              >
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-510-                {autoFields.map((f) => (
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-511-                  <View key={`${id}-${f.key}`} style={styles.fieldContainer}>
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-512-                    <Text style={styles.label}>
+fix/c10-remove-cross-page-write:src/organisms/ExpenseRepeater.tsx-513-                      {f.label} (€/mnd){f.optional ? ' (optioneel)' : ''} — Auto {idx}
+--
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-577-  // ========== MAIN RENDER ==========
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-578-
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-579-  if (!adults.length) {
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-580-    return (
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-581-      <View style={styles.pageContainer}>
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-582-        <Text style={styles.summaryDetail}>Geen volwassenen gevonden. Stel eerst uw huishouden in op C4/C1.</Text>
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-583-      </View>
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-584-    );
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-585-  }
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-586-
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-587-  return (
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-588-    <View style={styles.pageContainer}>
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-589-      {renderHouseholdBenefits()}
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-590-      
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-591-      {renderVermogen()}
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-592-
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-593-      {/* P4: SWIPE PATTERN FOR ADULTS (if > 1 adult) */}
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-594-      {adults.length > 1 ? (
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-595-        <ScrollView
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-596-          horizontal
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx:597:          pagingEnabled
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-598-          showsHorizontalScrollIndicator={false}
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-599-          contentContainerStyle={{ paddingRight: 20 }}
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx:600:          snapToInterval={CARD_WIDTH + 20}
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-601-          decelerationRate="fast"
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-602-        >
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-603-          {adults.map((m, idx) => {
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-604-            const rec = inkomsten[m.id] ?? { 
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-605-              id: m.id, 
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-606-              categories: { geen: false, werk: false, uitkering: false, anders: false } 
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-607-            };
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-608-            const title = m.naam?.trim() ? `Inkomen voor ${m.naam}` : `Volwassene ${idx + 1}`;
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-609-
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-610-            return (
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-611-              <View 
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-612-                key={m.id}
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-613-                style={[
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-614-                  styles.dashboardCard,
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-615-                  { 
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-616-                    width: CARD_WIDTH,
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-617-                    marginRight: 20,
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-618-                  }
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-619-                ]}
+fix/c10-remove-cross-page-write:src/organisms/IncomeRepeater.tsx-620-              >
+
+===== BRANCH: main =====
+main:src/organisms/ExpenseRepeater.tsx-588-              style={styles.numericInput}
+main:src/organisms/ExpenseRepeater.tsx-589-              value={readField(id, 'ov')?.toString() ?? ''}
+main:src/organisms/ExpenseRepeater.tsx-590-              keyboardType="number-pad"
+main:src/organisms/ExpenseRepeater.tsx-591-              onChangeText={(t) => updateExpense(id, 'ov', t)}
+main:src/organisms/ExpenseRepeater.tsx-592-              placeholder="0.00"
+main:src/organisms/ExpenseRepeater.tsx-593-            />
+main:src/organisms/ExpenseRepeater.tsx-594-          </View>
+main:src/organisms/ExpenseRepeater.tsx-595-        </View>
+main:src/organisms/ExpenseRepeater.tsx-596-      );
+main:src/organisms/ExpenseRepeater.tsx-597-    };
+main:src/organisms/ExpenseRepeater.tsx-598-
+main:src/organisms/ExpenseRepeater.tsx-599-    return (
+main:src/organisms/ExpenseRepeater.tsx-600-      <View style={styles.dashboardCard}>
+main:src/organisms/ExpenseRepeater.tsx-601-        {/* P4: Updated label */}
+main:src/organisms/ExpenseRepeater.tsx-602-        <Text style={styles.summaryLabelBold}>Vaste lasten per persoon</Text>
+main:src/organisms/ExpenseRepeater.tsx-603-        
+main:src/organisms/ExpenseRepeater.tsx-604-        {/* P4: SWIPE PATTERN FOR ADULTS (if > 1 adult) */}
+main:src/organisms/ExpenseRepeater.tsx-605-        {adults.length > 1 ? (
+main:src/organisms/ExpenseRepeater.tsx-606-          <ScrollView
+main:src/organisms/ExpenseRepeater.tsx-607-            horizontal
+main:src/organisms/ExpenseRepeater.tsx:608:            pagingEnabled
+main:src/organisms/ExpenseRepeater.tsx-609-            showsHorizontalScrollIndicator={false}
+main:src/organisms/ExpenseRepeater.tsx-610-            contentContainerStyle={{ paddingRight: 20 }}
+main:src/organisms/ExpenseRepeater.tsx:611:            snapToInterval={CARD_WIDTH + 20}
+main:src/organisms/ExpenseRepeater.tsx-612-            decelerationRate="fast"
+main:src/organisms/ExpenseRepeater.tsx-613-            style={{ marginVertical: 12 }}
+main:src/organisms/ExpenseRepeater.tsx-614-          >
+main:src/organisms/ExpenseRepeater.tsx-615-            {adults.map((m, idx) => renderAdultExpenses(m, idx))}
+main:src/organisms/ExpenseRepeater.tsx-616-          </ScrollView>
+main:src/organisms/ExpenseRepeater.tsx-617-        ) : (
+main:src/organisms/ExpenseRepeater.tsx-618-          adults.map((m, idx) => renderAdultExpenses(m, idx))
+main:src/organisms/ExpenseRepeater.tsx-619-        )}
+main:src/organisms/ExpenseRepeater.tsx-620-
+main:src/organisms/ExpenseRepeater.tsx-621-        {/* Children - no swipe */}
+main:src/organisms/ExpenseRepeater.tsx-622-        {children.map((m) => renderChildExpenses(m))}
+main:src/organisms/ExpenseRepeater.tsx-623-      </View>
+main:src/organisms/ExpenseRepeater.tsx-624-    );
+main:src/organisms/ExpenseRepeater.tsx-625-  };
+main:src/organisms/ExpenseRepeater.tsx-626-
+main:src/organisms/ExpenseRepeater.tsx-627-  const renderAutoKosten = () => {
+main:src/organisms/ExpenseRepeater.tsx-628-    const count = auto === 'Één' ? 1 : auto === 'Twee' ? 2 : 0;
+main:src/organisms/ExpenseRepeater.tsx-629-    if (count === 0) return null;
+main:src/organisms/ExpenseRepeater.tsx-630-
+main:src/organisms/ExpenseRepeater.tsx-631-    return (
+--
+main:src/organisms/HouseholdMemberRepeater.tsx-431-        </Text>
+main:src/organisms/HouseholdMemberRepeater.tsx-432-      </View>
+main:src/organisms/HouseholdMemberRepeater.tsx-433-    );
+main:src/organisms/HouseholdMemberRepeater.tsx-434-  }
+main:src/organisms/HouseholdMemberRepeater.tsx-435-
+main:src/organisms/HouseholdMemberRepeater.tsx-436-  const currentMembers: Member[] = Array.isArray(state.C4?.leden)
+main:src/organisms/HouseholdMemberRepeater.tsx-437-    ? (state.C4!.leden as Member[])
+main:src/organisms/HouseholdMemberRepeater.tsx-438-    : [];
+main:src/organisms/HouseholdMemberRepeater.tsx-439-
+main:src/organisms/HouseholdMemberRepeater.tsx-440-  const adults = currentMembers.filter((m) => m.memberType === 'adult');
+main:src/organisms/HouseholdMemberRepeater.tsx-441-  const children = currentMembers.filter((m) => m.memberType === 'child');
+main:src/organisms/HouseholdMemberRepeater.tsx-442-
+main:src/organisms/HouseholdMemberRepeater.tsx-443-  return (
+main:src/organisms/HouseholdMemberRepeater.tsx-444-    <View style={styles.pageContainer}>
+main:src/organisms/HouseholdMemberRepeater.tsx-445-      {renderBurgerlijkeStaat()}
+main:src/organisms/HouseholdMemberRepeater.tsx-446-      {renderWonen()}
+main:src/organisms/HouseholdMemberRepeater.tsx-447-
+main:src/organisms/HouseholdMemberRepeater.tsx-448-      {adults.length > 1 ? (
+main:src/organisms/HouseholdMemberRepeater.tsx-449-        <ScrollView
+main:src/organisms/HouseholdMemberRepeater.tsx-450-          horizontal
+main:src/organisms/HouseholdMemberRepeater.tsx:451:          pagingEnabled
+main:src/organisms/HouseholdMemberRepeater.tsx-452-          showsHorizontalScrollIndicator={false}
+main:src/organisms/HouseholdMemberRepeater.tsx-453-          style={{ marginBottom: 20 }}>
+main:src/organisms/HouseholdMemberRepeater.tsx-454-          {adults.map((m) => {
+main:src/organisms/HouseholdMemberRepeater.tsx-455-            const originalIndex = currentMembers.findIndex((x) => x.id === m.id);
+main:src/organisms/HouseholdMemberRepeater.tsx-456-            return renderAdultCard(m, originalIndex);
+main:src/organisms/HouseholdMemberRepeater.tsx-457-          })}
+main:src/organisms/HouseholdMemberRepeater.tsx-458-        </ScrollView>
+main:src/organisms/HouseholdMemberRepeater.tsx-459-      ) : (
+main:src/organisms/HouseholdMemberRepeater.tsx-460-        adults.map((m) => {
+main:src/organisms/HouseholdMemberRepeater.tsx-461-          const originalIndex = currentMembers.findIndex((x) => x.id === m.id);
+main:src/organisms/HouseholdMemberRepeater.tsx-462-          return renderAdultCard(m, originalIndex);
+main:src/organisms/HouseholdMemberRepeater.tsx-463-        })
+main:src/organisms/HouseholdMemberRepeater.tsx-464-      )}
+main:src/organisms/HouseholdMemberRepeater.tsx-465-
+main:src/organisms/HouseholdMemberRepeater.tsx-466-      {children.length > 1 ? (
+main:src/organisms/HouseholdMemberRepeater.tsx-467-        <ScrollView
+main:src/organisms/HouseholdMemberRepeater.tsx-468-          horizontal
+main:src/organisms/HouseholdMemberRepeater.tsx:469:          pagingEnabled
+main:src/organisms/HouseholdMemberRepeater.tsx-470-          showsHorizontalScrollIndicator={false}
+main:src/organisms/HouseholdMemberRepeater.tsx-471-          style={{ marginBottom: 20 }}>
+main:src/organisms/HouseholdMemberRepeater.tsx-472-          {children.map((m) => {
+main:src/organisms/HouseholdMemberRepeater.tsx-473-            const originalIndex = currentMembers.findIndex((x) => x.id === m.id);
+main:src/organisms/HouseholdMemberRepeater.tsx-474-            return renderChildCard(m, originalIndex);
+main:src/organisms/HouseholdMemberRepeater.tsx-475-          })}
+main:src/organisms/HouseholdMemberRepeater.tsx-476-        </ScrollView>
+main:src/organisms/HouseholdMemberRepeater.tsx-477-      ) : (
+main:src/organisms/HouseholdMemberRepeater.tsx-478-        children.map((m) => {
+main:src/organisms/HouseholdMemberRepeater.tsx-479-          const originalIndex = currentMembers.findIndex((x) => x.id === m.id);
+main:src/organisms/HouseholdMemberRepeater.tsx-480-          return renderChildCard(m, originalIndex);
+main:src/organisms/HouseholdMemberRepeater.tsx-481-        })
+main:src/organisms/HouseholdMemberRepeater.tsx-482-      )}
+main:src/organisms/HouseholdMemberRepeater.tsx-483-    </View>
+main:src/organisms/HouseholdMemberRepeater.tsx-484-  );
+main:src/organisms/HouseholdMemberRepeater.tsx-485-};
+main:src/organisms/HouseholdMemberRepeater.tsx-486-
+main:src/organisms/HouseholdMemberRepeater.tsx-487-export default HouseholdMemberRepeater;
+--
+main:src/organisms/IncomeRepeater.tsx-553-          />
+main:src/organisms/IncomeRepeater.tsx-554-        </View>
+main:src/organisms/IncomeRepeater.tsx-555-      )}
+main:src/organisms/IncomeRepeater.tsx-556-    </View>
+main:src/organisms/IncomeRepeater.tsx-557-  );
+main:src/organisms/IncomeRepeater.tsx-558-
+main:src/organisms/IncomeRepeater.tsx-559-
+main:src/organisms/IncomeRepeater.tsx-560-  if (!adults.length) {
+main:src/organisms/IncomeRepeater.tsx-561-    return (
+main:src/organisms/IncomeRepeater.tsx-562-      <View style={styles.pageContainer}>
+main:src/organisms/IncomeRepeater.tsx-563-        <Text style={styles.summaryDetail}>Geen volwassenen gevonden. Stel eerst uw huishouden in op C4/C1.</Text>
+main:src/organisms/IncomeRepeater.tsx-564-      </View>
+main:src/organisms/IncomeRepeater.tsx-565-    );
+main:src/organisms/IncomeRepeater.tsx-566-  }
+main:src/organisms/IncomeRepeater.tsx-567-
+main:src/organisms/IncomeRepeater.tsx-568-  return (
+main:src/organisms/IncomeRepeater.tsx-569-    <View style={styles.pageContainer}>
+main:src/organisms/IncomeRepeater.tsx-570-      {adults.length > 1 ? (
+main:src/organisms/IncomeRepeater.tsx-571-        <ScrollView
+main:src/organisms/IncomeRepeater.tsx-572-          horizontal
+main:src/organisms/IncomeRepeater.tsx:573:          pagingEnabled
+main:src/organisms/IncomeRepeater.tsx-574-          showsHorizontalScrollIndicator={false}
+main:src/organisms/IncomeRepeater.tsx-575-          contentContainerStyle={{ paddingRight: 20 }}
+main:src/organisms/IncomeRepeater.tsx:576:          snapToInterval={CARD_WIDTH + 20}
+main:src/organisms/IncomeRepeater.tsx-577-          decelerationRate="fast"
+main:src/organisms/IncomeRepeater.tsx-578-        >
+main:src/organisms/IncomeRepeater.tsx-579-          {renderPerAdultIncome()}
+main:src/organisms/IncomeRepeater.tsx-580-        </ScrollView>
+main:src/organisms/IncomeRepeater.tsx-581-      ) : (
+main:src/organisms/IncomeRepeater.tsx-582-        renderPerAdultIncome()
+main:src/organisms/IncomeRepeater.tsx-583-      )}
+main:src/organisms/IncomeRepeater.tsx-584-      {renderHouseholdBenefits()}
+main:src/organisms/IncomeRepeater.tsx-585-      {renderVermogen()}
+main:src/organisms/IncomeRepeater.tsx-586-    </View>
+main:src/organisms/IncomeRepeater.tsx-587-  );
+main:src/organisms/IncomeRepeater.tsx-588-};
+main:src/organisms/IncomeRepeater.tsx-589-
+main:src/organisms/IncomeRepeater.tsx-590-export default IncomeRepeater;
+
+===== BRANCH: pre-c7-hardening =====
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-330-              </Text>
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-331-              <TextInput
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-332-                style={styles.numericInput}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-333-                value={readField(id, k)?.toString() ?? ''}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-334-                keyboardType="number-pad"
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-335-                onChangeText={(t) => updateExpense(id, k, t)}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-336-                placeholder="0.00"
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-337-              />
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-338-            </View>
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-339-          ))}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-340-        </View>
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-341-      );
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-342-    };
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-343-
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-344-    return (
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-345-      <View style={styles.dashboardCard}>
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-346-        <Text style={styles.summaryLabelBold}>Vaste lasten per persoon</Text>
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-347-        {adults.length > 1 ? (
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-348-          <ScrollView
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-349-            horizontal
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx:350:            pagingEnabled
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-351-            showsHorizontalScrollIndicator={false}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-352-            contentContainerStyle={{ paddingRight: 20 }}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx:353:            snapToInterval={CARD_WIDTH + 20}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-354-            decelerationRate="fast"
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-355-            style={{ marginVertical: 12 }}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-356-          >
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-357-            {adults.map((m, idx) => renderAdultExpenses(m, idx))}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-358-          </ScrollView>
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-359-        ) : adults.map((m, idx) => renderAdultExpenses(m, idx))}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-360-        {children.map((m) => renderChildExpenses(m))}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-361-      </View>
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-362-    );
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-363-  };
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-364-
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-365-  const renderAutoKosten = () => {
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-366-    // Bepaal aantal auto's
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-367-    const count = auto === 'Één' ? 1 : auto === 'Twee' ? 2 : 0;
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-368-    if (count === 0) return null;
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-369-  
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-370-    // Velden per auto
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-371-    const autoFields: { key: string; label: string; optional?: boolean }[] = [
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-372-      { key: 'wegenbelasting', label: 'Wegenbelasting' },
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-373-      { key: 'brandstofOfLaden', label: 'Benzine/opladen' },
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-374-      { key: 'apk', label: 'APK' },
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-375-      { key: 'onderhoudReservering', label: 'Reservering onderhoud', optional: true },
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-376-      { key: 'lease', label: 'Leasekosten', optional: true },
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-377-      { key: 'afschrijving', label: 'Afschrijving', optional: true },
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-378-    ];
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-379-  
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-380-    return (
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-381-      <View style={styles.dashboardCard}>
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-382-        <Text style={styles.summaryLabelBold}>Autokosten</Text>
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-383-  
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-384-        <ScrollView
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-385-          horizontal
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx:386:          pagingEnabled
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-387-          showsHorizontalScrollIndicator={false}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-388-          contentContainerStyle={{ paddingRight: 20 }}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx:389:          snapToInterval={CARD_WIDTH + 20}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-390-          decelerationRate="fast"
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-391-          style={{ marginVertical: 12 }}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-392-        >
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-393-          {Array.from({ length: count }).map((_, i) => {
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-394-            const idx = i + 1;
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-395-            const id = `auto-${idx}`;
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-396-  
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-397-            return (
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-398-              <View
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-399-                key={id}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-400-                style={count > 1 ? [styles.dashboardCard, { width: CARD_WIDTH, marginRight: 20 }] : styles.fieldContainer}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-401-              >
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-402-                {autoFields.map((f) => (
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-403-                  <View key={`${id}-${f.key}`} style={styles.fieldContainer}>
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-404-                    <Text style={styles.label}>
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-405-                      {f.label} (€/mnd){f.optional ? ' (optioneel)' : ''} — Auto {idx}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-406-                    </Text>
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-407-                    <TextInput
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-408-                      style={styles.numericInput}
+pre-c7-hardening:src/organisms/ExpenseRepeater.tsx-409-                      value={readField(id, f.key)?.toString() ?? ''}
+--
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-577-  // ========== MAIN RENDER ==========
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-578-
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-579-  if (!adults.length) {
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-580-    return (
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-581-      <View style={styles.pageContainer}>
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-582-        <Text style={styles.summaryDetail}>Geen volwassenen gevonden. Stel eerst uw huishouden in op C4/C1.</Text>
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-583-      </View>
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-584-    );
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-585-  }
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-586-
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-587-  return (
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-588-    <View style={styles.pageContainer}>
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-589-      {renderHouseholdBenefits()}
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-590-      
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-591-      {renderVermogen()}
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-592-
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-593-      {/* P4: SWIPE PATTERN FOR ADULTS (if > 1 adult) */}
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-594-      {adults.length > 1 ? (
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-595-        <ScrollView
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-596-          horizontal
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx:597:          pagingEnabled
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-598-          showsHorizontalScrollIndicator={false}
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-599-          contentContainerStyle={{ paddingRight: 20 }}
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx:600:          snapToInterval={CARD_WIDTH + 20}
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-601-          decelerationRate="fast"
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-602-        >
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-603-          {adults.map((m, idx) => {
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-604-            const rec = inkomsten[m.id] ?? { 
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-605-              id: m.id, 
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-606-              categories: { geen: false, werk: false, uitkering: false, anders: false } 
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-607-            };
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-608-            const title = m.naam?.trim() ? `Inkomen voor ${m.naam}` : `Volwassene ${idx + 1}`;
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-609-
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-610-            return (
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-611-              <View 
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-612-                key={m.id}
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-613-                style={[
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-614-                  styles.dashboardCard,
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-615-                  { 
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-616-                    width: CARD_WIDTH,
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-617-                    marginRight: 20,
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-618-                  }
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-619-                ]}
+pre-c7-hardening:src/organisms/IncomeRepeater.tsx-620-              >
+
+===== BRANCH: retry =====
+retry:src/organisms/ExpenseRepeater.tsx-330-              </Text>
+retry:src/organisms/ExpenseRepeater.tsx-331-              <TextInput
+retry:src/organisms/ExpenseRepeater.tsx-332-                style={styles.numericInput}
+retry:src/organisms/ExpenseRepeater.tsx-333-                value={readField(id, k)?.toString() ?? ''}
+retry:src/organisms/ExpenseRepeater.tsx-334-                keyboardType="number-pad"
+retry:src/organisms/ExpenseRepeater.tsx-335-                onChangeText={(t) => updateExpense(id, k, t)}
+retry:src/organisms/ExpenseRepeater.tsx-336-                placeholder="0.00"
+retry:src/organisms/ExpenseRepeater.tsx-337-              />
+retry:src/organisms/ExpenseRepeater.tsx-338-            </View>
+retry:src/organisms/ExpenseRepeater.tsx-339-          ))}
+retry:src/organisms/ExpenseRepeater.tsx-340-        </View>
+retry:src/organisms/ExpenseRepeater.tsx-341-      );
+retry:src/organisms/ExpenseRepeater.tsx-342-    };
+retry:src/organisms/ExpenseRepeater.tsx-343-
+retry:src/organisms/ExpenseRepeater.tsx-344-    return (
+retry:src/organisms/ExpenseRepeater.tsx-345-      <View style={styles.dashboardCard}>
+retry:src/organisms/ExpenseRepeater.tsx-346-        <Text style={styles.summaryLabelBold}>Vaste lasten per persoon</Text>
+retry:src/organisms/ExpenseRepeater.tsx-347-        {adults.length > 1 ? (
+retry:src/organisms/ExpenseRepeater.tsx-348-          <ScrollView
+retry:src/organisms/ExpenseRepeater.tsx-349-            horizontal
+retry:src/organisms/ExpenseRepeater.tsx:350:            pagingEnabled
+retry:src/organisms/ExpenseRepeater.tsx-351-            showsHorizontalScrollIndicator={false}
+retry:src/organisms/ExpenseRepeater.tsx-352-            contentContainerStyle={{ paddingRight: 20 }}
+retry:src/organisms/ExpenseRepeater.tsx:353:            snapToInterval={CARD_WIDTH + 20}
+retry:src/organisms/ExpenseRepeater.tsx-354-            decelerationRate="fast"
+retry:src/organisms/ExpenseRepeater.tsx-355-            style={{ marginVertical: 12 }}
+retry:src/organisms/ExpenseRepeater.tsx-356-          >
+retry:src/organisms/ExpenseRepeater.tsx-357-            {adults.map((m, idx) => renderAdultExpenses(m, idx))}
+retry:src/organisms/ExpenseRepeater.tsx-358-          </ScrollView>
+retry:src/organisms/ExpenseRepeater.tsx-359-        ) : adults.map((m, idx) => renderAdultExpenses(m, idx))}
+retry:src/organisms/ExpenseRepeater.tsx-360-        {children.map((m) => renderChildExpenses(m))}
+retry:src/organisms/ExpenseRepeater.tsx-361-      </View>
+retry:src/organisms/ExpenseRepeater.tsx-362-    );
+retry:src/organisms/ExpenseRepeater.tsx-363-  };
+retry:src/organisms/ExpenseRepeater.tsx-364-
+retry:src/organisms/ExpenseRepeater.tsx-365-  const renderAutoKosten = () => {
+retry:src/organisms/ExpenseRepeater.tsx-366-    // Bepaal aantal auto's
+retry:src/organisms/ExpenseRepeater.tsx-367-    const count = auto === 'Één' ? 1 : auto === 'Twee' ? 2 : 0;
+retry:src/organisms/ExpenseRepeater.tsx-368-    if (count === 0) return null;
+retry:src/organisms/ExpenseRepeater.tsx-369-  
+retry:src/organisms/ExpenseRepeater.tsx-370-    // Velden per auto
+retry:src/organisms/ExpenseRepeater.tsx-371-    const autoFields: { key: string; label: string; optional?: boolean }[] = [
+retry:src/organisms/ExpenseRepeater.tsx-372-      { key: 'wegenbelasting', label: 'Wegenbelasting' },
+retry:src/organisms/ExpenseRepeater.tsx-373-      { key: 'brandstofOfLaden', label: 'Benzine/opladen' },
+retry:src/organisms/ExpenseRepeater.tsx-374-      { key: 'apk', label: 'APK' },
+retry:src/organisms/ExpenseRepeater.tsx-375-      { key: 'onderhoudReservering', label: 'Reservering onderhoud', optional: true },
+retry:src/organisms/ExpenseRepeater.tsx-376-      { key: 'lease', label: 'Leasekosten', optional: true },
+retry:src/organisms/ExpenseRepeater.tsx-377-      { key: 'afschrijving', label: 'Afschrijving', optional: true },
+retry:src/organisms/ExpenseRepeater.tsx-378-    ];
+retry:src/organisms/ExpenseRepeater.tsx-379-  
+retry:src/organisms/ExpenseRepeater.tsx-380-    return (
+retry:src/organisms/ExpenseRepeater.tsx-381-      <View style={styles.dashboardCard}>
+retry:src/organisms/ExpenseRepeater.tsx-382-        <Text style={styles.summaryLabelBold}>Autokosten</Text>
+retry:src/organisms/ExpenseRepeater.tsx-383-  
+retry:src/organisms/ExpenseRepeater.tsx-384-        <ScrollView
+retry:src/organisms/ExpenseRepeater.tsx-385-          horizontal
+retry:src/organisms/ExpenseRepeater.tsx:386:          pagingEnabled
+retry:src/organisms/ExpenseRepeater.tsx-387-          showsHorizontalScrollIndicator={false}
+retry:src/organisms/ExpenseRepeater.tsx-388-          contentContainerStyle={{ paddingRight: 20 }}
+retry:src/organisms/ExpenseRepeater.tsx:389:          snapToInterval={CARD_WIDTH + 20}
+retry:src/organisms/ExpenseRepeater.tsx-390-          decelerationRate="fast"
+retry:src/organisms/ExpenseRepeater.tsx-391-          style={{ marginVertical: 12 }}
+retry:src/organisms/ExpenseRepeater.tsx-392-        >
+retry:src/organisms/ExpenseRepeater.tsx-393-          {Array.from({ length: count }).map((_, i) => {
+retry:src/organisms/ExpenseRepeater.tsx-394-            const idx = i + 1;
+retry:src/organisms/ExpenseRepeater.tsx-395-            const id = `auto-${idx}`;
+retry:src/organisms/ExpenseRepeater.tsx-396-  
+retry:src/organisms/ExpenseRepeater.tsx-397-            return (
+retry:src/organisms/ExpenseRepeater.tsx-398-              <View
+retry:src/organisms/ExpenseRepeater.tsx-399-                key={id}
+retry:src/organisms/ExpenseRepeater.tsx-400-                style={count > 1 ? [styles.dashboardCard, { width: CARD_WIDTH, marginRight: 20 }] : styles.fieldContainer}
+retry:src/organisms/ExpenseRepeater.tsx-401-              >
+retry:src/organisms/ExpenseRepeater.tsx-402-                {autoFields.map((f) => (
+retry:src/organisms/ExpenseRepeater.tsx-403-                  <View key={`${id}-${f.key}`} style={styles.fieldContainer}>
+retry:src/organisms/ExpenseRepeater.tsx-404-                    <Text style={styles.label}>
+retry:src/organisms/ExpenseRepeater.tsx-405-                      {f.label} (€/mnd){f.optional ? ' (optioneel)' : ''} — Auto {idx}
+retry:src/organisms/ExpenseRepeater.tsx-406-                    </Text>
+retry:src/organisms/ExpenseRepeater.tsx-407-                    <TextInput
+retry:src/organisms/ExpenseRepeater.tsx-408-                      style={styles.numericInput}
+retry:src/organisms/ExpenseRepeater.tsx-409-                      value={readField(id, f.key)?.toString() ?? ''}
+--
+retry:src/organisms/HouseholdMemberRepeater.tsx-522-    </Text>
+retry:src/organisms/HouseholdMemberRepeater.tsx-523-   </View>
+retry:src/organisms/HouseholdMemberRepeater.tsx-524-  );
+retry:src/organisms/HouseholdMemberRepeater.tsx-525- }
+retry:src/organisms/HouseholdMemberRepeater.tsx-526-
+retry:src/organisms/HouseholdMemberRepeater.tsx-527- const currentMembers: Member[] = Array.isArray(state.C4?.leden)
+retry:src/organisms/HouseholdMemberRepeater.tsx-528-  ? (state.C4!.leden as Member[])
+retry:src/organisms/HouseholdMemberRepeater.tsx-529-  : [];
+retry:src/organisms/HouseholdMemberRepeater.tsx-530-
+retry:src/organisms/HouseholdMemberRepeater.tsx-531- const adults = currentMembers.filter((m) => m.memberType === 'adult');
+retry:src/organisms/HouseholdMemberRepeater.tsx-532- const children = currentMembers.filter((m) => m.memberType === 'child');
+retry:src/organisms/HouseholdMemberRepeater.tsx-533-
+retry:src/organisms/HouseholdMemberRepeater.tsx-534- return (
+retry:src/organisms/HouseholdMemberRepeater.tsx-535-  <View style={styles.pageContainer}>
+retry:src/organisms/HouseholdMemberRepeater.tsx-536-   {renderBurgerlijkeStaat()}
+retry:src/organisms/HouseholdMemberRepeater.tsx-537-   {renderWonen()}
+retry:src/organisms/HouseholdMemberRepeater.tsx-538-
+retry:src/organisms/HouseholdMemberRepeater.tsx-539-   {adults.length > 1 ? (
+retry:src/organisms/HouseholdMemberRepeater.tsx-540-    <ScrollView
+retry:src/organisms/HouseholdMemberRepeater.tsx-541-     horizontal
+retry:src/organisms/HouseholdMemberRepeater.tsx:542:     pagingEnabled
+retry:src/organisms/HouseholdMemberRepeater.tsx-543-     showsHorizontalScrollIndicator={false}
+retry:src/organisms/HouseholdMemberRepeater.tsx-544-     style={{ marginBottom: 20 }}>
+retry:src/organisms/HouseholdMemberRepeater.tsx-545-     {adults.map((m) => {
+retry:src/organisms/HouseholdMemberRepeater.tsx-546-      const originalIndex = currentMembers.findIndex((x) => x.id === m.id);
+retry:src/organisms/HouseholdMemberRepeater.tsx-547-      return renderAdultCard(m, originalIndex);
+retry:src/organisms/HouseholdMemberRepeater.tsx-548-     })}
+retry:src/organisms/HouseholdMemberRepeater.tsx-549-    </ScrollView>
+retry:src/organisms/HouseholdMemberRepeater.tsx-550-   ) : (
+retry:src/organisms/HouseholdMemberRepeater.tsx-551-    adults.map((m) => {
+retry:src/organisms/HouseholdMemberRepeater.tsx-552-     const originalIndex = currentMembers.findIndex((x) => x.id === m.id);
+retry:src/organisms/HouseholdMemberRepeater.tsx-553-     return renderAdultCard(m, originalIndex);
+retry:src/organisms/HouseholdMemberRepeater.tsx-554-    })
+retry:src/organisms/HouseholdMemberRepeater.tsx-555-   )}
+retry:src/organisms/HouseholdMemberRepeater.tsx-556-
+retry:src/organisms/HouseholdMemberRepeater.tsx-557-   {children.length > 1 ? (
+retry:src/organisms/HouseholdMemberRepeater.tsx-558-    <ScrollView
+retry:src/organisms/HouseholdMemberRepeater.tsx-559-     horizontal
+retry:src/organisms/HouseholdMemberRepeater.tsx:560:     pagingEnabled
+retry:src/organisms/HouseholdMemberRepeater.tsx-561-     showsHorizontalScrollIndicator={false}
+retry:src/organisms/HouseholdMemberRepeater.tsx-562-     style={{ marginBottom: 20 }}>
+retry:src/organisms/HouseholdMemberRepeater.tsx-563-     {children.map((m) => {
+retry:src/organisms/HouseholdMemberRepeater.tsx-564-      const originalIndex = currentMembers.findIndex((x) => x.id === m.id);
+retry:src/organisms/HouseholdMemberRepeater.tsx-565-      return renderChildCard(m, originalIndex);
+retry:src/organisms/HouseholdMemberRepeater.tsx-566-     })}
+retry:src/organisms/HouseholdMemberRepeater.tsx-567-    </ScrollView>
+retry:src/organisms/HouseholdMemberRepeater.tsx-568-   ) : (
+retry:src/organisms/HouseholdMemberRepeater.tsx-569-    children.map((m) => {
+retry:src/organisms/HouseholdMemberRepeater.tsx-570-     const originalIndex = currentMembers.findIndex((x) => x.id === m.id);
+retry:src/organisms/HouseholdMemberRepeater.tsx-571-     return renderChildCard(m, originalIndex);
+retry:src/organisms/HouseholdMemberRepeater.tsx-572-    })
+retry:src/organisms/HouseholdMemberRepeater.tsx-573-   )}
+retry:src/organisms/HouseholdMemberRepeater.tsx-574-  </View>
+retry:src/organisms/HouseholdMemberRepeater.tsx-575- );
+retry:src/organisms/HouseholdMemberRepeater.tsx-576-};
+retry:src/organisms/HouseholdMemberRepeater.tsx-577-
+retry:src/organisms/HouseholdMemberRepeater.tsx-578-export default HouseholdMemberRepeater;
+--
+retry:src/organisms/IncomeRepeater.tsx-577-  // ========== MAIN RENDER ==========
+retry:src/organisms/IncomeRepeater.tsx-578-
+retry:src/organisms/IncomeRepeater.tsx-579-  if (!adults.length) {
+retry:src/organisms/IncomeRepeater.tsx-580-    return (
+retry:src/organisms/IncomeRepeater.tsx-581-      <View style={styles.pageContainer}>
+retry:src/organisms/IncomeRepeater.tsx-582-        <Text style={styles.summaryDetail}>Geen volwassenen gevonden. Stel eerst uw huishouden in op C4/C1.</Text>
+retry:src/organisms/IncomeRepeater.tsx-583-      </View>
+retry:src/organisms/IncomeRepeater.tsx-584-    );
+retry:src/organisms/IncomeRepeater.tsx-585-  }
+retry:src/organisms/IncomeRepeater.tsx-586-
+retry:src/organisms/IncomeRepeater.tsx-587-  return (
+retry:src/organisms/IncomeRepeater.tsx-588-    <View style={styles.pageContainer}>
+retry:src/organisms/IncomeRepeater.tsx-589-      {renderHouseholdBenefits()}
+retry:src/organisms/IncomeRepeater.tsx-590-      
+retry:src/organisms/IncomeRepeater.tsx-591-      {renderVermogen()}
+retry:src/organisms/IncomeRepeater.tsx-592-
+retry:src/organisms/IncomeRepeater.tsx-593-      {/* P4: SWIPE PATTERN FOR ADULTS (if > 1 adult) */}
+retry:src/organisms/IncomeRepeater.tsx-594-      {adults.length > 1 ? (
+retry:src/organisms/IncomeRepeater.tsx-595-        <ScrollView
+retry:src/organisms/IncomeRepeater.tsx-596-          horizontal
+retry:src/organisms/IncomeRepeater.tsx:597:          pagingEnabled
+retry:src/organisms/IncomeRepeater.tsx-598-          showsHorizontalScrollIndicator={false}
+retry:src/organisms/IncomeRepeater.tsx-599-          contentContainerStyle={{ paddingRight: 20 }}
+retry:src/organisms/IncomeRepeater.tsx:600:          snapToInterval={CARD_WIDTH + 20}
+retry:src/organisms/IncomeRepeater.tsx-601-          decelerationRate="fast"
+retry:src/organisms/IncomeRepeater.tsx-602-        >
+retry:src/organisms/IncomeRepeater.tsx-603-          {adults.map((m, idx) => {
+retry:src/organisms/IncomeRepeater.tsx-604-            const rec = inkomsten[m.id] ?? { 
+retry:src/organisms/IncomeRepeater.tsx-605-              id: m.id, 
+retry:src/organisms/IncomeRepeater.tsx-606-              categories: { geen: false, werk: false, uitkering: false, anders: false } 
+retry:src/organisms/IncomeRepeater.tsx-607-            };
+retry:src/organisms/IncomeRepeater.tsx-608-            const title = m.naam?.trim() ? `Inkomen voor ${m.naam}` : `Volwassene ${idx + 1}`;
+retry:src/organisms/IncomeRepeater.tsx-609-
+retry:src/organisms/IncomeRepeater.tsx-610-            return (
+retry:src/organisms/IncomeRepeater.tsx-611-              <View 
+retry:src/organisms/IncomeRepeater.tsx-612-                key={m.id}
+retry:src/organisms/IncomeRepeater.tsx-613-                style={[
+retry:src/organisms/IncomeRepeater.tsx-614-                  styles.dashboardCard,
+retry:src/organisms/IncomeRepeater.tsx-615-                  { 
+retry:src/organisms/IncomeRepeater.tsx-616-                    width: CARD_WIDTH,
+retry:src/organisms/IncomeRepeater.tsx-617-                    marginRight: 20,
+retry:src/organisms/IncomeRepeater.tsx-618-                  }
+retry:src/organisms/IncomeRepeater.tsx-619-                ]}
+retry:src/organisms/IncomeRepeater.tsx-620-              >
+
+===== BRANCH: snack-min =====
+❌ Niet gevonden
+

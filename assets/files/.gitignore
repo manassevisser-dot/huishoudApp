@@ -1,0 +1,29 @@
+
+# Node packages
+node_modules/
+
+# Expo / Metro cache en output
+.expo/
+web-build/
+dist/
+
+# React Native bundling/artifacts (optioneel, voor native builds)
+android/
+ios/
+
+# Env & lokale config
+.env*
+*.local
+
+# OS / editor rommel
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Test / coverage (als je dat later toevoegt)
+coverage/
+.idx/
+*.bak
+repo-structure.txt
+trate pages and navigation (single source of truth)"
