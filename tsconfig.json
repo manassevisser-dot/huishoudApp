@@ -1,9 +1,11 @@
 
 {
-  "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "noImplicitAny": false,
-    "strictNullChecks": false,
+    "target": "ES2020",
+    "module": "ES2020",
+    "jsx": "react-native",
+    "strict": true,
+    "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
       "@domain/*": ["src/domain/*"],
@@ -21,16 +23,8 @@
       "@shared-types/*": ["src/shared-types/*"],
       "@components/*": ["src/ui/components/*"]
     },
-    "target": "es2020",
-    "module": "es2020",
-    "moduleResolution": "bundler",
-    "jsx": "react-native",
-    "strict": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true
+    "types": ["jest", "react", "react-native"]
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": ["src", "jest.setup.js", "__mocks__"]
 }
+

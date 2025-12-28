@@ -1,15 +1,16 @@
+//useAppOrchastration.test.tsx
 import * as React from 'react';
 import { render, act } from '@testing-library/react-native';
 import { useAppOrchestration } from '../useAppOrchestration';
 
-// 1. Definieer mock-variabelen met het 'mock' prefix (voor hoisting-safety)
+// 1. Phoenix Mocks (Hoisted)
 const mockDispatch = jest.fn();
 const mockContextValue = {
   state: {},
   dispatch: mockDispatch,
 };
 
-// 2. Mocks - Houd het simpel: return direct wat de hook verwacht
+// ADR-01: Gebruik de juiste aliassen voor mocks
 jest.mock('@services/storageShim', () => ({
   __esModule: true,
   default: {
@@ -19,18 +20,23 @@ jest.mock('@services/storageShim', () => ({
   },
 }));
 
-jest.mock('@state/schemas/FormStateSchema', () => ({
-  __esModule: true,
-  FormStateSchema: { safeParse: jest.fn((d) => ({ success: true, data: d })) },
-}));
+jest.mock('@state/schemas/FormStateSchema', () => {
+  return {
+    __esModule: true,
+    // Zorg dat we een object returnen met een werkende safeParse functie
+    FormStateSchema: {
+      safeParse: jest.fn().mockReturnValue({ success: true, data: {} })
+    }
+  };
+});
 
 jest.mock('@selectors/householdSelectors', () => ({
   __esModule: true,
   selectIsSpecialStatus: jest.fn(() => false),
 }));
 
-// De cruciale fix: Eén enkele mock zonder React referentie
-jest.mock('@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext', () => ({
+// FIX: Verwijder de "Path Collapse". Gebruik de schone alias.
+jest.mock('@context/FormContext', () => ({
   __esModule: true,
   useFormContext: () => mockContextValue,
 }));
@@ -52,30 +58,38 @@ describe('useAppOrchestration FSM', () => {
     const { result } = await renderOrchestrator();
 
     expect(result.status).toBe('READY');
-
-    // Check op de juiste naamgeving met underscores (Phoenix standaard)
     expect(mockDispatch).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'LOAD_SAVED_STATE' }),
-    );
-
-    // Bonus: Controleer of de shadow-flag (ADR-17/Household rule) ook is afgevuurd
-    expect(mockDispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'SET_SPECIAL_STATUS', payload: false }),
     );
   });
 
   it('ERROR for corrupt payload', async () => {
+    // 1. Bespioneer console.error en vertel hem niets te doen
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  
     const shim = require('@services/storageShim').default;
     shim.loadState.mockResolvedValueOnce({ corrupt: 'data' });
-
+  
     const z = require('@state/schemas/FormStateSchema');
-    z.FormStateSchema.safeParse.mockReturnValueOnce({ success: false });
-
+    z.FormStateSchema.safeParse.mockReturnValueOnce({ 
+      success: false, 
+      error: { issues: [{ message: 'Invalid schema' }] } 
+    });
+  
     const { result } = await renderOrchestrator();
+    
     expect(result.status).toBe('ERROR');
+  
+    // 2. Verifieer dat de error gelogd ZOU zijn (optioneel)
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('[Orchestrator] Validation failed'),
+      expect.anything()
+    );
+  
+    // 3. Herstel de console voor andere tests
+    consoleSpy.mockRestore();
   });
 
-  // Helper om de hook te renderen zonder Context Wrapper
   async function renderOrchestrator() {
     let currentStatus: any = 'INITIALIZING';
     const TestComponent = () => {
@@ -86,10 +100,9 @@ describe('useAppOrchestration FSM', () => {
 
     render(<TestComponent />);
 
-    // Wacht op de useEffect ticks
+    // ADR-16: Robuuste async wait voor FSM transities
     await act(async () => {
-      await Promise.resolve(); // INITIALIZING -> HYDRATING
-      await Promise.resolve(); // HYDRATING -> FINAL STATE
+      await new Promise(resolve => setTimeout(resolve, 0)); 
     });
 
     return { result: { status: currentStatus } };

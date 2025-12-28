@@ -4,8 +4,8 @@ import * as React from 'react';
 import { View } from 'react-native';
 import WizardPage from './WizardPage';
 import { PageConfig } from 'src/shared-types/form';
-import { useFormContext } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext';
-import { useWizard } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/WizardContext';
+import { useFormContext } from '@app/context/FormContext';
+import { useWizard } from '@app/context/WizardContext';
 // Importeer de bestaande PageConfigs (feiten uit repo)
 import { C1Config } from './pages/C1.config';
 import { C4Config } from './pages/C4.config';

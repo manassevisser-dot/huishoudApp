@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-nati
 import { useAppStyles } from '@ui/styles/useAppStyles';
 import ChipButton from '@components/ChipButton';
 import MoneyField from '@components/fields/MoneyField'; // De nieuwe dispatcher
-import { useFormContext } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext';
+import { useFormContext } from '@app/context/FormContext';
 import {
   IncomeFrequency,
   UitkeringKey,

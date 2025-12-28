@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 import FormField from '@ui/components/fields/FormField';
 import ConditionalField from '@components/ConditionalField';
-import { useFormContext } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext';
+import { useFormContext } from '@app/context/FormContext';
 import { validateField } from '@utils/validation';
 import { evaluateCondition } from '@utils/conditions';
 import { PageConfig } from 'src/shared-types/form';

@@ -1,17 +1,17 @@
-//src/screens/Wizard/WizardController.tsx
 import * as React from 'react';
-import { View } from 'react-native';
-import WizardPage from './WizardPage';
-import { PageConfig } from '../../types/form';
+// Voeg View en WizardPage toe aan je imports!
+import { View } from 'react-native'; 
+
+
+import { PageConfig } from '@shared-types/form';
 import { useFormContext } from '@context/FormContext';
 
-// Importeer de bestaande PageConfigs (feiten uit repo)
 import { C1Config } from './pages/C1.config';
 import { C4Config } from './pages/C4.config';
 import { C7Config } from './pages/C7.config';
 import { C10Config } from './pages/C10.config';
+import WizardPage from '@ui/screens/Wizard/WizardPage';
 
-// De wizard-flow (volgorde conform handover)
 const PAGES: PageConfig[] = [C1Config, C4Config, C7Config, C10Config];
 
 type WizardControllerProps = {
@@ -27,7 +27,6 @@ const WizardController: React.FC<WizardControllerProps> = (props) => {
   const totalPages = effectivePages.length;
   const isControlled = typeof props.pageIndex === 'number' && !!props.onNext && !!props.onPrev;
 
-  // Uncontrolled fallback
   const [uncontrolledIndex, setUncontrolledIndex] = React.useState(0);
   const currentPageIndex = isControlled ? (props.pageIndex as number) : uncontrolledIndex;
 
@@ -45,21 +44,11 @@ const WizardController: React.FC<WizardControllerProps> = (props) => {
   const isFirst = currentPageIndex === 0;
   const isLast = currentPageIndex === totalPages - 1;
 
-  // ============================================
-  // A2 FIX: Just-in-time ALIGN bij page-enter C4
-  // ============================================
-
-  // ============================================
-  // A2 FIX: Just-in-time ALIGN bij page-enter C4
-  // ============================================
+  // FIX: De zwevende object-notatie is verwijderd of in een log gezet
   React.useEffect(() => {
-      id: page?.id,
-      pageIndex: currentPageIndex,
-      totalPages,
-    });
+    // console.log({ id: page?.id, pageIndex: currentPageIndex, totalPages }); // Optioneel terugzetten
 
     if (page?.id === 'C4') {
-
       const aantalMensen = Math.max(1, Number(state.C1?.aantalMensen ?? 1));
       const aantalVolwassen = Math.min(
         aantalMensen,
@@ -71,11 +60,8 @@ const WizardController: React.FC<WizardControllerProps> = (props) => {
         payload: { aantalMensen, aantalVolwassen },
       });
     }
-  }, [page?.id]);
+  }, [page?.id, state.C1, dispatch]); // Dependency array aangevuld voor TS stabiliteit
 
-  // ============================================
-  // RENDER
-  // ============================================
   if (!page) {
     return <View />;
   }

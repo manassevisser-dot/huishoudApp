@@ -1,130 +1,62 @@
-
-/**
- * PHOENIX JEST CONFIG (Sanitized v1.0)
- * ADR-12 Audit-ready
- */
+/** @type {import('jest').Config} */
 module.exports = {
-  preset: 'react-native',
-  setupFilesAfterEnv: ['<rootDir>/jest-setup.js'],
-
-  /* @aliases-start */
-moduleNameMapper: {
-    '^\@domain/(.*),
-/* @aliases-end */
-
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
+  preset: 'jest-expo',
+  
+  setupFiles: [
+    "<rootDir>/jest.setup.early.js" 
   ],
-};
-: '<rootDir>/src/domain/$1',
-    '^\@state/(.*),
-/* @aliases-end */
-
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
+  setupFilesAfterEnv: [
+    "<rootDir>/jest.setup.js"
   ],
-};
-: '<rootDir>/src/state/$1',
-    '^\@ui/(.*),
-/* @aliases-end */
 
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
-  ],
-};
-: '<rootDir>/src/ui/$1',
-    '^\@styles/(.*),
-/* @aliases-end */
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
 
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
-  ],
-};
-: '<rootDir>/src/ui/styles/$1',
-    '^\@app/(.*),
-/* @aliases-end */
-
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
-  ],
-};
-: '<rootDir>/src/app/$1',
-    '^\@utils/(.*),
-/* @aliases-end */
-
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
-  ],
-};
-: '<rootDir>/src/utils/$1',
-    '^\@services/(.*),
-/* @aliases-end */
-
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
-  ],
-};
-: '<rootDir>/src/services/$1',
-    '^\@assets/(.*),
-/* @aliases-end */
-
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
-  ],
-};
-: '<rootDir>/_assets/$1',
-    '^\@logic/(.*),
-/* @aliases-end */
-
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
-  ],
-};
-: '<rootDir>/src/logic/$1',
-    '^\@config/(.*),
-/* @aliases-end */
-
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
-  ],
-};
-: '<rootDir>/src/config/$1',
-    '^\@context/(.*),
-/* @aliases-end */
-
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
-  ],
-};
-: '<rootDir>/src/app/context/$1',
-    '^\@selectors/(.*),
-/* @aliases-end */
-
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
-  ],
-};
-: '<rootDir>/src/selectors/$1',
-    '^\@shared-types/(.*),
-/* @aliases-end */
-
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
-  ],
-};
-: '<rootDir>/src/shared-types/$1',
-    '^\@components/(.*),
-/* @aliases-end */
-
-  transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
-  ],
-};
-: '<rootDir>/src/ui/components/$1',
+  moduleNameMapper: {
+    '^@app/(.*)$': '<rootDir>/src/app/$1',
+    '^@domain/(.*)$': '<rootDir>/src/domain/$1',
+    '^@services/(.*)$': '<rootDir>/src/services/$1',
+    '^@shared-types/(.*)$': '<rootDir>/src/shared-types/$1',
+    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
+    '^@config/(.*)$': '<rootDir>/src/config/$1',
+    '^@logic/(.*)$': '<rootDir>/src/logic/$1',
+    '^@ui/(.*)$': '<rootDir>/src/ui/$1',
+    '^@components/(.*)$': '<rootDir>/src/ui/components/$1',
+    '^@styles/(.*)$': '<rootDir>/src/ui/styles/$1',
+    '^@state/(.*)$': '<rootDir>/src/state/$1',
+    '^@context/(.*)$': '<rootDir>/src/app/context/$1',
+    '^@selectors/(.*)$': '<rootDir>/src/selectors/$1',
+    '^@assets/(.*)$': '<rootDir>/assets/$1'
   },
-/* @aliases-end */
 
+  // DE CRUCIALE FIX:
+  // We moeten expo-modules-core expliciet toelaten tot transformatie.
   transformIgnorePatterns: [
-    'node_modules/(?!(jest-)?react-native|@react-native|@react-navigation|@react-native-community)',
+    'node_modules/(?!(react-native|@react-native|expo|expo-.*|@expo|expo-modules-core|react-navigation|@react-navigation|@react-native-community|@testing-library)/)',
   ],
+
+  clearMocks: true,
+  restoreMocks: true,
+
+  collectCoverage: true, // Zet coverage standaard aan
+  coverageDirectory: "<rootDir>/coverage",
+  coverageReporters: ["html", "text", "text-summary"], // HTML voor de browser, text voor de terminal
+  
+  collectCoverageFrom: [
+    "src/**/*.{ts,tsx}",
+    "!src/**/*.d.ts",
+    "!src/**/__tests__/**",
+    "!src/types/**",
+    "!**/node_modules/**",
+  ],
+
+  // Optioneel: zet drempels (thresholds) zodat je tests falen als de dekking zakt
+  coverageThreshold: {
+    global: {
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
+    },
+  },
+
 };

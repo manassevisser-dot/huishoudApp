@@ -1,77 +1,77 @@
-// WAI-006A-Hook — AppStatus Orchestrator (FSM)
-// --------------------------------------------
-// Aliassen (Phoenix): @services, @state, @utils, @ui
-// Let op: selecto../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context via relatieve paden (geen @selectors alias)
+//useAppOrchestration.ts
 
+// FIX A: Namespace import voor compatibiliteit
 import * as React from 'react';
+// FIX B: Gebruik de specifieke aliassen uit je config
 import StorageShim from '@services/storageShim';
-import { FormStateSchema, type FormStateV1 } from '@state/schemas/FormStateSchema';
+import { FormStateSchema } from '@state/schemas/FormStateSchema';
 import { selectIsSpecialStatus } from '@selectors/householdSelectors';
-import { useFormContext } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext';
+import { useFormContext } from '@context/FormContext'; 
 
+// Types
+import type { FormStateV1 } from '@state/schemas/FormStateSchema';
 export type AppStatus = 'INITIALIZING' | 'HYDRATING' | 'UNBOARDING' | 'READY' | 'ERROR';
 
 export function useAppOrchestration() {
   const { state, dispatch } = useFormContext();
   const [status, setStatus] = React.useState<AppStatus>('INITIALIZING');
 
-  // Eén publieke actie voor ERROR-scherm
   const resetApp = React.useCallback(async () => {
     await StorageShim.clearAll();
-    // Na reset starten we als nieuwe gebruiker
     setStatus('UNBOARDING');
-    // Reducer cleanup (optioneel): breng state naar minimale vorm
     dispatch({ type: 'RESET_STATE' });
   }, [dispatch]);
 
   React.useEffect(() => {
     let mounted = true;
+
     async function hydrate() {
       if (!mounted) return;
       setStatus('HYDRATING');
 
-      // 1) Load via uniforme API (Shim)
-      const raw = await StorageShim.loadState();
-
-      // 2) Branches: new user / corrupt / valid v1.0
-      if (!raw) {
-        if (!mounted) return;
-        setStatus('UNBOARDING');
-        return;
-      }
-
-      // 3) Validatie vóór READY (Zod gate)
-      const parse = FormStateSchema.safeParse(raw);
-      if (!parse.success) {
-        if (!mounted) return;
-        setStatus('ERROR');
-        return;
-      }
-
-      const v1 = parse.data as FormStateV1;
-
-      // 4) Dispatch gevalideerde state naar context
-      dispatch({ type: 'LOAD_SAVED_STATE', data: v1 });
-
-      // 5) Shadow flag precies éénmaal bij overgang naar READY
       try {
-        const special = selectIsSpecialStatus({ ...state, ...v1 } as any);
-        dispatch({ type: 'SET_SPECIAL_STATUS', payload: special });
-      } catch {
-        // selector niet kritisch; READY blijft leidend
-      }
+        const raw = await StorageShim.loadState();
 
-      if (!mounted) return;
-      setStatus('READY');
+        if (!raw) {
+          if (mounted) setStatus('UNBOARDING');
+          return;
+        }
+
+        const parse = FormStateSchema.safeParse(raw);
+        if (!parse.success) {
+          console.error('[Orchestrator] Validation failed', parse.error);
+          if (mounted) setStatus('ERROR');
+          return;
+        }
+
+        // Zod data is nu gegarandeerd FormStateV1
+        const validatedData = parse.data as FormStateV1;
+
+        dispatch({ type: 'LOAD_SAVED_STATE', payload: validatedData } as any);
+
+        // Shadow flag: bereken op basis van de nieuwe werkelijkheid
+        try {
+          const special = selectIsSpecialStatus({ ...state, ...validatedData });
+          dispatch({ type: 'SET_SPECIAL_STATUS', payload: special });
+        } catch (e) {
+          console.warn('[Orchestrator] Shadow flag calculation failed', e);
+        }
+
+        if (mounted) setStatus('READY');
+      } catch (err) {
+        console.error('[Orchestrator] Fatal hydration error', err);
+        if (mounted) setStatus('ERROR');
+      }
     }
 
-    // INITIALIZING duurt één render-tick
-    Promise.resolve().then(hydrate);
+    // Tick voor hydration start
+    const timer = setTimeout(hydrate, 0);
 
     return () => {
       mounted = false;
+      clearTimeout(timer);
     };
-  }, [dispatch]); // deliberately not depending on 'state' to avoid extra ticks
+  }, [dispatch]); // Geen afhankelijkheid van 'state' conform ADR-16
 
   return { status, resetApp };
 }

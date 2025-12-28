@@ -2,7 +2,7 @@ import * as React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 import MoneyField from '@components/fields/MoneyField';
-import { useFormContext } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext';
+import { useFormContext } from '@app/context/FormContext';
 import { AutoCount } from 'src/shared-types/form';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_WIDTH = SCREEN_WIDTH * 0.85;

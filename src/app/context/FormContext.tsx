@@ -1,11 +1,16 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { FormState, FormAction } from '@shared-types/form';
+// FIX A: Gebruik namespace import voor React om TS1259 te omzeilen
+import * as React from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
 
-export { FormState, FormAction }; // Exporteer ze hier ook voor selectors/test-logic.ts
+// FIX B: Verwijder FormValue als deze niet in de domain kernel zit
+import { FormState, FormAction } from '@domain/types/form';
+
+// ADR-12: Types voor selectors
+export type { FormState, FormAction };
 
 interface FormContextValue {
   state: FormState;
-  dispatch: (action: FormAction) => void; // Legacy ondersteuning
+  dispatch: (action: FormAction) => void;
   updateField: (page: string, field: string, value: any) => void;
   isRefreshing: boolean;
   refreshData: () => Promise<void>;
@@ -13,7 +18,8 @@ interface FormContextValue {
 
 const FormContext = createContext<FormContextValue | undefined>(undefined);
 
-export const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// FIX C: Expliciete type-definitie voor children om TS7031 te voorkomen
+export const FormProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, setState] = useState<FormState>({
     schemaVersion: '2.0',
     isSpecialStatus: false,
@@ -25,27 +31,25 @@ export const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Legacy dispatch om bestaande componenten te laten werken
   const dispatch = useCallback((action: FormAction) => {
-    // Hier kun je een simpele reducer-logica toevoegen indien nodig
+    // Reducer logica hier...
   }, []);
 
   const updateField = useCallback((page: string, field: string, value: any) => {
     setState((prev: FormState) => {
-      // Als de 'page' global is, zetten we het op de root
       if (page === 'global') {
         return { ...prev, [field]: value };
       }
-      // Anders zetten we het in de specifieke sectie (C1, C4, etc)
       return {
         ...prev,
-        [page]: { ...prev[page], [field]: value },
+        [page]: { ...prev[page as keyof FormState], [field]: value }
       };
     });
   }, []);
 
   const refreshData = useCallback(async () => {
     setIsRefreshing(true);
+    setTimeout(() => setIsRefreshing(false), 500);
   }, []);
 
   return (

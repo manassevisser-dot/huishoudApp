@@ -1,0 +1,63 @@
+🔑 PHOENIX CONSTANTS INDEX
+Gegenereerd op: 12/27/2025, 11:25:19 PM
+------------------------------------------------------------
+ADR_SAFETY_LIMIT               | Sync afgebroken door veiligheidslimieten (ADR-06).
+AUDIT_NOT_FOUND                | ❌ FOUT: phoenix-check.sh niet gevonden!
+AUDIT_START                    | 🛡️ Start Audit (phoenix-check)...
+AUDIT_STAT_HOUSEHOLD           | ℹ️  Statistiek: Huishoudens met > 5 volwassenen krijgen speciale status.
+AUDIT_SUMMARY_FAIL             | ❌ Fout: Functie show_summary niet geladen uit reports.sh
+CHECK_ISSUE                    | [Dynamische Functie]
+CLEANUP_DONE                   | Systeem opgeschoond.
+CLEANUP_FAIL                   | Opschonen mislukt of map is leeg.
+CLEANUP_RUNNING                | Rapporten opschonen (behoud laatste 5)...
+CLEAN_ARTIFACTS                | • Cleaning artifacts
+CLEAN_BAK                      | • Removing .bak backups
+CLEAN_EXPO                     | • Clearing Expo cache
+CLEAN_REPORTS                  | • Pruning old reports (keep 5)
+COMMIT_DONE                    | [Dynamische Functie]
+COMMIT_START                   | 🧹 Cleanup, prepare & commit
+CONFIG_BACKUP_FAIL             | Kritieke fout: Configuratie backup mislukt. Operatie afgebroken.
+CONFIG_BACKUP_SUCCESS          | Configuratie backup succesvol beveiligd
+DEDUP_OK                       | ✅ Deduplicatie succesvol afgerond.
+DEDUP_REPORT_MOVE              | 📦 Verplaatsen van deduplicatie rapporten naar base...
+DEDUP_SKIP                     | ⚠️ Dedup script niet gevonden of doelmap ontbreekt (skip)
+DEDUP_START                    | 🔍 Start Deduplicatie scan...
+DRY_RUN_COMPLETE               | Dry-run voltooid: Geen wijzigingen doorgevoerd.
+ERR_BABEL_PRESET               | ❌ Babel Preset missing: 'metro-react-native-babel-preset' niet gevonden.
+FATAL                          | [Dynamische Functie]
+FILE_INFO                      | [Dynamische Functie]
+FILE_TOO_LARGE                 | Kritiek: bestand is abnormaal groot
+FINISH                         | Phoenix operatie voltooid.
+FINISH_TIME                    | [Dynamische Functie]
+GIT_ADD                        | • Git add
+GIT_COMMIT                     | [Dynamische Functie]
+GIT_COMMIT_NONE                | ⚠️ Nothing to commit
+GIT_PUSH                       | • Git push
+GIT_TAG                        | [Dynamische Functie]
+GUARD_CHECK                    | 🐕 Guard Dog: Checking file sizes...
+GUARD_CRITICAL                 | 🚨 COMMIT AFGEKEURD: Los de bloating op voordat je commit.
+GUARD_FAIL                     | [Dynamische Functie]
+GUARD_PASS                     | [Dynamische Functie]
+GUARD_SAFE                     | 🦴 Alles veilig: geen verdachte wijzigingen gevonden.
+HELP                           | 
+📋 Phoenix Commander
+Gebruik --dry-run voor simulatie.
+
+IMPORTS_CLEAN                  | ✨ Alle imports zijn al correct geformatteerd.
+IMPORTS_FIXED                  | [Dynamische Functie]
+IMPORTS_START                  | 🧩 Phoenix Import Fixer: Aliassen rechttrekken...
+KEYS_INDEX_GEN                 | [Dynamische Functie]
+KEYS_INDEX_NAME                | 🔑 PHOENIX CONSTANTS INDEX
+LOCK_ACTIVE                    | ❌ Phoenix audit is al bezig sinds:
+LOCK_PID                       | [Dynamische Functie]
+LOCK_STALE                     | ⚠️  Oude lock gevonden (>30 min). Opruimen en opnieuw starten…
+PRESET_CHECK                   | 🧪 Controleren van Babel presets...
+REMEDY_BABEL                   | 💡 Oplossing: Draai 'npm install --save-dev metro-react-native-babel-preset' en wis de jest cache.
+REPORTS_LOCATION               | [Dynamische Functie]
+RUN_CHECKS                     | • Running lint/ts checks (non-fatal)
+STEP_FAIL                      | [Dynamische Functie]
+STEP_SKIP                      | [Dynamische Functie]
+STEP_START                     | [Dynamische Functie]
+SYNC_ALIASES_FOUND             | [Dynamische Functie]
+SYNC_OK                        | Phoenix integriteit hersteld.🤕
+SYNC_START                     | 🚀 Phoenix Sync gestart...🔄

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, ScrollView, RefreshControl } from 'react-native';
 import { useAppStyles } from '@ui/styles/useAppStyles';
-import { useFormContext } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext';
+import { useFormContext } from '@app/context/FormContext';
 import { selectFinancialSummaryVM } from '@selectors/financialSelectors';
 import { FinancialSummary } from '@ui/components/FinancialSummary';
 

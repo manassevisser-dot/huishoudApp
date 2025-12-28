@@ -1,5 +1,5 @@
 import { getHouseholdStatus, type HouseholdStats } from '../domain/household';
-import type { FormState } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext';
+import type { FormState } from '@app/context/FormContext';
 import { Member, WoningType, AutoCount } from 'src/shared-types/form';
 
 export const selectHouseholdStats = (state: FormState): HouseholdStats => {

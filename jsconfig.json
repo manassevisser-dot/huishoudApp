@@ -2,51 +2,22 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@domain/*": [
-        "src/domain/*"
-      ],
-      "@state/*": [
-        "src/state/*"
-      ],
-      "@ui/*": [
-        "src/ui/*"
-      ],
-      "@styles/*": [
-        "src/ui/styles/*"
-      ],
-      "@app/*": [
-        "src/app/*"
-      ],
-      "@utils/*": [
-        "src/utils/*"
-      ],
-      "@services/*": [
-        "src/services/*"
-      ],
-      "@assets/*": [
-        "_assets/*"
-      ],
-      "@logic/*": [
-        "src/logic/*"
-      ],
-      "@config/*": [
-        "src/config/*"
-      ],
-      "@context/*": [
-        "src/app/context/*"
-      ],
-      "@selectors/*": [
-        "src/selectors/*"
-      ],
-      "@shared-types/*": [
-        "src/shared-types/*"
-      ],
-      "@components/*": [
-        "src/ui/components/*"
-      ]
+      // @alias-start
+      "@domain/*": ["src/domain/*"],
+      "@state/*": ["src/state/*"],
+      "@ui/*": ["src/ui/*"],
+      "@styles/*": ["src/ui/styles/*"],
+      "@app/*": ["src/app/*"],
+      "@utils/*": ["src/utils/*"],
+      "@services/*": ["src/services/*"],
+      "@assets/*": ["_assets/*"],
+      "@logic/*": ["src/logic/*"],
+      "@config/*": ["src/config/*"],
+      "@context/*": ["src/app/context/*"],
+      "@selectors/*": ["src/selectors/*"],
+      "@shared-types/*": ["src/shared-types/*"],
+      "@components/*": ["src/ui/components/*"],
+      // @alias-end
     }
-  },
-  "exclude": [
-    "node_modules"
-  ]
+  }
 }

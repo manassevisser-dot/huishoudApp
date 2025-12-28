@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 
-import { useFormContext } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext';
+import { useFormContext } from '@app/context/FormContext';
 import { Member, WoningType, AutoCount } from 'src/shared-types/form';
 import ChipButton from '@components/ChipButton';
 import { useAppStyles } from '@ui/styles/useAppStyles';

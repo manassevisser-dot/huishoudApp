@@ -42,7 +42,7 @@ const InputCounter: React.FC<InputCounterProps> = ({
         accessibilityRole="button"
         accessibilityLabel={`${accessibilityLabel ?? 'Waarde'} verlagen`}
       >
-        <Text style={[styles.sign, { color: canDec ? colors.primaryText : colors.textSecondary }]}>
+        <Text style={[styles.sign, { color: canDec ? colors.textPrimary : colors.textSecondary }]}>
           -
         </Text>
       </TouchableOpacity>
@@ -60,7 +60,7 @@ const InputCounter: React.FC<InputCounterProps> = ({
         accessibilityRole="button"
         accessibilityLabel={`${accessibilityLabel ?? 'Waarde'} verhogen`}
       >
-        <Text style={[styles.sign, { color: canInc ? colors.primaryText : colors.textSecondary }]}>
+        <Text style={[styles.sign, { color: canInc ? colors.textPrimary : colors.textSecondary }]}>
           +
         </Text>
       </TouchableOpacity>

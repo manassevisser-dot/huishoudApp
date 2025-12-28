@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
-# Ultimate Import Path Fixer v2.0
-# Migreert alleen relatieve imports (zonder @) naar moderne @ aliases
-
 set -euo pipefail
+
+
+# Alleen loggen als we de kapitein zijn
+if [[ "${PHOENIX_INTERNAL:-false}" != "true" ]]; then
+    log_info "IMPORTS_START"
+fi
+
+FIX_COUNT=0
 
 # === ERROR HANDLING ===
 on_error() {

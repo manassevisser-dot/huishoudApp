@@ -43,7 +43,13 @@ suggest_fix() {
 }
 
 generate_report() {
-    [[ "${GENERATE_REPORT}" != "true" ]] && return
+    # 1. Zorg dat de variabele altijd een waarde heeft (default: true)
+    : "${GENERATE_REPORT:=true}"
+
+    # 2. Gebruik nu een simpele check of we doorgaan
+    [[ "${GENERATE_REPORT}" == "false" ]] && return
+
+   
 
     local t p f s eff r g
     t=$(read_counter total)
@@ -77,10 +83,46 @@ generate_report() {
     fi
 
     cat > "$out" <<HTML
-<!DOCTYPE html>...
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phoenix Audit Report</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 40px auto; padding: 0 20px; background: #f4f7f6; }
+        .card { background: white; border-radius: 8px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .grade { font-size: 72px; font-weight: bold; color: #2ecc71; text-align: center; margin: 20px 0; }
+        .stats { display: flex; justify-content: space-around; text-align: center; border-top: 1px solid #eee; padding-top: 20px; }
+        .stat-val { font-size: 24px; font-weight: bold; display: block; }
+        .stat-label { font-size: 12px; color: #888; text-transform: uppercase; }
+        h1 { border-bottom: 2px solid #2ecc71; padding-bottom: 10px; }
+        ul { list-style: none; padding: 0; }
+        li { background: #fff; margin-bottom: 10px; padding: 15px; border-left: 5px solid #2ecc71; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🦅 Project Phoenix Audit</h1>
+        <p>Timestamp: $(date '+%Y-%m-%d %H:%M:%S')</p>
+        <div class="grade">$g</div>
+        <div class="stats">
+            <div><span class="stat-val">$t</span><span class="stat-label">Checks</span></div>
+            <div><span class="stat-val">$p</span><span class="stat-label">Passed</span></div>
+            <div><span class="stat-val">$f</span><span class="stat-label">Failed</span></div>
+        </div>
+    </div>
+    <div class="card">
+        <h2>🛠️ Aanbevelingen & Revisies</h2>
+        <ul>$fixes</ul>
+    </div>
+</body>
+</html>
 HTML
 
     printf "%b%s%b %s\n" "$GREEN" "$ICON_OK" "$NC" "Report: $out"
+    
+    echo "Rapport wordt gegenereerd..."
 }
 
 show_summary() {

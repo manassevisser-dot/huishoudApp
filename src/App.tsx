@@ -1,8 +1,8 @@
 // WAI-006A-Projector — Pure projection via FSM
 import * as React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ThemeProvider } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/ThemeContext';
-import { FormProvider } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext';
+import { ThemeProvider } from '@app/context/ThemeContext';
+import { FormProvider } from '@app/context/FormContext';
 import { useAppOrchestration } from '@app/hooks/useAppOrchestration';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 
@@ -10,7 +10,7 @@ import SplashScreen from '@ui/screens/SplashScreen';
 import WelcomeWizard from '@ui/screens/WelcomeWizard';
 import MainNavigator from '@ui/navigation/MainNavigator';
 import CriticalErrorScreen from '@ui/screens/CriticalErrorScreen';
-import { WizardProvider } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/WizardContext';
+import { WizardProvider } from '@app/context/WizardContext';
 
 const AppContent: React.FC = () => {
   const { status, resetApp } = useAppOrchestration();

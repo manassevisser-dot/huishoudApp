@@ -8,7 +8,7 @@ import ConditionalField from '../../components/ConditionalField';
 import { useFormContext } from '@context/FormContext';
 import { validateField } from '@utils/validation';
 import { evaluateCondition } from '@utils/conditions';
-import { PageConfig } from '../../types/form';
+import { PageConfig } from '@shared-types/form';
 import { showWizardProgress } from '../../config/features';
 import ChipButton from '../../components/ChipButton';
 import { Member, WoningType, AutoCount } from '@shared-types/form';
@@ -50,13 +50,13 @@ const WizardPage: React.FC<PageProps> = ({
       dispatch({
         type: 'SET_PAGE_DATA',
         pageId: 'C1',
-        data: { aantalVolwassen: mensen },
+        payload: { aantalVolwassen: mensen },
       });
     } else if (volwassen > 7) {
       dispatch({
         type: 'SET_PAGE_DATA',
         pageId: 'C1',
-        data: { aantalVolwassen: 7 },
+        payload: { aantalVolwassen: 7 },
       });
     }
   }, [page.id, state.C1?.aantalMensen, state.C1?.aantalVolwassen, dispatch]);
@@ -70,7 +70,7 @@ const WizardPage: React.FC<PageProps> = ({
     dispatch({
       type: 'SET_PAGE_DATA',
       pageId: page.id,
-      data: { [fieldId]: value },
+      payload: { [fieldId]: value },
     });
   };
 
@@ -122,7 +122,7 @@ const WizardPage: React.FC<PageProps> = ({
                 label={w}
                 selected={state.C4?.woning === w}
                 onPress={() => {
-                  dispatch({ type: 'SET_PAGE_DATA', pageId: 'C4', data: { woning: w } });
+                  dispatch({ type: 'SET_PAGE_DATA', pageId: 'C4', payload: { woning: w } });
                 }}
                 accessibilityLabel={`Woning: ${w}`}
               />

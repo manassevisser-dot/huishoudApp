@@ -9,7 +9,7 @@ import WizardPage from './WizardPage';
 import { PageConfig } from 'src/shared-types/form';
 
 // Compat-shim (zoals voorgesteld): setWizardState terug als contract
-import { useWizard } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/WizardContext';
+import { useWizard } from '@app/context/WizardContext';
 
 // -------------------------------------------------------------
 // Props & component handtekening
