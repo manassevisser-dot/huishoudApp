@@ -1,19 +1,19 @@
 // src/ui/navigation/Navigator.tsx
 import * as React from 'react';
-import { features } from '../config/features';
+import { features } from '@config/features';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useAppStyles } from '@ui/styles/useAppStyles';
-import TempWizardScreen from '../screens/TempWizardScreen';
-import LandingScreen from '../screens/LandingScreen';
-import WizardController from '../screens/Wizard/OUDWizardController';
-import DashboardScreen from '../screens/Dashboard/DashboardScreen';
+import TempWizardScreen from '@screens/TempWizardScreen';
+import LandingScreen from '@screens/LandingScreen';
+import WizardController from '@screens/Wizard/OUDWizardController';
+import DashboardScreen from '@screens/Dashboard/DashboardScreen';
 import DailyInputScreen from '@ui/screens/DailyInput/DailyInputScreen';
-import OptionsScreen from '../screens/Options/OptionsScreen';
-import SettingsScreen from '../screens/Settings/SettingsScreen';
-import CsvUploadScreen from '../screens/CSV/CsvUploadScreen';
-import ResetScreen from '../screens/Reset/ResetScreen';
-import UndoScreen from '../screens/Daily/UndoScreen';
-import { PageConfig } from '../shared-types/form';
+import OptionsScreen from '@screens/Options/OptionsScreen';
+import SettingsScreen from '@screens/Settings/SettingsScreen';
+import CsvUploadScreen from '@screens/CSV/CsvUploadScreen';
+import ResetScreen from '@screens/Reset/ResetScreen';
+import UndoScreen from '@screens/Daily/UndoScreen';
+import { PageConfig } from '../../shared-types/form';
 
 type NavigatorProps = {
   // Flags

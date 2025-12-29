@@ -1,16 +1,19 @@
-// src/logic/__tests__/finance.test.ts
-import { computeSummary } from '../finance';
+import { computePhoenixSummary } from '@logic/finance'; // Let op de nieuwe functienaam
+import { DATA_KEYS } from '@domain/constants/datakeys';
+import { FormState } from '../../shared-types/form';
 
 describe('WAI-004C Finance Integratie', () => {
   it('berekent netto correct: 100,00 inkomsten - 40,00 uitgaven = 6000 cent', () => {
-    // FIX: Pak de arrays in een object met 'items' key, zoals Phoenix het verwacht
-    const incomeState = { items: [{ amount: 10000 }] };
-    const expenseState = { items: [{ amount: 4000 }] };
+    // We mocken de state zoals de Master Reducer hem opslaat
+    const mockState = {
+      [DATA_KEYS.FINANCE]: { inkomsten: { bedrag: 10000 } }, // Centen!
+      [DATA_KEYS.EXPENSES]: { wonen: { bedrag: 4000 } },
+    } as unknown as FormState;
 
-    const s = computeSummary(incomeState, expenseState);
+    const s = computePhoenixSummary(mockState);
 
-    expect(s.totalIncome).toBe(10000);
-    expect(s.totalExpenses).toBe(4000);
-    expect(s.netto).toBe(6000); // Let op: check of je 'net' of 'netto' gebruikt in finance.ts
+    expect(s.totalIncomeCents).toBe(10000);
+    expect(s.totalExpensesCents).toBe(4000);
+    expect(s.netCents).toBe(6000); 
   });
 });

@@ -1,4 +1,4 @@
-import { parseToCents } from '@utils/numbers';
+import { toCents } from '@utils/numbers';
 
 describe('GM-001: Euro NumericParser Baseline', () => {
   const scenarios = [
@@ -10,13 +10,13 @@ describe('GM-001: Euro NumericParser Baseline', () => {
 
   scenarios.forEach(({ input, expected }) => {
     it(`moet "${input}" parsen naar ${expected} centen`, () => {
-      expect(parseToCents(input)).toBe(expected);
+      expect(toCents(input)).toBe(expected);
     });
   });
 });
 
 describe('GM-002: Sanitisatie Check', () => {
   it('moet omgaan met spaties en vreemde tekens', () => {
-    expect(parseToCents(' € 1.250,50 ')).toBe(125050);
+    expect(toCents(' € 1.250,50 ')).toBe(125050);
   });
 });

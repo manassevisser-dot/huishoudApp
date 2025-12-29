@@ -1,34 +1,33 @@
-// src/a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/WizardContext.tsx
-import React from 'react';
+import * as React from 'react'; import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
-export type WizardState = {
-  id?: string;
-  pageIndex?: number;
-  totalPages?: number;
-};
+export interface WizardState {
+  pageIndex: number;
+  steps: string[];
+}
 
-type WizardContextValue = {
-  wizard: WizardState;
-  setWizardState: (next: WizardState) => void;
-};
+interface WizardContextType {
+  state: WizardState;
+  setPageIndex: (index: number) => void;
+}
 
-const defaultValue: WizardContextValue = {
-  wizard: {},
-  setWizardState: () => {}, // no-op voorkomt crashes als er (nog) niets luistert
-};
+const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
-const WizardContext = React.createContext<WizardContextValue>(defaultValue);
+export const WizardProvider = ({ children }: { children: ReactNode }) => {
+  const [state, setState] = useState<WizardState>({ pageIndex: 0, steps: [] });
 
-export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [wizard, setWizard] = React.useState<WizardState>({});
-
-  const setWizardState = React.useCallback((next: WizardState) => {
-    setWizard((prev) => ({ ...prev, ...next }));
+  const setPageIndex = useCallback((index: number) => {
+    setState(prev => ({ ...prev, pageIndex: index }));
   }, []);
 
   return (
-    <WizardContext.Provider value={{ wizard, setWizardState }}>{children}</WizardContext.Provider>
+    <WizardContext.Provider value={{ state, setPageIndex }}>
+      {children}
+    </WizardContext.Provider>
   );
 };
 
-export const useWizard = () => React.useContext(WizardContext);
+export const useWizard = () => {
+  const context = useContext(WizardContext);
+  if (!context) throw new Error('useWizard must be used within WizardProvider');
+  return context;
+};

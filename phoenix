@@ -4,6 +4,10 @@ set -euo pipefail
 PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export PROJECT_ROOT
 # ... (Je Bridge functies) ...
+# Terminal Colors & Icons
+RED='\033[0;31m'
+NC='\033[0m'
+ICON_FAIL='❌'
 
 log_node() {
     node -e "const l=require('${PROJECT_ROOT}/scripts/utils/logger'); $1"
@@ -25,6 +29,22 @@ export -f log_val
 
 # ============ Orchestrator Dispatcher ============
 
+cmd_full() {
+
+    # 1. Draai de statische audit (wat je nu ziet)
+
+    node scripts/maintenance/audit-orchestrator.js "$@"
+
+    
+
+    # 2. Draai de daadwerkelijke tests voor de coverage
+
+    log_info "🧪 Starten van de Phoenix Test Suite (Jest)..."
+
+    npm test -- --coverage --watchAll=false
+
+}
+
 cmd_all() {
     node scripts/maintenance/audit-orchestrator.js "$@"
 }
@@ -45,11 +65,12 @@ _cmd_audit() {
 
 # ============ Dispatcher ============
 case "${1:-}" in
+  full)        cmd_full "$@" ;;
+  all)         cmd_all "$@" ;; # Nu luistert hij ook naar 'full'
   audit)      _cmd_audit ;;
   dedup)      _cmd_dedup ;;
   fix|sanity) _cmd_sanity "$@" ;; 
-  clean)      cmd_clean ;;
-  all)        cmd_all "$@" ;; 
+  clean)       cmd_clean ;;
   ""|help|-h|--help) cmd_help; exit 0 ;;
   *) 
     echo -e "${RED}${ICON_FAIL} Onbekend commando: ${1}${NC}"

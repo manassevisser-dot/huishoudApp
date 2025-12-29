@@ -1,25 +1,29 @@
-import { selectHouseholdStats, selectIsSpecialStatus } from '../householdSelectors';
+import { selectIsSpecialStatus } from '@selectors/householdSelectors';
+import { DATA_KEYS } from '@domain/constants/datakeys';
+import { FormState } from '../../shared-types/form';
 
 describe('WAI-003: Household Selectors', () => {
   it('moet true teruggeven voor 6 volwassenen (Project Eis 2025)', () => {
+    // FIX: Gebruik de DATA_KEYS en de juiste structuur
     const mockState = {
-      C4: {
+      [DATA_KEYS.HOUSEHOLD]: {
         leden: [
           { memberType: 'adult' },
           { memberType: 'adult' },
           { memberType: 'adult' },
           { memberType: 'adult' },
           { memberType: 'adult' },
-          { memberType: 'adult' }, // 6 volwassenen
+          { memberType: 'adult' },
         ],
       },
-    } as any;
+    } as unknown as FormState;
 
-    expect(selectIsSpecialStatus(mockState)).toBe(true); // Verwacht true bij > 5 [cite: 33]
+    // FIX: state correct meegeven aan de selector
+    expect(selectIsSpecialStatus(mockState)).toBe(true);
   });
 
   it('moet false teruggeven bij een lege state', () => {
-    const mockState = {} as any;
-    expect(selectIsSpecialStatus(mockState)).toBe(false); // [cite: 34]
+    const mockState = {} as unknown as FormState;
+    expect(selectIsSpecialStatus(mockState)).toBe(false);
   });
 });

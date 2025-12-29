@@ -2,7 +2,7 @@ import * as React from 'react';
 import { View, Text } from 'react-native';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 
-const MainNavigator: React.FC = () => {
+const MainNavigator: React.FC<any> = () => {
   const { styles } = useAppStyles();
   return (
     <View style={styles.container}>

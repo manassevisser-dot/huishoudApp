@@ -1,123 +1,28 @@
-// Voeg deze toe bovenaan of bij de andere exports
-export type WoningType = 'Huur' | 'Koop' | 'Inwonend' | 'Dakloos'; // Vul aan waar nodig
+import * as React from 'react';
 
-export interface Member {
+export interface FieldConfig {
   id: string;
-  memberType: string;
-  naam?: string; // 👈 Toegevoegd om IncomeRepeater te fixen
-  leeftijd?: number;
-  gender?: string;
-  dateOfBirth?: string;
-}
-
-// ... rest van je file
-
-export type FieldOption = { label: string; value: string };
-
-export type ConditionalConfig = {
-  field: string;
-  operator: '>' | '<' | '>=' | '<=' | '===' | '!==';
-  value: any;
-};
-
-export type FieldConfig = {
-  id: string;
-  label: string;
-  type:
-    | 'text'
-    | 'numeric'
-    | 'radio-chips'
-    | 'toggle'
-    | 'counter'
-    | 'repeater-array'
-    | 'income-repeater'
-    | 'expense-repeater';
-  required?: boolean;
-  defaultValue?: any;
+  type: string;
+  label?: string;
   placeholder?: string;
-  labelDynamic?: boolean;
+  required?: boolean;
+  options?: Array<{ label: string; value: any }>;
   validation?: {
     min?: number;
     max?: number;
+    required?: boolean;
     postcode?: boolean;
-    lengthEqualsTo?: string;
+    lengthEqualsTo?: number;
+    [key: string]: any;
   };
-  options?: FieldOption[];
-  conditional?: ConditionalConfig;
-};
-
-export type PageConfig = {
-  id: string;
-  title: string;
-  fields: FieldConfig[];
-};
-
-export interface Member {
-  id: string;
-  memberType: string;
-  leeftijd?: number;
-  gender?: string;
+  // De 'Glue': laat de compiler alle extra properties toe die in de config bestanden staan
+  [key: string]: any; 
 }
 
-export interface Transaction {
-  id: string;
-  amount: number;
-  label?: string;
-}
+export type FormAction = { type: string; payload?: any };
 
 export interface FormState {
-  schemaVersion: string;
-  isSpecialStatus: boolean;
-  C1: { aantalMensen: number; aantalVolwassen: number };
-  C4: {
-    leden: Member[];
-    woning?: string; // Teruggezet voor WizardPage
-    autoCount?: string; // Teruggezet voor ExpenseRepeater
-  };
-  C7: {
-    items: Transaction[];
-    inkomsten?: any; // Teruggezet voor IncomeRepeater
-    householdBenefits?: any;
-    vermogen?: any;
-  };
-  C10: { items: Transaction[] };
+  activeStep: string;
+  data: Record<string, any>; // 'any' zorgt dat zowel "1.000" als 1000 mag
   [key: string]: any;
-}
-
-// Voeg dit type toe voor de dispatch errors
-// Maak de actie-definitie ruim genoeg voor alle legacy patronen
-export type FormAction = {
-  type: string;
-  payload?: any;
-  pageId?: string;
-  data?: any;
-  field?: string;
-  value?: any;
-};
-
-export type AutoCount = 'Een' | 'Twee' | 'Nee'; // Of de waarden die jij gebruikt
-
-export interface Member {
-  id: string;
-  memberType: string;
-  leeftijd?: number;
-  gender?: string;
-}
-
-// src/shared-types/temp-form.ts  (alleen nodig als je nog geen PageConfig hebt)
-export type TempFieldType = 'text' | 'number' | 'select' | 'date' | 'toggle' | 'currency';
-
-export interface TempFieldConfig {
-  id: string;
-  label: string;
-  type: TempFieldType;
-  defaultValue?: string | number | boolean | null;
-  required?: boolean;
-}
-
-export interface TempPageConfig {
-  id: string;
-  title: string;
-  fields: TempFieldConfig[];
-  description?: string;
 }

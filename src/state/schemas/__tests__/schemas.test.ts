@@ -1,4 +1,4 @@
-import { FormStateSchema } from '../FormStateSchema';
+import { FormStateSchema } from '@state/schemas/FormStateSchema';
 
 describe('WAI-005A Zod Schemas (Clean Version)', () => {
   it('accepteert Phoenix v1.0 met centen integers', () => {

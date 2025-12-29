@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import * as React from 'react'; import { ReactNode, useMemo } from 'react';
 import { View, ScrollView, RefreshControl } from 'react-native';
 import { useAppStyles } from '@ui/styles/useAppStyles';
-import { useFormContext } from '@app/context/FormContext';
+import { useForm } from '@app/context/FormContext';
 import { selectFinancialSummaryVM } from '@selectors/financialSelectors';
 import { FinancialSummary } from '@ui/components/FinancialSummary';
 
@@ -15,7 +15,7 @@ interface DashboardProps {
 
 export const DashboardScreen: React.FC<DashboardProps> = () => {
   const { styles } = useAppStyles();
-  const { state, refreshData, isRefreshing } = useFormContext();
+  const { state, refreshData, isRefreshing } = useForm() as any;
 
   const financialData = useMemo(() => {
     return selectFinancialSummaryVM(state);

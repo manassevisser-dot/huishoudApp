@@ -1,94 +1,74 @@
+
 // src/ui/screens/Wizard/WizardController.tsx
 import * as React from 'react';
-import { View } from 'react-native';
+import { useState, useMemo, useCallback } from 'react';
+import { useForm } from '@app/context/FormContext';
+import { WizardPage } from './WizardPage';
+// Geen vage import uit de map './pages' meer, maar direct naar de bron:
+import { setupHouseholdConfig } from './pages/1setupHousehold.config';
+import { detailsHouseholdConfig } from './pages/2detailsHousehold.config';
+import { incomeDetailsConfig } from './pages/3incomeDetails.config';
+import { fixedExpensesConfig } from './pages/4fixedExpenses.config';
 
-// LET OP: pad naar WizardPage kan in jouw project anders zijn
-import WizardPage from './WizardPage';
+// Dit vormt je 'slimme' array die de Wizard aanstuurt
+const pages = [
+  setupHouseholdConfig,
+  detailsHouseholdConfig,
+  incomeDetailsConfig,
+  fixedExpensesConfig,
+];
 
-// Types zoals gebruikt in WizardPage — pas pad aan indien nodig
-import { PageConfig } from 'src/shared-types/form';
+export const WizardController: React.FC<any> = () => {
+  const { state, dispatch } = useForm() as any;
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
-// Compat-shim (zoals voorgesteld): setWizardState terug als contract
-import { useWizard } from '@app/context/WizardContext';
-
-// -------------------------------------------------------------
-// Props & component handtekening
-// -------------------------------------------------------------
-type WizardControllerProps = {
-  /** De lijst met pagina-configs voor de wizard in de gewenste volgorde */
-  pages: PageConfig[];
-
-  /** Startindex (default: 0) */
-  initialIndex?: number;
-
-  /** Callback wanneer laatste pagina 'Volgende' triggert */
-  onFinish?: () => void;
-};
-
-const WizardController: React.FC<WizardControllerProps> = (props) => {
-  const { pages, initialIndex = 0, onFinish } = props;
-
-  // Veiligheidsnet voor lege input
-  const totalPages = Array.isArray(pages) ? pages.length : 0;
-  const [currentPageIndex, setCurrentPageIndex] = React.useState<number>(
-    Math.min(Math.max(0, initialIndex), Math.max(0, totalPages - 1)),
+  // Bundel configs — memoize om re-renders wat rustiger te maken
+  const pages = useMemo(
+    () => [
+      setupHouseholdConfig,
+      detailsHouseholdConfig,
+      incomeDetailsConfig,
+      fixedExpensesConfig,
+    ],
+    []
   );
 
-  // Huidige pagina (kan undefined zijn bij lege pages)
-  const page = pages[currentPageIndex];
+  const currentPageConfig = pages[currentPageIndex];
 
-  // Compatibiliteits-shim: voed oude consumers die op setWizardState leunen
-  const { setWizardState } = useWizard();
-
-  // -----------------------------------------------------------
-  // Effect: bij elke paginawissel of paginalijst-update, shim bijwerken
-  // -----------------------------------------------------------
-  React.useEffect(() => {
-    // Alleen bij geldige pagina
-    if (!page) return;
-
-    setWizardState({
-      id: page.id,
-      pageIndex: currentPageIndex,
-      totalPages: totalPages,
-    });
-  }, [page?.id, currentPageIndex, totalPages, setWizardState]);
-
-  // -----------------------------------------------------------
-  // Navigatiehandlers
-  // -----------------------------------------------------------
-  const goPrev = React.useCallback(() => {
-    setCurrentPageIndex((i) => Math.max(0, i - 1));
-  }, []);
-
-  const goNext = React.useCallback(() => {
-    // Als dit de laatste pagina is → finish
-    if (currentPageIndex >= totalPages - 1) {
-      onFinish?.();
-    } else {
-      setCurrentPageIndex((i) => Math.min(totalPages - 1, i + 1));
+  const handleNext = useCallback(() => {
+    // BUSINESS RULE: Bij het verlaten van de setup, synchroniseer we de ledenlijst
+    if (currentPageConfig?.id === '1setupHousehold') {
+      const aantal = state.setup?.aantalMensen ?? 1;
+      dispatch({
+        type: 'SYNC_MEMBERS',
+        payload: { count: aantal },
+      });
     }
-  }, [currentPageIndex, totalPages, onFinish]);
 
-  // -----------------------------------------------------------
-  // Render: enkel de huidige pagina
-  // -----------------------------------------------------------
-  if (!page || totalPages === 0) {
-    // Je kunt hier ook een fallback-view renderen
-    return <View />;
+    // Navigeer naar de volgende pagina (alleen als we niet op de laatste zitten)
+    if (currentPageIndex < pages.length - 1) {
+      setCurrentPageIndex((prev) => prev + 1);
+    }
+  }, [currentPageConfig?.id, currentPageIndex, pages.length, state.setup?.aantalMensen, dispatch]);
+
+  const handleBack = useCallback(() => {
+    if (currentPageIndex > 0) {
+      setCurrentPageIndex((prev) => prev - 1);
+    }
+  }, [currentPageIndex]);
+
+  // (optioneel) Guard — als er geen config is (out of bounds), render niets of een fallback
+  if (!currentPageConfig) {
+    return null;
   }
 
   return (
     <WizardPage
-      page={page}
-      onNext={goNext}
-      onPrev={goPrev}
+      config={currentPageConfig}
+      onNext={handleNext}
+      onBack={handleBack}
       isFirst={currentPageIndex === 0}
-      isLast={currentPageIndex === totalPages - 1}
-      totalPages={totalPages}
-      currentPageIndex={currentPageIndex}
+      isLast={currentPageIndex === pages.length - 1}
     />
   );
 };
-
-export default WizardController;

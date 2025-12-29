@@ -1,14 +1,15 @@
-// Zorg dat hij zowel de array als het object-met-items snapt
-export const computeSummary = (incomeInput: any, expenseInput: any) => {
-  const income = Array.isArray(incomeInput) ? incomeInput : incomeInput?.items || [];
-  const expenses = Array.isArray(expenseInput) ? expenseInput : expenseInput?.items || [];
+import { FormState } from '../shared-types/form';
 
-  const totalIncome = income.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
-  const totalExpenses = expenses.reduce((sum: number, item: any) => sum + (item.amount || 0), 0);
+export const computePhoenixSummary = (state: any) => {
+  const income = state.income?.items || [];
+  const expenses = state.expenses?.items || [];
+
+  const totalIncomeCents = income.reduce((sum: number, i: any) => sum + (Number(i.amountCents) || 0), 0);
+  const totalExpensesCents = expenses.reduce((sum: number, e: any) => sum + (Number(e.amountCents) || 0), 0);
 
   return {
-    totalIncome,
-    totalExpenses,
-    netto: totalIncome - totalExpenses,
+    totalIncomeCents,
+    totalExpensesCents,
+    netCents: totalIncomeCents - totalExpensesCents
   };
 };

@@ -38,7 +38,7 @@ jest.mock('@selectors/householdSelectors', () => ({
 // FIX: Verwijder de "Path Collapse". Gebruik de schone alias.
 jest.mock('@context/FormContext', () => ({
   __esModule: true,
-  useFormContext: () => mockContextValue,
+  useForm: () => mockContextValue,
 }));
 
 describe('useAppOrchestration FSM', () => {

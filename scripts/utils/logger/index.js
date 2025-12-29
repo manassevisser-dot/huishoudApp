@@ -1,3 +1,6 @@
+#!/usr/bin/env node
+const fs = require('fs');
+// ... rest van je code
 const transports = require('./transports');
 const sync = require('./constants/sync');
 const audit = require('./constants/audit'); // NIEUW

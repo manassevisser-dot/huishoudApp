@@ -1,1 +1,2 @@
-export const ping = () => 'pong';
+// src/utils/ping.ts
+export const ping = (): string => 'pong';

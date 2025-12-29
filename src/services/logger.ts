@@ -1,22 +1,8 @@
-type LogLevel = 'info' | 'warn' | 'error' | 'debug';
+const Logger = {
+  info: (msg: string, data?: any) => console.log(`[INFO] ${msg}`, data),
+  error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err),
+  log: (level: string, msg: string, ...args: any[]) => console.log(`[${level}] ${msg}`, ...args)
+};
 
-class Logger {
-  private log(level: LogLevel, message: string, data?: any) {
-    // Voegt tijdstempel toe voor makkelijker debuggen
-    const timestamp = new Date().toISOString();
-    const prefix = `[${timestamp}] [${level.toUpperCase()}]`;
-    
-    if (data) {
-      console.info(prefix, message, data);
-    } else {
-      console.info(prefix, message);
-    }
-  }
-
-  info(message: string, data?: any) { this.log('info', message, data); }
-  warn(message: string, data?: any) { this.log('warn', message, data); }
-  error(message: string, data?: any) { this.log('error', message, data); }
-  debug(message: string, data?: any) { this.log('debug', message, data); }
-}
-
-export const logger = new Logger()
+export default Logger;
+export const logger = Logger;

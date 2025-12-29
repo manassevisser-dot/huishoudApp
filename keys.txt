@@ -1,5 +1,5 @@
 🔑 PHOENIX CONSTANTS INDEX
-Gegenereerd op: 12/27/2025, 11:25:19 PM
+Gegenereerd op: 12/29/2025, 12:20:16 AM
 ------------------------------------------------------------
 ADR_SAFETY_LIMIT               | Sync afgebroken door veiligheidslimieten (ADR-06).
 AUDIT_NOT_FOUND                | ❌ FOUT: phoenix-check.sh niet gevonden!

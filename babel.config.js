@@ -1,11 +1,8 @@
-
-// babel.config.js
 module.exports = function (api) {
   api.cache(true);
   return {
     presets: [
       'babel-preset-expo',
-      // Preset om TS te strippen voor Jest/Babel pipeline
       '@babel/preset-typescript',
     ],
     plugins: [
@@ -14,6 +11,7 @@ module.exports = function (api) {
         {
           root: ['./'],
           alias: {
+// @alias-start
             '@domain': './src/domain',
             '@state': './src/state',
             '@ui': './src/ui',
@@ -28,15 +26,16 @@ module.exports = function (api) {
             '@selectors': './src/selectors',
             '@shared-types': './src/shared-types',
             '@components': './src/ui/components',
+            '@fields': './src/ui/components/fields',
+// @alias-end
           },
           extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
         },
       ],
     ],
-    // Zorg dat Jest geen “extra” env nodig heeft
     env: {
       test: {
-        // Laat zoals boven; Expo preset + TS is genoeg
+        // Test configuratie
       },
     },
   };

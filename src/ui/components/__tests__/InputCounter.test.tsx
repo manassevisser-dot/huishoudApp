@@ -1,43 +1,47 @@
-/* global jest, describe, it, expect */
 import * as React from 'react';
-// ... rest van je imports
 import { render, fireEvent } from '@testing-library/react-native';
-import InputCounter from '../InputCounter';
+import InputCounter from '@fields/InputCounter';
+import { ThemeProvider } from '@app/context/ThemeContext';
 
-// Mock de styles hook
-jest.mock('@styles/useAppStyles', () => ({
-  useAppStyles: () => ({
-    colors: {
-      primary: 'blue',
-      secondary: 'grey',
-      textPrimary: 'black',
-      primaryText: 'white',
-      textSecondary: 'grey',
-    },
-  }),
-}));
+const renderWithProviders = (ui: React.ReactElement) => {
+  return render(
+    <ThemeProvider>
+      {ui}
+    </ThemeProvider>
+  );
+};
 
-describe('WAI-002: InputCounter Unit Tests', () => {
-  it('moet de initiële waarde tonen', () => {
-    const { getByText } = render(<InputCounter value={3} onValueChange={() => {}} />);
-    expect(getByText('3')).toBeTruthy();
+describe('InputCounter Unit Tests', () => {
+  const mockOnValueChange = jest.fn();
+  
+  const defaultProps = {
+    value: 5,
+    onValueChange: mockOnValueChange, // FIX: Match de interface
+    min: 0,
+    max: 10,
+    label: 'Test Counter'
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('moet onChange aanroepen bij verhogen', () => {
-    const onChangeMock = jest.fn();
-    const { getByLabelText } = render(<InputCounter value={3} onValueChange={onChangeMock} />);
+  it('moet de initiële waarde tonen', () => {
+    const { getByText } = renderWithProviders(<InputCounter {...defaultProps} />);
+    expect(getByText('5')).toBeTruthy();
+  });
 
-    fireEvent.press(getByLabelText('Waarde verhogen'));
-    expect(onChangeMock).toHaveBeenCalledWith(4);
+  it('moet onValueChange aanroepen bij verhogen', () => {
+    const { getByText } = renderWithProviders(<InputCounter {...defaultProps} />);
+    const plusButton = getByText('+');
+    fireEvent.press(plusButton);
+    expect(mockOnValueChange).toHaveBeenCalledWith(6);
   });
 
   it('mag niet onder het minimum gaan', () => {
-    const onChangeMock = jest.fn();
-    const { getByLabelText } = render(
-      <InputCounter value={0} min={0} onValueChange={onChangeMock} />,
-    );
-
-    fireEvent.press(getByLabelText('Waarde verlagen'));
-    expect(onChangeMock).not.toHaveBeenCalled();
+    const { getByText } = renderWithProviders(<InputCounter {...defaultProps} value={0} />);
+    const minusButton = getByText('-');
+    fireEvent.press(minusButton);
+    expect(mockOnValueChange).not.toHaveBeenCalled();
   });
 });

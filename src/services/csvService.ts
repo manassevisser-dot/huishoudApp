@@ -1,4 +1,4 @@
-import { logger } from './logger';
+import logger from '@services/logger';
 // src/services/csvService.ts
 
 // Helper: valideer Date

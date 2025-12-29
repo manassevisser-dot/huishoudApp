@@ -1,10 +1,10 @@
-import React from 'react';
+import * as React from 'react';
 import { View, Text } from 'react-native';
 import { useAppStyles } from '@ui/styles/useAppStyles'; // ← orchestrator (CU-008.6)
-import { FinancialSummaryVM } from '@selectors/financialSelectors';
+import { selectFinancialSummaryVM as FinancialSummaryVM } from '@selectors/financialSelectors';
 
 interface Props {
-  data: FinancialSummaryVM;
+  data: any;
 }
 
 export const FinancialSummary: React.FC<Props> = ({ data }) => {

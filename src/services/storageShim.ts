@@ -1,6 +1,6 @@
 // CU-001-SHIM — Storage API shim (Phoenix v1.0)
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as LegacyNamespace from './storage';
+import * as LegacyNamespace from '@services/storage';
 import { type FormStateV1 } from '@state/schemas/FormStateSchema';
 
 const KEY = '@CashflowWizardState';

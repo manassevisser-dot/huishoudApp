@@ -18,3 +18,4 @@ export const features = {
   useTempWizard: true, // zet naar false om de oude te gebruiken
 };
 ``;
+export const PHOENIX_KEYS = [];

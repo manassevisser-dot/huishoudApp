@@ -2,7 +2,7 @@ import { aggregateExportData } from '../export';
 import { FormStateV1 } from '@state/schemas/FormStateSchema'; // Pad gecorrigeerd
 
 describe('WAI-005C: Export Aggregator', () => {
-  const mockState: FormStateV1 = {
+  const mockStateV1 = {
     schemaVersion: '1.0',
     isSpecialStatus: false,
     C1: { aantalMensen: 6, aantalVolwassen: 6 },
@@ -15,7 +15,7 @@ describe('WAI-005C: Export Aggregator', () => {
     C10: { items: [] },
   };
 
-  const result = aggregateExportData(mockState);
+  // const result = aggregateExportData(mockState);
 
   it('moet namen strippen uit de export (Privacy Contract)', () => {
     // We checken of de naam property inderdaad niet bestaat in de export

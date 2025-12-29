@@ -21,19 +21,25 @@ export const validateField = (field: FieldConfig, value: any, state: any): strin
     ) {
       return `Waarde mag maximaal ${field.validation.max} zijn.`;
     }
-    if (field.validation.postcode && typeof value === 'string' && !/^\d{4}$/.test(value.trim())) {
+    if (field.validation?.postcode && typeof value === 'string' && !/^\d{4}$/.test(value.trim())) {
       return 'Ongeldige postcode (formaat: 4 cijfers, bijv. 1234).';
     }
   }
 
-  // Cross-page array length validation (declarative)
-  if (Array.isArray(value) && typeof field.validation?.lengthEqualsTo === 'string') {
-    const [tPage, tField] = field.validation.lengthEqualsTo.split('.');
+
+  if (Array.isArray(value) && field.validation?.lengthEqualsTo) {
+    // We halen de path-string uit lengthEqualsTo (indien het een string is)
+    const path = String(field.validation.lengthEqualsTo);
+    const [tPage, tField] = path.split('.');
+  
+    // Veilig de state uitlezen
     const expected = Number(state?.[tPage]?.[tField] ?? 0);
+    
     if (value.length !== expected) {
       return `Aantal leden (${value.length}) moet gelijk zijn aan totaal aantal personen (${expected}).`;
     }
   }
+
 
   return null;
 };

@@ -1,9 +1,8 @@
 //======
 // src/services/transactionService.ts
 
-import { DailyTransaction, TransactionSummary } from '../shared-types/transaction';
-import { logger } from './logger'; 
-import { Storage } from './storage'; // (currently unused, maar laten staan voor toekomst)
+import { DailyTransaction, TransactionSummary } from '@shared-types/transaction';
+import logger from '@services/logger'; 
 // Note: __DEV__ logging is safe in React Native
 
 // In a real scenario, these would be env variables
@@ -28,7 +27,7 @@ export const TransactionService = {
       await new Promise((resolve) => setTimeout(resolve, 600));
 
       // Store locally to simulate persistence
-      await this._mockLocalSave(transaction);
+      await (this as any)._mockLocalSave(transaction);
       return true;
     } catch (error: any) {
       // Differentiated logging
@@ -46,7 +45,7 @@ export const TransactionService = {
    * Computes monthly totals from local transactions.
    */
   async fetchSummary(): Promise<TransactionSummary> {
-    const all = await this._mockLocalLoad();
+    const all = await (this as any)._mockLocalLoad();
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
@@ -56,11 +55,11 @@ export const TransactionService = {
     // 3) reduce naar bedrag (getal)
     const totalMonth = all
       .filter(hasValidDate)
-      .filter((t) => {
+      .filter((t: any) => {
         const d = new Date(t.date); // t.date is nu zeker string
         return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
       })
-      .reduce((sum, t) => sum + (t.amount ?? 0), 0);
+      .reduce((sum: any, t: any) => sum + (t.amount ?? 0), 0);
 
     // Simplistische weekberekening in mock (ok voor MVP)
     const totalWeek = totalMonth;
@@ -76,10 +75,10 @@ export const TransactionService = {
    * Returns last N transactions sorted by date descending (mock).
    */
   async list(limit: number = 5): Promise<DailyTransaction[]> {
-    const all = await this._mockLocalLoad();
+    const all = await (this as any)._mockLocalLoad();
     return all
       .filter(hasValidDate)
-      .sort((a, b) => {
+      .sort((a: any, b: any) => {
         const tb = new Date(b.date).getTime();
         const ta = new Date(a.date).getTime();
         return tb - ta;
@@ -145,29 +144,6 @@ export const TransactionService = {
   },
 
   // --- MOCK STORAGE HELPERS ---
-  async _mockLocalSave(t: DailyTransaction) {
-    const importAsyncStorage = async () => {
-      const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
-      return AsyncStorage;
-    };
-    const AsyncStorage = await importAsyncStorage();
-    const existingRaw = await AsyncStorage.getItem(STORAGE_KEY);
-
-    let existing: DailyTransaction[] = [];
-    if (existingRaw) {
-      try {
-        existing = JSON.parse(existingRaw);
-      } catch (e) {
-        if (__DEV__) logger.warn('Malformed transactions JSON in storage; resetting list', e);
-        existing = [];
-      }
-    }
-
-    // NOTE: id via Math.random is ok voor demo; voor productie liever uuid
-    existing.push({ ...t, id: Math.random().toString(36).substring(7) });
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(existing));
-  },
-
   async _mockLocalLoad(): Promise<DailyTransaction[]> {
     const importAsyncStorage = async () => {
       const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
@@ -179,8 +155,29 @@ export const TransactionService = {
     try {
       return JSON.parse(raw);
     } catch (e) {
-      if (__DEV__) logger.warn('Malformed transactions JSON in storage; returning empty list', e);
+      if (__DEV__) logger.info('Malformed transactions JSON in storage; returning empty list', e);
       return [];
     }
   },
+}; // <--- Hier sluit de TransactionService
+
+/**
+ * Phoenix Migration Handler (ADR-13)
+ * Converteert legacy C7 data naar de nieuwe Phoenix structuur.
+ */
+export const migrateToPhoenix = (oldState: any): any => {
+  const newState = {
+    activeStep: 'landing',
+    data: {},
+    finance: { inkomsten: { bedrag: 0 } }
+  };
+
+  if (oldState?.C7?.items?.[0]?.amount) {
+    const legacyAmount = oldState.C7.items[0].amount;
+    // Zet "1.250,50" om naar 125050 centen
+    const cleanAmount = legacyAmount.replace(/\./g, '').replace(',', '.');
+    newState.finance.inkomsten.bedrag = Math.round(parseFloat(cleanAmount) * 100);
+  }
+
+  return newState;
 };
