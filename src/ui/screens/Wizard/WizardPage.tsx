@@ -1,8 +1,10 @@
-// src/ui/screens/Wizard/WizardPage.tsx
 import * as React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
-import { FieldRenderer } from '@ui/components/FieldRenderer';
-import { useAppStyles } from '@ui/styles/useAppStyles';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { useForm } from '../../../app/context/FormContext';
+import { useAppStyles } from '../../styles/useAppStyles';
+import FormField from '../../components/fields/FormField';
+import { Logger } from '../../../services/logger';
+import { Strings } from '../../../utils/strings';
 
 interface WizardPageProps {
   config: any;
@@ -12,60 +14,62 @@ interface WizardPageProps {
   isLast: boolean;
 }
 
-export const WizardPage: React.FC<WizardPageProps & object> = ({ 
-  config, 
-  onNext, 
-  onBack, 
-  isFirst, 
-  isLast 
+export const WizardPage: React.FC<WizardPageProps> = ({
+  config,
+  onNext,
+  onBack,
+  isFirst,
+  isLast,
 }) => {
+  const { state, dispatch } = useForm();
   const { styles } = useAppStyles();
 
-  return (
-    <SafeAreaView style={styles.pageContainer}>
-      <ScrollView 
-        contentContainerStyle={{ paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header Sectie */}
-        <View style={{ padding: 20 }}>
-          <Text style={styles.summaryLabelBold}>{config.title}</Text>
-          <Text style={styles.helperText}>{config.description}</Text>
-        </View>
+  React.useEffect(() => {
+    Logger.info(`Scherm geladen: ${config.title}`);
+  }, [config.title]);
 
-        {/* Dynamische Velden uit de Config */}
-        <View style={{ paddingHorizontal: 20 }}>
-          {config.fields.map((field: any) => (
-            <FieldRenderer 
-              key={field.id} 
-              field={field} 
-              pageId={config.id} 
-            />
-          ))}
-        </View>
+  return (
+    <View style={styles.container}>
+      <Text 
+        style={styles.pageTitle}
+        accessibilityRole="header"
+        accessibilityLiveRegion="assertive"
+      >
+        {config.title}
+      </Text>
+      
+      {/* GEFIXED: styles.formContainer vervangen door styles.container of styles.inputContainer */}
+      <ScrollView style={styles.container}>
+        {config.fields.map((field: any) => (
+          <FormField
+            key={field.id}
+            field={field}
+            state={state}
+            dispatch={dispatch}
+            value={state[field.id] ?? state.setup?.[field.id]} 
+          />
+        ))}
       </ScrollView>
 
-      {/* Navigatie Balk onderaan */}
-      <View style={[styles.footer, { 
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        padding: 20,
-        backgroundColor: 'white',
-        borderTopWidth: 1,
-        borderTopColor: '#eee'
-      }]}>
-        {!isFirst ? (
-          <TouchableOpacity onPress={onBack} style={(styles as any).buttonSecondary}>
-            <Text>Terug</Text>
+      {/* GEFIXED: Geen inline style meer, maar gebruik maken van layout styles uit je tokens */}
+      <View style={styles.buttonContainer}>
+        {!isFirst && (
+          <TouchableOpacity onPress={onBack} style={styles.buttonSecondary}>
+            <Text style={styles.buttonText}>{Strings.wizard.back}</Text>
           </TouchableOpacity>
-        ) : <View />}
-
-        <TouchableOpacity onPress={onNext} style={(styles as any).buttonPrimary}>
-          <Text style={{ color: 'white' }}>
-            {isLast ? 'Bereken resultaat' : 'Volgende'}
+        )}
+        <TouchableOpacity 
+          onPress={onNext} 
+          style={styles.button}
+          accessibilityLabel={isLast ? Strings.wizard.finish : Strings.wizard.next}
+        >
+          <Text style={styles.buttonText}>
+            {isLast ? Strings.wizard.finish : Strings.wizard.next}
           </Text>
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
+
+export default WizardPage;

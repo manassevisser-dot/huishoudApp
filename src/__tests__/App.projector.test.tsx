@@ -1,34 +1,54 @@
 import * as React from 'react';
-import { render } from '@testing-library/react-native';
-import App from '../App';
-import { useAppOrchestration } from '@app/hooks/useAppOrchestration';
+import { render, fireEvent, waitFor } from '@testing-library/react-native';
+import Navigator from '../navigation/Navigator';
+import { FormState } from '../shared-types/form';
 
-// Mock de orchestrator hook
-jest.mock('@app/hooks/useAppOrchestration');
+// Mock de context en insets zodat de testomgeving stabiel is
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
 
-// Mock de schermen om te kijken of de juiste wordt aangeroepen
-jest.mock('src/ui/screens/Wizard/SplashScreen', () => {
-  const { Text } = require('react-native');
-  return () => <Text testID="splash-screen">Splash</Text>;
-});
+describe('Projector: Navigator & WAI Integriteit', () => {
+  
+  const createMockState = (step: 'LANDING' | 'WIZARD' | 'DASHBOARD'): FormState => ({
+    activeStep: step,
+    setup: { aantalVolwassen: 1 },
+    household: { adultsCount: 1, members: [] },
+    finance: { inkomsten: {}, uitgaven: {} }
+  } as unknown as FormState);
 
-jest.mock('@ui/screens/Wizard/WelcomeWizard', () => {
-  const { Text } = require('react-native');
-  return () => <Text testID="welcome-wizard">Wizard</Text>;
-});
+  it('WAI Check: LandingScreen moet toegankelijke knoppen hebben', () => {
+    const state = createMockState('LANDING');
+    const { getByRole, getByLabelText } = render(<Navigator state={state} />);
 
-describe('WAI-006A-Projector: State Machine Rendering', () => {
-  const mockOrch = useAppOrchestration as jest.Mock;
-
-  it('rendeert SplashScreen bij status HYDRATING', () => {
-    mockOrch.mockReturnValue({ status: 'HYDRATING' });
-    const { getByTestId } = render(<App />);
-    expect(getByTestId('splash-screen')).toBeTruthy();
+    // WAI-01: Heeft de startknop de juiste rol en label voor schermlezers?
+    const signupBtn = getByRole('button', { name: /aanmelden/i });
+    expect(signupBtn).toBeTruthy();
+    
+    // WAI-02: Is het label specifiek genoeg?
+    expect(getByLabelText('Aanmelden en starten met setup')).toBeTruthy();
   });
 
-  it('rendeert WelcomeWizard bij status UNBOARDING', () => {
-    mockOrch.mockReturnValue({ status: 'UNBOARDING' });
-    const { getByTestId } = render(<App />);
-    expect(getByTestId('welcome-wizard')).toBeTruthy();
+  it('Projector: Moet naar Wizard switchen bij actie', async () => {
+    // We testen hier of de Navigator de switch-case logica correct uitvoert
+    const { rerender, getByText } = render(<Navigator state={createMockState('LANDING')} />);
+    
+    expect(getByText(/Welkom/i)).toBeTruthy();
+
+    // Simuleer een state-update vanuit de orchestrator
+    rerender(<Navigator state={createMockState('WIZARD')} />);
+    
+    // Nu moet de WizardPage getoond worden (ervan uitgaande dat die 'Stappen' bevat)
+    await waitFor(() => {
+      expect(getByText(/Stap/i)).toBeTruthy();
+    });
+  });
+
+  it('WAI Check: Dashboard moet direct bereikbaar zijn via Inloggen', () => {
+    const state = createMockState('DASHBOARD');
+    const { getByText } = render(<Navigator state={state} />);
+
+    // Controleer of de "Dashboard (Hoofdmenu)" tekst aanwezig is
+    expect(getByText(/Dashboard/i)).toBeTruthy();
   });
 });

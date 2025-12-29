@@ -1,43 +1,45 @@
 import * as React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAppStyles } from '@ui/styles/useAppStyles';
+import { useAppStyles } from '../../styles/useAppStyles';
+import { useForm } from '../../../app/context/FormContext';
 
-type Props = {
-  onSignup: () => void; // Start wizard at C1
-  onSignin: () => void; // Go to Dashboard
-};
+interface Props {
+  onSignup?: () => void; // Optioneel gemaakt
+  onSignin?: () => void; // Optioneel gemaakt
+}
 
 const LandingScreen: React.FC<Props> = ({ onSignup, onSignin }) => {
-  const { styles, colors } = useAppStyles() as any; // ✅ verplaatst naar binnen
+  const { styles } = useAppStyles();
   const insets = useSafeAreaInsets();
+  const { dispatch } = useForm();
+
+  // Phoenix 2025 logica: we gebruiken dispatch om de state te wijzigen
+  const handleStart = () => {
+    if (onSignup) onSignup();
+    dispatch({ type: 'SET_VALUE', payload: { path: 'activeStep', value: 'WIZARD' } });
+  };
+
+  const handleLogin = () => {
+    if (onSignin) onSignin();
+    dispatch({ type: 'SET_VALUE', payload: { path: 'activeStep', value: 'DASHBOARD' } });
+  };
 
   return (
     <View style={[styles.container, { paddingBottom: Math.max(20, insets.bottom + 8) }]}>
       <View style={styles.pageContainer}>
         <Text style={styles.pageTitle}>Welkom</Text>
         <Text style={styles.summaryDetail}>
-          Start met het instellen van uw huishouding of ga direct naar het dashboard als u al bekend
-          bent.
+          Start met het instellen van uw huishouding of ga direct naar het dashboard.
         </Text>
       </View>
 
-      <View style={[styles.buttonContainer, { bottom: insets.bottom }]}>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={onSignup}
-          accessibilityRole="button"
-          accessibilityLabel="Aanmelden en starten met setup"
-        >
+      <View style={[styles.buttonContainer, { paddingBottom: insets.bottom }]}>
+        <TouchableOpacity style={styles.button} onPress={handleStart}>
           <Text style={styles.buttonText}>Aanmelden</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.button, styles.secondaryButton]}
-          onPress={onSignin}
-          accessibilityRole="button"
-          accessibilityLabel="Inloggen en ga naar dashboard"
-        >
+        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={handleLogin}>
           <Text style={styles.secondaryButtonText}>Inloggen</Text>
         </TouchableOpacity>
       </View>

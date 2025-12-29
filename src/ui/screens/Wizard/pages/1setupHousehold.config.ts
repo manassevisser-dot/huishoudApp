@@ -1,5 +1,5 @@
 // ADR-02: Type-Safety aan systeemgrenzen via relatieve paden
-import { FormState } from 'src/shared-types/form'; 
+import { FormState } from '@shared-types/form';
 import { DATA_KEYS } from '@domain/constants/datakeys';
 
 export interface WizardPageConfig {

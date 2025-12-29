@@ -1,12 +1,26 @@
 import { FormState, FormAction } from '../../shared-types/form';
 
+// Initial state voor fallback scenario's
+export const initialState: FormState = {
+  activeStep: 'LANDING',
+  data: {},
+  setup: {},
+  household: {
+    adultsCount: 1,
+    members: [],
+    leden: []
+  },
+  finance: {
+    inkomsten: {},
+    uitgaven: {}
+  }
+};
+
 export const formReducer = (state: FormState, action: FormAction): FormState => {
   switch (action.type) {
     case 'SET_VALUE':
     case 'SET_FIELD': {
       const { path, value } = action.payload;
-      // We gebruiken een type-cast naar 'any' voor de key om TS te laten weten
-      // dat we bewust de top-level properties van FormState indexeren.
       return {
         ...state,
         [path as any]: value,
@@ -14,35 +28,45 @@ export const formReducer = (state: FormState, action: FormAction): FormState => 
     }
 
     case 'SYNC_MEMBERS': {
-      // Gebruik DATA_KEYS om consistentie met de Stalen Kern te garanderen
+      // We zorgen dat we altijd een object teruggeven dat voldoet aan de interface
       return {
         ...state,
         household: {
           ...state.household,
-          leden: action.payload
+          adultsCount: action.payload.count || 0,
+          members: action.payload.members || [],
+          leden: action.payload.members || [] // Dubbele entry voor compatibiliteit
         }
       };
     }
 
     case 'SET_MEMBER_VALUE': {
       const { memberId, key, value } = action.payload;
-      const currentFinance = state.finance;
-      const currentMember = currentFinance.inkomsten[memberId] || {};
+      
+      // FIX TS18048: Gebruik null-coalescing om zeker te zijn dat finance bestaat
+      const currentFinance = state.finance ?? { inkomsten: {}, uitgaven: {} };
+      const currentInkomsten = currentFinance.inkomsten ?? {};
+      const currentMemberData = currentInkomsten[memberId] ?? {};
 
       return {
         ...state,
         finance: {
           ...currentFinance,
           inkomsten: {
-            ...currentFinance.inkomsten,
-            [memberId]: { ...currentMember, [key]: value }
-          }
+            ...currentInkomsten,
+            [memberId]: { 
+              ...currentMemberData, 
+              [key]: value 
+            }
+          },
+          // Zorg dat uitgaven ook altijd aanwezig blijft
+          uitgaven: currentFinance.uitgaven ?? {}
         }
       };
     }
 
     case 'RESET_APP':
-      return state; // Idealiter keer je hier terug naar een 'initialState'
+      return initialState;
 
     default:
       return state;

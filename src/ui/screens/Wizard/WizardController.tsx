@@ -1,74 +1,37 @@
-
-// src/ui/screens/Wizard/WizardController.tsx
 import * as React from 'react';
-import { useState, useMemo, useCallback } from 'react';
-import { useForm } from '@app/context/FormContext';
-import { WizardPage } from './WizardPage';
-// Geen vage import uit de map './pages' meer, maar direct naar de bron:
+import { useForm } from '../../../app/context/FormContext';
+import { WizardPage } from './WizardPage'; 
+// Importeer de losse configs als bouwstenen
 import { setupHouseholdConfig } from './pages/1setupHousehold.config';
 import { detailsHouseholdConfig } from './pages/2detailsHousehold.config';
 import { incomeDetailsConfig } from './pages/3incomeDetails.config';
 import { fixedExpensesConfig } from './pages/4fixedExpenses.config';
 
-// Dit vormt je 'slimme' array die de Wizard aanstuurt
-const pages = [
-  setupHouseholdConfig,
-  detailsHouseholdConfig,
-  incomeDetailsConfig,
-  fixedExpensesConfig,
-];
-
-export const WizardController: React.FC<any> = () => {
-  const { state, dispatch } = useForm() as any;
-  const [currentPageIndex, setCurrentPageIndex] = useState(0);
-
-  // Bundel configs — memoize om re-renders wat rustiger te maken
-  const pages = useMemo(
-    () => [
-      setupHouseholdConfig,
-      detailsHouseholdConfig,
-      incomeDetailsConfig,
-      fixedExpensesConfig,
-    ],
-    []
-  );
-
-  const currentPageConfig = pages[currentPageIndex];
-
-  const handleNext = useCallback(() => {
-    // BUSINESS RULE: Bij het verlaten van de setup, synchroniseer we de ledenlijst
-    if (currentPageConfig?.id === '1setupHousehold') {
-      const aantal = state.setup?.aantalMensen ?? 1;
-      dispatch({
-        type: 'SYNC_MEMBERS',
-        payload: { count: aantal },
-      });
+const WizardController: React.FC = () => {
+  const { state, dispatch } = useForm();
+  
+  // Dynamische mapping op basis van activeStep (conform je stateModel)
+  const getConfig = () => {
+    switch (state.activeStep) {
+      case 'WIZARD_SETUP': return setupHouseholdConfig;
+      case 'WIZARD_DETAILS': return detailsHouseholdConfig;
+      case 'WIZARD_INCOME': return incomeDetailsConfig;
+      case 'WIZARD_EXPENSES': return fixedExpensesConfig;
+      default: return setupHouseholdConfig;
     }
+  };
 
-    // Navigeer naar de volgende pagina (alleen als we niet op de laatste zitten)
-    if (currentPageIndex < pages.length - 1) {
-      setCurrentPageIndex((prev) => prev + 1);
-    }
-  }, [currentPageConfig?.id, currentPageIndex, pages.length, state.setup?.aantalMensen, dispatch]);
-
-  const handleBack = useCallback(() => {
-    if (currentPageIndex > 0) {
-      setCurrentPageIndex((prev) => prev - 1);
-    }
-  }, [currentPageIndex]);
-
-  // (optioneel) Guard — als er geen config is (out of bounds), render niets of een fallback
-  if (!currentPageConfig) {
-    return null;
-  }
+  const config = getConfig();
 
   return (
-    <WizardPage
-      config={currentPageConfig}
-      onNext={handleNext}
-      onBack={handleBack}
-      isFirst={currentPageIndex === 0}
-      isLast={currentPageIndex === pages.length - 1}
+    <WizardPage 
+      config={config}
+      isFirst={state.activeStep === 'WIZARD_SETUP'}
+      isLast={state.activeStep === 'WIZARD_EXPENSES'}
+      onNext={() => dispatch({ type: 'NEXT_STEP' })}
+      onBack={() => dispatch({ type: 'PREV_STEP' })}
     />
   );
 };
+
+export default WizardController;

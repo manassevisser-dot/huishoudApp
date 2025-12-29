@@ -54,6 +54,7 @@ const CsvUploadScreen: React.FC<Props> = ({ onClose }) => {
                     category: 'Overig',
                     paymentMethod: 'pin',
                     weekNumber: getISOWeek(new Date(row.date)),
+                    
                   });
                 }
               }

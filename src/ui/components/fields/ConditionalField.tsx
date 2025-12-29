@@ -1,46 +1,30 @@
 import * as React from 'react';
-
-import { FieldConfig } from '@shared-types/form';
-import { evaluateCondition } from '@utils/conditions';
+import { View } from 'react-native';
+import { FormFieldProps } from './FormField';
 import FormField from './FormField';
 
-// We definiëren de vorm lokaal zodat de TS-error direct verdwijnt
-interface LocalConditionalProps {
-  field: FieldConfig & {
-    condition?: {
-      fieldId: string;
-      operator: 'eq' | 'neq' | 'gt' | 'lt';
-      value: any;
-    };
-  };
-  state: any;
-  value: any;
-  onChange: (fieldId: string, value: any) => void;
-  error: string | null;
-}
-
-const ConditionalField: React.FC<LocalConditionalProps> = ({
-  field,
-  state,
-  value,
-  onChange,
-  error,
+export const ConditionalField: React.FC<FormFieldProps> = ({ 
+  field, 
+  state, 
+  dispatch, 
+  value 
 }) => {
-  // Gebruik de utility om te bepalen of we dit veld moeten tonen
-  const isVisible = field.condition 
-    ? evaluateCondition(field.condition, state) 
-    : true;
+  // ADR-01: Business logica uit de config halen
+  const isVisible = field.condition ? field.condition(state) : true;
 
-  if (!isVisible) return null;
+  if (!isVisible || !field.dependentField) {
+    return null;
+  }
 
   return (
-    <FormField
-      field={field}
-      value={value}
-      onChange={onChange}
-      error={error}
-      state={state}
-    />
+    <View style={{ marginTop: 10, paddingLeft: 15, borderLeftWidth: 2, borderLeftColor: '#eee' }}>
+      <FormField
+        field={field.dependentField}
+        state={state}
+        dispatch={dispatch}
+        value={state[field.dependentField.id]}
+      />
+    </View>
   );
 };
 

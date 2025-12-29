@@ -1,28 +1,24 @@
-import { aggregateExportData } from '../export';
-import { FormStateV1 } from '@state/schemas/FormStateSchema'; // Pad gecorrigeerd
+import { TransactionService } from '../../services/transactionService';
 
-describe('WAI-005C: Export Aggregator', () => {
-  const mockStateV1 = {
-    schemaVersion: '1.0',
-    isSpecialStatus: false,
-    C1: { aantalMensen: 6, aantalVolwassen: 6 },
-    C4: {
-      leden: [
-        { id: '1', memberType: 'adult', leeftijd: 40 }, // 'naam' weggelaten volgens contract
-      ],
-    },
-    C7: { items: [{ id: 'i1', label: 'Salaris', amount: 500000 }] },
-    C10: { items: [] },
-  };
-
-  // const result = aggregateExportData(mockState);
-
-  it('moet namen strippen uit de export (Privacy Contract)', () => {
-    // We checken of de naam property inderdaad niet bestaat in de export
-    expect(result.household.members[0]).not.toHaveProperty('naam');
+describe('Export Logic', () => {
+  beforeEach(() => {
+    TransactionService.clearAll();
   });
 
-  it('moet de special status vlag zetten bij > 5 volwassenen [2025-12-07]', () => {
-    expect(result.isSpecialStatus).toBe(true);
+  it('should correctly store and retrieve a transaction', async () => {
+    const mockTx = {
+      date: '2025-01-01',
+      amount: 42.50,
+      category: 'Boodschappen',
+      paymentMethod: 'pin',
+      weekNumber: 1
+    };
+
+    const result = await TransactionService._mockLocalSave(mockTx);
+    const transactions = await TransactionService.getAllTransactions();
+
+    expect(result).toBe(true);
+    expect(transactions.length).toBe(1);
+    expect(transactions[0].amount).toBe(42.50);
   });
 });

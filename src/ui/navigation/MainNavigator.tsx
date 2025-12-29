@@ -1,13 +1,20 @@
 import * as React from 'react';
 import { View, Text } from 'react-native';
-import { useAppStyles } from '@ui/styles/useAppStyles';
+import { useAppStyles } from '../styles/useAppStyles';
 
-const MainNavigator: React.FC<any> = () => {
+interface Props {
+  onSignup?: () => void;
+  onSignin?: () => void;
+}
+
+const MainNavigator: React.FC<Props> = () => {
   const { styles } = useAppStyles();
+  
   return (
     <View style={styles.container}>
-      <Text style={styles.pageTitle}>Hoofdnavigatie (Dashboard)</Text>
+      <Text style={styles.pageTitle}>Dashboard (Hoofdmenu)</Text>
     </View>
   );
 };
+
 export default MainNavigator;

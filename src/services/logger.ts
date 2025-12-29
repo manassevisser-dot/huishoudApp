@@ -1,8 +1,10 @@
-const Logger = {
-  info: (msg: string, data?: any) => console.log(`[INFO] ${msg}`, data),
-  error: (msg: string, err?: any) => console.error(`[ERROR] ${msg}`, err),
-  log: (level: string, msg: string, ...args: any[]) => console.log(`[${level}] ${msg}`, ...args)
+const LoggerInstance = {
+  info: (msg: string, data?: any) => console.log(msg, data),
+  error: (msg: string, err?: any) => console.error(msg, err),
+  warn: (msg: string, data?: any) => console.warn(msg, data),
+  log: (level: string, msg: string, ...args: any[]) => console.log(`[${level}]`, msg, ...args),
 };
 
-export default Logger;
-export const logger = Logger;
+export const logger = LoggerInstance;
+export const Logger = LoggerInstance; // Zorgt dat beide imports werken
+export default LoggerInstance;

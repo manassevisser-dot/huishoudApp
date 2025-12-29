@@ -1,37 +1,39 @@
 import * as React from 'react';
-import { useState } from 'react';
-import { View, TextInput, Text } from 'react-native';
-import { useForm } from '@app/context/FormContext';
+import { View, Text, TextInput } from 'react-native';
 
-interface Props {
-  pageId: string;
-  fieldId: string;
+export interface MoneyFieldProps {
   label: string;
-  placeholder?: string;
+  amount: number; // We gebruiken 'amount' zoals geëist door de compiler in DailyInput
+  onAmountChange: (val: number) => void;
+  error?: string;
 }
 
-export const MoneyField: React.FC<Props> = ({ pageId, fieldId, label, placeholder }) => {
-  const { state, dispatch } = useForm() as any;
-  const [value, setValue] = useState(state?.data?.[fieldId] || '');
-
-  const handleChange = (text: string) => {
-    setValue(text);
-    dispatch({ 
-      type: 'UPDATE_FIELD', 
-      payload: { fieldId: fieldId, value: text } 
-    });
-  };
-
+export const MoneyField: React.FC<MoneyFieldProps> = ({ 
+  label, 
+  amount, 
+  onAmountChange, 
+  error 
+}) => {
   return (
-    <View style={{ padding: 10 }}>
-      <Text>{label}</Text>
+    <View style={{ marginBottom: 15 }}>
+      <Text style={{ fontWeight: '600', marginBottom: 5 }}>{label}</Text>
       <TextInput
-        value={String(value)}
-        onChangeText={handleChange}
-        placeholder={placeholder}
+        style={{
+          borderWidth: 1,
+          borderColor: error ? 'red' : '#ccc',
+          padding: 12,
+          borderRadius: 8,
+          fontSize: 18,
+        }}
         keyboardType="numeric"
-        style={{ borderBottomWidth: 1, padding: 5 }}
+        value={amount.toString()}
+        onChangeText={(text) => {
+          const num = parseFloat(text.replace(',', '.'));
+          onAmountChange(isNaN(num) ? 0 : num);
+        }}
+        placeholder="0.00"
       />
+      {error && <Text style={{ color: 'red', fontSize: 12 }}>{error}</Text>}
     </View>
   );
 };

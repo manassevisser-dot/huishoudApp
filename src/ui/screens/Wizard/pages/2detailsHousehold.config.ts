@@ -1,4 +1,4 @@
-import { TempPageConfig } from '@domain/types/form';
+import { TempPageConfig } from '@shared-types/form';
 
 export const detailsHouseholdConfig: TempPageConfig = {
   id: '2detailsHousehold',

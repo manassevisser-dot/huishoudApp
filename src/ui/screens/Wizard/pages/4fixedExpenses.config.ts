@@ -1,4 +1,4 @@
-import { TempPageConfig } from '@domain/types/form';
+import { TempPageConfig, FormState} from '@shared-types/form';
 
 export const fixedExpensesConfig: TempPageConfig = {
   id: '4fixedExpenses',

@@ -1,4 +1,4 @@
-import { TempPageConfig } from '@domain/types/form';
+import { TempPageConfig, FormState, Member } from '@shared-types/form';
 
 export const incomeDetailsConfig: TempPageConfig = {
   id: '3incomeDetails',
@@ -15,14 +15,16 @@ export const incomeDetailsConfig: TempPageConfig = {
     {
       id: 'inkomstenLeden',
       type: 'repeater',
-      // Phoenix Power: Alleen volwassenen tonen
-      filter: (state: FormState) => state.household?.leden?.filter(m => m.memberType === 'adult') || [],
+      // Voeg expliciete types toe aan de parameters
+      filter: (state: FormState) => 
+        state.household?.leden?.filter((m: Member) => m.memberType === 'adult') || [],
       fields: [
         {
           id: 'werkSectie',
-          type: 'collapsible-section', // Jouw 'Expanded' logica
+          type: 'collapsible-section',
           label: 'Inkomen uit werk',
-          visibleIf: (state, memberId) => state.finance?.inkomsten[memberId]?.categories?.werk,
+          visibleIf: (state: FormState, memberId?: string) => 
+            memberId ? state.finance?.inkomsten?.[memberId]?.categories?.werk : false,
           fields: [
             { id: 'nettoSalaris', label: 'Netto salaris', type: 'money' },
             { id: 'zorgtoeslag', label: 'Zorgtoeslag', type: 'money' },

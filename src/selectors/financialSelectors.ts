@@ -1,10 +1,11 @@
-import { computePhoenixSummary } from '@logic/finance';
-import { toCents } from '@utils/numbers';
+import { computePhoenixSummary } from '../logic/finance';
+import { toCents } from '../utils/numbers';
 import { FormState } from '../shared-types/form';
+import { Logger } from '../services/logger';
 
 export function selectFinancialSummaryVM(state: FormState) {
-  // Bereken het financiële overzicht vanuit de state
   const summary = computePhoenixSummary(state);
+  Logger.info('Financial VM generated');
 
   return {
     totals: {
