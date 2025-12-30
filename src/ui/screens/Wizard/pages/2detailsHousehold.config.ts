@@ -1,40 +1,47 @@
+
 import { TempPageConfig } from '@shared-types/form';
 
 export const detailsHouseholdConfig: TempPageConfig = {
-  id: '2detailsHousehold',
+  pageId: '2detailsHousehold',
   title: 'Wie zijn de bewoners?',
   description: 'Vul de details in per gezinslid. Gebruik de swipe om te navigeren.',
+  componentName: 'WizardPage',              // ✅ (aanrader: overal zetten)
   fields: [
     {
-      id: 'leden', // Dit matcht met de key in state.household.leden [cite: 5, 25]
+      fieldId: 'leden_repeater',            // ✅ fieldId (UI sleutel)
+      pageId: 'leden',
+      label: 'Bewoners',                    // ✅ REQUIRED door FormFieldConfig
       type: 'repeater',
       fields: [
         {
-          id: 'naam',
+          fieldId: 'naam',
+          pageId: 'naam',
           label: 'Naam',
           type: 'text',
-          placeholder: 'Bijv. Jan de Vries', // Uit jouw oude code [cite: 26]
+          placeholder: 'Bijv. Jan de Vries',
           required: true,
         },
         {
-          id: 'dateOfBirth',
+          fieldId: 'dateOfBirth',
+          pageId: 'dateOfBirth',
           label: 'Geboortedatum',
-          type: 'date-input', // Triggert jouw DateField + useDobInput
+          type: 'date-input',
           placeholder: 'DD-MM-YYYY',
           maxLength: 10,
         },
         {
-          id: 'gender',
+          fieldId: 'gender',
+          pageId: 'gender',
           label: 'Geslacht',
-          type: 'radio-chips', // Triggert jouw ChipButton [cite: 2, 33]
+          type: 'radio-chips',
           options: [
             { label: 'Man', value: 'man' },
             { label: 'Vrouw', value: 'vrouw' },
             { label: 'Anders', value: 'anders' },
             { label: 'N.v.t.', value: 'n.v.t.' },
           ],
-        }
-      ]
-    }
+        },
+      ],
+    },
   ],
 };

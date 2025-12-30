@@ -1,24 +1,30 @@
-// CU-001-SHIM — Storage API shim (Phoenix v1.0)
-// Test Suite: Validatie van delegatie-integriteit en envelope-structuur
 
-import { type FormStateV1 } from '@state/schemas/FormStateSchema';
+import { makePhoenixState } from '@test-utils/state';
+
+// ⚠️ Belangrijk: geen top-level import van StorageShim gebruiken,
+// omdat we per test met jest.doMock werken en daarna `require('../storageShim')`
+// doen zodat de module opnieuw geëvalueerd wordt met de mock in scope.
 
 describe('CU-001-SHIM StorageShim', () => {
   beforeEach(() => {
-    // Cruciaal: Reset de module cache zodat doMock elke keer opnieuw evalueert
+    // Cruciaal: reset module cache en mocks zodat doMock telkens opnieuw werkt
     jest.resetModules();
     jest.clearAllMocks();
   });
 
-  // Helper om de AsyncStorage mock te extraheren
-  const getAsyncMock = () => require('@react-native-async-storage/async-storage').default;
-
   it('delegates loadState to legacy when available (Integriteits-gate)', async () => {
-    // Mock de legacy storage met een specifiek Phoenix v1.0 object
+    // Mock legacy storage die een volledige Phoenix v1.0 state teruggeeft
     jest.doMock('@services/storage', () => ({
       __esModule: true,
       Storage: {
-        loadState: jest.fn(async () => ({ schemaVersion: '1.0', C1: { aantalMensen: 1 } })),
+        loadState: jest.fn(async () => ({
+          schemaVersion: '1.0',
+          data: {
+            setup: {},
+            household: { members: [] },
+            finance: {},
+          },
+        })),
       },
     }));
 
@@ -26,11 +32,10 @@ describe('CU-001-SHIM StorageShim', () => {
     const res = await StorageShim.loadState();
 
     expect(res?.schemaVersion).toBe('1.0');
-    expect(res?.C1?.aantalMensen).toBe(1);
+    expect(res?.data?.household?.members).toEqual([]);
   });
 
   it('returns null on loadState when legacy is absent (Anti-corruption gate)', async () => {
-    // Bewijs dat de shim NIET zelf gaat parsen als de legacy engine ontbreekt
     jest.doMock('@services/storage', () => ({ __esModule: true }));
 
     const { StorageShim } = require('../storageShim');
@@ -41,6 +46,8 @@ describe('CU-001-SHIM StorageShim', () => {
 
   it('enforces schemaVersion and envelope on saveState (Audit gate)', async () => {
     const mockSetItem = jest.fn();
+
+    // Geen legacy → shim moet zelf AsyncStorage envelope schrijven
     jest.doMock('@services/storage', () => ({ __esModule: true }));
     jest.doMock('@react-native-async-storage/async-storage', () => ({
       __esModule: true,
@@ -48,22 +55,31 @@ describe('CU-001-SHIM StorageShim', () => {
     }));
 
     const { StorageShim } = require('../storageShim');
-    const mockState = { C1: { aantalMensen: 2 } };
+
+ // ✅ Gebruik de helper voor Phoenix-proof state
+ const mockState = makePhoenixState({
+  activeStep: 'WIZARD',
+  data: { 
+    setup: {},                 // Setup staat op root niveau van data
+    household: { members: [] }, // Household staat NAAST setup (niet erin)
+    finance: {},               // Finance is verplicht volgens je type definitie
+  },
+});
 
     await StorageShim.saveState(mockState as any);
 
-    // Verifieer de volledige Phoenix-envelope (V2 infrastructuur + V1.0 schema)
     const [key, rawValue] = mockSetItem.mock.calls[0];
     const payload = JSON.parse(rawValue);
 
     expect(key).toBe('@CashflowWizardState');
     expect(payload.version).toBe(2);
     expect(payload.state.schemaVersion).toBe('1.0');
-    expect(payload.state.C1.aantalMensen).toBe(2);
+    expect(payload.state.data.setup.aantalMensen).toBe(2);
   });
 
   it('uses removeItem instead of clear() for compliance (Safety gate)', async () => {
     const mockRemoveItem = jest.fn();
+
     jest.doMock('@services/storage', () => ({ __esModule: true }));
     jest.doMock('@react-native-async-storage/async-storage', () => ({
       __esModule: true,
@@ -73,7 +89,7 @@ describe('CU-001-SHIM StorageShim', () => {
     const { StorageShim } = require('../storageShim');
     await StorageShim.clearAll();
 
-    // Check of we specifiek de Phoenix-key wissen en niet het hele device
+    // Controleer dat alleen de Phoenix key gewist wordt
     expect(mockRemoveItem).toHaveBeenCalledWith('@CashflowWizardState');
   });
 

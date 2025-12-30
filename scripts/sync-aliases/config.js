@@ -1,11 +1,10 @@
 const path = require('path');
+const ROOT = process.cwd();
 
-// --- SINGLE SOURCE OF TRUTH VOOR MARKERS ---
-const TAG = "@alias-start"; // Verander dit hier, en het verandert overal
+const TAG = "@alias-start"; 
 const END_TAG = "@alias-end";
 
 const markers = {
-  // We bouwen de markers dynamisch op zodat ze overal consistent zijn
   babel:    { start: `// ${TAG}`, end: `// ${END_TAG}` },
   jest:     { start: `// ${TAG}`, end: `// ${END_TAG}` },
   jsconfig: { start: `// ${TAG}`, end: `// ${END_TAG}` },
@@ -13,17 +12,15 @@ const markers = {
 
 module.exports = {
   paths: {
-    root: path.resolve(__dirname, '../../'),
-    tsconfig: path.resolve(__dirname, '../../tsconfig.json'),
-    babel: path.resolve(__dirname, '../../babel.config.js'),
-    jest: path.resolve(__dirname, '../../jest.config.js'),
-    jsconfig: path.resolve(__dirname, '../../jsconfig.json'),
+    root: ROOT,
+    tsconfig: path.join(ROOT, 'tsconfig.json'),
+    jsconfig: path.join(ROOT, 'jsconfig.json'),
+    babel: path.join(ROOT, 'babel.config.js'),
+    jest: path.join(ROOT, 'jest.config.js'),
   },
-  
   markers,
-  
-  // Gereserveerde prefixes die we nooit als alias willen
-  reservedPrefixes: ['http://', 'https://', './', '../'],
+  // LET OP: '@test' is hier verwijderd zodat @test-utils werkt!
+  reservedPrefixes: ['@types', '@react', '@expo', '@jest', '@babel', '@node', '@native', '@testing-library'],
 
   flags: {
     dryRun: process.argv.includes('--dry-run'),

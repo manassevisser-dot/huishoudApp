@@ -1,19 +1,54 @@
-import { computePhoenixSummary } from '@logic/finance'; // Let op de nieuwe functienaam
-import { DATA_KEYS } from '@domain/constants/datakeys';
-import { FormState } from '../../shared-types/form';
+import { computePhoenixSummary } from '@logic/finance';
+import { makePhoenixState } from '@test-utils/state';
 
-describe('WAI-004C Finance Integratie', () => {
-  it('berekent netto correct: 100,00 inkomsten - 40,00 uitgaven = 6000 cent', () => {
-    // We mocken de state zoals de Master Reducer hem opslaat
-    const mockState = {
-      [DATA_KEYS.FINANCE]: { inkomsten: { bedrag: 10000 } }, // Centen!
-      [DATA_KEYS.EXPENSES]: { wonen: { bedrag: 4000 } },
-    } as unknown as FormState;
+describe('Finance Integratie', () => {
+  it('berekent netto correct uit de finance tak', () => {
+    const state = makePhoenixState({
+      data: {
+        finance: {
+          income: { items: [{ amountCents: 10000, frequency: 'month' }] },
+          expenses: { items: [{ amountCents: 4000, frequency: 'month' }] },
+        }
+      }
+    });
 
-    const s = computePhoenixSummary(mockState);
+    // FIX: We geven state.data.finance door omdat de functie 
+    // direct zoekt naar .income en .expenses
+    const summary = computePhoenixSummary(state.data.finance);
 
-    expect(s.totalIncomeCents).toBe(10000);
-    expect(s.totalExpensesCents).toBe(4000);
-    expect(s.netCents).toBe(6000); 
+    expect(summary.totalIncomeCents).toBe(10000);
+    expect(summary.netCents).toBe(6000);
+  });
+
+
+  it('aggregatie met maandnormalisatie', () => {
+    const state = makePhoenixState({
+      data: {
+        finance: {
+          income: {
+            items: [
+              { id: 'q-300', amountCents: 30000, frequency: 'quarter' }, // 10000 p/m
+              { id: 'y-12000', amountCents: 1200000, frequency: 'year' }, // 100000 p/m
+            ],
+          },
+          expenses: { items: [] },
+        },
+      },
+    });
+
+    const summary = computePhoenixSummary(state.data.finance);
+    
+    expect(summary.totalIncomeCents).toBe(110000);
+    expect(summary.netCents).toBe(110000);
+  });
+
+  it('lege items geeft overal 0', () => {
+    const summary = computePhoenixSummary({ 
+      income: { items: [] }, 
+      expenses: { items: [] } 
+    });
+    
+    expect(summary.totalIncomeCents).toBe(0);
+    expect(summary.netCents).toBe(0);
   });
 });

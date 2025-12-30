@@ -1,29 +1,40 @@
-import { selectIsSpecialStatus } from '@selectors/householdSelectors';
-import { DATA_KEYS } from '@domain/constants/datakeys';
+import { selectIsSpecialStatus } from '../../selectors/householdSelectors';
 import { FormState } from '../../shared-types/form';
 
 describe('WAI-003: Household Selectors', () => {
-  it('moet true teruggeven voor 6 volwassenen (Project Eis 2025)', () => {
-    // FIX: Gebruik de DATA_KEYS en de juiste structuur
-    const mockState = {
-      [DATA_KEYS.HOUSEHOLD]: {
-        leden: [
-          { memberType: 'adult' },
-          { memberType: 'adult' },
-          { memberType: 'adult' },
-          { memberType: 'adult' },
-          { memberType: 'adult' },
-          { memberType: 'adult' },
-        ],
+  // We maken een helper om een valide basis-state te genereren
+  const createBaseState = (aantalVolwassen: number): FormState => ({
+    currentPageId: 'setup',
+    activeStep: 'WIZARD',
+    isValid: true,
+    data: {
+      setup: { aantalVolwassen },
+      household: {
+        // We vullen members voor de volledigheid, 
+        // hoewel de huidige selector naar setup kijkt
+        members: Array(aantalVolwassen).fill(null).map((_, i) => ({
+          entityId: `m${i}`,
+          fieldId: 'member_1', // VOEG DIT TOE
+          memberType: 'adult',
+          naam: `Member ${i + 1}`
+        }))
       },
-    } as unknown as FormState;
+      finance: {},
+    }
+  });
 
-    // FIX: state correct meegeven aan de selector
+  it('moet true teruggeven voor 6 volwassenen (Project Eis 2025)', () => {
+    const mockState = createBaseState(6);
     expect(selectIsSpecialStatus(mockState)).toBe(true);
   });
 
+  it('moet false teruggeven voor 2 volwassenen', () => {
+    const mockState = createBaseState(2);
+    expect(selectIsSpecialStatus(mockState)).toBe(false);
+  });
+
   it('moet false teruggeven bij een lege state', () => {
-    const mockState = {} as unknown as FormState;
+    const mockState = createBaseState(0);
     expect(selectIsSpecialStatus(mockState)).toBe(false);
   });
 });

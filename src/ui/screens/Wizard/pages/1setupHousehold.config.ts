@@ -2,8 +2,8 @@
 import { FormState } from '@shared-types/form';
 import { DATA_KEYS } from '@domain/constants/datakeys';
 
-export interface WizardPageConfig {
-  id: string;
+interface WizardPageConfig {
+  pageId: string;
   title: string;
   fields: any[];
 }
@@ -13,11 +13,11 @@ export interface WizardPageConfig {
  * Deze config bevat de regels die door de WizardPage projector worden uitgelezen.
  */
 export const setupHouseholdConfig: WizardPageConfig = {
-  id: '1setupHousehold',
+  pageId: '1setupHousehold',
   title: 'Huishouden opzetten',
   fields: [
     {
-      id: 'aantalMensen',
+  fieldId: '1setupHousehold',
       label: 'Totaal aantal bewoners (N)',
       type: 'counter',
       defaultValue: 1,
@@ -25,7 +25,7 @@ export const setupHouseholdConfig: WizardPageConfig = {
       max: 20,
     },
     {
-      id: 'aantalVolwassen',
+  fieldId: 'aantalVolwassen',
       label: 'Aantal volwassenen (M)',
       type: 'counter',
       defaultValue: 1,
@@ -35,7 +35,7 @@ export const setupHouseholdConfig: WizardPageConfig = {
       maxGetter: (state: FormState) => state[DATA_KEYS.SETUP]?.aantalMensen || 1,
     },
     {
-      id: 'kinderenLabel',
+  fieldId: 'kinderenLabel',
       label: 'Waarvan aantal kinderen (K)',
       type: 'derived-label',
       // ADR-03: Berekening op basis van de state
@@ -51,7 +51,7 @@ export const setupHouseholdConfig: WizardPageConfig = {
       },
     },
     {
-      id: 'autoCount',
+  fieldId: 'autoCount',
       label: 'Hoeveel auto\'s heeft het huishouden?',
       type: 'radio-chips',
       options: [
@@ -62,7 +62,7 @@ export const setupHouseholdConfig: WizardPageConfig = {
       defaultValue: 'Nee',
     },
     {
-      id: 'heeftHuisdieren',
+  fieldId: 'heeftHuisdieren',
       label: 'Zijn er huisdieren aanwezig?',
       type: 'toggle',
       defaultValue: false,

@@ -1,53 +1,39 @@
-// src/services/transactionService.ts
+import { FormState } from '@shared-types/form';
 
-export type TransactionInput = {
-  date: string | Date;
-  amount: number;
-  category: string;
-  paymentMethod: string;
-  weekNumber: number;
-  note?: string;
+export const migrateTransactionsToPhoenix = async (oldData: any): Promise<FormState> => {
+  
+  const newState: FormState = {
+    schemaVersion: '1.0',
+    activeStep: 'WIZARD',
+    
+    // ✅ FIX: Deze twee velden waren verplicht volgens je FormState type
+    currentPageId: '1setupHousehold', // Startpagina (of '1setupHousehold' afhankelijk van je config)
+    isValid: false,      // Default op false zetten zodat validatie opnieuw draait
+    
+    data: {
+      setup: {
+        aantalMensen: oldData?.aantalMensen ?? 0,
+        aantalVolwassen: oldData?.aantalVolwassen ?? 0,
+      },
+      household: { 
+        members: [] 
+      },
+      finance: {},
+    },
+    meta: {
+      lastModified: new Date().toISOString(),
+      version: 1,
+    },
+  };
+
+  return newState;
 };
 
-// In-memory store voor de sessie
-let _transactions: TransactionInput[] = [];
+export const undoLastTransaction = async () => { 
+  console.log('Undo not implemented yet');
+};
 
 export const TransactionService = {
-  /**
-   * Slaat een transactie op in het geheugen.
-   * Straks eenvoudig uit te breiden naar AsyncStorage of SQLite.
-   */
-  _mockLocalSave: async (tx: TransactionInput): Promise<boolean> => {
-    try {
-      _transactions.push({
-        ...tx,
-        date: tx.date instanceof Date ? tx.date.toISOString() : tx.date
-      });
-      console.log(`[TransactionService] Saved: ${tx.amount} in ${tx.category}`);
-      return true;
-    } catch (error) {
-      console.error('[TransactionService] Save failed:', error);
-      return false;
-    }
-  },
-
-  /**
-   * Haalt alle opgeslagen transacties op.
-   */
-  getAllTransactions: async (): Promise<TransactionInput[]> => {
-    return [..._transactions];
-  },
-
-  /**
-   * Reset de store (handig voor testen of logout).
-   */
-  clearAll: () => {
-    _transactions = [];
-  }
-  
-};
-// Voeg dit onderaan je bestaande transactionService.ts toe:
-export const migrateToPhoenix = async () => {
-  console.log('Migration completed');
-  return true;
+  migrate: migrateTransactionsToPhoenix,
+  undo: undoLastTransaction,
 };

@@ -1,69 +1,61 @@
-import * as React from 'react';
+import { Member } from '../domain/household';
 
-export interface FieldOption {
+export interface FormFieldConfig {
+  fieldId: string;
+  id?: string; // Tijdelijk voor legacy support
   label: string;
-  value: any;
-}
-
-export interface FieldConfig {
-  id: string;
-  type: string;
-  label?: string;
+  type: 'text' | 'number' | 'select' | 'date' | 'counter' | 'repeater' | 'section' | 'collapsible-section';
   placeholder?: string;
   required?: boolean;
-  options?: FieldOption[];
-  defaultValue?: any;
-  // Phoenix Dynamische Logica
-  visibleIf?: (state: FormState, memberId?: string) => boolean;
-  valueGetter?: (state: FormState) => any;
-  maxGetter?: (state: FormState) => number;
-  countGetter?: (state: FormState) => number;
-  filter?: (state: FormState) => any[];
-  // Voor geneste velden (repeater/section)
-  fields?: FieldConfig[]; 
-  [key: string]: any; 
+  validation?: {
+    min?: number;
+    max?: number;
+    postcode?: boolean;
+    lengthEqualsTo?: string | number;
+    [key: string]: any;
+  };
+  visibleIf?: string | ((state: any) => boolean); 
+  condition?: string | ((state: any) => boolean);
+  dependentField?: any;
+  [key: string]: any; // Catch-all voor custom props in configs
 }
+
+export type FieldConfig = FormFieldConfig;
 
 export interface WizardPageConfig {
-  id: string;
+  pageId: string;
   title: string;
-  description?: string; // Voeg dit optionele veld toe
-  fields: any[];
+  description?: string;
+  componentName: string;
+  fields?: FormFieldConfig[];
 }
 
-// Alias voor jouw 'TempPageConfig' import
 export type TempPageConfig = WizardPageConfig;
 
 export interface FormState {
-  activeStep: string;
-  data: Record<string, any>;
-  setup?: Record<string, any>;
-  household?: {
-    adultsCount: number;
-    members: Member[]; // Gebruik de nieuwe Member interface
-    leden?: any[];
+  currentPageId: string;
+  activeStep: number | string; // Laat beide toe voor Navigator vs Wizard
+  data: {
+    setup: any;
+    household: {
+      members: Member[];
+      [key: string]: any;
+    };
+    finance: any;
   };
-  finance?: {
-    inkomsten: Record<string, any>;
-    uitgaven: Record<string, any>;
-  };
-  [key: string]: any;
+  // Legacy support (voor AdultsCounter.tsx en WizardPage.tsx)
+  setup?: any;
+  household?: any; 
+  isValid: boolean;
+  [key: string]: any; 
 }
 
 export type FormAction = 
-  | { type: 'UPDATE_FIELD'; payload: { fieldId: string; value: any } }
-  | { type: 'SYNC_MEMBERS'; payload: { count: number } }
-  | { type: 'SET_STEP'; payload: string }
-  | { type: string; payload?: any }; 
-
-export interface Member {
-  id: string;
-  naam?: string;
-  memberType: 'adult' | 'child';
-  [key: string]: any;
-}
-
-export type WoningType = 'huur' | 'koop' | 'anders';
-
-export type AutoCount = 'Nee' | 'Een' | 'Twee';
-
+  | { type: 'SET_PAGE'; pageId: string }
+  | { type: 'UPDATE_MEMBER'; index: number; member: Partial<Member> }
+  | { type: 'SET_VALUE'; payload: any }
+  | { type: 'SET_FIELD'; fieldId: string; value: any; payload?: any }
+  | { type: 'SET_MEMBER_VALUE'; index: number; field: string; value: any }
+  | { type: 'SYNC_MEMBERS'; payload: any }
+  | { type: 'RESET_APP' }
+  | { type: 'SYNC_HOUSEHOLD'; aantalMensen: number; aantalVolwassen: number };

@@ -10,7 +10,7 @@ export default function App() {
     return <View testID="splash-screen" />;
   }
 
-  if (status === 'UNBOARDING') {
+  if (status === 'ONBOARDING') {
     return <View testID="welcome-wizard" />;
   }
 

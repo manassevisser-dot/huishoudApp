@@ -1,37 +1,39 @@
-import { TempPageConfig, FormState, Member } from '@shared-types/form';
+
+import { TempPageConfig, FormState } from '@shared-types/form';
 
 export const incomeDetailsConfig: TempPageConfig = {
-  id: '3incomeDetails',
-  title: 'Inkomsten',
+  pageId: '3incomeDetails',
+  title: 'Inkomensdetails',
+  componentName: 'WizardPage',                         // ✅
   fields: [
     {
-      id: 'householdBenefits',
-      label: 'Toeslagen huishouden',
+      fieldId: 'inkomsten_section',                    // ✅ REQUIRED
+      pageId: 'inkomsten',
+      label: 'Inkomen',                                // ✅ REQUIRED
       type: 'section',
       fields: [
-        { id: 'huurtoeslag', label: 'Huurtoeslag', type: 'money' }
-      ]
+        { fieldId: 'werk_bedrag', pageId: 'bedrag', label: 'Inkomen uit werk (€/mnd)', type: 'money' },
+      ],
     },
     {
-      id: 'inkomstenLeden',
+      fieldId: 'leden_inkomen_repeater',               // ✅ REQUIRED
+      pageId: 'leden_inkomen',
+      label: 'Inkomen per lid',                        // ✅ REQUIRED
       type: 'repeater',
-      // Voeg expliciete types toe aan de parameters
-      filter: (state: FormState) => 
-        state.household?.leden?.filter((m: Member) => m.memberType === 'adult') || [],
+      filter: (state: FormState) => state.data?.household?.members ?? [],
       fields: [
         {
-          id: 'werkSectie',
-          type: 'collapsible-section',
-          label: 'Inkomen uit werk',
-          visibleIf: (state: FormState, memberId?: string) => 
-            memberId ? state.finance?.inkomsten?.[memberId]?.categories?.werk : false,
+          fieldId: 'lid_inkomen_section',
+          pageId: 'lid_inkomen',
+          type: 'section',
+          label: 'Inkomen lid',
+          visibleIf: (state: FormState, memberId?: string) => !!memberId,
           fields: [
-            { id: 'nettoSalaris', label: 'Netto salaris', type: 'money' },
-            { id: 'zorgtoeslag', label: 'Zorgtoeslag', type: 'money' },
-            { id: 'reiskosten', label: 'Reiskosten', type: 'money' }
-          ]
-        }
-      ]
-    }
+            { fieldId: 'lid_werk_bedrag', pageId: 'lid_werk_bedrag', label: 'Werk (€/mnd)', type: 'money' },
+            // ... andere velden per lid
+          ],
+        },
+      ],
+    },
   ],
 };

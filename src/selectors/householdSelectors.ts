@@ -1,41 +1,59 @@
-import { DATA_KEYS } from '@domain/constants/datakeys';
-import { FormState } from '@shared-types/form';
+import { createSelector } from 'reselect';
+import { FormState } from '../shared-types/form';
+import { getHouseholdStatus } from '../logic/householdLogic';
 
+/**
+ * CONSTANTEN
+ */
 export const HOUSEHOLD_STATUS = {
   SINGLE: 'SINGLE',
   PARTNERS: 'PARTNERS',
   SPECIAL: 'SPECIAL',
-};
+} as const;
 
 /**
- * Berekent de statistieken van het huishouden.
+ * BASE SELECTORS (Directe toegang tot de state)
  */
-export const selectHouseholdStats = (state: FormState) => {
-  const setupData = state[DATA_KEYS.SETUP] || {};
-  const adultCount = Number(setupData.aantalVolwassen || 0); // Gebruik 0 als fallback voor lege state
-
-  return {
-    adultCount,
-    // Deze boolean wordt gebruikt voor de test-check
-    isSpecial: adultCount > 5,
-  };
-};
+const selectMembers = (state: FormState) => state.data.household?.members || [];
+const selectSetupData = (state: FormState) => state.data.setup || {};
 
 /**
- * FIX: Deze moet 'true' of 'false' teruggeven voor de test WAI-003.
- * De status string ("SINGLE"/"SPECIAL") kun je beter in een aparte selector zetten.
+ * LOGIC SELECTORS
  */
-export const selectIsSpecialStatus = (state: FormState): boolean => {
-  const { adultCount } = selectHouseholdStats(state);
-  return adultCount > 5;
-};
+
+// 1. Statistieken op basis van de setup (voorheen index ['setup'])
+export const selectHouseholdStats = createSelector(
+  [selectSetupData],
+  (setupData) => {
+    const adultCount = Number(setupData.aantalVolwassen || 0);
+    return {
+      adultCount,
+      isSpecial: adultCount > 5,
+    };
+  }
+);
+
+// 2. Boolean check voor specifieke business rules (bijv. test WAI-003)
+export const selectIsSpecialStatus = createSelector(
+  [selectHouseholdStats],
+  (stats) => stats.isSpecial
+);
+
+// 3. Status van data-integriteit (gebruikt de functie uit de Logic laag)
+export const selectHouseholdDataIntegrityStatus = createSelector(
+  [selectMembers],
+  (members) => getHouseholdStatus(members)
+);
 
 /**
- * Nieuwe selector voor de UI-status (de string-versie)
+ * UI STATUS SELECTOR
+ * Combineert de telling met de status-labels
  */
-export const selectHouseholdStatusType = (state: FormState) => {
-  const { adultCount } = selectHouseholdStats(state);
-  if (adultCount > 5) return HOUSEHOLD_STATUS.SPECIAL;
-  if (adultCount === 2) return HOUSEHOLD_STATUS.PARTNERS;
-  return HOUSEHOLD_STATUS.SINGLE;
-};
+export const selectHouseholdTypeLabel = createSelector(
+  [selectHouseholdStats],
+  (stats) => {
+    if (stats.isSpecial) return HOUSEHOLD_STATUS.SPECIAL;
+    if (stats.adultCount === 2) return HOUSEHOLD_STATUS.PARTNERS;
+    return HOUSEHOLD_STATUS.SINGLE;
+  }
+);

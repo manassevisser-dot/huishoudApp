@@ -2,9 +2,9 @@ import * as React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useForm } from '../../../app/context/FormContext';
 import { useAppStyles } from '../../styles/useAppStyles';
-import FormField from '../../components/fields/FormField';
+import  FormField  from '../../components/fields/FormField';
 import { Logger } from '../../../services/logger';
-import { Strings } from '../../../utils/strings';
+import { WizStrings } from 'src/config/Strings'
 
 interface WizardPageProps {
   config: any;
@@ -42,11 +42,11 @@ export const WizardPage: React.FC<WizardPageProps> = ({
       <ScrollView style={styles.container}>
         {config.fields.map((field: any) => (
           <FormField
-            key={field.id}
+            key={field.fieldId}
             field={field}
             state={state}
             dispatch={dispatch}
-            value={state[field.id] ?? state.setup?.[field.id]} 
+            value={state[field.fieldId] ?? state.setup?.[field.fieldId]} 
           />
         ))}
       </ScrollView>
@@ -54,17 +54,17 @@ export const WizardPage: React.FC<WizardPageProps> = ({
       {/* GEFIXED: Geen inline style meer, maar gebruik maken van layout styles uit je tokens */}
       <View style={styles.buttonContainer}>
         {!isFirst && (
-          <TouchableOpacity onPress={onBack} style={styles.buttonSecondary}>
-            <Text style={styles.buttonText}>{Strings.wizard.back}</Text>
+          <TouchableOpacity onPress={onBack} style={styles.secondaryButton}>
+            <Text style={styles.buttonText}>{WizStrings.wizard.back}</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity 
           onPress={onNext} 
           style={styles.button}
-          accessibilityLabel={isLast ? Strings.wizard.finish : Strings.wizard.next}
+          accessibilityLabel={isLast ? WizStrings.wizard.finish : WizStrings.wizard.next}
         >
           <Text style={styles.buttonText}>
-            {isLast ? Strings.wizard.finish : Strings.wizard.next}
+            {isLast ? WizStrings.wizard.finish : WizStrings.wizard.next}
           </Text>
         </TouchableOpacity>
       </View>

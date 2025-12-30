@@ -1,15 +1,31 @@
-import { FormState } from '../shared-types/form';
 
-export const computePhoenixSummary = (state: any) => {
-  const income = state.income?.items || [];
-  const expenses = state.expenses?.items || [];
+const multipliers = {
+  month: 1,
+  quarter: 1 / 3,
+  year: 1 / 12,
+  week: 52 / 12,   // ≈ 4.3333
+  '4wk': 13 / 12,  // ≈ 1.0833
+} as const;
 
-  const totalIncomeCents = income.reduce((sum: number, i: any) => sum + (Number(i.amountCents) || 0), 0);
-  const totalExpensesCents = expenses.reduce((sum: number, e: any) => sum + (Number(e.amountCents) || 0), 0);
+const toMonthly = (amountCents: number, frequency?: string) => {
+  const factor = multipliers[frequency as keyof typeof multipliers] ?? 1;
+  // houd centen integer
+  return Math.round(amountCents * factor);
+};
 
-  return {
-    totalIncomeCents,
-    totalExpensesCents,
-    netCents: totalIncomeCents - totalExpensesCents
-  };
+export const computePhoenixSummary = (financeData: any) => {
+  const incomeItems = financeData?.income?.items ?? [];
+  const expenseItems = financeData?.expenses?.items ?? [];
+
+  const totalIncomeCents = incomeItems.reduce((acc: number, item: any) => {
+    return acc + toMonthly(Number(item?.amountCents ?? 0), item?.frequency);
+  }, 0);
+
+  const totalExpensesCents = expenseItems.reduce((acc: number, item: any) => {
+    return acc + toMonthly(Number(item?.amountCents ?? 0), item?.frequency);
+  }, 0);
+
+  const netCents = totalIncomeCents - totalExpensesCents;
+
+  return { totalIncomeCents, totalExpensesCents, netCents };
 };

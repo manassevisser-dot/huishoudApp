@@ -7,7 +7,7 @@ import { FormState } from '../shared-types/form';
  */
 export const createMockState = (overrides: Partial<FormState> = {}) => {
   const baseState = {
-    schemaVersion: '1.0.0',
+    schemaVersion: '1.0',
     isSpecialStatus: false,
     [DATA_KEYS.SETUP]: { 
       aantalMensen: 1, 

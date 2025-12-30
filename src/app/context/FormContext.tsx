@@ -9,8 +9,13 @@ export const FormContext = React.createContext<{
 } | undefined>(undefined);
 
 export const initialFormState: FormState = {
-  activeStep: 'landing',
-  data: {},
+  activeStep: 'LANDING',
+  currentPageId: 'start',
+  isValid: false,
+  data: {
+    setup: {},
+    household: { members: [] },
+    finance: { income: { items: [] }, expenses: { items: [] } },},
 };
 
 // Gebruik React.ReactNode (met de prefix!) om import-fouten te omzeilen

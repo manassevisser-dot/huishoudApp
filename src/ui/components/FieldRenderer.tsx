@@ -19,17 +19,19 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({
     <>
       {fields.map((field) => {
         // View logic: check visibility
-        if (field.visibleIf && !field.visibleIf(state)) {
-          return null;
-        }
+        const isVisible = typeof field.visibleIf === 'function' 
+  ? field.visibleIf(state) 
+  : field.visibleIf 
+    ? !!state.data.setup[field.visibleIf] // Als het een string is, check of die waarde bestaat
+    : true;
 
         return (
           <FormField
-            key={`${pageId || 'field'}-${field.id}`}
+            key={`${pageId || 'field'}-${field.fieldId}`}
             field={field}
             state={state}
             dispatch={dispatch}
-            value={state[field.id]}
+            value={state[field.fieldId]}
           />
         );
       })}

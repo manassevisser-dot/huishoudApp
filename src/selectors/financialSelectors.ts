@@ -1,11 +1,13 @@
+
+// src/selectors/financialSelectors.ts
 import { computePhoenixSummary } from '../logic/finance';
 import { toCents } from '../utils/numbers';
 import { FormState } from '../shared-types/form';
-import { Logger } from '../services/logger';
+import Logger from '../services/logger'; // ✅ default import, consistent met mock
 
 export function selectFinancialSummaryVM(state: FormState) {
   const summary = computePhoenixSummary(state);
-  Logger.info('Financial VM generated');
+  Logger.info?.('Financial VM generated');
 
   return {
     totals: {

@@ -48,7 +48,7 @@ const CsvUploadScreen: React.FC<Props> = ({ onClose }) => {
               // Mock: Add to local storage
               for (const row of rows) {
                 if (row.date && row.amount) {
-                  await TransactionService._mockLocalSave({
+                  await (TransactionService as any)._mockLocalSave({
                     date: row.date,
                     amount: row.amount,
                     category: 'Overig',

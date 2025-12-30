@@ -7,11 +7,11 @@ export const UndoScreen: React.FC = () => {
 
   React.useEffect(() => {
     // Gebruik de nieuwe method name
-    TransactionService.getAllTransactions().then(setItems);
+    (TransactionService as any).getAllTransactions().then(setItems);
   }, []);
 
   const handleClearAll = () => {
-    TransactionService.clearAll();
+    (TransactionService as any).clearAll();
     setItems([]);
   };
 

@@ -1,9 +1,7 @@
+// src/ui/components/fields/FormField.tsx
 import * as React from 'react';
 import { View } from 'react-native';
-import { FieldConfig, FormState, FormAction } from '@shared-types/form';
-// Importeer hier je werkelijke componenten
-// import CounterField from './CounterField';
-// import TextInputField from './TextInputField';
+import { FieldConfig, FormState, FormAction } from '../../../shared-types/form';
 
 export interface FormFieldProps {
   field: FieldConfig;
@@ -13,24 +11,42 @@ export interface FormFieldProps {
 }
 
 const FormField: React.FC<FormFieldProps> = ({ field, state, dispatch, value }) => {
-  // Handige helper om waarde updates te sturen
+  
+  /**
+   * Onze reducer verwacht het Phoenix-contract:
+   * Directe properties op de action, geen geneste payload.
+   */
   const handleChange = (newValue: any) => {
     dispatch({
       type: 'SET_FIELD',
-      payload: { path: field.id, value: newValue }
+      fieldId: field.fieldId, // Directe property
+      value: newValue,        // Directe property
     });
   };
 
   // Render logica op basis van field.type
   switch (field.type) {
     case 'counter':
+      // Hier komt straks je CounterField component:
       // return <CounterField field={field} value={value} onChange={handleChange} />;
-      return null; 
+      return null;
+
     case 'text':
+      // Hier komt straks je TextInputField component:
       // return <TextInputField field={field} value={value} onChange={handleChange} />;
       return null;
-    default:
+
+    case 'section':
+    case 'collapsible-section':
+    case 'repeater':
+      // Deze worden meestal door de PageRenderer of een Parent afgehandeld,
+      // maar we vangen ze hier op om fouten te voorkomen.
       return null;
+
+    default:
+      // Onbekend veldtype of placeholder
+      console.warn(`Veldtype "${field.type}" wordt (nog) niet ondersteund in FormField.`);
+      return <View />;
   }
 };
 

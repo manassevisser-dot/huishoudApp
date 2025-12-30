@@ -1,46 +1,48 @@
-import { TempPageConfig, FormState} from '@shared-types/form';
+
+import { TempPageConfig, FormState } from '@shared-types/form';
 
 export const fixedExpensesConfig: TempPageConfig = {
-  id: '4fixedExpenses',
+  pageId: '4fixedExpenses',
   title: 'Vaste Lasten',
+  componentName: 'WizardPage',                              // ✅ REQUIRED door WizardPageConfig
   fields: [
     {
-      id: 'wonen',
+      fieldId: 'wonen_section',
+      pageId: 'wonen',
       label: 'Wonen',
       type: 'section',
       fields: [
-        { id: 'bedrag', label: 'Huur / Hypotheek (€/mnd)', type: 'money' }
-      ]
+        { fieldId: 'wonen_bedrag', pageId: 'bedrag', label: 'Huur / Hypotheek (€/mnd)', type: 'money' },
+      ],
     },
-    // Dynamische Sectie: Auto's (Alleen als op pagina 1 auto's zijn gekozen)
     {
-      id: 'vervoer',
+      fieldId: 'vervoer_repeater',
+      pageId: 'vervoer',
       label: 'Vervoer (Auto)',
       type: 'repeater',
-      // We gebruiken hier het getal dat de gebruiker eerder koos (bijv. 2 auto's)
       countGetter: (state: FormState) => {
-        const val = state.setup?.autoCount; // 'Eén' of 'Twee'
+        const val = state.data?.setup?.autoCount;
         if (val === 'Een') return 1;
         if (val === 'Twee') return 2;
         return 0;
       },
-      visibleIf: (state: FormState) => state.setup?.autoCount !== 'Nee',
+      visibleIf: (state: FormState) => state.data?.setup?.autoCount !== 'Nee',
       fields: [
-        { id: 'vast', label: 'Verzekering + Belasting', type: 'money' },
-        { id: 'brandstof', label: 'Brandstof / Laden', type: 'money' }
-      ]
+        { fieldId: 'vervoer_vast', pageId: 'vast', label: 'Verzekering + Belasting', type: 'money' },
+        { fieldId: 'vervoer_brandstof', pageId: 'brandstof', label: 'Brandstof / Laden', type: 'money' },
+      ],
     },
-    // Collapsible Sectie: Streaming (Jouw STREAMING_KEYS lijst)
     {
-      id: 'abonnementen',
+      fieldId: 'abonnementen_section',
+      pageId: 'abonnementen',
       label: 'Streaming & Abonnementen',
       type: 'collapsible-section',
       fields: [
-        { id: 'netflix', label: 'Netflix', type: 'money' },
-        { id: 'videoland', label: 'Videoland', type: 'money' },
-        { id: 'hbo', label: 'HBO Max', type: 'money' },
-        { id: 'disneyPlus', label: 'Disney+', type: 'money' }
-      ]
-    }
+        { fieldId: 'netflix',     pageId: 'netflix',     label: 'Netflix',     type: 'money' },
+        { fieldId: 'videoland',   pageId: 'videoland',   label: 'Videoland',   type: 'money' },
+        { fieldId: 'hbo',         pageId: 'hbo',         label: 'HBO Max',     type: 'money' },
+        { fieldId: 'disneyPlus',  pageId: 'disneyPlus',  label: 'Disney+',     type: 'money' },
+      ],
+    },
   ],
 };

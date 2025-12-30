@@ -1,0 +1,960 @@
+ '#00000033',	30:      backgroundColor
+ '#000000',	53:    shadow
+ '#000000',	78:    shadow
+ '#000',	9:    shadowColor
+ '#007AFF',	41:    primary
+ '#007AFF',	51:    selected
+ 0.1,	11:    shadowOpacity
+ 0.1,                     // was	21:    shadowOpacity
+ 0,	27:      bottom
+ 0,	28:      left
+ 0,	29:      borderBottomWidth
+ 0,	29:      right
+ 0,	55:      marginLeft
+ 0,	65:    borderBottomWidth
+ 0,	8:  activeStep
+ 0,	98:  paddingVertical
+ '#0F172A',	57:    background
+ '#0F172A',	63:    inverseText
+ '#0F172A',	67:    onPrimary
+ '#0F172A',	73:    onWarning
+ '#0F172A',	75:    onSuccess
+ '#0F172A',	77:    onSelected
+ '1.0.0',	10:    schemaVersion
+ '100%',	95:  height
+ '1.0',	16:      schemaVersion
+ 10,	21:  padding
+ 10,	24:          maxLength
+ '1.0',	25:      schemaVersion
+ {	102:inputMoneyRow
+ '1.0',	6:      schemaVersion
+ '1.0',	6:    schemaVersion
+ [	10:        leden
+ '1.0-phoenix-export',	12:    version
+ {},	10:    setup
+ 1,	105:  borderWidth
+ 1, 	13:      aantalMensen
+ {	113:helperText
+ 1 	14:      aantalVolwassen
+ 1	14:      weekNumber
+ {	118:  moneyInputWrapper
+ 1,	19:      borderWidth
+ 1,	19:  borderWidth
+ {	11:  common
+ [	11:      fields
+ {	11:    household
+ {	11:    totals
+ 12,	22:      right
+ 12,	24:          padding
+ 12,	29:      left
+ 1,	22:      borderBottomWidth
+ 1,	22:          borderWidth
+ 12,	31:    borderRadius
+ 12,	34:      borderRadius
+ 1,	23:      defaultValue
+ 1,	24:      min
+ [],	12:      members
+ 12, sm	2:export const Type = { xs
+ {	12:    summarySection
+ {	12:    toggleButton
+ 1,	30:      borderBottomWidth
+ 1,	30:      flexGrow
+ 1,	31:      defaultValue
+ 1,	32:      min
+ 1,	34:      borderTopWidth
+ 1,	38:      borderWidth
+ 1,	39:      flex
+ {	13:      alertErrorText
+ {	13:    chip
+ {},	13:  data
+ 14,	41:  padding
+ 1,	44:  borderWidth
+ 14,	62:  paddingHorizontal
+ 14,	71:  paddingVertical
+ {},	14:    finance
+ {	14:    ios
+ 1,	58:    borderBottomWidth
+ {	15: label
+ {	15:  logger
+ {	15:  paths
+ 1,	60:  borderWidth
+ 1,	69:      borderTopWidth
+ {	16:    checkboxSelected
+ 1,	70:  flex
+ 1,	74:      flex
+ [], 	17:      leden
+ 1,	80:  borderWidth
+ 18,	26:          fontSize
+ 18,	43:    fontSize
+ 1,	85:      flex
+ [	18:  fields
+ {	18:    household
+ {	18:  ios
+ {	18:    summaryRow
+ 1,	94:  flex
+ {	19:    hintOverlayBottomRight
+ 1, borderColor	120:  borderWidth
+ '#1C1C1E',	35:    textPrimary
+ '#1C1C1E',	44:    onSecondary
+ '#1E293B',	58:    surface
+ '#1E293B',	59:    inputBackground
+ '#1E293B',	65:    borderSubtle
+ '#1E293B',        // ← zelfde als surface	79:    card
+ '1setupHousehold',	16:  pageId
+ '2025-01-01',	10:      date
+ 20,	25:      max
+ {	20:      alertWarningText
+ {	20:      Storage
+ 2,	12:      borderWidth
+ 2,	13:    elevation
+ {},	21:    default
+ [	21:      fields
+ {},	21:      inkomsten
+ 22,	38:    paddingBottom
+ {	22:errorTextStyle
+ {},	22:      householdBenefits
+ 2,	32:      borderTopWidth
+ 2,	33:      paddingVertical
+ {	23:    income
+ 2,	44:    minimumFractionDigits
+ 2,	45:    maximumFractionDigits
+ {	24:    dashboardCard
+ {	24:    headerBar
+ [	24:      items
+ {	25:     buttonContainer
+ {},	25:  default
+ {	25:    summaryRowTotal
+ 2,	68:    borderTopWidth
+ {	26:    cardBadge
+ () => {	26:    stopTimer
+ {	27:    finances
+ [],	27:      vervoer
+ {}	28:      abonnementen
+ {	28:    expenses
+ [	28:          fields
+ [	28:      fields
+ {	28:  flags
+ {	28:    gridItem
+ {	28:      warningTextOrange
+ {	29:  card
+ [	29:      items
+ '2detailsHousehold',	4:  pageId
+ {	2:  wizard
+ '30%',	29:      width
+ '#30D158',	74:    success
+ {	30:  data
+ {	30:fieldLabel
+ [	30:          options
+ {	31:        data
+ {	31:  light
+ {	32:    household
+ '#334155',	64:    border
+ '#334155',	68:    secondary
+ '#34C759',	49:    success
+ {	34:      warningTextRed
+ {	36:  cardSwipe
+ '#38BDF8',	66:    primary
+ '#38BDF8',	76:    selected
+ {	38:    button
+ [	38:      fields
+ {	38:input
+ '3incomeDetails',	4:  pageId
+ {	40:    helperText
+ 4,	11:      borderRadius
+ 4,	12:    shadowRadius
+ {	41:        data
+ 42.50,	11:      amount
+ {	42:  sectionTitle
+ {	47:    buttonText
+ {	47:    debugBox
+ 48,	110:  height
+ 48,	85:  height
+ 48, checkbox	4:export const Sizes = { inputHeight
+ {	48:errorText
+ {	48:  summarySection
+ '4fixedExpenses',	4:  pageId
+ 4, sm	1:export const Space = { xs
+ 4, sm	3:export const Radius = { xs
+ 4,                        // was	22:    shadowRadius
+ 5,	34:      margin
+ {	53:    debugText
+ {	53:    secondaryButton
+ {	54:  summaryRow
+ {	55:numericWrapper
+ {	56:  dark
+ {	57:        data
+ [	57:      options
+ {	58:    secondaryButtonText
+ '600',	17:  fontWeight
+ '600',	18:        fontWeight
+ '600',	32:  fontWeight
+ '600',	39:        fontWeight
+ '600',	61:      fontWeight
+ '600',	89:  fontWeight
+ {	61:  summaryRowTotal
+ 6,	21:      bottom
+ '#64748B',	62:    textTertiary
+ {	64:    buttonRow
+ {	64:currencyPrefix
+ 6,	50:      borderRadius
+ {	69:numericInput
+ '#6E6E73',	36:    textSecondary
+ [	6:  fields
+ {	6:  StyleSheet
+ '700',	10:      fontWeight
+ '700',	25:            fontWeight
+ '700',	39:            fontWeight
+ '700',	44:    fontWeight
+ '700',	50:      fontWeight
+ {	73:        data
+ {	73:    primary
+ {	77:moneyRow
+ {	7:  dashboard
+ [	7:  fields
+ 80,	16:      minWidth
+ 8,	107:  borderRadius
+ 8,	15:      borderRadius
+ 8,	22:  borderRadius
+ 8,	25:          borderRadius
+ 8,	28:      top
+ {	84:        data
+ {	84:    secondary
+ {	86:          setup
+ {	87:moneyPrefix
+ {	8:    checkbox
+ '#8E8E93',	37:    textTertiary
+ {	8:    pageTitle
+ {	8:  sm
+ {	8:    toggleWrapper
+ {	93:moneyTextInput
+ '#94A3B8',	61:    textSecondary
+ {	97:        data
+ {	9:  data
+ {	9:  default
+ {	9:    navigationHint
+ {	9:  Platform
+ 'aantalMensen',	20:  pageId
+ { aantalVolwassen	15:    setup
+ 'aantalVolwassen',	28:  pageId
+ 'Aantal volwassenen (M)',	29:      label
+ 'abonnementen',	35:  pageId
+ 'absolute',	20:      position
+ 'absolute',	26:      position
+ 'absolute',	27:      position
+ "💡 Actie	37:    REMEDY_BABEL
+ action.aantalMensen,	88:            aantalMensen
+ action.aantalVolwassen,	89:            aantalVolwassen
+ action.pageId,	24:        currentPageId
+ 'adult' | 'child';	4:  memberType
+ adultCount > 5,	31:      isSpecial
+ { adultsCount	16:    household
+ 'Afronden',	5:    finish
+ "✨ Alle imports zijn al correct geformatteerd.",	70:    IMPORTS_CLEAN
+ "🦴 Alles veilig	32:    GUARD_SAFE
+ amt,	57:        amount
+ any;	10:  config
+ any;	12:  value
+ any) => { /* ... */ };	1:export const migrateTransactionsToPhoenix = async (data
+ any) => {	2:export const evaluateRules = (data
+ any) => {	3:export const computePhoenixSummary = (state
+ any) => {	3:export const useAppOrchestration = (loadState
+ any)	4:export const migrateToPhoenix = (oldState
+ any;	7:  data
+ any[];	8:  fields
+ any;      // Hersteld	31:    setup
+ any;    // Hersteld	37:    finance
+ any, state	3:export const evaluateConditions = (condition
+ async () => {	44:            onPress
+ 'autoCount',	54:  pageId
+ "❌ Babel Preset missing	43:    ERR_BABEL_PRESET
+ { backgroundColor	19:    toggleActive
+ { backgroundColor	20:    toggleInactive
+ { backgroundColor	22:    chipSelected
+ { backgroundColor	41:    gridItemSelected
+ { backgroundColor	96:    buttonActive
+ { bedrag	26:      wonen
+ 'Bijv. Jan de Vries', // Uit jouw oude code [cite	16:          placeholder
+ 'Boodschappen',	12:      category
+ boolean;	13:  isFirst
+ boolean;	14:  isLast
+ boolean;	19:  enabled
+ boolean;	33:  geen
+ boolean;	34:  werk
+ boolean;	35:  uitkering
+ boolean;	36:  anders
+ boolean;	39:  isValid
+ boolean;	63:  hasVermogen
+ boolean;	6:  value
+ boolean;	7:  selected
+ { borderColor	23:    chipError
+ { borderColor	47:inputError
+ (branch, tag) => `✅ Done. Branch	59:    COMMIT_DONE
+ c.background,	32:      backgroundColor
+ c.background,	33:      backgroundColor
+ c.background,	68:      backgroundColor
+ c.border,	106:  borderColor
+ c.border,	13:      borderColor
+ c.border,	20:      borderColor
+ c.border,	31:      borderBottomColor
+ c.border,	33:      borderTopColor
+ c.border,	35:      borderTopColor
+ c.border,	39:      borderColor
+ c.border,	45:  borderColor
+ c.border,	61:  borderColor
+ c.border,	69:    borderTopColor
+ c.border,	70:      borderTopColor
+ c.border,	81:  borderColor
+ c.borderSubtle,	23:      borderBottomColor
+ c.borderSubtle,	59:    borderBottomColor
+ '#ccc',	20:  borderColor
+ 'center',	104:  alignItems
+ 'center',	17:      alignItems
+ 'center',	26:      alignItems
+ 'center',	32:                alignItems
+ 'center',	36:      alignItems
+ 'center',	37:      justifyContent
+ 'center',	43:      alignItems
+ 'center',	50:                alignItems
+ 'center',	57:  alignItems
+ 'center',	78:      alignItems
+ 'center',	79:  alignItems
+ 'center',	89:      alignItems
+ (cents	8:  onValueChange
+ c.error,	14:        color
+ c.error,	23:  color
+ c.error,	35:        color
+ c.error,	49:  color
+ { children	15:export const WizardProvider = ({ children }
+ c.inputBackground,	109:  backgroundColor
+ c.inputBackground,	39:  backgroundColor
+ c.inputBackground,	58:  backgroundColor
+ c.inputBackground,	84:  backgroundColor
+ "• Cleaning artifacts",	48:    CLEAN_ARTIFACTS
+ "🧹 Cleanup, prepare & commit",	47:    COMMIT_START
+ { clearAll	84:      Storage
+ "• Clearing Expo cache",	51:    CLEAN_EXPO
+ (cmd) => `[DRY-RUN] Overslaan	21:    STEP_SKIP
+ 'collapsible-section',	24:          type
+ 'collapsible-section',	37:      type
+ { color	21:labelError
+ { color	25:    chipTextSelected
+ { color	36:fieldLabelError
+ { color	43:    gridItemTextSelected
+ { color	82:    primaryText
+ { color	92:    secondaryText
+ { color	97:    buttonTextActive
+ ColorScheme) {	10:export function makeChips(c
+ ColorScheme) {	10:export function makeLayout(c
+ ColorScheme) {	10:export function makeSummary(c
+ ColorScheme) {	11:export function makeAlerts(c
+ ColorScheme) {	11:export function makeButtons(c
+ ColorScheme) {	11:export function makeDashboard(c
+ ColorScheme) {	11:export function makeForms(c
+ ColorScheme) {	11:export function makeHeader(c
+ ColorScheme) {	15:export function makeCards(c
+ ColorScheme) {	6:export function makeCheckboxes(c
+ ColorScheme) {	6:export function makeHelpers(c
+ ColorScheme) {	6:export function makeToggles(c
+ ColorScheme) {	6:export function makeTypography(c
+ colors.error, // semantisch i.p.v. 'red'	38:            color
+ colors.success, // semantisch i.p.v. 'green'	24:            color
+ "🚨 COMMIT AFGEKEURD	31:    GUARD_CRITICAL
+ "Configuratie backup succesvol beveiligd",	64:    CONFIG_BACKUP_SUCCESS
+ "Configuratie backup succesvol beveiligd",	66:    CONFIG_BACKUP_SUCCESS
+ c.onPrimary,	48:      color
+ c.onSecondary,	59:      color
+ "🧪 Controleren van Babel presets...",	35:    PRESET_CHECK
+ 'counter',	22:      type
+ 'counter',	30:      type
+ (count) => `🛠️  Succesvol ${count} imports hersteld naar aliassen!`,	71:    IMPORTS_FIXED
+ c.primary,	17:      borderColor
+ c.primary,	18:      backgroundColor
+ c.primary,	40:      backgroundColor
+ c.primary,	75:      backgroundColor
+ "❌ CRITICAl	36:    ERR_BABEL_PRESET
+ c.secondary,	14:      backgroundColor
+ c.secondary,	48:      backgroundColor
+ c.secondary,	54:      backgroundColor
+ c.secondary,	86:      backgroundColor
+ c.shadow,	15:      shadowColor
+ c.shadow,	19:    shadowColor
+ c.surface,	13:      backgroundColor
+ c.surface,	14:      backgroundColor
+ c.surface,	25:      backgroundColor
+ c.surface,	30:    backgroundColor
+ c.surface,	31:      backgroundColor
+ c.surface,	49:    backgroundColor
+ c.textPrimary,	12:      color
+ c.textPrimary,	18:  color
+ c.textPrimary,	33:  color
+ c.textPrimary,	43:  color
+ c.textPrimary,	46:    color
+ c.textPrimary,	73:  color
+ c.textPrimary,	97:  color
+ c.textSecondary,	115:  color
+ c.textSecondary,	42:      color
+ c.textSecondary,	55:      color
+ c.textSecondary,	90:  color
+ c.textTertiary,	11:      color
+ c.textTertiary,	66:  color
+ 'currency',	54:    style
+ currentAdults[i].fieldId || makeFieldId(i) 	42:        fieldId
+ currentChildren[i].fieldId || makeFieldId(globalIdx) 	57:        fieldId
+ c.warning,	21:        color
+ c.warning,	29:        color
+ '#D1D1D6',	39:    border
+ 'Dashboard',	8:    title
+ Date {	106:export function todayUtcNoon()
+ Date)	112:export function toISOFromUTC(dateUtc
+ Date)	120:export function getAdultMaxISO(base?
+ Date)	128:export function getChildMinISO(base?
+ Date)	137:export function getChildMaxISO(base?
+ Date)	74:export function formatDateISO(date
+ Date)	82:export function getISOWeek(date
+ dateCol >= 0 ? cols[dateCol] 	56:        date
+ (date) => `Gegenereerd op	76:    KEYS_INDEX_GEN
+ 'date-input', // Triggert jouw DateField + useDobInput	22:          type
+ Date.now(),	8:    timestamp
+ 'dateOfBirth',	20:  pageId
+ Date | string,	25:  input
+ 'DD-MM-YYYY',	23:          placeholder
+ 'dd-mm-yyyy' | 'weekday' | 'short' | 'full' = 'dd-mm-yyyy',	26:  formatType
+ "✅ Deduplicatie succesvol afgerond.",	5:    DEDUP_OK
+ "⚠️ Dedup script niet gevonden of doelmap ontbreekt (skip)",	6:    DEDUP_SKIP
+ 'derived-label',	40:      type
+ "Dry-run voltooid	63:    DRY_RUN_COMPLETE
+ '#E5E5EA',	43:    secondary
+ { elevation	20:    android
+ { elevation	24:  android
+ 'Er is een fout opgetreden',	13:    error
+ error ? 'red' 	23:          borderColor
+ 'EUR',	55:    currency
+ 'expenses',   // Vroeger C10	7:    EXPENSES
+ '#F2F2F7',	32:    background
+ '#F2F2F7',	40:    borderSubtle
+ '#F8FAFC',	60:    textPrimary
+ '#F8FAFC',	69:    onSecondary
+ false,	11:    isSpecialStatus
+ false,	16:  isValid
+ false,	68:      defaultValue
+ '#FF3B30',	45:    error
+ '#FF453A',	70:    error
+ '#FF9500',	47:    warning
+ '#FF9F0A',	72:    warning
+ '#fff',	31:      color
+ '#FFFFFF',	33:    surface
+ '#FFFFFF',	34:    inputBackground
+ '#FFFFFF',	38:    inverseText
+ '#FFFFFF',	42:    onPrimary
+ '#FFFFFF',	46:    onError
+ '#FFFFFF',	48:    onWarning
+ '#FFFFFF',	50:    onSuccess
+ '#FFFFFF',	52:    onSelected
+ '#FFFFFF',	71:    onError
+ '#FFFFFF',        // ← zelfde als surface	54:    card
+ FieldConfig[];	6:  fields
+ FieldConfig;	9:  field
+ FieldConfig, value	5:export const validateField = (field
+ (file, size) => `Bestand ${file} is ${size} bytes groot.`,	40:    FILE_INFO
+ (file, size, max) => `❌ FAIL	30:    GUARD_FAIL
+ (file, size) => `✅ PASS	29:    GUARD_PASS
+ 'finance',     // Vroeger C7	6:    FINANCE
+ { flex	126:textInput
+ { flex	12:    container
+ { flex	13:    pageContainer
+ { flexDirection	12:    chipContainer
+ { flexDirection	27:    gridContainer
+ { flexDirection	95:    buttonGroup
+ 'flex-start',	10:      justifyContent
+ { fontSize	124:currencySymbol
+ { fontSize	21:    toggleText
+ { fontSize	24:    chipText
+ { fontSize	31:    dashboardLabel
+ { fontSize	32:    dashboardKPI
+ { fontSize	33:    dashboardMessage
+ { fontSize	35:    headerTitle
+ { fontSize	35:    summaryLabel
+ { fontSize	36:    summaryLabelBold
+ { fontSize	37:    headerButtonText
+ { fontSize	37:    summaryValue
+ { fontSize	38:    summaryValueBold
+ { fontSize	39:    summaryDetail
+ { fontSize	42:    gridItemText
+ FormState;	10:  state
+ FormState = {	11:export const initialFormState
+ FormState = {	6:export const initialState
+ FormState) {	6:export function selectFinancialSummaryVM(state
+ FormState;	7:  state
+ FormState;	8:  state
+ FormState, action	19:export function formReducer(state
+ FormStateV1) => {	7:export const aggregateExportData = (state
+ "❌ FOUT	10:    AUDIT_NOT_FOUND
+ "❌ Fout	11:    AUDIT_SUMMARY_FAIL
+ Frequency | string)	12:export const getMonthlyFactor = (freq?
+ 'Geboortedatum',	21:          label
+ 'gender',	27:  pageId
+ { ...generic, ...sync, ...audit },	19:    TEXT
+ 'Geslacht',	28:          label
+ getISOWeek(new Date(row.date)),	56:                    weekNumber
+ "• Git add",	54:    GIT_ADD
+ "• Git push",	58:    GIT_PUSH
+ "🐕 Guard Dog	28:    GUARD_CHECK
+ { hasVermogen	23:      vermogen
+ 'heeftHuisdieren',	65:  pageId
+ 'hidden',	36:      overflow
+ 'Hoeveel auto\'s heeft het huishouden?',	55:      label
+ 'householdBenefits',	8:  pageId
+ 'household', // Vroeger C4	5:    HOUSEHOLD
+ ['http	26:  reservedPrefixes
+ 'Huishouden opzetten',	17:  title
+ 'Huur' 	18:      woning
+ IncomeCategories;	41:  categories
+ (index	10:  setPageIndex
+ 'Inkomen uit werk',	25:          label
+ { inkomsten	17:    finance
+ 'Inkomsten',	5:  title
+ 'inkomstenLeden',	16:  pageId
+ (iso	10:  onChangeISO
+ "ℹ️  Statistiek	12:    AUDIT_STAT_HOUSEHOLD
+ 'italic',	15:      fontStyle
+ { items	17:      C7
+ { items	7:      C7
+ { items	8:      C10
+ jest.fn(),	10:    info
+ jest.fn(),	11:    error
+ jest.fn(),	12:    warn
+ jest.fn(),	13:    log
+ jest.fn()	16:     info
+ jest.fn(async () => ({ schemaVersion	21:        loadState
+ (key) => transports.error(logger.TEXT[key] || key),	34:    error
+ (key) => transports.info(logger.TEXT[key] || key),	31:    info
+ (key) => transports.ok(logger.TEXT[key] || key),	32:    ok
+ (key) => transports.warn(logger.TEXT[key] || key),	33:    warn
+ 'kinderenLabel',	38:  pageId
+ "Kritiek	62:    FILE_TOO_LARGE
+ "Kritieke fout	67:    CONFIG_BACKUP_FAIL
+ 'Laden...',	12:    loading
+ 'landing',	12:  activeStep
+ 'leden', // Dit matcht met de key in state.household.leden [cite	9:  pageId
+ (level	5:  log
+ () => { logger._startTime = Date.now(); },	25:    startTimer
+ makeFieldId(idx),	26:    fieldId
+ makeId('m', idx),	25:    entityId
+ { marginBottom	15:    inputContainer
+ { marginBottom	29:fieldContainer
+ { marginBottom	41:  section
+ Member[];	13:  members
+ Member[];	33:      members
+ Member[])	7:export const getHouseholdStatus = (members
+ Member[] | undefined,	15:  current
+ migrateTransactionsToPhoenix,	6:  migrate
+ m.leeftijd,	23:          leeftijd
+ m.memberType,	22:          type
+ mockId,	7:  entityId
+ MoneyListSchema, // Inkomsten	49:    C7
+ MoneyListSchema, // Lasten	50:    C10
+ (msg) => {	13:    die
+ (msg	2:  info
+ (msg	3:  error
+ (msg	4:  warn
+ (msg) => { 	53:    verbose
+ (msg) => `• Git commit	55:    GIT_COMMIT
+ (msgKey) => {	57:    die
+ (msg) => "\n🚨 FATALE FOUT	2:    FATAL
+ (msg) => writeStream('error', colors.red + "❌ " + msg + colors.reset),	12:    error
+ (msg) => writeStream('info', "ℹ️ " + msg),	9:    info
+ (msg) => writeStream('ok', colors.green + "✅ " + msg + colors.reset),	10:    ok
+ (msg) => writeStream('warn', colors.yellow + "⚠️ " + msg + colors.reset),	11:    warn
+ 'naam',	13:  pageId
+ 'Naam',	14:          label
+ (name) => `--- ${name} ---`,	20:    STEP_START
+ (name) => `Fout tijdens ${name}`,	22:    STEP_FAIL
+ 'Nee',	62:      defaultValue
+ new Date().toISOString(),	14:    exportDate
+ (n) => "Mapping	3:    SYNC_ALIASES_FOUND
+ noteCol >= 0 ? cols[noteCol] 	58:        note
+ "⚠️ Nothing to commit",	56:    GIT_COMMIT_NONE
+ {notificationsEnabled ? 'Aan' 	57:              Status
+ "\n📋 Phoenix Commander\nGebruik --dry-run voor simulatie.\n"	3:    HELP
+ null,	24:    _startTime
+ number,	16:  aantalMensen
+ number,	17:  aantalVolwassen
+ number;	17:  amount
+ number;	21:  weekNumber
+ number;	26:  totalVariableMonth
+ number;	27:  totalVariableWeek
+ number)	41:export function formatCentsToDutch(cents
+ number;	4:  pageIndex
+ number)	52:export function formatCurrency(amountCents
+ number;	6:  value
+ number; // Bedrag in centen (altijd >= 0)	7:  value
+ number, freq?	33:export const convertToMonthlyCents = (cents
+ number; // Hersteld	29:  activeStep
+ number; // We gebruiken 'amount' zoals geëist door de compiler in DailyInput	6:  amount
+ (obj	7:    create
+ (objs	10:    select
+ "💡 Oplossing	44:    REMEDY_BABEL
+ "Opschonen mislukt of map is leeg.",	25:    CLEANUP_FAIL
+ "⚠️  Oude lock gevonden (>30 min). Opruimen en opnieuw starten…",	15:    LOCK_STALE
+ 'Overig',	54:                    category
+ { padding	36:    headerButton
+ { paddingBottom	14:    scrollContent
+ Partial<FormState> = {}) => {	8:export const createMockState = (overrides
+ 'PARTNERS',	10:  PARTNERS
+ { path	14:        payload
+ { path	20:      payload
+    path.join(ROOT, 'babel.config.js'),	11:  babel
+     path.join(ROOT, 'jest.config.js'),	12:  jest
+ path.join(ROOT, 'jsconfig.json'),	13:  jsconfig
+ path.join(ROOT, 'tsconfig.json'),	10:  tsconfig
+ path.resolve(__dirname, '../../'),	16:    root
+ path.resolve(__dirname, '../../babel.config.js'),	18:    babel
+ path.resolve(__dirname, '../../jest.config.js'),	19:    jest
+ path.resolve(__dirname, '../../jsconfig.json'),	20:    jsconfig
+ path.resolve(__dirname, '../../tsconfig.json'),	17:    tsconfig
+ (path) => `📄 Zie rapporten in	77:    REPORTS_LOCATION
+ PaymentMethod;	20:  paymentMethod
+ "❌ Phoenix audit is al bezig sinds	16:    LOCK_ACTIVE
+ ./phoenix_compare.sh <DIR_A> <DIR_B> [--out OUTDIR] [--keywords "kw1,kw2"]	11:Gebruik
+ "🔑 PHOENIX CONSTANTS INDEX",	75:    KEYS_INDEX_NAME
+ "🧩 Phoenix Import Fixer	69:    IMPORTS_START
+ 'Phoenix integriteit hersteld.🤕',	4:    SYNC_OK
+ "Phoenix operatie voltooid.",	74:    FINISH
+ '🚀 Phoenix Sync gestart...🔄',	2:    SYNC_START
+ (pid) => `ℹ️  PID	17:    LOCK_PID
+ 'pin',	13:      paymentMethod
+ 'pin',	55:                    paymentMethod
+ process.argv.includes('--backup'),	31:    backup
+ process.argv.includes('--dry-run'),	22:    isDryRun
+ process.argv.includes('--dry-run'),	29:    dryRun
+ process.argv.includes('--help'),	33:    help
+ process.argv.includes('--restore'),	32:    restore
+ process.argv.includes('--verbose'),	30:    verbose
+ process.argv.includes('--verbose') || process.argv.includes('-v'),	21:    isVerbose
+ "• Pruning old reports (keep 5)",	50:    CLEAN_REPORTS
+ 'radio-chips',	56:      type
+ 'radio-chips', // Triggert jouw ChipButton [cite	29:          type
+ Radius.lg,	35:      borderRadius
+ Radius.lg,	40:  borderRadius
+ Radius.lg,	42:      borderRadius
+ Radius.lg,	59:  borderRadius
+ Radius.lg,	77:      borderRadius
+ Radius.lg,	88:      borderRadius
+ Radius.md,	82:  borderRadius
+ Radius.pill,	17:      borderRadius
+ Radius.xl,	15:      borderRadius
+ Radius.xl,	27:      borderRadius
+ Radius.xl,	51:    borderRadius
+ "Rapporten opschonen (behoud laatste 5)...",	23:    CLEANUP_RUNNING
+ React.Dispatch<any>; // 'any' actie om de 99 errors van de baan te vegen	8:  dispatch
+ React.Dispatch<FormAction>;	11:  dispatch
+ React.Dispatch<FormAction>;	8:  dispatch
+ React.FC = () => {	5:export const AdultsCounter
+ React.FC = () => {	5:export const UndoScreen
+ React.FC = () => {	7:export const DailyInputScreen
+ React.FC<{children	16:export const ThemeProvider
+ React.FC<{ children	17:export const FormProvider
+ React.FC<DashboardProps> = () => {	17:export const DashboardScreen
+ React.FC<FieldRendererProps> = ({ 	12:export const FieldRenderer
+ React.FC<FormFieldProps> = ({ 	6:export const ConditionalField
+ React.FC<MoneyFieldProps> = ({ 	11:export const MoneyField
+ React.FC<Props> = ({ data }) => {	10:export const FinancialSummary
+ React.FC<WizardPageProps> = ({	17:export const WizardPage
+ Record<Theme, ColorScheme> = {	30:export const Colors
+ 'relative',	39:    position
+ { removeItem	70:      default
+ "• Removing .bak backups",	49:    CLEAN_BAK
+ 'repeater',	10:      type
+ 'repeater',	17:      type
+ 'repeater',	19:      type
+ (reportPath) => {	39:    report
+ return setupHouseholdConfig;	20:      default
+    return true;	23:    default
+ 'right',	12:      textAlign
+ 'row',	103:  flexDirection
+ 'row',	19:      flexDirection
+ 'row',	25:      flexDirection
+ 'row',	26:      flexDirection
+ 'row',	30:                flexDirection
+ 'row',	30:      flexDirection
+ 'row',	48:                flexDirection
+ 'row',	55:    flexDirection
+ 'row',	56:  flexDirection
+ 'row',	62:    flexDirection
+ 'row',	65:      flexDirection
+ 'row',	78:  flexDirection
+ 'row',	9:      flexDirection
+ 'row', alignItems	119:  flexDirection
+ row.amount,	53:                    amount
+ row.date,	52:                    date
+ "• Running lint/ts checks (non-fatal)",	52:    RUN_CHECKS
+ (s) => `⏱️  Duur	79:    FINISH_TIME
+ 'section',	10:      type
+ 'SET_FIELD', 	13:        type
+ 'SET_FIELD',	19:      type
+ { setItem	47:      default
+ 'setup',	7:  currentPageId
+ 'setup',         // Vroeger C1	4:    SETUP
+ sh.ios.opacity,	17:      shadowOpacity
+ sh.ios.radius,	18:      shadowRadius
+ 'SINGLE',	9:  SINGLE
+ Sizes.checkbox,	10:      height
+ Sizes.checkbox,	9:      width
+ 'space-between',	20:      justifyContent
+ 'space-between',	27:      justifyContent
+ 'space-between',	31:                justifyContent
+ 'space-between',	31:      justifyContent
+ 'space-between',	49:                justifyContent
+ 'space-between',	56:    justifyContent
+ 'space-between',	63:    justifyContent
+ 'space-between',	66:      justifyContent
+ Space.lg,	16:      paddingHorizontal
+ Space.lg,	28:      paddingHorizontal
+ Space.lg,	32:    padding
+ Space.lg,	32:      paddingVertical
+ Space.lg,	41:      padding
+ Space.lg,	76:      padding
+ Space.lg,	87:      padding
+ Space.md,	108:  paddingHorizontal
+ Space.md,	13:      marginTop
+ Space.md,	18:      marginRight
+ Space.md,	30:      paddingTop
+ Space.md,	33:    marginBottom
+ Space.md,	37:    marginBottom
+ Space.md,	44:      marginLeft
+ Space.md,	45:    marginBottom
+ Space.md,	51:      marginTop
+ Space.md,	56:      marginRight
+ Space.md,	66:    paddingTop
+ Space.md,	79:      marginLeft
+ Space.md,	83:  paddingHorizontal
+ Space.md,	90:      marginRight
+ Space.md, backgroundColor	121:  paddingHorizontal
+ Space.sm,	14:      marginRight
+ Space.sm,	14:      paddingVertical
+ Space.sm,	15:      paddingVertical
+ Space.sm,	19:  marginBottom
+ Space.sm,	21:      paddingVertical
+ Space.sm,	28:      paddingVertical
+ Space.sm,	29:      paddingVertical
+ Space.sm,	31:      marginTop
+ Space.sm,	32:      paddingHorizontal
+ Space.sm,	33:      paddingHorizontal
+ Space.sm,	34:  marginBottom
+ Space.sm,	49:      padding
+ Space.sm,	57:    paddingVertical
+ Space.sm,	64:    paddingVertical
+ Space.sm,	67:    marginTop
+ Space.xl,	13:      paddingHorizontal
+ Space.xl,	14:      padding
+ Space.xl,	16:      marginBottom
+ Space.xl,	26:      padding
+ Space.xl,	28:      marginBottom
+ Space.xl,	32:      padding
+ Space.xl,	50:    padding
+ Space.xl,	52:    marginBottom
+ Space.xl,	67:      padding
+ Space.xs,	116:  marginTop
+ Space.xs,	24:  marginTop
+ Space.xs,	43:      marginTop
+ Space.xs,	50:  marginTop
+ Space.xs,	67:  marginRight
+ Space.xs,	91:  marginRight
+ 'SPECIAL',	11:  SPECIAL
+     { start	10:  jest
+ { start	11:  jsconfig
+    { start	9:  babel
+ "🛡️ Start Audit (phoenix-check)...",	9:    AUDIT_START
+ "🔍 Start Deduplicatie scan...",	3:    DEDUP_START
+ (state	19:      filter
+ (state	21:      countGetter
+ (state	26:          visibleIf
+ (state	27:      visibleIf
+ (state	34:      visibleIf
+ (state	35:      maxGetter
+ (state	42:      valueGetter
+ (state	47:      visibleIf
+ state.C10?.items || [],	30:      expenses
+ state.C7?.items || [],	29:      income
+ { ...state.data, [action.payload.fieldId]	25:          data
+ { ...state.data.household, members	59:          household
+ { ...state.data.household, members	75:          household
+ { ...state.data.household, members	99:          household
+ { ...state.data.setup, [action.fieldId]	43:          setup
+ { ...state.data.setup, ...action.payload },	33:          setup
+ state.schemaVersion,	13:    schemaVersion
+ step,	14:    activeStep
+ 'Streaming & Abonnementen',	36:      label
+ string;	10:  textTertiary
+ string;	11:  inverseText
+ string;	12:  border
+ string;	12:  householdId
+ string;	13:  borderSubtle
+ string;	14:  lastUpdated
+ string;	14:  primary
+ string;	15:  onPrimary
+ string;	16:  secondary
+ string;	17:  onSecondary
+ string;	18:  error
+ string;	18:  pageId
+ string;	19:  onError
+ string;	19:  title
+ string;	20:  warning
+ string;	21:  componentName
+ string;	21:  onWarning
+ string;	22:  success
+ string;	23:  onSuccess
+ string;	24:  selected
+ string;	25:  onSelected
+ string;	26:  fieldId
+ string;	27:  shadow
+ string;	28:  currentPageId
+ string;	2:  fieldId
+ string;	40:  fieldId
+ string;	4:  fieldId
+ string)	51:export function validateDobNL(input
+ string;	5:  background
+ string;	5:  label
+ string[];	5:  steps
+ string)	63:export function calculateAge(isoDate
+ string)	6:export function parseDDMMYYYYtoISO(input
+ string;	6:  label
+ string;	6:  pageId
+ string;	6:  surface
+ string {	78:export function getCurrentDateISO()
+ string)	7:export function formatDutchValue(raw
+ string;	7:  inputBackground
+ string;	7:  title
+ string;	8:  label
+ string;	8:  textPrimary
+ string)	91:export function isDigitsDatePlausible(digits
+ string;	9:  textSecondary
+ string;           // ← alias voor surface (backwards compat)	26:  card
+ string;    // De unieke database sleutel	2:  entityId
+ string;     // De unieke UI sleutel (nodig voor Phoenix Forms)	3:  fieldId
+ string | number | undefined | null)	18:export function toCents(input
+ string => 'pong';	2:export const ping = ()
+ string; // YYYY-MM-DD	16:  date
+ "Sync afgebroken door veiligheidslimieten (ADR-06).",	65:    ADR_SAFETY_LIMIT
+ "Systeem opgeschoond.",	24:    CLEANUP_DONE
+ (tag) => `• Create tag	57:    GIT_TAG
+ TempPageConfig = {	3:export const detailsHouseholdConfig
+ TempPageConfig = {	3:export const fixedExpensesConfig
+ TempPageConfig = {	3:export const incomeDetailsConfig
+ 'text',	15:          type
+ 'text' | 'number' | 'select' | 'date' | 'counter'; // 'counter' toegevoegd	6:  type
+ Theme) {	25:export function getAppStyles(theme
+ Theme;	8:  theme
+ (theme	9:  setTheme
+ toCents(summary.netCents),	14:      netEUR
+ toCents(summary.totalExpensesCents),	13:      totalExpensesEUR
+ toCents(summary.totalIncomeCents),	12:      totalIncomeEUR
+ 'Toeslagen huishouden',	9:      label
+ 'toggle',	67:      type
+ Tokens.Space.xl,	11:      marginBottom
+ Tokens.Space.xs,	16:        marginTop
+ Tokens.Space.xs,	17:        marginLeft
+ Tokens.Space.xs,	23:        marginTop
+ Tokens.Space.xs,	24:        marginLeft
+ Tokens.Space.xs,	31:        marginTop
+ Tokens.Space.xs,	32:        marginLeft
+ Tokens.Space.xs,	37:        marginTop
+ Tokens.Space.xs,	38:        marginLeft
+ () => ({ top	8:  useSafeAreaInsets
+ 'Totaal aantal bewoners (N)',	21:      label
+ totalIncomeCents - totalExpensesCents	13:    netCents
+ TransactionCategory;	18:  category
+ 'transparent',	18:  backgroundColor
+ true,	17:          required
+ true,	19:      __esModule
+ true,	46:      __esModule
+ true,	69:      __esModule
+ true,	83:      __esModule
+ true,	8:  __esModule
+ true	9:    isValid
+ true, // Onbekende sleutel wordt geaccepteerd [cite	26:      oude_instelling
+ true, // zet naar false om de oude te gebruiken	18:  useTempWizard
+ (type) => `⚠️ ${type} issues (ignored)`,	53:    CHECK_ISSUE
+ type,	27:    memberType
+ Type.h2,	9:      fontSize
+ Type.lg,	16:  fontSize
+ Type.lg,	31:  fontSize
+ Type.lg,	42:  fontSize
+ Type.lg,	49:      fontSize
+ Type.lg,	60:      fontSize
+ Type.lg,	65:  fontSize
+ Type.lg,	72:  fontSize
+ Type.md,	88:  fontSize
+ Type.md,	96:  fontSize
+ Type.sm,	10:      fontSize
+ Type.sm,	15:        fontSize
+ Type.sm,	22:        fontSize
+ Type.sm,	25:  fontSize
+ Type.sm,	30:        fontSize
+ Type.sm,	36:        fontSize
+ Type.sm,	51:  fontSize
+ Type.xs,	114:  fontSize
+ Type.xs,	35:      fontSize
+ Type.xs,	41:      fontSize
+ Type.xs,	54:      fontSize
+ undefined,	28:    naam
+ undefined,	29:    gender
+ undefined,	30:    dateOfBirth
+ undefined,	31:    leeftijd
+ undoLastTransaction,	7:  undo
+ 'Uploaden',	43:            text
+ (val	7:  onAmountChange
+ (val	7:  onUpdate
+ 'Vaste Lasten',	5:  title
+ "📦 Verplaatsen van deduplicatie rapporten naar base...",	4:    DEDUP_REPORT_MOVE
+ 'vervoer',	17:  pageId
+ 'Vervoer (Auto)',	18:      label
+ () => void;	10:  onHerstel
+ () => void;	10:  onSettings
+ () => void;	11:  onClose
+ () => void;	11:  onCsvUpload
+ () => void;	11:  onNext
+ () => void;	12:  onBack
+ () => void;	12:  onReset
+ () => void;	7:  onToggle
+ () => void;	8:  onClose
+ () => void;	9:  onClose
+ () => void;	9:  onPress
+ () => void;	9:  onWissen
+ 'Volgende',	4:    next
+ volwassenen,	19:      totalAdults
+ volwassenen > 5,	15:    isSpecialStatus
+ 'Vorige',	3:    back
+ 'Vul de details in per gezinslid. Gebruik de swipe om te navigeren.',	6:  description
+ 'Waarvan aantal kinderen (K)',	39:      label
+ 'Welkom bij uw overzicht',	9:    welcome
+ 'werkSectie',	23:  pageId
+ { width	10:    shadowOffset
+ { width	16:      shadowOffset
+ { width	20:    shadowOffset
+ 'Wie zijn de bewoners?',	5:  title
+ WizardPageConfig = {	15:export const setupHouseholdConfig
+ WizardState;	9:  state
+ 'wonen',	8:  pageId
+ 'Wonen',	9:      label
+ "\x1b[0m",	2:    reset
+ "\x1b[2m"	6:    dim
+ "\x1b[31m",	3:    red
+ "\x1b[32m",	4:    green
+ "\x1b[33m",	5:    yellow
+ z	25:    C1
+ z	33:    C4
+ z	35:        leden
+ z.array(MoneyItemSchema).default([]),	14:    items
+ z.boolean().default(false),	22:    isSpecialStatus
+ 'Zijn er huisdieren aanwezig?',	66:      label
+ z.number().default(1),	27:        aantalMensen
+ z.number().default(1),	28:        aantalVolwassen
+ z.number().int(), // Moet integer zijn (Phoenix-eis)	7:  amount
+ z.number().optional(),	40:              leeftijd
+ z.string(),	38:  fieldId
+ z.string(),	39:              memberType
+ z.string(),	5:  fieldId
+ z.string().default('1.0'),	21:    schemaVersion
+ z.string().optional(),	41:              gender
+ z.string().optional(),	6:  label

@@ -12,20 +12,25 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
 
   moduleNameMapper: {
-    '^@app/(.*)$': '<rootDir>/src/app/$1',
-    '^@domain/(.*)$': '<rootDir>/src/domain/$1',
-    '^@services/(.*)$': '<rootDir>/src/services/$1',
-    '^@shared-types/(.*)$': '<rootDir>/src/shared-types/$1',
-    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
-    '^@config/(.*)$': '<rootDir>/src/config/$1',
-    '^@logic/(.*)$': '<rootDir>/src/logic/$1',
-    '^@ui/(.*)$': '<rootDir>/src/ui/$1',
-    '^@components/(.*)$': '<rootDir>/src/ui/components/$1',
-    '^@styles/(.*)$': '<rootDir>/src/ui/styles/$1',
-    '^@state/(.*)$': '<rootDir>/src/state/$1',
-    '^@context/(.*)$': '<rootDir>/src/app/context/$1',
-    '^@selectors/(.*)$': '<rootDir>/src/selectors/$1',
-    '^@assets/(.*)$': '<rootDir>/assets/$1'
+// @alias-start
+    '^\@app/(.*)$': '<rootDir>/src/app/$1',
+    '^\@domain/(.*)$': '<rootDir>/src/domain/$1',
+    '^\@services/(.*)$': '<rootDir>/src/services/$1',
+    '^\@shared-types/(.*)$': '<rootDir>/src/shared-types/$1',
+    '^\@utils/(.*)$': '<rootDir>/src/utils/$1',
+    '^\@config/(.*)$': '<rootDir>/src/config/$1',
+    '^\@logic/(.*)$': '<rootDir>/src/logic/$1',
+    '^\@ui/(.*)$': '<rootDir>/src/ui/$1',
+    '^\@components/(.*)$': '<rootDir>/src/ui/components/$1',
+    '^\@fields/(.*)$': '<rootDir>/src/ui/components/fields/$1',
+    '^\@screens/(.*)$': '<rootDir>/src/ui/screens/$1',
+    '^\@styles/(.*)$': '<rootDir>/src/ui/styles/$1',
+    '^\@state/(.*)$': '<rootDir>/src/state/$1',
+    '^\@context/(.*)$': '<rootDir>/src/app/context/$1',
+    '^\@selectors/(.*)$': '<rootDir>/src/selectors/$1',
+    '^\@assets/(.*)$': '<rootDir>/assets/$1',
+    '^\@test-utils/(.*)$': '<rootDir>/src/test-utils/$1',
+// @alias-end
   },
 
   // DE CRUCIALE FIX:

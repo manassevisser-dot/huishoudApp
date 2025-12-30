@@ -1,20 +1,23 @@
-const updateBabel = (src, aliases, marker) => {
-  const content = Object.entries(aliases)
-    .map(([key, value]) => {
-      const val = Array.isArray(value) ? value[0] : value;
-      if (!val || typeof val !== 'string') return null;
+const fs = require('fs');
+const { markers } = require('../config');
+const { updateBetweenMarkers, createBackup, ok, warn } = require('../utils');
 
-      const babelKey = key.replace('/*', '');
-      let babelVal = val.replace('/*', '');
-      
-      // Zorg dat het pad altijd begint met ./ als het dat nog niet doet
-      if (!babelVal.startsWith('./') && !babelVal.startsWith('../')) {
-        babelVal = `./${babelVal}`;
-      }
+function updateBabel(aliases, flags, filePath) {
+  if (!fs.existsSync(filePath)) return;
+  let content = fs.readFileSync(filePath, 'utf8');
+  
+  if (!content.includes(markers.babel.start)) {
+    warn(`Babel mist markers: ${markers.babel.start}`);
+    return;
+  }
 
-      return `          '${babelKey}': '${babelVal}',`;
-    })
-    .filter(Boolean)
-    .join('\n');
-  return updateBetweenMarkers(src, marker.start, marker.end, content);
-};
+  const newContent = aliases.map(a => `            '${a.name}': './${a.target}',`).join('\n');
+  const updated = updateBetweenMarkers(content, markers.babel.start, markers.babel.end, newContent);
+  
+  if (!flags.dryRun) {
+    createBackup(filePath);
+    fs.writeFileSync(filePath, updated, 'utf8');
+    ok('Babel updated');
+  }
+}
+module.exports = { updateBabel };

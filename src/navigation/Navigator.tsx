@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { FormState } from '../shared-types/form';
-import LandingScreen from '../ui/screens/Wizard/LandingScreen';
+import LandingScreen from  'src/ui/screens/Wizard/LandingScreen'
 import WizardController from '../ui/screens/Wizard/WizardController';
 import MainNavigator from '../ui/navigation/MainNavigator';
 

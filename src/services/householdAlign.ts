@@ -1,24 +1,15 @@
-// src/services/householdAlign.ts
+import { Member } from '../domain/household';
 
 /**
- * Brengt leden[] in lijn met C1:
- * - Lengte === aantalMensen
- * - Eerste aantalVolwassen = 'adult', rest = 'child'
- * - Behoudt bestaande invoer waar mogelijk (type-safe)
+ * Phoenix ID Generator
+ * entityId: voor database/domein integriteit
+ * fieldId: voor React rendering en form-mapping
  */
-
-import { Member, WoningType, AutoCount } from 'src/shared-types/form';
-
-// Genereer unieke IDs (deterministisch genoeg voor UI; geen conflict met bestaande IDs)
-const makeId = (prefix: 'm', idx: number) => `m-${idx}-${Date.now()}`;
+const makeId = (prefix: 'm', idx: number): string => `${prefix}-${idx}-${Date.now()}`;
+const makeFieldId = (idx: number): string => `field-member-${idx}`;
 
 /**
- * ALIGN zonder data-erfenis:
- * - Lengte === aantalMensen
- * - Eerste aantalVolwassen = 'adult', rest = 'child'
- * - Bestaande adults/children behouden waar mogelijk (per categorie, op volgorde)
- * - Nieuwe leden krijgen ALTIJD lege velden (geen naam/DOB/leeftijd/gender)
- * - IDs worden uniek gemaakt; dubbele IDs in input worden gesaneerd
+ * alignMembers: Zorgt dat de members-array synchroon loopt met de UI-keuzes
  */
 export function alignMembers(
   current: Member[] | undefined,
@@ -28,28 +19,11 @@ export function alignMembers(
   const targetLen = Math.max(0, Number(aantalMensen ?? 0));
   const targetAdults = Math.max(0, Math.min(Number(aantalVolwassen ?? 0), targetLen));
 
-  // 0) Normaliseer invoer-array en sanitiseer dubbele IDs
-  let base = Array.isArray(current) ? current.map((m) => ({ ...m })) : [];
-  {
-    const seen = new Set<string>();
-    for (let i = 0; i < base.length; i++) {
-      const id = typeof base[i]?.id === 'string' ? base[i]!.id : `m-${i}`;
-      if (seen.has(id)) {
-        base[i] = { ...base[i], id: makeId('m', i) };
-      } else {
-        seen.add(id);
-        base[i] = { ...base[i], id };
-      }
-    }
-  }
+  const base = Array.isArray(current) ? current.map((m) => ({ ...m })) : [];
 
-  // 1) Splits huidige invoer in adults/children (op volgorde)
-  const adults = base.filter((m) => m?.memberType === 'adult');
-  const children = base.filter((m) => m?.memberType === 'child');
-
-  // 2) Hulpfunctie: maak een leeg lid
-  const emptyMember = (type: Member['memberType'], idxForId: number): Member => ({
-    id: makeId('m', idxForId),
+  const createEmptyMember = (type: 'adult' | 'child', idx: number): Member => ({
+    entityId: makeId('m', idx),
+    fieldId: makeFieldId(idx),
     memberType: type,
     naam: undefined,
     gender: undefined,
@@ -57,44 +31,33 @@ export function alignMembers(
     leeftijd: undefined,
   });
 
-  // 3) Bouw nieuwe lijst deterministisch op, zonder data-erfenis voor nieuw toegevoegde leden
   const next: Member[] = [];
 
-  // 3a) Adults: eerst behoud van bestaande adults tot targetAdults, daarna lege adults
-  const adultsToKeep = Math.min(adults.length, targetAdults);
-  for (let i = 0; i < adultsToKeep; i++) {
-    // behoud bestaande adult (alle velden blijven zoals ze zijn)
-    next.push({ ...adults[i], memberType: 'adult' });
-  }
-  for (let i = adultsToKeep; i < targetAdults; i++) {
-    // vul met LEGE adults (geen naam/DOB/leeftijd/gender)
-    next.push(emptyMember('adult', i));
+  // 1. Adults verwerken
+  const currentAdults = base.filter((m) => m.memberType === 'adult');
+  for (let i = 0; i < targetAdults; i++) {
+    if (currentAdults[i]) {
+      next.push({ 
+        ...currentAdults[i], 
+        fieldId: currentAdults[i].fieldId || makeFieldId(i) 
+      });
+    } else {
+      next.push(createEmptyMember('adult', i));
+    }
   }
 
-  // 3b) Children: restlengte is targetLen - targetAdults
+  // 2. Children verwerken
+  const currentChildren = base.filter((m) => m.memberType === 'child');
   const targetChildren = targetLen - targetAdults;
-  const childrenToKeep = Math.min(children.length, targetChildren);
-  for (let i = 0; i < childrenToKeep; i++) {
-    // behoud bestaande child
-    next.push({ ...children[i], memberType: 'child' });
-  }
-  for (let i = childrenToKeep; i < targetChildren; i++) {
-    // vul met LEGE children
-    const idxForId = targetAdults + i;
-    next.push(emptyMember('child', idxForId));
-  }
-
-  // 4) Unieke IDs garanderen in de uiteindelijke lijst (extra zekerheid)
-  {
-    const seen = new Set<string>();
-    for (let i = 0; i < next.length; i++) {
-      const id = typeof next[i]?.id === 'string' ? next[i]!.id : makeId('m', i);
-      if (seen.has(id)) {
-        next[i] = { ...next[i], id: makeId('m', i) };
-      } else {
-        seen.add(id);
-        next[i] = { ...next[i], id };
-      }
+  for (let i = 0; i < targetChildren; i++) {
+    const globalIdx = targetAdults + i;
+    if (currentChildren[i]) {
+      next.push({ 
+        ...currentChildren[i], 
+        fieldId: currentChildren[i].fieldId || makeFieldId(globalIdx) 
+      });
+    } else {
+      next.push(createEmptyMember('child', globalIdx));
     }
   }
 

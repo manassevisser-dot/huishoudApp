@@ -1,39 +1,42 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ES2020",
+    "target": "esnext",
+    "module": "esnext",
+    "lib": ["esnext"],
+    "allowJs": true,
     "jsx": "react-native",
+    "noEmit": true,
+    "isolatedModules": true,
     "strict": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@domain/*": ["src/domain/*"],
-      "@state/*": ["src/state/*"],
-      "@ui/*": ["src/ui/*"],
-      "@screens/*": ["src/ui/screens/*"], // DEZE ONTBRAAK
-      "@styles/*": ["src/ui/styles/*"],
       "@app/*": ["src/app/*"],
-      "@utils/*": ["src/utils/*"],
+      "@domain/*": ["src/domain/*"],
       "@services/*": ["src/services/*"],
-      "@assets/*": ["_assets/*"],
-      "@logic/*": ["src/logic/*"],
+      "@shared-types/*": ["src/shared-types/*"],
+      "@utils/*": ["src/utils/*"],
       "@config/*": ["src/config/*"],
+      "@logic/*": ["src/logic/*"],
+      "@ui/*": ["src/ui/*"],
+      "@components/*": ["src/ui/components/*"],
+      "@fields/*": ["src/ui/components/fields/*"],
+      "@screens/*": ["src/ui/screens/*"],
+      "@styles/*": ["src/ui/styles/*"],
+      "@state/*": ["src/state/*"],
       "@context/*": ["src/app/context/*"],
       "@selectors/*": ["src/selectors/*"],
-      "@shared-types/*": ["src/shared-types/*"],
-      "@components/*": ["src/ui/components/*"],
-      "@fields/*": ["src/ui/components/fields/*"]
-    },
-    "types": [
-      "jest",
-      "react",
-      "react-native"
-    ]
+      "@assets/*": ["assets/*"],
+      "@test-utils/*": ["src/test-utils/*"]
+    }
   },
-  "include": [
-    "src",
-    "jest.setup.js",
-    "__mocks__"
-  ],
-  "extends": "expo/tsconfig.base"
+  "exclude": [
+    "node_modules",
+    "babel.config.js",
+    "metro.config.js",
+    "jest.config.js"
+  ]
 }

@@ -23,7 +23,7 @@ export type UitkeringEntry = {
 };
 
 export type AndersEntry = {
-  id: string;
+  fieldId: string;
   label?: string;
   amount?: number;
   frequentie?: IncomeFrequency;
@@ -37,7 +37,7 @@ export type IncomeCategories = {
 };
 
 export type IncomeMember = {
-  id: string;
+  fieldId: string;
   categories: IncomeCategories;
   nettoSalaris?: number;
   frequentie?: IncomeFrequency;

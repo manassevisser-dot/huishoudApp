@@ -10,7 +10,9 @@ export const ConditionalField: React.FC<FormFieldProps> = ({
   value 
 }) => {
   // ADR-01: Business logica uit de config halen
-  const isVisible = field.condition ? field.condition(state) : true;
+  const isVisible = typeof field.condition === 'function' 
+  ? field.condition(state) 
+  : true;
 
   if (!isVisible || !field.dependentField) {
     return null;

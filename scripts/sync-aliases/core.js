@@ -1,45 +1,40 @@
 const fs = require('fs');
+const path = require('path');
 const ts = require('typescript');
+const { die, warn } = require('./utils');
 
-/**
- * Parsen van tsconfig.json met ondersteuning voor JSONC (comments)
- */
 function parseTsConfig(configPath) {
-  if (!fs.existsSync(configPath)) {
-    throw new Error('CONFIG_NOT_FOUND');
-  }
-
-  const rawContent = fs.readFileSync(configPath, 'utf8');
-  const result = ts.parseConfigFileTextToJson(configPath, rawContent);
-
-  if (result.error) {
-    throw new Error('CONFIG_PARSE_ERROR');
-  }
-
-  return result.config;
+  if (!fs.existsSync(configPath)) die(`tsconfig.json niet gevonden`);
+  try {
+    const raw = fs.readFileSync(configPath, 'utf8');
+    const res = ts.parseConfigFileTextToJson(configPath, raw);
+    if (res.error) die(`TSConfig Parse Error: ${res.error.messageText}`);
+    return res.config;
+  } catch (e) { die(`Leesfout: ${e.message}`); }
 }
 
-/**
- * Haalt aliassen uit tsconfig/jsconfig en maakt ze schoon
- */
-function extractAliases(tsconfig, rootDir, reserved) {
-  const rawPaths = (tsconfig.compilerOptions && tsconfig.compilerOptions.paths) || {};
-  const cleanAliases = {};
+function extractAliases(tsconfig, rootDir, reservedPrefixes = []) {
+  const paths = tsconfig?.compilerOptions?.paths;
+  if (!paths) die('Geen paths in tsconfig');
+  
+  const aliases = [];
+  const seen = new Set();
 
-  for (const [key, paths] of Object.entries(rawPaths)) {
-    // Sla gereserveerde prefixes over
-    if (reserved.some(prefix => key.startsWith(prefix))) continue;
+  for (const [key, value] of Object.entries(paths)) {
+    if (key.startsWith('_') || key.startsWith('//')) continue;
+    if (!Array.isArray(value) || value.length === 0) continue;
 
-    // Validatie van de data-structuur om 'replace' errors te voorkomen
-    if (Array.isArray(paths) && paths.length > 0 && typeof paths[0] === 'string') {
-      cleanAliases[key] = paths;
-    }
+    const name = key.replace(/\/\*$/, '');
+    const target = value[0].replace(/\/\*$/, '');
+
+    if (reservedPrefixes.some(p => name.startsWith(p))) continue;
+    if (seen.has(name)) { warn(`Dubbel: ${name}`); continue; }
+
+    aliases.push({ name, target });
+    seen.add(name);
   }
-
-  return cleanAliases;
+  if (aliases.length === 0) die('Geen aliassen gevonden');
+  return aliases;
 }
 
-module.exports = { 
-  extractAliases, 
-  parseTsConfig 
-};
+module.exports = { parseTsConfig, extractAliases };

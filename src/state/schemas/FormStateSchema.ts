@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 // 1. Individueel item (centen!)
 const MoneyItemSchema = z.object({
-  id: z.string(),
+  fieldId: z.string(),
   label: z.string().optional(),
   amount: z.number().int(), // Moet integer zijn (Phoenix-eis)
 });
@@ -18,7 +18,7 @@ const MoneyListSchema = z
 // 3. Het hoofd-schema
 export const FormStateSchema = z
   .object({
-    schemaVersion: z.string().default('1.0'),
+    schemaVersion: z.string().literal('1.0'),
     isSpecialStatus: z.boolean().default(false),
 
     // Huishouden
@@ -35,7 +35,7 @@ export const FormStateSchema = z
         leden: z
           .array(
             z.object({
-              id: z.string(),
+  fieldId: z.string(),
               memberType: z.string(),
               leeftijd: z.number().optional(),
               gender: z.string().optional(),

@@ -1,15 +1,22 @@
-import * as React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
-import InputCounter from '../fields/InputCounter';
+
+// src/ui/components/__tests__/InputCounter.test.tsx
+import { render, fireEvent } from '@test-utils/rtl';
+import  InputCounter  from 'src/ui/components/fields/InputCounter';
 
 describe('InputCounter', () => {
-  const mockUpdate = jest.fn();
-
-  it('roept onUpdate aan bij klik', () => {
-    const { getByText } = render(
-      <InputCounter label="Test" value={5} onUpdate={mockUpdate} />
+  it('moet de waarde verhogen bij een klik op de plus en action structuur doorgeven', () => {
+    const onChange = jest.fn();
+    const { getByTestId } = render(
+      <InputCounter
+        fieldId="aantalMensen"
+        value={1}
+        onChange={onChange}
+      />
     );
-    fireEvent.press(getByText(' + '));
-    expect(mockUpdate).toHaveBeenCalledWith(6);
+
+    fireEvent.press(getByTestId('counter-increment'));
+
+    // Nieuw contract: { fieldId, value }
+    expect(onChange).toHaveBeenCalledWith({ fieldId: 'aantalMensen', value: 2 });
   });
 });

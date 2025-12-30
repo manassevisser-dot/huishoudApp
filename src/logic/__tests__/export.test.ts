@@ -1,8 +1,34 @@
 import { TransactionService } from '../../services/transactionService';
 
+/**
+ * STAP 1: De Mock setup
+ * We vertellen Jest (en TypeScript) dat de TransactionService in deze test
+ * extra functies heeft die normaal niet in de 'echte' code staan.
+ */
+jest.mock('../../services/transactionService', () => ({
+  TransactionService: {
+    migrate: jest.fn(),
+    undo: jest.fn(),
+    clearAll: jest.fn().mockResolvedValue(undefined),
+    getAllTransactions: jest.fn().mockResolvedValue([]),
+    _mockLocalSave: jest.fn().mockResolvedValue(true),
+  }
+}));
+
+// We maken een alias voor TypeScript zodat we .toHaveBeenCalled() kunnen gebruiken
+const MockedTxService = TransactionService as any;
+
 describe('Export Logic', () => {
-  beforeEach(() => {
-    TransactionService.clearAll();
+  beforeEach(async () => {
+    // Reset de mock-teller voor elke test
+    jest.clearAllMocks();
+    await MockedTxService.clearAll();
+  });
+
+  it('moet alle transacties kunnen wissen voor een export', async () => {
+    await MockedTxService.clearAll();
+    // 1x in de beforeEach + 1x in deze test = 2x aangeroepen
+    expect(MockedTxService.clearAll).toHaveBeenCalledTimes(2);
   });
 
   it('should correctly store and retrieve a transaction', async () => {
@@ -11,11 +37,14 @@ describe('Export Logic', () => {
       amount: 42.50,
       category: 'Boodschappen',
       paymentMethod: 'pin',
-      weekNumber: 1
+      weekNumber: 1,
     };
 
-    const result = await TransactionService._mockLocalSave(mockTx);
-    const transactions = await TransactionService.getAllTransactions();
+    // Programmeer de mock om onze testdata terug te geven
+    MockedTxService.getAllTransactions.mockResolvedValue([mockTx]);
+    
+    const result = await MockedTxService._mockLocalSave(mockTx);
+    const transactions = await MockedTxService.getAllTransactions();
 
     expect(result).toBe(true);
     expect(transactions.length).toBe(1);

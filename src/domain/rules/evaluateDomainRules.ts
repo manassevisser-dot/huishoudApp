@@ -4,7 +4,7 @@ export const evaluateRules = (data: any) => {
   const mockId = Math.random().toString(36).substring(7);
   
   return {
-    id: mockId,
+  entityId: mockId,
     timestamp: Date.now(),
     isValid: true
   };

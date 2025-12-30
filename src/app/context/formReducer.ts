@@ -1,69 +1,104 @@
 import { FormState, FormAction } from '../../shared-types/form';
 
-// Initial state voor fallback scenario's
+/**
+ * De initiële state volgens de nieuwe Phoenix-structuur
+ */
 export const initialState: FormState = {
-  activeStep: 'LANDING',
-  data: {},
-  setup: {},
-  household: {
-    adultsCount: 1,
-    members: [],
-    leden: []
+  currentPageId: 'setup',
+  activeStep: 0,
+  data: {
+    setup: {},
+    household: {
+      members: [],
+    },
+    finance: {},
   },
-  finance: {
-    inkomsten: {},
-    uitgaven: {}
-  }
+  isValid: false,
 };
 
-export const formReducer = (state: FormState, action: FormAction): FormState => {
+export function formReducer(state: FormState, action: FormAction): FormState {
   switch (action.type) {
+    case 'SET_PAGE':
+      return {
+        ...state,
+        currentPageId: action.pageId,
+      };
+
     case 'SET_VALUE':
-    case 'SET_FIELD': {
-      const { path, value } = action.payload;
+      // Voor algemene setup velden
       return {
         ...state,
-        [path as any]: value,
+        data: {
+          ...state.data,
+          setup: { ...state.data.setup, ...action.payload },
+        },
       };
-    }
 
-    case 'SYNC_MEMBERS': {
-      // We zorgen dat we altijd een object teruggeven dat voldoet aan de interface
+    case 'SET_FIELD':
+      // Specifieke veld-updates op basis van fieldId
       return {
         ...state,
-        household: {
-          ...state.household,
-          adultsCount: action.payload.count || 0,
-          members: action.payload.members || [],
-          leden: action.payload.members || [] // Dubbele entry voor compatibiliteit
-        }
+        data: {
+          ...state.data,
+          setup: { ...state.data.setup, [action.fieldId]: action.value },
+        },
       };
-    }
 
-    case 'SET_MEMBER_VALUE': {
-      const { memberId, key, value } = action.payload;
-      
-      // FIX TS18048: Gebruik null-coalescing om zeker te zijn dat finance bestaat
-      const currentFinance = state.finance ?? { inkomsten: {}, uitgaven: {} };
-      const currentInkomsten = currentFinance.inkomsten ?? {};
-      const currentMemberData = currentInkomsten[memberId] ?? {};
-
+    case 'UPDATE_MEMBER':
+      const updatedMembers = [...state.data.household.members];
+      if (updatedMembers[action.index]) {
+        updatedMembers[action.index] = {
+          ...updatedMembers[action.index],
+          ...action.member,
+        };
+      }
       return {
         ...state,
-        finance: {
-          ...currentFinance,
-          inkomsten: {
-            ...currentInkomsten,
-            [memberId]: { 
-              ...currentMemberData, 
-              [key]: value 
-            }
+        data: {
+          ...state.data,
+          household: { ...state.data.household, members: updatedMembers },
+        },
+      };
+
+    case 'SET_MEMBER_VALUE':
+      const membersForValue = [...state.data.household.members];
+      if (membersForValue[action.index]) {
+        membersForValue[action.index] = {
+          ...membersForValue[action.index],
+          [action.field]: action.value,
+        };
+      }
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          household: { ...state.data.household, members: membersForValue },
+        },
+      };
+
+    case 'SYNC_HOUSEHOLD':
+      // Hier vangen we de resultaten op van de alignment logic
+      // We gaan ervan uit dat de sync-logica elders de members al heeft voorbereid
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          setup: {
+            ...state.data.setup,
+            aantalMensen: action.aantalMensen,
+            aantalVolwassen: action.aantalVolwassen,
           },
-          // Zorg dat uitgaven ook altijd aanwezig blijft
-          uitgaven: currentFinance.uitgaven ?? {}
-        }
+        },
       };
-    }
+
+    case 'SYNC_MEMBERS':
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          household: { ...state.data.household, members: action.payload },
+        },
+      };
 
     case 'RESET_APP':
       return initialState;
@@ -71,4 +106,4 @@ export const formReducer = (state: FormState, action: FormAction): FormState => 
     default:
       return state;
   }
-};
+}
