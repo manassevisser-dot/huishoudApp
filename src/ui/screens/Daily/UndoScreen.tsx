@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { TransactionService } from '../../../services/transactionService';
+import * as TransactionService  from '@services/transactionService';
 
 export const UndoScreen: React.FC = () => {
   const [items, setItems] = React.useState<any[]>([]);

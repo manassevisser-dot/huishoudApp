@@ -4,7 +4,7 @@ import { useAppOrchestration } from './app/hooks/useAppOrchestration';
 
 // Simpele weergave voor de test-suite
 export default function App() {
-  const { status } = useAppOrchestration(null); 
+  const { status } = useAppOrchestration(undefined); 
 
   if (status === 'HYDRATING') {
     return <View testID="splash-screen" />;

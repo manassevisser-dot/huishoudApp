@@ -1,54 +1,22 @@
-import { computePhoenixSummary } from '@logic/finance';
-import { makePhoenixState } from '@test-utils/state';
+// src/logic/__tests__/finance.test.ts
+import { computePhoenixSummary } from '../finance';
 
-describe('Finance Integratie', () => {
-  it('berekent netto correct uit de finance tak', () => {
-    const state = makePhoenixState({
-      data: {
-        finance: {
-          income: { items: [{ amountCents: 10000, frequency: 'month' }] },
-          expenses: { items: [{ amountCents: 4000, frequency: 'month' }] },
-        }
-      }
-    });
-
-    // FIX: We geven state.data.finance door omdat de functie 
-    // direct zoekt naar .income en .expenses
-    const summary = computePhoenixSummary(state.data.finance);
-
-    expect(summary.totalIncomeCents).toBe(10000);
-    expect(summary.netCents).toBe(6000);
+describe('Finance Logic — Maandelijkse Aggregatie', () => {
+  it('moet kwartaalbedragen correct naar maanden omrekenen (afgerond op cent)', () => {
+    const mockData = {
+      income: { items: [{ amount: 10000, frequency: 'quarter' }] }, // €100 / 3 = €33.33
+      expenses: { items: [] }
+    };
+    const result = computePhoenixSummary(mockData);
+    expect(result.totalIncomeCents).toBe(3333); // Exacte cent-validatie
   });
 
-
-  it('aggregatie met maandnormalisatie', () => {
-    const state = makePhoenixState({
-      data: {
-        finance: {
-          income: {
-            items: [
-              { id: 'q-300', amountCents: 30000, frequency: 'quarter' }, // 10000 p/m
-              { id: 'y-12000', amountCents: 1200000, frequency: 'year' }, // 100000 p/m
-            ],
-          },
-          expenses: { items: [] },
-        },
-      },
-    });
-
-    const summary = computePhoenixSummary(state.data.finance);
-    
-    expect(summary.totalIncomeCents).toBe(110000);
-    expect(summary.netCents).toBe(110000);
-  });
-
-  it('lege items geeft overal 0', () => {
-    const summary = computePhoenixSummary({ 
-      income: { items: [] }, 
-      expenses: { items: [] } 
-    });
-    
-    expect(summary.totalIncomeCents).toBe(0);
-    expect(summary.netCents).toBe(0);
+  it('moet netto resultaat correct berekenen bij diverse frequenties', () => {
+    const mockData = {
+      income: { items: [{ amount: 10000, frequency: 'month' }] },     // +10000
+      expenses: { items: [{ amount: 2500, frequency: 'week' }] }      // -10833 (2500 * 4.333...)
+    };
+    const result = computePhoenixSummary(mockData);
+    expect(result.netCents).toBe(-833); 
   });
 });

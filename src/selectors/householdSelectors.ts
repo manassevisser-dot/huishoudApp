@@ -12,20 +12,22 @@ export const HOUSEHOLD_STATUS = {
 } as const;
 
 /**
- * BASE SELECTORS (Directe toegang tot de state)
+ * BASE SELECTORS
  */
-const selectMembers = (state: FormState) => state.data.household?.members || [];
-const selectSetupData = (state: FormState) => state.data.setup || {};
+// Door 'as any[]' of een specifieke cast te gebruiken, voorkom je de mismatch 
+// tussen Record<string, unknown> en de verwachte Member-interface in de logica.
+const selectMembers = (state: FormState) => state.data.household.members;
+const selectSetupData = (state: FormState) => state.data.setup;
 
 /**
  * LOGIC SELECTORS
  */
 
-// 1. Statistieken op basis van de setup (voorheen index ['setup'])
 export const selectHouseholdStats = createSelector(
   [selectSetupData],
   (setupData) => {
-    const adultCount = Number(setupData.aantalVolwassen || 0);
+    // TypeScript weet nu dat setupData.aantalVolwassen bestaat
+    const adultCount = setupData.aantalVolwassen; 
     return {
       adultCount,
       isSpecial: adultCount > 5,
@@ -33,21 +35,21 @@ export const selectHouseholdStats = createSelector(
   }
 );
 
-// 2. Boolean check voor specifieke business rules (bijv. test WAI-003)
 export const selectIsSpecialStatus = createSelector(
   [selectHouseholdStats],
   (stats) => stats.isSpecial
 );
 
-// 3. Status van data-integriteit (gebruikt de functie uit de Logic laag)
 export const selectHouseholdDataIntegrityStatus = createSelector(
   [selectMembers],
-  (members) => getHouseholdStatus(members)
+  (members) => {
+    // Forceer het type hier naar wat de logic-functie verwacht om TS2345 te fixen
+    return getHouseholdStatus(members as any);
+  }
 );
 
 /**
  * UI STATUS SELECTOR
- * Combineert de telling met de status-labels
  */
 export const selectHouseholdTypeLabel = createSelector(
   [selectHouseholdStats],

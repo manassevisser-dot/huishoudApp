@@ -1,40 +1,51 @@
-import * as React from 'react';
+import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import { FormState, FormAction } from '../../shared-types/form';
+import { formReducer } from './formReducer';
 
-// We importeren types direct via de React namespace om TS2304/TS2307 te voorkomen
-import { FormState, FormAction } from '../../shared-types/form'; 
-
-export const FormContext = React.createContext<{
-  state: FormState;
-  dispatch: React.Dispatch<any>; // 'any' actie om de 99 errors van de baan te vegen
-} | undefined>(undefined);
-
-export const initialFormState: FormState = {
+/**
+ * Initial State conform de nieuwe SSOT (Single Source of Truth)
+ */
+export const initialState: FormState = {
+  schemaVersion: '1.0',
   activeStep: 'LANDING',
-  currentPageId: 'start',
-  isValid: false,
+  currentPageId: 'setup',
+  isValid: true,
   data: {
-    setup: {},
-    household: { members: [] },
-    finance: { income: { items: [] }, expenses: { items: [] } },},
+    setup: { 
+      aantalMensen: 1,
+      aantalVolwassen: 1, 
+      autoCount: 'Nee' 
+    },
+    household: { 
+      members: [] 
+    },
+    finance: {
+      income: { items: [], totalAmount: 0 },
+      expenses: { items: [], totalAmount: 0 }
+    }
+  },
+  meta: {
+    lastModified: new Date().toISOString(),
+    version: 1
+  }
 };
 
-// Gebruik React.ReactNode (met de prefix!) om import-fouten te omzeilen
-export const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = React.useReducer((state: FormState, action: any): FormState => {
-    switch (action.type) {
-      case 'SET_STEP':
-        return { ...state, activeStep: action.payload };
-      case 'UPDATE_FIELD':
-        return {
-          ...state,
-          data: { ...state.data, [action.payload.fieldId]: action.payload.value },
-        };
-      case 'RESET_APP':
-        return initialFormState;
-      default:
-        return state;
-    }
-  }, initialFormState);
+/**
+ * Context definitie
+ */
+/**
+ * Context definitie (Nu geëxporteerd voor test-utils)
+ */
+export const FormContext = createContext<{
+  state: FormState;
+  dispatch: React.Dispatch<FormAction>;
+} | undefined>(undefined);
+
+/**
+ * Provider Component
+ */
+export const FormProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [state, dispatch] = useReducer(formReducer, initialState);
 
   return (
     <FormContext.Provider value={{ state, dispatch }}>
@@ -43,10 +54,16 @@ export const FormProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
+/**
+ * Hooks & Exports
+ */
 export const useForm = () => {
-  const context = React.useContext(FormContext);
-  if (!context) throw new Error('useForm must be used within FormProvider');
+  const context = useContext(FormContext);
+  if (context === undefined) {
+    throw new Error('useForm must be used within a FormProvider');
+  }
   return context;
 };
 
+// De gevraagde alias voor legacy code ondersteuning
 export const useFormContext = useForm;

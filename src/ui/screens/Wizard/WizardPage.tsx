@@ -1,75 +1,77 @@
 import * as React from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useForm } from '../../../app/context/FormContext';
-import { useAppStyles } from '../../styles/useAppStyles';
-import  FormField  from '../../components/fields/FormField';
-import { Logger } from '../../../services/logger';
-import { WizStrings } from 'src/config/Strings'
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { useForm } from '@app/context/FormContext';
+import FormField from '@components/fields/FormField';
+import { WizardPageConfig, DataSection } from '@shared-types/form'; 
 
 interface WizardPageProps {
-  config: any;
+  config: WizardPageConfig;
   onNext: () => void;
   onBack: () => void;
   isFirst: boolean;
   isLast: boolean;
 }
 
-export const WizardPage: React.FC<WizardPageProps> = ({
-  config,
-  onNext,
-  onBack,
-  isFirst,
-  isLast,
-}) => {
+export const WizardPage: React.FC<WizardPageProps> = ({ config, onNext, onBack, isFirst, isLast }) => {
   const { state, dispatch } = useForm();
-  const { styles } = useAppStyles();
-
-  React.useEffect(() => {
-    Logger.info(`Scherm geladen: ${config.title}`);
-  }, [config.title]);
 
   return (
     <View style={styles.container}>
-      <Text 
-        style={styles.pageTitle}
-        accessibilityRole="header"
-        accessibilityLiveRegion="assertive"
-      >
-        {config.title}
-      </Text>
+      {/* Header op basis van WizardPageConfig [cite: 31] */}
+      {config.titleToken && <Text style={styles.title}>{config.titleToken}</Text>}
+      {config.title && <Text style={styles.title}>{config.title}</Text>}
       
-      {/* GEFIXED: styles.formContainer vervangen door styles.container of styles.inputContainer */}
-      <ScrollView style={styles.container}>
-        {config.fields.map((field: any) => (
-          <FormField
-            key={field.fieldId}
-            field={field}
-            state={state}
-            dispatch={dispatch}
-            value={state[field.fieldId] ?? state.setup?.[field.fieldId]} 
-          />
-        ))}
+      <ScrollView style={styles.scrollContainer}>
+        {config.fields.map((field) => {
+          // ✅ 1. Bepaal de sectie (Data Lade)
+          // Prioriteit: Veld-override [cite: 17] -> Pagina-default [cite: 31] -> Fallback 'setup' [cite: 27]
+          const targetSection: DataSection = field.section || config.section || 'setup';
+
+          // ✅ 2. Haal de waarde veilig op uit de state [cite: 27, 28, 29]
+          // Indexering is nu veilig omdat targetSection gegarandeerd DataSection is.
+          const sectionData = state.data[targetSection];
+          const value = (sectionData as any)?.[field.fieldId];
+
+          // ✅ 3. Check zichtbaarheid (Functie of String-key check) [cite: 20]
+          let isVisible = true;
+          if (typeof field.visibleIf === 'function') {
+            isVisible = field.visibleIf(state);
+          } else if (typeof field.visibleIf === 'string') {
+            // Check of de string-key in de huidige sectie een 'truthy' waarde heeft
+            isVisible = !!(state.data as any)[targetSection]?.[field.visibleIf];
+          }
+
+          if (!isVisible) return null;
+
+          // ✅ 4. Render het atomaire veld [cite: 16, 20]
+          return (
+            <FormField
+              key={field.fieldId}
+              field={field}
+              state={state}
+              dispatch={dispatch}
+              value={value} 
+            />
+          );
+        })}
       </ScrollView>
 
-      {/* GEFIXED: Geen inline style meer, maar gebruik maken van layout styles uit je tokens */}
-      <View style={styles.buttonContainer}>
-        {!isFirst && (
-          <TouchableOpacity onPress={onBack} style={styles.secondaryButton}>
-            <Text style={styles.buttonText}>{WizStrings.wizard.back}</Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity 
-          onPress={onNext} 
-          style={styles.button}
-          accessibilityLabel={isLast ? WizStrings.wizard.finish : WizStrings.wizard.next}
-        >
-          <Text style={styles.buttonText}>
-            {isLast ? WizStrings.wizard.finish : WizStrings.wizard.next}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Navigatie logica kan hieronder, gebruikmakend van onNext/onBack props */}
     </View>
   );
 };
 
-export default WizardPage;
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+});

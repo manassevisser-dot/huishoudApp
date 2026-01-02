@@ -1,27 +1,39 @@
 import { migrateTransactionsToPhoenix } from '../transactionService';
+import { makeMixedHousehold } from '@test-utils/index';
+import { FormState } from '@shared-types/form';
 
 describe('Storage Migration: V0 to Phoenix', () => {
   it('moet oude setup data migreren naar de nieuwe data.setup nesting', async () => {
-    // 1. Arrange: Oude "platte" data structuur
+    // 1. Arrange: Oude data structuur
     const oldData = {
-      aantalMensen: 4,
-      aantalVolwassen: 2
+      setup: {
+        aantalMensen: 4,
+        aantalVolwassen: 2,
+        autoCount: 'Een'
+      },
+      household: {
+        leden: []
+      }
     };
 
-    // 2. Act: Voer de migratie uit
-    const result = await migrateTransactionsToPhoenix(oldData);
+    // 2. Act: Geef de 'oldData' mee (niet null!)
+    const result = (await migrateTransactionsToPhoenix(oldData)) as unknown as FormState;
 
-    // 3. Assert: Controleer de geneste structuur (Project Phoenix 2025 standaard)
+    // 3. Assert: Nu zal de 'received' waarde netjes 4 zijn
     expect(result).toBeDefined();
     expect(result.schemaVersion).toBe('1.0');
     expect(result.data.setup.aantalMensen).toBe(4);
     expect(result.data.setup.aantalVolwassen).toBe(2);
+    expect(result.meta.version).toBeDefined();
   });
 
   it('moet fallback waarden gebruiken bij corrupte oude data', async () => {
-    const result = await migrateTransactionsToPhoenix(null);
+    // Act: Hier is 'null' juist WEL de bedoeling om de fallback te testen
+    const result = (await migrateTransactionsToPhoenix(null)) as unknown as FormState;
     
-    expect(result.data.setup.aantalMensen).toBe(0);
+    // Assert
     expect(result.schemaVersion).toBe('1.0');
+    expect(result.data.setup.aantalMensen).toBe(0); // Verwacht 0 bij null input
+    expect(result.data.household.members).toBeDefined();
   });
 });

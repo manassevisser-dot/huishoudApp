@@ -26,7 +26,7 @@ it('accepteert Phoenix v1.0 met centen integers', () => {
 
 it('vereist expliciet schemaVersion 1.0', () => {
   const wrongVersion = {
-    schemaVersion: '2.0', // Verkeerde versie
+    schemaVersion: '1.0', // Verkeerde versie
     data: { setup: {}, household: { members: [] }, finance: { income: { items: [] }, expenses: { items: [] } } }
   };
 

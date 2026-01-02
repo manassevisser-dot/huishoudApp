@@ -1,55 +1,30 @@
 
-// src/ui/components/InputCounter.tsx
 import * as React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 
-/** Basissubset die beide varianten delen */
-interface BaseProps {
+/** Phoenix-only props */
+export type InputCounterProps = {
   label?: string;
+  fieldId: string;
   value: number;
   min?: number;
   max?: number;
   disabled?: boolean;
   testIdBase?: string;
-}
-
-/** Phoenix-props: met fieldId + onChange(payload) */
-interface PhoenixChangeProps extends BaseProps {
-  fieldId: string;
   onChange: (payload: { fieldId: string; value: number }) => void;
-  onUpdate?: never; // disambiguation
-}
-
-/** Legacy-props: alleen onUpdate(number) */
-interface LegacyUpdateProps extends BaseProps {
-  onUpdate: (val: number) => void;
-  fieldId?: never;
-  onChange?: never;
-}
-
-/** Eén publiek type dat beide toestaat */
-export type InputCounterProps = PhoenixChangeProps | LegacyUpdateProps;
+};
 
 const InputCounter: React.FC<InputCounterProps> = ({
   label,
+  fieldId,
   value,
   min = 0,
   max = 100,
   disabled,
   testIdBase = 'counter',
-  ...rest
+  onChange,
 }) => {
-  // Normaliseer callbacks:
-  const isPhoenix = 'fieldId' in rest && typeof rest.fieldId === 'string';
-
-  const emit = (next: number) => {
-    if (isPhoenix) {
-      rest.onChange?.({ fieldId: rest.fieldId, value: next });
-    } else {
-      rest.onUpdate?.(next);
-    }
-  };
-
+  const emit = (next: number) => onChange({ fieldId, value: next });
   const dec = () => emit(Math.max(min, value - 1));
   const inc = () => emit(Math.min(max, value + 1));
 
@@ -67,7 +42,11 @@ const InputCounter: React.FC<InputCounterProps> = ({
           <Text style={{ fontSize: 25 }}> - </Text>
         </TouchableOpacity>
 
-        <Text testID={`${testIdBase}-value`} accessibilityLabel={`Huidige waarde ${value}`} style={{ marginHorizontal: 15 }}>
+        <Text
+          testID={`${testIdBase}-value`}
+          accessibilityLabel={`Huidige waarde ${value}`}
+          style={{ marginHorizontal: 15 }}
+        >
           {value}
         </Text>
 

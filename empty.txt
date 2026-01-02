@@ -1,0 +1,6 @@
+3. De "Missing Properties" in Tests
+In je tsc --noEmit zag ik veel errors zoals: Property 'schemaVersion' is missing in type....
+
+Dit komt omdat je in tests handmatig objecten maakt: render(<WizardController />, { state: { data: { ... } } });
+
+De oplossing: Gebruik altijd de createMockState utility die we eerder hebben gemaakt. Omdat die nu voldoet aan de nieuwe FormState interface (inclusief meta, isValid, etc.), verdwijnen die errors in één klap.

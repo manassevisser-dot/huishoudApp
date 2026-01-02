@@ -1,4 +1,4 @@
-import { TransactionService } from '../../services/transactionService';
+import * as TransactionService  from '../../services/transactionService';
 
 /**
  * STAP 1: De Mock setup

@@ -1,0 +1,2181 @@
+[
+  {
+    "file": "src/screens/Wizard/__tests__/WizardPage.test.tsx",
+    "titles": [
+      {
+        "kind": "describe",
+        "title": "WizardPage",
+        "sumLine": 2186,
+        "link": "src/screens/Wizard/__tests__/WizardPage.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "renders without crashing",
+        "sumLine": 2187,
+        "link": "src/screens/Wizard/__tests__/WizardPage.test.tsx"
+      }
+    ]
+  },
+  {
+    "file": "src/__tests__/App.projector.test.tsx",
+    "titles": [
+      {
+        "kind": "describe",
+        "title": "WizardPage",
+        "sumLine": 2263,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "renders without crashing",
+        "sumLine": 2264,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet namen strippen uit de export (Privacy Contract)",
+        "sumLine": 23034,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "rendeert WelcomeWizard bij status UNBOARDING",
+        "sumLine": 23058,
+        "fileLine": 26,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet false teruggeven bij een lege state",
+        "sumLine": 23091,
+        "fileLine": 32,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet false teruggeven bij een lege state",
+        "sumLine": 23102,
+        "fileLine": 32,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "rendeert WelcomeWizard bij status UNBOARDING",
+        "sumLine": 23445,
+        "fileLine": 26,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "rendeert WelcomeWizard bij status UNBOARDING",
+        "sumLine": 24074,
+        "fileLine": 26,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet namen strippen uit de export (Privacy Contract)",
+        "sumLine": 24098,
+        "fileLine": 32,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet de special status vlag zetten bij > 5 volwassenen [2025-12-07]",
+        "sumLine": 24104,
+        "fileLine": 32,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet de special status vlag zetten bij > 5 volwassenen [2025-12-07]",
+        "sumLine": 24113,
+        "fileLine": 32,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "Projector: Navigator & WAI Integriteit",
+        "sumLine": 28477,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "WAI Check: LandingScreen moet toegankelijke knoppen hebben",
+        "sumLine": 28486,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Projector: Moet naar Wizard switchen bij actie",
+        "sumLine": 28498,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "WAI Check: Dashboard moet direct bereikbaar zijn via Inloggen",
+        "sumLine": 28513,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "Household Logic: Status Determination",
+        "sumLine": 36354,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"SPECIAL_LARGE\" teruggeven voor meer dan 5 volwassenen",
+        "sumLine": 36355,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven voor een klein huishouden",
+        "sumLine": 36360,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "should migrate correctly",
+        "sumLine": 39654,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "WAI Check: LandingScreen heeft toegankelijke knoppen",
+        "sumLine": 42109,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Projector: switch LANDING → WIZARD rendert wizard UI",
+        "sumLine": 42117,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "vereist expliciet schemaVersion 1.0",
+        "sumLine": 42629,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"complete\" teruggeven voor 2 volwassenen",
+        "sumLine": 42636,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "weigert oude versies",
+        "sumLine": 42658,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "App Projector Flow",
+        "sumLine": 43474,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "WAI Check: LandingScreen heeft toegankelijke knoppen",
+        "sumLine": 43475,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Projector: switch LANDING → WIZARD rendert wizard UI",
+        "sumLine": 43791,
+        "fileLine": 17,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "Finance Integratie",
+        "sumLine": 44534,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "berekent netto correct uit de finance tak",
+        "sumLine": 44535,
+        "link": "src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "aggregatie met maandnormalisatie",
+        "sumLine": 44554,
+        "link": "src/__tests__/App.projector.test.tsx"
+      }
+    ]
+  },
+  {
+    "file": "WizardController.test.tsx",
+    "titles": [
+      {
+        "kind": "it",
+        "title": "should update setup data via SET_FIELD",
+        "sumLine": 12222,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven voor klein huishouden (2 volwassenen)",
+        "sumLine": 38079,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven voor klein huishouden (2 volwassenen)",
+        "sumLine": 38090,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven bij alleen kinderen (geen volwassenen)",
+        "sumLine": 38096,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven bij alleen kinderen (geen volwassenen)",
+        "sumLine": 38107,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet SPECIAL_LARGE teruggeven bij 6 volwassenen + kinderen",
+        "sumLine": 38113,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "Legacy → Phoenix migratie (leden → members)",
+        "sumLine": 39755,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "zet household.leden om naar data.household.members",
+        "sumLine": 39756,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "should migrate correctly",
+        "sumLine": 39773,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "Legacy → Phoenix migratie (leden → members)",
+        "sumLine": 39793,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "zet household.leden om naar data.household.members",
+        "sumLine": 39795,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WizardController",
+        "sumLine": 39898,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "renders correctly with initial state",
+        "sumLine": 39899,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WizardController Integration",
+        "sumLine": 39942,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "rendert zonder crash en toont de eerste stap",
+        "sumLine": 39944,
+        "link": "WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "rendert zonder crash en toont de eerste stap",
+        "sumLine": 40313,
+        "link": "WizardController.test.tsx"
+      }
+    ]
+  },
+  {
+    "file": "useAppOrchestration.test.tsx",
+    "titles": [
+      {
+        "kind": "describe",
+        "title": "householdSelectors",
+        "sumLine": 12415,
+        "link": "useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "should return true if more than 5 adults",
+        "sumLine": 12416,
+        "link": "useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "HYDRATING → ONBOARDING bij null",
+        "sumLine": 41151,
+        "link": "useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "accepteert Phoenix v1.0 met centen integers",
+        "sumLine": 42483,
+        "link": "useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven voor 2 volwassenen",
+        "sumLine": 42519,
+        "link": "useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven voor 2 volwassenen",
+        "sumLine": 42537,
+        "link": "useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"complete\" teruggeven voor 2 volwassenen",
+        "sumLine": 42562,
+        "link": "useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"empty\" teruggeven bij een lege lijst",
+        "sumLine": 42572,
+        "link": "useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "vereist expliciet schemaVersion 1.0",
+        "sumLine": 42579,
+        "link": "useAppOrchestration.test.tsx"
+      }
+    ]
+  },
+  {
+    "file": "(onbekend-bestand)",
+    "titles": [
+      {
+        "kind": "describe",
+        "title": "WAI-004C Finance Integratie",
+        "sumLine": 12504,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "berekent netto correct: 100,00 inkomsten - 40,00 uitgaven = 6000 cent",
+        "sumLine": 12505,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet strings (\"10,50\") via de NumericParser omzetten naar centen",
+        "sumLine": 12517,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Household Domain Logic",
+        "sumLine": 12521,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "RULE [2024-12-07]: moet een speciale status geven bij > 5 volwassenen",
+        "sumLine": 12522,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet een standaard status geven bij exact 5 volwassenen",
+        "sumLine": 12527,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-004C Finance Integratie",
+        "sumLine": 12545,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "berekent netto correct: 100,00 inkomsten - 40,00 uitgaven = 6000 cent",
+        "sumLine": 12546,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Household Domain Logic",
+        "sumLine": 12565,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "RULE [2024-12-07]: geeft SPECIAL_LARGE status bij > 5 volwassenen",
+        "sumLine": 12566,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "geeft STANDARD status bij exact 5 volwassenen",
+        "sumLine": 12571,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Storage Migratie",
+        "sumLine": 12582,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet legacy C7 data (\"10,50\") omzetten naar Phoenix centen (1050)",
+        "sumLine": 12583,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-003: Household Selectors",
+        "sumLine": 12601,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet true teruggeven voor 6 volwassenen (Project Eis 2025)",
+        "sumLine": 12602,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "GM-001: Euro NumericParser Baseline",
+        "sumLine": 13093,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "GM-002: Sanitisatie Check",
+        "sumLine": 13108,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet omgaan met spaties en vreemde tekens",
+        "sumLine": 13109,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-004-D: Frequency & Normalisatie Tests",
+        "sumLine": 13137,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "test",
+        "title": "getMonthlyFactor geeft de juiste ratio voor alle types",
+        "sumLine": 13138,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "convertToMonthlyCents (Integer validatie)",
+        "sumLine": 13146,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "test",
+        "title": "Week naar Maand: €100/wk wordt €433,33/pm",
+        "sumLine": 13147,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "test",
+        "title": "4-Weken naar Maand: €1000 per 4wk wordt €1083,33/pm",
+        "sumLine": 13152,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "test",
+        "title": "Kwartaal naar Maand: €300/kw wordt €100/pm",
+        "sumLine": 13157,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "test",
+        "title": "Jaar naar Maand: €12.000/jr wordt €1.000/pm",
+        "sumLine": 13161,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "test",
+        "title": "Default/Onbekend: geeft originele bedrag terug (factor 1)",
+        "sumLine": 13165,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Phoenix Migration",
+        "sumLine": 14826,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "should transform legacy C7 income to Phoenix Finance cents",
+        "sumLine": 14827,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Phoenix Migration Service",
+        "sumLine": 14871,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "should migrate legacy data to the new Phoenix structure",
+        "sumLine": 14872,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Phoenix Migration Specialist",
+        "sumLine": 14938,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "should transform legacy C7 data to new Phoenix Finance cents",
+        "sumLine": 14939,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "valideert de financiële lade dynamisch",
+        "sumLine": 14967,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Phoenix Migration Specialist",
+        "sumLine": 21700,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "should transform legacy C7 data to new Phoenix Finance cents",
+        "sumLine": 21701,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Phoenix Migration Specialist",
+        "sumLine": 21788,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "should transform legacy C7 data to new Phoenix Finance cents",
+        "sumLine": 21789,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Phoenix Migration Specialist",
+        "sumLine": 21996,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "should transform legacy C7 data to new Phoenix Finance cents",
+        "sumLine": 21997,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet namen strippen uit de export (Privacy Contract)",
+        "sumLine": 23776,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-005C: Export Aggregator",
+        "sumLine": 23825,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet namen strippen uit de export (Privacy Contract)",
+        "sumLine": 23829,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet de special status vlag zetten bij > 5 volwassenen",
+        "sumLine": 23833,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Phoenix Financial Flow: Validatie op basis van broncode",
+        "sumLine": 29534,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "Logic: computePhoenixSummary moet centen correct optellen",
+        "sumLine": 29549,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "Selector: selectFinancialSummaryVM moet de totals nesting bevatten",
+        "sumLine": 29556,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet false teruggeven bij een lege state",
+        "sumLine": 36027,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Export Logic",
+        "sumLine": 37355,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet alle transacties kunnen wissen voor een export",
+        "sumLine": 37361,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "should correctly store and retrieve a transaction",
+        "sumLine": 37366,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Export Logic",
+        "sumLine": 37414,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet alle transacties kunnen wissen voor een export",
+        "sumLine": 37420,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "should correctly store and retrieve a transaction",
+        "sumLine": 37425,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Export Logic",
+        "sumLine": 37476,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet alle transacties kunnen wissen voor een export",
+        "sumLine": 37482,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "should correctly store and retrieve a transaction",
+        "sumLine": 37487,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Export Logic",
+        "sumLine": 37533,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet alle transacties kunnen wissen voor een export",
+        "sumLine": 37540,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "should correctly store and retrieve a transaction",
+        "sumLine": 37546,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"SPECIAL_LARGE\" teruggeven voor > 5 volwassenen",
+        "sumLine": 38039,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven voor exact 5 volwassenen",
+        "sumLine": 38045,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven voor exact 5 volwassenen",
+        "sumLine": 38056,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" blijven bij gemengde samenstelling met 5 volwassenen en 2 kinderen",
+        "sumLine": 38062,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "migreert legacy data naar Phoenix",
+        "sumLine": 38558,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "uses removeItem instead of clear() for compliance (Safety gate)",
+        "sumLine": 41832,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"SPECIAL_LARGE\" teruggeven voor > 5 volwassenen",
+        "sumLine": 41846,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven voor exact 5 volwassenen",
+        "sumLine": 41852,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven voor exact 5 volwassenen",
+        "sumLine": 41863,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" blijven bij gemengde samenstelling met 5 volwassenen en 2 kinderen",
+        "sumLine": 41869,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven voor klein huishouden (2 volwassenen)",
+        "sumLine": 41886,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven voor klein huishouden (2 volwassenen)",
+        "sumLine": 41897,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven bij alleen kinderen (geen volwassenen)",
+        "sumLine": 41903,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven bij alleen kinderen (geen volwassenen)",
+        "sumLine": 41914,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet SPECIAL_LARGE teruggeven bij 6 volwassenen + kinderen",
+        "sumLine": 41920,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet SPECIAL_LARGE teruggeven bij 6 volwassenen + kinderen",
+        "sumLine": 41931,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven bij lege lijst",
+        "sumLine": 41937,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-004C Finance Integratie (Phoenix)",
+        "sumLine": 42251,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "berekent netto correct: 100,00 inkomsten - 40,00 uitgaven = 6000 cent",
+        "sumLine": 42253,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "aggregatie met verschillende frequenties: week/4wk/quarter/year → maandnormalisatie",
+        "sumLine": 42278,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "berekent netto correct",
+        "sumLine": 42400,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "Phoenix envelope v2 → READY",
+        "sumLine": 42421,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "berekent netto correct",
+        "sumLine": 42447,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "accepteert Phoenix v1.0 met centen integers",
+        "sumLine": 42607,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven voor exact 5 volwassenen",
+        "sumLine": 42808,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven voor exact 5 volwassenen",
+        "sumLine": 42819,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" blijven bij gemengde samenstelling met 5 volwassenen en 2 kinderen",
+        "sumLine": 42825,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven bij alleen kinderen (geen volwassenen)",
+        "sumLine": 42859,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven bij alleen kinderen (geen volwassenen)",
+        "sumLine": 42870,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet SPECIAL_LARGE teruggeven bij 6 volwassenen + kinderen",
+        "sumLine": 42876,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet SPECIAL_LARGE teruggeven bij 6 volwassenen + kinderen",
+        "sumLine": 42887,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven bij lege lijst",
+        "sumLine": 42893,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven bij lege lijst",
+        "sumLine": 42904,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-004C Finance Integratie (Phoenix)",
+        "sumLine": 43254,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "berekent netto correct: 100,00 inkomsten - 40,00 uitgaven = 6000 cent",
+        "sumLine": 43256,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"complete\" teruggeven voor > 5 volwassenen (voorheen SPECIAL_LARGE)",
+        "sumLine": 43895,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"partial\" teruggeven bij gemengde samenstelling",
+        "sumLine": 43912,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"empty\" teruggeven bij lege lijst",
+        "sumLine": 43929,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "lege items geeft overal 0",
+        "sumLine": 44575,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "FinancialFlow Selectors",
+        "sumLine": 45417,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "haalt de juiste totalen op in EUR formaat",
+        "sumLine": 45418,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "geeft nul-waarden bij lege state",
+        "sumLine": 45437,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Migration Fixture",
+        "sumLine": 45451,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "migreert oude data naar de nieuwe Phoenix structuur",
+        "sumLine": 45452,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Migration Fixture",
+        "sumLine": 45688,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "migreert oude data naar de nieuwe Phoenix structuur",
+        "sumLine": 45689,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Migration Member Mapping",
+        "sumLine": 46245,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet oude leden correct transformeren naar Member objecten",
+        "sumLine": 46246,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Migration Member Mapping",
+        "sumLine": 46328,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet oude leden correct transformeren naar Member objecten",
+        "sumLine": 46329,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Migration Member Mapping",
+        "sumLine": 46407,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet oude leden correct transformeren naar Member objecten",
+        "sumLine": 46408,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet fallback IDs genereren",
+        "sumLine": 46431,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Migration Member Mapping",
+        "sumLine": 46494,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet oude leden correct transformeren",
+        "sumLine": 46505,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet oude leden correct transformeren",
+        "sumLine": 46687,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Migration Member Mapping",
+        "sumLine": 46848,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet oude leden correct transformeren naar Member objecten",
+        "sumLine": 46857,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet oude leden correct transformeren",
+        "sumLine": 46861,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet fallback IDs genereren",
+        "sumLine": 46868,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet een complete household migreren",
+        "sumLine": 46901,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet alle member types correct mappen",
+        "sumLine": 46947,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Migration Member Mapping & Research Data",
+        "sumLine": 47135,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet een divers huishouden correct transformeren voor onderzoek",
+        "sumLine": 47137,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet namen en types correct mappen zonder dataverlies",
+        "sumLine": 47156,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet robuust omgaan met ontbrekende types (fallback naar adult)",
+        "sumLine": 47167,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet UX namen splitsen maar onderzoeks-type behouden",
+        "sumLine": 47278,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet namen splitsen voor UX maar types behouden voor onderzoek",
+        "sumLine": 47358,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Migration Member Mapping & Research Data",
+        "sumLine": 47384,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet een divers huishouden correct transformeren voor onderzoek",
+        "sumLine": 47386,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet namen en types correct mappen zonder dataverlies",
+        "sumLine": 47405,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet robuust omgaan met ontbrekende types (fallback naar adult)",
+        "sumLine": 47416,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet UX namen splitsen maar onderzoeks-type behouden",
+        "sumLine": 47422,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet namen splitsen voor UX maar types behouden voor onderzoek",
+        "sumLine": 47434,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Migration Member Mapping & Research Data",
+        "sumLine": 47459,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet een divers huishouden correct transformeren voor onderzoek",
+        "sumLine": 47461,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet robuust omgaan met ontbrekende types (fallback naar adult)",
+        "sumLine": 47480,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet namen splitsen voor UX maar types behouden voor onderzoek",
+        "sumLine": 47491,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet namen zonder achternaam correct afhandelen",
+        "sumLine": 47510,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet een perfecte payload genereren voor de n8n workflow",
+        "sumLine": 47819,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet data strippen van persoonsgegevens voor n8n export",
+        "sumLine": 47896,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "🔍 Data Orchestrator: Privacy & Research Filter",
+        "sumLine": 47981,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet namen behouden voor lokaal gebruik, maar strippen voor onderzoek",
+        "sumLine": 47983,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "🚀 Phoenix Research & Finance Validator",
+        "sumLine": 48067,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet de strikte scheiding tussen UX en Onderzoek bewaken",
+        "sumLine": 48069,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet alle kritieke leeftijdscategorieën voor het onderzoek mappen",
+        "sumLine": 48098,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "Migration Member Mapping & Research Data",
+        "sumLine": 48122,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet een divers huishouden correct transformeren voor onderzoek",
+        "sumLine": 48124,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet robuust omgaan met ontbrekende types (fallback naar adult)",
+        "sumLine": 48143,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet namen splitsen voor UX maar types behouden voor onderzoek",
+        "sumLine": 48154,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet namen zonder achternaam correct afhandelen",
+        "sumLine": 48173,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet data strippen van persoonsgegevens voor n8n export",
+        "sumLine": 48179,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "describe",
+        "title": "🚀 De Grote Verzamelaar: UX & Onderzoek Validatie",
+        "sumLine": 48329,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet oude leden migreren naar de nieuwe structuur met naam-splitsing",
+        "sumLine": 48332,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet een anonieme payload maken voor n8n zonder persoonsgegevens",
+        "sumLine": 48354,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "moet altijd terugvallen op adult als het type onbekend is",
+        "sumLine": 48379,
+        "link": "(onbekend-bestand)"
+      },
+      {
+        "kind": "it",
+        "title": "⚠️ (dynamic) moet \"${input}\" parsen naar ${expected} centen",
+        "sumLine": 13102,
+        "link": "(onbekend-bestand)"
+      }
+    ]
+  },
+  {
+    "file": "App.projector.test.tsx",
+    "titles": [
+      {
+        "kind": "it",
+        "title": "moet false teruggeven bij een lege state",
+        "sumLine": 12619,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-003: Household Selectors",
+        "sumLine": 12632,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet true teruggeven voor 6 volwassenen (Project Eis 2025)",
+        "sumLine": 12633,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet false teruggeven bij een lege state",
+        "sumLine": 12652,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-005B: Migration Matrix (Legacy -> Phoenix)",
+        "sumLine": 12670,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet v0 (plat object) met floats correct migreren naar v2 centen",
+        "sumLine": 12671,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet strings (\"10,50\") via de NumericParser omzetten naar centen",
+        "sumLine": 12687,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-005B: Migration Matrix (Legacy -> Phoenix)",
+        "sumLine": 12707,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet v0 (C7/C10) met floats correct migreren naar Phoenix centen",
+        "sumLine": 12712,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet strings (\"10,50\") via de NumericParser omzetten naar centen",
+        "sumLine": 12733,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "App projector",
+        "sumLine": 12924,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "renders SplashScreen on HYDRATING",
+        "sumLine": 12925,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "App projector (Phoenix Flow)",
+        "sumLine": 12957,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "toont niets (null) tijdens HYDRATING (via Splash mock)",
+        "sumLine": 12960,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "rendeert de Navigator wanneer de status READY is",
+        "sumLine": 12966,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "toont het WelcomeWizard wanneer de status NEW_USER is",
+        "sumLine": 12973,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-006A-Projector: State Machine Rendering",
+        "sumLine": 13060,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "rendeert SplashScreen bij status HYDRATING",
+        "sumLine": 13063,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "rendeert WelcomeWizard bij status UNBOARDING",
+        "sumLine": 13069,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "Phoenix Alias Sanity Check",
+        "sumLine": 13084,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet de ping functie vinden via de @utils alias",
+        "sumLine": 13085,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "should migrate correctly",
+        "sumLine": 39719,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "navigeert naar de volgende stap bij klikken op Volgende",
+        "sumLine": 40050,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "toont de Afronden knop op de laatste pagina",
+        "sumLine": 40070,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "switch LANDING → WIZARD rendert wizard UI",
+        "sumLine": 41165,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "Household Logic: Status Determination",
+        "sumLine": 43222,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"complete\" teruggeven voor 2 volwassenen (voorheen STANDARD)",
+        "sumLine": 43223,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"complete\" teruggeven voor > 5 volwassenen (voorheen SPECIAL_LARGE)",
+        "sumLine": 43228,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"partial\" teruggeven bij gemengde samenstelling",
+        "sumLine": 43234,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"empty\" teruggeven bij lege lijst",
+        "sumLine": 43242,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "aggregatie met maandnormalisatie",
+        "sumLine": 43279,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "lege items geeft overal 0",
+        "sumLine": 43300,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "Household Logic: Status Determination",
+        "sumLine": 43416,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"complete\" teruggeven voor 2 volwassenen",
+        "sumLine": 43417,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"empty\" teruggeven bij lege lijst",
+        "sumLine": 43423,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "Finance Integratie",
+        "sumLine": 43434,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "berekent netto correct uit de finance tak",
+        "sumLine": 43435,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "behoudt data en focus bij navigatie naar volgende stap",
+        "sumLine": 43608,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "App Projector Flow",
+        "sumLine": 43650,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "WAI Check: LandingScreen heeft toegankelijke knoppen",
+        "sumLine": 43651,
+        "link": "App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "focust het juiste invoerveld bij binnenkomst in de WIZARD",
+        "sumLine": 44274,
+        "link": "App.projector.test.tsx"
+      }
+    ]
+  },
+  {
+    "file": "src/app/hooks/__tests__/useAppOrchestration.test.tsx",
+    "titles": [
+      {
+        "kind": "it",
+        "title": "UNBOARDING for new user (loadState=null)",
+        "sumLine": 22948,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "READY for valid v1.0",
+        "sumLine": 22954,
+        "fileLine": 51,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "UNBOARDING for new user (loadState=null)",
+        "sumLine": 23381,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "READY for valid v1.0",
+        "sumLine": 23387,
+        "fileLine": 51,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "UNBOARDING for new user (loadState=null)",
+        "sumLine": 24010,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "READY for valid v1.0",
+        "sumLine": 24016,
+        "fileLine": 51,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "useAppOrchestration",
+        "sumLine": 27296,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "should initialize with initial state",
+        "sumLine": 27297,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "useAppOrchestration",
+        "sumLine": 27452,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "should initialize with initial state",
+        "sumLine": 27453,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "useAppOrchestration",
+        "sumLine": 27897,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Initializes correctly",
+        "sumLine": 27898,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "useAppOrchestration hook",
+        "sumLine": 28139,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet initialiseren met de meegegeven initialState",
+        "sumLine": 28140,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "Storage Migration",
+        "sumLine": 28290,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "should run migration without errors",
+        "sumLine": 28291,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "useAppOrchestration logic",
+        "sumLine": 28305,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet de juiste initiële state teruggeven",
+        "sumLine": 28306,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-003: Household Selectors",
+        "sumLine": 36000,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet true teruggeven voor 6 volwassenen (Project Eis 2025)",
+        "sumLine": 36001,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "Export Logic",
+        "sumLine": 36330,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet alle transacties kunnen wissen voor een export",
+        "sumLine": 36331,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "HYDRATING → ONBOARDING bij null",
+        "sumLine": 41000,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "weigert legacy floats",
+        "sumLine": 41762,
+        "fileLine": 50,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Phoenix envelope v2 → READY",
+        "sumLine": 42140,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Phoenix envelope v2 → READY",
+        "sumLine": 42179,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "useAppOrchestration (Phoenix/Legacy)",
+        "sumLine": 42204,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Phoenix envelope v2 → READY + SYNC_HOUSEHOLD met payload",
+        "sumLine": 42205,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "HYDRATING → ONBOARDING bij null",
+        "sumLine": 42219,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "lege income/expenses → alle totals 0",
+        "sumLine": 42306,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Phoenix envelope v2 → READY",
+        "sumLine": 42350,
+        "link": "src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      }
+    ]
+  },
+  {
+    "file": "src/ui/components/__tests__/InputCounter.test.tsx",
+    "titles": [
+      {
+        "kind": "it",
+        "title": "moet false teruggeven bij een lege state",
+        "sumLine": 23496,
+        "link": "src/ui/components/__tests__/InputCounter.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet false teruggeven bij een lege state",
+        "sumLine": 23507,
+        "link": "src/ui/components/__tests__/InputCounter.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet false teruggeven bij een lege state",
+        "sumLine": 24136,
+        "link": "src/ui/components/__tests__/InputCounter.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "InputCounter",
+        "sumLine": 28273,
+        "link": "src/ui/components/__tests__/InputCounter.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "roept onUpdate aan bij klik",
+        "sumLine": 28276,
+        "link": "src/ui/components/__tests__/InputCounter.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-003: Household Selectors",
+        "sumLine": 36050,
+        "link": "src/ui/components/__tests__/InputCounter.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet true teruggeven voor 6 volwassenen (Project Eis 2025)",
+        "sumLine": 36071,
+        "link": "src/ui/components/__tests__/InputCounter.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet false teruggeven voor 2 volwassenen",
+        "sumLine": 36076,
+        "link": "src/ui/components/__tests__/InputCounter.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet false teruggeven bij een lege state",
+        "sumLine": 36081,
+        "link": "src/ui/components/__tests__/InputCounter.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "Storage Migration: V0 to Phoenix",
+        "sumLine": 36110,
+        "link": "src/ui/components/__tests__/InputCounter.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet oude setup data migreren naar de nieuwe data.setup nesting",
+        "sumLine": 36111,
+        "link": "src/ui/components/__tests__/InputCounter.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "InputCounter",
+        "sumLine": 36153,
+        "link": "src/ui/components/__tests__/InputCounter.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet de waarde verhogen bij een klik op de plus",
+        "sumLine": 36154,
+        "link": "src/ui/components/__tests__/InputCounter.test.tsx"
+      }
+    ]
+  },
+  {
+    "file": "archive/legacy_screens/Wizard/__tests__/WizardPage.test.tsx",
+    "titles": [
+      {
+        "kind": "it",
+        "title": "moet namen strippen uit de export (Privacy Contract)",
+        "sumLine": 23553,
+        "fileLine": 3,
+        "link": "archive/legacy_screens/Wizard/__tests__/WizardPage.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet de special status vlag zetten bij > 5 volwassenen [2025-12-07]",
+        "sumLine": 23559,
+        "fileLine": 3,
+        "link": "archive/legacy_screens/Wizard/__tests__/WizardPage.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet de special status vlag zetten bij > 5 volwassenen [2025-12-07]",
+        "sumLine": 23568,
+        "fileLine": 3,
+        "link": "archive/legacy_screens/Wizard/__tests__/WizardPage.test.tsx"
+      }
+    ]
+  },
+  {
+    "file": "home/user/pre7/src/app/hooks/__tests__/useAppOrchestration.test.tsx",
+    "titles": [
+      {
+        "kind": "describe",
+        "title": "Export Logic",
+        "sumLine": 27661,
+        "link": "home/user/pre7/src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "should correctly store and retrieve a transaction",
+        "sumLine": 27666,
+        "link": "home/user/pre7/src/app/hooks/__tests__/useAppOrchestration.test.tsx"
+      }
+    ]
+  },
+  {
+    "file": "src/__tests__/WAI009_FocusManagement.test.tsx",
+    "titles": [
+      {
+        "kind": "describe",
+        "title": "WAI-009: Focus Management & Screen Reader Announcements",
+        "sumLine": 28540,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet een toegankelijke kop (H1/Header) hebben op elk scherm voor WAI-009",
+        "sumLine": 28549,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet de juiste accessibilityRole=\"header\" bevatten op het Dashboard",
+        "sumLine": 28565,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-009: Focus Management",
+        "sumLine": 29204,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet de juiste titels vinden via screen methods",
+        "sumLine": 29205,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "weigert legacy floats",
+        "sumLine": 37992,
+        "fileLine": 13,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Logic: computePhoenixSummary telt centen correct op",
+        "sumLine": 38021,
+        "fileLine": 13,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "weigert legacy floats",
+        "sumLine": 40841,
+        "fileLine": 36,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "uses removeItem instead of clear() for compliance (Safety gate)",
+        "sumLine": 42788,
+        "fileLine": 36,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"SPECIAL_LARGE\" teruggeven voor > 5 volwassenen",
+        "sumLine": 42802,
+        "fileLine": 36,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "uses removeItem instead of clear() for compliance (Safety gate)",
+        "sumLine": 43875,
+        "fileLine": 15,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "geeft nul-waarden terug als de data-tak ontbreekt",
+        "sumLine": 44938,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI009 Focus Management",
+        "sumLine": 44956,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "zet de focus op de header bij het laden van de Landing pagina",
+        "sumLine": 44957,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI009 Focus Management",
+        "sumLine": 45155,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "zet de focus op de header bij het laden",
+        "sumLine": 45156,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI009 Focus Management",
+        "sumLine": 45230,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "zet de focus op de header bij het laden",
+        "sumLine": 45231,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "Migration Fixture",
+        "sumLine": 45263,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "migreert oude leden naar het nieuwe Phoenix members formaat",
+        "sumLine": 45264,
+        "link": "src/__tests__/WAI009_FocusManagement.test.tsx"
+      }
+    ]
+  },
+  {
+    "file": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx",
+    "titles": [
+      {
+        "kind": "describe",
+        "title": "Phoenix Financial Flow: Van State naar ViewModel",
+        "sumLine": 29380,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet de volledige keten correct doorlopen: State -> Logica -> VM",
+        "sumLine": 29395,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet robuust omgaan met lege state (Edge Case)",
+        "sumLine": 29419,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WizardController: Navigatie & State Synchronisatie",
+        "sumLine": 29438,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet bij het verlaten van de household setup de Logger aanroepen (WAI-009)",
+        "sumLine": 29439,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WizardController",
+        "sumLine": 29843,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet renderen en interactie loggen",
+        "sumLine": 29844,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "navigeert naar de volgende stap bij klikken op Volgende",
+        "sumLine": 39963,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "toont de Afronden knop op de laatste pagina",
+        "sumLine": 39989,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WizardController Integration",
+        "sumLine": 40033,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "rendert zonder crash en toont de eerste stap",
+        "sumLine": 40035,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "moet \"STANDARD\" teruggeven bij lege lijst",
+        "sumLine": 41948,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Logic: computePhoenixSummary telt centen correct op",
+        "sumLine": 41966,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Logic: computePhoenixSummary telt centen correct op",
+        "sumLine": 42940,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Logic: computePhoenixSummary telt centen correct op",
+        "sumLine": 43959,
+        "link": "src/ui/screens/Wizard/__tests__/WizardController.test.tsx"
+      }
+    ]
+  },
+  {
+    "file": "WAI009_FocusManagement.test.tsx",
+    "titles": [
+      {
+        "kind": "it",
+        "title": "moet \"complete\" teruggeven voor 2 volwassenen",
+        "sumLine": 43177,
+        "link": "WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Projector: switch LANDING → WIZARD rendert wizard UI",
+        "sumLine": 43493,
+        "link": "WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "Projector: switch LANDING → WIZARD rendert wizard UI",
+        "sumLine": 43665,
+        "link": "WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "describe",
+        "title": "WAI-009: Focus Management (Project Eis 2025)",
+        "sumLine": 43719,
+        "link": "WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "focust het juiste invoerveld bij binnenkomst in de WIZARD",
+        "sumLine": 43721,
+        "link": "WAI009_FocusManagement.test.tsx"
+      }
+    ]
+  },
+  {
+    "file": "home/user/pre7/src/__tests__/App.projector.test.tsx",
+    "titles": [
+      {
+        "kind": "describe",
+        "title": "WAI-009: Focus Management (Project Eis 2025)",
+        "sumLine": 43556,
+        "link": "home/user/pre7/src/__tests__/App.projector.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "focust het juiste invoerveld bij binnenkomst in de WIZARD",
+        "sumLine": 43558,
+        "link": "home/user/pre7/src/__tests__/App.projector.test.tsx"
+      }
+    ]
+  },
+  {
+    "file": "home/user/pre7/src/__tests__/WAI009_FocusManagement.test.tsx",
+    "titles": [
+      {
+        "kind": "describe",
+        "title": "FinancialFlow Selectors",
+        "sumLine": 44911,
+        "link": "home/user/pre7/src/__tests__/WAI009_FocusManagement.test.tsx"
+      },
+      {
+        "kind": "it",
+        "title": "haalt de juiste totalen op uit de Phoenix-state structuur",
+        "sumLine": 44912,
+        "link": "home/user/pre7/src/__tests__/WAI009_FocusManagement.test.tsx"
+      }
+    ]
+  }
+]

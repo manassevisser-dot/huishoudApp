@@ -50,7 +50,7 @@ describe('WAI-004-D: Frequency & Normalisatie Tests', () => {
     const toMonthly = (item: { amountCents: number; frequency?: string }) =>
       convertToMonthlyCents(item.amountCents, item.frequency);
 
-    test('Income items → maandbedragen (ct)', () => {
+    test('Income items → monthlyexpenses (ct)', () => {
       const items = state.data.finance.income.items;
       expect(toMonthly(items[0])).toBe(43333);
       expect(toMonthly(items[1])).toBe(108333);

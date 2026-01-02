@@ -9,7 +9,7 @@ export const getHouseholdStatus = (members: Member[]): 'empty' | 'partial' | 'co
 
   const memberStatus = members.map(m => {
     // Check of de minimale Phoenix-velden gevuld zijn
-    const hasName = !!m.naam && m.naam.trim().length > 0;
+    const hasName = !!m.firstName && m.firstName.trim().length > 0;
     const hasDOB = !!m.dateOfBirth;
     
     return hasName && hasDOB;

@@ -3,6 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+// @alias-start
       "@app/*": [
         "src/app/*"
       ],
@@ -53,8 +54,11 @@
       ],
       "@test-utils/*": [
         "src/test-utils/*"
-      ]
+      ],
+      "@test-utils/.*": ["src/test-utils/*"],
+
     }
+// @alias-end
   },
   "exclude": [
     "node_modules",

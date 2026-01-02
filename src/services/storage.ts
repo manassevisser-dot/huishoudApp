@@ -1,30 +1,67 @@
 import { DATA_KEYS } from '@domain/constants/datakeys';
 import { toCents } from '@utils/numbers';
+import { FormState } from '@shared-types/form';
+import { Member } from '@domain/household';
 
-export const migrateToPhoenix = (oldState: any): any => {
-  const next: any = { 
-    schemaVersion: '1.0',
-    [DATA_KEYS.SETUP]: oldState[DATA_KEYS.SETUP] || { aantalMensen: 1 },
-    [DATA_KEYS.HOUSEHOLD]: oldState[DATA_KEYS.HOUSEHOLD] || { leden: [] },
-    [DATA_KEYS.FINANCE]: { inkomsten: { bedrag: 0 } },
-    [DATA_KEYS.EXPENSES]: { wonen: { bedrag: 0 } },
-  };
+/**
+ * Migreert een oude state structuur naar de nieuwe Phoenix 2025 interface.
+ */
+export const migrateToPhoenix = (oldState: any): FormState => {
+  const o = oldState || {};
 
-  const getFirstAmount = (obj: any) => {
+  const getFirstAmountCents = (obj: any): number => {
     const list = obj?.items || obj?.list || [];
-    // We gebruiken de toCents util om floating point errors te voorkomen
     return list.length > 0 ? toCents(list[0]?.amount ?? list[0]?.value ?? 0) : 0;
   };
 
-  // Migreer C7 -> FINANCE
-  if (oldState.C7 || oldState.income) {
-    next[DATA_KEYS.FINANCE].inkomsten.bedrag = getFirstAmount(oldState.C7 || oldState.income);
-  }
+  const migratedMembers: Member[] = (o[DATA_KEYS.HOUSEHOLD]?.leden || []).map((lid: any, i: number) => ({
+    entityId: lid.id || `m-${i}`,
+    naam: lid.naam || lid.firstName || 'Lid',
+    memberType: lid.type || 'adult',
+  }));
 
-  // Migreer C10 -> EXPENSES
-  if (oldState.C10 || oldState.fixedExpenses) {
-    next[DATA_KEYS.EXPENSES].wonen.bedrag = getFirstAmount(oldState.C10 || oldState.fixedExpenses);
-  }
+  const migratedData: FormState['data'] = {
+    [DATA_KEYS.SETUP]: o[DATA_KEYS.SETUP] || { 
+      aantalMensen: 1, 
+      aantalVolwassen: 1,
+      autoCount: 'Nee'
+    },
+    [DATA_KEYS.HOUSEHOLD]: {
+      members: migratedMembers as any[],
+    },
+    [DATA_KEYS.FINANCE]: {
+      income: { 
+        items: [], 
+        totalAmount: getFirstAmountCents(o.C7 || o.income)
+      },
+      expenses: { 
+        items: [],
+        totalAmount: getFirstAmountCents(o.C10 || o.fixedExpenses)
+      }
+    }
+  };
 
-  return next;
+  return {
+    schemaVersion: '1.0',
+    activeStep: 'LANDING',
+    currentPageId: 'page_1',
+    isValid: true,
+    data: migratedData,
+    meta: {
+      lastModified: new Date().toISOString(),
+      version: 1
+    }
+  };
+};
+
+/**
+ * Storage service voor persistentie en migratie.
+ * Fix: Named export toegevoegd om TS2305 te verhelpen.
+ */
+export const storage = {
+  migrateToPhoenix,
+  loadState: async (): Promise<FormState | null> => {
+     // Hier kun je de feitelijke AsyncStorage of localStorage logica toevoegen
+     return null; 
+  }
 };

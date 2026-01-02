@@ -6,32 +6,35 @@ export interface FieldRendererProps {
   fields: FieldConfig[];
   state: FormState;
   dispatch: React.Dispatch<FormAction>;
-  pageId?: string;
 }
 
-export const FieldRenderer: React.FC<FieldRendererProps> = ({ 
-  fields, 
-  state, 
-  dispatch, 
-  pageId 
-}) => {
+export const FieldRenderer: React.FC<FieldRendererProps> = ({ fields, state, dispatch }) => {
   return (
     <>
       {fields.map((field) => {
-        // View logic: check visibility
-        const isVisible = typeof field.visibleIf === 'function' 
-  ? field.visibleIf(state) 
-  : field.visibleIf 
-    ? !!state.data.setup[field.visibleIf] // Als het een string is, check of die waarde bestaat
-    : true;
+        // ✅ Evalueer zichtbaarheid
+        let isVisible = true;
+
+        if (typeof field.visibleIf === 'function') {
+          isVisible = field.visibleIf(state);
+        } else if (typeof field.visibleIf === 'string') {
+          // Check in de setup sectie of het veld 'waar' is
+          isVisible = !!(state.data.setup as any)[field.visibleIf];
+        }
+
+        if (!isVisible) return null;
+
+        // Phoenix SSOT: Haal de waarde op uit de juiste sectie
+        const section = field.section ?? 'setup';
+        const value = (state.data[section] as any)[field.fieldId];
 
         return (
           <FormField
-            key={`${pageId || 'field'}-${field.fieldId}`}
+            key={field.fieldId}
             field={field}
             state={state}
             dispatch={dispatch}
-            value={state[field.fieldId]}
+            value={value}
           />
         );
       })}

@@ -37,3 +37,4 @@ export const MoneyField: React.FC<MoneyFieldProps> = ({
     </View>
   );
 };
+export default MoneyField;

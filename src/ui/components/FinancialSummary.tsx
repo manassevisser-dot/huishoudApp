@@ -1,15 +1,26 @@
 import * as React from 'react';
 import { View, Text } from 'react-native';
-import { useAppStyles } from '@ui/styles/useAppStyles'; // ← orchestrator (CU-008.6)
-import { selectFinancialSummaryVM as FinancialSummaryVM } from '@selectors/financialSelectors';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+import { formatCurrency } from '@utils/numbers'; // Gebruik je nieuwe financiële grondwet
+
+// Definieer een interface voor de data die de selector levert
+interface FinancialSummaryData {
+  totalIncomeCents: number;
+  totalExpensesCents: number;
+  netCents: number;
+}
 
 interface Props {
-  data: any;
+  data: FinancialSummaryData;
 }
 
 export const FinancialSummary: React.FC<Props> = ({ data }) => {
   const { styles, colors, Tokens } = useAppStyles();
-  const { totals } = data;
+  
+  // We gebruiken de data direct uit de lades, omgezet naar Euro's voor display
+  const incomeDisplay = formatCurrency(data.totalIncomeCents);
+  const expensesDisplay = formatCurrency(data.totalExpensesCents);
+  const netDisplay = formatCurrency(data.netCents);
 
   return (
     <View style={styles.summaryDetail}>
@@ -19,13 +30,12 @@ export const FinancialSummary: React.FC<Props> = ({ data }) => {
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Totaal Inkomsten:</Text>
         <Text
-          style={{
-            ...styles.summaryValue,
-            color: colors.success, // semantisch i.p.v. 'green'
-            fontWeight: '700',
-          }}
+          style={[
+            styles.summaryValue,
+            { color: colors.success, fontWeight: '700' }
+          ]}
         >
-          {totals.totalIncomeEUR}
+          {incomeDisplay}
         </Text>
       </View>
 
@@ -33,23 +43,23 @@ export const FinancialSummary: React.FC<Props> = ({ data }) => {
       <View style={styles.summaryRow}>
         <Text style={styles.summaryLabel}>Totaal Uitgaven:</Text>
         <Text
-          style={{
-            ...styles.summaryValue,
-            color: colors.error, // semantisch i.p.v. 'red'
-            fontWeight: '700',
-          }}
+          style={[
+            styles.summaryValue,
+            { color: colors.error, fontWeight: '700' }
+          ]}
         >
-          {totals.totalExpensesEUR}
+          {expensesDisplay}
         </Text>
       </View>
 
-      {/* Netto resultaat: gebruik summaryRowTotal (heeft top-border met border → borderSubtle/ border) */}
+      {/* Netto resultaat */}
       <View style={styles.summaryRowTotal}>
         <Text style={styles.summaryLabelBold}>Netto resultaat:</Text>
-        <Text style={styles.summaryValueBold}>{totals.netEUR}</Text>
+        <Text style={styles.summaryValueBold}>
+          {netDisplay}
+        </Text>
       </View>
 
-      {/* (optioneel) Kleine spacer met Tokens.Space i.p.v. magic numbers */}
       <View style={{ height: Tokens.Space.md }} />
     </View>
   );

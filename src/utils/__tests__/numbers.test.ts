@@ -20,3 +20,36 @@ describe('GM-002: Sanitisatie Check', () => {
     expect(toCents(' € 1.250,50 ')).toBe(125050);
   });
 });
+
+
+describe('GM-003: Edge cases & US/NL mix', () => {
+  it('US punt-decimaal zonder komma', () => {
+    expect(toCents('1250.50')).toBe(125050);
+  });
+
+  it('US duizendtal + decimaal (gemixte invoer)', () => {
+    // Komma aanwezig => NL-pad: punten weg, komma naar punt
+    expect(toCents('1,250.50')).toBe(125050);
+  });
+
+  it('Meerdere punten zonder komma (hou alleen laatste als decimaal)', () => {
+    expect(toCents('1.234.567.89')).toBe(123456789);
+  });
+
+  it('Alleen duizendtallen zonder decimaal', () => {
+    expect(toCents('12.345')).toBe(1234500);
+  });
+
+  it('Ruwe input met letters/valutasymbolen', () => {
+    expect(toCents('EUR 12 345,00')).toBe(1234500);
+  });
+
+  it('Numbers direct (afronden naar centen)', () => {
+    expect(toCents(12.345)).toBe(1235);
+  });
+
+  it('Null/undefined geeft 0', () => {
+    expect(toCents(undefined)).toBe(0);
+    expect(toCents(null)).toBe(0);
+  });
+});

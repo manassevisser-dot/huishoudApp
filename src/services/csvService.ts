@@ -1,110 +1,75 @@
-import logger from '@services/logger';
-// src/services/csvService.ts
+import { parseRawCsv } from '@utils/csvHelper';
+import { toCents } from '@utils/numbers';
 
-// Helper: valideer Date
-const isValidDate = (d: Date) => !Number.isNaN(d.getTime());
+export type CsvRow = Record<string, string>;
 
-export type CsvRow = {
-  date?: string;
-  amount?: number;
-  note?: string;
+const normalizeAmount = (raw: string | undefined): number => {
+  if (!raw) return 0;
+
+  let value = raw
+    .replace(/\s+/g, '')
+    .replace(/€/g, '')
+    .replace(/,/g, '.');
+
+  // Remove thousands separators like 1.234.56 -> 1234.56
+  value = value.replace(/(\d+)\.(?=\d{3}\b)/g, '$1');
+
+  const num = Number(value);
+
+  return Number.isFinite(num) ? toCents(num) : 0;
 };
 
 export const csvService = {
-  /**
-   * Parse CSV text met flexibele kolomdetectie
-   * Headers: date/datum, amount/bedrag, note/notitie
-   * - Normaliseert amount (geen NaN doorlaten)
-   */
-  parse(text: string): CsvRow[] {
-    const trimmed: string = text.trim();
-    if (!trimmed) return [];
+  mapToInternalModel: (rawCsv: string) => {
+    const rawRows: CsvRow[] = parseRawCsv(rawCsv) ?? [];
 
-    const lines: string[] = trimmed.split('\n');
-    if (lines.length < 2) return [];
+    return rawRows.map(row => {
+      const keys = Object.keys(row ?? {});
 
-    const headers: string[] = lines[0]
-      .toLowerCase()
-      .split(',')
-      .map((h: string) => h.trim());
-    const dateCol: number = headers.findIndex((h: string) => h === 'date' || h === 'datum');
-    const amountCol: number = headers.findIndex((h: string) => h === 'amount' || h === 'bedrag');
-    const noteCol: number = headers.findIndex((h: string) => h === 'note' || h === 'notitie');
+      const amountKey = keys.find(k => /bedrag|amount|transactie/i.test(k));
+      const mutationKey = keys.find(k => /Af.?Bij|Mutatie|tegenrekening/i.test(k));
+      const descKey = keys.find(k => /Naam|Omschrijving|Mededeling|Beschrijving/i.test(k));
+      const dateKey = keys.find(k => /Datum|Boekdatum|date/i.test(k));
 
-    if (dateCol === -1 || amountCol === -1) {
-      throw new Error('CSV moet minimaal date/datum en amount/bedrag kolommen bevatten');
-    }
+      let rawAmount = amountKey ? row[amountKey] : '0';
 
-    const rows: CsvRow[] = [];
-    for (let i = 1; i < lines.length; i++) {
-      const cols: string[] = lines[i].split(',').map((c: string) => c.trim());
-      if (cols.length < 2) continue;
+      const mutationValue =
+        mutationKey && typeof row[mutationKey] === 'string'
+          ? row[mutationKey].toLowerCase()
+          : '';
 
-      // Amount veilig parsen
-      let amt: number | undefined = undefined;
-      if (amountCol >= 0) {
-        const rawAmount: string = cols[amountCol];
-        const num: number = parseFloat(rawAmount);
-        if (!Number.isNaN(num)) {
-          amt = num;
-        } else if (__DEV__) {
-          logger.warn(`[CSV Parse] Ongeldig bedrag op regel ${i + 1}: ${rawAmount}`);
-        }
+      const isDebit =
+        mutationValue.includes('af') ||
+        mutationValue.includes('debit') ||
+        mutationValue === '-' ||
+        mutationValue === 'd';
+
+      if (isDebit && !rawAmount?.startsWith('-')) {
+        rawAmount = `-${rawAmount}`;
       }
 
-      rows.push({
-        date: dateCol >= 0 ? cols[dateCol] : undefined,
-        amount: amt,
-        note: noteCol >= 0 ? cols[noteCol] : undefined,
-      });
-    }
+      const amount = normalizeAmount(rawAmount);
 
-    return rows;
+      const description =
+        typeof row[descKey ?? ''] === 'string'
+          ? row[descKey as string]
+          : 'Geen omschrijving';
+
+      const date =
+        typeof row[dateKey ?? ''] === 'string'
+          ? row[dateKey as string]
+          : '1970-01-01';
+
+      return {
+        amount,                     // CENTEN, NaN-safe
+        description,
+        date,
+        original: row ?? {},
+      };
+    });
   },
 
-  /**
-   * Valideer: geldige datums moeten binnen 62 dagen liggen
-   * - Rijen zonder   * - Rijen zonder geldige datum negeren
-   * - Geen enkele geldige datum → false
-   */
-  validateRange(rows: CsvRow[]): boolean {
-    if (rows.length === 0) return true;
-
-    // Verzamel eerst geldige date-strings
-    const dateStrings: string[] = rows
-      .map((r: CsvRow) => r.date)
-      .filter((s: string | undefined): s is string => typeof s === 'string');
-
-    if (dateStrings.length === 0) return false;
-
-    // Converteer naar Date en filter op geldige datums
-    const dates: Date[] = dateStrings
-      .map((s: string) => new Date(s))
-      .filter((d: Date) => isValidDate(d));
-
-    if (dates.length === 0) return false;
-
-    const minDate = new Date(Math.min(...dates.map((d: Date) => d.getTime())));
-    const maxDate = new Date(Math.max(...dates.map((d: Date) => d.getTime())));
-    const diffDays = (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24);
-
-    return diffDays <= 62;
-  },
-
-  /**
-   * Mock n8n webhook POST
-   * - Dev sanity-check
-   * - Try/catch voor voorspelbaar gedrag
-   */
-  async postToN8N(payload: any): Promise<void> {
-    try {
-      if (__DEV__ && (typeof payload !== 'object' || payload == null)) {
-        logger.warn('[CSV Upload] Invalid payload for mock upload:', payload);
-      }
-      // Simuleer netwerklatency
-      await new Promise((resolve) => setTimeout(resolve, 800));
-    } catch (e) {
-      if (__DEV__) logger.warn('[CSV Upload] Mock upload failed (unexpected):', e);
-    }
+  processCsvData: (rawCsv: string) => {
+    return csvService.mapToInternalModel(rawCsv);
   },
 };

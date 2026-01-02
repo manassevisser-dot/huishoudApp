@@ -9,7 +9,7 @@ module.exports = {
     AUDIT_START: "🛡️ Start Audit (phoenix-check)...",
     AUDIT_NOT_FOUND: "❌ FOUT: phoenix-check.sh niet gevonden!",
     AUDIT_SUMMARY_FAIL: "❌ Fout: Functie show_summary niet geladen uit reports.sh",
-    AUDIT_STAT_HOUSEHOLD: "ℹ️  Statistiek: Huishoudens met > 5 volwassenen krijgen speciale status.",
+    AUDIT_STAT_HOUSEHOLD: "ℹ️  Statistiek: Huishoudens met > 5 adults krijgen speciale status.",
     
     // === LOCK LOGICA ===
     LOCK_STALE: "⚠️  Oude lock gevonden (>30 min). Opruimen en opnieuw starten…",

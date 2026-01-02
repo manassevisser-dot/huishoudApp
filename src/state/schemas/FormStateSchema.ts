@@ -18,7 +18,7 @@ const MoneyListSchema = z
 // 3. Het hoofd-schema
 export const FormStateSchema = z
   .object({
-    schemaVersion: z.string().literal('1.0'),
+    schemaVersion: z.literal('1.0'),
     isSpecialStatus: z.boolean().default(false),
 
     // Huishouden

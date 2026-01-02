@@ -25,10 +25,11 @@ export function alignMembers(
     entityId: makeId('m', idx),
     fieldId: makeFieldId(idx),
     memberType: type,
-    naam: undefined,
+    firstName: '',
+    lastName: '',
     gender: undefined,
     dateOfBirth: undefined,
-    leeftijd: undefined,
+    age: undefined,
   });
 
   const next: Member[] = [];

@@ -2,21 +2,23 @@ import { Member } from '../household';
 import {getHouseholdStatus} from '@logic/householdLogic'
 // Helper om Phoenix-compliant members te maken
 
-const createMembers = (count: number, type: 'adult' | 'child'): Member[] => 
-  Array.from({ length: count }).map((_, i) => ({
-    entityId: `id-${type}-${i}`,
-    fieldId: `field-${type}-${i}`, 
-    memberType: type
-  }));
+  const createMembers = (count: number, type: 'adult' | 'child'): Member[] => 
+    Array.from({ length: count }).map((_, i) => ({
+      entityId: `m-${i}`,
+      fieldId: `field-household-member-${i}`, // VOEG DIT TOE
+      memberType: type,
+      firstName: 'Test Lid', lastName: '',           
+      dateOfBirth: '1990-01-01'   
+    }));
 
   describe('Household Logic: Status Determination', () => {
-    it('moet "complete" teruggeven voor 2 volwassenen', () => {
+    it('moet "complete" teruggeven voor 2 adults', () => {
       const members = createMembers(2, 'adult');
       // We verwachten 'complete' omdat 'STANDARD' niet in je type-definitie staat
       expect(getHouseholdStatus(members)).toBe('complete');
     });
 
-  it('moet "complete" teruggeven voor > 5 volwassenen (voorheen SPECIAL_LARGE)', () => {
+  it('moet "complete" teruggeven voor > 5 adults (voorheen SPECIAL_LARGE)', () => {
     const members = createMembers(6, 'adult');
     // In de nieuwe logica vallen alle valide vullingen onder 'complete'
     expect(getHouseholdStatus(members)).toBe('complete');

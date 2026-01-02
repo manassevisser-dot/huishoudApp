@@ -1,7 +1,7 @@
 
 // src/ui/components/__tests__/InputCounter.test.tsx
-import { render, fireEvent } from '@test-utils/rtl';
-import  InputCounter  from 'src/ui/components/fields/InputCounter';
+import { render, fireEvent } from '@test-utils/index';
+import  InputCounter  from '@fields/InputCounter';
 
 describe('InputCounter', () => {
   it('moet de waarde verhogen bij een klik op de plus en action structuur doorgeven', () => {

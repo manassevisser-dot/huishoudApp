@@ -28,7 +28,8 @@ module.exports = function (api) {
             '@context': './src/app/context',
             '@selectors': './src/selectors',
             '@assets': './assets',
-            '@test-utils': './src/test-utils',
+            '@test-utils': './src/test-utils/index.ts',
+            "@test-utils/*": ["src/test-utils/*"],
 // @alias-end
           },
           extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],

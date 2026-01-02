@@ -1,47 +1,24 @@
+import { DATA_KEYS, SUB_KEYS } from '@domain/constants/registry';
+import { UX_TOKENS } from '@domain/constants/registry';
+import { FormState } from '@shared-types/form';
+import { WizardPageConfig} from '@shared-types/wizard';
 
-import { TempPageConfig } from '@shared-types/form';
-
-export const detailsHouseholdConfig: TempPageConfig = {
-  pageId: '2detailsHousehold',
-  title: 'Wie zijn de bewoners?',
-  description: 'Vul de details in per gezinslid. Gebruik de swipe om te navigeren.',
-  componentName: 'WizardPage',              // ✅ (aanrader: overal zetten)
+export const detailsHouseholdConfig: WizardPageConfig  = {
+  pageId: DATA_KEYS.HOUSEHOLD,
+  titleToken: UX_TOKENS.PAGES[DATA_KEYS.HOUSEHOLD], // Automatisch 'Wie zijn de bewoners?'
+  componentName: 'WizardPage',
   fields: [
     {
-      fieldId: 'leden_repeater',            // ✅ fieldId (UI sleutel)
-      pageId: 'leden',
-      label: 'Bewoners',                    // ✅ REQUIRED door FormFieldConfig
+      fieldId: SUB_KEYS.MEMBERS,
       type: 'repeater',
       fields: [
         {
-          fieldId: 'naam',
-          pageId: 'naam',
-          label: 'Naam',
+          fieldId: 'fullName',
+          labelToken: UX_TOKENS.FIELDS.NAME, // 'Volledige naam'
           type: 'text',
-          placeholder: 'Bijv. Jan de Vries',
           required: true,
-        },
-        {
-          fieldId: 'dateOfBirth',
-          pageId: 'dateOfBirth',
-          label: 'Geboortedatum',
-          type: 'date-input',
-          placeholder: 'DD-MM-YYYY',
-          maxLength: 10,
-        },
-        {
-          fieldId: 'gender',
-          pageId: 'gender',
-          label: 'Geslacht',
-          type: 'radio-chips',
-          options: [
-            { label: 'Man', value: 'man' },
-            { label: 'Vrouw', value: 'vrouw' },
-            { label: 'Anders', value: 'anders' },
-            { label: 'N.v.t.', value: 'n.v.t.' },
-          ],
-        },
-      ],
-    },
-  ],
+        }
+      ]
+    }
+  ]
 };

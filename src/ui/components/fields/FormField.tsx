@@ -1,9 +1,9 @@
-// src/ui/components/fields/FormField.tsx
-import * as React from 'react';
+import React from 'react';
 import { View } from 'react-native';
 import { FieldConfig, FormState, FormAction } from '../../../shared-types/form';
+import { InputCounter, DateField, ToggleSwitch, MoneyInput } from './index';
 
-export interface FormFieldProps {
+interface FormFieldProps {
   field: FieldConfig;
   state: FormState;
   dispatch: React.Dispatch<FormAction>;
@@ -11,43 +11,36 @@ export interface FormFieldProps {
 }
 
 const FormField: React.FC<FormFieldProps> = ({ field, state, dispatch, value }) => {
-  
-  /**
-   * Onze reducer verwacht het Phoenix-contract:
-   * Directe properties op de action, geen geneste payload.
-   */
+  const targetSection = field.section ?? 'setup';
+
   const handleChange = (newValue: any) => {
     dispatch({
       type: 'SET_FIELD',
-      fieldId: field.fieldId, // Directe property
-      value: newValue,        // Directe property
+      payload: { section: targetSection, field: field.fieldId, value: newValue },
     });
   };
 
-  // Render logica op basis van field.type
-  switch (field.type) {
-    case 'counter':
-      // Hier komt straks je CounterField component:
-      // return <CounterField field={field} value={value} onChange={handleChange} />;
-      return null;
-
-    case 'text':
-      // Hier komt straks je TextInputField component:
-      // return <TextInputField field={field} value={value} onChange={handleChange} />;
-      return null;
-
-    case 'section':
-    case 'collapsible-section':
-    case 'repeater':
-      // Deze worden meestal door de PageRenderer of een Parent afgehandeld,
-      // maar we vangen ze hier op om fouten te voorkomen.
-      return null;
-
-    default:
-      // Onbekend veldtype of placeholder
-      console.warn(`Veldtype "${field.type}" wordt (nog) niet ondersteund in FormField.`);
-      return <View />;
-  }
+  return (
+    <View>
+      {field.type === 'counter' && (
+        <InputCounter
+          fieldId={field.fieldId}
+          label={field.label || field.labelToken}
+          value={Number(value || 0)}
+          onChange={(p) => handleChange(p.value)}
+          min={field.validation?.min}
+          max={field.validation?.max}
+        />
+      )}
+      {field.type === 'toggle' && (
+        <ToggleSwitch
+          value={!!value}
+          onToggle={() => handleChange(!value)}
+        />
+      )}
+      {/* Voeg hier DateField en MoneyInput toe op dezelfde wijze */}
+    </View>
+  );
 };
 
 export default FormField;

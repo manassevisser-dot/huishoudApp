@@ -1,6 +1,5 @@
 import * as React from 'react';
-// Gebruik overal @test-utils/rtl voor consistentie
-import { render, screen, fireEvent, makePhoenixState, HouseholdFixture } from '@test-utils/rtl';
+import { render, screen, fireEvent, makePhoenixState, createMockState } from '@test-utils/index'; 
 import WizardController from '../WizardController';
 
 // 1. Mock de Logger
@@ -27,17 +26,17 @@ jest.mock('src/config/Strings', () => ({
 describe('WizardController Integration', () => {
   
   it('rendert zonder crash en toont de eerste stap', () => {
-    // Arrange
-    const state = makePhoenixState({
+    // Arrange: ✅ Gebruik factory om een valide Phoenix state te genereren
+    const state = createMockState({
       data: { 
-        setup: { aantalMensen: 0, aantalVolwassen: 0 } 
+        setup: { aantalMensen: 1, aantalVolwassen: 1, autoCount: 'Nee' } 
       }
     });
 
-    // Act: we gebruiken de render van rtl.ts die automatisch de Providers bevat
+    // Act: De custom render uit test-utils voorziet de component van de FormProvider
     render(<WizardController />, { state });
 
-    // Assert: gebruik 'screen' in plaats van 'getByText' uit de render result
+    // Assert
     expect(screen.getByText('Volgende')).toBeTruthy();
   });
 
@@ -45,35 +44,33 @@ describe('WizardController Integration', () => {
     // Arrange
     const state = makePhoenixState({
       data: { 
-        setup: { aantalMensen: 0, aantalVolwassen: 0 } 
+        setup: { aantalMensen: 1, aantalVolwassen: 1, autoCount: 'Nee' } 
       }
     });
 
     render(<WizardController />, { state });
-
     const nextButton = screen.getByText('Volgende');
     
     // Act
     fireEvent.press(nextButton);
 
-    // Assert
-    // Als je controller naar de volgende pagina gaat, verschijnt vaak de 'Vorige' knop
-    // We gebruiken findByText omdat navigatie soms een tick duurt
+    // Assert: Bij navigatie naar de volgende pagina verschijnt de 'Vorige' knop
     expect(screen.getByText('Vorige')).toBeTruthy();
   });
 
   it('toont de Afronden knop op de laatste pagina', () => {
-    // Voorbeeld: als je weet dat de laatste pagina 'Afronden' toont
-    // Je moet hier de state zo zetten dat de controller denkt dat hij op het einde is
+    // Arrange: Zet de state direct op de laatste stap (bijv. 'SUMMARY' of 'FINISH')
     const state = makePhoenixState({
+      activeStep: 'WIZARD', // Of de specifieke ID die je controller als 'laatste' ziet
+      currentPageId: 'summary', 
       data: { 
-        setup: { aantalMensen: 0, aantalVolwassen: 0 } 
+        setup: { aantalMensen: 1, aantalVolwassen: 1, autoCount: 'Nee' } 
       }
     });
 
     render(<WizardController />, { state });
 
-    // Check of de finish-string aanwezig is
+    // Assert: Check of de finish-string aanwezig is conform de mock strings
     // expect(screen.getByText('Afronden')).toBeTruthy();
   });
   
