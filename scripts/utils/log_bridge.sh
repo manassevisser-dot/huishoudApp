@@ -1,7 +1,10 @@
+
 #!/usr/bin/env bash
 # log_bridge.sh - Phoenix Logging Bridge v3.0
 # Centralized bridge between Bash and Node.js logger
-set -euo pipefail
+
+# ⚠️ Zet 'set -u' NA het definiëren van defaults, zodat we eerst variabelen kunnen vullen.
+set -eo pipefail
 
 # === Project Root Detection ===
 if [[ -z "${PROJECT_ROOT:-}" ]]; then
@@ -10,7 +13,11 @@ if [[ -z "${PROJECT_ROOT:-}" ]]; then
 fi
 
 # === Logger Path ===
-LOGGER_PATH="${PROJECT_ROOT}/scripts/utils/logger.js"
+# Defensieve default (werkt ook als env LOGGER_PATH leeg of unset is)
+: "${LOGGER_PATH:=${PROJECT_ROOT}/scripts/utils/logger.js}"
+
+# Nu kunnen we veilig nounset inschakelen:
+set -u
 
 # === Color Fallbacks (if logger unavailable) ===
 if [[ -t 1 ]] && [[ -z "${NO_COLOR:-}" ]]; then
@@ -25,8 +32,10 @@ log_node() {
   local key="$2"
   shift 2
   local args=("$@")
+
   # Sanitize inputs to prevent injection
   key=$(printf '%s' "$key" | sed "s/'/'\\\\''/g")
+
   if [[ -f "$LOGGER_PATH" ]]; then
     # Build Node command safely
     local node_cmd="const l=require('${LOGGER_PATH}');"
