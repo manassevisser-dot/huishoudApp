@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Example pre-commit hook (opt-in): run quick audit; block on failure
+set -euo pipefail
+./scripts/maintenance/phoenix-check.sh || { echo "❌ Audit failed. Commit blocked."; exit 1; }

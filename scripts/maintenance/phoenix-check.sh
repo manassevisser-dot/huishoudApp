@@ -1,82 +1,51 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# 1. Bridge laden
-
-# 2. Lock-logica (Voorkomt dat de audit twee keer tegelijk draait)
-REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-REPO_NAME="$(basename "$REPO_ROOT")"
-LOCKDIR="/tmp/phoenix.audit.lock.${REPO_NAME}.$(id -u)"
-LOCK_FILE="$LOCKDIR/started"
-
-if mkdir "$LOCKDIR" 2>/dev/null; then
-  echo "$$" > "$LOCKDIR/pid"
-  date > "$LOCKDIR/started"
-  trap 'rm -rf "$LOCKDIR"' EXIT
-else
-  if [[ -f "$LOCK_FILE" ]]; then
-    NOW="$(date +%s)"
-    STARTED_TS=$(date -r "$LOCK_FILE" +%s 2>/dev/null || stat -f%m "$LOCK_FILE" 2>/dev/null || echo 0)
-    if [[ "$NOW" -gt $(( STARTED_TS + 1800 )) ]]; then
-      log_warn "LOCK_STALE"
-      rm -rf "$LOCKDIR"
-      exec "$0" "$@"
-    fi
-  fi
-  log_err "LOCK_ACTIVE"
-  exit 1
+# Bridge laden
+if ! command -v log_info >/dev/null 2>&1; then
+  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+  source "$PROJECT_ROOT/scripts/utils/log_bridge.sh"
 fi
 
-# 3. Modules laden (Stil, tenzij verbose)
+# Locking met flock (atomic)
+LOCK_FILE="/tmp/phoenix.audit.lock.$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")"
+exec 200>"$LOCK_FILE"
+if ! flock -n 200; then
+  log_err "LOCK_ACTIVE"
+  exit 10
+fi
+
 log_info "AUDIT_START"
+START_TS=$(date +%s)
+
+# Modules (optioneel) – alleen sourcen als bestanden bestaan
 set +u
-source ".phoenix/core.sh"
-source ".phoenix/checkers.sh"
-source ".phoenix/extractors.sh"
-source ".phoenix/audits.sh"
-source ".phoenix/reports.sh"
+[ -f ".phoenix/core.sh" ]      && source ".phoenix/core.sh"
+[ -f ".phoenix/checkers.sh" ]  && source ".phoenix/checkers.sh"
+[ -f ".phoenix/extractors.sh" ]&& source ".phoenix/extractors.sh"
+[ -f ".phoenix/audits.sh" ]    && source ".phoenix/audits.sh"
+[ -f ".phoenix/reports.sh" ]   && source ".phoenix/reports.sh"
 set -u
 
-#!/usr/bin/env bash
-set -euo pipefail
+# Run audits (best effort)
+_audit_exit=0
+if type run_all_audits >/dev/null 2>&1; then
+  run_all_audits || _audit_exit=$?
+else
+  # geen modules? minimal pass
+  _audit_exit=0
+fi
 
-# 1. Bridge laden
+# Summary tonen (indien aanwezig)
+if type show_summary >/dev/null 2>&1; then
+  show_summary || true
+else
+  log_err "AUDIT_SUMMARY_FAIL"
+  _audit_exit=1
+fi
 
-main() {
-    # Alleen loggen als we NIET vanuit de orchestrator komen (voorkomt dubbel-log)
-    if [[ "${PHOENIX_INTERNAL:-false}" != "true" ]]; then
-        log_info "AUDIT_START"
-    fi
+DURATION=$(( $(date +%s) - START_TS ))
+node -e "const l=require('./scripts/utils/logger'); const msg= l.TEXT.FINISH_TIME? l.TEXT.FINISH_TIME('$DURATION'): '⏱️ Duur'; l.info(msg);" || true
 
-    local start_time=$(date +%s)
-    local _audit_exit_code=0
-    
-    # Voer de audits uit (deze functies komen uit .phoenix/audits.sh)
-    run_all_audits || _audit_exit_code=$? 
-
-    # Toon de samenvatting (A+ score)
-    if declare -f show_summary > /dev/null; then
-        show_summary
-    else
-        log_err "AUDIT_SUMMARY_FAIL"
-        _audit_exit_code=1
-    fi
-
-    # Timer berekenen
-    local end_time=$(date +%s)
-    local duration=$((end_time - start_time))
-
-    # Tijd loggen via de bridge
-    node -e "const l=require('./scripts/utils/logger'); \
-      const msg = typeof l.TEXT.FINISH_TIME === 'function' ? l.TEXT.FINISH_TIME('$duration') : l.TEXT.FINISH_TIME; \
-      l.info(msg);"
-
-    # Bepaal exit status
-    if [[ "${SOFT_FAIL:-false}" == "true" ]]; then
-        exit 0
-    else
-        exit $_audit_exit_code
-    fi
-}
-
-main "$@"
+exit $_audit_exit

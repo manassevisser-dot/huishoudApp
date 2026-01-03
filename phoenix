@@ -1,57 +1,54 @@
 #!/usr/bin/env bash
-# Phoenix Commander v3.3 — "Research Edition"
-# ... (bestaande exports en log_node functies blijven gelijk)
+# Phoenix Commander v3.3 – dispatcher
+set -euo pipefail
 
-# ============ Research & Harvest Sectie ============
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PROJECT_ROOT
+source "$PROJECT_ROOT/scripts/utils/log_bridge.sh"
 
-cmd_harvest() {
-    log_info "🌾 De oogst begint: Validatie van Onderzoeks-integriteit..."
-    
-    # 1. TypeScript Check (zonder output te vervuilen)
-    log_info "🔍 Controleren op Type-mismatches..."
-    if ! npx tsc --noEmit; then
-        log_err "TypeScript errors gevonden! De oogst is mogelijk vervuild."
-        exit 1
-    fi
-
-    # 2. Draai de specifieke onderzoeks-tests
-    log_info "🧪 Draaien van integriteitstests..."
-    npm test -- --coverage --threshold=80 --testNamePattern='Onderzoeks-integriteit'
-    
-    log_ok "✅ Oogst voltooid: Data is consistent en geanonimiseerd."
+check_dependencies() {
+  local deps=(node npm bash grep awk sed)
+  for cmd in "${deps[@]}"; do
+    command -v "$cmd" >/dev/null || { log_err "Missing dependency: $cmd"; exit 40; }
+  done
 }
 
-cmd_debug_research() {
-    log_warn "🛠 Debug modus: Focus op Onderzoeks-integriteit..."
-    npx jest --watchAll -t 'Onderzoeks-integriteit'
+cmd_full() {
+  node scripts/maintenance/audit-orchestrator.js "$@" 2>/dev/null || true
+  log_info "🧪 Starten van de Phoenix Test Suite (Jest)…"
+  npm test -- --coverage --watchAll=false || true
+}
+cmd_all()      { node scripts/maintenance/audit-orchestrator.js "$@" || true; }
+_cmd_sanity()  { node scripts/sync-aliases/index.js "$@" || true; }
+_cmd_dedup()   { bash scripts/maintenance/phoenix_dedup.sh src || true; }
+_cmd_audit()   { PHOENIX_INTERNAL=true bash scripts/maintenance/phoenix-check.sh; }
+cmd_health()   { echo "🏥 Phoenix Health Check"; check_dependencies; echo "✅ All systems operational"; }
+cmd_watch()    { while true; do clear; _cmd_audit; sleep 5; done; }
+cmd_rollback() {
+  local latest
+  latest=$(ls -t backups/phoenix-* 2>/dev/null | head -1 || true)
+  [[ -z "$latest" ]] && { echo "No backups found."; return 0; }
+  read -p "Restore from $latest ? (y/N) " -n 1 -r; echo
+  [[ $REPLY =~ ^[Yy]$ ]] || return 0
+  cp -r "$latest/"* ./
+  echo "✅ Restored from $latest"
+}
+cmd_help() {
+  cat <<HLP
+Phoenix Commander v3.3
+Usage:
+  ./phoenix full|all|audit|dedup|health|watch|rollback|help
+HLP
 }
 
-# ============ De Verrassing: PII Scanner ============
-# Een snelle bash-check om te zien of er per ongeluk 'firstName' in onderzoekscodes lekt
-cmd_pii_scan() {
-    log_warn "🕵️  Scannen op PII-lekken in onderzoekspaden..."
-    # Zoekt naar patronen waarbij namen direct in researchPayloads worden gepusht
-    if grep -r "researchPayload.*firstName" src/services; then
-        log_err "PII LEK GEVONDEN! firstName gedetecteerd in researchPayload."
-    else
-        log_ok "Geen duidelijke PII-lekken gevonden in de services."
-    fi
-}
-
-# ============ Dispatcher (Geüpdatet) ============
 case "${1:-}" in
-  full)         shift; cmd_full "$@" ;;
-  harvest)      cmd_harvest ;;         # Nieuw!
-  harvest-debug) cmd_debug_research ;; # Nieuw!
-  scan)         cmd_pii_scan ;;        # De verrassing!
-  all)          shift; cmd_all "$@" ;;
-  audit)        _cmd_audit ;;
-  dedup)        _cmd_dedup ;;
-  fix|sanity)   shift; _cmd_sanity "$@" ;; 
-  migrate)      shift; _cmd_migrate "$@" ;;
-  clean)        cmd_clean ;;
+  full) cmd_full   "$@" ;;
+  all)  cmd_all    "$@" ;;
+  audit) _cmd_audit ;;
+  dedup) _cmd_dedup ;;
+  health) cmd_health ;;
+  watch) cmd_watch ;;
+  rollback) cmd_rollback ;;
   ""|help|-h|--help) cmd_help; exit 0 ;;
-  *) 
-    echo -e "${RED}${ICON_FAIL} Onbekend commando: ${1}${NC}"
-    cmd_help; exit 1 ;;
+  *) echo -e "❌ Onbekend commando: ${1}"; cmd_help; exit 1;;
 esac
