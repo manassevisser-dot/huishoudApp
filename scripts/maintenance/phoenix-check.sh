@@ -16,6 +16,7 @@ if ! flock -n 200; then
   exit 10
 fi
 
+
 log_info "AUDIT_START"
 START_TS=$(date +%s)
 
