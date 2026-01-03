@@ -21,9 +21,21 @@ set -u
 
 # === Color Fallbacks (if logger unavailable) ===
 if [[ -t 1 ]] && [[ -z "${NO_COLOR:-}" ]]; then
-  RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'; BLUE='\033[0;34m'; DIM='\033[2m'; BOLD='\033[1m'; NC='\033[0m'
+  RED='\033[0;31m'
+  GREEN='\033[0;32m'
+  YELLOW='\033[0;33m'
+  BLUE='\033[0;34m'
+  DIM='\033[2m'
+  BOLD='\033[1m'
+  NC='\033[0m'
 else
-  RED=''; GREEN=''; YELLOW=''; BLUE=''; DIM=''; BOLD=''; NC=''
+  RED=''
+  GREEN=''
+  YELLOW=''
+  BLUE=''
+  DIM=''
+  BOLD=''
+  NC=''
 fi
 
 # === Core Bridge Function ===
