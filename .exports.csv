@@ -1,0 +1,258 @@
+src/app/context/FormContext.tsx,39,export,const:FormContext
+src/app/context/FormContext.tsx,47,export,const:FormProvider
+src/app/context/FormContext.tsx,60,export,const:useForm
+src/app/context/FormContext.tsx,69,export,const:useFormContext
+src/app/context/FormContext.tsx,8,export,const:initialState
+src/app/context/formReducer.ts,4,export,function:formReducer
+src/app/context/ThemeContext.tsx,16,export,const:ThemeProvider
+src/app/context/ThemeContext.tsx,45,export,const:useTheme
+src/app/context/WizardContext.tsx,15,export,const:WizardProvider
+src/app/context/WizardContext.tsx,29,export,const:useWizard
+src/app/context/WizardContext.tsx,3,export,interface:WizardState
+src/app/hooks/useAppOrchestration.ts,16,export,const:useAppOrchestration
+src/app/hooks/useAppOrchestration.ts,6,export,interface:PhoenixEnvelopeV2
+src/App.tsx,6,export,default:App
+src/config/features.ts,14,export,const:showSuccessToasts
+src/config/features.ts,17,export,const:features
+src/config/features.ts,21,export,const:PHOENIX_KEYS
+src/config/features.ts,8,export,const:showWizardProgress
+src/config/WizStrings.ts,16,export,default:WizStrings
+src/config/WizStrings.ts,1,export,const:WizStrings
+src/containers/AdultsCounter.tsx,32,export,default:AdultsCounter
+src/containers/AdultsCounter.tsx,5,export,const:AdultsCounter
+src/domain/constants/datakeys.ts,15,export,type:DataKey
+src/domain/constants/datakeys.ts,1,export,const:DATA_KEYS
+src/domain/constants/datakeys.ts,8,export,const:SUB_KEYS
+src/domain/constants/labels.ts,8,export,const:UI_LABELS
+src/domain/constants/registry.ts,22,export,type:PageToken
+src/domain/constants/registry.ts,23,export,type:FieldToken
+src/domain/constants/registry.ts,24,export,type:UXToken
+src/domain/constants/registry.ts,4,export,const:DATA_KEYS
+src/domain/constants/registry.ts,6,export,const:UX_TOKENS
+src/domain/household.ts,29,export,interface:Household
+src/domain/household.ts,5,export,type:MemberType
+src/domain/household.ts,7,export,interface:Member
+src/domain/rules/evaluateDomainRules.ts,2,export,const:evaluateRules
+src/domain/types.ts,14,export,interface:Member
+src/domain/types.ts,34,export,interface:ResearchPayload
+src/domain/types.ts,48,export,interface:RawUIData
+src/domain/types.ts,68,export,interface:FinancialIncomeSummary
+src/domain/types.ts,75,export,interface:SetupData
+src/domain/types.ts,7,export,type:MemberType
+src/domain/types.ts,81,export,interface:CsvItem
+src/logic/export.ts,7,export,const:aggregateExportData
+src/logic/finance.ts,24,export,const:computePhoenixSummary
+src/logic/householdLogic.ts,7,export,const:getHouseholdStatus
+src/navigation/Navigator.tsx,24,export,default:Navigator
+src/selectors/financialSelectors.ts,6,export,function:selectFinancialSummaryVM
+src/selectors/householdSelectors.ts,26,export,const:selectHouseholdStats
+src/selectors/householdSelectors.ts,38,export,const:selectIsSpecialStatus
+src/selectors/householdSelectors.ts,43,export,const:selectHouseholdDataIntegrityStatus
+src/selectors/householdSelectors.ts,54,export,const:selectHouseholdTypeLabel
+src/selectors/householdSelectors.ts,8,export,const:HOUSEHOLD_STATUS
+src/services/csvService.ts,22,export,const:csvService
+src/services/csvService.ts,4,export,type:CsvRow
+src/services/dataOrchestrator.ts,138,export,default:dataOrchestrator
+src/services/dataOrchestrator.ts,20,export,interface:MasterProcessResult
+src/services/dataOrchestrator.ts,47,export,const:dataOrchestrator
+src/services/dataProcessor.ts,16,export,const:dataProcessor
+src/services/dataProcessor.ts,3,export,type:SetupData
+src/services/dataProcessor.ts,8,export,type:CsvItem
+src/services/householdAlign.ts,14,export,function:alignMembers
+src/services/logger.ts,10,export,default:LoggerInstance
+src/services/logger.ts,8,export,const:logger
+src/services/logger.ts,9,export,const:Logger
+src/services/migrationService.ts,18,export,unknown
+src/services/__mocks__/transactionService.ts,24,export,function:__resetTxMock
+src/services/__mocks__/transactionService.ts,5,export,const:TransactionService
+src/services/privacyHelpers.ts,18,export,function:parseName
+src/services/privacyHelpers.ts,26,export,function:toMemberType
+src/services/privacyHelpers.ts,45,export,function:makeResearchId
+src/services/privacyHelpers.ts,50,export,function:containsPII
+src/services/privacyHelpers.ts,60,export,function:assertNoPIILeak
+src/services/privacyHelpers.ts,81,export,function:collectAndDistributeData
+src/services/privacyHelpers.ts,8,export,function:toNumber
+src/services/storageShim.ts,47,export,default:StorageShim
+src/services/storageShim.ts,8,export,const:StorageShim
+src/services/storage.ts,61,export,const:storage
+src/services/storage.ts,9,export,const:migrateToPhoenix
+src/services/transactionService.ts,5,export,const:migrateTransactionsToPhoenix
+src/shared-types/expenses.ts,1,export,type:ExpenseItem
+src/shared-types/fields.ts,18,export,interface:FieldConfig
+src/shared-types/fields.ts,5,export,type:FieldType
+src/shared-types/form.ts,5,export,re-export:* from ./wizard
+src/shared-types/form.ts,6,export,re-export:* from ./fields
+src/shared-types/form.ts,7,export,re-export:* from ./types
+src/shared-types/income.ts,18,export,type:UitkeringEntry
+src/shared-types/income.ts,1,export,type:IncomeFrequency
+src/shared-types/income.ts,25,export,type:AndersEntry
+src/shared-types/income.ts,32,export,type:IncomeCategories
+src/shared-types/income.ts,39,export,type:IncomeMember
+src/shared-types/income.ts,3,export,type:UitkeringKey
+src/shared-types/income.ts,55,export,type:HouseholdBenefits
+src/shared-types/income.ts,62,export,type:VermogenData
+src/shared-types/transaction.ts,14,export,interface:DailyTransaction
+src/shared-types/transaction.ts,25,export,interface:TransactionSummary
+src/shared-types/transaction.ts,4,export,type:PaymentMethod
+src/shared-types/transaction.ts,6,export,type:TransactionCategory
+src/shared-types/types.ts,3,export,type:DeepPartial
+src/shared-types/wizard.ts,29,export,interface:WizardPageConfig
+src/shared-types/wizard.ts,39,export,type:FormAction
+src/shared-types/wizard.ts,4,export,type:DataSection
+src/shared-types/wizard.ts,6,export,interface:FormState
+src/state/schemas/FormStateSchema.ts,19,export,const:FormStateSchema
+src/state/schemas/FormStateSchema.ts,54,export,type:FormStateV1
+src/test-utils/assertions/migrationAssertions.ts,16,export,function:assertValidMember
+src/test-utils/assertions/migrationAssertions.ts,5,export,function:assertMemberTypePreserved
+src/test-utils/factories/csvFactory.ts,5,export,const:csvFactory
+src/test-utils/factories/memberFactory.ts,30,export,function:makeMembers
+src/test-utils/factories/memberFactory.ts,40,export,function:makeMixedHousehold
+src/test-utils/factories/memberFactory.ts,48,export,function:makeLegacyMember
+src/test-utils/factories/memberFactory.ts,8,export,function:makeMember
+src/test-utils/factories/stateFactory.ts,18,export,function:createMockState
+src/test-utils/factories/stateFactory.ts,49,export,function:makePhoenixState
+src/test-utils/index.ts,2,export,re-export:* from ./factories/stateFactory
+src/test-utils/index.ts,3,export,re-export:* from ./factories/memberFactory
+src/test-utils/index.ts,4,export,re-export:{ Providers as TestAppWrapper, Providers } from ./render/providers
+src/test-utils/index.ts,5,export,re-export:* from ./render/renderers
+src/test-utils/index.ts,6,export,re-export:* from ./assertions/migrationAssertions
+src/test-utils/index.ts,7,export,re-export:* from ./perf/measure
+src/test-utils/index.ts,8,export,re-export:* from ./utils/name
+src/test-utils/index.ts,9,export,re-export:* from ./factories/csvFactory
+src/test-utils/perf/measure.ts,6,export,unknown
+src/test-utils/render/providers.tsx,22,export,const:Providers
+src/test-utils/render/providers.tsx,40,export,default:Providers
+src/test-utils/render/renderers.tsx,17,export,function:renderWithProviders
+src/test-utils/render/renderers.tsx,28,export,function:renderHookWithProviders
+src/test-utils/render/renderers.tsx,39,export,const:renderWithState
+src/test-utils/render/renderers.tsx,40,export,const:render
+src/test-utils/render/renderers.tsx,41,export,named:{ screen, fireEvent, waitFor }
+src/test-utils/utils/name.ts,6,export,function:splitNameForUX
+src/ui/components/FieldRenderer.tsx,11,export,const:FieldRenderer
+src/ui/components/FieldRenderer.tsx,45,export,default:FieldRenderer
+src/ui/components/FieldRenderer.tsx,5,export,interface:FieldRendererProps
+src/ui/components/fields/ChipButton.tsx,35,export,default:ChipButton
+src/ui/components/fields/ChipButton.tsx,5,export,type:ChipButtonProps
+src/ui/components/fields/ConditionalField.tsx,12,export,const:ConditionalField
+src/ui/components/fields/ConditionalField.tsx,49,export,default:ConditionalField
+src/ui/components/fields/DateField.tsx,92,export,default:DateField
+src/ui/components/fields/FormField.tsx,46,export,default:FormField
+src/ui/components/fields/index.ts,10,export,re-export:{ default as MoneyField } from ./MoneyField
+src/ui/components/fields/index.ts,11,export,re-export:{ default as MoneyInput } from ./MoneyInput
+src/ui/components/fields/index.ts,12,export,re-export:{ default as ToggleSwitch } from ./ToggleSwitch
+src/ui/components/fields/index.ts,3,export,re-export:* from ./FormField
+src/ui/components/fields/index.ts,4,export,re-export:* from ./ConditionalField
+src/ui/components/fields/index.ts,7,export,re-export:{ default as ChipButton } from ./ChipButton
+src/ui/components/fields/index.ts,8,export,re-export:{ default as DateField } from ./DateField
+src/ui/components/fields/index.ts,9,export,re-export:{ default as InputCounter } from ./InputCounter
+src/ui/components/fields/InputCounter.tsx,67,export,default:InputCounter
+src/ui/components/fields/InputCounter.tsx,6,export,type:InputCounterProps
+src/ui/components/fields/MoneyField.tsx,11,export,const:MoneyField
+src/ui/components/fields/MoneyField.tsx,40,export,default:MoneyField
+src/ui/components/fields/MoneyField.tsx,4,export,interface:MoneyFieldProps
+src/ui/components/fields/MoneyInput.tsx,66,export,default:MoneyInput
+src/ui/components/fields/ToggleSwitch.tsx,37,export,default:ToggleSwitch
+src/ui/components/fields/ToggleSwitch.tsx,5,export,type:ToggleSwitchProps
+src/ui/components/FinancialSummary.tsx,17,export,const:FinancialSummary
+src/ui/navigation/MainNavigator.tsx,20,export,default:MainNavigator
+src/ui/screens/CSV/CsvUploadScreen.tsx,157,export,default:CsvUploadScreen
+src/ui/screens/DailyInput/DailyInputScreen.tsx,24,export,default:DailyInputScreen
+src/ui/screens/DailyInput/DailyInputScreen.tsx,7,export,const:DailyInputScreen
+src/ui/screens/Daily/UndoScreen.tsx,28,export,default:UndoScreen
+src/ui/screens/Daily/UndoScreen.tsx,5,export,const:UndoScreen
+src/ui/screens/Dashboard/DashboardScreen.tsx,17,export,const:DashboardScreen
+src/ui/screens/Dashboard/DashboardScreen.tsx,55,export,default:DashboardScreen
+src/ui/screens/Options/OptionsScreen.tsx,64,export,default:OptionsScreen
+src/ui/screens/Reset/ResetScreen.tsx,80,export,default:ResetScreen
+src/ui/screens/Settings/SettingsScreen.tsx,78,export,default:SettingsScreen
+src/ui/screens/Wizard/CriticalErrorScreen.tsx,18,export,default:CriticalErrorScreen
+src/ui/screens/Wizard/LandingScreen.tsx,51,export,default:LandingScreen
+src/ui/screens/Wizard/pages/1setupHousehold.config.ts,10,export,const:setupHouseholdConfig
+src/ui/screens/Wizard/pages/2detailsHousehold.config.ts,6,export,const:detailsHouseholdConfig
+src/ui/screens/Wizard/pages/3incomeDetails.config.ts,6,export,const:incomeDetailsConfig
+src/ui/screens/Wizard/pages/4fixedExpenses.config.ts,6,export,const:fixedExpensesConfig
+src/ui/screens/Wizard/SplashScreen.tsx,14,export,default:SplashScreen
+src/ui/screens/Wizard/WelcomeWizard.tsx,13,export,default:WelcomeWizard
+src/ui/screens/Wizard/WizardController.tsx,37,export,default:WizardController
+src/ui/screens/Wizard/WizardPage.tsx,15,export,const:WizardPage
+src/ui/styles/Colors.ts,2,export,type:Theme
+src/ui/styles/Colors.ts,30,export,const:Colors
+src/ui/styles/Colors.ts,4,export,interface:ColorScheme
+src/ui/styles/modules/Alerts.ts,11,export,function:makeAlerts
+src/ui/styles/modules/Buttons.ts,101,export,type:ButtonStyles
+src/ui/styles/modules/Buttons.ts,11,export,function:makeButtons
+src/ui/styles/modules/Cards.ts,15,export,function:makeCards
+src/ui/styles/modules/Checkboxes.ts,23,export,type:CheckboxStyles
+src/ui/styles/modules/Checkboxes.ts,6,export,function:makeCheckboxes
+src/ui/styles/modules/Chips.ts,10,export,function:makeChips
+src/ui/styles/modules/Chips.ts,47,export,type:ChipStyles
+src/ui/styles/modules/Dashboard.ts,11,export,function:makeDashboard
+src/ui/styles/modules/Dashboard.ts,37,export,type:DashboardStyles
+src/ui/styles/modules/Forms.ts,11,export,function:makeForms
+src/ui/styles/modules/Forms.ts,130,export,type:FormStyles
+src/ui/styles/modules/Header.ts,11,export,function:makeHeader
+src/ui/styles/modules/Header.ts,41,export,type:HeaderStyles
+src/ui/styles/modules/Helpers.ts,60,export,type:HelperStyles
+src/ui/styles/modules/Helpers.ts,6,export,function:makeHelpers
+src/ui/styles/modules/index.ts,10,export,re-export:* from ./Typography
+src/ui/styles/modules/index.ts,11,export,re-export:* from ./Alerts
+src/ui/styles/modules/index.ts,12,export,re-export:* from ./Toggles
+src/ui/styles/modules/index.ts,13,export,re-export:* from ./Checkboxes
+src/ui/styles/modules/index.ts,14,export,re-export:* from ./Helpers
+src/ui/styles/modules/index.ts,2,export,re-export:* from ./Layout
+src/ui/styles/modules/index.ts,3,export,re-export:* from ./Header
+src/ui/styles/modules/index.ts,4,export,re-export:* from ./Forms
+src/ui/styles/modules/index.ts,5,export,re-export:* from ./Buttons
+src/ui/styles/modules/index.ts,6,export,re-export:* from ./Cards
+src/ui/styles/modules/index.ts,7,export,re-export:* from ./Chips
+src/ui/styles/modules/index.ts,8,export,re-export:* from ./Dashboard
+src/ui/styles/modules/index.ts,9,export,re-export:* from ./Summary
+src/ui/styles/modules/Layout.ts,10,export,function:makeLayout
+src/ui/styles/modules/Layout.ts,19,export,type:LayoutStyles
+src/ui/styles/modules/Summary.ts,10,export,function:makeSummary
+src/ui/styles/modules/Summary.ts,43,export,type:SummaryStyles
+src/ui/styles/modules/Toggles.ts,25,export,type:ToggleStyles
+src/ui/styles/modules/Toggles.ts,6,export,function:makeToggles
+src/ui/styles/modules/Typography.ts,16,export,type:TypographyStyles
+src/ui/styles/modules/Typography.ts,6,export,function:makeTypography
+src/ui/styles/Tokens.ts,13,export,const:Shadows
+src/ui/styles/Tokens.ts,24,export,const:Tokens
+src/ui/styles/Tokens.ts,25,export,type:TokensType
+src/ui/styles/Tokens.ts,3,export,const:Space
+src/ui/styles/Tokens.ts,4,export,const:Type
+src/ui/styles/Tokens.ts,5,export,const:Radius
+src/ui/styles/Tokens.ts,6,export,const:Sizes
+src/ui/styles/useAppStyles.ts,25,export,function:getAppStyles
+src/ui/styles/useAppStyles.ts,50,export,type:AppStyles
+src/ui/styles/useAppStyles.ts,52,export,function:useAppStyles
+src/utils/conditions.ts,3,export,const:evaluateConditions
+src/utils/csvHelper.ts,5,export,const:parseRawCsv
+src/utils/date.ts,142,export,function:calculateAge
+src/utils/date.ts,165,export,function:formatDateISO
+src/utils/date.ts,170,export,function:getCurrentDateISO
+src/utils/date.ts,178,export,function:getISOWeek
+src/utils/date.ts,193,export,function:isDigitsDatePlausible
+src/utils/date.ts,210,export,function:todayLocalNoon
+src/utils/date.ts,216,export,function:toISOFromLocalNoon
+src/utils/date.ts,221,export,function:getAdultMaxISO
+src/utils/date.ts,229,export,function:getChildMinISO
+src/utils/date.ts,238,export,function:getChildMaxISO
+src/utils/date.ts,40,export,function:isoDateOnlyToLocalNoon
+src/utils/date.ts,51,export,function:toISOFromLocal
+src/utils/date.ts,66,export,function:parseDDMMYYYYtoISO
+src/utils/date.ts,87,export,function:formatDate
+src/utils/frequency.ts,18,export,const:getMonthlyFactor
+src/utils/frequency.ts,38,export,const:convertToMonthlyCents
+src/utils/frequency.ts,3,export,const:WEEKS_PER_YEAR
+src/utils/frequency.ts,4,export,const:MONTHS_PER_YEAR
+src/utils/frequency.ts,6,export,type:Frequency
+src/utils/numbers.ts,24,export,function:toCents
+src/utils/numbers.ts,79,export,function:formatCentsToDutch
+src/utils/numbers.ts,8,export,function:formatDutchValue
+src/utils/numbers.ts,90,export,function:formatCurrency
+src/utils/objects.ts,7,export,function:deepMerge
+src/utils/ping.ts,10,export,default:ping
+src/utils/ping.ts,5,export,const:ping
+src/utils/strings.ts,8,export,function:cleanName
+src/utils/validation.ts,51,export,function:validateDobNL
+src/utils/validation.ts,5,export,const:validateField

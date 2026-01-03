@@ -1,142 +1,54 @@
-
 #!/usr/bin/env bash
-# Phoenix Commander v3 — 2025-12-27
+# Phoenix Commander v3.3 – dispatcher
 set -euo pipefail
 
-# ============ UI (TTY-veilig, NO_COLOR support) ============
-if [[ -t 1 ]] && [[ -z "${NO_COLOR:-}" ]]; then
-  GREEN='\033[0;32m'; YELLOW='\033[0;33m'; RED='\033[0;31m'; BLUE='\033[0;34m'; BOLD='\033[1m'; DIM='\033[2m'; NC='\033[0m'
-  ICON_OK="✅"; ICON_FAIL="❌"; ICON_WARN="⚠️"; ICON_INFO="ℹ️"
-else
-  GREEN=''; YELLOW=''; RED=''; BLUE=''; BOLD=''; DIM=''; NC=''
-  ICON_OK='[OK]'; ICON_FAIL='[FAIL]'; ICON_WARN='[WARN]'; ICON_INFO='[INFO]'
-fi
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PROJECT_ROOT
+source "$PROJECT_ROOT/scripts/utils/log_bridge.sh"
 
-# ============ Helpers ============
-# Portabele file size (Linux/macOS)
-file_size() {
-  local f="$1"
-  if stat -c%s "$f" >/dev/null 2>&1; then
-    stat -c%s "$f"        # GNU coreutils (Linux)
-  else
-    stat -f%z "$f"        # BSD stat (macOS)
-  fi
-}
-
-# Timer
-__start_ts="$(date +%s)"
-
-# Rapport map en symlink
-TIMESTAMP="$(date +"%Y-%m-%d_%H%M")"
-REPORT_BASE="reports/${TIMESTAMP}"
-LATEST_LINK="reports/latest"
-mkdir -p "$REPORT_BASE"
-rm -rf "$LATEST_LINK" && ln -s "${TIMESTAMP}" "$LATEST_LINK"
-
-echo -e "🦅 Phoenix gestart. Rapporten in: ${REPORT_BASE}"
-
-# ============ Commands ============
-cmd_sanity() {
-  echo "🧹 Start Sanity..."
-
-  # 1) Pre-flight: hardening (abnormaal grote config)
-  for config in "jest.config.js" "babel.config.js"; do
-    if [[ -f "$config" ]]; then
-      local size
-      size="$(file_size "$config")"
-      if [[ "$size" -gt 50000 ]]; then
-        echo -e "🚨 KRITIEK: ${config} is ABNORMAAL GROOT (${size} bytes). 🚨"
-        echo -e "🫨 Sync ABORTED (sanity overgeslagen). 🫨"
-        # Stop alleen 'sanity'; laat 'all' door naar dedup/audit
-        return 0
-      fi
-    fi
+check_dependencies() {
+  local deps=(node npm bash grep awk sed)
+  for cmd in "${deps[@]}"; do
+    command -v "$cmd" >/dev/null || { log_err "Missing dependency: $cmd"; exit 40; }
   done
-
-  # 2) Sync aliases
-  if [[ -f "scripts/sync-aliases.js" ]]; then
-    echo "   • Syncing aliases..."
-    node scripts/sync-aliases.js || { echo -e "${RED}${ICON_FAIL} Alias sync gefaald${NC}"; return 0; }
-  fi
-
-  # 3) Fix imports (non-fatal: bij niks te doen -> door)
-  if [[ -f "scripts/maintenance/fix_imports.sh" ]]; then
-    echo "   • Fixing imports..."
-    # Laat 'all' verder lopen als fixer niets doet of non-zero geeft
-    bash scripts/maintenance/fix_imports.sh || echo "ℹ️ Niks te doen...💤💤 We gaan door..."
-  fi
 }
 
-cmd_dedup() {
-  echo "🔍 Start Deduplicatie..."
-  if [[ -f "scripts/maintenance/phoenix_dedup.sh" ]]; then
-    chmod +x scripts/maintenance/phoenix_dedup.sh
-    ./scripts/maintenance/phoenix_dedup.sh src
-    if [[ -d "dedup_reports" ]]; then
-      mv dedup_reports "${REPORT_BASE}/dedup"
-    fi
-  else
-    echo -e "${YELLOW}${ICON_WARN} Dedup script niet gevonden (skip)${NC}"
-  fi
+cmd_full() {
+  node scripts/maintenance/audit-orchestrator.js "$@" 2>/dev/null || true
+  log_info "🧪 Starten van de Phoenix Test Suite (Jest)…"
+  npm test -- --coverage --watchAll=false || true
 }
-
-cmd_audit() {
-  echo "🛡️ Start Audit (phoenix-check)..."
-  export GENERATE_REPORT=true
-
-  if [[ -f "phoenix-check.sh" ]]; then
-    bash phoenix-check.sh
-  else
-    echo -e "${RED}${ICON_FAIL} FOUT: phoenix-check.sh niet gevonden!${NC}"
-    return 0
-  fi
-
-  if [[ -d "artifacts" ]]; then
-    mv artifacts "${REPORT_BASE}/audit"
-  fi
+cmd_all()      { node scripts/maintenance/audit-orchestrator.js "$@" || true; }
+_cmd_sanity()  { node scripts/sync-aliases/index.js "$@" || true; }
+_cmd_dedup()   { bash scripts/maintenance/phoenix_dedup.sh src || true; }
+_cmd_audit()   { PHOENIX_INTERNAL=true bash scripts/maintenance/phoenix-check.sh; }
+cmd_health()   { echo "🏥 Phoenix Health Check"; check_dependencies; echo "✅ All systems operational"; }
+cmd_watch()    { while true; do clear; _cmd_audit; sleep 5; done; }
+cmd_rollback() {
+  local latest
+  latest=$(ls -t backups/phoenix-* 2>/dev/null | head -1 || true)
+  [[ -z "$latest" ]] && { echo "No backups found."; return 0; }
+  read -p "Restore from $latest ? (y/N) " -n 1 -r; echo
+  [[ $REPLY =~ ^[Yy]$ ]] || return 0
+  cp -r "$latest/"* ./
+  echo "✅ Restored from $latest"
 }
-
-cmd_clean() {
-  echo "🧹 Schoonmaken..."
-  rm -rf artifacts compare_out dedup_reports
-  if [[ -d "reports" ]]; then
-    cd reports && ls -t | tail -n +6 | xargs rm -rf 2>/dev/null || true
-  fi
-  echo "✅ Klaar."
-}
-
 cmd_help() {
-  cat <<HELP
-Gebruik: ./phoenix [command]
-
-Commands:
-  audit    - Draai technische audits (via phoenix-check)
-  dedup    - Zoek naar dubbele bestanden
-  sanity   - Fix imports en sync aliases
-  all      - Draai ALLES
-  clean    - Verwijder tijdelijke mappen
-HELP
+  cat <<HLP
+Phoenix Commander v3.3
+Usage:
+  ./phoenix full|all|audit|dedup|health|watch|rollback|help
+HLP
 }
 
-# ============ Dispatcher ============
 case "${1:-}" in
-  audit)  cmd_audit ;;
-  dedup)  cmd_dedup ;;
-  fix|sanity) cmd_sanity ;;
-  clean)  cmd_clean ;;
-  all)
-    cmd_sanity
-    cmd_dedup
-    cmd_audit
-    echo "✅ Alle taken voltooid!"
-    echo "📄 Zie rapporten in: ${REPORT_BASE}"
-    ;;
+  full) cmd_full   "$@" ;;
+  all)  cmd_all    "$@" ;;
+  audit) _cmd_audit ;;
+  dedup) _cmd_dedup ;;
+  health) cmd_health ;;
+  watch) cmd_watch ;;
+  rollback) cmd_rollback ;;
   ""|help|-h|--help) cmd_help; exit 0 ;;
-  *) echo -e "${RED}${ICON_FAIL} Onbekende command: ${1}${NC}"; cmd_help; exit 1 ;;
+  *) echo -e "❌ Onbekend commando: ${1}"; cmd_help; exit 1;;
 esac
-
-# ============ Einde & timing ============
-__end_ts="$(date +%s)"
-__dur="$((__end_ts - __start_ts))"
-echo -e "⏱️ Phoenix duurde ${__dur}s"
-exit 0

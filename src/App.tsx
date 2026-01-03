@@ -1,46 +1,22 @@
-// WAI-006A-Projector — Pure projection via FSM
-import * as React from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ThemeProvider } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/ThemeContext';
-import { FormProvider } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext';
-import { useAppOrchestration } from '@app/hooks/useAppOrchestration';
-import { useAppStyles } from '@ui/styles/useAppStyles';
+import React from 'react';
+import { ThemeProvider } from './app/context/ThemeContext';
+import { WizardProvider } from './app/context/WizardContext';
+import { FormProvider } from './app/context/FormContext';
+import MainNavigator from './ui/navigation/MainNavigator';
+// Let op de kleine 'i'
+import { initialFormState } from './state/schemas/FormStateSchema'; 
 
-import SplashScreen from '@ui/screens/SplashScreen';
-import WelcomeWizard from '@ui/screens/WelcomeWizard';
-import MainNavigator from '@ui/navigation/MainNavigator';
-import CriticalErrorScreen from '@ui/screens/CriticalErrorScreen';
-import { WizardProvider } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/WizardContext';
-
-const AppContent: React.FC = () => {
-  const { status, resetApp } = useAppOrchestration();
-  const { styles } = useAppStyles();
-
-  switch (status) {
-    case 'INITIALIZING':
-    case 'HYDRATING':
-      return <SplashScreen />;
-    case 'UNBOARDING':
-      return <WelcomeWizard />;
-    case 'READY':
-      return <MainNavigator />;
-    case 'ERROR':
-      return <CriticalErrorScreen onReset={resetApp} />;
-    default:
-      return <SplashScreen />; // defensief
-  }
+const App = () => {
+  return (
+    <ThemeProvider>
+      {/* Gebruik de juiste variabele naam */}
+      <FormProvider initialState={initialFormState}>
+        <WizardProvider>
+          <MainNavigator />
+        </WizardProvider>
+      </FormProvider>
+    </ThemeProvider>
+  );
 };
-
-const App: React.FC = () => (
-  <WizardProvider>
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <FormProvider>
-          <AppContent />
-        </FormProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
-  </WizardProvider>
-);
 
 export default App;

@@ -1,63 +1,54 @@
-
 #!/usr/bin/env bash
 set -euo pipefail
 
-# UI: TTY-veilig
-if [[ -t 1 ]] && [[ -z "${NO_COLOR:-}" ]]; then
-  GREEN='\033[0;32m'; YELLOW='\033[0;33m'; RED='\033[0;31m'; BLUE='\033[0;34m'; BOLD='\033[1m'; DIM='\033[2m'; NC='\033[0m'
-  OK="✅"; WARN="⚠️"; FAIL="❌"; INFO="ℹ️"
-else
-  GREEN=''; YELLOW=''; RED=''; BLUE=''; BOLD=''; DIM=''; NC=''
-  OK='[OK]'; WARN='[WARN]'; FAIL='[FAIL]'; INFO='[INFO]'
-fi
+# Bepaal de root van het project (rekenend vanaf scripts/maintenance/)
+# dirname ${BASH_SOURCE[0]} geeft de map van het script zelf
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-echo -e "${BOLD}${BLUE}🧹 Cleanup, prepare & commit${NC}"
+# Nu is het pad naar de bridge ALTIJD correct
 
-# 1) Opruimen (maar bewaar laatste reports-map)
-echo -e "• ${BOLD}Cleaning artifacts${NC}"
+log_info "COMMIT_START"
+
+# 1) Opruimen
+log_info "CLEAN_ARTIFACTS"
 rm -rf artifacts compare_out dedup_reports || true
 
-# verwijder oude .bak.* (backups van import fixer)
-echo -e "• ${BOLD}Removing .bak backups${NC}"
-find src -type f -name '*.bak.*' -print -delete 2>/dev/null || true
+log_info "CLEAN_BAK"
+find src -type f -name '*.bak.*' -delete 2>/dev/null || true
 
-# prune reports (bewaar 5 nieuwste)
 if [[ -d reports ]]; then
-  echo -e "• ${BOLD}Pruning old reports (keep 5)${NC}"
+  log_info "CLEAN_REPORTS"
   ( cd reports && ls -1t | grep -v latest | tail -n +6 | xargs -r rm -rf ) 2>/dev/null || true
 fi
 
-# 2) Dev caches (optioneel: comment uit als je het niet wilt)
+# 2) Dev caches
 if command -v npx >/dev/null 2>&1; then
-  echo -e "• ${BOLD}Clearing Expo cache (optional)${NC}"
+  log_info "CLEAN_EXPO"
   # npx expo start -c >/dev/null 2>&1 || true
 fi
 
-# 3) Lint/TypeScript (fail-safe; stop niet de commit)
-echo -e "• ${BOLD}Running lint/ts checks (non-fatal)${NC}"
-npm run -s lint  >/dev/null 2>&1 || echo -e "${YELLOW}${WARN} lint issues (ignored)${NC}"
-npx tsc --noEmit >/dev/null 2>&1 || echo -e "${YELLOW}${WARN} type issues (ignored)${NC}"
+# 3) Lint/TypeScript (non-fatal)
+log_info "RUN_CHECKS"
+npm run -s lint  >/dev/null 2>&1 || log_val "warn" "CHECK_ISSUE" "lint"
+npx tsc --noEmit >/dev/null 2>&1 || log_val "warn" "CHECK_ISSUE" "type"
 
-# 4) Git: add, commit, tag, push
+# 4) Git logica
 branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
-short_sha="$(git rev-parse --short HEAD 2>/dev/null || echo nohead)"
 timestamp="$(date +'%Y-%m-%d_%H%M')"
+tag="phoenix-${timestamp}"
+commit_msg="chore: phoenix run ${timestamp} — audits green (A+) — cleanup & maintenance"
 
-echo -e "• ${BOLD}Git add${NC}"
+log_info "GIT_ADD"
 git add -A
 
-# Kies een nette commit message
-commit_msg="chore: phoenix run ${timestamp} — audits green (A+) — cleanup & maintenance"
-echo -e "• ${BOLD}Git commit${NC}"
-git commit -m "${commit_msg}" || echo -e "${YELLOW}${WARN} Nothing to commit${NC}"
+log_val "info" "GIT_COMMIT" "$commit_msg"
+git commit -m "$commit_msg" || log_warn "GIT_COMMIT_NONE"
 
-# Optionele lightweight tag
-tag="phoenix-${timestamp}"
-echo -e "• ${BOLD}Create tag${NC}"
+log_val "info" "GIT_TAG" "$tag"
 git tag -f "${tag}" || true
 
-# Push branch + tags
-echo -e "• ${BOLD}Git push${NC}"
+log_info "GIT_PUSH"
 git push --follow-tags || git push && git push --tags || true
 
-echo -e "${GREEN}${OK} Done. Branch: ${branch}, tag: ${tag}${NC}"
+log_val2 "ok" "COMMIT_DONE" "$branch" "$tag"

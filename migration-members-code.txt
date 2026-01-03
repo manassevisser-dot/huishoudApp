@@ -1,0 +1,927 @@
+---CODE BLOCK START---
+import { migrateToPhoenix } from '../migration';
+import { DATA_KEYS } from '@domain/constants/datakeys';
+describe('Migration Member Mapping', () => {
+  it('moet oude leden correct transformeren naar Member objecten', () => {
+    const oldState = {
+      [DATA_KEYS.HOUSEHOLD]: {
+          { id: 'old-1', naam: 'Jan', type: 'adult' },
+          { id: 'old-2', naam: 'Kees', type: 'child' }
+      }
+    };
+    const result = migrateToPhoenix(oldState);
+    const members = result.data.household.members;
+    // Controleer lengte
+    expect(members).toHaveLength(2);
+    // Controleer eerste lid
+    expect(members[0]).toEqual({
+    });
+    // Controleer fallback voor ontbrekende IDs
+    const stateWithNoIds = {
+      [DATA_KEYS.HOUSEHOLD]: {
+        leden: [{ naam: 'Anoniem' }]
+      }
+    };
+    const resultNoId = migrateToPhoenix(stateWithNoIds);
+    expect(resultNoId.data.household.members[0].entityId).toBe('m-0');
+  });
+});
+Afhankelijk van hoe strikt je Member interface is (in src/shared-types/form.ts), moet je misschien extra velden toevoegen in de map() functie van je migratie.
+Als je interface bijvoorbeeld een dateOfBirth verplicht stelt, zal de test (of je IDE) nu klagen. Je kunt de migratie dan zo aanvullen:
+// In migrateToPhoenix binnen de .map()
+members: (oldState[DATA_KEYS.HOUSEHOLD]?.leden || []).map((lid: any, i: number) => ({
+  entityId: lid.id || `m-${i}`,
+}))
+export const migrateTransactionsToPhoenix = async (oldData: any): Promise<FormState> => {
+  // Gebruik een type assertion of zorg dat alle velden aanwezig zijn
+  const newState: FormState = {
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+export const migrateTransactionsToPhoenix = async (oldData: any): Promise<FormState> => {
+  // Gebruik een type assertion of zorg dat alle velden aanwezig zijn
+  const newState: FormState = {
+    schemaVersion: "1.0", // Moet exact "1.0" zijn (literal)
+    data: {
+      setup: {
+        aantalVolwassen: oldData?.leden?.filter((l: any) => l.isVolwassen)?.length ?? 1,
+      },
+      household: {
+        members: (oldData?.leden ?? []).map((lid: any, index: number) => ({
+          entityId: lid.id || `member-${index}`,
+          fieldId: `field-member-${index}`,
+        })),
+      },
+      finance: {
+        income: { items: [] },
+        expenses: { items: [] },
+      },
+    },
+  };
+import  { migrateTransactionsToPhoenix } from '@services/transactionService';
+import { DATA_KEYS } from '@domain/constants/datakeys';
+describe('Migration Member Mapping', () => {
+  it('moet oude leden correct transformeren naar Member objecten', () => {
+    const oldState = {
+      [DATA_KEYS.HOUSEHOLD]: {
+          { id: 'old-1', naam: 'Jan', type: 'adult' },
+          { id: 'old-2', naam: 'Kees', type: 'child' }
+      }
+    };
+    const result = migrateTransactionsToPhoenix(oldState);
+    const members = result.data.household.members;
+    // Controleer lengte
+    expect(members).toHaveLength(2);
+    // Controleer eerste lid
+    expect(members[0]).toEqual({
+    });
+    // Controleer fallback voor ontbrekende IDs
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+describe('Migration Member Mapping', () => {
+  it('moet oude leden correct transformeren naar Member objecten', async () => {
+    const oldState = {
+      household: { // Gebruik de key die de functie verwacht
+          { id: 'old-1', naam: 'Jan', type: 'adult' },
+          { id: 'old-2', naam: 'Kees', type: 'child' }
+      }
+    };
+    const result = await migrateTransactionsToPhoenix(oldState);
+    const members = result.data.household.members;
+    expect(members).toHaveLength(2);
+    // Gebruik objectContaining als je niet op elk intern veld (zoals fieldId) wilt checken
+    expect(members[0]).toEqual(expect.objectContaining({
+    }));
+  });
+  it('moet fallback IDs genereren', async () => {
+    const stateWithNoIds = { leden: [{ naam: 'Anoniem' }] };
+    const resultNoId = await migrateTransactionsToPhoenix(stateWithNoIds);
+    expect(resultNoId.data.household.members[0].entityId).toBe('m-0');
+  });
+});
+Door expect.objectContaining te gebruiken in je tests, maak je ze minder fragiel. Als je later besluit om een veld als fieldId of lastUpdated toe te voegen aan de migratie, hoef je niet al je oude tests aan te passen, zolang de kernvelden (naam, id) maar kloppen.
+Nu de leden-mapping staat, wil je waarschijnlijk de financiële migratie (C7/C10) ook toevoegen aan deze async functie. Zal ik laten zien hoe je die bedragen veilig ophaalt uit de oude state binnen deze nieuwe opzet?
+[{
+},{
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+},{
+},{
+}]
+// Voeg deze import toe bovenaan het bestand!
+import { FormState } from '@shared-types/form'; 
+export const migrateTransactionsToPhoenix = async (oldData: any): Promise<FormState> => {
+  // ... rest van je code
+};
+import { migrateTransactionsToPhoenix } from '../transactionService'; // Gebruik het juiste relatieve pad
+import { DATA_KEYS } from '@domain/constants/datakeys';
+describe('Migration Member Mapping', () => {
+  // Je test code...
+});
+Bestandsnamen: Controleer of de spelling van transactionService.ts exact overeenkomt met je import (let op hoofdletters/kleine letters).
+Path Aliases: Gebruik je @services/... of relatieve paden zoals ../? Als je @services gebruikt, controleer dan in tsconfig.json of dat pad goed geconfigureerd is. Voor tests is een relatief pad (../transactionService) vaak het veiligst.
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+},{
+}]
+// Voeg deze import toe bovenaan het bestand!
+import { FormState } from '@shared-types/form'; 
+export const migrateTransactionsToPhoenix = async (oldData: any): Promise<FormState> => {
+  // ... rest van je code
+};
+import { migrateTransactionsToPhoenix } from '../transactionService'; // Gebruik het juiste relatieve pad
+import { DATA_KEYS } from '@domain/constants/datakeys';
+describe('Migration Member Mapping', () => {
+  // Je test code...
+});
+Bestandsnamen: Controleer of de spelling van transactionService.ts exact overeenkomt met je import (let op hoofdletters/kleine letters).
+Path Aliases: Gebruik je @services/... of relatieve paden zoals ../? Als je @services gebruikt, controleer dan in tsconfig.json of dat pad goed geconfigureerd is. Voor tests is een relatief pad (../transactionService) vaak het veiligst.
+Omdat migrateTransactionsToPhoenix nu async is (het geeft een Promise terug), moet je in je test await gebruiken, anders krijg je fouten over dat result.data niet bestaat op een Promise:
+it('moet oude leden correct transformeren', async () => {
+  const result = await migrateTransactionsToPhoenix(oldState); // Vergeet de await niet!
+  const members = result.data.household.members;
+  expect(members).toHaveLength(2);
+});
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+import { migrateTransactionsToPhoenix } from '../transactionService'; // Gebruik het juiste relatieve pad
+import { DATA_KEYS } from '@domain/constants/datakeys';
+describe('Migration Member Mapping', () => {
+  // Je test code...
+});
+Bestandsnamen: Controleer of de spelling van transactionService.ts exact overeenkomt met je import (let op hoofdletters/kleine letters).
+Path Aliases: Gebruik je @services/... of relatieve paden zoals ../? Als je @services gebruikt, controleer dan in tsconfig.json of dat pad goed geconfigureerd is. Voor tests is een relatief pad (../transactionService) vaak het veiligst.
+Omdat migrateTransactionsToPhoenix nu async is (het geeft een Promise terug), moet je in je test await gebruiken, anders krijg je fouten over dat result.data niet bestaat op een Promise:
+it('moet oude leden correct transformeren', async () => {
+  const result = await migrateTransactionsToPhoenix(oldState); // Vergeet de await niet!
+  const members = result.data.household.members;
+  expect(members).toHaveLength(2);
+});
+    ✓ moet oude leden correct transformeren naar Member objecten (10 ms)
+    ✓ moet fallback IDs genereren (1 ms)
+  export.ts                   |       0 |        0 |       0 |       0 | 7-21              
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+    ✓ moet oude leden correct transformeren naar Member objecten (10 ms)
+    ✓ moet fallback IDs genereren (1 ms)
+  export.ts                   |       0 |        0 |       0 |       0 | 7-21              
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+    ✓ moet oude leden correct transformeren naar Member objecten (10 ms)
+    ✓ moet fallback IDs genereren (1 ms)
+  export.ts                   |       0 |        0 |       0 |       0 | 7-21              
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+    ✓ moet oude leden correct transformeren naar Member objecten (10 ms)
+    ✓ moet fallback IDs genereren (1 ms)
+  export.ts                   |       0 |        0 |       0 |       0 | 7-21              
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+De rode cijfers in de tabel (de lage coverage) komen simpelweg omdat je nu alleen dit specifieke bestand hebt getest, terwijl Jest de dekking van je hele project berekent tegen een drempelwaarde van 70%. Dat is voor nu geen probleem.
+✅ Validatie: De FormState voldoet aan de TypeScript-eisen (geen rode kringels meer).
+Nu de basis staat, is het slim om de financiële migratie (C7/income en C10/expenses) ook in deze functie te verwerken, zodat de gebruiker zijn bedragen niet kwijtraakt.
+    ✓ moet oude leden correct transformeren naar Member objecten (6 ms)
+    ✕ moet oude leden correct transformeren (2 ms)
+    ✓ moet fallback IDs genereren (1 ms)
+      26 |     });
+      27 |     it('moet oude leden correct transformeren', async () => {
+    > 28 |         const result = await migrateTransactionsToPhoenix(oldState); // Vergeet de await nie
+      29 |         const members = result.data.household.members;
+      30 |         expect(members).toHaveLength(2);
+      31 |       });
+      at Object.oldState (src/services/__tests__/migration.members.test.ts:28:59)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+    ✓ moet oude leden correct transformeren naar Member objecten (6 ms)
+    ✕ moet oude leden correct transformeren (2 ms)
+    ✓ moet fallback IDs genereren (1 ms)
+      26 |     });
+      27 |     it('moet oude leden correct transformeren', async () => {
+    > 28 |         const result = await migrateTransactionsToPhoenix(oldState); // Vergeet de await nie
+      29 |         const members = result.data.household.members;
+      30 |         expect(members).toHaveLength(2);
+      31 |       });
+      at Object.oldState (src/services/__tests__/migration.members.test.ts:28:59)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+  export.ts                   |       0 |        0 |       0 |       0 | 7-21              
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+    ✓ moet oude leden correct transformeren naar Member objecten (6 ms)
+    ✕ moet oude leden correct transformeren (2 ms)
+    ✓ moet fallback IDs genereren (1 ms)
+      26 |     });
+      27 |     it('moet oude leden correct transformeren', async () => {
+    > 28 |         const result = await migrateTransactionsToPhoenix(oldState); // Vergeet de await nie
+      29 |         const members = result.data.household.members;
+      30 |         expect(members).toHaveLength(2);
+      31 |       });
+      at Object.oldState (src/services/__tests__/migration.members.test.ts:28:59)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+  export.ts                   |       0 |        0 |       0 |       0 | 7-21              
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+    ✓ moet oude leden correct transformeren naar Member objecten (6 ms)
+    ✕ moet oude leden correct transformeren (2 ms)
+    ✓ moet fallback IDs genereren (1 ms)
+      26 |     });
+      27 |     it('moet oude leden correct transformeren', async () => {
+    > 28 |         const result = await migrateTransactionsToPhoenix(oldState); // Vergeet de await nie
+      29 |         const members = result.data.household.members;
+      30 |         expect(members).toHaveLength(2);
+      31 |       });
+      at Object.oldState (src/services/__tests__/migration.members.test.ts:28:59)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+  export.ts                   |       0 |        0 |       0 |       0 | 7-21              
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+  export.ts                   |       0 |        0 |       0 |       0 | 7-21              
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+import { migrateTransactionsToPhoenix } from '../transactionService';
+describe('Migration Member Mapping', () => {
+  // Definieer hier de oldState die de test verwacht
+  const oldState = {
+      { id: '1', name: 'Jan' },
+      { id: '2', name: 'Alleman' }
+  };
+  it('moet oude leden correct transformeren naar Member objecten', async () => {
+    // ... je bestaande test logica
+  });
+  it('moet oude leden correct transformeren', async () => {
+    const result = await migrateTransactionsToPhoenix(oldState);
+    const members = result.data.household.members;
+    expect(members).toHaveLength(2);
+    expect(members[0].firstName).toBe('Jan');
+  });
+  it('moet fallback IDs genereren', async () => {
+    // ... je bestaande test logica
+  });
+});
+In TypeScript/JavaScript moet elke variabele die je gebruikt eerst gedeclareerd worden (met const, let, of var). Omdat we migrateTransactionsToPhoenix(oldState) aanriepen zonder dat oldState ergens bovenin de functie of het bestand was gedefinieerd, wist Jest niet wat hij naar de functie moest sturen.
+Nu de tests (na deze fix) weer op groen staan, hebben we een stabiele basis.
+Zal ik de migratie-functie nu uitbreiden zodat hij ook de financiële data (inkomsten en uitgaven) meeneemt van de oude naar de nieuwe structuur?
+Type Conversie: Controleer of oude member types (zoals 'adult' of 'child') correct worden gemapt naar het nieuwe schema.
+Backward Compatibility: Test of oude schemaversies (v1 en v2) nog steeds correct worden verwerkt.
+Maak gebruik van de testDataGenerators om snel grote batches testdata aan te maken en gebruik assertions (zoals assertValidMember) om je code leesbaar te houden:
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+import { migrateTransactionsToPhoenix } from '../transactionService';
+describe('Migration Member Mapping', () => {
+  // Definieer hier de oldState die de test verwacht
+  const oldState = {
+      { id: '1', name: 'Jan' },
+      { id: '2', name: 'Alleman' }
+  };
+  it('moet oude leden correct transformeren naar Member objecten', async () => {
+    // ... je bestaande test logica
+  });
+  it('moet oude leden correct transformeren', async () => {
+    const result = await migrateTransactionsToPhoenix(oldState);
+    const members = result.data.household.members;
+    expect(members).toHaveLength(2);
+    expect(members[0].firstName).toBe('Jan');
+  });
+  it('moet fallback IDs genereren', async () => {
+    // ... je bestaande test logica
+  });
+});
+In TypeScript/JavaScript moet elke variabele die je gebruikt eerst gedeclareerd worden (met const, let, of var). Omdat we migrateTransactionsToPhoenix(oldState) aanriepen zonder dat oldState ergens bovenin de functie of het bestand was gedefinieerd, wist Jest niet wat hij naar de functie moest sturen.
+Nu de tests (na deze fix) weer op groen staan, hebben we een stabiele basis.
+Zal ik de migratie-functie nu uitbreiden zodat hij ook de financiële data (inkomsten en uitgaven) meeneemt van de oude naar de nieuwe structuur?
+Type Conversie: Controleer of oude member types (zoals 'adult' of 'child') correct worden gemapt naar het nieuwe schema.
+Backward Compatibility: Test of oude schemaversies (v1 en v2) nog steeds correct worden verwerkt.
+Maak gebruik van de testDataGenerators om snel grote batches testdata aan te maken en gebruik assertions (zoals assertValidMember) om je code leesbaar te houden:
+it('moet een complete household migreren', async () => {
+  const result = await migrateTransactionsToPhoenix(fixtures.completeHousehold);
+  assertions.assertAllMembersValid(result.data.household.members);
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+Dat is een uitstekende plek! Gezien de structuur van je project (waar ik src/test-utils al in je coverage-rapport zie staan), is het heel logisch om het daar neer te zetten.
+/**
+export const testDataGenerators = {
+  /**
+  createOldMember: (id: string, name: string, type: string = 'adult') => ({
+    type: type // 'adult', 'child', 'teenager', 'senior'
+  }),
+  /**
+  createResearchDataset: () => ({
+    household: {
+        { id: 'm1', naam: 'Volwassene', type: 'adult' },
+        { id: 'm2', naam: 'Puber 1', type: 'teenager' },
+        { id: 'm3', naam: 'Kind 1', type: 'child' },
+        { id: 'm4', naam: 'Senior 1', type: 'senior' }
+    },
+      { id: 't1', bedrag: 55.50, omschrijving: 'Supermarkt', lidId: 'm1' }
+  })
+};
+export const assertions = {
+  /**
+  assertMemberTypePreserved: (migratedMembers: any[]) => {
+    const types = migratedMembers.map(m => m.memberType);
+    expect(types).toContain('teenager');
+    expect(types).toContain('child');
+    expect(types).toContain('senior');
+    expect(types).toContain('adult');
+  },
+  /**
+  assertValidMember: (member: any) => {
+    expect(member).toHaveProperty('id');
+    expect(member).toHaveProperty('firstName');
+    expect(member).toHaveProperty('memberType'); // De basis voor je onderzoek
+    expect(typeof member.firstName).toBe('string');
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+Onderhoud: Als je later besluit een extra categorie toe te voegen (bijvoorbeeld baby), hoef je alleen de generator en de assertion in dit bestand aan te passen.
+import { migrateTransactionsToPhoenix } from '../transactionService';
+import { testDataGenerators, assertions } from '../../../test-utils/migrationHelpers';
+describe('Migration Member Mapping & Research Data', () => {
+  it('moet een divers huishouden correct transformeren voor onderzoek', async () => {
+    // Gebruik de generator voor je data-onderzoek (adult, teenager, child, senior)
+    const oldState = testDataGenerators.createResearchDataset();
+    const result = await migrateTransactionsToPhoenix(oldState);
+    const members = result.data.household.members;
+    // 1. Check op kwantiteit
+    expect(members).toHaveLength(4);
+    // 2. Check op kwaliteit (de kern van je onderzoek)
+    assertions.assertMemberTypePreserved(members);
+    // 3. Check op individuele validatie
+    members.forEach(member => {
+      assertions.assertValidMember(member);
+    });
+  });
+  it('moet namen en types correct mappen zonder dataverlies', async () => {
+    const customMember = testDataGenerators.createOldMember('m-99', 'Puber Jan', 'teenager');
+    const state = { household: { leden: [customMember] } };
+    const result = await migrateTransactionsToPhoenix(state);
+    const migrated = result.data.household.members[0];
+    expect(migrated.firstName).toBe('Puber Jan');
+    expect(migrated.memberType).toBe('teenager'); // Cruciaal voor eetpatroon-analyse
+  });
+  it('moet robuust omgaan met ontbrekende types (fallback naar adult)', async () => {
+    const brokenState = {
+      household: {
+        leden: [{ id: 'err-1', naam: 'Onbekend' }] // Geen type ingevuld
+      }
+    };
+    const result = await migrateTransactionsToPhoenix(brokenState);
+    expect(result.data.household.members[0].memberType).toBe('adult');
+  });
+});
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+import { migrateTransactionsToPhoenix } from '../transactionService';
+import { testDataGenerators, assertions } from '../../../test-utils/migrationHelpers';
+describe('Migration Member Mapping & Research Data', () => {
+  it('moet een divers huishouden correct transformeren voor onderzoek', async () => {
+    // Gebruik de generator voor je data-onderzoek (adult, teenager, child, senior)
+    const oldState = testDataGenerators.createResearchDataset();
+    const result = await migrateTransactionsToPhoenix(oldState);
+    const members = result.data.household.members;
+    // 1. Check op kwantiteit
+    expect(members).toHaveLength(4);
+    // 2. Check op kwaliteit (de kern van je onderzoek)
+    assertions.assertMemberTypePreserved(members);
+    // 3. Check op individuele validatie
+    members.forEach(member => {
+      assertions.assertValidMember(member);
+    });
+  });
+  it('moet namen en types correct mappen zonder dataverlies', async () => {
+    const customMember = testDataGenerators.createOldMember('m-99', 'Puber Jan', 'teenager');
+    const state = { household: { leden: [customMember] } };
+    const result = await migrateTransactionsToPhoenix(state);
+    const migrated = result.data.household.members[0];
+    expect(migrated.firstName).toBe('Puber Jan');
+    expect(migrated.memberType).toBe('teenager'); // Cruciaal voor eetpatroon-analyse
+  });
+  it('moet robuust omgaan met ontbrekende types (fallback naar adult)', async () => {
+    const brokenState = {
+      household: {
+        leden: [{ id: 'err-1', naam: 'Onbekend' }] // Geen type ingevuld
+      }
+    };
+    const result = await migrateTransactionsToPhoenix(brokenState);
+    expect(result.data.household.members[0].memberType).toBe('adult');
+  });
+});
+[{
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+import { migrateTransactionsToPhoenix } from '../transactionService';
+import { testDataGenerators, assertions } from '../../../test-utils/migrationHelpers';
+describe('Migration Member Mapping & Research Data', () => {
+  it('moet een divers huishouden correct transformeren voor onderzoek', async () => {
+    // Gebruik de generator voor je data-onderzoek (adult, teenager, child, senior)
+    const oldState = testDataGenerators.createResearchDataset();
+    const result = await migrateTransactionsToPhoenix(oldState);
+    const members = result.data.household.members;
+    // 1. Check op kwantiteit
+    expect(members).toHaveLength(4);
+    // 2. Check op kwaliteit (de kern van je onderzoek)
+    assertions.assertMemberTypePreserved(members);
+    // 3. Check op individuele validatie
+    members.forEach(member => {
+      assertions.assertValidMember(member);
+    });
+  });
+  it('moet namen en types correct mappen zonder dataverlies', async () => {
+    const customMember = testDataGenerators.createOldMember('m-99', 'Puber Jan', 'teenager');
+    const state = { household: { leden: [customMember] } };
+    const result = await migrateTransactionsToPhoenix(state);
+    const migrated = result.data.household.members[0];
+    expect(migrated.firstName).toBe('Puber Jan');
+    expect(migrated.memberType).toBe('teenager'); // Cruciaal voor eetpatroon-analyse
+  });
+  it('moet robuust omgaan met ontbrekende types (fallback naar adult)', async () => {
+    const brokenState = {
+      household: {
+        leden: [{ id: 'err-1', naam: 'Onbekend' }] // Geen type ingevuld
+      }
+    };
+    const result = await migrateTransactionsToPhoenix(brokenState);
+    expect(result.data.household.members[0].memberType).toBe('adult');
+  });
+});
+[{
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+[{
+}]
+Ik heb in mijn 2housholdDetail.confog.ts (of whatsthename) nog geen velden voor voornaam achternaam -> moeten we misschien toevoegen OF een helper maken die een Naamstring uitelkaar weet te trekken (bijvoorbeeld na de eerste spatie)
+Dat is een scherp punt! De TypeScript-fout Property 'firstName' does not exist on type 'Member' bevestigt dat jouw huidige Member-interface (waarschijnlijk in src/domain/household.ts) nog geen onderscheid maakt tussen voor- en achternaam.
+De Helper (Directe oplossing): We maken een helper die een "Naamstring" slim splitst. Dit zorgt dat we de data die we nu hebben (zoals "Jan van de Berg") direct kunnen gebruiken.
+Schema Update (Toekomst): We passen de migratie zo aan dat hij de output genereert die de Phoenix-interface verwacht.
+// Voeg deze functie toe aan je migrationHelpers.ts
+/**
+export const parseName = (fullName: string) => {
+  const trimmedName = fullName.trim();
+  const parts = trimmedName.split(' ');
+  if (parts.length <= 1) {
+    return { firstName: trimmedName, lastName: '' };
+  }
+  const firstName = parts[0];
+  const lastName = parts.slice(1).join(' ');
+  return { firstName, lastName };
+};
+In: { naam: "Jan Janssen", type: "teenager" }
+Out: { firstName: "Jan", lastName: "Janssen", memberType: "teenager" }
+Dat is een heel belangrijk onderscheid! Voor je data-onderzoek wil je natuurlijk volledig geanonimiseerde data om privacy-redenen (GDPR/AVG), terwijl je in de UX wel gewoon "Jan" of "Hanna" wilt zien om het persoonlijk te maken.
+UX: De naam wordt gesplitst in firstName en lastName (voor een nette interface).
+Onderzoek: We focussen op de memberType (teenager, senior, etc.) en een uniek geanonimiseerd id. De namen blijven buiten de export voor onderzoek.
+Om de TypeScript-fout (Property 'firstName' does not exist) op te lossen, moeten we eerst kijken hoe Member is gedefinieerd. Dat is een cruciaal onderscheid! In de softwarewereld noemen we dit Separation of Concerns:
+UX (User Experience): Hier gebruiken we de namen (firstName, lastName) om de app menselijk en herkenbaar te maken voor de gebruiker.
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+}]
+Ik heb in mijn 2housholdDetail.confog.ts (of whatsthename) nog geen velden voor voornaam achternaam -> moeten we misschien toevoegen OF een helper maken die een Naamstring uitelkaar weet te trekken (bijvoorbeeld na de eerste spatie)
+Dat is een scherp punt! De TypeScript-fout Property 'firstName' does not exist on type 'Member' bevestigt dat jouw huidige Member-interface (waarschijnlijk in src/domain/household.ts) nog geen onderscheid maakt tussen voor- en achternaam.
+De Helper (Directe oplossing): We maken een helper die een "Naamstring" slim splitst. Dit zorgt dat we de data die we nu hebben (zoals "Jan van de Berg") direct kunnen gebruiken.
+Schema Update (Toekomst): We passen de migratie zo aan dat hij de output genereert die de Phoenix-interface verwacht.
+// Voeg deze functie toe aan je migrationHelpers.ts
+/**
+export const parseName = (fullName: string) => {
+  const trimmedName = fullName.trim();
+  const parts = trimmedName.split(' ');
+  if (parts.length <= 1) {
+    return { firstName: trimmedName, lastName: '' };
+  }
+  const firstName = parts[0];
+  const lastName = parts.slice(1).join(' ');
+  return { firstName, lastName };
+};
+In: { naam: "Jan Janssen", type: "teenager" }
+Out: { firstName: "Jan", lastName: "Janssen", memberType: "teenager" }
+Dat is een heel belangrijk onderscheid! Voor je data-onderzoek wil je natuurlijk volledig geanonimiseerde data om privacy-redenen (GDPR/AVG), terwijl je in de UX wel gewoon "Jan" of "Hanna" wilt zien om het persoonlijk te maken.
+UX: De naam wordt gesplitst in firstName en lastName (voor een nette interface).
+Onderzoek: We focussen op de memberType (teenager, senior, etc.) en een uniek geanonimiseerd id. De namen blijven buiten de export voor onderzoek.
+Om de TypeScript-fout (Property 'firstName' does not exist) op te lossen, moeten we eerst kijken hoe Member is gedefinieerd. Dat is een cruciaal onderscheid! In de softwarewereld noemen we dit Separation of Concerns:
+UX (User Experience): Hier gebruiken we de namen (firstName, lastName) om de app menselijk en herkenbaar te maken voor de gebruiker.
+Data Onderzoek (Analytics): Hier gebruiken we geanonimiseerde data. We kijken alleen naar het memberType (teenager, senior, etc.) en een abstract ID (zoals m-0). De namen worden hier volledig gestript.
+Om de TypeScript-fout (Property 'firstName' does not exist) op te lossen en jouw data-strategie te ondersteunen, passen we de migratie-logica aan.
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+it('moet namen splitsen voor UX maar types behouden voor onderzoek', async () => {
+  const input = { 
+    household: { 
+      leden: [{ id: 'id-1', naam: 'Tom Janssen', type: 'teenager' }] 
+    } 
+  };
+  const result = await migrateTransactionsToPhoenix(input);
+  const member = result.data.household.members[0];
+  // UX controle: Klopt de weergave?
+  expect(member.firstName).toBe('Tom');
+  expect(member.lastName).toBe('Janssen');
+  // Onderzoek controle: Is de categorie bruikbaar?
+  expect(member.memberType).toBe('teenager'); // Essentieel voor eetpatroon-analyse [cite: 48]
+  expect(member.entityId).toBe('id-1');
+});
+Robuustheid: Als een naam geen spatie heeft (bijv. "Opa"), wordt de firstName "Opa" en de lastName een lege string, zodat de UX nooit breekt.
+import { migrateTransactionsToPhoenix } from '../transactionService';
+import { testDataGenerators, assertions } from '@test-utils/migrationHelpers';
+describe('Migration Member Mapping & Research Data', () => {
+  it('moet een divers huishouden correct transformeren voor onderzoek', async () => {
+    // Gebruik de generator voor je data-onderzoek (adult, teenager, child, senior)
+    const oldState = testDataGenerators.createResearchDataset();
+    const result = await migrateTransactionsToPhoenix(oldState);
+    const members = result.data.household.members;
+    // 1. Check op kwantiteit
+    expect(members).toHaveLength(4);
+    // 2. Check op kwaliteit (de kern van je onderzoek)
+    assertions.assertMemberTypePreserved(members);
+    // 3. Check op individuele validatie
+    members.forEach(member => {
+      assertions.assertValidMember(member);
+    });
+  });
+  it('moet namen en types correct mappen zonder dataverlies', async () => {
+    const customMember = testDataGenerators.createOldMember('m-99', 'Puber Jan', 'teenager');
+    const state = { household: { leden: [customMember] } };
+    const result = await migrateTransactionsToPhoenix(state);
+    const migrated = result.data.household.members[0];
+    expect(migrated.firstName).toBe('Puber Jan');
+    expect(migrated.memberType).toBe('teenager'); // Cruciaal voor eetpatroon-analyse
+  });
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+import { migrateTransactionsToPhoenix } from '../transactionService';
+import { testDataGenerators, assertions } from '../../../test-utils/migrationHelpers';
+describe('Migration Member Mapping & Research Data', () => {
+  it('moet een divers huishouden correct transformeren voor onderzoek', async () => {
+    // Gebruik de generator voor je data-onderzoek (adult, teenager, child, senior)
+    const oldState = testDataGenerators.createResearchDataset();
+    const result = await migrateTransactionsToPhoenix(oldState);
+    const members = result.data.household.members;
+    // 1. Check op kwantiteit
+    expect(members).toHaveLength(4);
+    // 2. Check op kwaliteit (de kern van je onderzoek)
+    assertions.assertMemberTypePreserved(members);
+    // 3. Check op individuele validatie
+    members.forEach(member => {
+      assertions.assertValidMember(member);
+    });
+  });
+  it('moet robuust omgaan met ontbrekende types (fallback naar adult)', async () => {
+    const brokenState = {
+      household: {
+        leden: [{ id: 'err-1', naam: 'Onbekend' }] // Geen type ingevuld
+      }
+    };
+    const result = await migrateTransactionsToPhoenix(brokenState);
+    expect(result.data.household.members[0].memberType).toBe('adult');
+  });
+  it('moet namen splitsen voor UX maar types behouden voor onderzoek', async () => {
+    const input = { 
+      household: { 
+        leden: [{ id: 'id-1', naam: 'Tom Janssen', type: 'teenager' }] 
+      } 
+    };
+    const result = await migrateTransactionsToPhoenix(input);
+    const member = result.data.household.members[0];
+    // UX controle: Klopt de weergave voor de gebruiker?
+    expect(member.firstName).toBe('Tom');
+    expect(member.lastName).toBe('Janssen');
+    // Onderzoek controle: Is de categorie bruikbaar voor consumptie-analyse?
+    expect(member.memberType).toBe('teenager'); 
+    expect(member.entityId).toBe('id-1');
+  });
+  it('moet namen zonder achternaam correct afhandelen', async () => {
+    const input = { 
+      household: { 
+        leden: [{ id: 'id-2', naam: 'Opa', type: 'senior' }] 
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+[{
+"message": "Property 'schemaVersion' does not exist on type '{ data: { household: { members: any; }; transactions: any; }; metadata: { migratedAt: string; schemaVersion: string; itemsProcessed: any; }; }'.",
+},{
+},{
+},{
+}]
+1. Het Pad naar de Helpers (Error 2307)
+Oplossing: Gebruik een relatief pad dat exact naar de map wijst. Als je test in src/services/__tests__/ staat en je helper in src/test-utils/, dan is het pad: import { ... } from '../../test-utils/migrationHelpers'; (twee niveaus omhoog, niet drie).
+2. De Metadata Error (Error 2339)
+3. De Domain Types (Error 2307)
+Oplossing: Voor nu gebruiken we het directe pad in src/services/transactionService.ts: import { Member, MemberType } from '../domain/household'; (Pas dit aan naar waar jouw types echt staan).
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+},{
+},{
+}]
+1. Het Pad naar de Helpers (Error 2307)
+Oplossing: Gebruik een relatief pad dat exact naar de map wijst. Als je test in src/services/__tests__/ staat en je helper in src/test-utils/, dan is het pad: import { ... } from '../../test-utils/migrationHelpers'; (twee niveaus omhoog, niet drie).
+2. De Metadata Error (Error 2339)
+3. De Domain Types (Error 2307)
+Oplossing: Voor nu gebruiken we het directe pad in src/services/transactionService.ts: import { Member, MemberType } from '../domain/household'; (Pas dit aan naar waar jouw types echt staan).
+// Gebruik relatief pad in plaats van @ alias als de config nog niet af is
+// Pas 'household' aan naar de juiste bestandsnaam in src/domain/
+export type MemberType = 'adult' | 'child' | 'teenager' | 'senior';
+export interface Member {
+  entityId: string;
+  memberType: MemberType;
+  firstName: string;
+  lastName: string;
+  naam: string;
+}
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+},{
+}]
+1. Het Pad naar de Helpers (Error 2307)
+Oplossing: Gebruik een relatief pad dat exact naar de map wijst. Als je test in src/services/__tests__/ staat en je helper in src/test-utils/, dan is het pad: import { ... } from '../../test-utils/migrationHelpers'; (twee niveaus omhoog, niet drie).
+2. De Metadata Error (Error 2339)
+3. De Domain Types (Error 2307)
+Oplossing: Voor nu gebruiken we het directe pad in src/services/transactionService.ts: import { Member, MemberType } from '../domain/household'; (Pas dit aan naar waar jouw types echt staan).
+// Gebruik relatief pad in plaats van @ alias als de config nog niet af is
+// Pas 'household' aan naar de juiste bestandsnaam in src/domain/
+export type MemberType = 'adult' | 'child' | 'teenager' | 'senior';
+export interface Member {
+  entityId: string;
+  memberType: MemberType;
+  firstName: string;
+  lastName: string;
+  naam: string;
+}
+import { migrateTransactionsToPhoenix } from '../transactionService';
+// Check of dit pad klopt: 2 stappen omhoog naar src, dan test-utils
+import { testDataGenerators, assertions } from '../../test-utils/migrationHelpers';
+// ... rest van de code
+    members.forEach((member: any) => { // Type 'any' toegevoegd om error 7006 te fixen
+      assertions.assertValidMember(member);
+    });
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+import { migrateTransactionsToPhoenix } from '../transactionService';
+// Check of dit pad klopt: 2 stappen omhoog naar src, dan test-utils
+import { testDataGenerators, assertions } from '../../test-utils/migrationHelpers';
+// ... rest van de code
+    members.forEach((member: any) => { // Type 'any' toegevoegd om error 7006 te fixen
+      assertions.assertValidMember(member);
+    });
+// ...
+export const assertions = {
+  assertValidMember: (member: any) => {
+    expect(member).toHaveProperty('firstName');
+    expect(member).toHaveProperty('memberType');
+  },
+  // ... rest
+};
+Probeer de imports aan te passen naar de relatieve paden (met ../../). Gaan de rode lijntjes nu weg?
+De beste plek hiervoor is src/domain/household.ts (of waar jouw huishoud-logica staat), maar voor nu kunnen we het direct in de service of een gedeeld types-bestand zetten om de tests draaiend te krijgen.
+Voeg dit toe aan de bovenkant van src/services/transactionService.ts (of in src/domain/household.ts als je dat liever hebt):
+/**
+export type MemberType = 'adult' | 'child' | 'teenager' | 'senior';
+export interface Member {
+  entityId: string;    // Anoniem ID voor onderzoek
+  memberType: MemberType;
+  firstName: string;   // UX veld
+  lastName: string;    // UX veld
+  naam: string;        // Fallback/Oude naam string
+}
+Door de MemberType te definiëren als een Union Type ('adult' | 'child' | ...) in plaats van een simpele string, dwing je TypeScript om je te helpen bij je onderzoek:
+import { MemberType } from '../services/transactionService';
+Zal ik je helpen om de MemberType declaratie in een specifiek types.ts bestand te zetten zodat je het overal in je app (ook in je research-scripts) kunt gebruiken?
+/**
+export type MemberType = 'adult' | 'child' | 'teenager' | 'senior';
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+Nee, beter plan; SSOT EN scheiding van taken /machten; we maken verzamelaar voor onderzoeksgegevens (een doorgeefluik van verschillende soorten data van de ene laag (UI) naar de andere (testen of whatever EN naar de database <later via n8n met workflow>)
+Dit is een uitstekend architecturaal inzicht. Wat jij voorstelt is een Data Orchestrator of Data Hub. In plaats van dat de UI direct bepaalt wat de database krijgt, creëer je een onafhankelijke laag die data verzamelt, valideert en formatteert voor verschillende eindpunten (UX, Onderzoek, n8n).
+De Bron (UI/Legacy): Levert ruwe data (bijv. "Jan Janssen", "puber").
+De Verzamelaar (Orchestrator): Ontvangt dit en splitst het in drie stromen:
+Stroom A (UX): Voornaam/Achternaam voor de app-interface.
+Stroom B (Onderzoek): Geanonimiseerde types (teenager, senior) + IDs.
+Stroom C (Workflows): Een JSON-payload die klaarstaat voor je n8n-workflow.
+De Bestemming: Lokale state (Phoenix) en later je externe database/onderzoekstool.
+import { Member, MemberType } from '../domain/household';
+export const collectMemberData = (rawLid: any, index: number) => {
+  // 1. Logica voor UX (Naam splitsen)
+  const names = rawLid.naam?.trim().split(' ') || ['Lid'];
+  const uxData = {
+    lastName: names.slice(1).join(' ') || '',
+  };
+  // 2. Logica voor Onderzoek (Mapping & Anonimiteit)
+  const researchData = {
+    entityId: rawLid.id || `m-${index}-${Math.random().toString(36).substr(2, 5)}`,
+    memberType: mapToResearchType(rawLid.type),
+  };
+  // 3. Logica voor n8n / Workflow (De volledige payload)
+  const workflowPayload = {
+    timestamp: new Date().toISOString()
+  };
+  return {
+    // De samengevoegde Member voor de lokale state
+    merged: {
+      fieldId: `field-${index}`,
+    } as Member
+  };
+};
+// Helper voor je eetpatroon-onderzoek
+const mapToResearchType = (type: string): MemberType => {
+  const t = type?.toLowerCase();
+  if (t === 'puber' || t === 'teenager') return 'teenager';
+  if (t === 'opa' || t === 'oma' || t === 'senior') return 'senior';
+  if (t === 'kind' || t === 'child') return 'child';
+  return 'adult';
+};
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+it('moet data strippen van persoonsgegevens voor n8n export', async () => {
+  const rawInput = { id: 'user-123', naam: 'Jan Janssen', type: 'teenager' };
+  const { localMember, researchPayload } = processMemberForOutput(rawInput, 0);
+  // Check Laag A (Telefoon)
+  expect(localMember.firstName).toBe('Jan');
+  // Check Laag B+C (Onderzoek/n8n)
+  expect(researchPayload.memberType).toBe('teenager');
+  expect(researchPayload).not.toHaveProperty('firstName'); // MAG NIET BESTAAN
+  expect(researchPayload).not.toHaveProperty('naam');      // MAG NIET BESTAAN
+  expect(researchPayload.researchId).not.toBe('user-123'); // Moet geanonimiseerd zijn
+});
+yes; er komt nog meer data bij hoor; alles uit de UI laag dat ik mag verzamelen :)
+Dit is het perfecte moment om dit "digitale doorgeefluik" (de Data Orchestrator) te bouwen. Als je zegt dat er "nog meer data bij komt", creëren we nu een schaalbaar systeem waar je simpelweg nieuwe velden in de UI kunt toevoegen, waarna de orchestrator beslist: "Dit blijft op de telefoon (UX)" of "Dit gaat geanonimiseerd naar n8n (Onderzoek)".
+import { Member, MemberType } from '../domain/household';
+/**
+ * Scheidt UX data (Telefoon) van Onderzoeksdata (n8n)
+export const collectAndDistributeData = (rawUIData: any, index: number) => {
+  // 1. BEWERKING: Naam splitsen voor UX
+  const names = (rawUIData.naam || 'Lid').trim().split(' ');
+  const firstName = names[0];
+  const lastName = names.slice(1).join(' ') || '';
+  // 2. BEWERKING: Type mapping voor Onderzoek
+  const memberType = mapToResearchType(rawUIData.type || rawUIData.memberType);
+  // --- LAAG A: LOKALE UI (Alles wat de gebruiker op zijn scherm ziet) ---
+  const localMember: Member = {
+    entityId: rawUIData.id || `local-${index}`,
+    fieldId: rawUIData.fieldId || `field-${index}`,
+    // Voeg hier simpelweg nieuwe UI velden toe die lokaal moeten blijven
+  };
+  // --- LAAG B+C: ONDERZOEK (Alleen geanonimiseerde data voor n8n) ---
+  const researchPayload = {
+    // Geen namen, alleen anonieme kenmerken voor de eetpatronen
+    researchId: Buffer.from(localMember.entityId).toString('base64').substring(0, 10),
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+import { migrateTransactionsToPhoenix } from '../transactionService';
+import { collectFinancialAndMemberData } from '../dataOrchestrator';
+describe('🚀 Phoenix Research & Finance Validator', () => {
+  it('moet de strikte scheiding tussen UX en Onderzoek bewaken', async () => {
+    // 1. Simuleer invoer van een gebruiker die het niet breed heeft
+    const rawInput = { 
+      type: 'senior', 
+    };
+    // 2. Haal de data door het doorgeefluik (The Collector)
+    const { localMember, researchPayload } = collectFinancialAndMemberData(rawInput, 0);
+    // --- CHECK: LOKALE HULP (UX) ---
+    // De gebruiker moet zijn eigen naam zien voor de vertrouwensband met de app
+    expect(localMember.firstName).toBe('Jan');
+    expect(localMember.naam).toBe('Jan Janssen');
+    // --- CHECK: ONDERZOEKSDATA (n8n Export) ---
+    // De export mag ABSOLUUT GEEN namen bevatten (Privacy by Design)
+    expect(researchPayload).not.toHaveProperty('firstName');
+    expect(researchPayload).not.toHaveProperty('naam');
+    // De export moet WEL de variabelen voor je armoede-onderzoek bevatten
+    expect(researchPayload.memberType).toBe('senior'); // Voor correlatie leeftijd/uitgaven
+    expect(researchPayload.bedrag).toBe(45.50);       // Voor meting van koopkracht
+    expect(researchPayload.researchId).not.toBe('user-001'); // ID moet gehasht zijn
+  });
+  it('moet alle kritieke leeftijdscategorieën voor het onderzoek mappen', () => {
+    const typesToTest = [
+      { in: 'puber', out: 'teenager' },
+      { in: '65+', out: 'senior' },
+      { in: 'baby', out: 'child' },
+      { in: 'onbekend', out: 'adult' }
+    ];
+    typesToTest.forEach(t => {
+      const { researchPayload } = collectFinancialAndMemberData({ type: t.in }, 0);
+      expect(researchPayload.memberType).toBe(t.out);
+    });
+  });
+});
+Schaalbaarheid: Als je morgen besluit om ook "postcode-niveau" (zonder huisnummer) te verzamelen voor onderzoek naar regionale armoede, voeg je simpelweg een extra expect toe aan deze test.
+De "Verzamelaar" (Orchestrator) is nu de spil van je applicatie.
+import { migrateTransactionsToPhoenix } from '../transactionService';
+import { testDataGenerators, assertions } from '../../test-utils/migrationHelpers';
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+import { migrateTransactionsToPhoenix } from '../transactionService';
+import { collectFinancialAndMemberData } from '../dataOrchestrator';
+describe('🚀 De Grote Verzamelaar: UX & Onderzoek Validatie', () => {
+  // TEST 1: De Migratie (van Oude naar Nieuwe Phoenix State)
+  it('moet oude leden migreren naar de nieuwe structuur met naam-splitsing', async () => {
+    const oldState = {
+      household: {
+          { id: 'm1', naam: 'Jan Janssen', type: 'senior' },
+          { id: 'm2', naam: 'Puber Tom', type: 'teenager' }
+      }
+    };
+    const result = await migrateTransactionsToPhoenix(oldState);
+    const members = result.data.household.members;
+    // Check UX: Is de naam gesplitst?
+    expect(members[0].firstName).toBe('Jan');
+    expect(members[0].lastName).toBe('Janssen');
+    // Check Onderzoek: Is het type behouden?
+    expect(members[1].memberType).toBe('teenager');
+  });
+  // TEST 2: De Privacy-Filter (Data strippen voor n8n)
+  it('moet een anonieme payload maken voor n8n zonder persoonsgegevens', () => {
+    const rawInput = { 
+      type: 'teenager', 
+    };
+    // We gebruiken hier de orchestrator die de splitsing maakt
+    const { localMember, researchPayload } = collectFinancialAndMemberData(rawInput, 0);
+    // UX: Telefoon moet de naam weten
+    expect(localMember.firstName).toBe('Kees');
+    // ONDERZOEK: n8n mag GEEN naam zien
+    expect(researchPayload).not.toHaveProperty('firstName');
+    expect(researchPayload).not.toHaveProperty('naam');
+    // ONDERZOEK: Moet wel de data voor je armoede-onderzoek hebben
+    expect(researchPayload.memberType).toBe('teenager');
+    expect(researchPayload.bedrag).toBe(12.50);
+    expect(researchPayload.researchId).not.toBe('user-123'); // Moet gehasht zijn
+  });
+  // TEST 3: Robuustheid (Fallback)
+  it('moet altijd terugvallen op adult als het type onbekend is', async () => {
+    const state = { household: { leden: [{ id: 'x', naam: 'Onbekend', type: 'iets-anders' }] } };
+    const result = await migrateTransactionsToPhoenix(state);
+    expect(result.data.household.members[0].memberType).toBe('adult');
+  });
+---CODE BLOCK END---
+
+---CODE BLOCK START---
+// De Verzamelaar die ALLES regelt
+export const collectFinancialAndMemberData = (rawInput: any, index: number) => {
+  // 1. Namen splitsen voor de UI
+  const parts = (rawInput.naam || 'Lid').trim().split(' ');
+  // 2. De lokale versie (voor de telefoon)
+  const localMember = {
+    lastName: parts.slice(1).join(' ') || '',
+    memberType: mapType(rawInput.type), // adult, child, teenager, senior
+  };
+  // 3. De onderzoeksversie (voor n8n) - HIER STRIPPEN WE DE DATA
+  const researchPayload = {
+    researchId: `anon_${index}_${Date.now()}`, // Geen echte naam of ID
+    timestamp: new Date().toISOString()
+  };
+  return { localMember, researchPayload };
+};
+const mapType = (t: string) => {
+  const type = t?.toLowerCase() || '';
+  if (['puber', 'teenager'].includes(type)) return 'teenager';
+  if (['65+', 'senior', 'opa', 'oma'].includes(type)) return 'senior';
+  if (['kind', 'child'].includes(type)) return 'child';
+  return 'adult';
+};
+Om dit effectief te "minen" (met een andere AI of voor je eigen documentatie), moet je de structuur van de Verzamelaar en de Machtenscheiding (Telefoon vs. n8n) vastleggen.
+De Data-Orchestrator (De Filter):
+Input: Ruwe data uit de UI (inclusief naam, type, bedrag).
+Output A (Lokaal): firstName, lastName, saldo. (Hulp voor de minima).
+Output B (n8n): researchId (gehasht), memberType (senior/teenager), bedrag. (Data voor jou).
+De SSOT Mapping (De Logica):
+De Privacy-Garantie (De Test):
+De test die afdwingt: expect(researchPayload).not.toHaveProperty('naam'). Dit is je juridische en ethische achterdeur.
+Samenvatting van de "Verzamelaar" (voor je archief):
+// DIT IS DE KERN VAN JE ARCHITECTUUR
+const { localMember, researchPayload } = collectFinancialAndMemberData(rawInput);
+// localMember -> blijft op toestel (UX)
+// researchPayload -> gaat naar n8n (Onderzoek)
+---CODE BLOCK END---

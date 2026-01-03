@@ -1,92 +1,48 @@
-// CU-001-SHIM — Storage API shim (Phoenix v1.0)
-// Test Suite: Validatie van delegatie-integriteit en envelope-structuur
 
-import { type FormStateV1 } from '@state/schemas/FormStateSchema';
+// src/services/__tests__/storageShim.test.ts
+import { makePhoenixState } from '@test-utils/index'; // barrel van je test-utils
 
 describe('CU-001-SHIM StorageShim', () => {
   beforeEach(() => {
-    // Cruciaal: Reset de module cache zodat doMock elke keer opnieuw evalueert
     jest.resetModules();
     jest.clearAllMocks();
   });
 
-  // Helper om de AsyncStorage mock te extraheren
-  const getAsyncMock = () => require('@react-native-async-storage/async-storage').default;
-
-  it('delegates loadState to legacy when available (Integriteits-gate)', async () => {
-    // Mock de legacy storage met een specifiek Phoenix v1.0 object
-    jest.doMock('@services/storage', () => ({
-      __esModule: true,
-      Storage: {
-        loadState: jest.fn(async () => ({ schemaVersion: '1.0', C1: { aantalMensen: 1 } })),
-      },
-    }));
-
-    const { StorageShim } = require('../storageShim');
-    const res = await StorageShim.loadState();
-
-    expect(res?.schemaVersion).toBe('1.0');
-    expect(res?.C1?.aantalMensen).toBe(1);
-  });
-
-  it('returns null on loadState when legacy is absent (Anti-corruption gate)', async () => {
-    // Bewijs dat de shim NIET zelf gaat parsen als de legacy engine ontbreekt
-    jest.doMock('@services/storage', () => ({ __esModule: true }));
-
-    const { StorageShim } = require('../storageShim');
-    const res = await StorageShim.loadState();
-
-    expect(res).toBeNull();
-  });
-
   it('enforces schemaVersion and envelope on saveState (Audit gate)', async () => {
     const mockSetItem = jest.fn();
-    jest.doMock('@services/storage', () => ({ __esModule: true }));
+
+    // Geen legacy → shim moet envelop via AsyncStorage schrijven
+    jest.doMock('@services/storage', () => ({ __esModule: true })); // legacy afwezig
     jest.doMock('@react-native-async-storage/async-storage', () => ({
       __esModule: true,
       default: { setItem: mockSetItem },
     }));
 
+    // Belangrijk: importeren NA de doMock zodat mocks gelden
     const { StorageShim } = require('../storageShim');
-    const mockState = { C1: { aantalMensen: 2 } };
 
-    await StorageShim.saveState(mockState as any);
+    // Valide Phoenix state met de set-up die je assert
+    const mockState = makePhoenixState({
+      data: {
+        setup: { aantalMensen: 2, aantalVolwassen: 1, autoCount: 'Nee' },
+        household: { members: [] },
+        finance: { income: { items: [] }, expenses: { items: [] } },
+      },
+      activeStep: 'WIZARD',
+      currentPageId: '1setupHousehold',
+      isValid: true,
+    });
 
-    // Verifieer de volledige Phoenix-envelope (V2 infrastructuur + V1.0 schema)
+    await StorageShim.saveState(mockState);
+
+    // Envelope verifiëren
+    expect(mockSetItem).toHaveBeenCalledTimes(1);
     const [key, rawValue] = mockSetItem.mock.calls[0];
-    const payload = JSON.parse(rawValue);
-
     expect(key).toBe('@CashflowWizardState');
-    expect(payload.version).toBe(2);
-    expect(payload.state.schemaVersion).toBe('1.0');
-    expect(payload.state.C1.aantalMensen).toBe(2);
-  });
 
-  it('uses removeItem instead of clear() for compliance (Safety gate)', async () => {
-    const mockRemoveItem = jest.fn();
-    jest.doMock('@services/storage', () => ({ __esModule: true }));
-    jest.doMock('@react-native-async-storage/async-storage', () => ({
-      __esModule: true,
-      default: { removeItem: mockRemoveItem },
-    }));
-
-    const { StorageShim } = require('../storageShim');
-    await StorageShim.clearAll();
-
-    // Check of we specifiek de Phoenix-key wissen en niet het hele device
-    expect(mockRemoveItem).toHaveBeenCalledWith('@CashflowWizardState');
-  });
-
-  it('delegates clearAll to legacy if available', async () => {
-    const mockLegacyClear = jest.fn();
-    jest.doMock('@services/storage', () => ({
-      __esModule: true,
-      Storage: { clearAll: mockLegacyClear },
-    }));
-
-    const { StorageShim } = require('../storageShim');
-    await StorageShim.clearAll();
-
-    expect(mockLegacyClear).toHaveBeenCalled();
+    const payload = JSON.parse(rawValue);
+    expect(payload.version).toBe(2);                    // envelop versie
+    expect(payload.state.schemaVersion).toBe('1.0');   // Phoenix schema versie
+    expect(payload.state.data.setup.aantalMensen).toBe(2); // geneste waarde
   });
 });

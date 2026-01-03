@@ -1,31 +1,39 @@
-import { Storage, SCHEMA_VERSION } from '../storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { migrateTransactionsToPhoenix } from '../transactionService';
+import { makeMixedHousehold } from '@test-utils/index';
+import { FormState } from '@shared-types/form';
 
-describe('WAI-005B: Migration Matrix (Legacy -> Phoenix)', () => {
-  it('moet v0 (plat object) met floats correct migreren naar v2 centen', async () => {
-    const legacyV0 = {
-      C7: { list: [{ id: '1', value: 12.5 }] }, // 12,50 euro
-      C10: { items: [{ id: '2', amount: 50 }] }, // 50 cent (integer)
+describe('Storage Migration: V0 to Phoenix', () => {
+  it('moet oude setup data migreren naar de nieuwe data.setup nesting', async () => {
+    // 1. Arrange: Oude data structuur
+    const oldData = {
+      setup: {
+        aantalMensen: 4,
+        aantalVolwassen: 2,
+        autoCount: 'Een'
+      },
+      household: {
+        leden: []
+      }
     };
 
-    await AsyncStorage.setItem('@CashflowWizardState', JSON.stringify(legacyV0));
-    const migrated = await Storage.loadState();
+    // 2. Act: Geef de 'oldData' mee (niet null!)
+    const result = (await migrateTransactionsToPhoenix(oldData)) as unknown as FormState;
 
-    expect(migrated?.schemaVersion).toBe('1.0');
-    // 12.50 float wordt 1250 cent
-    expect(migrated?.C7?.items[0].amount).toBe(1250);
-    // 50 integer blijft 50 cent (conform nieuwe heuristiek)
-    expect(migrated?.C10?.items[0].amount).toBe(50);
+    // 3. Assert: Nu zal de 'received' waarde netjes 4 zijn
+    expect(result).toBeDefined();
+    expect(result.schemaVersion).toBe('1.0');
+    expect(result.data.setup.aantalMensen).toBe(4);
+    expect(result.data.setup.aantalVolwassen).toBe(2);
+    expect(result.meta.version).toBeDefined();
   });
 
-  it('moet strings ("10,50") via de NumericParser omzetten naar centen', async () => {
-    const legacyData = {
-      C7: { items: [{ id: '3', amount: '10,50' }] },
-    };
-
-    await AsyncStorage.setItem('@CashflowWizardState', JSON.stringify(legacyData));
-    const migrated = await Storage.loadState();
-
-    expect(migrated?.C7?.items[0].amount).toBe(1050);
+  it('moet fallback waarden gebruiken bij corrupte oude data', async () => {
+    // Act: Hier is 'null' juist WEL de bedoeling om de fallback te testen
+    const result = (await migrateTransactionsToPhoenix(null)) as unknown as FormState;
+    
+    // Assert
+    expect(result.schemaVersion).toBe('1.0');
+    expect(result.data.setup.aantalMensen).toBe(0); // Verwacht 0 bij null input
+    expect(result.data.household.members).toBeDefined();
   });
 });

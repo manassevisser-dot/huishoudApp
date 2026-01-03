@@ -1,17 +1,33 @@
 /**
- * Project Phoenix: Household Domain
- * Bevat de regels voor de speciale status van huishoudens.
+ * MemberType: De kern-variabele voor ons data-onderzoek.
+ * Definieert de rol binnen het huishouden.
  */
+export type MemberType = 'adult' | 'child' | 'teenager' | 'senior';
 
-export interface HouseholdStats {
-  adultCount: number;
-  childCount: number;
+export interface Member {
+  // --- Identifiers ---
+  entityId: string;    // Unieke database sleutel (UUID)
+  fieldId: string;     // Unieke UI sleutel (voor Phoenix Forms state)
+
+  // --- Core Data ---
+  memberType: MemberType;
+  
+  // ✅ NIEUWE STANDAARD (Split Name)
+  firstName: string;
+  lastName: string;
+
+  // --- Optionele Data ---
+  dateOfBirth?: string; // ISO string (YYYY-MM-DD)
+  gender?: string;
+  
+  // --- Derived / Computed (mag optioneel zijn) ---
+  age?: number;
+
+  // ❌ LEGACY (Verwijderd om refactor af te dwingen)
 }
 
-export const getHouseholdStatus = (stats: HouseholdStats): 'STANDARD' | 'SPECIAL_LARGE' => {
-  // RULE [2024-12-07]: Huishoudens met [volwassenen > 5] krijgen een speciale status.
-  if (stats.adultCount > 5) {
-    return 'SPECIAL_LARGE';
-  }
-  return 'STANDARD';
-};
+export interface Household {
+  householdId: string;
+  members: Member[];
+  lastUpdated: string;
+}

@@ -1,4 +1,4 @@
 export type ExpenseItem = {
-  id: string;
+  fieldId: string;
   [key: string]: any;
 };

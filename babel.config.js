@@ -1,40 +1,45 @@
-
-// babel.config.js
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: ['babel-preset-expo'],
+    presets: [
+      'babel-preset-expo',
+      '@babel/preset-typescript',
+    ],
     plugins: [
-      // 👇 EERST module-resolver
       [
         'module-resolver',
         {
-          root: ['./src'],
-          extensions: ['.ios.js', '.android.js', '.js', '.jsx', '.ts', '.tsx', '.json'],
-
-          /* @aliases-start */
-alias: {
-              '@domain': './src/domain',
-              '@state': './src/state',
-              '@ui': './src/ui',
-              '@styles': './src/ui/styles',
-              '@app': './src/app',
-              '@utils': './src/utils',
-              '@services': './src/services',
-              '@assets': './_assets',
-              '@logic': './src/logic',
-              '@config': './src/config',
-              '@context': './src/app/context',
-              '@selectors': './src/selectors',
-              '@shared-types': './src/shared-types',
-              '@components': './src/ui/components',
-            },
-/* @aliases-end */
+          root: ['./'],
+          alias: {
+// @alias-start
+            '@app': './src/app',
+            '@domain': './src/domain',
+            '@services': './src/services',
+            '@shared-types': './src/shared-types',
+            '@utils': './src/utils',
+            '@config': './src/config',
+            '@logic': './src/logic',
+            '@ui': './src/ui',
+            '@components': './src/ui/components',
+            '@fields': './src/ui/components/fields',
+            '@screens': './src/ui/screens',
+            '@styles': './src/ui/styles',
+            '@state': './src/state',
+            '@context': './src/app/context',
+            '@selectors': './src/selectors',
+            '@assets': './assets',
+            '@test-utils': './src/test-utils/index.ts',
+            "@test-utils/*": ["src/test-utils/*"],
+// @alias-end
+          },
+          extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
         },
       ],
-
-      // 👇 LAATSTE reanimated
-      'react-native-reanimated/plugin',
     ],
+    env: {
+      test: {
+        // Test configuratie
+      },
+    },
   };
 };

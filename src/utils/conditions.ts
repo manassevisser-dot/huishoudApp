@@ -1,50 +1,25 @@
-import { ConditionalConfig } from '../shared-types/form';
+import { FormState } from '@shared-types/form';
 
-export const evaluateCondition = (
-  conditional: ConditionalConfig | undefined,
-  state: Record<string, any>,
-  pageId: string,
-): boolean => {
-  if (!conditional) return true;
+export const evaluateConditions = (condition: any, state: FormState): boolean => {
+  if (!condition || !state) return true;
 
-  const [targetPageId, targetFieldId] = conditional.field.split('.');
-  const targetValue = state[targetPageId]?.[targetFieldId];
-  const condValue = conditional.value;
+  const { fieldId, operator, value } = condition;
+  
+  // Phoenix 2025 data-lookup:
+  // We checken de root, de SETUP bucket en de HOUSEHOLD bucket
+  const actualValue = 
+    (state as any)[fieldId] ?? 
+    (state as any).SETUP?.[fieldId] ?? 
+    (state as any).household?.[fieldId];
 
-  switch (conditional.operator) {
-    case '===':
-      return targetValue === condValue;
-    case '!==':
-      return targetValue !== condValue;
-    case '>':
-    case '<':
-    case '>=':
-    case '<=': {
-      if (targetValue === null || targetValue === undefined || targetValue === '') {
-        return false;
-      }
+  // Zorg dat we niet vergelijken met undefined
+  if (actualValue === undefined) return false;
 
-      const numericTarget = Number(targetValue);
-      const numericCond = Number(condValue);
-
-      if (!Number.isFinite(numericTarget) || !Number.isFinite(numericCond)) {
-        return false;
-      }
-
-      switch (conditional.operator) {
-        case '>':
-          return numericTarget > numericCond;
-        case '<':
-          return numericTarget < numericCond;
-        case '>=':
-          return numericTarget >= numericCond;
-        case '<=':
-          return numericTarget <= numericCond;
-        default:
-          return false;
-      }
-    }
-    default:
-      return true;
+  switch (operator) {
+    case 'eq':  return actualValue === value;
+    case 'neq': return actualValue !== value;
+    case 'gt':  return Number(actualValue) > Number(value);
+    case 'lt':  return Number(actualValue) < Number(value);
+    default:    return true;
   }
 };

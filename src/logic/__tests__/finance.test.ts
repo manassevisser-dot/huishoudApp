@@ -1,16 +1,22 @@
 // src/logic/__tests__/finance.test.ts
-import { computeSummary } from '../finance';
+import { computePhoenixSummary } from '../finance';
 
-describe('WAI-004C Finance Integratie', () => {
-  it('berekent netto correct: 100,00 inkomsten - 40,00 uitgaven = 6000 cent', () => {
-    // FIX: Pak de arrays in een object met 'items' key, zoals Phoenix het verwacht
-    const incomeState = { items: [{ amount: 10000 }] };
-    const expenseState = { items: [{ amount: 4000 }] };
+describe('Finance Logic — Maandelijkse Aggregatie', () => {
+  it('moet kwartaalbedragen correct naar maanden omrekenen (afgerond op cent)', () => {
+    const mockData = {
+      income: { items: [{ amount: 10000, frequency: 'quarter' }] }, // €100 / 3 = €33.33
+      expenses: { items: [] }
+    };
+    const result = computePhoenixSummary(mockData);
+    expect(result.totalIncomeCents).toBe(3333); // Exacte cent-validatie
+  });
 
-    const s = computeSummary(incomeState, expenseState);
-
-    expect(s.totalIncome).toBe(10000);
-    expect(s.totalExpenses).toBe(4000);
-    expect(s.netto).toBe(6000); // Let op: check of je 'net' of 'netto' gebruikt in finance.ts
+  it('moet netto resultaat correct berekenen bij diverse frequenties', () => {
+    const mockData = {
+      income: { items: [{ amount: 10000, frequency: 'month' }] },     // +10000
+      expenses: { items: [{ amount: 2500, frequency: 'week' }] }      // -10833 (2500 * 4.333...)
+    };
+    const result = computePhoenixSummary(mockData);
+    expect(result.netCents).toBe(-833); 
   });
 });

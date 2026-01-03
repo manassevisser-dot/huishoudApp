@@ -1,47 +1,80 @@
-// WAI-004A — NumericParser & NL-formatters (non-negative)
-// -------------------------------------------------------
+
 import { cleanName } from './strings';
 
 /**
  * Tijdens typen: sta alleen cijfers, komma en punt toe.
- * Gebruikt cleanName voor emoji-stripping en limitering.
  * Verwijdert ook '-' conform de non-negative policy.
  */
 export function formatDutchValue(raw: string): string {
   return cleanName(String(raw ?? ''), 256)
     .replace(/\s+/g, '')
-    .replace(/-/g, '') // minus altijd weg
-    .replace(/[^0-9,.]/g, ''); // alleen [0-9], ',' en '.'
+    .replace(/-/g, '')
+    .replace(/[^0-9,.]/g, '');
 }
 
 /**
- * NL-parser: string/number → cents (integer, altijd ≥ 0).
- * Elimineert floating-point errors via integers.
+ * DE PHOENIX PARSER: Zet alles (string met komma of getal) om naar centen (integer).
+ * Dit is de enige functie die je gebruikt voor invoer naar de state.
+ *
+ * ADR-03: Centrale transformatie naar centen (integers).
+ * Handelt NL formaten (1.250,50), US formaten (1250.50) en rommelige strings af.
  */
-export function parseToCents(input: string | number): number {
+
+
+export function toCents(input: string | number | undefined | null): number {
+  if (input === undefined || input === null) return 0;
+
   if (typeof input === 'number') {
     return Math.round(Math.abs(input) * 100);
   }
-  if (!input) return 0;
 
-  let s = formatDutchValue(input);
-  s = s.replace(/\./g, ''); // duizendtallen weg
+  // 1) Cleanup basis: verwijder € + spaties + letters (bv. 'EUR')
+  let s = input.trim().replace(/[€\sA-Za-z]/g, '');
 
-  const lastComma = s.lastIndexOf(',');
-  if (lastComma >= 0) {
-    s = s.slice(0, lastComma).replace(/,/g, '') + '.' + s.slice(lastComma + 1).replace(/,/g, '');
-  } else {
-    s = s.replace(/,/g, '');
+  const hasComma = s.includes(',');
+  const hasDot = s.includes('.');
+
+  // 2) Beide aanwezig? Bepaal welke de decimaal is op volgorde
+  if (hasComma && hasDot) {
+    const iComma = s.indexOf(',');
+    const iDot = s.indexOf('.');
+
+    if (iDot > iComma) {
+      // US-stijl: duizendtal=komma, decimaal=punt
+      s = s.replace(/,/g, '');
+      // punt blijft staan
+    } else {
+      // EU-stijl: duizendtal=punt, decimaal=komma
+      s = s.replace(/\./g, '').replace(/,/g, '.');
+    }
+  } else if (hasComma) {
+    // 3) Alleen komma -> EU-pad: punten weg, komma -> punt
+    s = s.replace(/\./g, '').replace(/,/g, '.');
+  } else if (hasDot) {
+    // 4) Alleen punt -> heuristiek
+    const parts = s.split('.');
+    if (parts.length === 2) {
+      const [left, right] = parts;
+      // 'X.YYY' met exact 3 cijfers rechts (en niet '0.XXX') -> duizendtal
+      if (/^\d+$/.test(left) && /^\d{3}$/.test(right) && left !== '0') {
+        s = left + right; // verwijder punt (duizendtal)
+      }
+      // anders: laat de enkele punt staan als decimaal
+    } else if (parts.length > 2) {
+      // meerdere punten -> alleen de laatste blijft decimaal
+      const decimals = parts.pop()!;
+      s = parts.join('') + '.' + decimals;
+    }
   }
 
+  // 5) parse en naar centen
   const val = parseFloat(s);
-  if (isNaN(val)) return 0;
-
-  return Math.max(0, Math.round(val * 100));
+  return isNaN(val) ? 0 : Math.round(Math.abs(val) * 100);
 }
 
+
 /**
- * Formatter: cents → "1.250,50" (zonder €), altijd 2 decimalen.
+ * Formatter voor INPUT velden (zonder € symbool)
  */
 export function formatCentsToDutch(cents: number): string {
   const euros = (Number.isFinite(cents) ? cents : 0) / 100;
@@ -50,26 +83,13 @@ export function formatCentsToDutch(cents: number): string {
     maximumFractionDigits: 2,
   }).format(euros);
 }
-// src/utils/numbers.ts
 
 /**
- * Centen-gebaseerde berekeningen om afrondingsfouten te voorkomen (WAI-004)
- */
-export const toCents = (amount: number): number => Math.round(amount * 100);
-
-export const fromCents = (cents: number): string => (cents / 100).toFixed(2);
-
-export const parseNumber = (input: string): number => {
-  const cleanInput = input.replace(',', '.');
-  return Math.max(0, parseFloat(cleanInput) || 0); // Non-negative parser (WAI-006D)
-};
-/**
- * Read-only currency formatter (met €).
- * Niet gebruiken in input-context.
+ * Formatter voor DISPLAY (met € symbool)
  */
 export function formatCurrency(amountCents: number): string {
   return new Intl.NumberFormat('nl-NL', {
     style: 'currency',
     currency: 'EUR',
-  }).format(amountCents / 100);
+  }).format((amountCents || 0) / 100);
 }

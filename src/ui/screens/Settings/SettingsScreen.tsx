@@ -3,7 +3,7 @@ import * as React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStyles } from '@ui/styles/useAppStyles';
-import { useTheme } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/ThemeContext';
+import { useTheme } from '@app/context/ThemeContext';
 
 type Props = {
   onClose: () => void;

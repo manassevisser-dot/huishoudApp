@@ -1,7 +1,7 @@
-// src/a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/ThemeContext.tsx
+// @/app/context/ThemeContext.tsx
 import * as React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { logger } from '@services/logger';
+import logger from '@services/logger';
 type Theme = 'light' | 'dark';
 
 type ThemeContextType = {
@@ -13,7 +13,7 @@ const ThemeContext = React.createContext<ThemeContextType | undefined>(undefined
 
 const THEME_KEY = '@Theme';
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
   const [theme, setThemeState] = React.useState<Theme>('light');
 
   React.useEffect(() => {

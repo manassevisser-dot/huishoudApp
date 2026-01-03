@@ -1,13 +1,22 @@
-import * as React from 'react';
-import { View, Text } from 'react-native';
-import { useAppStyles } from '@ui/styles/useAppStyles';
+import React from 'react';
+import { useForm } from '../../app/context/FormContext';
+import LandingScreen from '../screens/Wizard/LandingScreen';
+import WizardController from '../screens/Wizard/WizardController';
+import DashboardScreen from '../screens/Dashboard/DashboardScreen';
 
-const MainNavigator: React.FC = () => {
-  const { styles } = useAppStyles();
-  return (
-    <View style={styles.container}>
-      <Text style={styles.pageTitle}>Hoofdnavigatie (Dashboard)</Text>
-    </View>
-  );
+const MainNavigator = () => {
+  const { state } = useForm();
+
+  // Bepaal welk scherm getoond moet worden op basis van de globale state
+  switch (state.activeStep) {
+    case 'WIZARD':
+      return <WizardController />;
+    case 'DASHBOARD':
+      return <DashboardScreen />;
+    case 'LANDING':
+    default:
+      return <LandingScreen />;
+  }
 };
+
 export default MainNavigator;

@@ -1,34 +1,57 @@
-// src/a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/WizardContext.tsx
-import React from 'react';
+import * as React from 'react';
+import { createContext, useContext, useReducer, ReactNode } from 'react';
+import { formReducer } from './formReducer';
+import { FormState } from '@shared-types/form';
+import { makePhoenixState } from '../../test-utils/factories/stateFactory';
 
-export type WizardState = {
-  id?: string;
-  pageIndex?: number;
-  totalPages?: number;
-};
+// De vorm van de context die beschikbaar is in de app
+interface WizardContextType {
+  state: FormState;
+  dispatch: React.Dispatch<any>;
+}
 
-type WizardContextValue = {
-  wizard: WizardState;
-  setWizardState: (next: WizardState) => void;
-};
+// Props voor de provider, inclusief injectie-opties voor tests
+interface WizardProviderProps {
+  children: ReactNode;
+  initialState?: FormState;     // Voor test-injectie
+  mockDispatch?: React.Dispatch<any>; // Voor test-injectie (jest.fn())
+}
 
-const defaultValue: WizardContextValue = {
-  wizard: {},
-  setWizardState: () => {}, // no-op voorkomt crashes als er (nog) niets luistert
-};
+const FormContext = createContext<WizardContextType | undefined>(undefined);
 
-const WizardContext = React.createContext<WizardContextValue>(defaultValue);
+// De standaard initiële staat van de applicatie via de factory
+const defaultInitialState = makePhoenixState();
 
-export const WizardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [wizard, setWizard] = React.useState<WizardState>({});
+export const WizardProvider: React.FC<WizardProviderProps> = ({ 
+  children, 
+  initialState, 
+  mockDispatch 
+}) => {
+  // 1. Initialiseer de reducer met ofwel de geïnjecteerde staat, of de standaard
+  const [state, dispatch] = useReducer(
+    formReducer, 
+    initialState || defaultInitialState
+  );
 
-  const setWizardState = React.useCallback((next: WizardState) => {
-    setWizard((prev) => ({ ...prev, ...next }));
-  }, []);
+  // 2. Bepaal welke dispatch we gebruiken (echt of mock)
+  // Dit zorgt ervoor dat we in tests acties kunnen onderscheppen
+  const activeDispatch = mockDispatch || dispatch;
 
   return (
-    <WizardContext.Provider value={{ wizard, setWizardState }}>{children}</WizardContext.Provider>
+    <FormContext.Provider value={{ state, dispatch: activeDispatch }}>
+      {children}
+    </FormContext.Provider>
   );
 };
 
-export const useWizard = () => React.useContext(WizardContext);
+// De hook die gebruikt wordt in componenten zoals LandingScreen
+export const useForm = () => {
+  const context = useContext(FormContext);
+  if (context === undefined) {
+    throw new Error('useForm must be used within a WizardProvider/FormProvider');
+  }
+  return context;
+};
+
+// Alias voor backwards compatibility mocht je nog useWizard gebruiken
+export const useWizard = useForm;

@@ -1,31 +1,61 @@
-import { getHouseholdStatus, type HouseholdStats } from '../domain/household';
-import type { FormState } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext';
-import { Member, WoningType, AutoCount } from 'src/shared-types/form';
+import { createSelector } from 'reselect';
+import { FormState } from '../shared-types/form';
+import { getHouseholdStatus } from '../logic/householdLogic';
 
-export const selectHouseholdStats = (state: FormState): HouseholdStats => {
-  // Bron 1: De directe invoer van de teller (C1)
-  const countFromC1 = Number(state?.C1?.aantalVolwassen ?? 0);
-
-  // Bron 2: De ledenlijst (C4)
-  const leden = Array.isArray(state?.C4?.leden) ? (state.C4!.leden as Member[]) : [];
-  const countFromC4 = leden.filter((m: Member) => m?.memberType === 'adult').length;
-
-  // Gebruik de hoogste waarde (tijdens invoer is C1 leidend)
-  const adultCount = Math.max(countFromC1, countFromC4);
-  const childCount = leden.filter((m: Member) => m?.memberType === 'child').length;
-
-  return { adultCount, childCount };
-};
+/**
+ * CONSTANTEN
+ */
 export const HOUSEHOLD_STATUS = {
-  SINGLE: 'single',
-  PARTNERS: 'partners',
-  SPECIAL: 'special_status', // De > 5 volwassenen regel
-} as const; // <--- Dit is de cruciale toevoeging voor de audit
+  SINGLE: 'SINGLE',
+  PARTNERS: 'PARTNERS',
+  SPECIAL: 'SPECIAL',
+} as const;
 
-export type HouseholdStatus = (typeof HOUSEHOLD_STATUS)[keyof typeof HOUSEHOLD_STATUS];
+/**
+ * BASE SELECTORS
+ */
+// Door 'as any[]' of een specifieke cast te gebruiken, voorkom je de mismatch 
+// tussen Record<string, unknown> en de verwachte Member-interface in de logica.
+const selectMembers = (state: FormState) => state.data.household.members;
+const selectSetupData = (state: FormState) => state.data.setup;
 
-export const selectIsSpecialStatus = (state: FormState): boolean => {
-  const { adultCount } = selectHouseholdStats(state);
-  // Gebruik de saved instruction: volwassenen > 5 krijgt speciale status
-  return adultCount > 5;
-};
+/**
+ * LOGIC SELECTORS
+ */
+
+export const selectHouseholdStats = createSelector(
+  [selectSetupData],
+  (setupData) => {
+    // TypeScript weet nu dat setupData.aantalVolwassen bestaat
+    const adultCount = setupData.aantalVolwassen; 
+    return {
+      adultCount,
+      isSpecial: adultCount > 5,
+    };
+  }
+);
+
+export const selectIsSpecialStatus = createSelector(
+  [selectHouseholdStats],
+  (stats) => stats.isSpecial
+);
+
+export const selectHouseholdDataIntegrityStatus = createSelector(
+  [selectMembers],
+  (members) => {
+    // Forceer het type hier naar wat de logic-functie verwacht om TS2345 te fixen
+    return getHouseholdStatus(members as any);
+  }
+);
+
+/**
+ * UI STATUS SELECTOR
+ */
+export const selectHouseholdTypeLabel = createSelector(
+  [selectHouseholdStats],
+  (stats) => {
+    if (stats.isSpecial) return HOUSEHOLD_STATUS.SPECIAL;
+    if (stats.adultCount === 2) return HOUSEHOLD_STATUS.PARTNERS;
+    return HOUSEHOLD_STATUS.SINGLE;
+  }
+);

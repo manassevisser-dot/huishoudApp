@@ -1,77 +1,70 @@
-// WAI-006A-Hook — AppStatus Orchestrator (FSM)
-// --------------------------------------------
-// Aliassen (Phoenix): @services, @state, @utils, @ui
-// Let op: selecto../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context via relatieve paden (geen @selectors alias)
+// src/app/hooks/useAppOrchestration.ts
+import { useEffect, useMemo } from 'react'; // Voeg useMemo toe
+import {useForm} from '../context/FormContext'; 
+import { storage } from '@services/storage';
 
-import * as React from 'react';
-import StorageShim from '@services/storageShim';
-import { FormStateSchema, type FormStateV1 } from '@state/schemas/FormStateSchema';
-import { selectIsSpecialStatus } from '@selectors/householdSelectors';
-import { useFormContext } from '@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext';
+export interface PhoenixEnvelopeV2 {
+  version: string;
+  payload: any;
+  timestamp: string;
+}
 
-export type AppStatus = 'INITIALIZING' | 'HYDRATING' | 'UNBOARDING' | 'READY' | 'ERROR';
+/**
+ * Orchestrator Hook: Beheert de initiële data-load en synchronisatie.
+ * Fix 1: Voorkomt infinite loops door specifiek op de payload te monitoren.
+ */
+export const useAppOrchestration = (envelope?: PhoenixEnvelopeV2) => {
+  const { state, dispatch } = useForm();
 
-export function useAppOrchestration() {
-  const { state, dispatch } = useFormContext();
-  const [status, setStatus] = React.useState<AppStatus>('INITIALIZING');
-
-  // Eén publieke actie voor ERROR-scherm
-  const resetApp = React.useCallback(async () => {
-    await StorageShim.clearAll();
-    // Na reset starten we als nieuwe gebruiker
-    setStatus('UNBOARDING');
-    // Reducer cleanup (optioneel): breng state naar minimale vorm
-    dispatch({ type: 'RESET_STATE' });
-  }, [dispatch]);
-
-  React.useEffect(() => {
-    let mounted = true;
-    async function hydrate() {
-      if (!mounted) return;
-      setStatus('HYDRATING');
-
-      // 1) Load via uniforme API (Shim)
-      const raw = await StorageShim.loadState();
-
-      // 2) Branches: new user / corrupt / valid v1.0
-      if (!raw) {
-        if (!mounted) return;
-        setStatus('UNBOARDING');
+  useEffect(() => {
+    const initApp = async () => {
+      if (envelope?.payload) {
+        dispatch({ type: 'UPDATE_DATA', payload: envelope.payload });
         return;
       }
 
-      // 3) Validatie vóór READY (Zod gate)
-      const parse = FormStateSchema.safeParse(raw);
-      if (!parse.success) {
-        if (!mounted) return;
-        setStatus('ERROR');
-        return;
+      const saved = await storage.loadState();
+      if (saved) {
+        const dataToLoad = (saved as any).data || saved;
+        dispatch({ type: 'UPDATE_DATA', payload: dataToLoad });
       }
+    };
 
-      const v1 = parse.data as FormStateV1;
+    initApp();
+  }, [dispatch, envelope?.payload]); 
 
-      // 4) Dispatch gevalideerde state naar context
-      dispatch({ type: 'LOAD_SAVED_STATE', data: v1 });
-
-      // 5) Shadow flag precies éénmaal bij overgang naar READY
-      try {
-        const special = selectIsSpecialStatus({ ...state, ...v1 } as any);
-        dispatch({ type: 'SET_SPECIAL_STATUS', payload: special });
-      } catch {
-        // selector niet kritisch; READY blijft leidend
-      }
-
-      if (!mounted) return;
-      setStatus('READY');
+  /**
+   * Verbeterde Status Logica
+   * 1. HYDRATING: We hebben nog geen schemaversie (app start net op).
+   * 2. ONBOARDING: Geen data OF setup niet voltooid (activeStep is niet 'COMPLETED').
+   * 3. READY: Setup is voltooid en data is valide.
+   */
+  const status = useMemo(() => {
+    // A. Laden
+    if (!state.schemaVersion) {
+      return 'HYDRATING';
     }
 
-    // INITIALIZING duurt één render-tick
-    Promise.resolve().then(hydrate);
+    // B. Check of we data van buitenaf hebben (Envelope)
+    // Als er een envelope is met payload, beschouwen we de setup als voltooid
+    const isExternalData = !!envelope?.payload;
 
-    return () => {
-      mounted = false;
-    };
-  }, [dispatch]); // deliberately not depending on 'state' to avoid extra ticks
+    // C. Check of de interne setup voltooid is
+    const isInternalSetupDone = state.data?.household?.members?.length > 0 && 
+                                (state.activeStep === 'dashboard' || state.activeStep === 'completed');
 
-  return { status, resetApp };
-}
+    // Als geen van beide waar is -> ONBOARDING
+    if (!isExternalData && !isInternalSetupDone) {
+      return 'ONBOARDING';
+    }
+
+    // D. Is de data bruikbaar?
+    return state.isValid ? 'READY' : 'INCOMPLETE';
+  }, [state.schemaVersion, state.data?.household?.members, state.activeStep, state.isValid, envelope?.payload]);
+
+  return { 
+    state, 
+    dispatch, 
+    status 
+  };
+};

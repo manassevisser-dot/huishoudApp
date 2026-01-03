@@ -1,27 +1,30 @@
-import { FormState } from 'src/shared-types/form';
-import { computeSummary } from '@logic/finance';
-import { formatCurrency } from '@utils/numbers';
+import { computePhoenixSummary } from '../logic/finance';
+import { formatCurrency } from '../utils/numbers'; 
+import { FormState } from '@shared-types/form';
+import Logger from '../services/logger';
 
-export interface FinancialSummaryVM {
-  totals: {
-    totalIncomeEUR: string;
-    totalExpensesEUR: string;
-    netEUR: string;
-  };
-}
+export function selectFinancialSummaryVM(state: FormState) {
+  // 1. Directe en type-safe extractie
+  // Omdat FormState nu 'finance' als vaste key heeft, snapt TS dit direct.
+  const financeData = state.data.finance;
+  
+  // 2. De rekenkern (Logic laag)
+  const summary = computePhoenixSummary(financeData);
+  
+  Logger.info?.('Financial VM generated');
 
-export function selectFinancialSummaryVM(state: FormState): FinancialSummaryVM {
-  // Pak de items arrays uit de sub-secties C7 en C10
-  const incomeItems = state.C7?.items || [];
-  const expenseItems = state.C10?.items || [];
-
-  const { totalIncome, totalExpenses, netto: net } = computeSummary(incomeItems, expenseItems);
-
+  // 3. De ViewModel (VM) 
   return {
+    // Ruwe data (integers/centen volgens ADR-03)
+    totalIncomeCents: summary.totalIncomeCents,
+    totalExpensesCents: summary.totalExpensesCents,
+    netCents: summary.netCents,
+    
+    // Geformatteerde strings voor de UI
     totals: {
-      totalIncomeEUR: formatCurrency(totalIncome),
-      totalExpensesEUR: formatCurrency(totalExpenses),
-      netEUR: formatCurrency(net),
+      totalIncomeEUR: formatCurrency(summary.totalIncomeCents),
+      totalExpensesEUR: formatCurrency(summary.totalExpensesCents),
+      netEUR: formatCurrency(summary.netCents),
     },
   };
 }

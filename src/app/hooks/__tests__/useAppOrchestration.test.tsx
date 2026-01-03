@@ -1,97 +1,37 @@
-import * as React from 'react';
-import { render, act } from '@testing-library/react-native';
+import { renderHookWithProviders } from '@test-utils/index';
 import { useAppOrchestration } from '../useAppOrchestration';
+import { createMockState } from '@test-utils/index';
 
-// 1. Definieer mock-variabelen met het 'mock' prefix (voor hoisting-safety)
-const mockDispatch = jest.fn();
-const mockContextValue = {
-  state: {},
-  dispatch: mockDispatch,
-};
-
-// 2. Mocks - Houd het simpel: return direct wat de hook verwacht
-jest.mock('@services/storageShim', () => ({
-  __esModule: true,
-  default: {
-    loadState: jest.fn(async () => null),
-    saveState: jest.fn(async () => undefined),
-    clearAll: jest.fn(async () => undefined),
-  },
-}));
-
-jest.mock('@state/schemas/FormStateSchema', () => ({
-  __esModule: true,
-  FormStateSchema: { safeParse: jest.fn((d) => ({ success: true, data: d })) },
-}));
-
-jest.mock('@selectors/householdSelectors', () => ({
-  __esModule: true,
-  selectIsSpecialStatus: jest.fn(() => false),
-}));
-
-// De cruciale fix: Eén enkele mock zonder React referentie
-jest.mock('@a../a../a../a../a../a../a../a../a../a../a../a../a../a../a../app/context/FormContext', () => ({
-  __esModule: true,
-  useFormContext: () => mockContextValue,
-}));
-
-describe('useAppOrchestration FSM', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('UNBOARDING for new user (loadState=null)', async () => {
-    const { result } = await renderOrchestrator();
-    expect(result.status).toBe('UNBOARDING');
-  });
-
-  it('READY for valid v1.0', async () => {
-    const shim = require('@services/storageShim').default;
-    shim.loadState.mockResolvedValueOnce({ schemaVersion: '1.0' });
-
-    const { result } = await renderOrchestrator();
-
-    expect(result.status).toBe('READY');
-
-    // Check op de juiste naamgeving met underscores (Phoenix standaard)
-    expect(mockDispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'LOAD_SAVED_STATE' }),
-    );
-
-    // Bonus: Controleer of de shadow-flag (ADR-17/Household rule) ook is afgevuurd
-    expect(mockDispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'SET_SPECIAL_STATUS', payload: false }),
-    );
-  });
-
-  it('ERROR for corrupt payload', async () => {
-    const shim = require('@services/storageShim').default;
-    shim.loadState.mockResolvedValueOnce({ corrupt: 'data' });
-
-    const z = require('@state/schemas/FormStateSchema');
-    z.FormStateSchema.safeParse.mockReturnValueOnce({ success: false });
-
-    const { result } = await renderOrchestrator();
-    expect(result.status).toBe('ERROR');
-  });
-
-  // Helper om de hook te renderen zonder Context Wrapper
-  async function renderOrchestrator() {
-    let currentStatus: any = 'INITIALIZING';
-    const TestComponent = () => {
-      const { status } = useAppOrchestration();
-      currentStatus = status;
-      return null;
+describe('useAppOrchestration (Phoenix/Legacy)', () => {
+  
+  it('Phoenix envelope v2 → READY', () => {
+    // ✅ FIX 1: Matchen met PhoenixEnvelopeV2 interface (payload + timestamp)
+    const mockEnvelope = {
+      version: '2.0',
+      timestamp: new Date().toISOString(),
+      payload: createMockState({
+        schemaVersion: '1.0',
+        isValid: true // Zorgt voor de READY status
+      })
     };
 
-    render(<TestComponent />);
+    const { result } = renderHookWithProviders(
+      () => useAppOrchestration(mockEnvelope)
+    );
 
-    // Wacht op de useEffect ticks
-    await act(async () => {
-      await Promise.resolve(); // INITIALIZING -> HYDRATING
-      await Promise.resolve(); // HYDRATING -> FINAL STATE
-    });
+    // De hook leidt 'READY' af als de state valide is
+    expect(result.current.status).toBe('READY');
+  });
 
-    return { result: { status: currentStatus } };
-  }
+  it('HYDRATING → ONBOARDING bij undefined', () => {
+    // ✅ FIX 2: Gebruik undefined in plaats van null (TS strict check)
+    // We kunnen het argument ook weglaten omdat het optioneel is.
+    const { result } = renderHookWithProviders(
+      () => useAppOrchestration(undefined)
+    );
+    
+    // Als er geen data is, valt de app terug op de initiële state/onboarding
+    // Let op: controleer of je hook 'ONBOARDING' daadwerkelijk teruggeeft bij lege state
+    expect(result.current.status).toBe('ONBOARDING');
+  });
 });

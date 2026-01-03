@@ -27,3 +27,4 @@ coverage/
 *.bak
 repo-structure.txt
 trate pages and navigation (single source of truth)"
+backups/*
