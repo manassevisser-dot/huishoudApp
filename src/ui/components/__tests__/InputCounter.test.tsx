@@ -1,6 +1,6 @@
 
 // src/ui/components/__tests__/InputCounter.test.tsx
-import { render, fireEvent } from '@test-utils/index';
+import { render, fireEvent } from '@testing-library/react-native';
 import  InputCounter  from '@fields/InputCounter';
 
 describe('InputCounter', () => {

@@ -1,54 +1,83 @@
 import { z } from 'zod';
 
-// 1. Individueel item (centen!)
+// 1. Veiligheid voor geld-items (centen)
 const MoneyItemSchema = z.object({
   fieldId: z.string(),
   label: z.string().optional(),
-  amount: z.number().int(), // Moet integer zijn (Phoenix-eis)
+  amount: z.number().int(), 
 });
 
-// 2. De lijst-structuur met harde defaults
-// Dit voorkomt de ".map is not a function" error
+// 2. Voorkomt de ".map is not a function" error door defaults
 const MoneyListSchema = z
   .object({
     items: z.array(MoneyItemSchema).default([]),
   })
   .default({ items: [] });
 
-// 3. Het hoofd-schema
+// 3. Het volledige schema
 export const FormStateSchema = z
   .object({
     schemaVersion: z.literal('1.0'),
-    isSpecialStatus: z.boolean().default(false),
+    activeStep: z.string(),
+    currentPageId: z.string(),
+    isValid: z.boolean().default(true),
 
-    // Huishouden
-    C1: z
-      .object({
+    data: z.object({
+      setup: z.object({
         aantalMensen: z.number().default(1),
         aantalVolwassen: z.number().default(1),
-      })
-      .default({ aantalMensen: 1, aantalVolwassen: 1 }),
+        // HIER AANGEPAST: Specifieke literals in plaats van algemene string
+        autoCount: z.enum(['Nee', 'Een', 'Twee']).default('Nee'),
+      }).default({ aantalMensen: 1, aantalVolwassen: 1, autoCount: 'Nee' }),
 
-    // Leden (Privacy-proof)
-    C4: z
-      .object({
-        leden: z
-          .array(
-            z.object({
-  fieldId: z.string(),
-              memberType: z.string(),
-              leeftijd: z.number().optional(),
-              gender: z.string().optional(),
-            }),
-          )
-          .default([]),
-      })
-      .default({ leden: [] }),
+      household: z.object({
+        members: z.array(z.any()).default([]),
+      }).default({ members: [] }),
 
-    // Financiën (Hier gaat het vaak mis bij de .map)
-    C7: MoneyListSchema, // Inkomsten
-    C10: MoneyListSchema, // Lasten
+      finance: z.object({
+        income: MoneyListSchema,
+        expenses: MoneyListSchema,
+      }).default({ 
+        income: { items: [] }, 
+        expenses: { items: [] } 
+      }),
+    }),
+
+    meta: z.object({
+      lastModified: z.string(),
+      version: z.number().default(1),
+    }),
   })
-  .passthrough(); // Staat extra velden toe zonder te crashen
+  .passthrough(); 
 
-export type FormStateV1 = z.infer<typeof FormStateSchema>;
+export type FormState = z.infer<typeof FormStateSchema>;
+
+/**
+ * 4. De initiële state. 
+ * We gebruiken "as const" bij autoCount om TS te vertellen 
+ * dat dit exact de waarde "Nee" is, en niet een willekeurige string.
+ */
+export const initialFormState: FormState = {
+  schemaVersion: '1.0',
+  activeStep: 'LANDING',
+  currentPageId: 'landing',
+  isValid: true,
+  data: {
+    setup: {
+      aantalMensen: 1,
+      aantalVolwassen: 1,
+      autoCount: 'Nee' as const, // Forceer de specifieke waarde
+    },
+    household: {
+      members: [],
+    },
+    finance: {
+      income: { items: [] },
+      expenses: { items: [] },
+    },
+  },
+  meta: {
+    lastModified: new Date().toISOString(),
+    version: 1,
+  },
+};

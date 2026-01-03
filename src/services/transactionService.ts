@@ -1,4 +1,5 @@
 import { type MemberType } from '../domain/household';
+import { StorageShim } from './storageShim'; // Importeer je shim
 // We importeren de 'wasstraat' helper uit de privacyHelpers
 import { toMemberType } from './privacyHelpers';
 
@@ -66,4 +67,16 @@ export const undoLastTransaction = async () => {
 export const TransactionService = {
   migrate: migrateTransactionsToPhoenix,
   undo: undoLastTransaction,
+
+  // Haal de transacties op uit de opgeslagen state
+  getAllTransactions: async (): Promise<any[]> => {
+    const state = await StorageShim.loadState();
+    // We graven in de Phoenix 1.0 structuur: data -> transactions
+    return state?.data?.transactions || [];
+  },
+
+  // Wis alle data via de shim
+  clearAll: async (): Promise<void> => {
+    return await StorageShim.clearAll();
+  }
 };

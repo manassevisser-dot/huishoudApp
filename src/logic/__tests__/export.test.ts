@@ -1,53 +1,80 @@
-import * as TransactionService  from '../../services/transactionService';
+import { aggregateExportData } from '../export';
+import { TransactionService } from '../../services/transactionService';
+import { FormState } from '@state/schemas/FormStateSchema';
 
-/**
- * STAP 1: De Mock setup
- * We vertellen Jest (en TypeScript) dat de TransactionService in deze test
- * extra functies heeft die normaal niet in de 'echte' code staan.
- */
-jest.mock('../../services/transactionService', () => ({
-  TransactionService: {
-    migrate: jest.fn(),
-    undo: jest.fn(),
-    clearAll: jest.fn().mockResolvedValue(undefined),
-    getAllTransactions: jest.fn().mockResolvedValue([]),
-    _mockLocalSave: jest.fn().mockResolvedValue(true),
-  }
-}));
+// 1. Mock de TransactionService
+jest.mock('../../services/transactionService');
+const mockedTxService = TransactionService as jest.Mocked<typeof TransactionService>;
 
-// We maken een alias voor TypeScript zodat we .toHaveBeenCalled() kunnen gebruiken
-const MockedTxService = TransactionService as any;
-
-describe('Export Logic', () => {
-  beforeEach(async () => {
-    // Reset de mock-teller voor elke test
+describe('Export Logic & Aggregator', () => {
+  
+  beforeEach(() => {
     jest.clearAllMocks();
-    await MockedTxService.clearAll();
   });
 
+  // --- Sectie 1: Service Mocks (Jouw bestaande test) ---
   it('moet alle transacties kunnen wissen voor een export', async () => {
-    await MockedTxService.clearAll();
-    // 1x in de beforeEach + 1x in deze test = 2x aangeroepen
-    expect(MockedTxService.clearAll).toHaveBeenCalledTimes(2);
+    mockedTxService.clearAll.mockResolvedValue(undefined);
+    
+    await TransactionService.clearAll();
+
+    expect(mockedTxService.clearAll).toHaveBeenCalledTimes(1);
   });
 
-  it('should correctly store and retrieve a transaction', async () => {
-    const mockTx = {
-      date: '2025-01-01',
-      amount: 42.50,
-      category: 'Boodschappen',
-      paymentMethod: 'pin',
-      weekNumber: 1,
-    };
-
-    // Programmeer de mock om onze testdata terug te geven
-    MockedTxService.getAllTransactions.mockResolvedValue([mockTx]);
+  // --- Sectie 2: Data Aggregation (Voor 100% Line & Branch coverage) ---
+  describe('aggregateExportData', () => {
     
-    const result = await MockedTxService._mockLocalSave(mockTx);
-    const transactions = await MockedTxService.getAllTransactions();
+    it('moet een volledige state correct transformeren en anonymiseren', () => {
+      const mockState = {
+        schemaVersion: 2,
+        C1: { aantalVolwassen: 6 }, // Trigger: isSpecialStatus = true (> 5)
+        C4: {
+          leden: [
+            { memberType: 'adult', leeftijd: 35, firstName: 'Geheim', lastName: 'Persoon' },
+            { memberType: 'child', leeftijd: 12, firstName: 'Kind', lastName: 'Anoniem' }
+          ]
+        },
+        C7: { items: [{ label: 'Salaris', value: 250000 }] }, // Cents
+        C10: { items: [{ label: 'Huur', value: 80000 }] }
+      } as unknown as FormState;
 
-    expect(result).toBe(true);
-    expect(transactions.length).toBe(1);
-    expect(transactions[0].amount).toBe(42.50);
+      const result = aggregateExportData(mockState);
+
+      // Controleer de Phoenix-export structuur
+      expect(result.version).toBe('1.0-phoenix-export');
+      expect(result.schemaVersion).toBe(2);
+      expect(result.isSpecialStatus).toBe(true);
+      
+      // Controleer of PII (namen) zijn weggefilterd (mapping check)
+      expect(result.household.members).toHaveLength(2);
+      expect(result.household.members[0]).toEqual({
+        type: 'adult',
+        leeftijd: 35
+      });
+      // firstName/lastName mogen niet aanwezig zijn in het resultaat
+      expect((result.household.members[0] as any).firstName).toBeUndefined();
+
+      // Financiën check
+      expect(result.finances.income).toHaveLength(1);
+      expect(result.finances.expenses).toHaveLength(1);
+      expect(result.exportDate).toMatch(/^\d{4}-\d{2}-\d{2}/); // ISO datum check
+    });
+
+    it('moet correct omgaan met lege of ontbrekende velden (edge cases)', () => {
+      // Scenario waarbij optionele secties ontbreken (test de ?? en || operators)
+      const emptyState = {
+        schemaVersion: 1,
+        C1: undefined,
+        C4: null,
+        C7: { items: [] }
+      } as unknown as FormState;
+
+      const result = aggregateExportData(emptyState);
+
+      expect(result.household.totalAdults).toBe(0);
+      expect(result.isSpecialStatus).toBe(false);
+      expect(result.household.members).toEqual([]);
+      expect(result.finances.expenses).toEqual([]);
+    });
   });
 });

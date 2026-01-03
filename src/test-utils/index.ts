@@ -9,7 +9,13 @@ export * from './factories/csvFactory';
 // 2. Renderers (RTL wrappers)
 export * from './render/renderers';
 export * from './render/providers';
+export * from './render/renderers';
+export * from './render/providers';
+export * from './factories/stateFactory';
 
+// Zorg dat renderWithState expliciet beschikbaar is voor de projector tests
+import { render } from './render/renderers';
+export { render as renderWithState };
 // 3. Assertions (Custom checks)
 export * from './assertions/migrationAssertions';
 

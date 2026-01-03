@@ -1,67 +1,85 @@
 import React from 'react';
-import { View, Text, Button } from 'react-native';
-import { render, fireEvent } from '@testing-library/react-native';
-import { Providers } from '../test-utils/render/providers';
-import { makePhoenixState } from '../test-utils/index';
+import { fireEvent, screen } from '@testing-library/react-native';
+// We gebruiken de krachtige render uit onze utils die de Provider bevat
+import { render, makePhoenixState } from '../test-utils';
+import LandingScreen from '../ui/screens/Wizard/LandingScreen';
 
-// 1. Mock Safe Area
-jest.mock('react-native-safe-area-context', () => ({
-  SafeAreaProvider: ({ children }: any) => children,
-  SafeAreaView: ({ children }: any) => children,
-  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
-}));
+/**
+ * WAI-009 Focus Management & Phoenix Navigation Integration
+ * Doel: Bevestigen dat de LandingScreen correct communiceert met de WizardContext
+ * en de juiste navigatie-acties triggert in de nieuwe architectuur.
+ */
 
-// 2. Mock Styles
-jest.mock('../ui/styles/useAppStyles', () => ({
-  useAppStyles: () => ({
-    styles: new Proxy({}, { get: () => ({}) }),
-    colors: { background: '#fff' },
-    Tokens: { space: { sm: 8 } }
-  }),
-}));
-
-// 3. Lokale Dummy Component (Geen imports!)
-const LandingScreen = ({ onSignup }: { onSignup?: () => void }) => {
-  // We simuleren hier de logica van je echte component
-  // Maar zonder dependencies die kunnen crashen
-  return (
-    <View testID="landing-screen">
-      <Text>Welkom bij Phoenix</Text>
-      <Button title="Aanmelden" onPress={onSignup} />
-    </View>
-  );
-};
-
-describe('WAI009 Focus Management (Ultimate Isolation)', () => {
+describe('WAI-009 - LandingScreen Integration', () => {
+  // We mocken dispatch om te kunnen spioneren op de acties
   const mockDispatch = jest.fn();
-  const mockState = makePhoenixState({ activeStep: 'LANDING' });
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders the LandingScreen without crashing', () => {
-    const { getByText } = render(
-      <Providers state={mockState} dispatch={mockDispatch}>
-        <LandingScreen />
-      </Providers>
-    );
+  it('moet de LandingScreen renderen binnen de Phoenix-context', () => {
+    // 1. Initialiseer de staat via onze factory
+    const initialState = makePhoenixState({
+      activeStep: 'LANDING',
+      currentPageId: 'setup'
+    });
 
-    expect(getByText(/Welkom/i)).toBeTruthy();
+    // 2. Render met de echte provider via onze custom render util
+    render(<LandingScreen />, { 
+      state: initialState, 
+      dispatch: mockDispatch 
+    });
+
+    // 3. Controleer of de UI elementen zichtbaar zijn
+    expect(screen.getByText(/Welkom/i)).toBeTruthy();
+    expect(screen.getByText(/Start met het instellen/i)).toBeTruthy();
   });
 
-  it('navigates when the "Aanmelden" button is pressed', () => {
-    const onSignupMock = jest.fn();
+  it('moet de juiste SET_STEP actie verzenden bij klikken op "Aanmelden"', () => {
+    render(<LandingScreen />, { 
+      state: makePhoenixState({ activeStep: 'LANDING' }), 
+      dispatch: mockDispatch 
+    });
 
-    const { getByText } = render(
-      <Providers state={mockState} dispatch={mockDispatch}>
-        <LandingScreen onSignup={onSignupMock} />
-      </Providers>
-    );
-
-    const signupButton = getByText('Aanmelden');
+    // Zoek de knop op de tekst (RTL best-practice)
+    const signupButton = screen.getByText('Aanmelden');
     fireEvent.press(signupButton);
 
-    expect(onSignupMock).toHaveBeenCalled();
+    // Controleer of de Phoenix-dispatch de juiste payload bevat
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'SET_STEP',
+      payload: 'WIZARD'
+    });
+  });
+
+  it('moet de juiste SET_STEP actie verzenden bij klikken op "Inloggen"', () => {
+    render(<LandingScreen />, { 
+      state: makePhoenixState({ activeStep: 'LANDING' }), 
+      dispatch: mockDispatch 
+    });
+
+    const loginButton = screen.getByText('Inloggen');
+    fireEvent.press(loginButton);
+
+    // Controleer of we direct naar het DASHBOARD gaan
+    expect(mockDispatch).toHaveBeenCalledWith({
+      type: 'SET_STEP',
+      payload: 'DASHBOARD'
+    });
+  });
+
+  it('moet eventuele externe callbacks (onSignup) correct aanroepen', () => {
+    const onSignupSpy = jest.fn();
+    
+    render(<LandingScreen onSignup={onSignupSpy} />, { 
+      dispatch: mockDispatch 
+    });
+
+    fireEvent.press(screen.getByText('Aanmelden'));
+
+    // Zowel de lokale callback als de context dispatch moeten zijn afgegaan
+    expect(onSignupSpy).toHaveBeenCalled();
+    expect(mockDispatch).toHaveBeenCalled();
   });
 });

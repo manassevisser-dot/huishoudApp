@@ -1,21 +1,20 @@
-
 // jest.config.ts
 import type { Config } from 'jest';
 
 const config: Config = {
   preset: 'jest-expo',
 
-  // Setup files
+  // 1. Setup Files (Volgorde is cruciaal voor de 'Nuclear De-Winterizer')
   setupFiles: [
-    '<rootDir>/jest.setup.early.js',
+    '<rootDir>/jest.setup.early.js', // Eerst de core mocks & winter-fix
   ],
   setupFilesAfterEnv: [
-    // Je gebruikt hier .tsx en dat kan; Jest laadt dit als setupmodule
-    '<rootDir>/src/test-utils/jest.setup.tsx',
+    '<rootDir>/src/test-utils/jest.setup.tsx', // Dan de matchers en UI-specifieke mocks
   ],
 
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
 
+  // 2. Module Mapping (Aliassen voor schone imports)
   moduleNameMapper: {
     // @alias-start
     '^@app/(.*)$': '<rootDir>/src/app/$1',
@@ -38,16 +37,16 @@ const config: Config = {
     // @alias-end
   },
 
-  // RN/Expo transform-ignore
+  // 3. RN/Expo transform-ignore (Voorkomt SyntaxErrors in node_modules)
   transformIgnorePatterns: [
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|expo-modules-core|expo-constants|expo-file-system|expo-asset)',
   ],
 
-  // Mocks lifecycle
+  // 4. Mocks lifecycle (Houdt tests zuiver)
   clearMocks: true,
   restoreMocks: true,
 
-  // ✅ Coverage (overzicht van waardes: statements/branches/functions/lines)
+  // 5. Coverage (Kwaliteitscontrole)
   collectCoverage: true,
   coverageDirectory: '<rootDir>/coverage',
   coverageReporters: ['html', 'text', 'text-summary'],
@@ -57,7 +56,8 @@ const config: Config = {
     '!src/**/__tests__/**',
     '!**/node_modules/**',
   ],
-  // Optioneel: drempel (zet desnoods lager/hoger)
+  
+  // Drempels om de 'Core Sanity' te bewaken
   coverageThreshold: {
     global: {
       branches: 70,

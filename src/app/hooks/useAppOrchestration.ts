@@ -1,6 +1,6 @@
 // src/app/hooks/useAppOrchestration.ts
 import { useEffect, useMemo } from 'react'; // Voeg useMemo toe
-import { useFormContext } from '../context/FormContext'; 
+import {useForm} from '../context/FormContext'; 
 import { storage } from '@services/storage';
 
 export interface PhoenixEnvelopeV2 {
@@ -14,7 +14,7 @@ export interface PhoenixEnvelopeV2 {
  * Fix 1: Voorkomt infinite loops door specifiek op de payload te monitoren.
  */
 export const useAppOrchestration = (envelope?: PhoenixEnvelopeV2) => {
-  const { state, dispatch } = useFormContext();
+  const { state, dispatch } = useForm();
 
   useEffect(() => {
     const initApp = async () => {

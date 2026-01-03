@@ -1,27 +1,22 @@
-
 // src/services/__mocks__/transactionService.ts
+
 let _store: any[] = [];
 
 export const TransactionService = {
+  // Zorg dat de namen exact matchen met de echte service
+  migrate: jest.fn(async () => ({ success: true })),
+  undo: jest.fn(async () => undefined),
+  
   clearAll: jest.fn(async () => {
     _store = [];
-  }),
-
-  _mockLocalSave: jest.fn(async (data: any) => {
-    _store.push(data);
-    return true;
   }),
 
   getAllTransactions: jest.fn(async () => {
     return [..._store];
   }),
 
-  migrate: jest.fn(async () => undefined),
-  undo: jest.fn(async () => undefined),
+  // Helper voor in je tests om data te 'faken'
+  _setMockData: (data: any[]) => {
+    _store = data;
+  }
 };
-
-// Handige resetter voor test-suites die veel doorlopen:
-export function __resetTxMock() {
-  _store = [];
-  jest.clearAllMocks();
-}

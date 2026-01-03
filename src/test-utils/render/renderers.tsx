@@ -1,46 +1,54 @@
 import React from 'react';
-import { 
-  render as rtlRender, 
-  renderHook as rtlRenderHook,
-  RenderOptions 
-} from '@testing-library/react-native';
-import { Providers } from './providers';
-import { FormState } from '@shared-types/form';
+import { render as rtlRender, RenderOptions as RTLRenderOptions, renderHook } from '@testing-library/react-native';
+import { ThemeProvider } from '../../app/context/ThemeContext';
+import { FormContext } from '../../app/context/FormContext';
+import { FormState } from '../../shared-types/form';
+import { makePhoenixState } from '../factories/stateFactory';
 
-// Custom Render
-export function renderWithProviders(
+export type RenderOptions = Omit<RTLRenderOptions, 'wrapper'> & {
+  state?: FormState;
+  dispatch?: jest.Mock;
+};
+
+// De hoofd-render functie
+export function render(
   ui: React.ReactElement,
-  options?: RenderOptions & { state?: FormState; dispatch?: React.Dispatch<any> }
+  { state, dispatch, ...rtlOptions }: RenderOptions = {}
 ) {
-  const { state, dispatch, ...rest } = options ?? {};
-  
-  return rtlRender(
-    <Providers state={state} dispatch={dispatch}>
-      {ui}
-    </Providers>, 
-    rest
-  );
+  const Wrapper = ({ children }: { children: React.ReactNode }) => {
+    const contextValue = {
+      state: state || makePhoenixState(),
+      dispatch: dispatch || jest.fn(),
+    };
+
+    return (
+      <ThemeProvider>
+        <FormContext.Provider value={contextValue}>
+          {children}
+        </FormContext.Provider>
+      </ThemeProvider>
+    );
+  };
+  console.log('UI to render:', ui);
+  console.log('Wrapper component:', Wrapper);
+  return rtlRender(ui, { wrapper: Wrapper, ...rtlOptions });
 }
 
-// Custom RenderHook
-export function renderHookWithProviders<Result, Props>(
-  render: (initialProps: Props) => Result,
-  options?: { state?: FormState; dispatch?: React.Dispatch<any> }
+// Aliassen zodat alle verschillende tests blijven werken
+export const renderWithState = render;
+
+export function renderHookWithProviders<TProps, TResult>(
+  callback: (props: TProps) => TResult,
+  options: RenderOptions = {}
 ) {
-  const { state, dispatch } = options ?? {};
-  
-  return rtlRenderHook(render, {
-    wrapper: ({ children }) => (
-      <Providers state={state} dispatch={dispatch}>
+  const { state, dispatch } = options;
+  const Wrapper = ({ children }: { children: React.ReactNode }) => (
+    <ThemeProvider>
+      <FormContext.Provider value={{ state: state || makePhoenixState(), dispatch: dispatch || jest.fn() }}>
         {children}
-      </Providers>
-    ),
-  });
+      </FormContext.Provider>
+    </ThemeProvider>
+  );
+
+  return renderHook(callback, { wrapper: Wrapper });
 }
-
-// Aliases voor backward compatibility
-export const renderWithState = renderWithProviders;
-export const render = renderWithProviders;
-
-// Re-export RTL utilities
-export * from '@testing-library/react-native';

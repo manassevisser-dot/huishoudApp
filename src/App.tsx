@@ -1,18 +1,22 @@
 import React from 'react';
-import { View } from 'react-native';
-import { useAppOrchestration } from './app/hooks/useAppOrchestration';
+import { ThemeProvider } from './app/context/ThemeContext';
+import { WizardProvider } from './app/context/WizardContext';
+import { FormProvider } from './app/context/FormContext';
+import MainNavigator from './ui/navigation/MainNavigator';
+// Let op de kleine 'i'
+import { initialFormState } from './state/schemas/FormStateSchema'; 
 
-// Simpele weergave voor de test-suite
-export default function App() {
-  const { status } = useAppOrchestration(undefined); 
+const App = () => {
+  return (
+    <ThemeProvider>
+      {/* Gebruik de juiste variabele naam */}
+      <FormProvider initialState={initialFormState}>
+        <WizardProvider>
+          <MainNavigator />
+        </WizardProvider>
+      </FormProvider>
+    </ThemeProvider>
+  );
+};
 
-  if (status === 'HYDRATING') {
-    return <View testID="splash-screen" />;
-  }
-
-  if (status === 'ONBOARDING') {
-    return <View testID="welcome-wizard" />;
-  }
-
-  return <View testID="app-ready" />;
-}
+export default App;
