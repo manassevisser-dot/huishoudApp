@@ -1,0 +1,246 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`UndoScreen moet alle transacties verwijderen als op de knop wordt gedrukt (en snapshot na clear) 1`] = `
+<View
+  style={
+    {
+      "padding": 20,
+    }
+  }
+>
+  <Text
+    style={
+      {
+        "fontSize": 18,
+      }
+    }
+  >
+    Laatste transacties: 
+    0
+  </Text>
+  <Text
+    accessibilityRole="text"
+    style={
+      {
+        "marginTop": 8,
+      }
+    }
+  >
+    Geen recente transacties
+  </Text>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "backgroundColor": "red",
+        "borderRadius": 5,
+        "marginTop": 20,
+        "opacity": 1,
+        "padding": 10,
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "white",
+          "textAlign": "center",
+        }
+      }
+    >
+      Verwijder alles
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`UndoScreen moet de lege staat tekst tonen (met snapshot) 1`] = `
+<View
+  style={
+    {
+      "padding": 20,
+    }
+  }
+>
+  <Text
+    style={
+      {
+        "fontSize": 18,
+      }
+    }
+  >
+    Laatste transacties: 
+    0
+  </Text>
+  <Text
+    accessibilityRole="text"
+    style={
+      {
+        "marginTop": 8,
+      }
+    }
+  >
+    Geen recente transacties
+  </Text>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "backgroundColor": "red",
+        "borderRadius": 5,
+        "marginTop": 20,
+        "opacity": 1,
+        "padding": 10,
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "white",
+          "textAlign": "center",
+        }
+      }
+    >
+      Verwijder alles
+    </Text>
+  </View>
+</View>
+`;
+
+exports[`UndoScreen moet transacties laden en de omschrijvingen tonen (met snapshot) 1`] = `
+<View
+  style={
+    {
+      "padding": 20,
+    }
+  }
+>
+  <Text
+    style={
+      {
+        "fontSize": 18,
+      }
+    }
+  >
+    Laatste transacties: 
+    2
+  </Text>
+  <View
+    style={
+      {
+        "marginTop": 8,
+      }
+    }
+    testID="tx-list"
+  >
+    <Text>
+      Boodschappen
+    </Text>
+    <Text>
+      Tanken
+    </Text>
+  </View>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "backgroundColor": "red",
+        "borderRadius": 5,
+        "marginTop": 20,
+        "opacity": 1,
+        "padding": 10,
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "color": "white",
+          "textAlign": "center",
+        }
+      }
+    >
+      Verwijder alles
+    </Text>
+  </View>
+</View>
+`;
