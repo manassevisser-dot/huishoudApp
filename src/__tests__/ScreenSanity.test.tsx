@@ -4,7 +4,7 @@ import { render } from '../test-utils/render/renderers';
 
 // Import Screens
 import CsvUploadScreen from '../ui/screens/CSV/CsvUploadScreen';
-import UndoScreen from '../ui/screens/Daily/UndoScreen';
+import { UndoScreen } from '../ui/screens/Daily/UndoScreen';
 import DailyInputScreen from '../ui/screens/DailyInput/DailyInputScreen';
 import DashboardScreen from '../ui/screens/Dashboard/DashboardScreen';
 import OptionsScreen from '../ui/screens/Options/OptionsScreen';

@@ -1,43 +1,103 @@
-import React from 'react';
-import { render, waitFor, screen } from '@testing-library/react-native';
-import { UndoScreen } from '../UndoScreen';
-import { TransactionService } from '../../../../services/transactionService';
 
-jest.mock('../../../../services/transactionService');
-const mockedTxService = TransactionService as jest.Mocked<typeof TransactionService>;
+import React from 'react';
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+  waitForElementToBeRemoved,
+} from '@testing-library/react-native';
+import { UndoScreen } from '../UndoScreen';
+
+// ✅ Mock via ALIAS (komt overeen met de import in UndoScreen)
+jest.mock('@services/transactionService', () => ({
+  TransactionService: {
+    getAllTransactions: jest.fn(),
+    clearAll: jest.fn(),
+  },
+}));
+
+import { TransactionService } from '@services/transactionService';
+const mockedTx = TransactionService as jest.Mocked<typeof TransactionService>;
+
+// (Optioneel) verhoog suite-timeout iets als je vaker coverage draait:
+// jest.setTimeout(15000);
 
 describe('UndoScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('moet transacties laden en het juiste aantal weergeven', async () => {
-    // Zorg dat de mock data exact matcht met wat de component verwacht
-    const mockData = [
-      { id: '1', amount: 100, description: 'Boodschappen' },
-      { id: '2', amount: 50, description: 'Tanken' }
-    ];
-    mockedTxService.getAllTransactions.mockResolvedValue(mockData as any);
+  afterEach(cleanup);
 
-    render(<UndoScreen />);
+  it(
+    'moet transacties laden en de omschrijvingen tonen (met snapshot)',
+    async () => {
+      const mockData = [
+        { id: '1', amount: 12.5, description: 'Boodschappen' },
+        { id: '2', amount: 45.0, description: 'Tanken' },
+      ];
+      mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
 
-    // Wacht tot de tekst met het aantal verschijnt
-    // Dit bevestigt dat de asynchrone call klaar is en de state is bijgewerkt
-    await waitFor(() => {
-      expect(screen.getByText(/Laatste transacties: 2/i)).toBeTruthy();
-    });
+      const { toJSON } = render(<UndoScreen />);
 
-    // Als de beschrijvingen nog steeds niet gevonden worden, 
-    // checken we of "Boodschappen" ergens in de boom voorkomt (fuzzy match)
-    expect(screen.queryByText(/Boodschappen/i)).toBeTruthy();
+      // ✅ Één waitFor-blok met hogere timeout: voorkomt 5s overschrijding bij coverage
+      await waitFor(
+        () => {
+          expect(screen.getByText(/Boodschappen/i)).toBeTruthy();
+          expect(screen.getByText(/Tanken/i)).toBeTruthy();
+          expect(screen.getByText(/Laatste transacties:\s*2/i)).toBeTruthy();
+        },
+        { timeout: 12000 }
+      );
+
+      // ✨ Snapshot van de gevulde staat
+      expect(toJSON()).toMatchSnapshot();
+    },
+    15000 // <-- per-test timeout (robust bij coverage)
+  );
+
+  it('moet de lege staat tekst tonen (met snapshot)', async () => {
+    mockedTx.getAllTransactions.mockResolvedValueOnce([]);
+
+    const { toJSON } = render(<UndoScreen />);
+
+    expect(await screen.findByText(/Geen recente transacties/i)).toBeTruthy();
+    expect(screen.getByText(/Laatste transacties:\s*0/i)).toBeTruthy();
+
+    // ✨ Snapshot van lege staat
+    expect(toJSON()).toMatchSnapshot();
   });
 
-  it('moet de getAllTransactions call maken bij het openen', async () => {
-    mockedTxService.getAllTransactions.mockResolvedValue([]);
-    render(<UndoScreen />);
-    
-    await waitFor(() => {
-      expect(mockedTxService.getAllTransactions).toHaveBeenCalledTimes(1);
-    });
+  it('moet alle transacties verwijderen als op de knop wordt gedrukt (en snapshot na clear)', async () => {
+    // 1) Initieel zijn er items
+    const mockData = [{ id: '1', description: 'Boodschappen' }];
+    mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+    mockedTx.clearAll.mockResolvedValueOnce(undefined);
+
+    const { toJSON } = render(<UndoScreen />);
+
+    // 2) Wacht tot het item zichtbaar is
+    const itemNode = await screen.findByText(/Boodschappen/i);
+    expect(itemNode).toBeTruthy();
+
+    // 3) Druk op de knop
+    fireEvent.press(screen.getByText(/Verwijder alles/i));
+
+    // 4) Service is aangeroepen
+    await waitFor(() => expect(mockedTx.clearAll).toHaveBeenCalled());
+
+    // 5) Wacht totdat *hetzelfde element* verdwijnt (callback + guard)
+    const stillThere = screen.queryByText(/Boodschappen/i);
+    if (stillThere) {
+      await waitForElementToBeRemoved(() => screen.queryByText(/Boodschappen/i), {
+        timeout: 3000,
+      });
+    }
+
+    // 6) Assert teller 0 en snapshot
+    expect(await screen.findByText(/Laatste transacties:\s*0/i)).toBeTruthy();
+    expect(toJSON()).toMatchSnapshot();
   });
 });
