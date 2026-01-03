@@ -28,8 +28,10 @@ START_TS="$(date +%s)"
 # Sommige projecten hebben geen .phoenix/* bestanden; daarom laden we ze best-effort
 # en zetten we set +u tijdelijk aan om 'unbound' issues te voorkomen bij optionele variabelen.
 set +u
-[[ -f ".phoenix/audits.sh"  ]] && source ".phoenix/audits.sh"
-[[ -f ".phoenix/reports.sh" ]] && source ".phoenix/reports.sh"
+[[ -f ".phoenix/core.sh"      ]] && source ".phoenix/core.sh"
+[[ -f ".phoenix/checkers.sh"  ]] && source ".phoenix/checkers.sh"
+[[ -f ".phoenix/audits.sh"    ]] && source ".phoenix/audits.sh"
+[[ -f ".phoenix/reports.sh"   ]] && source ".phoenix/reports.sh"
 set -u
 
 # ============ Audit uitvoeren ============ 
