@@ -6,9 +6,9 @@ export const MONTHS_PER_YEAR = 12 as const;
 export type Frequency = 'week' | '4wk' | 'month' | 'quarter' | 'year';
 
 // Interne helper om exhaustiveness af te dwingen bij switch
-const assertNever = (x: never): never => {
-  throw new Error(`Unsupported frequency: ${String(x)}`);
-};
+//const assertNever = (x: never): never => {
+//  throw new Error(`Unsupported frequency: ${String(x)}`);
+//};
 
 /**
  * Berekent de factor om een bedrag naar een maandbedrag te converteren.

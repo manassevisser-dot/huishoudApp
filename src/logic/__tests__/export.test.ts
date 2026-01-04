@@ -1,9 +1,9 @@
 import { aggregateExportData } from '../export';
-import { TransactionService } from '../../services/transactionService';
+import { TransactionService } from '@services/transactionService';
 import { FormState } from '@state/schemas/FormStateSchema';
 
 // 1. Mock de TransactionService
-jest.mock('../../services/transactionService');
+jest.mock('@services/transactionService');
 const mockedTxService = TransactionService as jest.Mocked<typeof TransactionService>;
 
 describe('Export Logic & Aggregator', () => {

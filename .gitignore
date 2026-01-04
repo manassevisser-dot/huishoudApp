@@ -28,3 +28,5 @@ coverage/
 repo-structure.txt
 trate pages and navigation (single source of truth)"
 backups/*
+.phoenix/history/
+.phoenix/.deps-checked

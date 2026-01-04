@@ -3,20 +3,20 @@ import { screen } from '@testing-library/react-native';
 import { render } from '../test-utils/render/renderers';
 
 // Import Screens
-import CsvUploadScreen from '../ui/screens/CSV/CsvUploadScreen';
-import { UndoScreen } from '../ui/screens/Daily/UndoScreen';
-import DailyInputScreen from '../ui/screens/DailyInput/DailyInputScreen';
-import DashboardScreen from '../ui/screens/Dashboard/DashboardScreen';
-import OptionsScreen from '../ui/screens/Options/OptionsScreen';
-import ResetScreen from '../ui/screens/Reset/ResetScreen';
-import SettingsScreen from '../ui/screens/Settings/SettingsScreen';
-import CriticalErrorScreen from '../ui/screens/Wizard/CriticalErrorScreen';
-import SplashScreen from '../ui/screens/Wizard/SplashScreen';
-import WelcomeWizard from '../ui/screens/Wizard/WelcomeWizard';
+import CsvUploadScreen from '@ui/screens/CSV/CsvUploadScreen';
+import { UndoScreen } from '@ui/screens/Daily/UndoScreen';
+import DailyInputScreen from '@ui/screens/DailyInput/DailyInputScreen';
+import DashboardScreen from '@ui/screens/Dashboard/DashboardScreen';
+import OptionsScreen from '@ui/screens/Options/OptionsScreen';
+import ResetScreen from '@ui/screens/Reset/ResetScreen';
+import SettingsScreen from '@ui/screens/Settings/SettingsScreen';
+import CriticalErrorScreen from '@ui/screens/Wizard/CriticalErrorScreen';
+import SplashScreen from '@ui/screens/Wizard/SplashScreen';
+import WelcomeWizard from '@ui/screens/Wizard/WelcomeWizard';
 
 // Mock navigatie props
 const mockNavigation = { navigate: jest.fn(), goBack: jest.fn(), setOptions: jest.fn() };
-const mockRoute = { params: {} };
+ 
 
 describe('Screen Sanity Smoke Tests', () => {
   

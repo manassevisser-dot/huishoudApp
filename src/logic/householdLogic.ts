@@ -1,4 +1,4 @@
-import { Member } from '../domain/household';
+import { Member } from '@domain/household';
 
 /**
  * PHOENIX LOGIC: Bepaalt de validiteit van het huishouden.

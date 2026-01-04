@@ -1,10 +1,16 @@
 import React from 'react';
 import { render as rtlRender, RenderOptions as RTLRenderOptions, renderHook } from '@testing-library/react-native';
-import { ThemeProvider } from '../../app/context/ThemeContext';
-import { FormContext } from '../../app/context/FormContext';
-import { FormState } from '../../shared-types/form';
+import { ThemeProvider } from '@app/context/ThemeContext';
+import { FormContext } from '@app/context/FormContext';
+import { FormState } from '@shared-types/form';
 import { makePhoenixState } from '../factories/stateFactory';
-
+// Voeg waitFor toe aan de lijst met imports
+import { 
+   
+  screen, 
+  waitFor, // <--- DEZE MOET ERBIJ
+  // ... andere imports zoals fireEvent
+} from '@testing-library/react-native';
 export type RenderOptions = Omit<RTLRenderOptions, 'wrapper'> & {
   state?: FormState;
   dispatch?: jest.Mock;
@@ -29,8 +35,6 @@ export function render(
       </ThemeProvider>
     );
   };
-  console.log('UI to render:', ui);
-  console.log('Wrapper component:', Wrapper);
   return rtlRender(ui, { wrapper: Wrapper, ...rtlOptions });
 }
 
@@ -52,3 +56,10 @@ export function renderHookWithProviders<TProps, TResult>(
 
   return renderHook(callback, { wrapper: Wrapper });
 }
+
+// Voeg dit toe aan je test-utils voor later
+export const expectTextAsync = async (text: string | RegExp) => {
+  await waitFor(() => {
+    expect(screen.getByText(text)).toBeTruthy();
+  }, { timeout: 2000 });
+};

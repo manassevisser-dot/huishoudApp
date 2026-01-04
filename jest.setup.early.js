@@ -67,4 +67,6 @@ jest.mock('react-native', () => {
 // Zorg dat Worklets niet crashen tijdens initialisatie
 global.__reanimatedWorkletInit = jest.fn();
 
-console.log('✅ Jest Early Setup: Winter neutralized & React Native mocked.');
+if (process.env.DEBUG_JEST) {
+  console.log('✅ Jest Early Setup: Winter neutralized & React Native mocked.');
+}

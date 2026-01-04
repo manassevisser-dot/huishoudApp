@@ -1,5 +1,5 @@
 import type { FormState, DataSection, DeepPartial } from './core';
-import type { FieldConfig } from './fields';
+import type { FieldConfig } from '@fields';
 
 export interface WizardPageConfig {
   pageId: string;

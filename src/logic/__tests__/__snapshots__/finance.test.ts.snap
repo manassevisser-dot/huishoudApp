@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`GM-007: Phoenix Finance Snapshot moet een consistent financieel overzicht genereren (Integriteit Contract) 1`] = `
+{
+  "netCents": 341667,
+  "totalExpensesCents": 198333,
+  "totalIncomeCents": 540000,
+}
+`;

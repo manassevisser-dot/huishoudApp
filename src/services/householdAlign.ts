@@ -1,4 +1,4 @@
-import { Member } from '../domain/household';
+import { Member } from '@domain/household';
 
 /**
  * Phoenix ID Generator

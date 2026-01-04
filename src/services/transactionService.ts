@@ -1,7 +1,8 @@
-import { type MemberType } from '../domain/household';
-import { StorageShim } from './storageShim'; // Importeer je shim
+
+import { StorageShim } from '@services/storageShim'; // Importeer je shim
 // We importeren de 'wasstraat' helper uit de privacyHelpers
 import { toMemberType } from './privacyHelpers';
+import { Logger } from './logger';
 
 export const migrateTransactionsToPhoenix = async (oldState: any) => {
   const safeState = oldState || {}; 
@@ -60,7 +61,7 @@ export const migrateTransactionsToPhoenix = async (oldState: any) => {
 };
 // ✅ VOEG DEZE TOE om de TS-error op te lossen
 export const undoLastTransaction = async () => {
-  console.log('Undo functionaliteit nog niet geïmplementeerd');
+  Logger.warn('Undo functionaliteit nog niet geïmplementeerd');
   return null;
 };
 

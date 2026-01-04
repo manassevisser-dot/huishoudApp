@@ -1,10 +1,10 @@
 import React from 'react';
-import { ThemeProvider } from './app/context/ThemeContext';
-import { WizardProvider } from './app/context/WizardContext';
-import { FormProvider } from './app/context/FormContext';
-import MainNavigator from './ui/navigation/MainNavigator';
+import { ThemeProvider } from '@app/context/ThemeContext';
+import { WizardProvider } from '@app/context/WizardContext';
+import { FormProvider } from '@app/context/FormContext';
+import MainNavigator from '@ui/navigation/MainNavigator';
 // Let op de kleine 'i'
-import { initialFormState } from './state/schemas/FormStateSchema'; 
+import { initialFormState } from '@state/schemas/FormStateSchema'; 
 
 const App = () => {
   return (
@@ -20,3 +20,4 @@ const App = () => {
 };
 
 export default App;
+// PHOENIX_EVENT: Boot sequence initiated

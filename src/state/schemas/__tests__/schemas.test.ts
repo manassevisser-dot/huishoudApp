@@ -1,4 +1,4 @@
-import { FormStateSchema } from '../FormStateSchema';
+import { FormStateSchema } from '@state/schemas/FormStateSchema';
 
 describe('FormStateSchema', () => {
   const validState = {

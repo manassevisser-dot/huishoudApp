@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAppStyles } from '../../styles/useAppStyles';
-import { useForm } from '../../../app/context/FormContext';
+import { useAppStyles } from '@styles/useAppStyles';
+import { useForm } from '@app/context/FormContext';
 
 interface Props {
   onSignup?: () => void;

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { FieldConfig, FormState, FormAction } from '@shared-types/form';
-import FormField from './fields/FormField';
+import FormField from '@fields/FormField';
 
 export interface FieldRendererProps {
   fields: FieldConfig[];

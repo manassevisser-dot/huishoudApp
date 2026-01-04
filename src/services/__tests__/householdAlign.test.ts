@@ -1,5 +1,5 @@
 import { alignMembers } from '../householdAlign';
-import { Member } from '../../domain/household';
+import { Member } from '@domain/household';
 
 describe('householdAlign - alignMembers', () => {
   

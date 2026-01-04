@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, screen } from '@testing-library/react-native';
 // We gebruiken de krachtige render uit onze utils die de Provider bevat
 import { render, makePhoenixState } from '../test-utils';
-import LandingScreen from '../ui/screens/Wizard/LandingScreen';
+import LandingScreen from '@ui/screens/Wizard/LandingScreen';
 
 /**
  * WAI-009 Focus Management & Phoenix Navigation Integration

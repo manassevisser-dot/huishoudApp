@@ -14,6 +14,7 @@ import * as TransactionService from '@services/transactionService';
 import { getISOWeek } from '@utils/date';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 import { DATA_KEYS } from '@domain/constants/datakeys'; // Toegevoegd voor de juiste mapping
+import {Logger} from '@services/logger';
 
 type Props = {
   onClose: () => void;
@@ -38,7 +39,7 @@ const CsvUploadScreen: React.FC<Props> = ({ onClose, members, setupData }) => {
       const result = dataOrchestrator.processAllData(members || [], csvText, setupData || {});
 
       // Gebruik de DATA_KEYS om de gefilterde lokale data op te halen
-      const householdData = result.local[DATA_KEYS.HOUSEHOLD];
+    
       const financeData = result.local[DATA_KEYS.FINANCE];
 
       if (financeData.transactions.length === 0) {
@@ -75,7 +76,7 @@ const CsvUploadScreen: React.FC<Props> = ({ onClose, members, setupData }) => {
             onPress: async () => {
               // --- 3. (ANONIEM) RESEARCH PAYLOAD NAAR ANALYTICS ---
               // Je kunt result.research direct doorsturen naar een API/n8n
-              console.log('Sending to research:', result.research);
+              Logger.info('Sending to research:', result.research);
 
               // --- 4. OPSLAAN NAAR LOKALE STORAGE ---
               for (const tx of financeData.transactions) {

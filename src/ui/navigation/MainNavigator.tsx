@@ -1,5 +1,5 @@
 import React from 'react';
-import { useForm } from '../../app/context/FormContext';
+import { useForm } from '@app/context/FormContext';
 import LandingScreen from '../screens/Wizard/LandingScreen';
 import WizardController from '../screens/Wizard/WizardController';
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';

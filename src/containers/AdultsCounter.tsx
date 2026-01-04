@@ -1,6 +1,6 @@
 import * as React from 'react';
-import InputCounter from '../ui/components/fields/InputCounter';
-import { useForm } from '../app/context/FormContext';
+import InputCounter from '@ui/components/fields/InputCounter';
+import { useForm } from '@app/context/FormContext';
 
 export const AdultsCounter: React.FC = () => {
   const { state, dispatch } = useForm();

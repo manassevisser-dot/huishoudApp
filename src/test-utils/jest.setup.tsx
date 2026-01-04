@@ -1,6 +1,29 @@
 // src/test-utils/jest.setup.tsx
 import '@testing-library/jest-native/extend-expect';
 
+/**
+ * React Act Environment configuratie
+ * Dit helpt bij het onderdrukken van onnodige act() waarschuwingen in React 18+ omgevingen
+ */
+// @ts-ignore
+global.IS_REACT_ACT_ENVIRONMENT = true;
+
+/**
+ * Console Error Filter
+ * Verbergt bekende ruis zoals act() waarschuwingen en DOM nesting fouten
+ */
+const originalError = console.error;
+console.error = (...args) => {
+  if (/validateDOMNesting|not wrapped in act/.test(args[0])) {
+    return;
+  }
+  originalError.call(console, ...args);
+};
+
+// =========================================================
+// Mocks
+// =========================================================
+
 // Reanimated mock (indien gebruikt)
 jest.mock('react-native-reanimated', () => {
   const Reanimated = require('react-native-reanimated/mock');

@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { FormState } from '../shared-types/form';
+import { FormState } from '@shared-types/form';
 import LandingScreen from  'src/ui/screens/Wizard/LandingScreen'
-import WizardController from '../ui/screens/Wizard/WizardController';
-import MainNavigator from '../ui/navigation/MainNavigator';
+import WizardController from '@ui/screens/Wizard/WizardController';
+import MainNavigator from '@ui/navigation/MainNavigator';
 
 interface NavigatorProps {
   state: FormState;

@@ -222,7 +222,9 @@ Zie \`compare_report.csv\` voor de ruwe data.
 |-------------|--------|----------|
 $(grep ",different" "$CSV" | head -10 | awk -F, '{printf "| %s | %s | %s |\n", $2, $6, $7}')
 
+===
 EOF
 
 echo "✅ Klaar! Rapporten opgeslagen in: $OUTDIR"
 ls -l "$OUTDIR"
+=====

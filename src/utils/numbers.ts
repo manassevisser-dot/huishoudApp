@@ -1,4 +1,3 @@
-
 import { cleanName } from './strings';
 
 /**
@@ -19,13 +18,12 @@ export function formatDutchValue(raw: string): string {
  * ADR-03: Centrale transformatie naar centen (integers).
  * Handelt NL formaten (1.250,50), US formaten (1250.50) en rommelige strings af.
  */
-
-
 export function toCents(input: string | number | undefined | null): number {
   if (input === undefined || input === null) return 0;
 
   if (typeof input === 'number') {
-    return Math.round(Math.abs(input) * 100);
+    // Verwijder Math.abs, behoud Math.round voor floating point correctie
+    return Math.round(input * 100);
   }
 
   // 1) Cleanup basis: verwijder € + spaties + letters (bv. 'EUR')
@@ -68,10 +66,10 @@ export function toCents(input: string | number | undefined | null): number {
   }
 
   // 5) parse en naar centen
+  // Zorg dat de parseFloat aan het einde ook geen Math.abs heeft
   const val = parseFloat(s);
-  return isNaN(val) ? 0 : Math.round(Math.abs(val) * 100);
+  return isNaN(val) ? 0 : Math.round(val * 100);
 }
-
 
 /**
  * Formatter voor INPUT velden (zonder € symbool)

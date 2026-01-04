@@ -16,7 +16,7 @@ const config: Config = {
 
   // 2. Module Mapping (Aliassen voor schone imports)
   moduleNameMapper: {
-    // @alias-start
+  // @alias-start
     '^@app/(.*)$': '<rootDir>/src/app/$1',
     '^@domain/(.*)$': '<rootDir>/src/domain/$1',
     '^@services/(.*)$': '<rootDir>/src/services/$1',
@@ -34,7 +34,7 @@ const config: Config = {
     '^@test-utils$': '<rootDir>/src/test-utils/index.ts',
     '^@test-utils/(.*)$': '<rootDir>/src/test-utils/$1',
     '^@shared-types/forms$': '<rootDir>/src/shared-types/forms.ts',
-    // @alias-end
+  // @alias-end
   },
 
   // 3. RN/Expo transform-ignore (Voorkomt SyntaxErrors in node_modules)
@@ -49,7 +49,7 @@ const config: Config = {
   // 5. Coverage (Kwaliteitscontrole)
   collectCoverage: true,
   coverageDirectory: '<rootDir>/coverage',
-  coverageReporters: ['html', 'text', 'text-summary'],
+  coverageReporters: ['html', 'text', 'text-summary', 'json', 'json-summary'],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx,js,jsx}',
     '!src/**/*.d.ts',

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { View, ScrollView } from 'react-native';
-import { MoneyField } from '../../components/fields/MoneyField';
-import { useAppStyles } from '../../styles/useAppStyles';
+import { MoneyField } from '@components/fields/MoneyField';
+import { useAppStyles } from '@styles/useAppStyles';
 
 // We gebruiken relatieve paden om alias-conflicten te vermijden
 export const DailyInputScreen: React.FC = () => {
@@ -14,7 +14,7 @@ export const DailyInputScreen: React.FC = () => {
           label="Bedrag" 
           // MoneyField verwacht 'amount' ipv 'value' op basis van je error
           amount={0} 
-          onAmountChange={(val: number) => console.log(val)} 
+          onAmountChange={(val) => { /* logged via orchestrator */ }} 
         />
       </View>
     </ScrollView>

@@ -102,7 +102,9 @@ export function formatDate(
   } else {
     date = input;
   }
-
+  if (!date || isNaN(date.getTime())) {
+    return '';
+  }
   const options: Intl.DateTimeFormatOptions = {};
 
   switch (formatType) {

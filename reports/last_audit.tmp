@@ -1,0 +1,21 @@
+
+[0;34m[1m=== PHOENIX AUDITS ===[0m
+[0;32m✅ Node Manifest[0m
+[0;32m✅ TS Config[0m
+[0;32m✅ Type-safety (39)[0m
+[0;32m✅ Non-negative parser (3)[0m
+[0;32m✅ Currency format (2)[0m
+[0;32m✅ Deep Imports (clean)[0m
+[0;32m✅ Console (clean)[0m
+[0;32m✅ Actions (30)[0m
+[0;32m✅ Geo ADR-18 (clean)[0m
+[0;31m❌ Contract (0 < 1)[0m
+   [0;33m💡 Pass 'geo_scope' in evaluateDomainRules[0m
+[0;31m❌ Telemetry (0 < 1)[0m
+   [0;33m💡 Add PHOENIX_EVENT logging[0m
+[0;32m✅[0m [1m[0;32mRefactor Integration[0m [2m(14 modules)[0m
+
+[0;34m[1m=== RESULTS ===[0m
+Total: 12 | Passed: [0;32m10[0m | Failed: [0;31m2[0m | Skipped: [0;33m0[0m
+Grade: [0;33mB[0m
+[34mℹ️  [39mDuur: 7s

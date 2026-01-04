@@ -1,4 +1,4 @@
-import { FieldConfig } from '../shared-types/form';
+import { FieldConfig } from '@shared-types/form';
 import { formatDutchValue } from '@utils/numbers';
 import { isDigitsDatePlausible, parseDDMMYYYYtoISO } from '@utils/date';
 

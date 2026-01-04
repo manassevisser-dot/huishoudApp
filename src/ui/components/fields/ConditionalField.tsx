@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { View } from 'react-native';
-import { FieldConfig, FormState, FormAction } from '../../../shared-types/form';
+import { FieldConfig, FormState, FormAction } from '@shared-types/form';
 import FormField from './FormField';
 
 interface ConditionalFieldProps {

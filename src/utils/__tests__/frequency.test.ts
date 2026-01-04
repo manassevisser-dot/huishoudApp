@@ -63,3 +63,41 @@ describe('WAI-004-D: Frequency & Normalisatie Tests', () => {
     });
   });
 });
+describe('WAI-004-E: Frequency Error Handling & Guards', () => {
+  
+  test('moet crashen bij niet-eindige getallen (Guard check)', () => {
+    // Dekt de !Number.isFinite(cents) check
+    expect(() => convertToMonthlyCents(Infinity, 'month')).toThrow('Invalid cents: not a finite number');
+    expect(() => convertToMonthlyCents(NaN, 'month')).toThrow('Invalid cents: not a finite number');
+  });
+
+  test('moet omgaan met 0 centen', () => {
+    expect(convertToMonthlyCents(0, 'year')).toBe(0);
+  });
+
+  test('moet omgaan met ontbrekende frequentie (undefined fallback)', () => {
+    // Dekt de default case via getMonthlyFactor(undefined)
+    expect(convertToMonthlyCents(1000)).toBe(1000);
+  });
+
+  test('moet negatieve bedragen ook correct omrekenen (indien toegestaan)', () => {
+    // Handig voor correctie-posten in de finance data
+    expect(convertToMonthlyCents(-1200, 'year')).toBe(-100);
+  });
+});
+describe('WAI-004-S: Frequency Snapshots', () => {
+  test('moet alle standaardfrequenties consistent omrekenen', () => {
+    const testValues = [1000, 50000, 120000];
+    const frequencies = ['week', '4wk', 'month', 'quarter', 'year'];
+    
+    const results = frequencies.map(f => ({
+      frequency: f,
+      results: testValues.map(v => ({
+        input: v,
+        monthly: convertToMonthlyCents(v, f)
+      }))
+    }));
+
+    expect(results).toMatchSnapshot();
+  });
+});

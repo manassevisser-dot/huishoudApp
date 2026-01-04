@@ -1,6 +1,5 @@
 import { DATA_KEYS, SUB_KEYS } from '@domain/constants/registry';
 import { UX_TOKENS } from '@domain/constants/registry';
-import { FormState } from '@shared-types/form';
 import { WizardPageConfig} from '@shared-types/wizard';
 
 export const detailsHouseholdConfig: WizardPageConfig  = {

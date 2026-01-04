@@ -1,4 +1,4 @@
-import { FormState, FormAction } from '../../shared-types/form';
+import { FormState, FormAction } from '@shared-types/form';
 import { deepMerge } from '@utils/objects'; // Zorg dat deze helper bestaat
 import { DATA_KEYS } from '@domain/constants/datakeys';
 

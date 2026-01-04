@@ -62,9 +62,9 @@ export function assertNoPIILeak(obj: any): void {
   const checkDeep = (current: any) => {
     if (!current || typeof current !== 'object') return;
     for (const [key, val] of Object.entries(current)) {
-      if (forbiddenKeys.some(k => key.toLowerCase().includes(k))) {
+      if (forbiddenKeys.some(k => key.toLowerCase() === k.toLowerCase() || key.toLowerCase().includes(k.toLowerCase()))) {
         throw new Error(`SECURITY ALERT: Verboden veld "${key}" in Research Payload.`);
-      }
+     }
       if (typeof val === 'string' && containsPII(val)) {
         throw new Error(`SECURITY ALERT: PII gedetecteerd in waarde van "${key}".`);
       }

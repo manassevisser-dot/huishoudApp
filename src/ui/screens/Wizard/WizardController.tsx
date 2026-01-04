@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useForm } from '../../../app/context/FormContext';
+import { useForm } from '@app/context/FormContext';
 import { WizardPage } from './WizardPage'; 
 // Importeer de losse configs als bouwstenen
 import { setupHouseholdConfig } from './pages/1setupHousehold.config';

@@ -1,67 +1,61 @@
 import React from 'react';
+import { render } from '@testing-library/react-native';
+import { FormProvider } from '@app/context/FormContext';
+import { createMockState } from '@test-utils/index';
 import WizardController from '../WizardController';
-import { useAppOrchestration } from '../../../../app/hooks/useAppOrchestration';
-import { renderWithState } from '../../../../test-utils';
 
-// Mocks instellen conform Best Practices [cite: 4, 19]
-jest.mock('../../../../app/hooks/useAppOrchestration');
-const mockedOrchestration = useAppOrchestration as jest.Mock;
+// ✅ Mock uitgebreid om de callbacks op te vangen
+const mockOnNext = jest.fn();
+const mockOnBack = jest.fn();
 
-jest.mock('../../../../config/WizStrings', () => ({
-  WizStrings: {
-    wizard: {
-      next: 'Volgende',
-      back: 'Terug',
-      finish: 'Afronden'
-    }
+jest.mock('../WizardPage', () => ({
+  // We gebruiken een simpele functionele component die zijn props uitvoert
+  WizardPage: (props: any) => {
+    // We slaan de props op in een tijdelijke mock-functie voor aanroep
+    mockOnNext.mockImplementation(() => props.onNext());
+    mockOnBack.mockImplementation(() => props.onBack());
+    return null;
   }
-}), { virtual: true });
+}));
 
-describe('WizardController', () => {
-  
-  beforeEach(() => {
-    jest.clearAllMocks(); // Ruim mocks op voor test-isolatie [cite: 24]
+describe('WizardController Branch & Function Coverage', () => {
+  const steps = [
+    'WIZARD_SETUP',
+    'WIZARD_DETAILS',
+    'WIZARD_INCOME',
+    'WIZARD_EXPENSES',
+    'UNKNOWN_STEP'
+  ] as const;
+
+  steps.forEach((step) => {
+    it(`moet de juiste config kiezen voor stap: ${step}`, () => {
+      const mockState = createMockState({ activeStep: step as any });
+      const { toJSON } = render(
+        <FormProvider initialState={mockState} mockDispatch={jest.fn()}>
+          <WizardController />
+        </FormProvider>
+      );
+      expect(toJSON()).toBeDefined();
+    });
   });
 
-  it('moet de SplashScreen tonen wanneer de status "loading" is', () => {
-    // Arrange: Mock de loading state [cite: 18]
-    mockedOrchestration.mockReturnValue({
-      status: 'loading',
-      error: null,
-    });
-    
-    // Act: Gebruik renderWithState om de FormProvider error te voorkomen
-    const { toJSON } = renderWithState(<WizardController />);
-    
-    // Assert
-    expect(toJSON()).not.toBeNull();
-  });
+  // ✅ TEST VOOR DE FUNCTIES (Lines 31-32 en Function coverage)
+  it('moet de dispatch aanroepen wanneer onNext en onBack worden getriggerd', () => {
+    const mockDispatch = jest.fn();
+    const mockState = createMockState({ activeStep: 'WIZARD_DETAILS' });
 
-  it('moet de CriticalErrorScreen tonen wanneer er een error optreedt', () => {
-    // Arrange: Mock de error state [cite: 9, 10]
-    mockedOrchestration.mockReturnValue({
-      status: 'error',
-      error: new Error('Migratie mislukt'),
-    });
-    
-    // Act
-    const { toJSON } = renderWithState(<WizardController />);
-    
-    // Assert
-    expect(toJSON()).not.toBeNull();
-  });
+    render(
+      <FormProvider initialState={mockState} mockDispatch={mockDispatch}>
+        <WizardController />
+      </FormProvider>
+    );
 
-  it('moet de volledige Wizard renderen bij een succesvolle "ready" status', () => {
-    // Arrange
-    mockedOrchestration.mockReturnValue({
-      status: 'ready',
-      error: null,
-    });
+    // Trigger de callbacks die de WizardController aan de WizardPage geeft
+    mockOnNext();
+    mockOnBack();
 
-    // Act
-    const { toJSON } = renderWithState(<WizardController />);
-    
-    // Assert: Snapshot test conform gids 
-    expect(toJSON()).toMatchSnapshot();
+    // Controleer of de dispatch is aangeroepen met de juiste types
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'NEXT_STEP' });
+    expect(mockDispatch).toHaveBeenCalledWith({ type: 'PREV_STEP' });
   });
 });

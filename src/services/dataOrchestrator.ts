@@ -12,7 +12,7 @@ import {
   collectAndDistributeData,
   assertNoPIILeak
 } from '@services/privacyHelpers';
-
+import {Logger} from '@services/logger'
 /* ============================================================
  * TYPES & INTERFACES
  * ============================================================ */
@@ -61,31 +61,25 @@ export const dataOrchestrator = {
     );
 
     // --- 2. VERWERK CSV (Met Kwaliteitsfilter & PII Strip) ---
-    let csvTransactions: CsvItem[] = [];
+    // --- 2. VERWERK CSV (Met Kwaliteitsfilter & PII Strip) ---
+let csvTransactions: CsvItem[] = [];
 
-    try {
-      // Haal ruwe mapping uit de service
-      const mapped = (csvService.mapToInternalModel(rawCsv) || []) as CsvItem[];
+try {
+  const mapped = (csvService.mapToInternalModel(rawCsv) || []) as CsvItem[];
 
-      csvTransactions = mapped
-        .map((item: CsvItem) => ({
-          ...item,
-          // Garandeer datagegevens en anonimiteit
-          date: item.date || new Date().toISOString(),
-          description: dataProcessor.stripPII(item.description || 'Geen omschrijving'),
-          category: dataProcessor.categorize(item.description || '')
-        }))
-        // HET KWALITEITSFILTER: Verwijder lege regels of 0-euro ruis
-        .filter(tx => {
-          const hasAmount = tx.amount !== 0;
-          const hasValidDesc = tx.description !== 'Geen omschrijving' && tx.description.trim() !== '';
-          return hasAmount && hasValidDesc;
-        });
+  csvTransactions = mapped
+    .map((item: CsvItem) => ({
+      ...item,
+      date: item.date || new Date().toISOString(),
+      description: dataProcessor.stripPII(item.description || 'Geen omschrijving'),
+      category: dataProcessor.categorize(item.description || '')
+    }))
+    .filter(tx => tx.amount !== 0); // Alleen checken op financiële waarde
 
-    } catch (e) {
-      console.error('CSV Mapping failed in Orchestrator', e);
-      csvTransactions = [];
-    }
+} catch (e) {
+  Logger.error('CSV Mapping failed in Orchestrator', e);
+  csvTransactions = [];
+}
 
     // --- 3. RECONCILIATIE & ANALYSE ---
     // Cast naar FinancialIncomeSummary om TS 'string vs "CSV"|"Setup"' error te fixen
