@@ -1,0 +1,26 @@
+Overzicht van indexen en code properties:
+
+1: formData.totalPeople
+2: formData.totalAdults
+3: Vorige button
+4: Volgende/Voltooien button
+5: formData.adultsDetails[0] (role, ageGroup, gender, pregnant)
+6: formData.adultsDetails[1] (role, ageGroup, gender, pregnant)
+7: Vorige button
+8: Volgende/Voltooien button
+9: formData.income.mainSalary
+10: formData.income.partnerSalary
+11: formData.income.benefits
+12: formData.income.allowances
+13: Vorige button
+14: Volgende/Voltooien button
+15: formData.assets.betaal
+16: formData.assets.spaar
+17: formData.assets.auto
+18: formData.assets.beleggingen
+19: Vorige button
+20: Volgende/Voltooien button
+21: formData.expenses.housingType
+22: formData.expenses.housingCost
+23: Vorige button
+24: Volgende/Voltooien button

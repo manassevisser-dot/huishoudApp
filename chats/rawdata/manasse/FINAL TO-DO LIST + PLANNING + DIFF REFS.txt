@@ -1,0 +1,136 @@
+
+; ============================================
+; PROJECT: W&I Excel UserForms Wizard
+; OWNER: Manasse Visser
+; VERSION: FINAL TO-DO LIST + PLANNING + DIFF REFS
+; ============================================
+
+[STEP 1: REVIEW DOCUMENTATIE]
+; Doel: Begrijp bestaande helpers, enums, event handlers en architectuur.
+; Bestanden: project_documentatie.txt, FULLcode.txt
+; DiffRef: diff_fullcode_bestpractices.txt   ; Overzicht van noodzakelijke aanpassingen/alignments
+; Actie:
+;   - Lees project_documentatie.txt voor context en naming (DYN_PREFIX, modules).
+;   - Scan FULLcode.txt op error handling, events, layout helpers.
+; Tijd: 30 min
+
+###GEDAAN
+
+[STEP 2: HELPER ROUTINES TOEVOEGEN]
+; Doel: Routines klaarzetten voor shapes/achtergrond/beeld en window-lock.
+; Bestanden: helper_routines.txt
+; DiffRef: (n.v.t. – dit is een codebundel, geen diff)
+; Actie:
+;   - Kopieer: ShapeExists, AddShapeAsImage, LockWindowUpdate, LoadImage, EnsureBackgroundImage naar module FormHelpers.
+;   - Compileer (Debug → Compile VBAProject).
+; Tijd: 20 min
+### GEDAAN
+
+[STEP 3: LAYOUT GRID IMPLEMENTEREN]
+; Doel: Safe-area + raster toepassen en controls positioneren.
+; Bestanden: layout_grid_specs.txt
+
+;### MEE BEZIG! Tussendoor nieuwe code ontvangen voor update via tabel
+
+; DiffRef: diff_layout_grid.txt              ; Concrete plaatsings- en safe-area stappen
+; Actie:
+;   - Pas FrmLayoutSafeAreaDyn aan volgens safe-area specs (Left=12, Top=12, Width=776, Height=476).
+;   - Positioneer controls exact volgens layout_grid_specs.txt (coördinaten per form/page).
+;   - Controleer TabIndex (top→bottom, left→right).
+; Tijd: 45 min
+
+[STEP 4: SHAPES OP REFERENTIES-SHEET]
+; Doel: Alle UI-buttons als shapes (voor image-knoppen in forms).
+; Bestanden: (sheet Referenties)
+; DiffRef: diff_fullcode_bestpractices.txt   ; Aanbevolen afmetingen + integratie via AddShapeAsImage
+; Actie:
+;   - Maak shapes met juiste namen/afmetingen:
+;       btnVorigeShape (80x28)
+;       btnVolgendeShape (100x28)
+;       btnOpslaanShape (100x28)
+;       btnAnnulerenShape (100x28)
+;       btnRowAddShape (28x28)
+;       btnRowDelShape (28x28)
+;   - Controleer bg_frmInvoer_landscape aanwezig.
+; Tijd: 30 min
+
+[STEP 5: USERFORMS BOUWEN]
+; Doel: Forms en MultiPage opzetten + basisnavigatie.
+; Bestanden: vba_stubs_all_forms.txt
+; DiffRef: 
+;   - diff_step_mockups_flowcharts.txt      ; Ontwerp & flowlogica voor alle 4 forms
+;   - diff_step_mockups_2_3_4.txt           ; MultiPage-plan + details voor stap 2–4
+; Actie:
+;   - frmHuishouden: Initialize + BuildForm_Huishouden (background, frames, knoppen via shapes).
+;   - frmVast: MultiPage (Page0=Inkomsten, Page1=Uitgaven) + BuildFrmVast (row-editor templates).
+;   - frmInvoer: Update Initialize (step-indicator + shape-knoppen fallback).
+; Tijd: 90 min
+
+[STEP 6: INCLUSIVITEIT]
+; Doel: Labels/opties neutraliseren conform inclusierichtlijnen.
+; Bestanden: mockup_huishouden.txt
+; DiffRef: diff_step_mockups_flowcharts.txt  ; Inclusieve labels & vragenstructuur verwerkt
+; Actie:
+;   - Genderopties: Man | Vrouw | Zelf beschrijven | Geen antwoord.
+;   - Zwangerschap/lactatie: “Zwangere of lacterende personen”.
+;   - Relaties: “ouder(s)”, “partner”, “verzorger(s)”.
+; Tijd: 20 min
+
+[STEP 7: VALIDATIE & NAVIGATIE]
+; Doel: Realtime validatie + enable/disable van knoppen volgens flow.
+; Bestanden: (gebruik bestaande modules FormEvents/FormData/Utils)
+; DiffRef: 
+;   - diff_fullcode_bestpractices.txt       ; Validatieregels, enable/disable criteria
+;   - diff_step_mockups_2_3_4.txt           ; Navigatie mapping (Huishouden→Vast→Invoer)
+; Actie:
+;   - Huishouden: Adults + Children == TotalPersons (1..8), pregnancy checkbox los van gender.
+;   - Vast: rijcompleet = Period + Amount > 0; “Geen vaste …” vlag activeert Next zonder rijen.
+;   - Invoer: Category gekozen, Amount>0; Next/Prev activeren o.b.v. validatie.
+; Tijd: 60 min
+
+[STEP 8: TESTPLAN UITVOEREN]
+; Doel: End-to-end scenarios en acceptatiecriteria verifiëren.
+; Bestanden: handover_copilot_v2.yaml, handover_copilot_v2.txt
+; DiffRef: (n.v.t. – testplan en criteria staan in handover v2)
+; Actie:
+;   - Scenarios: only_one_adult, two_adults_one_child, pregnant_person, no_fixed_income, several_pages_navigation.
+;   - Controleer acceptatiecriteria (UI/background/safe-area, shapes/fallback, tabvolgorde, live totals, navigatie, inclusiviteit, performance, error handling).
+; Tijd: 90 min
+
+[STEP 9: QA & DOCUMENTATIE]
+; Doel: Bevindingen vastleggen + overdracht afronden.
+; Bestanden: handover_copilot_v2.yaml, handover_copilot_v2.txt, ErrorLog (sheet)
+; DiffRef: diff_fullcode_bestpractices.txt   ; Logging en error handling uniform bevestigd
+; Actie:
+;   - Documenteer testen/fouten in ErrorLog (timestamp, module, beschrijving).
+;   - Update handover_copilot_v2.yaml indien extra bevindingen/aanpassingen.
+; Tijd: 30 min
+
+; ============================================
+; TOTALE TIJD: ~6 uur (indicatief; afhankelijk van ervaring)
+; ============================================
+
+[REFERENTIEBESTANDEN]
+; Mock-ups/Flow:
+;   - mockup_huishouden.txt
+;   - mockup_vaste_inkomsten.txt
+;   - mockup_vaste_uitgaven.txt
+;   - mockup_dagelijkse_uitgaven.txt
+;   - flow_huishouden.txt
+;   - flow_vaste_inkomsten.txt
+;   - flow_vaste_uitgaven.txt
+;   - flow_dagelijkse_uitgaven.txt
+; Diff-bestanden:
+;   - diff_step_mockups_flowcharts.txt
+;   - diff_step_mockups_2_3_4.txt
+;   - diff_layout_grid.txt
+;   - diff_fullcode_bestpractices.txt
+; Code/Helpers/Stubs:
+;   - helper_routines.txt
+;   - vba_stubs_all_forms.txt
+; Handover/Context:
+;   - handover_next_agent_copilot.txt
+;   - handover_copilot_v2.yaml
+;   - handover_copilot_v2.txt
+; Layout:
+;   - layout_grid_specs.txt

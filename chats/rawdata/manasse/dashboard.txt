@@ -1,0 +1,321 @@
+import React from 'react';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  SafeAreaView,
+  ScrollView,
+} from 'react-native';
+
+// --- UX/UI Kleuren uit Analyse ---
+const COLORS = {
+  primary: '#00A98F', // Teal - Actie/Positief
+  secondary: '#FF6B6B', // Zacht Rood - Uitgave/Kritiek
+  background: '#F9F9F9',
+  text: '#333333',
+  success: '#90EE90', // Lichtgroen - Inkomsten
+  card: '#FFFFFF',
+  shadow: '#D1D1D1',
+};
+
+// --- MOCK DATA VOOR UX REVIEW ---
+
+// 1. Gesimuleerde Transacties
+const MOCK_TRANSACTIONS = [
+  { id: '1', description: 'Boodschappen', amount: -45.50, date: 'Vandaag', type: 'Uitgave' },
+  { id: '2', description: 'Salaris', amount: 2500.00, date: 'Gisteren', type: 'Inkomst' },
+  { id: '3', description: 'Vervoer (Benzine)', amount: -75.00, date: 'Eergisteren', type: 'Uitgave' },
+  { id: '4', description: 'Huur', amount: -1200.00, date: '1-11', type: 'Uitgave' },
+  { id: '5', description: 'Boek gekocht', amount: -15.99, date: '31-10', type: 'Uitgave' },
+];
+
+// 2. Risicomarge Status (simulatie van 14 dagen over)
+const MOCK_RISK_STATUS = {
+  daysRemaining: 14,
+  marginAmount: 450.75, // Hoeveel geld je nog kunt uitgeven t.o.v. gemiddelde
+  isCritical: false,
+};
+
+// --- SUBSYSTEMEN ---
+
+/**
+ * Risicomarge Visualisatie: Wat moet ik NU doen?
+ * Dit is het meest prominente dashboard element.
+ */
+const RiskMarginIndicator: React.FC = () => {
+  const { daysRemaining, marginAmount, isCritical } = MOCK_RISK_STATUS;
+
+  // Kleur en tekst aanpassen op basis van de kritieke status
+  const indicatorColor = isCritical ? COLORS.secondary : COLORS.primary;
+  
+  const daysText = isCritical 
+    ? `ACTIE VEREIST: Marge ${daysRemaining} dagen` 
+    : `Nog ${daysRemaining} dagen marge`;
+
+  const marginText = isCritical 
+    ? `Jouw budget is KRITIEK. Beperk uitgaven.` 
+    : `Je hebt nog €${marginAmount.toFixed(2)} ruimte deze maand.`;
+
+  return (
+    <View style={[styles.riskCard, { borderColor: indicatorColor }]}>
+      <Text style={[styles.riskHeader, { color: indicatorColor }]}>
+        {daysText}
+      </Text>
+      <Text style={styles.riskSubheader}>
+        {marginText}
+      </Text>
+      
+      {/* Een simpele visualisatie van de progressie */}
+      <View style={styles.progressBarContainer}>
+        <View style={[
+          styles.progressBar, 
+          { 
+            backgroundColor: indicatorColor, 
+            // Mock de progressie (bijv. 80% als niet kritiek, 20% als kritiek)
+            width: isCritical ? '20%' : '80%', 
+          }
+        ]} />
+      </View>
+
+      <TouchableOpacity 
+        style={[styles.riskActionButton, { backgroundColor: indicatorColor }]}
+        // TODO: Navigeer naar QuickAddExpense scherm
+        onPress={() => console.log('Navigeer naar Snelle Invoer')}
+      >
+        <Text style={styles.riskActionButtonText}>Snelle Uitgave Toevoegen</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+/**
+ * Lijst van de 5 meest recente transacties.
+ */
+const RecentTransactions: React.FC = () => {
+  return (
+    <View style={styles.transactionsContainer}>
+      <Text style={styles.sectionHeader}>Recentste Transacties (Laatste 5)</Text>
+      {MOCK_TRANSACTIONS.map((t) => {
+        const isExpense = t.type === 'Uitgave';
+        const amountDisplay = isExpense ? `-€${Math.abs(t.amount).toFixed(2)}` : `+€${t.amount.toFixed(2)}`;
+        const amountColor = isExpense ? COLORS.secondary : COLORS.primary;
+
+        return (
+          <View key={t.id} style={styles.transactionRow}>
+            <View style={styles.transactionDetails}>
+              <Text style={styles.transactionDescription}>{t.description}</Text>
+              <Text style={styles.transactionDate}>{t.date}</Text>
+            </View>
+            <Text style={[styles.transactionAmount, { color: amountColor }]}>
+              {amountDisplay}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+};
+
+// --- HOOFDCOMPONENT ---
+
+const Dashboard: React.FC = () => {
+  const userName = "Gebruiker"; // Mock
+  const currentDate = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        
+        {/* Header */}
+        <View style={styles.headerContainer}>
+          <Text style={styles.greeting}>Welkom terug, {userName}</Text>
+          <Text style={styles.dateText}>{currentDate}</Text>
+        </View>
+
+        {/* 1. RISICO VISUALISATIE */}
+        <RiskMarginIndicator />
+
+        {/* 2. RECENTE TRANSACTIES */}
+        <RecentTransactions />
+        
+        {/* Opvulling voor scrollruimte */}
+        <View style={{ height: 50 }} />
+        
+      </ScrollView>
+      
+      {/* 3. VASTE ACTIEKOPPEN (Absolute positie onderaan) */}
+      <View style={styles.actionButtonTray}>
+        <TouchableOpacity
+          style={[styles.mainActionButton, styles.detailButton]}
+          // TODO: Navigeer naar Nieuwe Invoer (Detail)
+          onPress={() => console.log('Navigeer naar Detail Invoer')}
+        >
+          <Text style={styles.mainButtonText}>+ Nieuwe Invoer (Detail)</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.mainActionButton, styles.budgetButton]}
+          // TODO: Navigeer naar Budgetten
+          onPress={() => console.log('Navigeer naar Budgetten')}
+        >
+          <Text style={styles.mainButtonText}>📈 Bekijk Budgetten</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+};
+
+// --- STYLING ---
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  scrollContainer: {
+    padding: 20,
+    paddingBottom: 150, // Ruimte voor de vaste knoppenbalk
+  },
+  headerContainer: {
+    marginBottom: 20,
+  },
+  greeting: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#888',
+  },
+
+  // 1. Risicomarge Stijl
+  riskCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 30,
+    borderWidth: 2, // Duidelijke randkleur voor status
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  riskHeader: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 5,
+  },
+  riskSubheader: {
+    fontSize: 16,
+    color: COLORS.text,
+    marginBottom: 15,
+  },
+  progressBarContainer: {
+    height: 10,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 5,
+    overflow: 'hidden',
+    marginBottom: 15,
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 5,
+  },
+  riskActionButton: {
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  riskActionButtonText: {
+    color: COLORS.card,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
+  // 2. Recentste Transacties Stijl
+  transactionsContainer: {
+    backgroundColor: COLORS.card,
+    borderRadius: 15,
+    padding: 15,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 10,
+    paddingLeft: 5,
+  },
+  transactionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  transactionDetails: {
+    flex: 1,
+  },
+  transactionDescription: {
+    fontSize: 16,
+    color: COLORS.text,
+    fontWeight: '500',
+  },
+  transactionDate: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  // 3. Vaste Actieknoppen Stijl
+  actionButtonTray: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+    paddingTop: 10,
+    paddingBottom: 30, // Extra padding voor mobiele home-indicator
+    backgroundColor: COLORS.card,
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 10,
+  },
+  mainActionButton: {
+    flex: 1,
+    padding: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  detailButton: {
+    backgroundColor: COLORS.primary, // Primaire actie
+  },
+  budgetButton: {
+    backgroundColor: COLORS.text, // Donkere, duidelijke knop
+  },
+  mainButtonText: {
+    color: COLORS.card,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+});
+
+export default Dashboard;

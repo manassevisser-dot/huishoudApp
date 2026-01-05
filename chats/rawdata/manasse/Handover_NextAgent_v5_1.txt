@@ -1,0 +1,370 @@
+
+============================================================
+Handover for Next AI Agent — W&I Excel UserForms Wizard (v5.1)
+Owner: Manasse Visser
+Date: 2025-11-25
+Context: Continue at INI step [22_test_frminvoer]; focus on fixing layout on ALL UserForms.
+============================================================
+
+1) AGENT BRIEF (YAML)
+---------------------
+
+```yaml
+agent_brief:
+  owner: "Manasse Visser"
+  project: "W&I Excel UserForms Wizard"
+  context_date: "2025-11-25"
+  current_state:
+    ini_step: "[22_test_frminvoer]"
+    status: "Code compileert; dashboard en sanity-checks aanwezig; layout niet op alle forms correct geladen/uitgelijnd."
+  primary_goal: "Alle UserForms (frmHuishouden, frmVast, frmInvoer, evt. frmDebugDashboard) layout-finetunen zodat posities/sizes volledig datagedreven via Referenties!tblLayoutSpecs werken (zonder hardcoded coords)."
+  secondary_goals:
+    - "Zorgen dat Safe-area (FormLayout.FrmLayoutSafeAreaDyn) consequent wordt aangeroepen na background en control-bouw."
+    - "Hover events (CImgEvents) blijven intact; `_hover` assets werken."
+    - "Background kan optioneel via specs (Key=Background) komen; anders fallback bg_frmInvoer_landscape."
+  assets_and_tables:
+    referenties_sheet_shapes:
+      generic_shapes:
+        - name: "btnShapeSmall"        # + btnShapeSmall_hover
+        - name: "btnShapeMedium"       # + btnShapeMedium_hover
+        - name: "btnShapeLarge"        # + btnShapeLarge_hover
+      background_shape: "bg_frmInvoer_landscape"
+      hover_convention: "baseShape + '_hover'"
+    specs_table:
+      name: "tblLayoutSpecs"
+      required_columns: ["Key", "ShapeName", "Width", "Height", "X", "Y"]
+      example_rows:
+        - {Key: "Prev",    ShapeName: "btnShapeMedium", Width: 80, Height: 28, X: 280, Y: 428}
+        - {Key: "Next",    ShapeName: "btnShapeLarge",  Width: 100, Height: 28, X: 376, Y: 428}
+        - {Key: "Save",    ShapeName: "btnShapeLarge",  Width: 100, Height: 28, X: 486, Y: 428}
+        - {Key: "Cancel",  ShapeName: "btnShapeLarge",  Width: 100, Height: 28, X: 596, Y: 428}
+        - {Key: "RowAdd",  ShapeName: "btnShapeSmall",  Width: 28,  Height: 28, X: 692, Y: 80}
+        - {Key: "RowDel",  ShapeName: "btnShapeSmall",  Width: 28,  Height: 28, X: 724, Y: 80}
+  code_modules_to_use:
+    - "FormHelpers"          # EnsureBackgroundImage, AddShapeAsImage (centrale versie)
+    - "FormLayout"           # FrmLayoutSafeAreaDyn, TryGetControl, TryGetImageDyn
+    - "LayoutSpecsHelpers"   # GetLayoutSpec, PlaceButtonFromSpec, ApplyHoverPicture
+    - "FormEvents"           # BuildDynamicFrmInvoer, HookEventsDynamic
+    - "frmBuilders"          # BuildForm_Huishouden, BuildFrmVast (calls PlaceButtonFromSpec)
+    - "MonthlySheet"         # EnsureConfigSheet, ConfigGet (safe-area parameters)
+    - "modSanityChecks"      # RunAssetSanity(True) voor checks
+  class_modules_to_use:
+    - "CImgEvents"           # hover en click-simulatie
+    - "CCmbEvents"           # category change
+    - "CTxtEvents"           # bedrag validatie
+    - "CBtnEvents"           # fallback, indien nodig
+  known_issues:
+    - "Sommige UserForms roepen FrmLayoutSafeAreaDyn niet of te vroeg aan → controls staan buiten safe-area."
+    - "Sommige builders gebruiken nog hardcoded .Left/.Top i.p.v. PlaceButtonFromSpec → inconsistenties."
+    - "Resize-event ontbreekt of staat te vroeg/laat → layout valt terug."
+  tasks:
+    - id: "LAY-001"
+      title: "Uniformeer button-plaatsing via specs op elk frm"
+      actions:
+        - "Voor elk frm*: vervang handmatige Image/CommandButtons-plaatsing door LayoutSpecsHelpers.PlaceButtonFromSpec volgens Keys."
+        - "Gebruik BuildButtonsFromSpecs waar mogelijk (Prev/Next/Save/Cancel bundel)."
+      target_forms: ["frmHuishouden", "frmVast", "frmInvoer"]
+    - id: "LAY-002"
+      title: "Zorg voor juiste aanroepvolgorde"
+      actions:
+        - "UserForm_Initialize: eerst EnsureBackgroundImage(Me), daarna controls bouwen, daarna BuildButtonsFromSpecs/PlaceButtonFromSpec, daarna FrmLayoutSafeAreaDyn(Me), en pas dan HookEventsDynamic(Me)."
+        - "UserForm_Resize: roep FrmLayoutSafeAreaDyn(Me) aan."
+    - id: "LAY-003"
+      title: "Fix Hover"
+      actions:
+        - "Bevestig dat img.Tag wordt gezet op 'base=...\\nhover=...' in PlaceButtonFromSpec."
+        - "Controleer dat *_hover shapes bestaan; sanity-check moet OK zijn."
+    - id: "LAY-004"
+      title: "Optionele Background via specs"
+      actions:
+        - "Voeg Key=Background in tblLayoutSpecs toe (ShapeName=bg_frmInvoer_landscape)."
+        - "Gebruik helper GetBackgroundShapeNameFromSpecs in FormBackground.GetBackgroundPath met fallback."
+  acceptance_criteria:
+    - "Geen hardcoded posities/sizes in frm-modules voor knoppen; alles uit tblLayoutSpecs."
+    - "FrmLayoutSafeAreaDyn corrigeert veldposities zichtbaar en consequent (ook bij Resize)."
+    - "Hover vizueel binnen 100ms; `_hover` assets worden gebruikt."
+    - "Sanity-check: geen FOUT; waarschuwing alleen als hover shapes missen."
+  test_plan:
+    - "Open elk frm → visuele inspectie posities/buttons → hover proef."
+    - "Resize het form → posities blijven kloppen dankzij FrmLayoutSafeAreaDyn."
+    - "Sanity-check via dashboard → verwacht OK."
+  deliverables:
+    - "Patchs: frmHuishouden.frm, frmVast.frm, frmInvoer.frm (code-behind Initialize/Resize aangepast)"
+    - "Log: Sanity-report (txtStatus of MsgBox)"
+```
+1.2)
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:28	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:28	FormLayout	FrmLayoutSafeAreaDyn	[380] Kan de eigenschap Width niet instellen. Ongeldige eigenschappenwaarde.  Voer een waarde in groter dan of gelijk aan nul.
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:29	FormLayout	FrmLayoutSafeAreaDyn	[380] Kan de eigenschap Width niet instellen. Ongeldige eigenschappenwaarde.  Voer een waarde in groter dan of gelijk aan nul.
+26-11-2025 01:29	FormLayout	RemoveDynamicControls	"[-2147352571] Type komt niet overeen.
+"
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:29	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:30	FormLayout	RemoveDynamicControls	"[-2147352571] Type komt niet overeen.
+"
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetLayoutSpec	[13] Typen komen niet met elkaar overeen
+26-11-2025 01:30	LayoutSpecsHelpers	GetShapePath	[-2147467259] Methode Copy van object Shape is mislukt
+
+
+2) STARTPROMPT (PLAATS DIT ALS EERSTE PROMPT)
+--------------------------------------------
+
+```
+Je bent de volgende AI‑agent voor het W&I Excel UserForms Wizard project van Manasse Visser. We gaan direct verder bij INI stap [22_test_frminvoer] en richten ons op het fixen van de layout op ALLE UserForms. 
+
+Doel:
+- Maak de layout volledig datagedreven via Referenties!tblLayoutSpecs (Keys: Prev, Next, Save, Cancel, RowAdd, RowDel → ShapeName: btnShapeSmall/Medium/Large).
+- Verwijder hardcoded .Left/.Top/.Width/.Height voor knoppen in alle frm-code; gebruik LayoutSpecsHelpers.PlaceButtonFromSpec of BuildButtonsFromSpecs.
+- Zorg dat de aanroepvolgorde per frm is: EnsureBackgroundImage(Me) → controls bouwen → PlaceButtonFromSpec/BuildButtonsFromSpecs → FrmLayoutSafeAreaDyn(Me) → HookEventsDynamic(Me).
+- In UserForm_Resize altijd FrmLayoutSafeAreaDyn(Me) aanroepen.
+- Hover moet werken (CImgEvents); Tag 'base=... \n hover=...' staat op de Image.
+
+Assets:
+- Shapes op Referenties: btnShapeSmall/_hover, btnShapeMedium/_hover, btnShapeLarge/_hover, bg_frmInvoer_landscape.
+- Tabel: Referenties!tblLayoutSpecs met Key, ShapeName, Width, Height, X, Y.
+
+Actie:
+- Pas de Initialize/Resize code-behind aan voor: frmHuishouden, frmVast, frmInvoer.
+- Draai de sanity-check (modSanityChecks.RunAssetSanity True) en corrigeer ontbrekende shapes/keys.
+- Lever de patches van de drie frm-modules en noteer wat je hebt gewijzigd.
+
+Acceptatie:
+- Geen hardcoded coords in frm-modules voor knoppen.
+- Layout valt zichtbaar in de safe-area; resize herpositioneert netjes.
+- Hover werkt binnen ~100ms.
+
+Begin nu met frmHuishouden → dan frmVast → dan frmInvoer. Geef per form: wat je hebt aangepast, welke Keys geplaatst zijn, en een korte visuele check-output.
+```
+
+
+3) CONCRETE FIX-OPDRACHT PER USERFORM (CODEPATCHES)
+---------------------------------------------------
+
+A) frmHuishouden — Initialize & Resize
+```vba
+Private Sub UserForm_Initialize()
+  On Error GoTo ErrHandler
+  FormHelpers.EnsureBackgroundImage Me      ' 1) background eerst
+  frmBuilders.BuildForm_Huishouden Me       ' 2) bouw controls
+  LayoutSpecsHelpers.BuildButtonsFromSpecs Me ' 3) knoppen uit specs (Prev/Next/Cancel)
+  FormLayout.FrmLayoutSafeAreaDyn Me        ' 4) safe-area plaatsing (labels/inputs en knoppen)
+  FormEvents.HookEventsDynamic Me           ' 5) hover/click events
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "frmHuishouden", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+  On Error GoTo ErrHandler
+  FormLayout.FrmLayoutSafeAreaDyn Me
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "frmHuishouden", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+```
+
+B) frmVast — Initialize (MultiPage) & Resize
+```vba
+Private Sub UserForm_Initialize()
+  On Error GoTo ErrHandler
+  FormHelpers.EnsureBackgroundImage Me
+  frmBuilders.BuildFrmVast Me                        ' bouw de MultiPage + page-titels
+  ' Plaats knoppen via specs:
+  LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnVorige",   "Prev"
+  LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnVolgende", "Next"
+  LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnOpslaan",  "Save"
+  LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnAnnuleren","Cancel"
+  ' Row knoppen (Small)
+  LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgAddRow", "RowAdd"
+  LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgDelRow", "RowDel"
+  FormLayout.FrmLayoutSafeAreaDyn Me                ' safe-area voor de hoofdform; (page controls positioneer je in builders)
+  FormEvents.HookEventsDynamic Me
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "frmVast", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+  On Error GoTo ErrHandler
+  FormLayout.FrmLayoutSafeAreaDyn Me
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "frmVast", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+```
+
+C) frmInvoer — Initialize & Resize
+```vba
+Private Sub UserForm_Initialize()
+  On Error GoTo ErrHandler
+  FormEvents.BuildDynamicFrmInvoer Me    ' bouw dynamisch (labels, combo's, txt)
+  LayoutSpecsHelpers.BuildButtonsFromSpecs Me
+  FormLayout.FrmLayoutSafeAreaDyn Me
+  FormEvents.HookEventsDynamic Me
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "frmInvoer", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+  On Error GoTo ErrHandler
+  FormLayout.FrmLayoutSafeAreaDyn Me
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "frmInvoer", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+```
+
+D) Optionele Background via specs (helpers)
+```vba
+' LayoutSpecsHelpers — add helper
+Public Function GetBackgroundShapeNameFromSpecs() As String
+    On Error Resume Next
+    GetBackgroundShapeNameFromSpecs = CStr(GetLayoutSpec("Background", "ShapeName"))
+End Function
+```
+```vba
+' FormBackground — use helper with fallback
+Public Function GetBackgroundPath() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    If wsRef Is Nothing Then Exit Function
+    Dim bgShapeName As String
+    bgShapeName = LayoutSpecsHelpers.GetBackgroundShapeNameFromSpecs()
+    If Len(bgShapeName) = 0 Then bgShapeName = "bg_frmInvoer_landscape"  ' fallback
+    Dim shp As Shape: Set shp = wsRef.Shapes(bgShapeName)
+    If shp Is Nothing Then Exit Function
+    Dim tmp As String
+    tmp = Utils.GetTempFile("frmInvoer_bg", ".jpg")
+    Dim ch As ChartObject
+    Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=shp.Width, Height:=shp.Height)
+    shp.Copy: ch.Activate: ch.Chart.Paste
+    ch.Chart.Export tmp, "JPG": ch.Delete
+    If Dir(tmp) <> "" Then GetBackgroundPath = tmp
+    Exit Function
+ErrHandler:
+    Utils.LogError4 "FormBackground", "GetBackgroundPath", Err.Number, Err.Description
+End Function
+```
+
+
+4) VALIDATIE & TESTPLAN
+-----------------------
+- Sanity‑check via dashboard: `modSanityChecks.RunAssetSanity True` → verwacht **OK**; bij **FOUT**: fix shapes of specs.
+- Visueel: open elk frm, beweeg muis over knoppen → `_hover` zichtbaar binnen 100ms; knoppen staan exact op X/Y uit `tblLayoutSpecs`.
+- Resize: verander form-grootte → Safe-area herpositioneert labels/inputs/knoppen correct.
+- ErrorLog: blijft leeg of toont gecontroleerde warnings; geen runtime crashes.
+
+
+5) AUTO-RUN PROMPT (UIT TE VOEREN NA LEZEN DOOR DE AGENT)
+---------------------------------------------------------
+
+```
+Voer nu deze acties uit:
+1) frmHuishouden: pas Initialize/Resize aan volgens de patches; verwijder hardcoded knoppen-coördinaten; plaats knoppen via tblLayoutSpecs Keys (Prev/Next/Cancel). Draai Sanity-check en rapporteer.
+2) frmVast: idem; plaats Prev/Next/Save/Cancel + RowAdd/RowDel via specs; zorg dat FrmLayoutSafeAreaDyn(Me) correct wordt aangeroepen; rapporteer.
+3) frmInvoer: idem; bevestig BuildButtonsFromSpecs + FrmLayoutSafeAreaDyn + HookEventsDynamic; hover moet zichtbaar werken.
+4) Optioneel: voeg Key=Background in tblLayoutSpecs en activeer helper voor FormBackground.
+5) Lever de drie frm‑patches en een korte visuele check-output (OK/LET OP/FOUT per form).
+```
+
+============================================================
+END OF FILE — Handover for Next AI Agent (v5.1)
+============================================================

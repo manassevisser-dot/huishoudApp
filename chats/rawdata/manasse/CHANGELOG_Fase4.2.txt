@@ -1,0 +1,20 @@
+CHANGELOG - Fase 4.2 (Molecules)
+====================================
+Datum: 2025-11-30
+
+✅ Toegevoegde Molecules:
+- FormHeader (Heading2 + BodyText + Progressbar)
+- NumberStepper (volledige styling, disabled states)
+- SalaryInputGroup (flex-layout 70%/30%, CurrencyInput + SegmentedControl)
+- ToggleCard (active state met border en achtergrond, checkbox-indicator)
+- YNQuestionCard (Heading2 + SegmentedControl voor Ja/Nee)
+
+✅ Verbeteringen t.o.v. vorige versie:
+- Volledige JSX toegevoegd (geen skeletons)
+- Heading2 en BodyText correct toegepast
+- Responsieve flex-layout voor SalaryInputGroup
+- Active state styling voor ToggleCard
+- Progressbar in FormHeader geïmplementeerd
+- Props type-safe gemaakt
+
+

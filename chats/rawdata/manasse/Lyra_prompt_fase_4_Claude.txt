@@ -1,0 +1,142 @@
+
+Lyra Prompt: Financiële Vrijheid Budget App — FASE 4 (Start) • Eén-uitvoer opdracht voor Claude
+
+ROL
+Je bent een senior Full-Stack/Mobile Developer én UX/UI Expert. Je neemt Fase 4 over voor een mobiele budget-app die stress reduceert en snelle, eenvoudige financiële actie stimuleert.
+
+CONTEXT & ARCHITECTUUR
+• Frontend: React Native (Expo) met TypeScript.
+• Backend/Data: Supabase (Authenticatie & Database, Postgres + RLS policies). 
+• Quick Add backend: n8n Webhook (productie endpoint). 
+• Doelgroep: mensen met (financiële) stress; focus op toegankelijkheid, kalme UI, lage cognitieve belasting, snelle handeling (max. 2 kliks voor Quick Add: Bedrag + Categorie).
+• Belangrijke UX/UI principes: minimalisme, hoog contrast waar nodig, grote touch-targets, leesbaarheid (sans-serif/system font), kalme kleuren, geen veroordelende toon.
+
+DATA & SCHEMA (transactions)
+Kolommen (Postgres/Supabase):
+- id (uuid, PK, default gen_random_uuid())
+- user_id (uuid, NOT NULL, FK naar auth.users.id)
+- created_at (timestamptz, NOT NULL, default now())
+- date (date, NOT NULL)
+- amount (numeric, NOT NULL)
+- category (text, NOT NULL)
+- subcategory (text, OPTIONAL of NOT NULL per ontwerp, kies consistent)
+- description (text, NOT NULL)
+- type (text, NOT NULL: 'Income' | 'Expense' of 'Inkomst' | 'Uitgave')
+
+API & INTEGRATIE-EISEN
+• Gebruik de n8n **productie** Webhook (niet de test-URL). 
+• Plaats een placeholder voor de user-id en de Webhook URL, en gebruik die in de code.
+  - USER_ID placeholder: "USER_ID_PLACEHOLDER" (UUID-string)
+  - WEBHOOK URL placeholder: "WEBHOOK_URL_PLACEHOLDER" (pad: /webhook/transactions)
+• POST JSON naar de Webhook met headers: { 'Content-Type': 'application/json' }.
+• Respons: verwacht 200 OK + JSON { status: "success", message: "Transaction received." } (toon melding bij succes/fout).
+• Houd rekening met CORS (client gebruikt fetch; webhook moet JSON teruggeven; client toont fallback-melding bij netwerkfout).
+
+FUNCTIONELE EISEN FASE 4
+1) Ontwerp UX/UI-flow voor:
+   a. Dashboard (Analyse): actiegericht, niet veroordelend; visualiseer de “risicomarge” (uit Fase 3) op kalme, motiverende wijze.
+   b. Dagelijkse Invoer (Quick Add Expense): minimale velden; 2 kliks (Bedrag + Categorie) voor snelle invoer; aanvullende velden toegankelijk via uitklap of vervolg.
+2) Lever een Design System-voorstel: kleurenpalet (kalme tinten), typografie (sans-serif/system), spacing/komponenten, states.
+3) Schrijf volledige, schone React Native TypeScript code voor een component **TransactionInput** met velden: date, amount, category, subcategory, description, type.
+   - Default date = vandaag.
+   - Bedrag-invoer met numerieke keyboard.
+   - Categorie/subcategorie-selectie met duidelijke chips/knoppen.
+   - Type-toggle (Income/Expense of Inkomst/Uitgave) met heldere affordance.
+   - Opslaan-knop die via fetch() POST naar WEBHOOK_URL_PLACEHOLDER verstuurt, payload:
+     {
+       "user_id": "USER_ID_PLACEHOLDER",
+       "date": "YYYY-MM-DD",
+       "amount": <number>,
+       "category": "...",
+       "subcategory": "...",
+       "description": "...",
+       "type": "Expense" | "Income"
+     }
+   - Toon success (groene toast/snackbar) of fout (rode toast/snackbar) en reset relevante velden bij succes.
+   - Geen externe UI-libraries; gebruik RN/Expo standaardcomponenten.
+   - Code moet direct werken in Expo Snack (import React, React Native, TypeScript types, geen Node-only APIs).
+4) Accessibility: focus states, labels, aria-analogen (RN-AccessibilityProps), voldoende tap-targets (min 44px), kleurcontrast AA.
+5) Performance & offline: eenvoudige retry (één extra poging) en non-blocking UI; optioneel een kleine in-memory queue als netwerk wegvalt (beschrijf ontwerp kort).
+6) Copywriting: motiverende, niet-veroordelende teksten.
+7) Testplan: beschrijf handmatige testcases voor UI, validatie, netwerkfouten, en correcte JSON.
+
+CONSTRAINTS & ACCEPTATIECRITERIA
+• Eén-uitvoer document; self-contained; geen vervolgvraag nodig.
+• Alle code in TypeScript, geschikt voor Expo Snack; geen extra packages.
+• JSON keys moeten exact overeenkomen met het schema hierboven.
+• Gebruik productiepaden: /webhook/transactions (in placeholder WEBHOOK_URL_PLACEHOLDER).
+• Toon voorbeeld payload en fetch-config.
+• Leg uit hoe het ontwerp de 2-klik Quick Add ambitie haalt.
+• Vermijd hardcoderen van geheimen; alleen placeholders voor USER_ID en WEBHOOK URL.
+• Houd het taalgebruik en labeling consistent (NL of EN kiezen en consequent toepassen; mag NL).
+
+VERWACHTE OUTPUTSTRUCTUUR (geleverd door Claude, in één bestand)
+1. Executive Summary
+   - Korte beschrijving van doelen Fase 4 en kernbeslissingen.
+
+2. UX/UI Flow & Wireframes (tekstueel en eventueel ASCII)
+   - 2.1 Dashboard (Analyse): user journey, informatiehiërarchie, componenten, risicomarge-weergave (kalme, actiegerichte visuals).
+   - 2.2 Dagelijkse Invoer (Quick Add): stappen (2 kliks), foutpreventie, hints, states.
+
+3. Design System
+   - 3.1 Kleurenpalet (hex-codes) voor primaire, secundaire, achtergrond, success, warning, error.
+   - 3.2 Typografie (system sans-serif), sizes, line-height, toegankelijkheidsrichtlijnen.
+   - 3.3 Spacing & component states (hover/pressed/disabled), iconenbeleid.
+
+4. Accessibility Checklist
+   - Contrast, tap-targets, screen reader labels, focus order, haptics/feedback.
+
+5. React Native (TypeScript) – Volledige Componentcode: TransactionInput
+   - Volledige TSX-code (geformatteerd) zonder externe libs, geschikt voor Expo Snack.
+   - Functies: validatie, datumbepaling (vandaag), numerieke invoer, type-toggle, categorie chips.
+   - fetch() POST naar WEBHOOK_URL_PLACEHOLDER met Content-Type: application/json.
+   - Afhandeling: success/failure UI feedback; reset logica; minimale retry.
+
+6. API Integratie & Payload
+   - 6.1 Voorbeeld JSON payload (exacte keys/typen).
+   - 6.2 Voorbeeld fetch-config (headers/body) met placeholders.
+   - 6.3 Eventuele CORS-consideraties en aanbevolen response headers (serverkant) voor JSON.
+
+7. Testplan
+   - Scenarios: correcte insert, validatiefout, netwerkfout, CORS, verkeerde headers, RLS-blokkade (indien van toepassing via server), en herstel.
+
+8. Copywriting (microcopy)
+   - Labels, knopteksten, foutmeldingen, succesmeldingen (kalme toon, motiverend).
+
+9. Toelichting 2-Klik Quick Add
+   - Hoe UI dit bereikt; welke defaults/shortcuts; waarom dit stress verlaagt.
+
+10. Toekomstige uitbreidingen (kort)
+   - Offline queue robuuster, categorie-leren (frequentie), lokale analytics, themas.
+
+BIJLAGEN (in document opnemen)
+• A. Voorbeeld payload (NL):
+  {
+    "user_id": "USER_ID_PLACEHOLDER",
+    "date": "2025-11-29",
+    "amount": 99.95,
+    "category": "Vervoer",
+    "subcategory": "Brandstof",
+    "description": "Tankbeurt aan de pomp",
+    "type": "Uitgave"
+  }
+• B. Voorbeeld fetch (RN/TS):
+  const WEBHOOK_URL = "WEBHOOK_URL_PLACEHOLDER";
+  const payload = { /* zoals A. */ };
+  const res = await fetch(WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  // verwacht 200 OK met JSON { status: "success", message: "Transaction received." }
+
+AANVULLENDE RICHTLIJNEN VOOR CLAUDE
+• Lever alles in één samenhangend document, met heldere sectiekoppen zoals hierboven.
+• Gebruik duidelijke NL-terminologie in UI (bijv. "Opslaan", "Bedrag", "Categorie").
+• Schrijf code die compileert in Expo Snack en geen niet-mobiele Node APIs gebruikt.
+• Licht keuzes beknopt toe; vermijd overcomplexiteit.
+• Houd rekening met privacy (geen hardcoded secrets), en met RLS aan de serverkant.
+• Als een keuze afhankelijk is van implementatiedetail (bijv. subcategory verplicht of optioneel), documenteer je aanname en maak het consistent.
+
+EINDDOEL
+Eén opleverbestand met: UX/UI flow, design system, accessibility checklist, volledige TransactionInput componentcode (TSX), API-integratiebeschrijving + payload, testplan, microcopy, 2-klik Quick Add toelichting en korte roadmap.

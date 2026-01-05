@@ -1,0 +1,44 @@
+
+DIFFLIST – Layout Specs Integration (Shapes Reuse + Hover + Table-driven)
+Generated: 2025-11-24T23:29:48
+============================================================
+1) Referenties sheet – Create tblLayoutSpecs
+   Columns: Key | ShapeName | Width | Height | X | Y | DefaultColor | HoverColor | Notes
+   Add rows for Prev, Next, Save, Cancel, RowAdd, RowDel with sizes per layout_grid_specs.
+
+2) Shapes – Standardize base & hover variants
+   Create shapes:
+     btnShapeSmall, btnShapeSmall_hover
+     btnShapeMedium, btnShapeMedium_hover
+     btnShapeLarge, btnShapeLarge_hover
+   Ensure visual colors match DefaultColor/HoverColor in tblLayoutSpecs.
+
+3) New module – LayoutSpecsHelpers.bas (use LayoutSpecsHelpers.txt)
+   Add functions:
+     GetLayoutSpec(key, field)
+     GetShapePath(shapeName, suffix)
+     PlaceButtonFromSpec(frm, controlName, key)
+     ApplyHoverPicture(frm, controlName)
+     ResetHoverPicture(frm, controlName)
+   All functions include ErrHandler and Utils.LogError4 logging.
+
+4) FormEvents – Use table-driven buttons
+   In BuildDynamicFrmInvoer / BuildFrmVast pages:
+     Replace AddShapeAsImage calls with BuildButtonsFromSpecs(frm)
+     OR explicitly PlaceButtonFromSpec for each control
+
+5) Hover behavior – Add image event class
+   Create class CImgEvents with WithEvents Image:
+     - Image_MouseMove → LayoutSpecsHelpers.ApplyHoverPicture
+     - Form_MouseMove  → LayoutSpecsHelpers.ResetHoverPicture
+   Hook in HookEventsDynamic for each image button.
+
+6) Remove hardcoded coordinates
+   Replace any fixed Left/Top/Width/Height for buttons with values from tblLayoutSpecs via GetLayoutSpec.
+
+7) QA/Acceptance
+   - Verify reusable shapes render consistently across forms
+   - Hover swap occurs within 100ms
+   - Builders read all positions/sizes from table
+   - Logging present on all new helpers and image events
+============================================================

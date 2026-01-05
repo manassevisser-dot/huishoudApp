@@ -1,0 +1,236 @@
+#handover_copilot_v2.yaml // OLD VERSION - Just read to understand what we're doing.
+agent: next_agent
+owner: Manasse Visser
+project: W&I Excel UserForms Wizard
+version: 2.0
+timestamp: 2025-11-24T20:16:12Z
+
+files:
+  - layout_grid_specs.txt
+  - diff_layout_grid.txt
+  - helper_routines.txt
+  - vba_stubs_all_forms.txt
+  - diff_fullcode_bestpractices.txt
+  - handover_next_agent_copilot.txt
+
+forms:
+  - name: frmHuishouden
+    type: UserForm
+    step: 1
+  - name: frmVast
+    type: UserForm MultiPage
+    steps:
+      - Inkomsten (page 0)
+      - Uitgaven (page 1)
+  - name: frmInvoer
+    type: UserForm (Dagelijkse)
+    step: 4
+
+layout:
+  safe_area: {left:12, top:12, width:776, height:476}
+  grid: baseline:8, row_height:36, gutter:24
+  controls:
+    buttons:
+      - id: btnVorigeShape, size: {width:80, height:28}
+      - id: btnVolgendeShape, size: {width:100, height:28}
+      - id: btnOpslaanShape, size: {width:100, height:28}
+      - id: btnAnnulerenShape, size: {width:100, height:28}
+      - id: btnRowAddShape, size: {width:28, height:28}
+      - id: btnRowDelShape, size: {width:28, height:28}
+
+templates:
+  row_offsets: {start_top:80, delta_y:36}
+  page_0: income row template
+  page_1: expense row template
+
+assets:
+  sheet: Referenties
+  shapes:
+    - bg_frmInvoer_landscape
+    - btnVorigeShape
+    - btnVolgendeShape
+    - btnOpslaanShape
+    - btnAnnulerenShape
+    - btnRowAddShape
+    - btnRowDelShape
+
+tables:
+  - name: tblCategorieen
+    sheet: Referenties
+  - name: tblSubcategorieen
+    sheet: Referenties
+  - name: tbl_payment
+    sheet: Referenties
+  - name: ErrorLog
+    sheet: error_log
+    schema: [Timestamp, FormName, Module, Description]
+
+helper_modules:
+  - FormHelpers: [ShapeExists, AddShapeAsImage, LoadImagePNG, LockWindowUpdate, EnsureBackgroundImage]
+  - Utils: [ParseAmount, ToMonthlyAmount]
+
+validation_rules:
+  frmHuishouden:
+    - Adults + Children == TotalPersons
+    - TotalPersons ≤ 8, ≥ 1
+  frmVast:
+    - Each row must have Period + Amount > 0
+    - MonthlyTotal calculated live via Utils.ToMonthlyAmount
+  frmInvoer:
+    - Amount > 0
+    - Category required
+
+navigation:
+  frmHuishouden → frmVast.Page0
+  frmVast.Page0.Next → Page1
+        .Prev → frmHuishouden
+  frmVast.Page1.Next → frmInvoer
+        .Prev → frmVast.Page0
+  frmInvoer.Prev → frmVast.Page1
+
+acceptance_criteria:
+  - All forms load with background and safe-area
+  - Shapes appear as images, fallback to CommandButton
+  - TabIndex flows logically left-to-right, top-to-bottom
+  - Live row addition/removal works, Next/Prev enable/disable appropriately
+  - Validate edge cases: “only one adult”, “pregnant or chestfeeding person”
+  - Closing via [X] prompts confirmation if unsaved
+
+test_plan:
+  scenarios:
+    - name: only_one_adult
+      actions: [enter TotalPersons=1, select Adult on, no children]
+      expect: Next enabled, frmVast opens
+    - name: two_adults_one_child
+      actions: [TotalPersons=3, Adults=2, Children=1]
+      expect: sums validate, navigation works
+    - name: pregnant_person
+      actions: [select pregnant checkbox, Adults=1]
+      expect: uses neutral label “pregnant or chestfeeding person”
+    - name: no_fixed_income
+      actions: [leave income rows empty, check “No fixed income” flag]
+      expect: Next enabled, monthly total = 0
+    - name: several_pages_navigation
+      actions: navigate through Prev/Next across forms, then close
+      expect: correct show/hide backtracking, cancel returns to sheet
+
+best_practices:
+  instructions_format: Markdown + YAML is preferred
+  agent_manifest: JSON schema v1.4+ or YAML supported by Copilot Studio
+  prompt_file: use `.prompt.md` frontmatter YAML for VSCode Copilot
+
+====
+
+#handover_copilot_v3.yaml
+agent: next_agent
+owner: Manasse Visser
+project: W&I Excel UserForms Wizard
+version: 3.0
+timestamp: 2025-11-24T23:29:48
+
+updates:
+  shape_reuse_strategy:
+    sizes:
+      small: { width: 28, height: 28, base: btnShapeSmall, hover: btnShapeSmall_hover }
+      medium: { width: 80, height: 28, base: btnShapeMedium, hover: btnShapeMedium_hover }
+      large: { width: 100, height: 28, base: btnShapeLarge, hover: btnShapeLarge_hover }
+    mapping:
+      Prev: { size: medium, base: btnShapeMedium, hover: btnShapeMedium_hover }
+      Next: { size: large,  base: btnShapeLarge,  hover: btnShapeLarge_hover }
+      Save: { size: large,  base: btnShapeLarge,  hover: btnShapeLarge_hover }
+      Cancel:{ size: large,  base: btnShapeLarge,  hover: btnShapeLarge_hover }
+      RowAdd:{ size: small,  base: btnShapeSmall,  hover: btnShapeSmall_hover }
+      RowDel:{ size: small,  base: btnShapeSmall,  hover: btnShapeSmall_hover }
+
+  hover_behavior:
+    event: MouseMove
+    default_picture: base shape image
+    hover_picture:  hover shape image
+    reset_on_form_mousemove: true
+    
+    SafeArea: 2) In FormLayout.FrmLayoutSafeAreaDyn, ensure controls are positioned within safe area (Left=12, Top=12, Width=776, Height=476). > wasn't able to locate where to change these settings - before tblLayoutSpecs-update
+
+
+  layout_table:
+    name: tblLayoutSpecs
+    sheet: Referenties
+    schema:          ### NOTE for new M365 Copilot> added by Manasse> to consider: optional key for bg_landscape as a shape instead of jpg
+      - Key          # logical key (Prev, Next, Save, Cancel, RowAdd, RowDel, StepTitle, etc.)
+      - ShapeName    # base shape to export as image
+      - Width        # points
+      - Height       # points
+      - X            # Left position in points
+      - Y            # Top position in points
+      - DefaultColor # optional hex or named
+      - HoverColor   # optional hex or named
+      - Notes        # optional
+    example_rows:
+      - [Prev,   btnShapeMedium, 80,  28, 280, 428, "#0078D4", "#3399FF", "Previous button"]
+      - [Next,   btnShapeLarge,  100, 28, 376, 428, "#0078D4", "#3399FF", "Next button"]
+      - [Save,   btnShapeLarge,  100, 28, 486, 428, "#107C10", "#28A745", "Save button"]
+      - [Cancel, btnShapeLarge,  100, 28, 596, 428, "#A80000", "#D83B01", "Cancel button"]
+      - [RowAdd, btnShapeSmall,   28, 28, 692,  80, "#0078D4", "#3399FF", "+ row"]
+      - [RowDel, btnShapeSmall,   28, 28, 724,  80, "#A80000", "#D83B01", "- row"]
+## Written this part in CSS, to try and define what Manasse did - exept for yaml #'s
+##/*ALL SHAPES: color scheme. Added defaultvalue-line to cells in DefaultColor and same for Hoover */
+## default{
+##	background-color: #EFF2F; border: 2pt; border-color: #514AC9;
+##}
+## hoover{
+##	background-color: #C1CDFF; border: 2,5pt; border-color: #514AC9;/* there's a glow around the shape: color: #267DE6 // 4pt // oppacitiy 60% <-- i dont know how to explain in code*/
+##}
+
+integration:
+  builders_use_table: true
+  functions:
+    - GetLayoutSpec(shapeName, fieldName)
+    - GetShapePath(shapeName, suffix)
+    - PlaceButtonFromSpec(frm, controlName, baseKey)
+    - ApplyHoverPicture(frm, controlName)
+    - ResetHoverPicture(frm, controlName)
+  event_classes:
+    - CImgEvents (Image MouseMove)  # adds hover swap; hook in FormEvents.HookEventsDynamic
+
+forms:
+  frmHuishouden:
+    buttons:
+      - { control: imgBtnVorige,   key: Prev }
+      - { control: imgBtnVolgende, key: Next }
+      - { control: imgBtnAnnuleren,key: Cancel }
+  frmVast_page0:
+    buttons:
+      - { control: imgBtnVorige,   key: Prev }
+      - { control: imgBtnVolgende, key: Next }
+      - { control: imgBtnOpslaan,  key: Save }
+      - { control: imgBtnAnnuleren,key: Cancel }
+    row_buttons:
+      - { control: imgAddRow, key: RowAdd }
+      - { control: imgDelRow, key: RowDel }
+  frmVast_page1:
+    buttons:
+      - { control: imgBtnVorige,   key: Prev }
+      - { control: imgBtnVolgende, key: Next }
+      - { control: imgBtnOpslaan,  key: Save }
+      - { control: imgBtnAnnuleren,key: Cancel }
+    row_buttons:
+      - { control: imgAddRow, key: RowAdd }
+      - { control: imgDelRow, key: RowDel }
+  frmInvoer:
+    buttons:
+      - { control: imgBtnVorige,   key: Prev }
+      - { control: imgBtnOpslaan,  key: Save }
+      - { control: imgBtnAnnuleren,key: Cancel }
+
+acceptance:
+  reusable_shapes: true
+  hover_visual_change: visible within 100ms on mouseover
+  layout_driven: all positions/sizes come from tblLayoutSpecs
+  no_hardcoded_coords: in builders
+  logging: Utils.LogError4 used in helpers and event handlers
+
+next_tasks_for_agent:
+  - Create/Update Referenties!tblLayoutSpecs with schema above
+  - Add LayoutSpecsHelpers module from LayoutSpecsHelpers.txt
+  - Modify FormEvents to use PlaceButtonFromSpec + hover events (CImgEvents)
+  - Verify all builders read positions/sizes from tblLayoutSpecs
+

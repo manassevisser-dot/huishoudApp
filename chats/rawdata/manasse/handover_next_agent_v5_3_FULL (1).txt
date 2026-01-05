@@ -1,0 +1,2070 @@
+============================================================
+LYRA OPTIMIZED STARTPROMPT FOR NEXT AI AGENT
+============================================================
+You are Lyra, an AI prompt optimization specialist. Your role: interpret this handover and execute QA tasks.
+Follow DETAIL mode: clarify, verify, and optimize VBA code for W&I Excel UserForms Wizard.
+After reading, perform these steps:
+1) Validate Shape.Export patch and fallback logic.
+2) Run extended validator macro (modLayoutValidator).
+3) Ensure Initialize/Resize code matches specs for frmHuishouden, frmVast, frmInvoer.
+4) Confirm hover and safe-area behavior.
+5) Document findings and update handover.
+============================================================
+
+# STARTPROMPT VOOR VOLGENDE AGENT (uitvoeren bij inlezen)
+```
+Je bent de volgende AI-agent voor het W&I Excel UserForms Wizard project van Manasse Visser.
+We gaan verder met layout-versteviging en QA.
+
+Acties:
+1) Verifieer dat FormBackground.GetBackgroundPath de Shape.Export patch bevat (met ChartObject fallback).
+2) Draai de dashboard Sanity-check en de ValidateLayoutSpecs macro. Fix alles wat niet OK is.
+3) Controleer de drie forms (frmHuishouden, frmVast, frmInvoer):
+   - Initialize/Resize code zoals in deze handover (copy-paste indien nodig).
+   - Knoppen via tblLayoutSpecs (Prev/Next/Save/Cancel/RowAdd/RowDel).
+4) Test hover (CImgEvents) en resize gedrag (FrmLayoutSafeAreaDyn).
+5) Documenteer eventuele bevindingen in ErrorLog, update deze handover bij nieuwe wijzigingen.
+Acceptatie:
+- Achtergrond en knoppen renderen correct (geen wit vlak).
+- Geen hardcoded coords; alles datagedreven.
+- Sanity-check: OK.
+```
+
+Helemaal goed—hier is een **aanvulling op de mini validator macro** die méér controle doet dan alleen kolommen & shape‑bestaan:
+
+*   ✅ **Specs‑integriteit**: verplichte kolommen aanwezig; rijen voor alle keys gevuld (Key, ShapeName, Width, Height, X, Y).
+*   ✅ **Shapes (base + hover)**: check dat voor elke knop de **base‑shape** bestaat en optioneel de **hover‑variant** (`base + "_hover"`).
+*   ✅ **Form‑controls**: loop door Image‑knoppen op het **actieve UserForm** en valideer de `Tag`: bevat `base=` en **indien van toepassing** `hover=`; check of die shapes écht bestaan.
+*   ✅ **Achtergrond export**: test `FormBackground.GetBackgroundPath` en meldt of het pad een **niet‑lege** JPG oplevert.
+*   ✅ **Resultaat**: samengevat in een MsgBox **én** (indien aanwezig) in `frmDebugDashboard.txtStatus`.
+
+> **Waar plak je deze?** In een nieuwe **standaardmodule** genaamd `modLayoutValidator` (of voeg toe aan de bestaande).  
+> **Hoe start je ‘m?** Via de knop op jouw `frmDebugDashboard` zoals hieronder bij **HOWTO**.
+
+***LAST MINITUE TOEVOEGINGEN
+
+## 🔧 Uitgebreide mini validator macro (VBA)
+
+```vba
+
+
+'=========================
+' MODULE: modLayoutValidator (extended)
+'=========================
+Option Explicit
+
+' Publieke entry-point: voert alle checks uit en geeft een compact rapport
+Public Sub ValidateLayoutAll(Optional ByVal attachToDashboard As Boolean = True)
+    On Error GoTo ErrHandler
+    Dim rep As String
+    rep = "Sanity-rapport (extended)" & vbCrLf & String(40, "-") & vbCrLf
+
+    ' 1) Specs: kolommen & rijen
+    rep = rep & SpecsColumnsAndRowsCheck() & vbCrLf
+
+    ' 2) Shapes: base + hover bestaan?
+    rep = rep & ShapesExistenceCheck() & vbCrLf
+
+    ' 3) Form controls: Tag-validatie (base=/hover=), shapes kloppen?
+    '    Probeert actief form te vinden via Screen.ActiveForm; anders via Application.UserForms(0)
+    rep = rep & FormImageTagCheck() & vbCrLf
+
+    ' 4) Achtergrond: export pad non-empty?
+    rep = rep & BackgroundExportCheck() & vbCrLf
+
+    ' 5) Toon het rapport
+    If attachToDashboard Then
+        On Error Resume Next
+        ' Als een dashboard-TextBox bestaat, toon daar; anders MsgBox
+        frmDebugDashboard.txtStatus.Value = rep
+        On Error GoTo 0
+    End If
+    MsgBox rep, vbInformation, "Sanity (extended)"
+
+    Exit Sub
+ErrHandler:
+    MsgBox "FOUT in ValidateLayoutAll: [" & Err.Number & "] " & Err.Description, vbCritical
+End Sub
+
+' ---- 1) Specs: verplichte kolommen en rijen gevuld ----
+Private Function SpecsColumnsAndRowsCheck() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    If lo Is Nothing Then
+        SpecsColumnsAndRowsCheck = "FOUT: Tabel 'tblLayoutSpecs' niet gevonden."
+        Exit Function
+    End If
+
+    Dim requiredCols As Variant
+    requiredCols = Array("Key", "ShapeName", "Width", "Height", "X", "Y")
+    Dim i As Long, missing As String
+    For i = LBound(requiredCols) To UBound(requiredCols)
+        If FindColumnIndex(lo, CStr(requiredCols(i))) = 0 Then
+            missing = missing & "- Kolom ontbreekt: " & requiredCols(i) & vbCrLf
+        End If
+    Next i
+
+    If Len(missing) > 0 Then
+        SpecsColumnsAndRowsCheck = "FOUT (Specs):" & vbCrLf & missing
+        Exit Function
+    End If
+
+    If lo.DataBodyRange Is Nothing Then
+        SpecsColumnsAndRowsCheck = "LET OP: 'tblLayoutSpecs' heeft nog geen rijen."
+        Exit Function
+    End If
+
+    ' Keys die we minimaal verwachten
+    Dim expectedKeys As Variant
+    expectedKeys = Array("Prev", "Next", "Save", "Cancel", "RowAdd", "RowDel")
+
+    Dim colKey As Long, colShape As Long, colW As Long, colH As Long, colX As Long, colY As Long
+    colKey = FindColumnIndex(lo, "Key")
+    colShape = FindColumnIndex(lo, "ShapeName")
+    colW = FindColumnIndex(lo, "Width")
+    colH = FindColumnIndex(lo, "Height")
+    colX = FindColumnIndex(lo, "X")
+    colY = FindColumnIndex(lo, "Y")
+
+    Dim r As Range, k As Variant, found As Boolean, line As String
+    For Each k In expectedKeys
+        found = False
+        For Each r In lo.DataBodyRange.Rows
+            If Trim$(CStr(r.Cells(1, colKey).Value)) = CStr(k) Then
+                found = True
+                ' Check leegtes
+                If Len(Trim$(CStr(r.Cells(1, colShape).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colW).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colH).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colX).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colY).Value))) = 0 Then
+                    line = line & "- Key '" & k & "': heeft lege velden (ShapeName/Width/Height/X/Y)." & vbCrLf
+                End If
+                Exit For
+            End If
+        Next r
+        If Not found Then line = line & "- Key ontbreekt in specs: " & k & vbCrLf
+    Next k
+
+    If Len(line) > 0 Then
+        SpecsColumnsAndRowsCheck = "LET OP (Specs):" & vbCrLf & line
+    Else
+        SpecsColumnsAndRowsCheck = "OK  (Specs): Kolommen & rijen zijn compleet."
+    End If
+    Exit Function
+
+ErrHandler:
+    SpecsColumnsAndRowsCheck = "FOUT in SpecsColumnsAndRowsCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ---- 2) Shapes bestaan? (base + hover) ----
+Private Function ShapesExistenceCheck() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    If lo Is Nothing Or lo.DataBodyRange Is Nothing Then
+        ShapesExistenceCheck = "LET OP: 'tblLayoutSpecs' ontbreekt of heeft geen rijen; skip shapes-check."
+        Exit Function
+    End If
+
+    Dim colShape As Long, colKey As Long
+    colShape = FindColumnIndex(lo, "ShapeName")
+    colKey = FindColumnIndex(lo, "Key")
+
+    Dim r As Range, shapeName As String, keyName As String, report As String
+    For Each r In lo.DataBodyRange.Rows
+        keyName = Trim$(CStr(r.Cells(1, colKey).Value))
+        shapeName = Trim$(CStr(r.Cells(1, colShape).Value))
+        If Len(shapeName) > 0 Then
+            If Not ShapeExistsOn(wsRef, shapeName) Then
+                report = report & "- Key '" & keyName & "': base-shape ontbreekt: " & shapeName & vbCrLf
+            Else
+                ' Hover only for buttons (geen hover voor Background)
+                If LCase$(keyName) <> "background" Then
+                    Dim hoverName As String: hoverName = shapeName & "_hover"
+                    If Not ShapeExistsOn(wsRef, hoverName) Then
+                        report = report & "LET OP: Key '" & keyName & "': hover-shape ontbreekt: " & hoverName & vbCrLf
+                    End If
+                End If
+            End If
+        Else
+            report = report & "- Key '" & keyName & "': ShapeName is leeg." & vbCrLf
+        End If
+    Next r
+
+    If Len(report) = 0 Then
+        ShapesExistenceCheck = "OK  (Shapes): base/hover bestaan (hover niet vereist voor Background)."
+    Else
+        ShapesExistenceCheck = "LET OP (Shapes):" & vbCrLf & report
+    End If
+    Exit Function
+
+ErrHandler:
+    ShapesExistenceCheck = "FOUT in ShapesExistenceCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ---- 3) Form controls: Tag-validatie & shapekloppen ----
+Private Function FormImageTagCheck() As String
+    On Error GoTo ErrHandler
+    Dim frm As Object
+    Set frm = GetActiveFormSafe()
+
+    If frm Is Nothing Then
+        FormImageTagCheck = "LET OP (Form): geen actief form gevonden; open een UserForm en run opnieuw."
+        Exit Function
+    End If
+
+    Dim c As Control, issues As String
+    For Each c In frm.Controls
+        If TypeOf c Is MSForms.Image Then
+            Dim tagText As String: tagText = CStr(c.Tag)
+            Dim baseName As String: baseName = ParseTagLocal(tagText, "base")
+            Dim hoverName As String: hoverName = ParseTagLocal(tagText, "hover")
+
+            If Len(baseName) = 0 Then
+                issues = issues & "- Image '" & c.Name & "': Tag mist 'base='." & vbCrLf
+            Else
+                ' base-shape moet bestaan
+                If Not ShapeExistsOn(ThisWorkbook.Worksheets("Referenties"), baseName) Then
+                    issues = issues & "- Image '" & c.Name & "': base-shape niet gevonden: " & baseName & vbCrLf
+                End If
+            End If
+
+            ' Hover mag ontbreken op Background; voor buttons verwachten we hem wél
+            If InStr(1, LCase$(c.Name), "imgbtn", vbTextCompare) > 0 Or _
+               InStr(1, LCase$(c.Name), "imgaddrow", vbTextCompare) > 0 Or _
+               InStr(1, LCase$(c.Name), "imgdelrow", vbTextCompare) > 0 Then
+                If Len(hoverName) = 0 Then
+                    issues = issues & "LET OP: Image '" & c.Name & "': Tag mist 'hover='." & vbCrLf
+                ElseIf Not ShapeExistsOn(ThisWorkbook.Worksheets("Referenties"), hoverName) Then
+                    issues = issues & "LET OP: Image '" & c.Name & "': hover-shape niet gevonden: " & hoverName & vbCrLf
+                End If
+            End If
+        End If
+    Next c
+
+    If Len(issues) = 0 Then
+        FormImageTagCheck = "OK  (Form): alle Image-tags valide (base/hover) en shapes gevonden."
+    Else
+        FormImageTagCheck = "LET OP (Form):" & vbCrLf & issues
+    End If
+    Exit Function
+
+ErrHandler:
+    FormImageTagCheck = "FOUT in FormImageTagCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ---- 4) Achtergrond export check ----
+Private Function BackgroundExportCheck() As String
+    On Error GoTo ErrHandler
+    Dim p As String
+    p = FormBackground.GetBackgroundPath()
+    If Len(p) = 0 Then
+        BackgroundExportCheck = "FOUT (Background): GetBackgroundPath gaf leeg pad."
+    ElseIf Dir$(p) = "" Then
+        BackgroundExportCheck = "FOUT (Background): bestand bestaat niet: " & p
+    Else
+        BackgroundExportCheck = "OK  (Background): export pad = " & p
+    End If
+    Exit Function
+
+ErrHandler:
+    BackgroundExportCheck = "FOUT in BackgroundExportCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ---- Helpers ----
+Private Function FindColumnIndex(lo As ListObject, ByVal headerName As String) As Long
+    On Error Resume Next
+    Dim i As Long
+    For i = 1 To lo.HeaderRowRange.Columns.Count
+        If StrComp(CStr(lo.HeaderRowRange.Cells(1, i).Value), headerName, vbTextCompare) = 0 Then
+            FindColumnIndex = i
+            Exit Function
+        End If
+    Next i
+    FindColumnIndex = 0
+End Function
+
+Private Function ShapeExistsOn(ws As Worksheet, ByVal shapeName As String) As Boolean
+    On Error Resume Next
+    Dim shp As Shape
+    Set shp = ws.Shapes(shapeName)
+    ShapeExistsOn = Not shp Is Nothing
+    On Error GoTo 0
+End Function
+
+' Trimsamere ParseTag (lokale kopie; laat jouw Private ParseTag in LayoutSpecsHelpers intact)
+Private Function ParseTagLocal(ByVal tagText As String, ByVal key As String) As String
+    On Error GoTo ErrHandler
+    If Len(tagText) = 0 Then Exit Function
+    Dim parts() As String: parts = Split(tagText, vbLf)
+    Dim i As Long, kv()
+    For i = LBound(parts) To UBound(parts)
+        kv = Split(parts(i), "=")
+        If UBound(kv) = 1 Then If StrComp(Trim$(kv(0)), key, vbTextCompare) = 0 Then ParseTagLocal = Trim$(kv(1)): Exit Function
+    Next i
+    Exit Function
+ErrHandler:
+    ParseTagLocal = ""
+End Function
+
+' Probeer een actief UserForm te pakken (VBE of runtime)
+Private Function GetActiveFormSafe() As Object
+    On Error Resume Next
+    ' 1) Runtime getoonde forms
+    If VBA.UserForms.Count > 0 Then Set GetActiveFormSafe = VBA.UserForms(0)
+    ' 2) Sommige setups hebben Screen.ActiveForm
+    If GetActiveFormSafe Is Nothing Then Set GetActiveFormSafe = Screen.ActiveForm
+    On Error GoTo 0
+End Function
+```
+
+***
+
+## 🧭 HOWTO — knop op `frmDebugDashboard` toevoegen
+
+**In `frmDebugDashboard` (code‑behind):**
+
+```vba
+Private Sub cmdValidateAll_Click()
+  On Error GoTo ErrHandler
+  modLayoutValidator.ValidateLayoutAll True
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdValidateAll_Click: " & Err.Description, vbCritical
+End Sub
+```
+
+**In Design mode:**
+
+*   Voeg een **CommandButton** toe:
+    *   **Name**: `cmdValidateAll`
+    *   **Caption**: `Validate Layout (extended)`
+    *   **Left**: 50, **Top**: 260, **Width**: 200, **Height**: 28
+
+> De macro vult `frmDebugDashboard.txtStatus` als die bestaat, en toont altijd ook een MsgBox met het samenvattend rapport.
+
+***
+
+## Wat je nu krijgt in het rapport
+
+*   **OK (Specs)** of een lijst met ontbrekende kolommen/rijen/velden.
+*   **OK (Shapes)** of waarschuwingen voor ontbrekende `_hover`.
+*   **OK (Form)** of details per Image‑control waar `Tag` of shapes niet kloppen.
+*   **OK (Background)** met het **exportpad** (altijd handig voor debug).
+
+Wil je dat ik deze **uitgebreide validator** ook **append** in jouw bestaande **downloadbare handover** (v5.3 FULL), zodat de volgende agent ‘m direct kan copy‑pasten? Zeg maar **Ja/Nee**.
+
+Ja, laten we `txtStatus` toevoegen aan **frmDebugDashboard** zodat de validator zijn rapport daar kan tonen. Hier is een **HOWTO + code**:
+
+***
+
+### ✅ Hoe voeg je `txtStatus` toe in frmDebugDashboard
+
+1.  **Open VBE** → dubbelklik `frmDebugDashboard` → **Design Mode**.
+2.  Voeg een **TextBox** toe:
+    *   **Name**: `txtStatus`
+    *   **MultiLine**: `True`
+    *   **ScrollBars**: `2` (fmScrollBarsVertical)
+    *   **Width**: ±200
+    *   **Height**: ±60
+    *   **Left**: 50
+    *   **Top**: 300 (onder je knoppen)
+3.  Zet **Locked = True** (optioneel, zodat gebruiker niet kan typen).
+4.  Caption leeg laten.
+
+***
+
+### ✅ Waarom dit nodig is
+
+*   De uitgebreide validator (`ValidateLayoutAll`) schrijft het rapport naar `txtStatus` als die bestaat.
+*   Zo kun je **direct in het dashboard** zien wat er mis is, zonder alleen MsgBox.
+
+***
+
+### ✅ Extra: Click-event voor validator-knop
+
+Als je nog niet hebt:
+
+```vba
+Private Sub cmdValidateAll_Click()
+  On Error GoTo ErrHandler
+  modLayoutValidator.ValidateLayoutAll True
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdValidateAll_Click: " & Err.Description, vbCritical
+End Sub
+```
+
+
+============================================================
+END OF HANDOVER — v5.3 FULL
+============================================================
+
+
+============================================================
+APPENDIX — Additions after v5.3 FULL (2025-11-26, late evening)
+============================================================
+
+# A1) Extended Mini Validator Macro — modLayoutValidator
+```vba
+'=========================
+' MODULE: modLayoutValidator (extended)
+'=========================
+Option Explicit
+
+Public Sub ValidateLayoutAll(Optional ByVal attachToDashboard As Boolean = True)
+    On Error GoTo ErrHandler
+    Dim rep As String
+    rep = "Sanity-rapport (extended)" & vbCrLf & String(40, "-") & vbCrLf
+    rep = rep & SpecsColumnsAndRowsCheck() & vbCrLf
+    rep = rep & ShapesExistenceCheck() & vbCrLf
+    rep = rep & FormImageTagCheck() & vbCrLf
+    rep = rep & BackgroundExportCheck() & vbCrLf
+    If attachToDashboard Then
+        On Error Resume Next
+        frmDebugDashboard.txtStatus.Value = rep
+        On Error GoTo 0
+    End If
+    MsgBox rep, vbInformation, "Sanity (extended)"
+    Exit Sub
+ErrHandler:
+    MsgBox "FOUT in ValidateLayoutAll: [" & Err.Number & "] " & Err.Description, vbCritical
+End Sub
+
+Private Function SpecsColumnsAndRowsCheck() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    If lo Is Nothing Then
+        SpecsColumnsAndRowsCheck = "FOUT: Tabel 'tblLayoutSpecs' niet gevonden."
+        Exit Function
+    End If
+    Dim requiredCols As Variant
+    requiredCols = Array("Key", "ShapeName", "Width", "Height", "X", "Y")
+    Dim i As Long, missing As String
+    For i = LBound(requiredCols) To UBound(requiredCols)
+        If FindColumnIndex(lo, CStr(requiredCols(i))) = 0 Then
+            missing = missing & "- Kolom ontbreekt: " & requiredCols(i) & vbCrLf
+        End If
+    Next i
+    If Len(missing) > 0 Then
+        SpecsColumnsAndRowsCheck = "FOUT (Specs):" & vbCrLf & missing
+        Exit Function
+    End If
+    If lo.DataBodyRange Is Nothing Then
+        SpecsColumnsAndRowsCheck = "LET OP: 'tblLayoutSpecs' heeft nog geen rijen."
+        Exit Function
+    End If
+    Dim expectedKeys As Variant
+    expectedKeys = Array("Prev", "Next", "Save", "Cancel", "RowAdd", "RowDel")
+    Dim colKey As Long, colShape As Long, colW As Long, colH As Long, colX As Long, colY As Long
+    colKey = FindColumnIndex(lo, "Key")
+    colShape = FindColumnIndex(lo, "ShapeName")
+    colW = FindColumnIndex(lo, "Width")
+    colH = FindColumnIndex(lo, "Height")
+    colX = FindColumnIndex(lo, "X")
+    colY = FindColumnIndex(lo, "Y")
+    Dim r As Range, k As Variant, found As Boolean, line As String
+    For Each k In expectedKeys
+        found = False
+        For Each r In lo.DataBodyRange.Rows
+            If Trim$(CStr(r.Cells(1, colKey).Value)) = CStr(k) Then
+                found = True
+                If Len(Trim$(CStr(r.Cells(1, colShape).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colW).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colH).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colX).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colY).Value))) = 0 Then
+                    line = line & "- Key '" & k & "': heeft lege velden (ShapeName/Width/Height/X/Y)." & vbCrLf
+                End If
+                Exit For
+            End If
+        Next r
+        If Not found Then line = line & "- Key ontbreekt in specs: " & k & vbCrLf
+    Next k
+    If Len(line) > 0 Then
+        SpecsColumnsAndRowsCheck = "LET OP (Specs):" & vbCrLf & line
+    Else
+        SpecsColumnsAndRowsCheck = "OK  (Specs): Kolommen & rijen zijn compleet."
+    End If
+    Exit Function
+ErrHandler:
+    SpecsColumnsAndRowsCheck = "FOUT in SpecsColumnsAndRowsCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+Private Function ShapesExistenceCheck() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    If lo Is Nothing Or lo.DataBodyRange Is Nothing Then
+        ShapesExistenceCheck = "LET OP: 'tblLayoutSpecs' ontbreekt of heeft geen rijen; skip shapes-check."
+        Exit Function
+    End If
+    Dim colShape As Long, colKey As Long
+    colShape = FindColumnIndex(lo, "ShapeName")
+    colKey = FindColumnIndex(lo, "Key")
+    Dim r As Range, shapeName As String, keyName As String, report As String
+    For Each r In lo.DataBodyRange.Rows
+        keyName = Trim$(CStr(r.Cells(1, colKey).Value))
+        shapeName = Trim$(CStr(r.Cells(1, colShape).Value))
+        If Len(shapeName) > 0 Then
+            If Not ShapeExistsOn(wsRef, shapeName) Then
+                report = report & "- Key '" & keyName & "': base-shape ontbreekt: " & shapeName & vbCrLf
+            Else
+                If LCase$(keyName) <> "background" Then
+                    Dim hoverName As String: hoverName = shapeName & "_hover"
+                    If Not ShapeExistsOn(wsRef, hoverName) Then
+                        report = report & "LET OP: Key '" & keyName & "': hover-shape ontbreekt: " & hoverName & vbCrLf
+                    End If
+                End If
+            End If
+        Else
+            report = report & "- Key '" & keyName & "': ShapeName is leeg." & vbCrLf
+        End If
+    Next r
+    If Len(report) = 0 Then
+        ShapesExistenceCheck = "OK  (Shapes): base/hover bestaan (hover niet vereist voor Background)."
+    Else
+        ShapesExistenceCheck = "LET OP (Shapes):" & vbCrLf & report
+    End If
+    Exit Function
+ErrHandler:
+    ShapesExistenceCheck = "FOUT in ShapesExistenceCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+Private Function FormImageTagCheck() As String
+    On Error GoTo ErrHandler
+    Dim frm As Object
+    Set frm = GetActiveFormSafe()
+    If frm Is Nothing Then
+        FormImageTagCheck = "LET OP (Form): geen actief form gevonden; open een UserForm en run opnieuw."
+        Exit Function
+    End If
+    Dim c As Control, issues As String
+    For Each c In frm.Controls
+        If TypeOf c Is MSForms.Image Then
+            Dim tagText As String: tagText = CStr(c.Tag)
+            Dim baseName As String: baseName = ParseTagLocal(tagText, "base")
+            Dim hoverName As String: hoverName = ParseTagLocal(tagText, "hover")
+            If Len(baseName) = 0 Then
+                issues = issues & "- Image '" & c.Name & "': Tag mist 'base='." & vbCrLf
+            Else
+                If Not ShapeExistsOn(ThisWorkbook.Worksheets("Referenties"), baseName) Then
+                    issues = issues & "- Image '" & c.Name & "': base-shape niet gevonden: " & baseName & vbCrLf
+                End If
+            End If
+            If InStr(1, LCase$(c.Name), "imgbtn", vbTextCompare) > 0 Or _
+               InStr(1, LCase$(c.Name), "imgaddrow", vbTextCompare) > 0 Or _
+               InStr(1, LCase$(c.Name), "imgdelrow", vbTextCompare) > 0 Then
+                If Len(hoverName) = 0 Then
+                    issues = issues & "LET OP: Image '" & c.Name & "': Tag mist 'hover='." & vbCrLf
+                ElseIf Not ShapeExistsOn(ThisWorkbook.Worksheets("Referenties"), hoverName) Then
+                    issues = issues & "LET OP: Image '" & c.Name & "': hover-shape niet gevonden: " & hoverName & vbCrLf
+                End If
+            End If
+        End If
+    Next c
+    If Len(issues) = 0 Then
+        FormImageTagCheck = "OK  (Form): alle Image-tags valide (base/hover) en shapes gevonden."
+    Else
+        FormImageTagCheck = "LET OP (Form):" & vbCrLf & issues
+    End If
+    Exit Function
+ErrHandler:
+    FormImageTagCheck = "FOUT in FormImageTagCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+Private Function BackgroundExportCheck() As String
+    On Error GoTo ErrHandler
+    Dim p As String
+    p = FormBackground.GetBackgroundPath()
+    If Len(p) = 0 Then
+        BackgroundExportCheck = "FOUT (Background): GetBackgroundPath gaf leeg pad."
+    ElseIf Dir$(p) = "" Then
+        BackgroundExportCheck = "FOUT (Background): bestand bestaat niet: " & p
+    Else
+        BackgroundExportCheck = "OK  (Background): export pad = " & p
+    End If
+    Exit Function
+ErrHandler:
+    BackgroundExportCheck = "FOUT in BackgroundExportCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+Private Function FindColumnIndex(lo As ListObject, ByVal headerName As String) As Long
+    On Error Resume Next
+    Dim i As Long
+    For i = 1 To lo.HeaderRowRange.Columns.Count
+        If StrComp(CStr(lo.HeaderRowRange.Cells(1, i).Value), headerName, vbTextCompare) = 0 Then
+            FindColumnIndex = i
+            Exit Function
+        End If
+    Next i
+    FindColumnIndex = 0
+End Function
+
+Private Function ShapeExistsOn(ws As Worksheet, ByVal shapeName As String) As Boolean
+    On Error Resume Next
+    Dim shp As Shape
+    Set shp = ws.Shapes(shapeName)
+    ShapeExistsOn = Not shp Is Nothing
+    On Error GoTo 0
+End Function
+
+Private Function ParseTagLocal(ByVal tagText As String, ByVal key As String) As String
+    On Error GoTo ErrHandler
+    If Len(tagText) = 0 Then Exit Function
+    Dim parts() As String: parts = Split(tagText, vbLf)
+    Dim i As Long, kv()
+    For i = LBound(parts) To UBound(parts)
+        kv = Split(parts(i), "=")
+        If UBound(kv) = 1 Then If StrComp(Trim$(kv(0)), key, vbTextCompare) = 0 Then ParseTagLocal = Trim$(kv(1)): Exit Function
+    Next i
+    Exit Function
+ErrHandler:
+    ParseTagLocal = ""
+End Function
+
+Private Function GetActiveFormSafe() As Object
+    On Error Resume Next
+    If VBA.UserForms.Count > 0 Then Set GetActiveFormSafe = VBA.UserForms(0)
+    If GetActiveFormSafe Is Nothing Then Set GetActiveFormSafe = Screen.ActiveForm
+    On Error GoTo 0
+End Function
+```
+
+# A2) frmDebugDashboard — Click events (code-behind)
+```vba
+Option Explicit
+
+Private Sub cmdRefreshStatus_Click()
+  On Error GoTo ErrHandler
+  modDebugDashboard.RefreshStatus Me
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdRefreshStatus_Click: " & Err.Description, vbCritical
+End Sub
+
+Private Sub cmdRunSmokeTests_Click()
+  On Error GoTo ErrHandler
+  modDebugDashboard.RunSmokeTests
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdRunSmokeTests_Click: " & Err.Description, vbCritical
+End Sub
+
+Private Sub cmdExportErrorLog_Click()
+  On Error GoTo ErrHandler
+  modDebugDashboard.ExportErrorLogCSV
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdExportErrorLog_Click: " & Err.Description, vbCritical
+End Sub
+
+Private Sub cmdOpenHandover_Click()
+  On Error GoTo ErrHandler
+  modDebugDashboard.OpenHandoverLatest
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdOpenHandover_Click: " & Err.Description, vbCritical
+End Sub
+
+Private Sub cmdValidateAll_Click()
+  On Error GoTo ErrHandler
+  modLayoutValidator.ValidateLayoutAll True
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdValidateAll_Click: " & Err.Description, vbCritical
+End Sub
+
+Private Sub cmdSanity_Click()
+  On Error GoTo ErrHandler
+  Dim rep As String
+  rep = modSanityChecks.RunAssetSanity(True)
+  On Error Resume Next
+  Me.txtStatus.Value = rep
+  On Error GoTo ErrHandler
+  MsgBox rep, vbInformation, "Sanity-check"
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdSanity_Click: " & Err.Description, vbCritical
+End Sub
+```
+
+# A3) Module — modDebugDashboard routines
+```vba
+Attribute VB_Name = "modDebugDashboard"
+Option Explicit
+
+Public Sub RefreshStatus(frm As Object)
+  On Error GoTo ErrHandler
+  Dim msg As String
+  msg = "Status Check:" & vbCrLf
+  msg = msg & "Utils module: " & YesNo(ModuleExists("Utils")) & vbCrLf
+  msg = msg & "FormEvents module: " & YesNo(ModuleExists("FormEvents")) & vbCrLf
+  msg = msg & "LayoutSpecsHelpers: " & YesNo(ModuleExists("LayoutSpecsHelpers")) & vbCrLf
+  msg = msg & "FormBackground: " & YesNo(ModuleExists("FormBackground")) & vbCrLf
+  msg = msg & "frmHuishouden: " & YesNo(FormExists("frmHuishouden")) & vbCrLf
+  msg = msg & "frmVast: " & YesNo(FormExists("frmVast")) & vbCrLf
+  msg = msg & "frmInvoer: " & YesNo(FormExists("frmInvoer")) & vbCrLf
+  If HasStatusBox(frm) Then frm.txtStatus.Value = msg
+  MsgBox msg, vbInformation, "Dashboard Status"
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in RefreshStatus: " & Err.Description, vbCritical
+End Sub
+
+Public Sub RunSmokeTests()
+  On Error GoTo ErrHandler
+  MsgBox "Running Smoke Tests...", vbInformation
+  If FormExists("frmHuishouden") Then frmHuishouden.Show
+  If FormExists("frmVast") Then frmVast.Show
+  If FormExists("frmInvoer") Then frmInvoer.Show
+  MsgBox "Smoke Tests Completed.", vbInformation
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in RunSmokeTests: " & Err.Description, vbCritical
+End Sub
+
+Public Sub ExportErrorLogCSV()
+  On Error GoTo ErrHandler
+  Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("ErrorLog")
+  If ws Is Nothing Then
+    MsgBox "ErrorLog sheet niet gevonden.", vbExclamation
+    Exit Sub
+  End If
+  Dim tempPath As String
+  tempPath = Environ$("TEMP")
+  If Len(tempPath) = 0 Then tempPath = Environ$("TMP")
+  If Len(tempPath) = 0 Then tempPath = ThisWorkbook.Path
+  If Right$(tempPath, 1) <> Application.PathSeparator Then tempPath = tempPath & Application.PathSeparator
+  Dim csv As String
+  csv = tempPath & "ErrorLog_" & Format(Now, "yyyymmdd_hhnnss") & ".csv"
+  ws.Copy
+  On Error Resume Next
+  ActiveWorkbook.SaveAs Filename:=csv, FileFormat:=xlCSV
+  ActiveWorkbook.Close False
+  On Error GoTo ErrHandler
+  MsgBox "ErrorLog geëxporteerd naar: " & csv, vbInformation
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in ExportErrorLogCSV: " & Err.Description, vbCritical
+End Sub
+
+Public Sub OpenHandoverLatest()
+  On Error GoTo ErrHandler
+  Dim pathFull As String
+  pathFull = ThisWorkbook.Path
+  If Right$(pathFull, 1) <> Application.PathSeparator Then pathFull = pathFull & Application.PathSeparator
+  pathFull = pathFull & "handover_next_agent_v5_3_FULL.txt"
+  If Dir$(pathFull) = "" Then
+    pathFull = ThisWorkbook.Path & Application.PathSeparator & "handover_next_agent_v5_3.txt"
+  End If
+  If Dir$(pathFull) = "" Then
+    MsgBox "Handover-bestand niet gevonden in de map van de workbook.", vbExclamation
+    Exit Sub
+  End If
+  Application.FollowHyperlink pathFull
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in OpenHandoverLatest: " & Err.Description, vbCritical
+End Sub
+
+Private Function ModuleExists(ByVal moduleName As String) As Boolean
+  On Error Resume Next
+  Dim vbComp As Object
+  Set vbComp = ThisWorkbook.VBProject.VBComponents(moduleName)
+  ModuleExists = Not vbComp Is Nothing
+End Function
+
+Private Function FormExists(ByVal formName As String) As Boolean
+  On Error Resume Next
+  Dim vbComp As Object
+  Set vbComp = ThisWorkbook.VBProject.VBComponents(formName)
+  FormExists = Not vbComp Is Nothing
+End Function
+
+Private Function YesNo(ByVal cond As Boolean) As String
+  YesNo = IIf(cond, "OK", "Missing")
+End Function
+
+Private Function HasStatusBox(frm As Object) As Boolean
+  On Error Resume Next
+  HasStatusBox = Not frm.txtStatus Is Nothing
+  On Error GoTo 0
+End Function
+```
+
+# A4) frmDebugDashboard — Layout Specs (for design mode)
+```yaml
+form:
+  width: 300
+  height: 250
+  backcolor: white
+  font: Arial 10
+buttons:
+  - name: cmdRefreshStatus
+    caption: Refresh Status
+    left: 50
+    top: 20
+    width: 200
+    height: 28
+  - name: cmdRunSmokeTests
+    caption: Run Smoke Tests
+    left: 50
+    top: 60
+    width: 200
+    height: 28
+  - name: cmdExportErrorLog
+    caption: Export ErrorLog
+    left: 50
+    top: 100
+    width: 200
+    height: 28
+  - name: cmdOpenHandover
+    caption: Open Handover
+    left: 50
+    top: 140
+    width: 200
+    height: 28
+  - name: cmdValidateAll
+    caption: Validate Layout (extended)
+    left: 50
+    top: 180
+    width: 200
+    height: 28
+  - name: cmdSanity
+    caption: Sanity-check
+    left: 50
+    top: 220
+    width: 200
+    height: 28
+status_box:
+  name: txtStatus
+  left: 50
+  top: 260
+  width: 200
+  height: 60
+  multiline: true
+  scrollbars: vertical
+  locked: true
+  tabstop: false
+label_optional:
+  name: lblStatus
+  caption: Status
+  left: 50
+  top: 240
+  width: 200
+  height: 18
+  
+ABOVE SPECS ARE NOT WHAT MANASSE USED!!   
+```
+
+
+
+This prompt provides a prompt for you turn a specific chat into a specialist at X. When you run this, it will make sense ``` PROMPT: You are Lyra, a master-level AI prompt optimization specialist. Your mission: transform any user input into precision-crafted prompts that unlock AI's full potential across all platforms.
+
+THE 4-D METHODOLOGY
+1. DECONSTRUCT
+Extract core intent, key entities, and context
+
+Identify output requirements and constraints
+
+Map what's provided vs. what's missing
+
+2. DIAGNOSE
+Audit for clarity gaps and ambiguity
+
+Check specificity and completeness
+
+Assess structure and complexity needs
+
+3. DEVELOP
+Select optimal techniques based on request type:
+
+Creative → Multi-perspective + tone emphasis
+
+Technical → Constraint-based + precision focus
+
+Educational → Few-shot examples + clear structure
+
+Complex → Chain-of-thought + systematic frameworks
+
+Assign appropriate AI role/expertise
+
+Enhance context and implement logical structure
+
+4. DELIVER
+Construct optimized prompt
+
+Format based on complexity
+
+Provide implementation guidance
+
+OPTIMIZATION TECHNIQUES
+Foundation: Role assignment, context layering, output specs, task decomposition
+
+Advanced: Chain-of-thought, few-shot learning, multi-perspective analysis, constraint optimization
+
+Platform Notes:
+
+ChatGPT/GPT-4: Structured sections, conversation starters
+
+Claude: Longer context, reasoning frameworks
+
+Gemini: Creative tasks, comparative analysis
+
+Others: Apply universal best practices
+
+OPERATING MODES
+DETAIL MODE:
+
+Gather context with smart defaults
+
+Ask 2-3 targeted clarifying questions
+
+Provide comprehensive optimization
+
+BASIC MODE:
+
+Quick fix primary issues
+
+Apply core techniques only
+
+Deliver ready-to-use prompt
+
+RESPONSE FORMATS
+Simple Requests: Your Optimized Prompt: [Improved prompt]
+
+What Changed: [Key improvements]
+
+Complex Requests: Your Optimized Prompt: [Improved prompt]
+
+Key Improvements: • [Primary changes and benefits]
+
+Techniques Applied: [Brief mention]
+
+Pro Tip: [Usage guidance]
+
+WELCOME MESSAGE (REQUIRED)
+When activated, display EXACTLY:
+
+"Hello! I'm Lyra, your AI prompt optimizer. I transform vague requests into precise, effective prompts that deliver better results.
+
+What I need to know:
+
+Target AI: ChatGPT, Claude, Gemini, or Other
+
+Prompt Style: DETAIL (I'll ask clarifying questions first) or BASIC (quick optimization)
+
+Examples:
+
+"DETAIL using ChatGPT — Write me a marketing email"
+
+"BASIC using Claude — Help with my resume"
+
+Just share your rough prompt and I'll handle the optimization!"
+
+PROCESSING FLOW
+Auto-detect complexity:
+
+Read this full file for context.
+
+Simple tasks → BASIC mode
+
+Complex/professional → DETAIL mode
+
+Inform user with override option
+
+Execute chosen mode protocol
+
+Deliver optimized prompt in Dutch
+
+
+============================================================
+Handover for Next AI Agent — W&I Excel UserForms Wizard (v5.3 — FULL)
+Owner: Manasse Visser
+Date: 2025-11-26
+Context: Patch Shape.Export for background export (fallback ChartObject), difflijst van vanavond, cruciale bevindingen, STARTPROMPT, en volledige Initialize/Resize code voor frmHuishouden, frmVast, frmInvoer.
+============================================================
+
+# CRUCIALE BEVINDINGEN VAN VANDAAG
+- tblLayoutSpecs headers mismatch veroorzaakte typefouten; opgelost met NormalizeSpecsHeaders macro (headers exact: Key, ShapeName, Width, Height, X, Y, DefaultColor, HoverColor, Notes).
+- Background export gaf wit vlak via ChartObject; fix door **Shape.Export** te gebruiken, met **ChartObject** als fallback.
+- Hover werkt alleen als `Tag` correct is gezet: `base=...` en (voor knoppen) `hover=...`.
+- Aanroepvolgorde per form is cruciaal: **EnsureBackgroundImage → controls bouwen → BuildButtonsFromSpecs/PlaceButtonFromSpec → FrmLayoutSafeAreaDyn → HookEventsDynamic**.
+- Sanity-check en validator macro bevestigen dat shapes en specs nu OK zijn.
+
+# DIFFLIST VAN VANAVOND
+- [PATCH] **FormBackground.GetBackgroundPath**: vervang ChartObject export door **Shape.Export**; voeg fallback ChartObject toe.
+- [UPDATE] **LayoutSpecsHelpers.GetShapePath**: robuust gemaakt, maar niet nodig voor achtergrond sinds Shape.Export; blijft gebruikt voor knoppen/hover.
+- [UPDATE] **LayoutSpecsHelpers.PlaceButtonFromSpec**: veilige conversie (NzDbl) en duidelijke logging voor lege waarden.
+- [UPDATE] **NormalizeSpecsHeaders**: nieuwe guided macro om headers/tabelnaam te normaliseren.
+- [UPDATE] **frmBuilders** en **UserForm Initialize/Resize**: aanroepvolgorde uniform gemaakt.
+- [QA] Sanity-check rapport: alle shapes OK; fout ‘Key/ShapeName ontbreekt’ opgelost.
+
+# PATCH VOOR SHAPE.EXPORT + FALLBACK (achtergrond)
+```vba
+' FormBackground — nieuwe exportmethode (Shape.Export) met ChartObject fallback
+Option Explicit
+Public Function GetBackgroundPath() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    If wsRef Is Nothing Then Exit Function
+
+    Dim bgShapeName As String
+    bgShapeName = LayoutSpecsHelpers.GetBackgroundShapeNameFromSpecs()
+    If Len(bgShapeName) = 0 Then bgShapeName = "bg_frmInvoer_landscape" ' fallback
+
+    Dim shp As Shape: Set shp = wsRef.Shapes(bgShapeName)
+    If shp Is Nothing Then Exit Function
+
+    Dim tmp As String
+    tmp = Utils.GetTempFile("frmInvoer_bg", ".jpg")
+
+    ' 1) Probeer Shape.Export direct (betrouwbaar)
+    On Error Resume Next
+    shp.Export tmp, "JPG"
+    If Err.Number = 0 And Dir(tmp) <> "" Then
+        GetBackgroundPath = tmp
+        Exit Function
+    End If
+    On Error GoTo ErrHandler
+
+    ' 2) Fallback: ChartObject methode (alleen als Export faalt)
+    Dim ch As ChartObject
+    Set ch = wsRef.ChartObjects.Add(Left:=Application.Max(0, shp.Left), _
+                                    Top:=Application.Max(0, shp.Top), _
+                                    Width:=Application.Max(8, shp.Width), _
+                                    Height:=Application.Max(8, shp.Height))
+    shp.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    ch.Chart.Paste
+    ch.Chart.Export tmp, "JPG": ch.Delete
+    If Dir(tmp) <> "" Then GetBackgroundPath = tmp
+    Exit Function
+ErrHandler:
+    Utils.LogError4 "FormBackground", "GetBackgroundPath", Err.Number, Err.Description
+End Function
+```
+
+# INITIALIZE/RESIZE CODE — FORMS (COPY-PASTE KLAAR)
+
+## A) frmHuishouden
+```vba
+Option Explicit
+Private Sub UserForm_Initialize()
+  On Error GoTo ErrHandler
+  ' 1) Achtergrond
+  FormHelpers.EnsureBackgroundImage Me
+  ' 2) Controls bouwen
+  frmBuilders.BuildForm_Huishouden Me
+  ' 3) Knoppen via specs
+  LayoutSpecsHelpers.BuildButtonsFromSpecs Me
+  ' 4) Safe-area
+  FormLayout.FrmLayoutSafeAreaDyn Me
+  ' 5) Events (hover/click)
+  FormEvents.HookEventsDynamic Me
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "frmHuishouden", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+  On Error GoTo ErrHandler
+  FormLayout.FrmLayoutSafeAreaDyn Me
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "frmHuishouden", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+```
+
+## B) frmVast (MultiPage)
+```vba
+Option Explicit
+Private Sub UserForm_Initialize()
+  On Error GoTo ErrHandler
+  ' 1) Achtergrond
+  FormHelpers.EnsureBackgroundImage Me
+  ' 2) MultiPage + page-titels/row editors
+  frmBuilders.BuildFrmVast Me
+  ' 3) Navigatieknoppen via specs
+  LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnVorige",   "Prev"
+  LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnVolgende", "Next"
+  LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnOpslaan",  "Save"
+  LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnAnnuleren","Cancel"
+  ' 4) Row-knoppen
+  LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgAddRow", "RowAdd"
+  LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgDelRow", "RowDel"
+  ' 5) Safe-area
+  FormLayout.FrmLayoutSafeAreaDyn Me
+  ' 6) Events
+  FormEvents.HookEventsDynamic Me
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "frmVast", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+  On Error GoTo ErrHandler
+  FormLayout.FrmLayoutSafeAreaDyn Me
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "frmVast", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+```
+
+## C) frmInvoer (Dagelijks)
+```vba
+Option Explicit
+Private Sub UserForm_Initialize()
+  On Error GoTo ErrHandler
+  ' 1) Dynamisch bouwen (labels, combo's, txt, achtergrond)
+  FormEvents.BuildDynamicFrmInvoer Me
+  ' 2) Knoppen via specs
+  LayoutSpecsHelpers.BuildButtonsFromSpecs Me
+  ' 3) Safe-area
+  FormLayout.FrmLayoutSafeAreaDyn Me
+  ' 4) Events
+  FormEvents.HookEventsDynamic Me
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "frmInvoer", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+  On Error GoTo ErrHandler
+  FormLayout.FrmLayoutSafeAreaDyn Me
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "frmInvoer", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+```
+
+# ACCEPTATIE & QA CHECKLIST
+- **Geen hardcoded** posities/sizes voor knoppen; alles via `tblLayoutSpecs`.
+- **Achtergrond zichtbaar** en niet wit: `GetBackgroundPath` levert een JPG met de ontworpen shape.
+- **Hover** wissel zichtbaar binnen ~100 ms; `_hover` shapes bestaan.
+- **Safe-area** herpositioneert velden en knoppen correct bij resize.
+- **Sanity-check** (dashboard): OK/geen fouten.
+- **ErrorLog** blijft leeg of toont alleen gecontroleerde waarschuwingen.
+
+# STARTPROMPT VOOR VOLGENDE AGENT (uitvoeren bij inlezen)
+```
+Je bent de volgende AI-agent voor het W&I Excel UserForms Wizard project van Manasse Visser.
+We gaan verder met layout-versteviging en QA.
+
+Acties:
+1) Verifieer dat FormBackground.GetBackgroundPath de Shape.Export patch bevat (met ChartObject fallback).
+2) Draai de dashboard Sanity-check en de ValidateLayoutSpecs macro. Fix alles wat niet OK is.
+3) Controleer de drie forms (frmHuishouden, frmVast, frmInvoer):
+   - Initialize/Resize code zoals in deze handover (copy-paste indien nodig).
+   - Knoppen via tblLayoutSpecs (Prev/Next/Save/Cancel/RowAdd/RowDel).
+4) Test hover (CImgEvents) en resize gedrag (FrmLayoutSafeAreaDyn).
+5) Documenteer eventuele bevindingen in ErrorLog, update deze handover bij nieuwe wijzigingen.
+Acceptatie:
+- Achtergrond en knoppen renderen correct (geen wit vlak).
+- Geen hardcoded coords; alles datagedreven.
+- Sanity-check: OK.
+```
+
+Helemaal goed—hier is een **aanvulling op de mini validator macro** die méér controle doet dan alleen kolommen & shape‑bestaan:
+
+*   ✅ **Specs‑integriteit**: verplichte kolommen aanwezig; rijen voor alle keys gevuld (Key, ShapeName, Width, Height, X, Y).
+*   ✅ **Shapes (base + hover)**: check dat voor elke knop de **base‑shape** bestaat en optioneel de **hover‑variant** (`base + "_hover"`).
+*   ✅ **Form‑controls**: loop door Image‑knoppen op het **actieve UserForm** en valideer de `Tag`: bevat `base=` en **indien van toepassing** `hover=`; check of die shapes écht bestaan.
+*   ✅ **Achtergrond export**: test `FormBackground.GetBackgroundPath` en meldt of het pad een **niet‑lege** JPG oplevert.
+*   ✅ **Resultaat**: samengevat in een MsgBox **én** (indien aanwezig) in `frmDebugDashboard.txtStatus`.
+
+> **Waar plak je deze?** In een nieuwe **standaardmodule** genaamd `modLayoutValidator` (of voeg toe aan de bestaande).  
+> **Hoe start je ‘m?** Via de knop op jouw `frmDebugDashboard` zoals hieronder bij **HOWTO**.
+
+***LAST MINITUE TOEVOEGINGEN
+
+## 🔧 Uitgebreide mini validator macro (VBA)
+
+```vba
+
+
+'=========================
+' MODULE: modLayoutValidator (extended)
+'=========================
+Option Explicit
+
+' Publieke entry-point: voert alle checks uit en geeft een compact rapport
+Public Sub ValidateLayoutAll(Optional ByVal attachToDashboard As Boolean = True)
+    On Error GoTo ErrHandler
+    Dim rep As String
+    rep = "Sanity-rapport (extended)" & vbCrLf & String(40, "-") & vbCrLf
+
+    ' 1) Specs: kolommen & rijen
+    rep = rep & SpecsColumnsAndRowsCheck() & vbCrLf
+
+    ' 2) Shapes: base + hover bestaan?
+    rep = rep & ShapesExistenceCheck() & vbCrLf
+
+    ' 3) Form controls: Tag-validatie (base=/hover=), shapes kloppen?
+    '    Probeert actief form te vinden via Screen.ActiveForm; anders via Application.UserForms(0)
+    rep = rep & FormImageTagCheck() & vbCrLf
+
+    ' 4) Achtergrond: export pad non-empty?
+    rep = rep & BackgroundExportCheck() & vbCrLf
+
+    ' 5) Toon het rapport
+    If attachToDashboard Then
+        On Error Resume Next
+        ' Als een dashboard-TextBox bestaat, toon daar; anders MsgBox
+        frmDebugDashboard.txtStatus.Value = rep
+        On Error GoTo 0
+    End If
+    MsgBox rep, vbInformation, "Sanity (extended)"
+
+    Exit Sub
+ErrHandler:
+    MsgBox "FOUT in ValidateLayoutAll: [" & Err.Number & "] " & Err.Description, vbCritical
+End Sub
+
+' ---- 1) Specs: verplichte kolommen en rijen gevuld ----
+Private Function SpecsColumnsAndRowsCheck() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    If lo Is Nothing Then
+        SpecsColumnsAndRowsCheck = "FOUT: Tabel 'tblLayoutSpecs' niet gevonden."
+        Exit Function
+    End If
+
+    Dim requiredCols As Variant
+    requiredCols = Array("Key", "ShapeName", "Width", "Height", "X", "Y")
+    Dim i As Long, missing As String
+    For i = LBound(requiredCols) To UBound(requiredCols)
+        If FindColumnIndex(lo, CStr(requiredCols(i))) = 0 Then
+            missing = missing & "- Kolom ontbreekt: " & requiredCols(i) & vbCrLf
+        End If
+    Next i
+
+    If Len(missing) > 0 Then
+        SpecsColumnsAndRowsCheck = "FOUT (Specs):" & vbCrLf & missing
+        Exit Function
+    End If
+
+    If lo.DataBodyRange Is Nothing Then
+        SpecsColumnsAndRowsCheck = "LET OP: 'tblLayoutSpecs' heeft nog geen rijen."
+        Exit Function
+    End If
+
+    ' Keys die we minimaal verwachten
+    Dim expectedKeys As Variant
+    expectedKeys = Array("Prev", "Next", "Save", "Cancel", "RowAdd", "RowDel")
+
+    Dim colKey As Long, colShape As Long, colW As Long, colH As Long, colX As Long, colY As Long
+    colKey = FindColumnIndex(lo, "Key")
+    colShape = FindColumnIndex(lo, "ShapeName")
+    colW = FindColumnIndex(lo, "Width")
+    colH = FindColumnIndex(lo, "Height")
+    colX = FindColumnIndex(lo, "X")
+    colY = FindColumnIndex(lo, "Y")
+
+    Dim r As Range, k As Variant, found As Boolean, line As String
+    For Each k In expectedKeys
+        found = False
+        For Each r In lo.DataBodyRange.Rows
+            If Trim$(CStr(r.Cells(1, colKey).Value)) = CStr(k) Then
+                found = True
+                ' Check leegtes
+                If Len(Trim$(CStr(r.Cells(1, colShape).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colW).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colH).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colX).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colY).Value))) = 0 Then
+                    line = line & "- Key '" & k & "': heeft lege velden (ShapeName/Width/Height/X/Y)." & vbCrLf
+                End If
+                Exit For
+            End If
+        Next r
+        If Not found Then line = line & "- Key ontbreekt in specs: " & k & vbCrLf
+    Next k
+
+    If Len(line) > 0 Then
+        SpecsColumnsAndRowsCheck = "LET OP (Specs):" & vbCrLf & line
+    Else
+        SpecsColumnsAndRowsCheck = "OK  (Specs): Kolommen & rijen zijn compleet."
+    End If
+    Exit Function
+
+ErrHandler:
+    SpecsColumnsAndRowsCheck = "FOUT in SpecsColumnsAndRowsCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ---- 2) Shapes bestaan? (base + hover) ----
+Private Function ShapesExistenceCheck() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    If lo Is Nothing Or lo.DataBodyRange Is Nothing Then
+        ShapesExistenceCheck = "LET OP: 'tblLayoutSpecs' ontbreekt of heeft geen rijen; skip shapes-check."
+        Exit Function
+    End If
+
+    Dim colShape As Long, colKey As Long
+    colShape = FindColumnIndex(lo, "ShapeName")
+    colKey = FindColumnIndex(lo, "Key")
+
+    Dim r As Range, shapeName As String, keyName As String, report As String
+    For Each r In lo.DataBodyRange.Rows
+        keyName = Trim$(CStr(r.Cells(1, colKey).Value))
+        shapeName = Trim$(CStr(r.Cells(1, colShape).Value))
+        If Len(shapeName) > 0 Then
+            If Not ShapeExistsOn(wsRef, shapeName) Then
+                report = report & "- Key '" & keyName & "': base-shape ontbreekt: " & shapeName & vbCrLf
+            Else
+                ' Hover only for buttons (geen hover voor Background)
+                If LCase$(keyName) <> "background" Then
+                    Dim hoverName As String: hoverName = shapeName & "_hover"
+                    If Not ShapeExistsOn(wsRef, hoverName) Then
+                        report = report & "LET OP: Key '" & keyName & "': hover-shape ontbreekt: " & hoverName & vbCrLf
+                    End If
+                End If
+            End If
+        Else
+            report = report & "- Key '" & keyName & "': ShapeName is leeg." & vbCrLf
+        End If
+    Next r
+
+    If Len(report) = 0 Then
+        ShapesExistenceCheck = "OK  (Shapes): base/hover bestaan (hover niet vereist voor Background)."
+    Else
+        ShapesExistenceCheck = "LET OP (Shapes):" & vbCrLf & report
+    End If
+    Exit Function
+
+ErrHandler:
+    ShapesExistenceCheck = "FOUT in ShapesExistenceCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ---- 3) Form controls: Tag-validatie & shapekloppen ----
+Private Function FormImageTagCheck() As String
+    On Error GoTo ErrHandler
+    Dim frm As Object
+    Set frm = GetActiveFormSafe()
+
+    If frm Is Nothing Then
+        FormImageTagCheck = "LET OP (Form): geen actief form gevonden; open een UserForm en run opnieuw."
+        Exit Function
+    End If
+
+    Dim c As Control, issues As String
+    For Each c In frm.Controls
+        If TypeOf c Is MSForms.Image Then
+            Dim tagText As String: tagText = CStr(c.Tag)
+            Dim baseName As String: baseName = ParseTagLocal(tagText, "base")
+            Dim hoverName As String: hoverName = ParseTagLocal(tagText, "hover")
+
+            If Len(baseName) = 0 Then
+                issues = issues & "- Image '" & c.Name & "': Tag mist 'base='." & vbCrLf
+            Else
+                ' base-shape moet bestaan
+                If Not ShapeExistsOn(ThisWorkbook.Worksheets("Referenties"), baseName) Then
+                    issues = issues & "- Image '" & c.Name & "': base-shape niet gevonden: " & baseName & vbCrLf
+                End If
+            End If
+
+            ' Hover mag ontbreken op Background; voor buttons verwachten we hem wél
+            If InStr(1, LCase$(c.Name), "imgbtn", vbTextCompare) > 0 Or _
+               InStr(1, LCase$(c.Name), "imgaddrow", vbTextCompare) > 0 Or _
+               InStr(1, LCase$(c.Name), "imgdelrow", vbTextCompare) > 0 Then
+                If Len(hoverName) = 0 Then
+                    issues = issues & "LET OP: Image '" & c.Name & "': Tag mist 'hover='." & vbCrLf
+                ElseIf Not ShapeExistsOn(ThisWorkbook.Worksheets("Referenties"), hoverName) Then
+                    issues = issues & "LET OP: Image '" & c.Name & "': hover-shape niet gevonden: " & hoverName & vbCrLf
+                End If
+            End If
+        End If
+    Next c
+
+    If Len(issues) = 0 Then
+        FormImageTagCheck = "OK  (Form): alle Image-tags valide (base/hover) en shapes gevonden."
+    Else
+        FormImageTagCheck = "LET OP (Form):" & vbCrLf & issues
+    End If
+    Exit Function
+
+ErrHandler:
+    FormImageTagCheck = "FOUT in FormImageTagCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ---- 4) Achtergrond export check ----
+Private Function BackgroundExportCheck() As String
+    On Error GoTo ErrHandler
+    Dim p As String
+    p = FormBackground.GetBackgroundPath()
+    If Len(p) = 0 Then
+        BackgroundExportCheck = "FOUT (Background): GetBackgroundPath gaf leeg pad."
+    ElseIf Dir$(p) = "" Then
+        BackgroundExportCheck = "FOUT (Background): bestand bestaat niet: " & p
+    Else
+        BackgroundExportCheck = "OK  (Background): export pad = " & p
+    End If
+    Exit Function
+
+ErrHandler:
+    BackgroundExportCheck = "FOUT in BackgroundExportCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ---- Helpers ----
+Private Function FindColumnIndex(lo As ListObject, ByVal headerName As String) As Long
+    On Error Resume Next
+    Dim i As Long
+    For i = 1 To lo.HeaderRowRange.Columns.Count
+        If StrComp(CStr(lo.HeaderRowRange.Cells(1, i).Value), headerName, vbTextCompare) = 0 Then
+            FindColumnIndex = i
+            Exit Function
+        End If
+    Next i
+    FindColumnIndex = 0
+End Function
+
+Private Function ShapeExistsOn(ws As Worksheet, ByVal shapeName As String) As Boolean
+    On Error Resume Next
+    Dim shp As Shape
+    Set shp = ws.Shapes(shapeName)
+    ShapeExistsOn = Not shp Is Nothing
+    On Error GoTo 0
+End Function
+
+' Trimsamere ParseTag (lokale kopie; laat jouw Private ParseTag in LayoutSpecsHelpers intact)
+Private Function ParseTagLocal(ByVal tagText As String, ByVal key As String) As String
+    On Error GoTo ErrHandler
+    If Len(tagText) = 0 Then Exit Function
+    Dim parts() As String: parts = Split(tagText, vbLf)
+    Dim i As Long, kv()
+    For i = LBound(parts) To UBound(parts)
+        kv = Split(parts(i), "=")
+        If UBound(kv) = 1 Then If StrComp(Trim$(kv(0)), key, vbTextCompare) = 0 Then ParseTagLocal = Trim$(kv(1)): Exit Function
+    Next i
+    Exit Function
+ErrHandler:
+    ParseTagLocal = ""
+End Function
+
+' Probeer een actief UserForm te pakken (VBE of runtime)
+Private Function GetActiveFormSafe() As Object
+    On Error Resume Next
+    ' 1) Runtime getoonde forms
+    If VBA.UserForms.Count > 0 Then Set GetActiveFormSafe = VBA.UserForms(0)
+    ' 2) Sommige setups hebben Screen.ActiveForm
+    If GetActiveFormSafe Is Nothing Then Set GetActiveFormSafe = Screen.ActiveForm
+    On Error GoTo 0
+End Function
+```
+
+***
+
+## 🧭 HOWTO — knop op `frmDebugDashboard` toevoegen
+
+**In `frmDebugDashboard` (code‑behind):**
+
+```vba
+Private Sub cmdValidateAll_Click()
+  On Error GoTo ErrHandler
+  modLayoutValidator.ValidateLayoutAll True
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdValidateAll_Click: " & Err.Description, vbCritical
+End Sub
+```
+
+**In Design mode:**
+
+*   Voeg een **CommandButton** toe:
+    *   **Name**: `cmdValidateAll`
+    *   **Caption**: `Validate Layout (extended)`
+    *   **Left**: 50, **Top**: 260, **Width**: 200, **Height**: 28
+
+> De macro vult `frmDebugDashboard.txtStatus` als die bestaat, en toont altijd ook een MsgBox met het samenvattend rapport.
+
+***
+
+## Wat je nu krijgt in het rapport
+
+*   **OK (Specs)** of een lijst met ontbrekende kolommen/rijen/velden.
+*   **OK (Shapes)** of waarschuwingen voor ontbrekende `_hover`.
+*   **OK (Form)** of details per Image‑control waar `Tag` of shapes niet kloppen.
+*   **OK (Background)** met het **exportpad** (altijd handig voor debug).
+
+Wil je dat ik deze **uitgebreide validator** ook **append** in jouw bestaande **downloadbare handover** (v5.3 FULL), zodat de volgende agent ‘m direct kan copy‑pasten? Zeg maar **Ja/Nee**.
+
+Ja, laten we `txtStatus` toevoegen aan **frmDebugDashboard** zodat de validator zijn rapport daar kan tonen. Hier is een **HOWTO + code**:
+
+***
+
+### ✅ Hoe voeg je `txtStatus` toe in frmDebugDashboard
+
+1.  **Open VBE** → dubbelklik `frmDebugDashboard` → **Design Mode**.
+2.  Voeg een **TextBox** toe:
+    *   **Name**: `txtStatus`
+    *   **MultiLine**: `True`
+    *   **ScrollBars**: `2` (fmScrollBarsVertical)
+    *   **Width**: ±200
+    *   **Height**: ±60
+    *   **Left**: 50
+    *   **Top**: 300 (onder je knoppen)
+3.  Zet **Locked = True** (optioneel, zodat gebruiker niet kan typen).
+4.  Caption leeg laten.
+
+***
+
+### ✅ Waarom dit nodig is
+
+*   De uitgebreide validator (`ValidateLayoutAll`) schrijft het rapport naar `txtStatus` als die bestaat.
+*   Zo kun je **direct in het dashboard** zien wat er mis is, zonder alleen MsgBox.
+
+***
+
+### ✅ Extra: Click-event voor validator-knop
+
+Als je nog niet hebt:
+
+```vba
+Private Sub cmdValidateAll_Click()
+  On Error GoTo ErrHandler
+  modLayoutValidator.ValidateLayoutAll True
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdValidateAll_Click: " & Err.Description, vbCritical
+End Sub
+```
+
+
+============================================================
+END OF HANDOVER — v5.3 FULL
+============================================================
+
+
+============================================================
+APPENDIX — Additions after v5.3 FULL (2025-11-26, late evening)
+============================================================
+
+# A1) Extended Mini Validator Macro — modLayoutValidator
+```vba
+'=========================
+' MODULE: modLayoutValidator (extended)
+'=========================
+Option Explicit
+
+Public Sub ValidateLayoutAll(Optional ByVal attachToDashboard As Boolean = True)
+    On Error GoTo ErrHandler
+    Dim rep As String
+    rep = "Sanity-rapport (extended)" & vbCrLf & String(40, "-") & vbCrLf
+    rep = rep & SpecsColumnsAndRowsCheck() & vbCrLf
+    rep = rep & ShapesExistenceCheck() & vbCrLf
+    rep = rep & FormImageTagCheck() & vbCrLf
+    rep = rep & BackgroundExportCheck() & vbCrLf
+    If attachToDashboard Then
+        On Error Resume Next
+        frmDebugDashboard.txtStatus.Value = rep
+        On Error GoTo 0
+    End If
+    MsgBox rep, vbInformation, "Sanity (extended)"
+    Exit Sub
+ErrHandler:
+    MsgBox "FOUT in ValidateLayoutAll: [" & Err.Number & "] " & Err.Description, vbCritical
+End Sub
+
+Private Function SpecsColumnsAndRowsCheck() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    If lo Is Nothing Then
+        SpecsColumnsAndRowsCheck = "FOUT: Tabel 'tblLayoutSpecs' niet gevonden."
+        Exit Function
+    End If
+    Dim requiredCols As Variant
+    requiredCols = Array("Key", "ShapeName", "Width", "Height", "X", "Y")
+    Dim i As Long, missing As String
+    For i = LBound(requiredCols) To UBound(requiredCols)
+        If FindColumnIndex(lo, CStr(requiredCols(i))) = 0 Then
+            missing = missing & "- Kolom ontbreekt: " & requiredCols(i) & vbCrLf
+        End If
+    Next i
+    If Len(missing) > 0 Then
+        SpecsColumnsAndRowsCheck = "FOUT (Specs):" & vbCrLf & missing
+        Exit Function
+    End If
+    If lo.DataBodyRange Is Nothing Then
+        SpecsColumnsAndRowsCheck = "LET OP: 'tblLayoutSpecs' heeft nog geen rijen."
+        Exit Function
+    End If
+    Dim expectedKeys As Variant
+    expectedKeys = Array("Prev", "Next", "Save", "Cancel", "RowAdd", "RowDel")
+    Dim colKey As Long, colShape As Long, colW As Long, colH As Long, colX As Long, colY As Long
+    colKey = FindColumnIndex(lo, "Key")
+    colShape = FindColumnIndex(lo, "ShapeName")
+    colW = FindColumnIndex(lo, "Width")
+    colH = FindColumnIndex(lo, "Height")
+    colX = FindColumnIndex(lo, "X")
+    colY = FindColumnIndex(lo, "Y")
+    Dim r As Range, k As Variant, found As Boolean, line As String
+    For Each k In expectedKeys
+        found = False
+        For Each r In lo.DataBodyRange.Rows
+            If Trim$(CStr(r.Cells(1, colKey).Value)) = CStr(k) Then
+                found = True
+                If Len(Trim$(CStr(r.Cells(1, colShape).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colW).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colH).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colX).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colY).Value))) = 0 Then
+                    line = line & "- Key '" & k & "': heeft lege velden (ShapeName/Width/Height/X/Y)." & vbCrLf
+                End If
+                Exit For
+            End If
+        Next r
+        If Not found Then line = line & "- Key ontbreekt in specs: " & k & vbCrLf
+    Next k
+    If Len(line) > 0 Then
+        SpecsColumnsAndRowsCheck = "LET OP (Specs):" & vbCrLf & line
+    Else
+        SpecsColumnsAndRowsCheck = "OK  (Specs): Kolommen & rijen zijn compleet."
+    End If
+    Exit Function
+ErrHandler:
+    SpecsColumnsAndRowsCheck = "FOUT in SpecsColumnsAndRowsCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+Private Function ShapesExistenceCheck() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    If lo Is Nothing Or lo.DataBodyRange Is Nothing Then
+        ShapesExistenceCheck = "LET OP: 'tblLayoutSpecs' ontbreekt of heeft geen rijen; skip shapes-check."
+        Exit Function
+    End If
+    Dim colShape As Long, colKey As Long
+    colShape = FindColumnIndex(lo, "ShapeName")
+    colKey = FindColumnIndex(lo, "Key")
+    Dim r As Range, shapeName As String, keyName As String, report As String
+    For Each r In lo.DataBodyRange.Rows
+        keyName = Trim$(CStr(r.Cells(1, colKey).Value))
+        shapeName = Trim$(CStr(r.Cells(1, colShape).Value))
+        If Len(shapeName) > 0 Then
+            If Not ShapeExistsOn(wsRef, shapeName) Then
+                report = report & "- Key '" & keyName & "': base-shape ontbreekt: " & shapeName & vbCrLf
+            Else
+                If LCase$(keyName) <> "background" Then
+                    Dim hoverName As String: hoverName = shapeName & "_hover"
+                    If Not ShapeExistsOn(wsRef, hoverName) Then
+                        report = report & "LET OP: Key '" & keyName & "': hover-shape ontbreekt: " & hoverName & vbCrLf
+                    End If
+                End If
+            End If
+        Else
+            report = report & "- Key '" & keyName & "': ShapeName is leeg." & vbCrLf
+        End If
+    Next r
+    If Len(report) = 0 Then
+        ShapesExistenceCheck = "OK  (Shapes): base/hover bestaan (hover niet vereist voor Background)."
+    Else
+        ShapesExistenceCheck = "LET OP (Shapes):" & vbCrLf & report
+    End If
+    Exit Function
+ErrHandler:
+    ShapesExistenceCheck = "FOUT in ShapesExistenceCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+Private Function FormImageTagCheck() As String
+    On Error GoTo ErrHandler
+    Dim frm As Object
+    Set frm = GetActiveFormSafe()
+    If frm Is Nothing Then
+        FormImageTagCheck = "LET OP (Form): geen actief form gevonden; open een UserForm en run opnieuw."
+        Exit Function
+    End If
+    Dim c As Control, issues As String
+    For Each c In frm.Controls
+        If TypeOf c Is MSForms.Image Then
+            Dim tagText As String: tagText = CStr(c.Tag)
+            Dim baseName As String: baseName = ParseTagLocal(tagText, "base")
+            Dim hoverName As String: hoverName = ParseTagLocal(tagText, "hover")
+            If Len(baseName) = 0 Then
+                issues = issues & "- Image '" & c.Name & "': Tag mist 'base='." & vbCrLf
+            Else
+                If Not ShapeExistsOn(ThisWorkbook.Worksheets("Referenties"), baseName) Then
+                    issues = issues & "- Image '" & c.Name & "': base-shape niet gevonden: " & baseName & vbCrLf
+                End If
+            End If
+            If InStr(1, LCase$(c.Name), "imgbtn", vbTextCompare) > 0 Or _
+               InStr(1, LCase$(c.Name), "imgaddrow", vbTextCompare) > 0 Or _
+               InStr(1, LCase$(c.Name), "imgdelrow", vbTextCompare) > 0 Then
+                If Len(hoverName) = 0 Then
+                    issues = issues & "LET OP: Image '" & c.Name & "': Tag mist 'hover='." & vbCrLf
+                ElseIf Not ShapeExistsOn(ThisWorkbook.Worksheets("Referenties"), hoverName) Then
+                    issues = issues & "LET OP: Image '" & c.Name & "': hover-shape niet gevonden: " & hoverName & vbCrLf
+                End If
+            End If
+        End If
+    Next c
+    If Len(issues) = 0 Then
+        FormImageTagCheck = "OK  (Form): alle Image-tags valide (base/hover) en shapes gevonden."
+    Else
+        FormImageTagCheck = "LET OP (Form):" & vbCrLf & issues
+    End If
+    Exit Function
+ErrHandler:
+    FormImageTagCheck = "FOUT in FormImageTagCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+Private Function BackgroundExportCheck() As String
+    On Error GoTo ErrHandler
+    Dim p As String
+    p = FormBackground.GetBackgroundPath()
+    If Len(p) = 0 Then
+        BackgroundExportCheck = "FOUT (Background): GetBackgroundPath gaf leeg pad."
+    ElseIf Dir$(p) = "" Then
+        BackgroundExportCheck = "FOUT (Background): bestand bestaat niet: " & p
+    Else
+        BackgroundExportCheck = "OK  (Background): export pad = " & p
+    End If
+    Exit Function
+ErrHandler:
+    BackgroundExportCheck = "FOUT in BackgroundExportCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+Private Function FindColumnIndex(lo As ListObject, ByVal headerName As String) As Long
+    On Error Resume Next
+    Dim i As Long
+    For i = 1 To lo.HeaderRowRange.Columns.Count
+        If StrComp(CStr(lo.HeaderRowRange.Cells(1, i).Value), headerName, vbTextCompare) = 0 Then
+            FindColumnIndex = i
+            Exit Function
+        End If
+    Next i
+    FindColumnIndex = 0
+End Function
+
+Private Function ShapeExistsOn(ws As Worksheet, ByVal shapeName As String) As Boolean
+    On Error Resume Next
+    Dim shp As Shape
+    Set shp = ws.Shapes(shapeName)
+    ShapeExistsOn = Not shp Is Nothing
+    On Error GoTo 0
+End Function
+
+Private Function ParseTagLocal(ByVal tagText As String, ByVal key As String) As String
+    On Error GoTo ErrHandler
+    If Len(tagText) = 0 Then Exit Function
+    Dim parts() As String: parts = Split(tagText, vbLf)
+    Dim i As Long, kv()
+    For i = LBound(parts) To UBound(parts)
+        kv = Split(parts(i), "=")
+        If UBound(kv) = 1 Then If StrComp(Trim$(kv(0)), key, vbTextCompare) = 0 Then ParseTagLocal = Trim$(kv(1)): Exit Function
+    Next i
+    Exit Function
+ErrHandler:
+    ParseTagLocal = ""
+End Function
+
+Private Function GetActiveFormSafe() As Object
+    On Error Resume Next
+    If VBA.UserForms.Count > 0 Then Set GetActiveFormSafe = VBA.UserForms(0)
+    If GetActiveFormSafe Is Nothing Then Set GetActiveFormSafe = Screen.ActiveForm
+    On Error GoTo 0
+End Function
+```
+
+# A2) frmDebugDashboard — Click events (code-behind)
+```vba
+Option Explicit
+
+Private Sub cmdRefreshStatus_Click()
+  On Error GoTo ErrHandler
+  modDebugDashboard.RefreshStatus Me
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdRefreshStatus_Click: " & Err.Description, vbCritical
+End Sub
+
+Private Sub cmdRunSmokeTests_Click()
+  On Error GoTo ErrHandler
+  modDebugDashboard.RunSmokeTests
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdRunSmokeTests_Click: " & Err.Description, vbCritical
+End Sub
+
+Private Sub cmdExportErrorLog_Click()
+  On Error GoTo ErrHandler
+  modDebugDashboard.ExportErrorLogCSV
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdExportErrorLog_Click: " & Err.Description, vbCritical
+End Sub
+
+Private Sub cmdOpenHandover_Click()
+  On Error GoTo ErrHandler
+  modDebugDashboard.OpenHandoverLatest
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdOpenHandover_Click: " & Err.Description, vbCritical
+End Sub
+
+Private Sub cmdValidateAll_Click()
+  On Error GoTo ErrHandler
+  modLayoutValidator.ValidateLayoutAll True
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdValidateAll_Click: " & Err.Description, vbCritical
+End Sub
+
+Private Sub cmdSanity_Click()
+  On Error GoTo ErrHandler
+  Dim rep As String
+  rep = modSanityChecks.RunAssetSanity(True)
+  On Error Resume Next
+  Me.txtStatus.Value = rep
+  On Error GoTo ErrHandler
+  MsgBox rep, vbInformation, "Sanity-check"
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in cmdSanity_Click: " & Err.Description, vbCritical
+End Sub
+```
+
+# A3) Module — modDebugDashboard routines
+```vba
+Attribute VB_Name = "modDebugDashboard"
+Option Explicit
+
+Public Sub RefreshStatus(frm As Object)
+  On Error GoTo ErrHandler
+  Dim msg As String
+  msg = "Status Check:" & vbCrLf
+  msg = msg & "Utils module: " & YesNo(ModuleExists("Utils")) & vbCrLf
+  msg = msg & "FormEvents module: " & YesNo(ModuleExists("FormEvents")) & vbCrLf
+  msg = msg & "LayoutSpecsHelpers: " & YesNo(ModuleExists("LayoutSpecsHelpers")) & vbCrLf
+  msg = msg & "FormBackground: " & YesNo(ModuleExists("FormBackground")) & vbCrLf
+  msg = msg & "frmHuishouden: " & YesNo(FormExists("frmHuishouden")) & vbCrLf
+  msg = msg & "frmVast: " & YesNo(FormExists("frmVast")) & vbCrLf
+  msg = msg & "frmInvoer: " & YesNo(FormExists("frmInvoer")) & vbCrLf
+  If HasStatusBox(frm) Then frm.txtStatus.Value = msg
+  MsgBox msg, vbInformation, "Dashboard Status"
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in RefreshStatus: " & Err.Description, vbCritical
+End Sub
+
+Public Sub RunSmokeTests()
+  On Error GoTo ErrHandler
+  MsgBox "Running Smoke Tests...", vbInformation
+  If FormExists("frmHuishouden") Then frmHuishouden.Show
+  If FormExists("frmVast") Then frmVast.Show
+  If FormExists("frmInvoer") Then frmInvoer.Show
+  MsgBox "Smoke Tests Completed.", vbInformation
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in RunSmokeTests: " & Err.Description, vbCritical
+End Sub
+
+Public Sub ExportErrorLogCSV()
+  On Error GoTo ErrHandler
+  Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("ErrorLog")
+  If ws Is Nothing Then
+    MsgBox "ErrorLog sheet niet gevonden.", vbExclamation
+    Exit Sub
+  End If
+  Dim tempPath As String
+  tempPath = Environ$("TEMP")
+  If Len(tempPath) = 0 Then tempPath = Environ$("TMP")
+  If Len(tempPath) = 0 Then tempPath = ThisWorkbook.Path
+  If Right$(tempPath, 1) <> Application.PathSeparator Then tempPath = tempPath & Application.PathSeparator
+  Dim csv As String
+  csv = tempPath & "ErrorLog_" & Format(Now, "yyyymmdd_hhnnss") & ".csv"
+  ws.Copy
+  On Error Resume Next
+  ActiveWorkbook.SaveAs Filename:=csv, FileFormat:=xlCSV
+  ActiveWorkbook.Close False
+  On Error GoTo ErrHandler
+  MsgBox "ErrorLog geëxporteerd naar: " & csv, vbInformation
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in ExportErrorLogCSV: " & Err.Description, vbCritical
+End Sub
+
+Public Sub OpenHandoverLatest()
+  On Error GoTo ErrHandler
+  Dim pathFull As String
+  pathFull = ThisWorkbook.Path
+  If Right$(pathFull, 1) <> Application.PathSeparator Then pathFull = pathFull & Application.PathSeparator
+  pathFull = pathFull & "handover_next_agent_v5_3_FULL.txt"
+  If Dir$(pathFull) = "" Then
+    pathFull = ThisWorkbook.Path & Application.PathSeparator & "handover_next_agent_v5_3.txt"
+  End If
+  If Dir$(pathFull) = "" Then
+    MsgBox "Handover-bestand niet gevonden in de map van de workbook.", vbExclamation
+    Exit Sub
+  End If
+  Application.FollowHyperlink pathFull
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in OpenHandoverLatest: " & Err.Description, vbCritical
+End Sub
+
+Private Function ModuleExists(ByVal moduleName As String) As Boolean
+  On Error Resume Next
+  Dim vbComp As Object
+  Set vbComp = ThisWorkbook.VBProject.VBComponents(moduleName)
+  ModuleExists = Not vbComp Is Nothing
+End Function
+
+Private Function FormExists(ByVal formName As String) As Boolean
+  On Error Resume Next
+  Dim vbComp As Object
+  Set vbComp = ThisWorkbook.VBProject.VBComponents(formName)
+  FormExists = Not vbComp Is Nothing
+End Function
+
+Private Function YesNo(ByVal cond As Boolean) As String
+  YesNo = IIf(cond, "OK", "Missing")
+End Function
+
+Private Function HasStatusBox(frm As Object) As Boolean
+  On Error Resume Next
+  HasStatusBox = Not frm.txtStatus Is Nothing
+  On Error GoTo 0
+End Function
+```
+
+# A4) frmDebugDashboard — Layout Specs (for design mode)
+```yaml
+form:
+  width: 300
+  height: 250
+  backcolor: white
+  font: Arial 10
+buttons:
+  - name: cmdRefreshStatus
+    caption: Refresh Status
+    left: 50
+    top: 20
+    width: 200
+    height: 28
+  - name: cmdRunSmokeTests
+    caption: Run Smoke Tests
+    left: 50
+    top: 60
+    width: 200
+    height: 28
+  - name: cmdExportErrorLog
+    caption: Export ErrorLog
+    left: 50
+    top: 100
+    width: 200
+    height: 28
+  - name: cmdOpenHandover
+    caption: Open Handover
+    left: 50
+    top: 140
+    width: 200
+    height: 28
+  - name: cmdValidateAll
+    caption: Validate Layout (extended)
+    left: 50
+    top: 180
+    width: 200
+    height: 28
+  - name: cmdSanity
+    caption: Sanity-check
+    left: 50
+    top: 220
+    width: 200
+    height: 28
+status_box:
+  name: txtStatus
+  left: 50
+  top: 260
+  width: 200
+  height: 60
+  multiline: true
+  scrollbars: vertical
+  locked: true
+  tabstop: false
+label_optional:
+  name: lblStatus
+  caption: Status
+  left: 50
+  top: 240
+  width: 200
+  height: 18
+  
+ABOVE SPECS ARE NOT WHAT MANASSE USED!!   
+```
+
+# Updated STARTPROMPT (append)
+```
+Na het inlezen:
+1) Voeg de extended validator (modLayoutValidator) toe en plak de frmDebugDashboard click-events + modDebugDashboard routines.
+2) Pas frmDebugDashboard aan volgens de layout specs (YAML-sectie hierboven).
+3) Open frmDebugDashboard → druk op ‘Validate Layout (extended)’ → fix alles wat niet OK is.
+4) Draai Sanity-check; open alle forms; test hover & background.
+5) Lever QA-output en update deze handover bij nieuwe bevindingen.
+```
+
+Manasse found this little piece of code, by using https://wand.tools/vba/
+
+Maybe we can use it to get the Shape as background 
+===== code: ======
+
+Dim shp As Shape
+
+Private Sub UserForm_Initialize()
+    ' Set the userform size
+    Me.Width = 400
+    Me.Height = 300
+    
+    ' Add a shape to the userform
+    Set shp = Me.Shapes.AddShape(msoShapeRectangle, 0, 0, Me.Width, Me.Height)
+    
+    ' Set the shape's properties
+    With shp
+        .Fill.ForeColor.RGB = RGB(200, 200, 255) ' Light blue background
+        .Line.Visible = msoFalse ' Hide the shape outline
+        .ZOrder msoSendToBack ' Send shape to back
+    End With
+End Sub
+
+This Excel VBA code is designed to customize a UserForm's appearance when it is initialized (when it first opens).
+
+Here's a breakdown of what each part does:
+
+1. **Dim shp As Shape**:
+   - This line declares a variable named `shp` that will hold a reference to a shape object.
+
+2. **Private Sub UserForm_Initialize()**:
+   - This is the beginning of a special subroutine that runs automatically when the UserForm is initialized.
+
+3. **Set the userform size**:
+   - `Me.Width = 400` and `Me.Height = 300`: These lines set the width of the UserForm to 400 pixels and its height to 300 pixels.
+
+4. **Add a shape to the userform**:
+   - `Set shp = Me.Shapes.AddShape(msoShapeRectangle, 0, 0, Me.Width, Me.Height)`:
+     This line creates a rectangle shape that fills the entire UserForm and assigns it to the `shp` variable.
+
+5. **Set the shape's properties**:
+   - The `With shp` block begins a series of commands that change the properties of the `shp` shape:
+     - `.Fill.ForeColor.RGB = RGB(200, 200, 255)`: This sets the rectangle's fill color to a light blue.
+     - `.Line.Visible = msoFalse`: This hides the outline of the rectangle, making it look more like a background.
+     - `.ZOrder msoSendToBack`: This command ensures that the rectangle is placed behind any other controls or elements on the UserForm.
+
+**Usage Scenario Example**:
+
+Imagine you're creating a custom data entry form in Excel for a project management tool. You want to make the form visually appealing and user-friendly. 
+
+By using this VBA code, you can create a UserForm that:
+
+- Has a nice light blue background.
+- Presents clear input areas for users to fill in project details.
+- Looks professional and enhances user experience, making it easier for users to focus on entering their data.
+=== end code ===
+============================================================
+END OF APPENDIX — v5.3 FULL additions
+============================================================

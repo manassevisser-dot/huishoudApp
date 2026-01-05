@@ -1,0 +1,64 @@
+project: WI_UserForms_Wizard
+version: 3
+date: 2025-11-25
+owner: Manasse Visser
+
+summary: >
+  Complete implementation package for the W&I Excel UserForms Wizard.
+  Adds form builders, layout helpers, shape-driven buttons, hover-support,
+  multi-page frmVast and stepwise onboarding forms (Huishouden -> Vaste -> Dagelijks).
+  Includes error handling, validation rules and a layout/table-driven approach.
+
+files_changed_or_added:
+  - FormHelpers (Module) 
+  - LayoutSpecsHelpers (Module)
+  - FormLayout (Module)
+  - FormEvents (Module)
+  - frmBuilders (Module)
+  - CImgEvents (ClassModule)
+  - frmInvoer (UserForm) - Initialize update
+  - frmHuishouden (UserForm) - new
+  - frmVast (UserForm) - new MultiPage
+  - Referenties sheet - add tblLayoutSpecs and required named shapes
+
+prerequisites:
+  - Excel with VBA (xlsm)
+  - MSForms (Microsoft Forms 2.0 Object Library) enabled under Tools -> References
+  - A sheet named "Referenties" present in workbook
+
+instructions:
+  - Open VBE (Alt+F11) and add the modules in the order described in the INI diff list
+  - Populate the Referenties sheet with shapes and a tblLayoutSpecs as specified
+  - Compile and fix any missing references (Tools -> References)
+  - Run forms for smoke tests: frmHuishouden -> frmVast -> frmInvoer
+
+key_functions:
+  - AddShapeAsImage: Export shape to temporary JPG and add as Forms.Image to a UserForm
+  - BuildButtonsFromSpecs: Reads tblLayoutSpecs and places image buttons on forms
+  - BuildForm_Huishouden: Creates the 'household' step, dynamic adults/children frames
+  - BuildFrmVast: Creates the MultiPage for Inkomsten & Uitgaven
+  - BuildDynamicFrmInvoer: Rebuilds the daily expenses input form
+
+validation_rules:
+  - Huishouden: Adults + Children == TotalPersons; TotalPersons in 1..8
+  - Vaste Inkomsten: Row valid if Bron, Periode and Bedrag > 0
+  - Vaste Uitgaven: Row valid if Categorie, Periode and Bedrag > 0
+  - Dagelijkse Invoer: Categorie chosen and Bedrag >0
+
+testing:
+  - Scenario: single adult -> no children -> ensure flow continues
+  - Scenario: two adults + one child -> validate counts
+  - Scenario: no fixed income -> select "Geen vaste inkomsten" and continue
+  - Scenario: hover swap for buttons (mouse over image) -> hover image appears
+
+notes:
+  - If image controls are not clickable in your Excel version, create invisible CommandButtons over the image positions and map their Click to the intended action
+  - Keep the Referenties sheet under version control and export shapes to PNG for future visual consistency
+
+references:
+  - original_handover: file:///mnt/data/handover_copilot_v2_and_v3.yaml
+  - diffs_source: all VBA updates + diffs.txt (uploaded by owner)
+
+contact:
+  - owner: Manasse Visser
+  - email: (add your email here)

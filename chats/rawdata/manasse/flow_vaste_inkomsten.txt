@@ -1,0 +1,14 @@
+FLOWCHART – Form 2: Vaste Inkomsten (Stap 2/4)
+Generated: 2025-11-24 19:18:07
+===============================================
+
+Enter/Select income rows → Normalize amounts to monthly via Utils.ToMonthlyAmount → Compute total
+Validation:
+  - Non-empty source and amount per active row
+  - Period required; default = maand
+  - Optional receiver selection
+Buttons:
+  - Next enabled if ≥1 valid income row OR user chooses "Geen vaste inkomsten"
+  - Previous returns to Form 1; Cancel closes
+Persistence:
+  - On Next/Opslaan → write to tblVastInkomsten (sheet "Vast" or "Database" per project conventions)

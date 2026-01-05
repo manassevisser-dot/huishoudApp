@@ -1,0 +1,164 @@
+import React, { useState, useMemo } from 'react';
+import { Users, Wallet, CreditCard, List, CheckCircle, ChevronDown, ChevronRight, Home } from 'lucide-react';
+
+// Kleuren die overeenkomen met het Design System (Teal)
+const COLORS = {
+  primary: '#00A98F',
+  text: '#333333',
+  lightText: '#666666',
+  background: '#F9F9F9',
+  card: '#FFFFFF',
+};
+
+// --- HULPCOMPONENTEN VOOR FLOWCHART ELEMENTEN ---
+
+// Node voor de start of het einde van de flow
+const StartEndNode = ({ title, icon: Icon }) => (
+  <div className="flex flex-col items-center justify-center p-4 bg-gray-700 text-white rounded-full shadow-lg h-24 w-24 mx-auto mb-4">
+    {Icon && <Icon size={24} />}
+    <p className="mt-1 text-xs font-semibold text-center leading-none">{title}</p>
+  </div>
+);
+
+// Standaard processtap Node
+const ProcessNode = ({ title, description, icon: Icon, isCurrent }) => (
+  <div 
+    className={`w-full p-4 rounded-xl shadow-md border-4 transition-all duration-300 transform 
+                ${isCurrent ? 'scale-[1.02] bg-white border-teal-500' : 'bg-gray-50 border-gray-200 hover:shadow-lg'}`}
+    style={{ borderColor: isCurrent ? COLORS.primary : COLORS.text + '20', backgroundColor: COLORS.card }}
+  >
+    <div className="flex items-center gap-4">
+      <div 
+        className={`p-3 rounded-lg ${isCurrent ? 'bg-teal-500' : 'bg-gray-100'}`}
+        style={{ backgroundColor: isCurrent ? COLORS.primary : COLORS.background }}
+      >
+        {Icon && <Icon size={24} className={isCurrent ? "text-white" : "text-gray-500"} />}
+      </div>
+      <div className="flex-1">
+        <h3 className="font-bold text-lg" style={{ color: COLORS.text }}>{title}</h3>
+        <p className="text-sm" style={{ color: COLORS.lightText }}>{description}</p>
+      </div>
+      {isCurrent && <ChevronRight size={20} className="text-teal-500" style={{ color: COLORS.primary }} />}
+    </div>
+  </div>
+);
+
+// Pijl en verbinding tussen stappen
+const FlowConnector = ({ label }) => (
+  <div className="flex flex-col items-center justify-center my-2">
+    <div className="text-gray-400 text-sm font-medium italic" style={{ color: COLORS.lightText }}>{label}</div>
+    <ChevronDown size={28} className="text-gray-400 animate-pulse" style={{ color: COLORS.lightText }} />
+  </div>
+);
+
+// --- HOOFDCOMPONENT ---
+
+const SimpleFinancieleUserFlow = () => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 5;
+
+  // De simpele flow zoals aangeleverd
+  const flowSteps = useMemo(() => [
+    { 
+      step: 1, 
+      title: "Stap 1: Huishouden", 
+      subSteps: "1.1 Basis & 1.2 Details", 
+      icon: Users,
+      description: "Aantal personen, volwassenen, kinderen en basisdetails.",
+    },
+    { 
+      step: 2, 
+      title: "Stap 2: Inkomsten", 
+      subSteps: "Salaris, uitkeringen, toeslagen.", 
+      icon: Wallet,
+      description: "Alle maandelijkse inkomsten van het huishouden invoeren.",
+    },
+    { 
+      step: 3, 
+      title: "Stap 3: Vaste Lasten", 
+      subSteps: "Huur/Hypotheek, energie, vaste kosten.", 
+      icon: CreditCard,
+      description: "Verplichte maandelijkse uitgaven (woonkosten, etc.).",
+    },
+    { 
+      step: 4, 
+      title: "Stap 4: Overige Kosten", 
+      subSteps: "Verzekeringen, abonnementen, vervoer.", 
+      icon: List,
+      description: "Hier bevestig en sla je de setup op naar de database.",
+    },
+    { 
+      step: 5, 
+      title: "Stap 5: Dashboard Landing", 
+      subSteps: "Overzicht & Actieknop.", 
+      icon: CheckCircle,
+      description: "Laatste overzicht, inclusief knop naar 'Dagelijkse Uitgaven'.",
+    },
+  ], []);
+
+  const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+  const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
+  const goToStart = () => setCurrentStep(1);
+
+  return (
+    <div className="p-8 min-h-screen" style={{ backgroundColor: COLORS.background, fontFamily: 'Inter, sans-serif' }}>
+      <h1 className="text-3xl font-extrabold mb-8 text-center" style={{ color: COLORS.text }}>
+        Simpele Financiële User Flow
+      </h1>
+
+      <div className="flex flex-col items-center max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-2xl">
+        
+        {/* Navigatie Knoppen */}
+        <div className="flex justify-between w-full mb-6 gap-3">
+          <button 
+            onClick={prevStep} 
+            disabled={currentStep === 1}
+            className="flex-1 p-3 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+            style={{ backgroundColor: COLORS.card, color: COLORS.text, border: '2px solid #DDDDDD' }}
+          >
+            Vorige
+          </button>
+          <button 
+            onClick={nextStep} 
+            disabled={currentStep === totalSteps}
+            className="flex-1 p-3 rounded-lg text-sm font-semibold text-white transition-colors disabled:bg-gray-400"
+            style={{ backgroundColor: COLORS.primary }}
+          >
+            Volgende ({currentStep}/{totalSteps})
+          </button>
+        </div>
+
+        {/* --- START PUNT --- */}
+        <StartEndNode title="START" icon={Home} />
+        <FlowConnector label="Aanmelden/Inloggen" />
+
+        {/* --- FLOW STAPPEN --- */}
+        {flowSteps.map((stepData, index) => (
+          <React.Fragment key={stepData.step}>
+            <ProcessNode 
+              title={stepData.title}
+              description={stepData.description}
+              icon={stepData.icon}
+              isCurrent={currentStep === stepData.step}
+            />
+            
+            {/* Voeg een connector toe na elke stap, behalve de laatste */}
+            {index < flowSteps.length - 1 && (
+              <FlowConnector label={`Ga naar Stap ${stepData.step + 1}`} />
+            )}
+          </React.Fragment>
+        ))}
+
+        {/* --- EINDE PUNT --- */}
+        <FlowConnector label="Setup Voltooid" />
+        <StartEndNode title="EINDE" icon={CheckCircle} />
+
+        <p className="mt-8 text-center text-xs" style={{ color: COLORS.lightText }}>
+          * Opmerking: Stap 4 is het 'bevestigen en opslaan' en Stap 5 is de uiteindelijke landing page, conform de aangeleverde user flow.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+export default SimpleFinancieleUserFlow;

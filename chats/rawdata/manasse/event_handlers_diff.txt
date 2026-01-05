@@ -1,0 +1,72 @@
+
+CHECKLIST VOOR CONTROLES:
+=========================
+1. Controleer DYN_PREFIX:
+   - Alle referenties moeten zijn: FormLayout.DYN_PREFIX
+   - Zoek naar: DYN_PREFIX zonder prefix, FormEvents.DYN_PREFIX, FormData.DYN_PREFIX
+   - Vervang door: FormLayout.DYN_PREFIX
+
+2. Enum gebruik:
+   - Zoek naar Utils.dbDate, Utils.dbYear, etc.
+   - Vervang door: dbDate, dbYear, dbWeek, dbAmount, dbCategory (Enum DBCols)
+
+3. Foutafhandeling:
+   - Zorg voor On Error GoTo ErrHandler
+   - Voeg Exit Sub vóór ErrHandler
+   - Gebruik Utils.LogError4 voor logging
+
+4. Shapes voor achtergrond:
+   - Controleer dat shape op blad "Referenties" heet: bg_frmInvoer_landscape
+   - In FormBackground.GetBackgroundPath: Set shp = wsRef.Shapes("bg_frmInvoer_landscape")
+
+5. Reporting module:
+   - Verwijder Private Const WEEK_SUMMARY_COL en MONTH_SUMMARY_COL
+   - Gebruik Enum SummaryCols: SummaryCols.colWeekSummaryStart, SummaryCols.colMonthSummaryStart
+
+6. UserForm dynamische opbouw:
+   - BuildDynamicFrmInvoer moet Application.ScreenUpdating = False/True gebruiken
+   - HookEventsDynamic koppelt knoppen en comboboxen
+
+=========================
+
+DIFF-LIJST VOOR KNOP-EVENTS:
+============================
+LOCATIE: FormEvents.bas
+
+--- HandleOpslaan_dyn ---
+OUD:
+Dim outR As Long: outR = Utils.LastRow(wsDB, Utils.dbDate) + 1
+If Len(cat) = 0 Then MsgBox "Kies een categorie": Exit Sub
+MsgBox "Opgeslagen!"
+MsgBox "Fout: " & Err.Description
+
+NIEUW:
+Dim outR As Long: outR = Utils.LastRow(wsDB, dbDate) + 1
+If Len(cat) = 0 Then
+    MsgBox "Kies een categorie", vbExclamation
+    Exit Sub
+End If
+MsgBox "Opgeslagen!", vbInformation
+Utils.LogError4 "FormEvents", "HandleOpslaan_dyn", Err.Number, Err.Description
+MsgBox "Fout: " & Err.Description, vbCritical
+
+--- HandleAnnuleren_dyn ---
+OUD:
+Unload frm
+
+NIEUW:
+Unload frm (blijft hetzelfde, maar voeg evt. foutafhandeling toe indien gewenst)
+
+--- HandleNieuwSub_dyn ---
+OUD:
+Dim loSub As ListObject: Set loSub = wsRef.ListObjects("tbl_cat_sub")
+MsgBox "Bestaat al": Exit Sub
+MsgBox "Fout: " & Err.Description
+
+NIEUW:
+Dim loSub As ListObject: Set loSub = wsRef.ListObjects("tblSubcategorieen")
+MsgBox "Bestaat al", vbInformation
+Utils.LogError4 "FormEvents", "HandleNieuwSub_dyn", Err.Number, Err.Description
+MsgBox "Fout: " & Err.Description, vbCritical
+
+=========================

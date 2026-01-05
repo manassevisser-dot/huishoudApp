@@ -1,0 +1,88 @@
+
+PROJECT DOCUMENTATIE VOOR VOLGENDE AI-AGENT
+===========================================
+
+DOEL:
+------
+We hebben een Excel/VBA-project opgeschoond en uitgebreid met dynamische UserForms, foutafhandeling, enums, en optionele shape-gebaseerde knoppen.
+
+STAPPEN EN WIJZIGINGEN:
+------------------------
+
+1. **DYN_PREFIX Fix**
+   - Alle referenties naar DYN_PREFIX gecorrigeerd naar: FormLayout.DYN_PREFIX.
+   - Public Const DYN_PREFIX As String = "dyn_" toegevoegd in FormLayout.bas.
+
+2. **Enum Gebruik**
+   - Enum DBCols gebruikt voor kolomnummers in Database.
+   - Enum SummaryCols toegevoegd in modTypes:
+     ```vba
+     Public Enum SummaryCols
+         colWeekSummaryStart = 12
+         colMonthSummaryStart = 16
+     End Enum
+     ```
+   - Hardcoded WEEK_SUMMARY_COL en MONTH_SUMMARY_COL verwijderd.
+
+3. **Foutafhandeling**
+   - On Error GoTo ErrHandler toegevoegd in alle procedures.
+   - Exit Sub vóór ErrHandler.
+   - Utils.LogError4 gebruikt voor logging.
+
+4. **Event Handlers Verbeterd**
+   - HandleOpslaan_dyn: gebruikt dbDate Enum, foutafhandeling, logging, MsgBox met vbCritical/vbInformation.
+   - HandleAnnuleren_dyn: Unload frm.
+   - HandleNieuwSub_dyn: gebruikt tblSubcategorieen, logging, MsgBox verbeterd.
+
+5. **Diff-lijsten**
+   - Diff-lijsten gemaakt voor:
+     - Event-handlers (Opslaan, Annuleren, NieuwSub).
+     - Shape-gebaseerde knoppen.
+
+6. **Shape-gebaseerde knoppen**
+   - Mogelijkheid toegevoegd om knoppen te vervangen door shapes opgeslagen in werkblad "Referenties".
+   - Nieuwe helpers:
+     ```vba
+     Public Function ShapeExists(shapeName As String) As Boolean
+     Public Sub AddShapeAsImage(frm As Object, shapeName As String, ctlName As String)
+     ```
+   - BuildDynamicFrmInvoer aangepast:
+     - Controleert of shapes bestaan (btnOpslaanShape, btnAnnulerenShape, btnNieuwSubShape).
+     - Gebruikt AddShapeAsImage indien beschikbaar, anders standaard CommandButton.
+
+7. **BuildDynamicFrmInvoer Verbeterd**
+   - Application.ScreenUpdating = False/True toegevoegd.
+   - Dynamische controls toegevoegd (labels, comboboxen, textbox).
+   - Data geladen via FormData.LoadCategoriesIntoCombo en FormData.LoadPaymentMethodsIntoCombo.
+   - Layout aangepast via FormLayout.FrmLayoutSafeAreaDyn.
+   - Events gekoppeld via HookEventsDynamic.
+
+8. **Helperfuncties toegevoegd**
+   - ShapeExists en AddShapeAsImage in FormLayout of nieuwe module ShapeHelpers.
+
+9. **Checklist voor testen**
+   - SetupVastEnCategorieTabellen uitvoeren.
+   - frmInvoer.Show om UserForm te testen.
+   - Controleer knoppen (shapes of standaard).
+   - Test Opslaan, Annuleren, NieuwSub.
+   - Test rapportage BerekenWeekTotaal en BerekenMaandTotaal.
+
+BESTANDEN GEMAAKT:
+-------------------
+- event_handlers_diff.txt: diff-lijst voor event-handlers.
+- shape_buttons_diff_and_code.txt: diff-lijst + verbeterde BuildDynamicFrmInvoer.
+
+LOCATIES VOOR NIEUWE CODE:
+---------------------------
+- FormLayout.bas: Public Const DYN_PREFIX, ShapeExists, AddShapeAsImage.
+- modTypes.bas: Enum SummaryCols.
+- FormEvents.bas: vervang BuildDynamicFrmInvoer en HookEventsDynamic.
+- Utils.bas: bevat GetTempFile (gebruikt door AddShapeAsImage).
+
+VOLGENDE STAP:
+--------------
+- Alle wijzigingen doorvoeren in VBA-editor.
+- Compileer (Debug → Compile VBAProject).
+- Test macro's en UserForm.
+
+===========================================

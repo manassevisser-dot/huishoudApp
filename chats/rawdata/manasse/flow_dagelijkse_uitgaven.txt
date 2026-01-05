@@ -1,0 +1,6 @@
+FLOWCHART – Form 4: Dagelijkse uitgaven (Stap 4/4)
+Generated: 2025-11-24 19:18:07
+===============================================
+
+User adds individual expense entries → Save to Database using existing HandleOpslaan_dyn → Option to finish onboarding
+Previous → Form 3; Cancel → close

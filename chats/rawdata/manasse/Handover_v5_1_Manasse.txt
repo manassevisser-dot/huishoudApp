@@ -1,0 +1,124 @@
+
+# ============================================================
+# Handover – W&I Excel UserForms Wizard (v5.1)
+# Owner: Manasse Visser | Date: 2025-11-25
+# Context: Je staat nu bij INI stap [22_test_frminvoer]. Dit overdrachtbestand
+# bundelt alle relevante informatie vanaf die stap en geeft de resterende
+# implementatie-, test- en QA-stappen plus sanity-checks en opschoonacties.
+# ============================================================
+
+[00_context]
+state=Je hebt alle modules en classes geïmplementeerd, Dashboard en SanityChecks toegevoegd.
+current_step=[22_test_frminvoer]
+notes=Focus op testen van frmInvoer (dagformulier), hover events, opslag naar Database, en layout via Safe-area.
+
+[01_prerequisites]
+refs=Microsoft Forms 2.0; Microsoft Office XX.X; VBA Extensibility 5.3; (optioneel) Scripting Runtime
+assets=Referenties!Shapes: btnShapeSmall/_hover, btnShapeMedium/_hover, btnShapeLarge/_hover, bg_frmInvoer_landscape
+specs_tbl=Referenties!tblLayoutSpecs gevuld met Keys: Prev, Next, Save, Cancel, RowAdd, RowDel (ShapeName wijst naar generieke btnShapeSmall/Medium/Large)
+config_tbl=Configuratie!tblFrmInvoerConfig aanwezig (BG_MARGIN, ROW_SPACING, etc.)
+
+[02_modules_structure]
+keep_modules=FormBackground, FormHelpers, FormLayout, LayoutSpecsHelpers, FormData, FormEvents, frmBuilders, MonthlySheet, Navigation, Reporting, TableSetup, Utils, modSanityChecks, modDebugDashboard
+classes=CImgEvents, CBtnEvents, CCmbEvents, CTxtEvents
+forms=frmHuishouden, frmVast, frmInvoer, frmDebugDashboard
+optional_remove=ShapeHelpers, DataCategories (indien ongebruikt), CallForm, Installer
+
+[03_sanity_checks]
+run=Gebruik frmDebugDashboard → knop Sanity-check (of MsgBox) om shapes/specificaties te controleren.
+expected=OK voor alle generieke shapes en hun hover; waarschuwingen bij ontbrekende hover; fouten bij ontbrekende shapes of lege specs.
+
+[04_test_frminvoer]
+step=[22_test_frminvoer]
+object=frmInvoer (Dagelijkse uitgaven)
+procedure=
+ 1. Open VBE → dubbelklik frmInvoer → Run (F5).
+ 2. Controleer titel/datum ("Vandaag: …"), labels en velden (Categorie, Subcategorie, Bedrag, Betaalwijze).
+ 3. Controleer hover op knoppen (Opslaan, Annuleren, Vorige) – hover‑afbeelding moet binnen ~100 ms wisselen.
+ 4. Kies een Categorie; Subcategorie moet laden o.b.v. Referenties!tblSubcategorieen.
+ 5. Voer een Bedrag in (numerieke validatie via CTxtEvents): decimalen en getalformat.
+ 6. Kies Betaalwijze.
+ 7. Klik Opslaan: record moet naar Database (kolommen Datum/Jaar/MaandKey/WeekISO/DagNaam/Categorie/Subcategorie/Bedrag/Betaalwijze/Soort).
+ 8. Form sluit na ‘Opgeslagen!’.
+acceptance=
+ - Hover werkt; knoppen zichtbaar op juiste plaatsen (via tblLayoutSpecs).
+ - Validatie van Bedrag en verplichte Categorie.
+ - Opslag naar Database correct en afgerond.
+ - Geen runtime fouten; ErrorLog blijft leeg of toont gecontroleerde waarschuwingen.
+
+[05_test_frmhuishouden]
+step=[23_test_frmhuishouden]
+procedure=
+ 1. Open frmHuishouden → Run.
+ 2. Controleer titel en frames (Volwassenen/Kinderen), en knoppen Prev/Next/Cancel.
+ 3. (Optioneel) Zet validatie Adults + Children == TotalPersons; test verschillende combinaties (1..8).
+acceptance=Basis UI ok, navigatieknoppen aanwezig; (optioneel) validatie faalt correct met melding.
+
+[06_test_frmvast]
+step=[24_test_frmvast]
+procedure=
+ 1. Open frmVast → Run.
+ 2. Controleer MultiPage Pages(0)=Inkomsten, Pages(1)=Uitgaven.
+ 3. RowAdd/RowDel knoppen aanwezig (btnShapeSmall), navigatieknoppen via specs (Medium/Large).
+ 4. (Optioneel) Voeg rij‑editor controls toe en test ToMonthlyAmount.
+acceptance=UI en navigatie ok; (optioneel) rijen en totals werken; hover functioneert.
+
+[07_navigation_flow]
+step=[25_navigation_flow]
+procedure=
+ 1. Flow: frmHuishouden → frmVast (Page0 → Page1) → frmInvoer.
+ 2. Prev/Next moeten naar juiste vorige/volgende form/page.
+ 3. Cancel sluit wizard.
+acceptance=Flow conform handover v2/v3; geen dead‑ends; knoppen enabled/disabled conform validatieregels.
+
+[08_error_logging]
+step=[26_error_logging]
+procedure=
+ - Forceer een testfout (bijv. verwijder tijdelijk een shape‑naam) en draai Sanity‑check.
+ - Controleer ErrorLog: datum/module/functie/foutmelding.
+acceptance=Logregels verschijnen; geen onverklaarde crashes.
+
+[09_background_via_specs_optional]
+step=[opt]
+procedure=
+ - Voeg een rij in tblLayoutSpecs: Key=Background, ShapeName=bg_frmInvoer_landscape.
+ - Zorg dat FormBackground.GetBackgroundPath de specs helper gebruikt (patch aanwezig).
+acceptance=Background kan wisselen via specs zonder codewijziging.
+
+[10_opschonen_modules]
+step=[clean]
+procedure=
+ 1. Ctrl+F op functie‑namen uit ShapeHelpers/DataCategories/CallForm/Installer.
+ 2. Geen referenties? Verwijder module en Compile.
+acceptance=Project blijft compileren en draaien; minder dubbelei.
+
+[11_release_checklist]
+items=
+ - Sanity‑check: OK/geen FOUT.
+ - Alle forms doorlopen en sluiten correct.
+ - Database gevuld door frmInvoer test.
+ - Week/Maand rapporten genereren (Workbook_Open) zonder prompts.
+ - Backup .xlsm gemaakt.
+
+[12_appendix_keys_specs]
+keys_desc=
+ - Prev → btnShapeMedium (80x28)  | X/Y: ontwerp
+ - Next → btnShapeLarge (100x28)  | X/Y: ontwerp
+ - Save → btnShapeLarge (100x28)  | X/Y: ontwerp
+ - Cancel → btnShapeLarge (100x28)| X/Y: ontwerp
+ - RowAdd → btnShapeSmall (28x28) | X/Y: ontwerp
+ - RowDel → btnShapeSmall (28x28) | X/Y: ontwerp
+hover_convention=baseShape & "_hover" (vereist hover shape met exact die naam)
+
+[13_appendix_known_issues]
+items=
+ - UDT ByVal compileerfout in AppendReport → opgelost door ByRef.
+ - Geen hover zichtbaar → hover‑shape ontbreekt of naam afwijkt.
+ - DataBodyRange Nothing bij lege tabellen → check op Nothing voor loops.
+
+[14_contacts]
+owner=Manasse Visser
+manager=Ahmad Gidder
+skip_manager=Jan Marten de Hoop
+
+# Einde Handover v5.1 – Veel succes met stap [22_test_frminvoer] en verder!

@@ -1,0 +1,248 @@
+import React from 'react';
+
+// Kleurpalet gedefinieerd volgens de Design Gids
+export const COLORS = {
+  primary: '#00A98F', // Teal
+  secondary: '#FF6B6B', // Red/Coral
+  background: '#F9F9F9', // Zeer lichtgrijs
+  text: '#333333', // Donkergrijs
+  income: '#38A169', // Groen voor Inkomsten
+  expense: '#E53E3E', // Rood voor Lasten/Uitgaven
+  lightText: '#666666',
+  inputBackground: '#FFFFFF',
+  border: '#DDDDDD',
+  disabled: '#AAAAAA',
+  focusBorder: '#4299E1', // Blauw voor focus/selectie
+};
+
+/**
+ * Interface voor de algemene knop-props.
+ */
+interface ButtonProps {
+  text: string;
+  onPress: () => void;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  icon?: React.ReactNode;
+}
+
+// -----------------------------------------------------------------------------
+// 1. PrimaryButton
+// -----------------------------------------------------------------------------
+
+export const PrimaryButton: React.FC<ButtonProps> = ({ text, onPress, disabled = false, fullWidth = true, icon }): JSX.Element => (
+  <button
+    onClick={onPress}
+    disabled={disabled}
+    style={{
+      backgroundColor: disabled ? COLORS.disabled : COLORS.primary,
+      color: 'white',
+      padding: '14px 24px',
+      width: fullWidth ? '100%' : 'auto',
+      opacity: disabled ? 0.9 : 1, // Iets minder opacity bij disabled
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      border: 'none',
+      borderRadius: '10px', // FIX: Toegevoegd (volgens changelog)
+      fontSize: '16px',
+      fontWeight: 700, // FIX: Toegevoegd (volgens changelog)
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
+      transition: 'all 0.15s ease-in-out',
+      boxShadow: disabled ? 'none' : '0 2px 8px rgba(0, 169, 143, 0.25)', // FIX: Toegevoegd (volgens changelog)
+    }}
+  >
+    {text}
+    {icon && icon}
+  </button>
+);
+
+// -----------------------------------------------------------------------------
+// 2. SecondaryButton
+// -----------------------------------------------------------------------------
+
+export const SecondaryButton: React.FC<ButtonProps> = ({ text, onPress, disabled = false, fullWidth = true, icon }): JSX.Element => (
+  <button
+    onClick={onPress}
+    disabled={disabled}
+    style={{
+      backgroundColor: COLORS.inputBackground,
+      color: disabled ? COLORS.disabled : COLORS.text,
+      padding: '14px 24px',
+      width: fullWidth ? '100%' : 'auto',
+      opacity: disabled ? 0.6 : 1,
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      border: `2px solid ${COLORS.border}`,
+      borderRadius: '10px', // FIX: Toegevoegd (consistentie)
+      fontSize: '16px',
+      fontWeight: 600, // Semi-bold
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
+      transition: 'all 0.15s ease-in-out',
+      boxShadow: 'none',
+    }}
+  >
+    {text}
+    {icon && icon}
+  </button>
+);
+
+// -----------------------------------------------------------------------------
+// 3. CurrencyInput
+// -----------------------------------------------------------------------------
+
+interface CurrencyInputProps {
+  label: string;
+  value: number | string;
+  onChange: (value: number | string) => void;
+  type?: 'income' | 'expense' | 'neutral';
+  required?: boolean;
+  helperText?: string;
+  style?: React.CSSProperties;
+}
+
+export const CurrencyInput: React.FC<CurrencyInputProps> = ({ label, value, onChange, type = 'neutral', required, helperText, style = {} }): JSX.Element => {
+  const colorMap = { income: COLORS.income, expense: COLORS.expense, neutral: COLORS.text };
+  const inputBorderColor = colorMap[type] || COLORS.border;
+
+  // Hanteer de verandering van de input
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.replace(',', '.'); // Vervang komma door punt voor parseFloat
+    const numValue = parseFloat(rawValue);
+
+    if (isNaN(numValue) && rawValue.trim() !== '' && rawValue.trim() !== '-') {
+      // Sta toe dat de input leeg is, of alleen een minteken
+      return;
+    }
+    onChange(rawValue.trim() === '' || rawValue.trim() === '-' ? rawValue : numValue);
+  };
+
+  return (
+    <div style={{ margin: '15px 0', width: '100%', ...style }}>
+      <label style={{ display: 'block', marginBottom: '5px', fontSize: '15px', fontWeight: 600, color: COLORS.text }}>
+        {label} {required && <span style={{ color: COLORS.expense }}>*</span>}
+      </label>
+      <div style={{ display: 'flex', alignItems: 'center', backgroundColor: COLORS.inputBackground, border: `2px solid ${COLORS.border}`, borderRadius: '10px', padding: '10px', transition: 'border-color 0.2s ease' }}>
+        <span style={{ fontSize: '18px', fontWeight: 700, color: inputBorderColor, marginRight: '8px' }}>€</span>
+        <input
+          type="text" // Gebruik text i.p.v. number om float en negatieve waarden beter te hanteren en styling te behouden
+          inputMode="decimal"
+          value={value}
+          onChange={handleChange}
+          required={required}
+          placeholder="0.00"
+          style={{
+            flexGrow: 1,
+            border: 'none',
+            outline: 'none',
+            fontSize: '18px',
+            fontWeight: 700,
+            color: COLORS.text,
+            padding: '0',
+            backgroundColor: 'transparent',
+          }}
+        />
+      </div>
+      {helperText && <p style={{ fontSize: '13px', color: COLORS.lightText, margin: '5px 0 0 0' }}>{helperText}</p>}
+    </div>
+  );
+};
+
+// -----------------------------------------------------------------------------
+// 4. SegmentedControl
+// -----------------------------------------------------------------------------
+
+interface SegmentedOption<T> {
+  label: string;
+  value: T;
+}
+
+interface SegmentedControlProps<T extends string | number | boolean> {
+  options: SegmentedOption<T>[];
+  selectedValue: T;
+  onChange: (value: T) => void;
+  fullWidth?: boolean;
+}
+
+export const SegmentedControl = <T extends string | number | boolean>({ options, selectedValue, onChange, fullWidth = true }: SegmentedControlProps<T>): JSX.Element => (
+  <div style={{ display: 'flex', width: fullWidth ? '100%' : 'auto', borderRadius: '12px', overflow: 'hidden', border: `2px solid ${COLORS.border}`, backgroundColor: COLORS.inputBackground, margin: '15px 0' }}>
+    {options.map((option, index) => {
+      const isSelected = selectedValue === option.value;
+      
+      const buttonStyle: React.CSSProperties = {
+        flex: 1,
+        padding: '12px 16px',
+        fontSize: '15px',
+        fontWeight: 600,
+        color: isSelected ? 'white' : COLORS.text,
+        backgroundColor: isSelected ? COLORS.primary : COLORS.inputBackground,
+        border: 'none', // Geen individuele randen nodig, de container heeft ze
+        cursor: 'pointer',
+        transition: 'background-color 0.2s, color 0.2s',
+        outline: 'none',
+        // Visuele separator toevoegen, behalve op de laatste knop
+        borderRight: index < options.length - 1 ? `2px solid ${COLORS.border}` : 'none', 
+      };
+
+      return (
+        <button
+          key={String(option.value)}
+          onClick={() => onChange(option.value)}
+          style={buttonStyle}
+        >
+          {option.label}
+        </button>
+      );
+    })}
+  </div>
+);
+
+
+// -----------------------------------------------------------------------------
+// 5. BodyText
+// -----------------------------------------------------------------------------
+
+interface BodyTextProps {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+  size?: 'small' | 'regular' | 'large';
+  color?: string;
+}
+
+export const BodyText: React.FC<BodyTextProps> = ({ children, style = {}, size = 'regular', color }): JSX.Element => {
+  const sizeMap = { small: '13px', regular: '15px', large: '17px' };
+  return <p style={{ fontSize: sizeMap[size], fontWeight: 400, color: color ?? COLORS.text, lineHeight: '1.5', margin: 0, ...style }}>{children}</p>;
+};
+
+// -----------------------------------------------------------------------------
+// 6. Heading2
+// -----------------------------------------------------------------------------
+
+interface Heading2Props {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+  color?: string;
+}
+
+export const Heading2: React.FC<Heading2Props> = ({ children, style = {}, color }): JSX.Element => (
+  <h2 style={{ fontSize: '24px', fontWeight: 700, color: color ?? COLORS.text, margin: '20px 0 10px 0', ...style }}>
+    {children}
+  </h2>
+);
+
+// -----------------------------------------------------------------------------
+// Default Export (voor gemakkelijk importeren)
+// -----------------------------------------------------------------------------
+
+export default {
+    PrimaryButton,
+    SecondaryButton,
+    CurrencyInput,
+    SegmentedControl,
+    BodyText,
+    Heading2,
+    COLORS
+};

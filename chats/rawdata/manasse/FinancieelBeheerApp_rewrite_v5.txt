@@ -1,0 +1,464 @@
+
+import React, { useState, useMemo, useCallback } from 'react';
+import { ChevronRight, ChevronLeft, Check } from 'lucide-react';
+
+// === KLEUREN ===
+const COLORS = {
+  primary: '#00A98F',
+  danger:  '#FF6B6B',
+  bg:      '#F9F9F9',
+  text:    '#333',
+  lightText: '#666',
+  inputBg: '#FFF',
+  border:  '#DDD',
+};
+
+// === OPTIES ===
+const GENDER_OPTIONS = [
+  { label: 'Man', value: 'man' },
+  { label: 'Vrouw', value: 'vrouw' },
+  { label: 'Anders/Neutraal', value: 'anders' },
+  { label: 'Geen antwoord', value: 'onbekend' },
+];
+const CHILD_AGE_OPTIONS = [
+  { label: '0-3 jaar', value: '0-3' },
+  { label: '4-8 jaar', value: '4-8' },
+  { label: '9-13 jaar', value: '9-13' },
+  { label: '14-18 jaar', value: '14-18' },
+];
+const ADULT_AGE_OPTIONS = [
+  { label: '18-25 jaar', value: '18-25' },
+  { label: '26-45 jaar', value: '26-45' },
+  { label: '46-67 jaar', value: '46-67' },
+  { label: '67+ jaar', value: '67+' },
+];
+const RELATIONSHIP_OPTIONS = [
+  { label: 'Zelf/Aanvrager', value: 'self' },
+  { label: 'Partner', value: 'partner' },
+  { label: 'Volwassen Kind', value: 'adult_child' },
+  { label: 'Ander Familielid (18+)', value: 'adult_family' },
+  { label: 'Ander Huishoudlid', value: 'adult_other' },
+];
+const LIVING_SITUATION_OPTIONS = [
+  { label: 'Huurhuis', value: 'huur' },
+  { label: 'Koophuis', value: 'koop' },
+  { label: 'Inwonend', value: 'inwonend' },
+];
+const SALARY_FREQUENCY_OPTIONS = [
+  { label: 'Per Week', value: 'week' },
+  { label: 'Per 4 Weken', value: '4weeks' },
+  { label: 'Per Maand', value: 'month' },
+];
+
+// === HULPCOMPONENTEN ===
+const SectionTitle = ({ children }) => (
+  <h3 className="text-xl font-bold mb-3" style={{ color: COLORS.text }}>{children}</h3>
+);
+const SubTitle = ({ children }) => (
+  <h4 className="text-lg font-semibold mb-2" style={{ color: COLORS.lightText }}>{children}</h4>
+);
+const Label = ({ children, required }) => (
+  <label className="block mb-1 text-sm font-semibold" style={{ color: COLORS.text }}>
+    {children} {required ? <span style={{ color: COLORS.danger }}>*</span> : null}
+  </label>
+);
+const InputWrap = ({ children }) => (
+  <div className="w-full px-4 py-3 rounded-lg border-2" style={{ borderColor: COLORS.border, backgroundColor: COLORS.inputBg }}>
+    {children}
+  </div>
+);
+const NumberInput = ({ value, onChange, placeholder = '0.00' }) => (
+  <input
+    type="text"
+    value={value === 0 ? '0' : (value || '')}
+    onChange={(e) => {
+      const clean = e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.');
+      const num = parseFloat(clean);
+      onChange(isNaN(num) ? 0 : num);
+    }}
+    placeholder={placeholder}
+    className="w-full outline-none bg-transparent"
+    style={{ color: COLORS.text }}
+  />
+);
+const NumberStepper = ({ label, value, onChange, min = 0, max = 8 }) => (
+  <div className="mb-3">
+    <Label>{label}</Label>
+    <div className="flex items-center gap-3">
+      <button
+        onClick={() => value > min && onChange(value - 1)}
+        disabled={value <= min}
+        className="px-4 py-2 rounded-lg font-bold transition-all disabled:opacity-40"
+        style={{ backgroundColor: value <= min ? COLORS.border : COLORS.primary, color: 'white' }}
+      >
+        -
+      </button>
+      <span className="font-bold" style={{ color: COLORS.text }}>{value}</span>
+      <button
+        onClick={() => value < max && onChange(value + 1)}
+        disabled={value >= max}
+        className="px-4 py-2 rounded-lg font-bold transition-all disabled:opacity-40"
+        style={{ backgroundColor: value >= max ? COLORS.border : COLORS.primary, color: 'white' }}
+      >
+        +
+      </button>
+    </div>
+  </div>
+);
+const RadioGroup = ({ label, options, value, onChange, required = false }) => (
+  <div className="mb-3">
+    <Label required={required}>{label}</Label>
+    <div className="flex flex-wrap gap-2">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          onClick={() => onChange(opt.value)}
+          className="px-3 py-2 rounded-lg border"
+          style={{
+            borderColor: COLORS.border,
+            backgroundColor: value === opt.value ? COLORS.primary : COLORS.inputBg,
+            color: value === opt.value ? 'white' : COLORS.text,
+          }}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+const YesNoToggle = ({ label, value, onChange, required = false }) => (
+  <div className="mb-3">
+    <Label required={required}>{label}</Label>
+    <div className="flex gap-2">
+      <button
+        onClick={() => onChange(true)}
+        className="flex-1 py-3 rounded-lg font-semibold transition-all"
+        style={{ backgroundColor: value === true ? COLORS.primary : COLORS.inputBg, color: value === true ? 'white' : COLORS.text, borderWidth: 2, borderColor: value === true ? COLORS.primary : COLORS.border }}
+      >
+        Ja
+      </button>
+      <button
+        onClick={() => onChange(false)}
+        className="flex-1 py-3 rounded-lg font-semibold transition-all"
+        style={{ backgroundColor: value === false ? COLORS.primary : COLORS.inputBg, color: value === false ? 'white' : COLORS.text, borderWidth: 2, borderColor: value === false ? COLORS.primary : COLORS.border }}
+      >
+        Nee
+      </button>
+    </div>
+  </div>
+);
+
+// === HOOFD COMPONENT ===
+const SetupForm = () => {
+  // Navigatie: 5 stappen
+  const [step, setStep] = useState(1); // 1..5
+
+  // Stap 1.1: Aantal personen (en logische kinderen)
+  const [totalPersons, setTotalPersons] = useState(1);
+  const [adultCount, setAdultCount] = useState(1); // wordt in 1.2 verfijnd
+  const childCount = Math.max(0, totalPersons - adultCount);
+
+  // Stap 1.2: Samenstelling (members)
+  const [adults, setAdults] = useState([{ relationship: 'self', gender: 'man', ageCategory: '26-45', pregnantOrLactating: false }]);
+  const [children, setChildren] = useState([]);
+
+  // Stap 2.1: Inkomsten
+  const [mainSalary, setMainSalary] = useState(0);
+  const [mainFreq, setMainFreq] = useState('month');
+  const [partnerSalary, setPartnerSalary] = useState(0);
+  const [partnerFreq, setPartnerFreq] = useState('month');
+  const [benefits, setBenefits] = useState(0);
+  const [allowances, setAllowances] = useState(0);
+
+  // Stap 3.1: Bezittingen
+  const [saldoBetaal, setSaldoBetaal] = useState(0);
+  const [saldoSpaar, setSaldoSpaar] = useState(0);
+  const [waardeAuto, setWaardeAuto] = useState(0);
+  const [waardeBelegging, setWaardeBelegging] = useState(0);
+
+  // Stap 3.2: Vaste lasten
+  const [living, setLiving] = useState(null); // huur/koop/inwonend
+  const [woonlasten, setWoonlasten] = useState(0);
+  const [zorgpremiePP, setZorgpremiePP] = useState(0);
+  const [telecom, setTelecom] = useState(0);
+  const [schuldaflossing, setSchuldaflossing] = useState(0);
+
+  // Afgeleid: arrays updaten bij counts
+  const rebuildAdults = useCallback((n) => {
+    setAdults((prev) => {
+      const arr = [...prev];
+      while (arr.length < n) arr.push({ relationship: 'adult_other', gender: 'onbekend', ageCategory: '26-45', pregnantOrLactating: false });
+      return arr.slice(0, n).map((a, i) => (i === 0 ? { ...a, relationship: 'self' } : a));
+    });
+  }, []);
+  const rebuildChildren = useCallback((n) => {
+    setChildren((prev) => {
+      const arr = [...prev];
+      while (arr.length < n) arr.push({ gender: 'onbekend', ageCategory: null });
+      return arr.slice(0, n);
+    });
+  }, []);
+
+  // Bij totalPersons wijziging: zorg dat adultCount <= totalPersons
+  const handleTotalChange = useCallback((newTotal) => {
+    setTotalPersons(newTotal);
+    if (adultCount > newTotal) setAdultCount(newTotal);
+    rebuildAdults(Math.max(1, Math.min(adultCount, newTotal)));
+    rebuildChildren(Math.max(0, newTotal - Math.max(1, Math.min(adultCount, newTotal))));
+  }, [adultCount, rebuildAdults, rebuildChildren]);
+
+  // Bij adultCount wijziging binnen 1..totalPersons
+  const handleAdultCountChange = useCallback((n) => {
+    const safe = Math.max(1, Math.min(totalPersons, n));
+    setAdultCount(safe);
+    rebuildAdults(safe);
+    rebuildChildren(Math.max(0, totalPersons - safe));
+  }, [totalPersons, rebuildAdults, rebuildChildren]);
+
+  // Validaties per stap
+  const valid_1_1 = useMemo(() => totalPersons >= 1 && adultCount >= 1 && adultCount <= totalPersons, [totalPersons, adultCount]);
+  const valid_1_2 = useMemo(() => {
+    const adultsOk = adults.length === adultCount && adults.every(a => !!a.gender && !!a.ageCategory);
+    const kidsOk = children.length === childCount && children.every(k => !!k.gender && !!k.ageCategory);
+    return adultsOk && kidsOk;
+  }, [adultCount, childCount, adults, children]);
+  const valid_2_1 = useMemo(() => {
+    const mainOk = mainSalary >= 0;
+    const partnerOk = adultCount > 1 ? partnerSalary >= 0 : true;
+    return mainOk && partnerOk;
+  }, [mainSalary, partnerSalary, adultCount]);
+  const valid_3_1 = useMemo(() => saldoBetaal >= 0 && saldoSpaar >= 0 && waardeAuto >= 0 && waardeBelegging >= 0, [saldoBetaal, saldoSpaar, waardeAuto, waardeBelegging]);
+  const valid_3_2 = useMemo(() => living !== null && woonlasten >= 0 && zorgpremiePP >= 0 && telecom >= 0 && schuldaflossing >= 0, [living, woonlasten, zorgpremiePP, telecom, schuldaflossing]);
+
+  // Conversie frequenties
+  const toMonthly = (amount, freq) => {
+    if (freq === 'week') return (amount || 0) * 52 / 12;
+    if (freq === '4weeks') return (amount || 0) * 13 / 12;
+    return amount || 0;
+  };
+
+  // Totalen
+  const totalIncome = useMemo(() => {
+    const mainM = toMonthly(mainSalary, mainFreq);
+    const partnerM = adultCount > 1 ? toMonthly(partnerSalary, partnerFreq) : 0;
+    return mainM + partnerM + (benefits || 0) + (allowances || 0);
+  }, [mainSalary, mainFreq, partnerSalary, partnerFreq, benefits, allowances, adultCount]);
+  const totalAssets = useMemo(() => (saldoBetaal + saldoSpaar + waardeAuto + waardeBelegging), [saldoBetaal, saldoSpaar, waardeAuto, waardeBelegging]);
+  const totalExpenses = useMemo(() => (woonlasten + telecom + schuldaflossing + (zorgpremiePP * adultCount)), [woonlasten, telecom, schuldaflossing, zorgpremiePP, adultCount]);
+  const budget = useMemo(() => (totalIncome - totalExpenses), [totalIncome, totalExpenses]);
+  const woonlastenLabel = living === 'huur' ? 'Huurprijs per maand' : living === 'koop' ? 'Hypotheek per maand' : 'Kostgeld per maand';
+
+  // Navigatie helpers
+  const next = () => setStep(s => Math.min(5, s + 1));
+  const prev = () => setStep(s => Math.max(1, s - 1));
+  const canNext = step === 1 ? valid_1_1 : step === 2 ? valid_1_2 : step === 3 ? valid_2_1 : step === 4 ? valid_3_1 : valid_3_2;
+
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: COLORS.bg }}>
+      {/* Header */}
+      <div className="max-w-3xl mx-auto p-4">
+        <h2 className="text-2xl font-extrabold" style={{ color: COLORS.primary }}>Financiële Setup</h2>
+        <p className="text-sm" style={{ color: COLORS.lightText }}>Stap {step} van 5</p>
+        {/* Progress */}
+        <div className="grid grid-cols-5 gap-2 mt-2">
+          {[1,2,3,4,5].map(i => (
+            <div key={i} className="h-2 rounded" style={{ backgroundColor: i <= step ? COLORS.primary : COLORS.border }} />
+          ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-3xl mx-auto p-4">
+        {/* STAP 1.1 */}
+        {step === 1 && (
+          <div>
+            <SectionTitle>Stap 1.1: Aantal personen in huishouden</SectionTitle>
+            <NumberStepper label="Totaal aantal personen" value={totalPersons} onChange={handleTotalChange} min={1} max={8} />
+            <div className="flex gap-6 mt-2">
+              <div>
+                <Label>Volwassenen (logisch)</Label>
+                <InputWrap>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold" style={{ color: COLORS.text }}>{adultCount}</span>
+                  </div>
+                </InputWrap>
+              </div>
+              <div>
+                <Label>Kinderen (logisch)</Label>
+                <InputWrap>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold" style={{ color: COLORS.text }}>{childCount}</span>
+                  </div>
+                </InputWrap>
+              </div>
+            </div>
+            <div className="mt-2">
+              <p className="text-sm" style={{ color: COLORS.lightText }}>Tip: aantal volwassenen verfijn je in stap 1.2; hier tonen we de berekening op basis van jouw totaal.</p>
+            </div>
+          </div>
+        )}
+
+        {/* STAP 1.2 */}
+        {step === 2 && (
+          <div>
+            <SectionTitle>Stap 1.2: Samenstelling huishouden</SectionTitle>
+            <NumberStepper label="Aantal volwassenen" value={adultCount} onChange={handleAdultCountChange} min={1} max={totalPersons} />
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <SubTitle>Volwassenen</SubTitle>
+                {adults.slice(0, adultCount).map((a, i) => (
+                  <div key={i} className="mb-4 p-3 rounded-lg border" style={{ borderColor: COLORS.border }}>
+                    <p className="font-semibold" style={{ color: COLORS.primary }}>{i === 0 ? 'Aanvrager' : `Volwassene ${i+1}`}</p>
+                    {i !== 0 && (
+                      <RadioGroup label="Relatie" options={RELATIONSHIP_OPTIONS.filter(r => r.value !== 'self')} value={a.relationship} onChange={(v) => setAdults(prev => prev.map((x, idx) => idx === i ? { ...x, relationship: v } : x))} required />
+                    )}
+                    <RadioGroup label="Leeftijdsgroep" options={ADULT_AGE_OPTIONS} value={a.ageCategory} onChange={(v) => setAdults(prev => prev.map((x, idx) => idx === i ? { ...x, ageCategory: v } : x))} required />
+                    <RadioGroup label="Gender" options={GENDER_OPTIONS} value={a.gender} onChange={(v) => setAdults(prev => prev.map((x, idx) => idx === i ? { ...x, gender: v } : x))} required />
+                    <YesNoToggle label="Zwanger of lacterend" value={!!a.pregnantOrLactating} onChange={(v) => setAdults(prev => prev.map((x, idx) => idx === i ? { ...x, pregnantOrLactating: v } : x))} />
+                  </div>
+                ))}
+              </div>
+              <div>
+                <SubTitle>Kinderen</SubTitle>
+                {children.slice(0, childCount).map((c, i) => (
+                  <div key={i} className="mb-4 p-3 rounded-lg border" style={{ borderColor: COLORS.border }}>
+                    <p className="font-semibold" style={{ color: COLORS.primary }}>{`Kind ${i+1}`}</p>
+                    <RadioGroup label="Leeftijdsgroep" options={CHILD_AGE_OPTIONS} value={c.ageCategory} onChange={(v) => setChildren(prev => prev.map((x, idx) => idx === i ? { ...x, ageCategory: v } : x))} required />
+                    <RadioGroup label="Gender" options={GENDER_OPTIONS} value={c.gender} onChange={(v) => setChildren(prev => prev.map((x, idx) => idx === i ? { ...x, gender: v } : x))} required />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STAP 2.1 */}
+        {step === 3 && (
+          <div>
+            <SectionTitle>Stap 2.1: Inkomsten</SectionTitle>
+            <SubTitle>Salaris Inkomsten</SubTitle>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label required>Hoofdsalaris</Label>
+                <InputWrap><NumberInput value={mainSalary} onChange={setMainSalary} /></InputWrap>
+                <RadioGroup label="Frequentie" options={SALARY_FREQUENCY_OPTIONS} value={mainFreq} onChange={setMainFreq} />
+              </div>
+              {adultCount > 1 && (
+                <div>
+                  <Label>Partnersalaris</Label>
+                  <InputWrap><NumberInput value={partnerSalary} onChange={setPartnerSalary} /></InputWrap>
+                  <RadioGroup label="Frequentie" options={SALARY_FREQUENCY_OPTIONS} value={partnerFreq} onChange={setPartnerFreq} />
+                </div>
+              )}
+            </div>
+            <SubTitle>Overige Inkomsten</SubTitle>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>Uitkeringen (WW, WIA, Bijstand, Pensioen)</Label>
+                <InputWrap><NumberInput value={benefits} onChange={setBenefits} /></InputWrap>
+              </div>
+              <div>
+                <Label>Toeslagen (Zorg, Huur, Kinderopvang)</Label>
+                <InputWrap><NumberInput value={allowances} onChange={setAllowances} /></InputWrap>
+              </div>
+            </div>
+            <div className="mt-4 p-3 rounded-lg border" style={{ borderColor: COLORS.border }}>
+              <p className="font-semibold" style={{ color: COLORS.text }}>Totaal maandinkomen: <span style={{ color: COLORS.primary }}>€{totalIncome.toFixed(2)}</span></p>
+            </div>
+          </div>
+        )}
+
+        {/* STAP 3.1 */}
+        {step === 4 && (
+          <div>
+            <SectionTitle>Stap 3.1: Bezittingen</SectionTitle>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <Label>Banksaldo (betaal)</Label>
+                <InputWrap><NumberInput value={saldoBetaal} onChange={setSaldoBetaal} /></InputWrap>
+              </div>
+              <div>
+                <Label>Banksaldo (spaar)</Label>
+                <InputWrap><NumberInput value={saldoSpaar} onChange={setSaldoSpaar} /></InputWrap>
+              </div>
+              <div>
+                <Label>Waarde auto (indicatief)</Label>
+                <InputWrap><NumberInput value={waardeAuto} onChange={setWaardeAuto} /></InputWrap>
+              </div>
+              <div>
+                <Label>Beleggingen (indicatief)</Label>
+                <InputWrap><NumberInput value={waardeBelegging} onChange={setWaardeBelegging} /></InputWrap>
+              </div>
+            </div>
+            <div className="mt-4 p-3 rounded-lg border" style={{ borderColor: COLORS.border }}>
+              <p className="font-semibold" style={{ color: COLORS.text }}>Totaal bezittingen: <span style={{ color: COLORS.primary }}>€{totalAssets.toFixed(2)}</span></p>
+            </div>
+          </div>
+        )}
+
+        {/* STAP 3.2 */}
+        {step === 5 && (
+          <div>
+            <SectionTitle>Stap 3.2: Vaste lasten</SectionTitle>
+            <RadioGroup label="Woonsituatie" options={LIVING_SITUATION_OPTIONS} value={living} onChange={setLiving} required />
+            {living && (
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label required>{woonlastenLabel}</Label>
+                  <InputWrap><NumberInput value={woonlasten} onChange={setWoonlasten} /></InputWrap>
+                </div>
+                <div>
+                  <Label>Zorgverzekeringspremie (per persoon)</Label>
+                  <InputWrap><NumberInput value={zorgpremiePP} onChange={setZorgpremiePP} /></InputWrap>
+                </div>
+                <div>
+                  <Label>Telecom & Media (Internet/TV/Telefonie/Streaming)</Label>
+                  <InputWrap><NumberInput value={telecom} onChange={setTelecom} /></InputWrap>
+                </div>
+                <div>
+                  <Label>Schuldaflossing (maandelijks)</Label>
+                  <InputWrap><NumberInput value={schuldaflossing} onChange={setSchuldaflossing} /></InputWrap>
+                </div>
+              </div>
+            )}
+            <div className="mt-4 p-3 rounded-lg border" style={{ borderColor: COLORS.border }}>
+              <p className="font-semibold" style={{ color: COLORS.text }}>Totaal maandlasten: <span style={{ color: COLORS.danger }}>€{totalExpenses.toFixed(2)}</span></p>
+              <p className="font-semibold mt-1" style={{ color: budget >= 0 ? COLORS.primary : COLORS.danger }}>Beschikbaar Budget: €{budget.toFixed(2)}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center justify-between mt-6">
+          <button
+            onClick={prev}
+            disabled={step === 1}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border disabled:opacity-40"
+            style={{ borderColor: COLORS.border, color: COLORS.text, backgroundColor: COLORS.inputBg }}
+          >
+            <ChevronLeft size={18} /> Vorige
+          </button>
+          <button
+            onClick={() => {
+              if (step < 5 && canNext) next();
+              else if (step === 5 && valid_3_2) {
+                alert(`Setup voltooid!
+
+Totaal Inkomen: €${totalIncome.toFixed(2)}
+Totaal Lasten: €${totalExpenses.toFixed(2)}
+Beschikbaar Budget: €${budget.toFixed(2)}`);
+              }
+            }}
+            disabled={!canNext}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg"
+            style={{ backgroundColor: canNext ? COLORS.primary : COLORS.border, color: 'white' }}
+          >
+            {step < 5 ? (<><span>Volgende</span> <ChevronRight size={18} /></>) : (<><span>Voltooien</span> <Check size={18} /></>)}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SetupForm;

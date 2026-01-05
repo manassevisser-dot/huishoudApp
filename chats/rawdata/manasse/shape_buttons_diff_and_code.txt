@@ -1,0 +1,126 @@
+
+DIFF-LIJST VOOR SHAPE-GEBASEERDE KNOPPEN:
+=========================================
+LOCATIE: FormEvents.bas, Procedure BuildDynamicFrmInvoer
+
+--- Oude regels ---
+Set Btn = frm.Controls.Add("Forms.CommandButton.1", FormLayout.DYN_PREFIX & "btnOpslaan", True)
+Btn.Caption = "Opslaan"
+Set Btn = frm.Controls.Add("Forms.CommandButton.1", FormLayout.DYN_PREFIX & "btnAnnuleren", True)
+Btn.Caption = "Annuleren"
+Set Btn = frm.Controls.Add("Forms.CommandButton.1", FormLayout.DYN_PREFIX & "btnNieuwSub", True)
+Btn.Caption = "+"
+
+--- Nieuwe regels ---
+If ShapeExists("btnOpslaanShape") Then
+    AddShapeAsImage frm, "btnOpslaanShape", FormLayout.DYN_PREFIX & "btnOpslaan"
+Else
+    Set Btn = frm.Controls.Add("Forms.CommandButton.1", FormLayout.DYN_PREFIX & "btnOpslaan", True)
+    Btn.Caption = "Opslaan"
+End If
+
+If ShapeExists("btnAnnulerenShape") Then
+    AddShapeAsImage frm, "btnAnnulerenShape", FormLayout.DYN_PREFIX & "btnAnnuleren"
+Else
+    Set Btn = frm.Controls.Add("Forms.CommandButton.1", FormLayout.DYN_PREFIX & "btnAnnuleren", True)
+    Btn.Caption = "Annuleren"
+End If
+
+If ShapeExists("btnNieuwSubShape") Then
+    AddShapeAsImage frm, "btnNieuwSubShape", FormLayout.DYN_PREFIX & "btnNieuwSub"
+Else
+    Set Btn = frm.Controls.Add("Forms.CommandButton.1", FormLayout.DYN_PREFIX & "btnNieuwSub", True)
+    Btn.Caption = "+"
+End If
+
+=========================================
+
+
+KANT-EN-KLARE VERBETERDE VERSIE:
+
+Public Sub BuildDynamicFrmInvoer(frm As Object)
+    On Error GoTo ErrHandler
+    Application.ScreenUpdating = False
+
+    ' Verwijder oude dynamische controls
+    FormLayout.RemoveDynamicControls frm
+
+    ' Achtergrond toevoegen
+    FormBackground.EnsureBackgroundImage frm
+
+    Dim lbl As MSForms.Label
+    Dim cmb As MSForms.ComboBox
+    Dim Txt As MSForms.TextBox
+    Dim Btn As MSForms.CommandButton
+
+    ' Datum label
+    Set lbl = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblDatumVandaag", True)
+    lbl.Caption = "Het is vandaag " & Format(Date, "dddd dd-mm-yyyy")
+
+    ' Categorie
+    Set lbl = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblCat", True)
+    lbl.Caption = "Categorie"
+    Set cmb = frm.Controls.Add("Forms.ComboBox.1", FormLayout.DYN_PREFIX & "cmbCategorie", True)
+    cmb.Style = fmStyleDropDownList
+
+    ' Subcategorie
+    Set lbl = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblSub", True)
+    lbl.Caption = "Subcategorie"
+    Set cmb = frm.Controls.Add("Forms.ComboBox.1", FormLayout.DYN_PREFIX & "cmbSubcategorie", True)
+    cmb.Enabled = False
+    cmb.Style = fmStyleDropDownList
+
+    ' Bedrag
+    Set lbl = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblBedrag", True)
+    lbl.Caption = "Bedrag"
+    Set Txt = frm.Controls.Add("Forms.TextBox.1", FormLayout.DYN_PREFIX & "txtBedrag", True)
+
+    ' Betaalwijze
+    Set lbl = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblBetaal", True)
+    lbl.Caption = "Betaalwijze"
+    Set cmb = frm.Controls.Add("Forms.ComboBox.1", FormLayout.DYN_PREFIX & "cmbBetaalwijze", True)
+    cmb.Style = fmStyleDropDownList
+
+    ' Knoppen: gebruik shapes indien beschikbaar
+    If ShapeExists("btnOpslaanShape") Then
+        AddShapeAsImage frm, "btnOpslaanShape", FormLayout.DYN_PREFIX & "btnOpslaan"
+    Else
+        Set Btn = frm.Controls.Add("Forms.CommandButton.1", FormLayout.DYN_PREFIX & "btnOpslaan", True)
+        Btn.Caption = "Opslaan"
+    End If
+
+    If ShapeExists("btnAnnulerenShape") Then
+        AddShapeAsImage frm, "btnAnnulerenShape", FormLayout.DYN_PREFIX & "btnAnnuleren"
+    Else
+        Set Btn = frm.Controls.Add("Forms.CommandButton.1", FormLayout.DYN_PREFIX & "btnAnnuleren", True)
+        Btn.Caption = "Annuleren"
+    End If
+
+    If ShapeExists("btnNieuwSubShape") Then
+        AddShapeAsImage frm, "btnNieuwSubShape", FormLayout.DYN_PREFIX & "btnNieuwSub"
+    Else
+        Set Btn = frm.Controls.Add("Forms.CommandButton.1", FormLayout.DYN_PREFIX & "btnNieuwSub", True)
+        Btn.Caption = "+"
+    End If
+
+    ' Data laden
+    FormData.LoadCategoriesIntoCombo frm
+    FormData.LoadPaymentMethodsIntoCombo frm
+
+    ' Layout aanpassen
+    Dim c As Control
+    For Each c In frm.Controls
+        If TypeOf c Is MSForms.ComboBox Then FormLayout.AutoFitDropdownDyn c
+    Next c
+    FormLayout.FrmLayoutSafeAreaDyn frm
+
+    ' Events koppelen
+    HookEventsDynamic frm
+
+    Application.ScreenUpdating = True
+    Exit Sub
+
+ErrHandler:
+    Application.ScreenUpdating = True
+    MsgBox "Fout in BuildDynamicFrmInvoer: " & Err.Description, vbCritical
+End Sub

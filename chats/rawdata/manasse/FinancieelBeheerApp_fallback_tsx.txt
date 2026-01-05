@@ -1,0 +1,548 @@
+// FinancieelBeheerApp.tsx (mock n8n fallback, TypeScript, zonder Firebase)
+import React, { useState, useCallback, useEffect } from 'react';
+import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
+import { Users, Euro, Home, Check, ArrowRight, ArrowLeft, Plus, Minus, X, ChevronDown, ChevronUp } from 'lucide-react-native';
+
+// Canvas/omgeving kan __app_id setten; anders default
+const appId: string = (typeof (__app_id as any) !== 'undefined') ? ( __app_id as string ) : 'default-app-id';
+
+// --- n8n setup webhook URL; laat '' voor mock-only ---
+const N8N_SETUP_URL: string = '';
+
+// Steps definitie
+const STEPS = [
+  { id: 1, title: 'Huishouden', icon: Users },
+  { id: 2, title: 'Vaste Inkomsten', icon: Euro },
+  { id: 3, title: 'Vaste Lasten', icon: Home },
+] as const;
+
+// Constanten voor Huishouden
+const MAX_PERSONS = 8;
+const ADULT_RELATIONSHIPS = ['Zelf/Aanvrager', 'Partner', 'Volwassen Kind', 'Ander Familielid (18+)', 'Ander Huishoudlid'];
+const ADULT_GENDERS = ['Man', 'Vrouw', 'Anders/Neutraal', 'Geen antwoord'];
+const CHILD_AGE_GROUPS = ['0-3 jaar', '4-8 jaar', '9-13 jaar', '14-18 jaar'];
+const ADULT_AGE_GROUPS = ['18-25 jaar', '26-45 jaar', '46-67 jaar', '67+ jaar'];
+
+type Member = {
+  id: number;
+  type: 'adult' | 'child';
+  name?: string;
+  relationship?: string;
+  gender?: string;
+  ageGroup?: string;
+  isPregnantOrLactating?: boolean;
+}
+
+const createMember = (type: 'adult' | 'child' = 'adult'): Member => ({
+  id: Date.now() + Math.random(),
+  type,
+  name: '',
+  relationship: type === 'adult' ? '' : 'Kind',
+  gender: '',
+  ageGroup: '',
+  isPregnantOrLactating: false,
+});
+
+// --- n8n send met fallback ---
+async function sendToWebhook(data: any): Promise<boolean> {
+  // 1) Mock-only: geen URL → success
+  if (!N8N_SETUP_URL || N8N_SETUP_URL.trim() === '') {
+    console.warn('Mock fallback: setup niet naar n8n, maar doorgaan...');
+    await new Promise(r => setTimeout(r, 500));
+    return true;
+  }
+  // 2) Probeer n8n, anders fallback → success
+  try {
+    const response = await fetch(N8N_SETUP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      console.warn('n8n setup niet OK:', response.status);
+      await new Promise(r => setTimeout(r, 300));
+      return true; // fallback → done
+    }
+    await response.json();
+    return true;
+  } catch (error: any) {
+    console.warn('n8n setup error, fallback naar mock:', error?.message);
+    await new Promise(r => setTimeout(r, 300));
+    return true; // fallback → done
+  }
+}
+
+// --- Hulpcomponenten ---
+const NumericInput: React.FC<{ label: string; value: string | number; onChangeText: (t: string) => void; placeholder?: string; max?: number; min?: number }> = ({ label, value, onChangeText, placeholder = '0', max = 99, min = 0 }) => (
+  <View style={sharedStyles.inputGroup}>
+    <Text style={sharedStyles.inputLabel}>{label}</Text>
+    <TextInput
+      style={[sharedStyles.inputField, setupStyles.numericInput]}
+      onChangeText={(text) => {
+        const num = parseInt(text.replace(/[^0-9]/g, ''), 10);
+        if (isNaN(num)) { onChangeText(String(min)); return; }
+        if (num > max) return;
+        onChangeText(String(num));
+      }}
+      value={String(value ?? '')}
+      keyboardType="number-pad"
+      placeholder={placeholder}
+      placeholderTextColor="#999"
+    />
+  </View>
+);
+
+const CurrencyInput: React.FC<{ label: string; value?: string; onChangeText: (t: string) => void; placeholder?: string }> = ({ label, value, onChangeText, placeholder = '0.00' }) => {
+  const formatValue = (text: string) => {
+    const cleanText = text.replace(/[^0-9.,]/g, '');
+    const floatValue = parseFloat(cleanText.replace(',', '.'));
+    if (isNaN(floatValue)) return '';
+    return floatValue.toFixed(2);
+  };
+  const displayValue = value ? parseFloat(value).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+  return (
+    <View style={sharedStyles.inputGroup}>
+      <Text style={sharedStyles.inputLabel}>{label}</Text>
+      <View style={sharedStyles.inputRow}>
+        <Text style={sharedStyles.currencyPrefix}>€</Text>
+        <TextInput
+          style={sharedStyles.inputField}
+          onChangeText={(text) => onChangeText(formatValue(text))}
+          value={displayValue}
+          keyboardType="numeric"
+          placeholder={placeholder}
+          placeholderTextColor="#999"
+        />
+        <Text style={sharedStyles.currencySuffix}>/mnd</Text>
+      </View>
+    </View>
+  );
+};
+
+const DropdownInput: React.FC<{ label: string; value?: string; options: (string | { value: string; label: string })[]; onSelect: (v: string) => void }> = ({ label, value, options, onSelect }) => {
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const optFind = options.find(opt => (typeof opt === 'string' ? opt === value : opt.value === value));
+  const displayValue = typeof optFind === 'string' ? optFind : (optFind as any)?.label || `Selecteer ${label.toLowerCase()}`;
+  return (
+    <View style={[sharedStyles.inputGroup, { zIndex: 100 }] }>
+      <Text style={sharedStyles.inputLabel}>{label}</Text>
+      <TouchableOpacity style={setupStyles.dropdownHeader} onPress={() => setIsOpen(!isOpen)}>
+        <Text style={setupStyles.dropdownText}>{displayValue}</Text>
+        {isOpen ? <ChevronUp size={16} color="#333" /> : <ChevronDown size={16} color="#333" />}
+      </TouchableOpacity>
+      {isOpen && (
+        <View style={setupStyles.dropdownList}>
+          {options.map((option, index) => {
+            const optValue = typeof option === 'string' ? option : option.value;
+            const optLabel = typeof option === 'string' ? option : option.label;
+            return (
+              <TouchableOpacity key={index} style={setupStyles.dropdownItem} onPress={() => { onSelect(optValue); setIsOpen(false); }}>
+                <Text style={setupStyles.dropdownItemText}>{optLabel}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+};
+
+const MemberForm: React.FC<{ member: Member; index: number; onUpdate: (id: number, key: keyof Member, value: any) => void; onDelete: (id: number) => void }> = ({ member, index, onUpdate, onDelete }) => {
+  const isAdult = member.type === 'adult';
+  const headerText = isAdult ? (member.relationship === 'Zelf/Aanvrager' ? 'Aanvrager' : `Volwassene ${index + 1}`) : `Kind ${index + 1}`;
+  return (
+    <View style={setupStyles.memberCard}>
+      <View style={setupStyles.memberCardHeader}>
+        <Text style={setupStyles.memberCardTitle}>{headerText}</Text>
+        {member.relationship !== 'Zelf/Aanvrager' && (
+          <TouchableOpacity onPress={() => onDelete(member.id)} style={setupStyles.deleteButton}>
+            <X size={18} color="#FFF" />
+          </TouchableOpacity>
+        )}
+      </View>
+      {/* Optionele naam */}
+      <View style={sharedStyles.inputGroup}>
+        <Text style={sharedStyles.inputLabel}>Roepnaam (optioneel)</Text>
+        <TextInput style={[sharedStyles.inputField, setupStyles.numericInput]} value={member.name || ''} onChangeText={(text) => onUpdate(member.id, 'name', text)} placeholder="Naam" placeholderTextColor="#999" />
+      </View>
+      {/* Relatie (volwassenen, behalve Aanvrager) */}
+      {isAdult && member.relationship !== 'Zelf/Aanvrager' && (
+        <DropdownInput label="Relatie tot Aanvrager" value={member.relationship} options={ADULT_RELATIONSHIPS.filter(r => r !== 'Zelf/Aanvrager')} onSelect={(value) => onUpdate(member.id, 'relationship', value)} />
+      )}
+      {/* Leeftijdsgroep */}
+      <DropdownInput label="Leeftijdsgroep" value={member.ageGroup} options={isAdult ? ADULT_AGE_GROUPS : CHILD_AGE_GROUPS} onSelect={(value) => onUpdate(member.id, 'ageGroup', value)} />
+      {/* Gender/Beschrijving */}
+      <DropdownInput label="Gender/Beschrijving" value={member.gender} options={ADULT_GENDERS} onSelect={(value) => onUpdate(member.id, 'gender', value)} />
+      {/* Zwanger/Lacterend (alleen volwassenen) */}
+      {isAdult && (
+        <TouchableOpacity style={setupStyles.checkboxContainer} onPress={() => onUpdate(member.id, 'isPregnantOrLactating', !member.isPregnantOrLactating)}>
+          <View style={member.isPregnantOrLactating ? setupStyles.checkboxChecked : setupStyles.checkbox} />
+          <Text style={setupStyles.checkboxLabel}>Zwanger of lacterend (cruciaal voor toeslagen)</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+};
+
+const NavigationButtons: React.FC<{ currentStep: number; totalSteps: number; onNext: () => void; onPrev: () => void; onComplete: () => void; isLoading?: boolean; isValidationPassed?: boolean }> = ({ currentStep, totalSteps, onNext, onPrev, onComplete, isLoading = false, isValidationPassed = true }) => {
+  const isLastStep = currentStep === totalSteps;
+  const isFirstStep = currentStep === 1;
+  return (
+    <View style={sharedStyles.navContainer}>
+      {!isFirstStep && (
+        <TouchableOpacity style={[sharedStyles.navButton, sharedStyles.navButtonSecondary]} onPress={onPrev} disabled={isLoading}>
+          <ArrowLeft size={20} color="#333" />
+          <Text style={sharedStyles.navButtonTextSecondary}>Vorige</Text>
+        </TouchableOpacity>
+      )}
+      {isFirstStep && <View style={{ flex: 1 }} />}
+      {isLastStep ? (
+        <TouchableOpacity style={[sharedStyles.navButton, sharedStyles.navButtonPrimary, { opacity: isValidationPassed ? 1 : 0.5 }]} onPress={onComplete} disabled={isLoading || !isValidationPassed}>
+          {isLoading ? (<ActivityIndicator color="white" />) : (<>
+            <Check size={20} color="white" />
+            <Text style={sharedStyles.navButtonTextPrimary}>Setup Gereed</Text>
+          </>)}
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity style={[sharedStyles.navButton, sharedStyles.navButtonPrimary, { opacity: isValidationPassed ? 1 : 0.5 }]} onPress={onNext} disabled={isLoading || !isValidationPassed}>
+          <Text style={sharedStyles.navButtonTextPrimary}>Volgende</Text>
+          <ArrowRight size={20} color="white" />
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+};
+
+// --- Stap 1: Huishouden ---
+const StepHousehold: React.FC<{ data: any; setData: (fn: any) => void; onValidationSuccess: (navigate?: boolean) => void }> = ({ data, setData, onValidationSuccess }) => {
+  const { totalPersons, members, isPets, petDetails } = data.household;
+
+  // Synchroniseer members array met totalPersons
+  useEffect(() => {
+    const currentCount = members.length;
+    const targetCount = parseInt(totalPersons || '0', 10);
+    if (currentCount < targetCount) {
+      const newMembers = [...members];
+      for (let i = currentCount; i < targetCount; i++) {
+        const newMember = createMember(i === 0 ? 'adult' : 'child');
+        if (i === 0) {
+          newMember.relationship = 'Zelf/Aanvrager';
+          newMember.ageGroup = ADULT_AGE_GROUPS[1]; // default 26-45
+          newMember.gender = ADULT_GENDERS[0]; // default Man
+        }
+        newMembers.push(newMember);
+      }
+      setData((prevData: any) => ({ ...prevData, household: { ...prevData.household, members: newMembers } }));
+    } else if (currentCount > targetCount) {
+      const newMembers = members.slice(0, targetCount);
+      setData((prevData: any) => ({ ...prevData, household: { ...prevData.household, members: newMembers } }));
+    }
+  }, [totalPersons, setData]);
+
+  const handleMemberUpdate = (id: number, key: keyof Member, value: any) => {
+    setData((prevData: any) => ({
+      ...prevData,
+      household: {
+        ...prevData.household,
+        members: prevData.household.members.map((m: Member) => (m.id === id ? { ...m, [key]: value } : m)),
+      },
+    }));
+  };
+  const handleMemberDelete = (id: number) => {
+    setData((prevData: any) => ({
+      ...prevData,
+      household: {
+        ...prevData.household,
+        members: prevData.household.members.filter((m: Member) => m.id !== id),
+      },
+    }));
+  };
+
+  const [isValidationPassed, setIsValidationPassed] = useState<boolean>(false);
+  useEffect(() => {
+    const targetCount = parseInt(totalPersons || '0', 10);
+    const currentCount = members.length;
+    if (targetCount === 0 || targetCount > MAX_PERSONS || currentCount !== targetCount) {
+      setIsValidationPassed(false);
+      return;
+    }
+    const allRequiredFilled = members.every((m: Member) => (
+      (m.type === 'adult' && !!m.relationship && !!m.ageGroup && !!m.gender) ||
+      (m.type === 'child' && !!m.ageGroup && !!m.gender)
+    ));
+    setIsValidationPassed(allRequiredFilled);
+  }, [totalPersons, members]);
+
+  const handleNext = () => {
+    if (isValidationPassed) onValidationSuccess();
+    else Alert.alert('Onvolledig Formulier', 'Controleer telling en verplichte velden.');
+  };
+
+  const adultCount = members.filter((m: Member) => m.type === 'adult').length;
+  const childCount = members.filter((m: Member) => m.type === 'child').length;
+  const currentCount = members.length;
+
+  return (
+    <View style={setupStyles.stepContent}>
+      <Text style={setupStyles.sectionTitle}>Stap 1: Huishoudsamenstelling</Text>
+      <NumericInput label={`Uit hoeveel personen bestaat uw huishouden? (Max ${MAX_PERSONS})`} value={totalPersons} onChangeText={(text) => setData({ ...data, household: { ...data.household, totalPersons: text } })} max={MAX_PERSONS} min={1} />
+
+      {parseInt(totalPersons || '0', 10) > 0 && (
+        <View style={setupStyles.addMemberContainer}>
+          <Text style={setupStyles.memberSummaryText}>Huidige telling: {adultCount} Volwassene(n) en {childCount} Kind(eren)</Text>
+          <View style={setupStyles.memberControlRow}>
+            {adultCount < 2 && adultCount < parseInt(totalPersons || '0', 10) && (
+              <TouchableOpacity style={setupStyles.memberButton} onPress={() => setData((p: any) => ({ ...p, household: { ...p.household, members: [...p.household.members, createMember('adult')] } }))}>
+                <Plus size={16} color="#333" />
+                <Text style={setupStyles.memberButtonText}>Voeg Volwassene toe</Text>
+              </TouchableOpacity>
+            )}
+            {currentCount < parseInt(totalPersons || '0', 10) && (
+              <TouchableOpacity style={setupStyles.memberButton} onPress={() => setData((p: any) => ({ ...p, household: { ...p.household, members: [...p.household.members, createMember('child')] } }))}>
+                <Plus size={16} color="#333" />
+                <Text style={setupStyles.memberButtonText}>Voeg Kind toe</Text>
+              </TouchableOpacity>
+            )}
+            {currentCount > 1 && (
+              <TouchableOpacity style={[setupStyles.memberButton, setupStyles.memberButtonDanger]} onPress={() => handleMemberDelete(members[members.length - 1].id)}>
+                <Minus size={16} color="#FFF" />
+                <Text style={[setupStyles.memberButtonText, { color: '#FFF' }]}>Laatste Lid Weg</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <Text style={setupStyles.validationText}>
+            {isValidationPassed ? '✅ De telling klopt en alle details zijn compleet.' : `🛑 Totaal: ${currentCount}/${totalPersons}. Vul alle velden in. ${currentCount !== parseInt(totalPersons || '0', 10) ? `(Nog ${parseInt(totalPersons || '0', 10) - currentCount} lid(den) te definiëren)` : ''}`}
+          </Text>
+        </View>
+      )}
+
+      {currentCount > 0 && members.map((member: Member, index: number) => (
+        <MemberForm key={member.id} member={member} index={index} onUpdate={handleMemberUpdate} onDelete={handleMemberDelete} />
+      ))}
+
+      {parseInt(totalPersons || '0', 10) > 0 && currentCount > 0 && (
+        <View>
+          <Text style={[setupStyles.sectionTitle, { fontSize: 18, marginBottom: 15 }]}>5. Huisdieren</Text>
+          <Text style={sharedStyles.inputLabel}>Is/zijn er huisdier(en) in uw huishouden?</Text>
+          <View style={setupStyles.radioGroup}>
+            {['Ja', 'Nee'].map(option => (
+              <TouchableOpacity key={option} style={setupStyles.radioButton} onPress={() => setData((p: any) => ({ ...p, household: { ...p.household, isPets: option === 'Ja' } }))}>
+                <View style={setupStyles.radioCircle}>{(isPets === (option === 'Ja')) && <View style={setupStyles.radioInnerCircle} />}</View>
+                <Text style={setupStyles.radioLabel}>{option}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {isPets && (
+            <View style={sharedStyles.inputGroup}>
+              <Text style={sharedStyles.inputLabel}>Zo ja, wat is het aantal en soort?</Text>
+              <TextInput style={[sharedStyles.inputRow, { height: 80, alignItems: 'flex-start', paddingVertical: 10 }]} value={petDetails || ''} onChangeText={(text) => setData((p: any) => ({ ...p, household: { ...p.household, petDetails: text } }))} placeholder="Bijv. 1 hond, 2 katten" placeholderTextColor="#999" multiline />
+            </View>
+          )}
+        </View>
+      )}
+
+      <NavigationButtons currentStep={1} totalSteps={STEPS.length} onNext={handleNext} onPrev={() => {}} onComplete={() => {}} isLoading={false} isValidationPassed={isValidationPassed} />
+    </View>
+  );
+};
+
+// --- Stap 2: Inkomsten (vereenvoudigd) ---
+const INCOME_FIELDS = [
+  { key: 'salary', label: 'Salaris uit werk (netto)' },
+  { key: 'benefits', label: 'Uitkering (bijstand, Wajong, etc.)' },
+  { key: 'pension', label: 'Pensioen' },
+  { key: 'otherIncome', label: 'Overige inkomsten' },
+] as const;
+
+const StepIncome: React.FC<{ data: any; setData: (fn: any) => void; onValidationSuccess: (navigate?: boolean) => void }> = ({ data, setData, onValidationSuccess }) => {
+  const { fixedIncome } = data;
+  const handleIncomeChange = (key: string, value: string) => {
+    setData((p: any) => ({ ...p, fixedIncome: { ...p.fixedIncome, [key]: value } }));
+  };
+  const handleNext = () => {
+    // Simple validatie; ga altijd door
+    onValidationSuccess();
+  };
+  const totalIncome = Object.values(fixedIncome).reduce((sum: number, current: any) => sum + (parseFloat(current) || 0), 0).toLocaleString('nl-NL', { style: 'currency', currency: 'EUR' });
+  return (
+    <View style={setupStyles.stepContent}>
+      <Text style={setupStyles.sectionTitle}>Stap 2: Uw maandelijkse vaste inkomsten (netto)</Text>
+      <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+        {INCOME_FIELDS.map(field => (
+          <CurrencyInput key={field.key} label={field.label} value={fixedIncome[field.key] || ''} onChangeText={(t) => handleIncomeChange(field.key, t)} />
+        ))}
+        <View style={setupStyles.summaryBox}>
+          <Text style={setupStyles.summaryTextLabel}>Totaal Vaste Inkomsten:</Text>
+          <Text style={setupStyles.summaryTextValue}>{totalIncome}</Text>
+        </View>
+      </ScrollView>
+      <NavigationButtons currentStep={2} totalSteps={STEPS.length} onNext={handleNext} onPrev={() => onValidationSuccess(false)} onComplete={() => {}} isValidationPassed={true} />
+    </View>
+  );
+};
+
+// --- Stap 3: Lasten (vereenvoudigd) ---
+const StepExpenses: React.FC<{ data: any; setData: (fn: any) => void; onValidationSuccess: (navigate?: boolean) => void }> = ({ data, setData, onValidationSuccess }) => {
+  const { fixedExpenses } = data;
+  const handleNext = () => onValidationSuccess();
+  return (
+    <View style={setupStyles.stepContent}>
+      <Text style={setupStyles.sectionTitle}>Stap 3: Uw maandelijkse vaste lasten</Text>
+      <CurrencyInput label="Voorbeeld Huur/Hypotheek" value={fixedExpenses?.rent || ''} onChangeText={(t) => setData({ ...data, fixedExpenses: { ...fixedExpenses, rent: t } })} />
+      <NavigationButtons currentStep={3} totalSteps={STEPS.length} onNext={handleNext} onPrev={() => onValidationSuccess(false)} onComplete={handleNext} isValidationPassed={true} />
+    </View>
+  );
+};
+
+// --- Setup scherm ---
+const SetupScreen: React.FC<{ onSetupComplete: () => void }> = ({ onSetupComplete }) => {
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [setupData, setSetupData] = useState<any>(() => ({
+    household: { totalPersons: '1', members: [createMember('adult')], isPets: false, petDetails: '' },
+    fixedIncome: {},
+    fixedExpenses: { rent: '' },
+  }));
+
+  const handleNextStep = useCallback(() => { if (currentStep < STEPS.length) setCurrentStep((prev) => prev + 1); }, [currentStep]);
+  const handlePrevStep = useCallback(() => { if (currentStep > 1) setCurrentStep((prev) => prev - 1); }, [currentStep]);
+
+  const handleComplete = async () => {
+    setIsLoading(true);
+    try {
+      const cleanedData = {
+        appId,
+        timestamp: new Date().toISOString(),
+        household: {
+          totalPersons: parseInt(setupData.household.totalPersons || '0', 10),
+          members: setupData.household.members.map((m: Member) => ({ type: m.type, name: m.name || undefined, relationship: m.relationship, gender: m.gender, ageGroup: m.ageGroup, isPregnantOrLactating: m.isPregnantOrLactating })),
+          isPets: setupData.household.isPets,
+          petDetails: setupData.household.isPets ? setupData.household.petDetails : undefined,
+        },
+        fixedIncome: Object.fromEntries(Object.entries(setupData.fixedIncome).filter(([, v]) => !!v && parseFloat(String(v)) > 0).map(([k, v]) => [k, parseFloat(String(v))])),
+        fixedExpenses: Object.fromEntries(Object.entries(setupData.fixedExpenses).filter(([, v]) => !!v && parseFloat(String(v)) > 0).map(([k, v]) => [k, parseFloat(String(v))])),
+      };
+      await sendToWebhook(cleanedData); // fallback zorgt dat we altijd door kunnen
+      onSetupComplete();
+    } catch (error: any) {
+      console.error('Setup voltooid fout:', error);
+      Alert.alert('Fout bij Voltooien', `Het verzenden is mislukt: ${error.message}.`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const isLastStep = currentStep === STEPS.length;
+  const CurrentStepComponent = currentStep === 1 ? StepHousehold : (currentStep === 2 ? StepIncome : StepExpenses);
+
+  return (
+    <KeyboardAvoidingView style={setupStyles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <View style={setupStyles.header}>
+        <Text style={setupStyles.mainTitle}>Financiële Setup</Text>
+        <Text style={setupStyles.stepIndicator}>Stap {currentStep} van {STEPS.length}: {STEPS[currentStep - 1].title}</Text>
+        <View style={setupStyles.progressContainer}>
+          {STEPS.map((step) => (<View key={step.id} style={[setupStyles.progressBar, step.id <= currentStep ? setupStyles.progressBarActive : setupStyles.progressBarInactive]} />))}
+        </View>
+      </View>
+      <ScrollView contentContainerStyle={setupStyles.scrollContent} keyboardShouldPersistTaps="handled">
+        <CurrentStepComponent data={setupData} setData={setSetupData} onValidationSuccess={(navigate: boolean = true) => {
+          if (navigate) { if (isLastStep) handleComplete(); else handleNextStep(); } else { handlePrevStep(); }
+        }} />
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+};
+
+const DashboardScreen: React.FC<{ onReset: () => void }> = ({ onReset }) => (
+  <View style={dashboardStyles.container}>
+    <Text style={dashboardStyles.title}>Dashboard (Mock)</Text>
+    <Text style={dashboardStyles.subtitle}>Gefeliciteerd! De setup is succesvol voltooid.</Text>
+    <TouchableOpacity style={dashboardStyles.resetButton} onPress={onReset}><Text style={dashboardStyles.resetButtonText}>Herstart Setup (Test)</Text></TouchableOpacity>
+  </View>
+);
+
+export default function FinancieelBeheerApp({ userId }: { userId: string }) {
+  const [currentScreen, setCurrentScreen] = useState<'setup' | 'dashboard'>('setup');
+  const handleSetupComplete = () => setCurrentScreen('dashboard');
+  const handleReset = () => setCurrentScreen('setup');
+  if (!userId) return (<SafeAreaView style={appStyles.safeArea}><Text style={{ padding: 16, color: '#A80000' }}>Fout: gebruiker niet ingelogd.</Text></SafeAreaView>);
+  return (
+    <SafeAreaView style={appStyles.safeArea}>
+      {currentScreen === 'setup' ? (<SetupScreen onSetupComplete={handleSetupComplete} />) : (<DashboardScreen onReset={handleReset} />)}
+    </SafeAreaView>
+  );
+}
+
+// --- Styles ---
+const primaryColor = '#00A98F';
+const secondaryColor = '#E8F5E9';
+const dangerColor = '#FF6B6B';
+
+const appStyles = StyleSheet.create({ safeArea: { flex: 1, backgroundColor: secondaryColor } });
+
+const sharedStyles = StyleSheet.create({
+  inputGroup: { marginBottom: 15 },
+  inputLabel: { fontSize: 14, color: '#333', fontWeight: '600', marginBottom: 5 },
+  inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#ddd', paddingHorizontal: 10, height: 50 },
+  currencyPrefix: { fontSize: 18, color: primaryColor, fontWeight: 'bold', marginRight: 8 },
+  currencySuffix: { fontSize: 14, color: '#666', marginLeft: 8, alignSelf: 'center' },
+  inputField: { flex: 1, fontSize: 18, color: '#333', height: '100%', paddingVertical: 0 },
+  navContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 15, borderTopWidth: 1, borderTopColor: '#eee', backgroundColor: '#fff', width: '100%', position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 99, paddingHorizontal: 20 },
+  navButton: { flexDirection: 'row', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', flex: 1, marginHorizontal: 5 },
+  navButtonPrimary: { backgroundColor: primaryColor },
+  navButtonTextPrimary: { color: 'white', fontWeight: 'bold', fontSize: 16, marginLeft: 5 },
+  navButtonSecondary: { backgroundColor: secondaryColor, borderWidth: 1, borderColor: '#ccc' },
+  navButtonTextSecondary: { color: '#333', fontWeight: 'bold', fontSize: 16, marginRight: 5 },
+});
+
+const setupStyles = StyleSheet.create({
+  container: { flex: 1, padding: 20, backgroundColor: secondaryColor },
+  header: { paddingBottom: 15, marginBottom: 10, borderBottomWidth: 1, borderBottomColor: '#ddd' },
+  mainTitle: { fontSize: 28, fontWeight: '800', color: primaryColor, marginBottom: 5 },
+  stepIndicator: { fontSize: 16, color: '#666', fontWeight: '500', marginBottom: 10 },
+  progressContainer: { flexDirection: 'row', justifyContent: 'space-between', gap: 5 },
+  progressBar: { height: 6, flex: 1, borderRadius: 3 },
+  progressBarActive: { backgroundColor: primaryColor },
+  progressBarInactive: { backgroundColor: '#ccc' },
+  scrollContent: { flexGrow: 1, paddingBottom: 100 },
+  stepContent: { flex: 1 },
+  sectionTitle: { fontSize: 22, fontWeight: 'bold', color: '#333', marginBottom: 20, marginTop: 10 },
+  infoText: { fontSize: 14, color: '#666', marginTop: 10, lineHeight: 20, borderLeftWidth: 3, borderLeftColor: primaryColor, paddingLeft: 10, paddingVertical: 5 },
+  numericInput: { textAlign: 'left', paddingHorizontal: 10, backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#ddd', height: 50, fontSize: 18 },
+  memberCard: { backgroundColor: '#fff', borderRadius: 12, padding: 15, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3, borderLeftWidth: 5, borderLeftColor: primaryColor },
+  memberCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
+  memberCardTitle: { fontSize: 18, fontWeight: '700', color: primaryColor },
+  deleteButton: { backgroundColor: dangerColor, borderRadius: 50, padding: 5 },
+  addMemberContainer: { marginBottom: 25, padding: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, backgroundColor: '#f9f9f9' },
+  memberSummaryText: { fontSize: 14, color: '#666', marginBottom: 10, fontWeight: '600' },
+  memberControlRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 15 },
+  memberButton: { flexDirection: 'row', backgroundColor: secondaryColor, padding: 8, borderRadius: 6, borderWidth: 1, borderColor: primaryColor, alignItems: 'center', justifyContent: 'center' },
+  memberButtonDanger: { backgroundColor: dangerColor, borderColor: dangerColor },
+  memberButtonText: { fontSize: 14, marginLeft: 5, color: primaryColor, fontWeight: '600' },
+  validationText: { fontSize: 14, fontWeight: '500', color: '#333' },
+  dropdownHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#ddd', paddingHorizontal: 15, height: 50 },
+  dropdownText: { fontSize: 16, color: '#333' },
+  dropdownList: { position: 'absolute', top: 75, left: 0, right: 0, backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: primaryColor, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 5, elevation: 5 },
+  dropdownItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  dropdownItemText: { fontSize: 16, color: '#333' },
+  radioGroup: { flexDirection: 'row', marginBottom: 15, gap: 20 },
+  radioButton: { flexDirection: 'row', alignItems: 'center' },
+  radioCircle: { height: 20, width: 20, borderRadius: 10, borderWidth: 2, borderColor: primaryColor, alignItems: 'center', justifyContent: 'center', marginRight: 8 },
+  radioInnerCircle: { height: 10, width: 10, borderRadius: 5, backgroundColor: primaryColor },
+  radioLabel: { fontSize: 16, color: '#333' },
+  checkboxContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 15, marginBottom: 5 },
+  checkbox: { height: 20, width: 20, borderRadius: 5, borderWidth: 2, borderColor: primaryColor, marginRight: 10 },
+  checkboxChecked: { height: 20, width: 20, borderRadius: 5, borderWidth: 2, borderColor: primaryColor, backgroundColor: primaryColor, marginRight: 10 },
+  checkboxLabel: { fontSize: 14, color: '#333', flexShrink: 1 },
+  summaryBox: { backgroundColor: '#fff', padding: 15, borderRadius: 10, marginTop: 20, borderLeftWidth: 5, borderLeftColor: dangerColor, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
+  summaryTextLabel: { fontSize: 16, fontWeight: '600', color: '#333' },
+  summaryTextValue: { fontSize: 20, fontWeight: 'bold', color: dangerColor },
+});
+
+const dashboardStyles = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: secondaryColor, padding: 20 },
+  title: { fontSize: 24, fontWeight: 'bold', color: primaryColor, marginBottom: 10 },
+  subtitle: { fontSize: 16, textAlign: 'center', color: '#333', marginBottom: 30 },
+  resetButton: { padding: 15, borderRadius: 10, backgroundColor: dangerColor, marginTop: 20 },
+  resetButtonText: { color: 'white', fontWeight: 'bold' },
+});

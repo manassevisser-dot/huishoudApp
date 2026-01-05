@@ -1,0 +1,57 @@
+DIFFLIST – Step: Mock-ups 2–4 + MultiPage plan
+Generated: 2025-11-24 19:32:04
+=================================================
+Scope:
+- Visual mock-up for Form 2 generated.
+- Wireframe specs for Forms 3–4.
+- Decision: one frmVast with MultiPage (Page1=Inkomsten, Page2=Uitgaven).
+
+New/Changed assets on sheet "Referenties":
+- Shapes (ensure existence): btnVorigeShape, btnVolgendeShape, btnOpslaanShape, btnAnnulerenShape,
+  btnRowAddShape, btnRowDelShape.
+
+Form 2 (Vaste inkomsten) — Controls (DYN_PREFIX):
+- lblStepTitle: "Stap 2 van 4 – Vaste inkomsten"
+- Row editor: txtBron/cmbBron, cmbPeriode (maand/week/4 weken/kwartaal/jaar), txtBedrag,
+  cmbOntvanger (Zelf/Partner/Gezamenlijk), imgAddRow/imgDelRow (shapes as Image controls).
+- lblTotaalMaand + calc field (uses Utils.ToMonthlyAmount).
+- Navigation: imgBtnVorige, imgBtnVolgende, imgBtnOpslaan, imgBtnAnnuleren.
+- Background via FormBackground.EnsureBackgroundImage.
+
+Form 3 (Vaste uitgaven) — Controls (DYN_PREFIX):
+- lblStepTitle: "Stap 3 van 4 – Vaste uitgaven"
+- Row editor: cmbCategorie, txtOmschrijving (optional), cmbPeriode, txtBedrag, cmbBetaalwijze,
+  imgAddRow/imgDelRow.
+- lblTotaalMaand + calc field.
+- Navigation: Vorige/Volgende/Opslaan/Annuleren shapes.
+- Background via FormBackground.EnsureBackgroundImage.
+
+Form 4 (Dagelijkse uitgaven) — Controls (DYN_PREFIX):
+- lblStepTitle: "Stap 4 van 4 – Dagelijkse uitgaven"
+- Reuse existing: lblDatumVandaag, cmbCategorie, cmbSubcategorie, btnNieuwSub, txtBedrag,
+  cmbBetaalwijze.
+- Add navigation shapes: imgBtnVorige (to stap 3), imgBtnOpslaan (final), imgBtnAnnuleren.
+- Layout alignment via FormLayout.FrmLayoutSafeAreaDyn.
+
+frmVast MultiPage plan:
+- New form: frmVast with MultiPage1.Pages(0)="Inkomsten"; Pages(1)="Uitgaven".
+- Build stubs: BuildFrmVast_Inkomsten, BuildFrmVast_Uitgaven; HookFrmVastEvents.
+- Navigation mapping:
+  * Huishouden (form 1) → frmVast (MultiPage index 0)
+  * frmVast.Next → set MultiPage.Value=1
+  * frmVast.Previous → back to Huishouden
+  * frmVast.Next from Page1 → Page2; from Page2 → open frmInvoer (dagelijks)
+- Shapes loading: AddShapeAsImage for all buttons, fallback to CommandButton.
+
+Validation additions:
+- Inkomsten/Uitgaven: require period + bedrag; allow zero rows if user selects "Geen vaste …".
+- Consistent parsing via Utils.ParseAmount; monthly normalization via Utils.ToMonthlyAmount.
+
+Terminologie updates (inclusive):
+- Ontvanger: Zelf/Partner/Gezamenlijk (neutral)
+- Labels avoid gendered titles; stick to neutral Dutch wording per earlier research.
+
+Testing checklist:
+- Render background correctly within safe-area.
+- Image-shape buttons clickable.
+- Totals update live; Next enabled only when validation passes.

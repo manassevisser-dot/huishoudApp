@@ -1,0 +1,103 @@
+
+#handover_copilot_v3.yaml
+agent: next_agent
+owner: Manasse Visser
+project: W&I Excel UserForms Wizard
+version: 3.0
+timestamp: 2025-11-24T23:29:48
+
+updates:
+  shape_reuse_strategy:
+    sizes:
+      small: { width: 28, height: 28, base: btnShapeSmall, hover: btnShapeSmall_hover }
+      medium: { width: 80, height: 28, base: btnShapeMedium, hover: btnShapeMedium_hover }
+      large: { width: 100, height: 28, base: btnShapeLarge, hover: btnShapeLarge_hover }
+    mapping:
+      Prev: { size: medium, base: btnShapeMedium, hover: btnShapeMedium_hover }
+      Next: { size: large,  base: btnShapeLarge,  hover: btnShapeLarge_hover }
+      Save: { size: large,  base: btnShapeLarge,  hover: btnShapeLarge_hover }
+      Cancel:{ size: large,  base: btnShapeLarge,  hover: btnShapeLarge_hover }
+      RowAdd:{ size: small,  base: btnShapeSmall,  hover: btnShapeSmall_hover }
+      RowDel:{ size: small,  base: btnShapeSmall,  hover: btnShapeSmall_hover }
+
+  hover_behavior:
+    event: MouseMove
+    default_picture: base shape image
+    hover_picture:  hover shape image
+    reset_on_form_mousemove: true
+
+  layout_table:
+    name: tblLayoutSpecs
+    sheet: Referenties
+    schema:
+      - Key          # logical key (Prev, Next, Save, Cancel, RowAdd, RowDel, StepTitle, etc.)
+      - ShapeName    # base shape to export as image
+      - Width        # points
+      - Height       # points
+      - X            # Left position in points
+      - Y            # Top position in points
+      - DefaultColor # optional hex or named
+      - HoverColor   # optional hex or named
+      - Notes        # optional
+    example_rows:
+      - [Prev,   btnShapeMedium, 80,  28, 280, 428, "#0078D4", "#3399FF", "Previous button"]
+      - [Next,   btnShapeLarge,  100, 28, 376, 428, "#0078D4", "#3399FF", "Next button"]
+      - [Save,   btnShapeLarge,  100, 28, 486, 428, "#107C10", "#28A745", "Save button"]
+      - [Cancel, btnShapeLarge,  100, 28, 596, 428, "#A80000", "#D83B01", "Cancel button"]
+      - [RowAdd, btnShapeSmall,   28, 28, 692,  80, "#0078D4", "#3399FF", "+ row"]
+      - [RowDel, btnShapeSmall,   28, 28, 724,  80, "#A80000", "#D83B01", "- row"]
+
+integration:
+  builders_use_table: true
+  functions:
+    - GetLayoutSpec(shapeName, fieldName)
+    - GetShapePath(shapeName, suffix)
+    - PlaceButtonFromSpec(frm, controlName, baseKey)
+    - ApplyHoverPicture(frm, controlName)
+    - ResetHoverPicture(frm, controlName)
+  event_classes:
+    - CImgEvents (Image MouseMove)  # adds hover swap; hook in FormEvents.HookEventsDynamic
+
+forms:
+  frmHuishouden:
+    buttons:
+      - { control: imgBtnVorige,   key: Prev }
+      - { control: imgBtnVolgende, key: Next }
+      - { control: imgBtnAnnuleren,key: Cancel }
+  frmVast_page0:
+    buttons:
+      - { control: imgBtnVorige,   key: Prev }
+      - { control: imgBtnVolgende, key: Next }
+      - { control: imgBtnOpslaan,  key: Save }
+      - { control: imgBtnAnnuleren,key: Cancel }
+    row_buttons:
+      - { control: imgAddRow, key: RowAdd }
+      - { control: imgDelRow, key: RowDel }
+  frmVast_page1:
+    buttons:
+      - { control: imgBtnVorige,   key: Prev }
+      - { control: imgBtnVolgende, key: Next }
+      - { control: imgBtnOpslaan,  key: Save }
+      - { control: imgBtnAnnuleren,key: Cancel }
+    row_buttons:
+      - { control: imgAddRow, key: RowAdd }
+      - { control: imgDelRow, key: RowDel }
+  frmInvoer:
+    buttons:
+      - { control: imgBtnVorige,   key: Prev }
+      - { control: imgBtnOpslaan,  key: Save }
+      - { control: imgBtnAnnuleren,key: Cancel }
+
+acceptance:
+  reusable_shapes: true
+  hover_visual_change: visible within 100ms on mouseover
+  layout_driven: all positions/sizes come from tblLayoutSpecs
+  no_hardcoded_coords: in builders
+  logging: Utils.LogError4 used in helpers and event handlers
+
+next_tasks_for_agent:
+  - Create/Update Referenties!tblLayoutSpecs with schema above
+  - Add LayoutSpecsHelpers module from LayoutSpecsHelpers.txt
+  - Modify FormEvents to use PlaceButtonFromSpec + hover events (CImgEvents)
+  - Verify all builders read positions/sizes from tblLayoutSpecs
+

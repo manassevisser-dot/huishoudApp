@@ -1,0 +1,392 @@
+import React, { useState, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { ChevronLeft, ChevronRight, Check } from 'lucide-react-native';
+
+// ====================================================================
+// DESIGN ATOMS (Aangepast voor React Native)
+// ====================================================================
+
+// Kleurpalet gedefinieerd volgens designAtoms.txt
+const COLORS = {
+  primary: '#00A98F', // Teal
+  secondary: '#FF6B6B', // Red/Coral
+  background: '#F9F9F9', // Zeer lichtgrijs
+  text: '#333333', // Donkergrijs
+  income: '#38A169',
+  expense: '#E53E3E',
+  lightText: '#666666',
+  inputBackground: '#FFFFFF',
+  border: '#DDDDDD',
+  disabled: '#AAAAAA',
+  focusBorder: '#4299E1',
+}; //
+
+interface ButtonProps {
+  text: string; // Komt van de `text` prop in designAtoms.txt
+  onPress: () => void;
+  disabled?: boolean;
+  fullWidth?: boolean;
+  icon?: React.ReactNode;
+  active?: boolean; // Toegevoegd voor YNQuestionCard functionaliteit
+}
+
+const styles = StyleSheet.create({
+  // ORGANISM STIJLEN
+  organismContainer: { padding: 20, backgroundColor: COLORS.background, flex: 1 },
+  footer: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 30, paddingTop: 15, borderTopWidth: 1, borderTopColor: COLORS.border },
+  validationError: { color: COLORS.secondary, marginTop: 10, fontWeight: '500', fontSize: 13 },
+  stepContentContainer: { paddingHorizontal: 5 },
+
+  // ATOM STIJLEN
+  buttonBase: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minWidth: 100 },
+  buttonText: { fontSize: 15, fontWeight: '600', marginLeft: 4 },
+  heading2: { fontSize: 24, fontWeight: '700', color: COLORS.text, marginBottom: 10 },
+  bodyText: { fontSize: 15, fontWeight: '400', color: COLORS.text, lineHeight: 22 },
+
+  // MOLECULE STIJLEN
+  stepperContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: COLORS.border, marginBottom: 15 },
+  stepperLabel: { fontSize: 15, color: COLORS.text, fontWeight: '600' },
+  stepperControls: { flexDirection: 'row', alignItems: 'center' },
+  stepperButton: { width: 30, height: 30, backgroundColor: COLORS.inputBackground, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, borderRadius: 5 },
+  stepperButtonText: { fontSize: 18, color: COLORS.text, fontWeight: 'bold' },
+  stepperValue: { fontSize: 15, fontWeight: '600', minWidth: 35, textAlign: 'center', color: COLORS.text },
+  cardContainer: { marginBottom: 20, padding: 0 },
+  segmentedControlContainer: { flexDirection: 'row', marginTop: 10 },
+});
+
+// Aangepaste PrimaryButton voor React Native
+const PrimaryButton: React.FC<ButtonProps> = ({ text, onPress, disabled = false, fullWidth = true, icon, active = false }) => {
+  const bgColor = disabled ? COLORS.disabled : active ? COLORS.primary : COLORS.primary; // Als `active` true is, blijft de kleur Primary
+  const btnStyles = [
+    styles.buttonBase,
+    { backgroundColor: bgColor, opacity: disabled ? 0.4 : 1, width: fullWidth ? '100%' : undefined },
+  ];
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled}
+      style={btnStyles}
+    >
+      {icon}
+      <Text style={[styles.buttonText, { color: 'white' }]}>{text}</Text>
+    </TouchableOpacity>
+  );
+}; //
+
+// Aangepaste SecondaryButton voor React Native
+const SecondaryButton: React.FC<ButtonProps> = ({ text, onPress, disabled = false, fullWidth = true, icon, active = false }) => {
+  const bgColor = active ? COLORS.primary : COLORS.inputBackground;
+  const textColor = active ? 'white' : COLORS.text;
+  const borderColor = active ? COLORS.primary : COLORS.border;
+  const btnStyles = [
+    styles.buttonBase,
+    { backgroundColor: bgColor, borderWidth: 1, borderColor: borderColor, opacity: disabled ? 0.4 : 1, width: fullWidth ? '100%' : undefined },
+  ];
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled}
+      style={btnStyles}
+    >
+      {icon}
+      <Text style={[styles.buttonText, { color: textColor }]}>{text}</Text>
+    </TouchableOpacity>
+  );
+}; //
+
+// Aangepaste Heading2 voor React Native
+const Heading2: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Text style={styles.heading2}>{children}</Text>
+); //
+
+// Aangepaste BodyText voor React Native
+const BodyText: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Text style={styles.bodyText}>{children}</Text>
+); //
+
+// ====================================================================
+// DESIGN MOLECULES (Aangepast voor React Native)
+// ====================================================================
+
+// FormHeader Interface uit designMolecules.txt
+interface FormHeaderProps {
+  title: string;
+  currentStep: number;
+  totalSteps: number;
+  // Subtitle toegevoegd om aan de vereisten van de Superprompt te voldoen
+  subtitle: string;
+}
+
+const FormHeader: React.FC<FormHeaderProps> = ({ title, currentStep, totalSteps, subtitle }) => (
+  <View style={{ marginBottom: 20 }}>
+    <Text style={{ fontSize: 13, color: COLORS.primary, fontWeight: '600' }}>
+      STAP {currentStep} VAN {totalSteps}
+    </Text>
+    <Heading2>{title}</Heading2>
+    <BodyText>{subtitle}</BodyText>
+  </View>
+); //
+
+// NumberStepper Interface uit designMolecules.txt
+interface NumberStepperProps {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+}
+
+const NumberStepper: React.FC<NumberStepperProps> = ({ label, value, onChange, min = 0, max }) => {
+  const decrement = () => onChange(Math.max(min, value - 1));
+  const increment = () => {
+    if (max === undefined || value < max) {
+      onChange(value + 1);
+    }
+  };
+
+  const isMin = value <= min;
+  const isMax = max !== undefined && value >= max;
+
+  return (
+    <View style={styles.stepperContainer}>
+      <Text style={styles.stepperLabel}>{label}</Text>
+      <View style={styles.stepperControls}>
+        <TouchableOpacity onPress={decrement} disabled={isMin} style={[styles.stepperButton, { opacity: isMin ? 0.4 : 1 }]}>
+          <Text style={styles.stepperButtonText}>-</Text>
+        </TouchableOpacity>
+        <Text style={styles.stepperValue}>{value}</Text>
+        <TouchableOpacity onPress={increment} disabled={isMax} style={[styles.stepperButton, { opacity: isMax ? 0.4 : 1 }]}>
+          <Text style={styles.stepperButtonText}>+</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}; //
+
+// YNQuestionCard Interface uit designMolecules.txt
+interface YNQuestionCardProps {
+  question: string;
+  value: boolean | null; // null is voor onbeantwoord
+  onChange: (answer: boolean) => void; // Komt overeen met `onAnswer` in de vorige versie
+  required?: boolean;
+}
+
+const YNQuestionCard: React.FC<YNQuestionCardProps> = ({ question, value, onChange }) => (
+  <View style={styles.cardContainer}>
+    <Text style={styles.stepperLabel}>{question}</Text>
+    <View style={styles.segmentedControlContainer}>
+      {/* Gebruikt de PrimaryButton en SecondaryButton Atoms voor de implementatie */}
+      <View style={{ flex: 1, marginRight: 8 }}>
+        <PrimaryButton text="Ja" onPress={() => onChange(true)} active={value === true} fullWidth={true} />
+      </View>
+      <View style={{ flex: 1, marginLeft: 8 }}>
+        <SecondaryButton text="Nee" onPress={() => onChange(false)} active={value === false} fullWidth={true} />
+      </View>
+    </View>
+  </View>
+); //
+
+// ====================================================================
+// ORGANISM COMPONENT (HouseholdSetupOrganism)
+// ====================================================================
+
+// Data Structuur volgens Superprompt
+interface HouseholdState {
+  totalPersons: number;
+  adults: number;
+  children: number;
+  details: Array<any>;
+  hasPets: boolean | null;
+} //
+
+const INITIAL_STATE: HouseholdState = {
+  totalPersons: 1,
+  adults: 1,
+  children: 0,
+  details: [],
+  hasPets: null,
+};
+
+const HouseholdSetupOrganism: React.FC = () => {
+  const totalSteps = 2; // Alleen Stap 1.1 en 1.2
+  const [step, setStep] = useState(1);
+  const [householdState, setHouseholdState] = useState<HouseholdState>(INITIAL_STATE);
+
+  // LOGICA VOOR STATE UPDATES EN AFGELEIDE WAARDEN
+  const updateState = useCallback(<K extends keyof HouseholdState>(key: K, value: HouseholdState[K]) => {
+    setHouseholdState(prevState => {
+      let newState = { ...prevState, [key]: value };
+
+      if (key === 'totalPersons' || key === 'adults') {
+        const newTotalPersons = newState.totalPersons;
+        const newAdults = newState.adults;
+        const safeTotalPersons = Math.max(1, newTotalPersons); // Minimaal 1 persoon
+        const safeAdults = Math.max(0, newAdults);
+
+        // Voorkom adults > totalPersons. Set adults = totalPersons als dit gebeurt.
+        const effectiveAdults = Math.min(safeAdults, safeTotalPersons);
+
+        // Herbereken kinderen
+        const newChildren = Math.max(0, safeTotalPersons - effectiveAdults);
+
+        newState = { ...newState, totalPersons: safeTotalPersons, adults: effectiveAdults, children: newChildren };
+      }
+
+      return newState;
+    });
+  }, []);
+
+  // VALIDATIE LOGICA
+  // Stap 1.1 Validatie: Basis
+  const valid_1_1 = useMemo(() => {
+    const { totalPersons, adults } = householdState;
+    return (
+      totalPersons >= 1 &&         // Minimaal één persoon
+      adults >= 0 &&
+      adults <= totalPersons       // Aantal volwassenen mag niet groter zijn dan totaal
+    );
+  }, [householdState]);
+
+  // Stap 1.2 Validatie: Huisdieren
+  const valid_1_2 = useMemo(() => {
+    return householdState.hasPets !== null; // Moet beantwoord zijn
+  }, [householdState]);
+
+  // Algemene navigatie validatie
+  const canNext = useMemo(() => {
+    if (step === 1) return valid_1_1;
+    if (step === 2) return valid_1_2;
+    return false;
+  }, [step, valid_1_1, valid_1_2]);
+
+  // NAVIGATIE FUNCTIES
+  const prev = () => setStep(s => Math.max(1, s - 1));
+  const next = () => {
+    if (canNext) {
+      setStep(s => s + 1);
+    }
+  };
+
+  const finishSetup = () => {
+    Alert.alert("Setup Voltooid", `Huishouden State: ${JSON.stringify(householdState, null, 2)}`);
+  };
+
+  // RENDERING VAN STAPPEN
+  const renderStepContent = () => {
+    switch (step) {
+      case 1:
+        return (
+          <View style={styles.stepContentContainer}>
+            <FormHeader
+              currentStep={1}
+              totalSteps={totalSteps}
+              title="Basis Gegevens"
+              subtitle="Geef het totale aantal personen in het huishouden op, en het aantal volwassenen (18+)."
+            />
+            <NumberStepper
+              label="Totaal aantal personen in het huishouden (incl. kinderen)"
+              value={householdState.totalPersons}
+              onChange={(v) => updateState('totalPersons', v)}
+              min={1}
+            />
+            <NumberStepper
+              label="Aantal volwassenen (18+)"
+              value={householdState.adults}
+              onChange={(v) => updateState('adults', v)}
+              min={0}
+              max={householdState.totalPersons} // max is belangrijk voor de UI feedback
+            />
+
+            <View style={{ marginTop: 20 }}>
+              <BodyText>
+                Afgeleid aantal kinderen: <Text style={{ fontWeight: 'bold' }}>{householdState.children}</Text>
+              </BodyText>
+            </View>
+
+            {/* Validatie feedback */}
+            {!valid_1_1 && householdState.totalPersons >= 1 && (
+              <Text style={styles.validationError}>
+                Fout: Aantal volwassenen mag niet groter zijn dan het totale aantal personen.
+              </Text>
+            )}
+          </View>
+        );
+
+      case 2:
+        return (
+          <View style={styles.stepContentContainer}>
+            <FormHeader
+              currentStep={2}
+              totalSteps={totalSteps}
+              title="Huisdieren"
+              subtitle="Hebben jullie huisdieren in het huishouden?"
+            />
+            <YNQuestionCard
+              question="Heeft dit huishouden huisdieren?"
+              value={householdState.hasPets}
+              onChange={(v) => updateState('hasPets', v)}
+            />
+          </View>
+        );
+
+      // Hier zou Stap 3 (Details, als per Superprompt) of de afronding komen.
+      case 3:
+        return (
+          <View style={styles.stepContentContainer}>
+            <FormHeader
+              currentStep={totalSteps + 1}
+              totalSteps={totalSteps + 1}
+              title="Setup Voltooid"
+              subtitle="Huishouden Setup is compleet (Stap 1.1 & 1.2)."
+            />
+            <BodyText>
+              Alle verplichte basisvragen zijn beantwoord. U kunt nu het proces afronden.
+            </BodyText>
+          </View>
+        );
+
+      default:
+        return <Text style={styles.validationError}>Onbekende stap: {step}</Text>;
+    }
+  };
+
+  // RENDERING VAN FOOTER NAVIGATIE
+  const renderFooter = () => (
+    <View style={styles.footer}>
+      <SecondaryButton
+        text="Vorige"
+        onPress={prev}
+        disabled={step === 1}
+        icon={<ChevronLeft size={18} color={COLORS.text} />}
+        fullWidth={false}
+      />
+
+      {step < totalSteps ? (
+        <PrimaryButton
+          text="Volgende"
+          onPress={next}
+          disabled={!canNext}
+          icon={<ChevronRight size={18} color="white" />}
+          fullWidth={false}
+        />
+      ) : (
+        <PrimaryButton
+          text="Voltooien"
+          onPress={finishSetup}
+          disabled={!canNext}
+          icon={<Check size={18} color="white" />}
+          fullWidth={false}
+        />
+      )}
+    </View>
+  );
+
+  return (
+    <View style={styles.organismContainer}>
+      {renderStepContent()}
+      {renderFooter()}
+    </View>
+  );
+};
+
+export default HouseholdSetupOrganism;

@@ -1,0 +1,500 @@
+
+; ============================================
+; PROJECT: W&I Excel UserForms Wizard
+; OWNER: Manasse Visser
+; VERSION: FINAL TO-DO LIST + PLANNING + DIFF REFS
+; ============================================
+
+[STEP 1: REVIEW DOCUMENTATIE]
+; Doel: Begrijp bestaande helpers, enums, event handlers en architectuur.
+; Bestanden: project_documentatie.txt, FULLcode.txt
+; DiffRef: diff_fullcode_bestpractices.txt   ; Overzicht van noodzakelijke aanpassingen/alignments
+; Actie:
+;   - Lees project_documentatie.txt voor context en naming (DYN_PREFIX, modules).
+;   - Scan FULLcode.txt op error handling, events, layout helpers.
+; Tijd: 30 min
+
+###GEDAAN
+
+[STEP 2: HELPER ROUTINES TOEVOEGEN]
+; Doel: Routines klaarzetten voor shapes/achtergrond/beeld en window-lock.
+; Bestanden: helper_routines.txt
+; DiffRef: (n.v.t. – dit is een codebundel, geen diff)
+; Actie:
+;   - Kopieer: ShapeExists, AddShapeAsImage, LockWindowUpdate, LoadImage, EnsureBackgroundImage naar module FormHelpers.
+;   - Compileer (Debug → Compile VBAProject).
+; Tijd: 20 min
+### GEDAAN
+
+[STEP 3: LAYOUT GRID IMPLEMENTEREN]
+; Doel: Safe-area + raster toepassen en controls positioneren.
+; Bestanden: layout_grid_specs.txt
+
+
+; DiffRef: diff_layout_grid.txt              ; Concrete plaatsings- en safe-area stappen
+; Actie:
+;   - Pas FrmLayoutSafeAreaDyn aan volgens safe-area specs (Left=12, Top=12, Width=776, Height=476).
+;   - Positioneer controls exact volgens layout_grid_specs.txt (coördinaten per form/page).
+;   - Controleer TabIndex (top→bottom, left→right).
+; Tijd: 45 min
+
+[STEP 4: SHAPES OP REFERENTIES-SHEET]
+; Doel: Alle UI-buttons als shapes (voor image-knoppen in forms).
+; Bestanden: (sheet Referenties)
+; DiffRef: diff_fullcode_bestpractices.txt   ; Aanbevolen afmetingen + integratie via AddShapeAsImage
+; Actie:
+;   - Maak shapes met juiste namen/afmetingen:
+;       btnVorigeShape (80x28)
+;       btnVolgendeShape (100x28)
+;       btnOpslaanShape (100x28)
+;       btnAnnulerenShape (100x28)
+;       btnRowAddShape (28x28)
+;       btnRowDelShape (28x28)
+;   - Controleer bg_frmInvoer_landscape aanwezig.
+; Tijd: 30 min
+
+[STEP 5: USERFORMS BOUWEN]
+; Doel: Forms en MultiPage opzetten + basisnavigatie.
+; Bestanden: vba_stubs_all_forms.txt
+; DiffRef: 
+;   - diff_step_mockups_flowcharts.txt      ; Ontwerp & flowlogica voor alle 4 forms
+;   - diff_step_mockups_2_3_4.txt           ; MultiPage-plan + details voor stap 2–4
+; Actie:
+;   - frmHuishouden: Initialize + BuildForm_Huishouden (background, frames, knoppen via shapes).
+;   - frmVast: MultiPage (Page0=Inkomsten, Page1=Uitgaven) + BuildFrmVast (row-editor templates).
+;   - frmInvoer: Update Initialize (step-indicator + shape-knoppen fallback).
+; Tijd: 90 min
+
+[STEP 6: INCLUSIVITEIT]
+; Doel: Labels/opties neutraliseren conform inclusierichtlijnen.
+; Bestanden: mockup_huishouden.txt
+; DiffRef: diff_step_mockups_flowcharts.txt  ; Inclusieve labels & vragenstructuur verwerkt
+; Actie:
+;   - Genderopties: Man | Vrouw | Zelf beschrijven | Geen antwoord.
+;   - Zwangerschap/lactatie: “Zwangere of lacterende personen”.
+;   - Relaties: “ouder(s)”, “partner”, “verzorger(s)”.
+; Tijd: 20 min
+
+[STEP 7: VALIDATIE & NAVIGATIE]
+; Doel: Realtime validatie + enable/disable van knoppen volgens flow.
+; Bestanden: (gebruik bestaande modules FormEvents/FormData/Utils)
+; DiffRef: 
+;   - diff_fullcode_bestpractices.txt       ; Validatieregels, enable/disable criteria
+;   - diff_step_mockups_2_3_4.txt           ; Navigatie mapping (Huishouden→Vast→Invoer)
+; Actie:
+;   - Huishouden: Adults + Children == TotalPersons (1..8), pregnancy checkbox los van gender.
+;   - Vast: rijcompleet = Period + Amount > 0; “Geen vaste …” vlag activeert Next zonder rijen.
+;   - Invoer: Category gekozen, Amount>0; Next/Prev activeren o.b.v. validatie.
+; Tijd: 60 min
+
+[STEP 8: TESTPLAN UITVOEREN]
+; Doel: End-to-end scenarios en acceptatiecriteria verifiëren.
+; Bestanden: handover_copilot_v2.yaml, handover_copilot_v2.txt
+; DiffRef: (n.v.t. – testplan en criteria staan in handover v2)
+; Actie:
+;   - Scenarios: only_one_adult, two_adults_one_child, pregnant_person, no_fixed_income, several_pages_navigation.
+;   - Controleer acceptatiecriteria (UI/background/safe-area, shapes/fallback, tabvolgorde, live totals, navigatie, inclusiviteit, performance, error handling).
+; Tijd: 90 min
+
+[STEP 9: QA & DOCUMENTATIE]
+; Doel: Bevindingen vastleggen + overdracht afronden.
+; Bestanden: handover_copilot_v2.yaml, handover_copilot_v2.txt, ErrorLog (sheet)
+; DiffRef: diff_fullcode_bestpractices.txt   ; Logging en error handling uniform bevestigd
+; Actie:
+;   - Documenteer testen/fouten in ErrorLog (timestamp, module, beschrijving).
+;   - Update handover_copilot_v2.yaml indien extra bevindingen/aanpassingen.
+; Tijd: 30 min
+
+; ============================================
+; TOTALE TIJD: ~6 uur (indicatief; afhankelijk van ervaring)
+; ============================================
+
+[REFERENTIEBESTANDEN]
+; Mock-ups/Flow:
+;   - mockup_huishouden.txt
+;   - mockup_vaste_inkomsten.txt
+;   - mockup_vaste_uitgaven.txt
+;   - mockup_dagelijkse_uitgaven.txt
+;   - flow_huishouden.txt
+;   - flow_vaste_inkomsten.txt
+;   - flow_vaste_uitgaven.txt
+;   - flow_dagelijkse_uitgaven.txt
+; Diff-bestanden:
+;   - diff_step_mockups_flowcharts.txt
+;   - diff_step_mockups_2_3_4.txt
+;   - diff_layout_grid.txt
+;   - diff_fullcode_bestpractices.txt
+; Code/Helpers/Stubs:
+;   - helper_routines.txt
+;   - vba_stubs_all_forms.txt
+; Handover/Context:
+;   - handover_next_agent_copilot.txt
+;   - handover_copilot_v2.yaml
+;   - handover_copilot_v2.txt
+; Layout:
+;   - layout_grid_specs.txt
+'============================================================
+'### EERST //SUB FUNCTIE_NAAM() //
+'On Error GoTo ErrHandler
+' --- Jouw code hier ---
+'Exit Sub
+
+'ErrHandler:
+    'Utils.LogError4 "MODULE_NAAM", "FUNCTIE_NAAM", Err.Number, Err.Description
+    'MsgBox "Fout in FUNCTIE_NAAM: " & Err.Description, vbCritical
+'End Sub
+' === EINDE ErrHandler===
+
+' === FORM 1: frmHuishouden ===
+' Steps:
+' 1) Insert new UserForm in VBE, name it frmHuishouden.
+' 2) Paste this Initialize event:
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    FormBackground.EnsureBackgroundImage Me
+    Call BuildForm_Huishouden
+    Exit Sub
+ErrHandler:
+	Utils.LogError4 "frmHuishouden", "UserForm_Initialize", Err.Number, Err.Description
+    MsgBox "Fout in UserForm_Initialize: " & Err.Description, vbCritical
+End Sub
+
+Public Sub BuildForm_Huishouden()
+    FormLayout.RemoveDynamicControls Me
+	On Error GoTo ErrHandler
+    ' Add SpinButton + TextBox for total persons
+    ' Add Frames for Adults and Children dynamically
+    ' Use FormLayout.DYN_PREFIX for naming
+    ' Example:
+    Dim lbl As MSForms.Label
+    Set lbl = Me.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblTitle", True)
+    lbl.Caption = "Stap 1 van 4 – Huishouden"
+    ' Add navigation buttons via AddShapeAsImage or fallback CommandButton
+ErrHandler:
+	Utils.LogError4 "frmHuishouden", "BuildForm_Huishouden", Err.Number, Err.Description
+    MsgBox "Fout in BuildForm_Huishouden: " & Err.Description, vbCritical
+End Sub
+
+
+' Validation:
+' - Ensure Adults + Children = TotalPersons
+' - Enable Next only when valid
+
+' === FORM 2 & 3: frmVast (MultiPage) ===
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    FormBackground.EnsureBackgroundImage Me
+    Call BuildFrmVast
+    Exit Sub
+ErrHandler:
+	Utils.LogError4 "frmVast", "UserForm_Initialize", Err.Number, Err.Description
+    MsgBox "Fout in UserForm_Initialize: " & Err.Description, vbCritical
+End Sub
+
+
+Public Sub BuildFrmVast()
+    FormLayout.RemoveDynamicControls Me
+    ' Add MultiPage control with Pages(0) = Inkomsten, Pages(1) = Uitgaven
+    ' BuildPage_Inkomsten: add row editor controls (cmbBron, cmbPeriode, txtBedrag, cmbOntvanger)
+    ' BuildPage_Uitgaven: add row editor controls (cmbCategorie, txtOmschrijving, cmbPeriode, txtBedrag, cmbBetaalwijze)
+    ' Add navigation shapes: Vorige, Volgende, Opslaan, Annuleren
+	Exit Sub
+ErrHandler:
+	Utils.LogError4 "frmVast", "BuildFrmVast", Err.Number, Err.Description
+    MsgBox "Fout in BuildFrmVast: " & Err.Description, vbCritical
+End Sub
+
+' === FORM 4: frmInvoer (Dagelijkse) ===
+' Already exists; update Initialize to add Prev button and step indicator
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    FormEvents.BuildDynamicFrmInvoer Me
+    ' Add shape buttons if available
+	Exit Sub
+ErrHandler:
+	Utils.LogError4 "frmInvoer", "UserForm_Initialize", Err.Number, Err.Description
+    MsgBox "Fout in UserForm_Initialize: " & Err.Description, vbCritical
+End Sub
+
+' === HOW-TO FOR NOOBS ===
+' 1) Open VBE (Alt+F11)
+' 2) Insert UserForms: frmHuishouden, frmVast (with MultiPage), reuse frmInvoer
+' 3) Copy above stubs into respective code windows
+' 4) Ensure helpers from helper_routines.txt are in a StdModule (e.g., FormHelpers)
+
+'### === Ik ben hier gebleven === ###
+
+' 5) On sheet "Referenties", add shapes named: btnVorigeShape, btnVolgendeShape, btnOpslaanShape, btnAnnulerenShape, btnRowAddShape, btnRowDelShape
+' 6) Compile (Debug → Compile VBAProject)
+' 7) Test navigation: frmHuishouden → frmVast.Page(0) → frmVast.Page(1) → frmInvoer
+' 8) Validate totals and row completeness before enabling Next
+
+
+## FORM 1 – frmHuishouden
+- Voeg UserForm via VBE → naam: frmHuishouden
+- In frmHuishouden_Initialize:
+  * Center form, set default font/colors per design
+  * Call BuildForm_Huishouden – clear controls
+- BuildForm_Huishouden routine:
+  * txtTotalPersons + SpinButton
+  * Frames: AdultOptions & ChildOptions
+  * For each adult category: create dynamic controls with DYN_PREFIX
+  * Show/hide child frame based on total >1
+  * Add shape buttons using AddShapeAsImage from Referenties
+- Event Handlers:
+  * txtTotalPersons_Change → recalc visibility
+  * AdultCount_Change, ChildCount_Change → recalc totals + enable/disable Next button
+  * btnNext_Click → Validate Sum Adults+Children = total, else MsgBox. On success: frmHuishouden.Hide, frmVast.MultiPage.Value = 0, frmVast.Show
+  * QueryClose event: If X clicked, ask confirmation unless cancel allowed
+- Validation Tips:
+  * Use IsNumeric() before Val()
+  * Prevent negative or >8 totals (enforce Max Persons)
+  * Focus = .SetFocus, TabIndex sequence
+
+## FORM 2–3 – frmVast (MultiPage)
+- Import UserForm frmVast with MultiPage
+- Initialize:
+  * Center form, set default styles
+  * BuildPages: BuildPage_Inkomsten(), BuildPage_Uitgaven()
+- BuildPage_Inkomsten:
+  * Frame with rows: cmbBron, cmbPeriode, txtBedrag, cmbOntvanger
+  * + and – shape controls
+  * Use Utils.ToMonthlyAmount
+  * imgBtnNext_Page0.Click: PageIndex → 1 or if validation fails show MsgBox
+- BuildPage_Uitgaven:
+  * Frame with cmbCategorie, txtOmschrijving, cmbPeriode, txtBedrag, cmbBetaalwijze
+  * Same Next logic → Next leads to frmInvoer.Show
+- Navigation:
+  * imgBtnPrev on Page1 → frmHuishouden.Show
+  * imgBtnCancel → Unload Me
+- Validation:
+  * RowComplete if all cols filled & positive amount
+  * TotalMonth updated Live
+
+## FORM 4 – frmInvoer (Daily)
+- Modify existing Initialize:
+  * imgBtnPrev = builds via AddShapeAsImage
+  * Change btnOpslaan_Click to navigate to ExitWizard (Unload)
+- Ensure existing code uses taborder
+
+## GENERAL
+- Shapes from Referenties: btnVolgendeShape, btnVorigeShape, btnCancelShape, btnAddRowShape, btnDelRowShape
+- Add image via WIA LoadImage function
+- In frmInitialize: `LockWindowUpdate Application.VBE.MainWindow.HWnd` before adding controls, unlock after
+- Add `On Error GoTo ErrHandler` in all frm modules; show MsgBox and log using Logger
+- Naming guideline: prefix controls with DYN_PREFIX + Category + Index (e.g. txtAdultMan_1)
+- In each btnProceed, ensure to update ProgressIndicatorLabel.Caption = "Stap X van 4"
+
+## FILES TO EDIT
+- Ensure in module Utils: LoadImage, AddShapeAsImage, LockFormStyle helpers
+- Application.FormsSettings: Default font/color is Calibri 10, grey/white/blue border
+
+## TESTING
+- Simulate "only one adult no kid"
+- Simulate "2 adults 3 kids"
+- Simulate "pregnant/chestfeeding"
+- Try closing via [X], check QueryClose behavior
+
+## TODO for User
+- On Referenties sheet: ensure shapes with proper names exist
+- Add PNG styles to sheet
+- Copy code stubs from **vba_stubs_huishouden.bas**, etc.
+
+/*ALL SHAPES: color scheme. Added defaultvalue-line to cells in DefaultColor and same for Hoover */
+# default{
+	background-color: #EFF2F; border: 2pt; border-color: #514AC9;
+}
+# hoover{
+	background-color: #C1CDFF; border: 2,5pt; border-color: #514AC9;/* there's a glow around the shape: color: #267DE6 // 4pt // oppacitiy 60% <-- i dont know how to explain in code*/
+}
+
+
+
+==== Handleiding voor de updates
+
+[00_global_instructions]
+Handleiding voor de updates
+notes=Volg stappen 01..21 exact. Sla vaak op. Als compile errors verschijnen: Tools->References -> zorg dat "Microsoft Forms 2.0 Object Library" aangevinkt is.
+
+[01_create_module_FormHelpers]
+path=VBE -> Insert -> Module
+name=FormHelpers
+action=Plak de code uit de sectie "Module: FormHelpers".
+why=Helpers voor shapes/achtergrond/temporaries.
+
+[02_create_module_LayoutSpecsHelpers]
+path=VBE -> Insert -> Module
+name=LayoutSpecsHelpers
+action=Plak de code uit "Module: LayoutSpecsHelpers".
+why=Leest tblLayoutSpecs en plaatst knoppen op formulier.
+
+[03_create_module_FormLayout]
+path=VBE -> Insert -> Module
+name=FormLayout
+action=Plak code uit "Module: FormLayout".
+why=Verwijdert oude dynamische controls en heb je DYN_PREFIX.
+
+[04_create_class_CImgEvents]
+path=VBE -> Insert -> Class Module
+name=CImgEvents
+action=Plak "Class: CImgEvents" code.
+why=Maakt hover gedrag voor Image-knoppen.
+
+[05_create_module_FormEvents]
+path=VBE -> Insert -> Module
+name=FormEvents
+action=Plak code uit "Module: FormEvents".
+why=Bevat BuildDynamicFrmInvoer en event-hooking.
+
+[06_create_module_frmBuilders]
+path=VBE -> Insert -> Module
+name=frmBuilders
+action=Plak code uit "Module: frmBuilders".
+why=Build routines voor frmHuishouden en frmVast.
+
+[07_update_existing_frmInvoer]
+path=VBE -> Project -> Forms -> frmInvoer (open)
+name=frmInvoer
+action=Vervang UserForm_Initialize met de code in sectie "UserForm code: frmInvoer".
+why=Maakt dagformulier consistent met nieuwe layout.
+
+[08_create_userform_frmHuishouden]
+path=VBE -> Insert -> UserForm
+name=frmHuishouden
+action=Open code-pane van frmHuishouden en plak Initialize code zoals aangegeven.
+then=Open Module frmBuilders en roep BuildForm_Huishouden(Me) aan indien nodig.
+why=Nieuwe stap 1 van 4.
+
+[09_create_userform_frmVast]
+path=VBE -> Insert -> UserForm
+name=frmVast
+action=In code-pane: UserForm_Initialize met call BuildFrmVast Me (gebruik module frmBuilders).
+why=MultiPage voor vaste inkomsten/uitgaven.
+
+[10_create_tblLayoutSpecs]
+path=Referenties sheet in workbook
+action=Maak een tabel met name=tblLayoutSpecs met kolommen:
+    Key, ShapeName, Width, Height, X, Y, DefaultColor, HoverColor, Notes
+FillRows:
+    Prev, btnVorigeShape, 80,28, 280,428
+    Next, btnVolgendeShape, 100,28, 376,428
+    Save, btnOpslaanShape, 100,28, 486,428
+    Cancel, btnAnnulerenShape, 100,28, 596,428
+    RowAdd, btnRowAddShape, 28,28, 692,80
+    RowDel, btnRowDelShape, 28,28, 724,80
+why=Table drives button placement and hover images.
+
+[11_create_shapes_on_Referenties]
+path=Referenties sheet
+action=Maak shapes met exact de volgende namen:
+    bg_frmInvoer_landscape
+    btnVorigeShape
+    btnVorigeShape_hover
+    btnVolgendeShape
+    btnVolgendeShape_hover
+    btnOpslaanShape
+    btnOpslaanShape_hover
+    btnAnnulerenShape
+    btnAnnulerenShape_hover
+    btnRowAddShape
+    btnRowAddShape_hover
+    btnRowDelShape
+    btnRowDelShape_hover
+note=Zorg voor exacte naamgevingen; voer juiste sizes volgens tblLayoutSpecs.
+why=Vorm assets die worden geëxporteerd naar JPG en in forms gebruikt.
+
+[12_compile_and_fix_references]
+path=VBE -> Debug -> Compile VBAProject
+action=Als er compile errors: Tools -> References -> vink "Microsoft Forms 2.0 Object Library" en "Microsoft Office XX.X Object Library".
+why=MSForms controls en ChartObjects vereist.
+
+[13_test_frmInvoer]
+path=VBE -> dubbelklik frmInvoer -> Run
+action=Controleer of titel, datum en velden verschijnen en buttons zichtbaar zijn.
+why=Basisvalidatie van BuildDynamicFrmInvoer.
+
+[14_test_frmHuishouden]
+path=VBE -> dubbelklik frmHuishouden -> Run
+action=Controleer of titel, persons controls en frames verschijnen.
+why=UI check stap 1.
+
+[15_test_frmVast]
+path=VBE -> dubbelklik frmVast -> Run
+action=Controleer MultiPage met twee pagina's en de row-template.
+why=UI check stap 2–3.
+
+[16_navigation_tests]
+path=frmHuishouden, frmVast, frmInvoer
+action=Gebruik Next/Prev shapes (klik) — als shapes niet clickable maak fallback CommandButton (zie note).
+note=Image controls do not have Click event by default. To handle clicks you can implement a tiny routine to detect MouseDown on the image controls and route action — alternative: create invisible CommandButtons over buttons as fallback.
+
+[17_additional_events]
+path=Module FormEvents / Class CImgEvents
+action=Indien gewenst: maak CBtnEvents, CCmbEvents, CTxtEvents classmodules (pattern gelijk aan CImgEvents) en hook in HookEventsDynamic.
+why=Volledige hooking voor runtime events.
+
+[18_validation_rules]
+path=frmBuilders / FormEvents
+action=Implementeer validatie:
+    - Adults + Children = total (frmHuishouden)
+    - For frmVast pages: row valid when Bron & Periode & Bedrag>0
+    - For daily: Category chosen & Bedrag>0
+why=Voorkomt doorgaan zonder noodzakelijke gegevens.
+
+[19_error_logging]
+path=Module Utils (if exists) or create new module Logger
+action=Zorg dat Utils.LogError4 bestaat of maak een eenvoudige fallback:
+    Public Sub LogError4(modName As String, procName As String, errNum As Long, errDesc As String)
+        ' Append to ErrorLog sheet or Debug.Print
+        Debug.Print Now & " | " & modName & "." & procName & " | " & errNum & " | " & errDesc
+    End Sub
+why=Consistente error logging.
+
+[20_final_compile_test]
+path=VBE -> Debug -> Compile VBAProject
+action=Los alle compile fouten op. Test run forms end-to-end: frmHuishouden -> frmVast -> frmInvoer.
+why=Accepteer release.
+
+[21_save_and_document]
+path=Excel -> Save (maak backup copy)
+action=Maak backup .xlsm en documenteer de wijzigingen (wij hebben handover YAML gemaakt).
+why=Veiligheid & overdracht.
+
+INI voor extra'sectie
+[00_prepare]
+notes=Open Excel, save as .xlsm if not already. Alt+F11 to open VBE.
+
+[01_enable_references_if_needed]
+path=VBE -> Tools -> References
+action=Ensure these are checked:
+    - Microsoft Forms 2.0 Object Library
+    - Microsoft Visual Basic for Applications Extensibility 5.3
+why=Required for runtime form detection & MSForms controls.
+
+[02_create_userform_dashboard]
+path=VBE -> Insert -> UserForm
+name=frmDebugDashboard
+action=Open frmDebugDashboard code window and paste the "UserForm: frmDebugDashboard" code block from the instructions.
+
+[03_create_module_modDebugDashboard]
+path=VBE -> Insert -> Module
+name=modDebugDashboard
+action=Paste the "Module: modDebugDashboard" code block exactly.
+
+[04_compile]
+path=VBE -> Debug -> Compile VBAProject
+action=Fix any missing references. If you see compile errors referencing other modules (e.g. modDebugDashboard calls functions in Utils or other modules), ignore for now but ensure the dashboard module compiles.
+
+[05_run_dashboard]
+path=VBE -> Project -> Forms -> frmDebugDashboard -> Run (F5) or call via Immediate: frmDebugDashboard.Show
+action=Dashboard opens. Click "Refresh status", "Run Smoke Tests", "Export ErrorLog CSV", "Open handover YAML".
+
+[06_handover_yaml]
+note=The YAML is at the local path: file:///mnt/data/handover_copilot_v2_and_v3.yaml
+action=Use dashboard "Open handover YAML" button to open it (Application.FollowHyperlink).
+
+[07_troubleshooting]
+notes=If buttons do not seem to do anything:
+    - Ensure modDebugDashboard exists and code compiled
+    - Ensure ErrorLog sheet exists for export
+    - If "TestFormShowHide" reports "FAILED to Add" maybe the forms require other modules to exist; check VBE Immediate window for error messages.

@@ -1,0 +1,217 @@
+
+// FinancieelBeheerApp.jsx
+import React, { useState, useCallback } from 'react';
+
+// Icons kun je laten staan of vervangen; voor pure RN kun je react-native-vector-icons gebruiken
+// import { Loader2, Zap, Home, Save, User, UserCheck } from 'lucide-react';
+
+// === Globale variabelen (als je ze gebruikt in je omgeving)
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+// ---- UTILITIES ----
+// Stuurt setup data naar jouw n8n webhook
+const saveSetupToN8N = async (setupData, userId) => {
+  const n8nEndpoint = 'https://uw.n8n.server/webhook/financial-setup-data'; // <--- vervang door echte endpoint
+  const payload = {
+    userId,
+    appId,
+    timestamp: new Date().toISOString(),
+    setupData,
+  };
+  try {
+    const response = await fetch(n8nEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`API fout (${response.status}): ${errorBody}`);
+    }
+    await response.json(); // kan je loggen indien gewenst
+    return true;
+  } catch (error) {
+    console.error('n8n API fout:', error);
+    throw new Error('Opslaan mislukt. Controleer n8n URL/verbinding.');
+  }
+};
+
+// ---- HULPCOMPONENTEN (basic RN inline styles voor Expo) ----
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+
+const InputField = ({ label, value, onChange, keyboardType = 'numeric' }) => (
+  <View style={styles.inputGroup}>
+    <Text style={styles.label}>{label}</Text>
+    <TextInput
+      style={styles.input}
+      value={String(value ?? '')}
+      onChangeText={onChange}
+      keyboardType={keyboardType}
+      placeholder="0"
+    />
+  </View>
+);
+
+const Button = ({ children, onPress, disabled = false }) => (
+  <TouchableOpacity
+    onPress={onPress}
+    disabled={disabled}
+    style={[styles.btn, disabled && styles.btnDisabled]}
+  >
+    <Text style={styles.btnText}>{children}</Text>
+  </TouchableOpacity>
+);
+
+// ---- Setup Stap 1: Huishouden ----
+const SetupScreen = ({ userId, onSetupComplete, onReset }) => {
+  const [volwassenen, setVolwassenen] = useState(1);
+  const [kinderen, setKinderen] = useState(0);
+  const [woonsituatie, setWoonsituatie] = useState('huur'); // 'huur', 'koop', 'inwonend'
+  const [isSaving, setIsSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false);
+
+  const isFormValid = volwassenen >= 1;
+
+  const handleVolwassenenChange = (val) => {
+    const num = parseInt(val || '0', 10);
+    setVolwassenen(Math.max(1, isNaN(num) ? 1 : num));
+  };
+  const handleKinderenChange = (val) => {
+    const num = parseInt(val || '0', 10);
+    setKinderen(Math.max(0, isNaN(num) ? 0 : num));
+  };
+
+  const handleSave = async () => {
+    if (!isFormValid) return;
+    setIsSaving(true);
+    setIsError(false);
+    setMessage('');
+
+    const setupData = {
+      step: 1,
+      huishouden: {
+        volwassenen,
+        kinderen,
+        totaalPersonen: volwassenen + kinderen,
+        woonsituatie,
+      },
+    };
+
+    try {
+      await saveSetupToN8N(setupData, userId);
+      setMessage('Setup succesvol verzonden naar n8n!');
+      setTimeout(onSetupComplete, 1200);
+    } catch (error) {
+      setIsError(true);
+      setMessage(error.message || 'Er is een onbekende fout opgetreden.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Stap 1: Huishouden</Text>
+      <Text style={styles.subtitle}>
+        Deze gegevens worden via een externe API (n8n) opgeslagen.
+      </Text>
+
+      <View style={styles.segmentRow}>
+        <Button onPress={() => setWoonsituatie('huur')}>Huur</Button>
+        <Button onPress={() => setWoonsituatie('koop')}>Koop</Button>
+        <Button onPress={() => setWoonsituatie('inwonend')}>Inwonend</Button>
+      </View>
+
+      <InputField label="Volwassenen" value={volwassenen} onChange={handleVolwassenenChange} />
+      <InputField label="Kinderen" value={kinderen} onChange={handleKinderenChange} />
+
+      {!!message && (
+        <Text style={[styles.message, isError ? styles.error : styles.success]}>{message}</Text>
+      )}
+
+      {isSaving ? (
+        <View style={styles.row}>
+          <ActivityIndicator size="small" color="#0f766e" />
+          <Text style={styles.savingText}>Opslaan & Verzenden...</Text>
+        </View>
+      ) : (
+        <View style={styles.row}>
+          <Button onPress={handleSave} disabled={!isFormValid}>
+            Opslaan & Verder (Stap 2)
+          </Button>
+          <Button onPress={onReset}>Annuleren / Herstart</Button>
+        </View>
+      )}
+
+      <Text style={styles.footer}>Uw ID: {userId || 'Nog niet ingelogd'}</Text>
+    </View>
+  );
+};
+
+// ---- Mock Dashboard ----
+const DashboardScreen = ({ userId, onReset }) => (
+  <View style={styles.container}>
+    <Text style={styles.title}>Dashboard (Mock)</Text>
+    <Text style={styles.subtitle}>
+      De setup data is succesvol verzonden via n8n. Hier komt je financiële overzicht.
+    </Text>
+    <Button onPress={onReset}>Herstart Setup (Test)</Button>
+    <Text style={styles.footer}>Huidige gebruiker ID: {userId}</Text>
+  </View>
+);
+
+// ---- HOOFD COMPONENT ----
+// Let op: NIET meer export default App, maar FinancieelBeheerApp
+export default function FinancieelBeheerApp({ userId }) {
+  const [currentScreen, setCurrentScreen] = useState('setup'); // 'setup' | 'dashboard'
+
+  const handleSetupComplete = useCallback(() => {
+    setCurrentScreen('dashboard');
+  }, []);
+
+  const handleReset = useCallback(() => {
+    setCurrentScreen('setup');
+  }, []);
+
+  // We eisen nu een userId die vanuit App.jsx (na login) meegegeven wordt
+  if (!userId) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.error}>Fout: gebruiker niet ingelogd.</Text>
+      </View>
+    );
+  }
+
+  return currentScreen === 'setup' ? (
+    <SetupScreen userId={userId} onSetupComplete={handleSetupComplete} onReset={handleReset} />
+  ) : (
+    <DashboardScreen userId={userId} onReset={handleReset} />
+  );
+}
+
+// ---- STYLES ----
+const styles = StyleSheet.create({
+  container: { padding: 16, gap: 12 },
+  title: { fontSize: 20, fontWeight: '700' },
+  subtitle: { fontSize: 14, color: '#555' },
+  inputGroup: { marginTop: 8 },
+  label: { fontSize: 14, marginBottom: 4 },
+  input: {
+    borderWidth: 1, borderColor: '#ccc', borderRadius: 8,
+    paddingHorizontal: 12, paddingVertical: 10, fontSize: 16,
+  },
+  btn: {
+    backgroundColor: '#0f766e', paddingVertical: 10, paddingHorizontal: 14,
+    borderRadius: 8, marginRight: 8,
+  },
+  btnDisabled: { backgroundColor: '#94d5d0' },
+  btnText: { color: '#fff', fontWeight: '600' },
+  segmentRow: { flexDirection: 'row', gap: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
+  message: { marginTop: 8 },
+  success: { color: '#107C10' },
+  error: { color: '#A80000' },
+  savingText: { marginLeft: 8 },
+  footer: { marginTop: 16, color: '#666' },
+});

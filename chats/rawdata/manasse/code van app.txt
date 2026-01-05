@@ -1,0 +1,1376 @@
+//App.tsx: 
+
+import React, { useState } from 'react';
+import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+
+// Importeer het Setup Scherm vanuit de 'screens' map
+import SetupScreen from './screens/SetupScreen';
+
+// --- MOCK DASHBOARD (Ter Vervanging in de echte app) ---
+const DashboardScreen = ({ onReset }) => (
+  <View style={dashboardStyles.container}>
+    <Text style={dashboardStyles.title}>Dashboard (Mock)</Text>
+    <Text style={dashboardStyles.subtitle}>
+      Dit is waar de app na succesvolle setup naartoe navigeert.
+    </Text>
+    <TouchableOpacity 
+        style={dashboardStyles.resetButton} 
+        onPress={onReset}
+    >
+      <Text style={dashboardStyles.resetButtonText}>Herstart Setup (Test)</Text>
+    </TouchableOpacity>
+  </View>
+);
+
+const dashboardStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#00A98F',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#333',
+    marginBottom: 30,
+  },
+  resetButton: {
+    padding: 15,
+    borderRadius: 10,
+    backgroundColor: '#FF6B6B',
+  },
+  resetButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  }
+});
+
+
+// --- HOOFD COMPONENT MET NAVIGATIE LOGICA ---
+
+const App: React.FC = () => {
+  // 'setup' toont het Setup scherm, 'dashboard' toont het Dashboard (Mock)
+  const [currentScreen, setCurrentScreen] = useState<'setup' | 'dashboard'>('setup');
+
+  const handleSetupComplete = () => {
+    // Navigatie logica na succesvol opslaan in SetupScreen
+    setCurrentScreen('dashboard');
+  };
+  
+  const handleReset = () => {
+      // Om de setup opnieuw te testen
+      setCurrentScreen('setup');
+  }
+
+  // Hier renderen we het gekozen scherm
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F9F9F9' }}>
+      {currentScreen === 'setup' ? (
+        // We injecteren de navigatie functie als prop in het SetupScreen
+        <SetupScreen onSetupComplete={handleSetupComplete} />
+      ) : (
+        <DashboardScreen onReset={handleReset} />
+      )}
+    </SafeAreaView>
+  );
+};
+
+export default App;
+
+
+//DASHBOARD in Dashboard.tsx
+
+import React from 'react';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  SafeAreaView,
+  ScrollView,
+} from 'react-native';
+
+// --- UX/UI Kleuren uit Analyse ---
+const COLORS = {
+  primary: '#00A98F', // Teal - Actie/Positief
+  secondary: '#FF6B6B', // Zacht Rood - Uitgave/Kritiek
+  background: '#F9F9F9',
+  text: '#333333',
+  success: '#90EE90', // Lichtgroen - Inkomsten
+  card: '#FFFFFF',
+  shadow: '#D1D1D1',
+};
+
+// --- MOCK DATA VOOR UX REVIEW ---
+
+// 1. Gesimuleerde Transacties
+const MOCK_TRANSACTIONS = [
+  { id: '1', description: 'Boodschappen', amount: -45.50, date: 'Vandaag', type: 'Uitgave' },
+  { id: '2', description: 'Salaris', amount: 2500.00, date: 'Gisteren', type: 'Inkomst' },
+  { id: '3', description: 'Vervoer (Benzine)', amount: -75.00, date: 'Eergisteren', type: 'Uitgave' },
+  { id: '4', description: 'Huur', amount: -1200.00, date: '1-11', type: 'Uitgave' },
+  { id: '5', description: 'Boek gekocht', amount: -15.99, date: '31-10', type: 'Uitgave' },
+];
+
+// 2. Risicomarge Status (simulatie van 14 dagen over)
+const MOCK_RISK_STATUS = {
+  daysRemaining: 14,
+  marginAmount: 450.75, // Hoeveel geld je nog kunt uitgeven t.o.v. gemiddelde
+  isCritical: false,
+};
+
+// --- SUBSYSTEMEN ---
+
+/**
+ * Risicomarge Visualisatie: Wat moet ik NU doen?
+ * Dit is het meest prominente dashboard element.
+ */
+const RiskMarginIndicator: React.FC = () => {
+  const { daysRemaining, marginAmount, isCritical } = MOCK_RISK_STATUS;
+
+  // Kleur en tekst aanpassen op basis van de kritieke status
+  const indicatorColor = isCritical ? COLORS.secondary : COLORS.primary;
+  
+  const daysText = isCritical 
+    ? `ACTIE VEREIST: Marge ${daysRemaining} dagen` 
+    : `Nog ${daysRemaining} dagen marge`;
+
+  const marginText = isCritical 
+    ? `Jouw budget is KRITIEK. Beperk uitgaven.` 
+    : `Je hebt nog €${marginAmount.toFixed(2)} ruimte deze maand.`;
+
+  return (
+    <View style={[styles.riskCard, { borderColor: indicatorColor }]}>
+      <Text style={[styles.riskHeader, { color: indicatorColor }]}>
+        {daysText}
+      </Text>
+      <Text style={styles.riskSubheader}>
+        {marginText}
+      </Text>
+      
+      {/* Een simpele visualisatie van de progressie */}
+      <View style={styles.progressBarContainer}>
+        <View style={[
+          styles.progressBar, 
+          { 
+            backgroundColor: indicatorColor, 
+            // Mock de progressie (bijv. 80% als niet kritiek, 20% als kritiek)
+            width: isCritical ? '20%' : '80%', 
+          }
+        ]} />
+      </View>
+
+      <TouchableOpacity 
+        style={[styles.riskActionButton, { backgroundColor: indicatorColor }]}
+        // TODO: Navigeer naar QuickAddExpense scherm
+        onPress={() => console.log('Navigeer naar Snelle Invoer')}
+      >
+        <Text style={styles.riskActionButtonText}>Snelle Uitgave Toevoegen</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+/**
+ * Lijst van de 5 meest recente transacties.
+ */
+const RecentTransactions: React.FC = () => {
+  return (
+    <View style={styles.transactionsContainer}>
+      <Text style={styles.sectionHeader}>Recentste Transacties (Laatste 5)</Text>
+      {MOCK_TRANSACTIONS.map((t) => {
+        const isExpense = t.type === 'Uitgave';
+        const amountDisplay = isExpense ? `-€${Math.abs(t.amount).toFixed(2)}` : `+€${t.amount.toFixed(2)}`;
+        const amountColor = isExpense ? COLORS.secondary : COLORS.primary;
+
+        return (
+          <View key={t.id} style={styles.transactionRow}>
+            <View style={styles.transactionDetails}>
+              <Text style={styles.transactionDescription}>{t.description}</Text>
+              <Text style={styles.transactionDate}>{t.date}</Text>
+            </View>
+            <Text style={[styles.transactionAmount, { color: amountColor }]}>
+              {amountDisplay}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+};
+
+// --- HOOFDCOMPONENT ---
+
+const Dashboard: React.FC = () => {
+  const userName = "Gebruiker"; // Mock
+  const currentDate = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        
+        {/* Header */}
+        <View style={styles.headerContainer}>
+          <Text style={styles.greeting}>Welkom terug, {userName}</Text>
+          <Text style={styles.dateText}>{currentDate}</Text>
+        </View>
+
+        {/* 1. RISICO VISUALISATIE */}
+        <RiskMarginIndicator />
+
+        {/* 2. RECENTE TRANSACTIES */}
+        <RecentTransactions />
+        
+        {/* Opvulling voor scrollruimte */}
+        <View style={{ height: 50 }} />
+        
+      </ScrollView>
+      
+      {/* 3. VASTE ACTIEKOPPEN (Absolute positie onderaan) */}
+      <View style={styles.actionButtonTray}>
+        <TouchableOpacity
+          style={[styles.mainActionButton, styles.detailButton]}
+          // TODO: Navigeer naar Nieuwe Invoer (Detail)
+          onPress={() => console.log('Navigeer naar Detail Invoer')}
+        >
+          <Text style={styles.mainButtonText}>+ Nieuwe Invoer (Detail)</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.mainActionButton, styles.budgetButton]}
+          // TODO: Navigeer naar Budgetten
+          onPress={() => console.log('Navigeer naar Budgetten')}
+        >
+          <Text style={styles.mainButtonText}>📈 Bekijk Budgetten</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+};
+
+// --- STYLING ---
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  scrollContainer: {
+    padding: 20,
+    // AANGEPAST: Verhogen om de vaste knoppenbalk plus de navigatiebalk van het systeem vrij te houden.
+    // Nieuwe, nog grotere buffer: 140
+    paddingBottom: 140, 
+  },
+  headerContainer: {
+    marginBottom: 20,
+  },
+  greeting: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#888',
+  },
+
+  // 1. Risicomarge Stijl
+  riskCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 30,
+    borderWidth: 2, // Duidelijke randkleur voor status
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  riskHeader: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginBottom: 5,
+  },
+  riskSubheader: {
+    fontSize: 16,
+    color: COLORS.text,
+    marginBottom: 15,
+  },
+  progressBarContainer: {
+    height: 10,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 5,
+    overflow: 'hidden',
+    marginBottom: 15,
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 5,
+  },
+  riskActionButton: {
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  riskActionButtonText: {
+    color: COLORS.card,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+
+  // 2. Recentste Transacties Stijl
+  transactionsContainer: {
+    backgroundColor: COLORS.card,
+    borderRadius: 15,
+    padding: 15,
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 10,
+    paddingLeft: 5,
+  },
+  transactionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEEEEE',
+  },
+  transactionDetails: {
+    flex: 1,
+  },
+  transactionDescription: {
+    fontSize: 16,
+    color: COLORS.text,
+    fontWeight: '500',
+  },
+  transactionDate: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 2,
+  },
+  transactionAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  // 3. Vaste Actieknoppen Stijl
+  actionButtonTray: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+    paddingTop: 10,
+    // AANGEPAST: Zeer ruime padding onderaan (55) om de native navigatiebalk op Samsung/Android te ontwijken.
+    paddingBottom: 55, 
+    backgroundColor: COLORS.card,
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 10,
+  },
+  mainActionButton: {
+    flex: 1,
+    padding: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  detailButton: {
+    backgroundColor: COLORS.primary, // Primaire actie
+  },
+  budgetButton: {
+    backgroundColor: COLORS.text, // Donkere, duidelijke knop
+  },
+  mainButtonText: {
+    color: COLORS.card,
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+});
+
+export default Dashboard;
+
+//package.json
+
+{
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
+    "react-native-paper": "4.9.2",
+    "react-native-screens": "~4.16.0",
+    "@react-navigation/native": "*",
+    "@react-navigation/native-stack": "*",
+    "react-native-safe-area-context": "~5.6.0",
+    "@react-native-community/datetimepicker": "8.4.4",
+    "lucide-react": "*"
+  }
+}
+
+//QuickAddExpense.tsx in map screens
+import React, { useState, useMemo, useCallback } from 'react';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  SafeAreaView,
+  Keyboard,
+  ScrollView,
+  Dimensions, 
+  Platform,
+  ActivityIndicator, 
+  Alert, 
+} from 'react-native';
+
+// De Webhook URL waar de transactiegegevens naartoe worden gestuurd.
+// VERVANG dit in productie met jouw echte n8n of custom endpoint.
+const WEBHOOK_URL = "https://your-n8n-or-backend-webhook-url/receive-transaction";
+
+// --- GLOBALE VARIABELEN (Canvas Environment) ---
+// Omdat we Firebase niet meer gebruiken, negeren we de Firebase globale variabelen.
+// We gebruiken een Mock User ID om de payload te testen.
+const MOCK_USER_ID = 'user-uuid-12345-mock-id'; 
+
+// Importeer Datum/Tijd Picker van de community library
+import DateTimePicker from '@react-native-community/datetimepicker'; 
+
+// Haal de schermbreedte op voor responsieve knoppen
+const { width } = Dimensions.get('window');
+const CONTAINER_HORIZONTAL_PADDING = 16;
+
+// --- DYNAMISCHE GROOTTE CALCULATIE VOOR CATEGORIE/BETAALMETHODE (4 PER RIJ) ---
+const MAX_CATEGORY_BUTTONS_PER_ROW = 4; 
+const CATEGORY_BUTTON_MARGIN = 4; 
+// Totale ruimte van marges + padding
+const TOTAL_CATEGORY_MARGIN_SPACE = CATEGORY_BUTTON_MARGIN * (MAX_CATEGORY_BUTTONS_PER_ROW * 2) + CONTAINER_HORIZONTAL_PADDING * 2; 
+const DYNAMIC_CATEGORY_BUTTON_WIDTH = (width - TOTAL_CATEGORY_MARGIN_SPACE) / MAX_CATEGORY_BUTTONS_PER_ROW;
+
+
+// --- UX/UI Kleuren (Gebaseerd op 'Kalme kleuren' design system) ---
+const COLORS = {
+  primary: '#00A98F',        // Mint Groen/Cyaan (Rustgevend)
+  secondary: '#FF6B6B',      // Zacht Rood (Actie/Fout)
+  neutral_accent: '#6B7280', // Blauwgrijs
+  background: '#F0F4F8',     // Zeer Licht Grijs/Blauw
+  text: '#2C3E50',           // Donker Navy (Hoog Contrast)
+  card: '#FFFFFF',
+  shadow: '#D1D1D1',
+  selectedCategory: '#2c3e50', 
+  dateNeutral: '#D2D9E0',    // Neutrale knopkleur
+};
+
+// --- HIERARCHISCHE DATA STRUCTUUR (Afgeleid van CSV) ---
+interface CategoryItem {
+  name: string;
+  icon: string;
+  subcategories?: { name: string, icon: string }[];
+  isChildCategory?: boolean; 
+}
+
+const CHILD_NAME_PLACEHOLDER = 'Kind'; 
+
+// Dit is de mock data die de functionaliteit aandrijft
+const MOCK_HIERARCHICAL_CATEGORIES: CategoryItem[] = [
+  { name: 'Boodschappen', icon: '🛒', subcategories: [
+    { name: 'Boodschappen', icon: '🥫' },
+    { name: 'Roken', icon: '🚬' },
+  ]},
+  { name: 'Bestellen', icon: '🚚', subcategories: [
+    { name: 'Eten', icon: '🍕' },
+    { name: 'Winkelen', icon: '🛍️' },
+    { name: 'Onzin', icon: '🤪' }, 
+  ]},
+  { name: 'Uitjes', icon: '🎟️', subcategories: [
+    { name: 'Concert', icon: '🎤' },
+    { name: 'Sauna', icon: '🧖' },
+    { name: 'Bioscoop', icon: '🎬' },
+    { name: 'Voetbal', icon: '⚽' },
+    { name: 'Bar', icon: '🍺' },
+    { name: 'Etentje', icon: '🍽️' },
+    { name: 'Uitgaan', icon: '🕺' },
+    { name: 'Pretpark', icon: '🎢' },
+  ]},
+  { name: CHILD_NAME_PLACEHOLDER, icon: '👨‍👧‍👦', isChildCategory: true, subcategories: [
+    { name: 'Zakgeld', icon: '💵' },
+    { name: 'Verzorging', icon: '🧴' },
+    { name: 'Onzin', icon: '🤪' },
+    { name: 'Sparen', icon: '💰' },
+    { name: 'School', icon: '📚' },
+    { name: 'Anders', icon: '❓' },
+  ]},
+  { name: 'Vervoer', icon: '🚗', subcategories: [
+    { name: 'OV', icon: '🚆' },
+    { name: 'Opladen/Tanken', icon: '🔌' },
+    { name: 'Onderhoud', icon: '🔧' },
+  ]},
+  { name: 'Extra', icon: '🎁', subcategories: [
+    { name: 'Cadeaus', icon: '🎀' },
+    { name: 'Vakantie', icon: '✈️' },
+    { name: 'Beleggen', icon: '📈' }, 
+  ]},
+  { name: 'Kleding e.d.', icon: '🛍️', subcategories: [
+    { name: 'Kleding nieuw', icon: '👕' },
+    { name: 'Kleding 2e hands', icon: '♻️' },
+    { name: 'Schoenen', icon: '👟' },
+    { name: 'Verzorging', icon: '💅' },
+  ]},
+  { name: 'Overig', icon: '💡' },
+];
+
+const MOCK_PAYMENT_METHODS = [
+  { name: 'Pinpas', icon: '💳' },
+  { name: 'Contant', icon: '💰' },
+  { name: 'iDEAL', icon: '📱' },
+  { name: 'Creditcard', icon: '🏅' },
+];
+
+// --- DATUM HULPFUNCTIES ---
+
+const getDateOffset = (offset: number): Date => {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  d.setHours(0, 0, 0, 0); 
+  return d;
+};
+
+const isSameDay = (d1: Date, d2: Date): boolean => {
+  return (
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
+  );
+};
+
+const TODAY = getDateOffset(0);
+const YESTERDAY = getDateOffset(-1);
+const DAY_BEFORE_YESTERDAY = getDateOffset(-2);
+
+const QUICK_DATE_OPTIONS = [
+    { label: 'Vandaag', offset: 0, date: TODAY },
+    { label: 'Gisteren', offset: -1, date: YESTERDAY },
+    { label: 'Eergisteren', offset: -2, date: DAY_BEFORE_YESTERDAY },
+    { label: 'Anders...', offset: -99, date: new Date(0) } 
+];
+
+const formatDate = (date: Date): string => {
+  const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+  return date.toLocaleDateString('nl-NL', options);
+};
+
+// --- BEDRAG HULPFUNCTIE ---
+const getNumericAmount = (input: string): number => {
+    let cleaned = input.replace(/\./g, ''); 
+    cleaned = cleaned.replace(/,/g, '.');
+    cleaned = cleaned.replace(/[^0-9.]/g, ''); 
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
+};
+
+
+// --- HOOFDCOMPONENT ---
+
+const QuickAddExpense: React.FC = () => {
+
+  // --- FORM STATE ---
+  const [amountInput, setAmountInput] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<Date>(TODAY); 
+  const [showDatePicker, setShowDatePicker] = useState<boolean>(false); 
+  const [selectedMainCategory, setSelectedMainCategory] = useState<string | null>(null);
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  
+  // --- UI STATE ---
+  const [message, setMessage] = useState<string | null>(null);
+  const [messageType, setMessageType] = useState<'success' | 'error'>('success');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  
+  // Omdat er geen initiële auth is, is de app direct klaar
+  const isInitializing = false; 
+
+  // Bepaal de Subcategorieën en of ze vereist zijn
+  const availableSubcategories = useMemo(() => {
+    const mainCat = MOCK_HIERARCHICAL_CATEGORIES.find(c => c.name === selectedMainCategory);
+    return mainCat?.subcategories || [];
+  }, [selectedMainCategory]);
+
+  const isSubcategoryRequired = availableSubcategories.length > 0;
+  
+  // Bepaal of de actieknop geactiveerd moet worden (5-staps validatie)
+  const isButtonActive = useMemo(() => {
+    const numericAmount = getNumericAmount(amountInput);
+    
+    // Stap 1: Bedrag > 0
+    if (isNaN(numericAmount) || numericAmount <= 0) return false;
+    // Stap 3: Hoofdcategorie
+    if (!selectedMainCategory) return false;
+    // Stap 4: Subcategorie (indien vereist)
+    if (isSubcategoryRequired && !selectedSubCategory) return false;
+    // Stap 5: Betaalmethode
+    if (!selectedPaymentMethod) return false;
+    
+    return true;
+  }, [amountInput, selectedMainCategory, isSubcategoryRequired, selectedSubCategory, selectedPaymentMethod]);
+
+
+  const handleAmountChange = (text: string) => {
+    // Verwerk de invoer om komma's en punten voor duizendtallen correct te plaatsen
+    let cleanedInput = text.replace(/\./g, ''); 
+    cleanedInput = cleanedInput.replace(/,/g, ',');
+    let [integerPart, decimalPart] = cleanedInput.split(',');
+
+    if (integerPart === undefined || integerPart === null) integerPart = '';
+
+    if (decimalPart !== undefined && decimalPart.length > 2) {
+        decimalPart = decimalPart.substring(0, 2);
+    }
+    
+    if (integerPart) {
+      const numericValue = integerPart.replace(/\D/g, '');
+      integerPart = numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+    
+    let finalInput = integerPart;
+    if (decimalPart !== undefined) {
+      finalInput += `,${decimalPart}`;
+    }
+
+    if (text === ',' || text === '.') {
+      finalInput = '0,';
+    }
+
+    setAmountInput(finalInput);
+  };
+  
+  const handleQuickDateSelect = (offset: number) => {
+    Keyboard.dismiss();
+    const newDate = getDateOffset(offset);
+    setSelectedDate(newDate);
+    setMessage(null);
+  };
+
+  const handleDateChange = useCallback((event: any, date?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios'); 
+    if (event.type === 'set' && date) {
+      date.setHours(0, 0, 0, 0);
+      setSelectedDate(date);
+    } else if (Platform.OS === 'android') {
+      setShowDatePicker(false); 
+    }
+    setMessage(null);
+  }, []);
+
+  const handleMainCategorySelect = (categoryName: string) => {
+    if (selectedMainCategory === categoryName) {
+        setSelectedMainCategory(null);
+        setSelectedSubCategory(null);
+    } else {
+        setSelectedMainCategory(categoryName);
+        setSelectedSubCategory(null); // Reset subcategorie bij nieuwe hoofdcategorie
+    }
+    setMessage(null); 
+  };
+  
+  const handleSubCategorySelect = (subCategoryName: string) => {
+    setSelectedSubCategory(subCategoryName);
+    setMessage(null);
+  };
+
+  const handlePaymentMethodSelect = (methodName: string) => {
+    setSelectedPaymentMethod(methodName);
+    setMessage(null);
+  };
+
+  /**
+   * Slaat de uitgave op door een POST-verzoek naar de Webhook URL te sturen.
+   */
+  const handleSubmit = async () => {
+    Keyboard.dismiss(); 
+    if (isSubmitting) return;
+
+    if (!isButtonActive) {
+      setMessage("❌ Voltooi alle stappen (bedrag, categorie, subcategorie indien nodig, betaalmethode).");
+      setMessageType('error');
+      return;
+    }
+    
+    const numericAmount = getNumericAmount(amountInput);
+
+    setIsSubmitting(true);
+    setMessage("⏳ Bezig met verzenden naar de back-end...");
+    setMessageType('success'); 
+
+    // Constructie van de Webhook payload (volgens uw document: Naamloos document - Bijlage B)
+    const payload = {
+      user_id: MOCK_USER_ID, // Vervang in productie door de echte geauthenticeerde user ID
+      date: selectedDate.toISOString().split('T')[0], // YYYY-MM-DD
+      amount: numericAmount, // Numerieke waarde
+      category: selectedMainCategory!,
+      subcategory: selectedSubCategory || null, 
+      paymentMethod: selectedPaymentMethod!,
+      description: 'Quick Add via Mobiele App', // Voorbeeld, kan optioneel gemaakt worden
+      type: "Uitgave",
+    };
+    
+    try {
+      console.log('Sending Webhook Payload:', payload);
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Optioneel: API Key voor authenticatie, indien nodig
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        // De back-end heeft de data succesvol ontvangen (Status 2xx)
+        const details = `${selectedMainCategory}${selectedSubCategory ? ` - ${selectedSubCategory}` : ''}`;
+        const formattedAmount = numericAmount.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const formattedDate = formatDate(selectedDate); 
+
+        setMessage(`✅ Uitgave van €${formattedAmount} (${details}) op ${formattedDate} succesvol verzonden!`);
+        setMessageType('success');
+        
+        // Reset form (behalve de datum)
+        setAmountInput('');
+        setSelectedMainCategory(null);
+        setSelectedSubCategory(null);
+        setSelectedPaymentMethod(null); 
+      } else {
+        // HTTP fout zoals 400 Bad Request of 500 Internal Server Error
+        console.error('❌ HTTP Fout bij Webhook:', response.status);
+        setMessage(`❌ Fout (${response.status}) bij het verzenden van de data. Back-end probleem.`);
+        setMessageType('error');
+      }
+
+    } catch (error) {
+      // Netwerkfout (geen internet, DNS-fout)
+      console.error("❌ Netwerkfout bij Webhook:", error);
+      Alert.alert("Fout", "Controleer uw netwerkverbinding of de Webhook URL.");
+      setMessage("❌ Fout: Kon de back-end niet bereiken. Controleer de URL.");
+      setMessageType('error');
+    } finally {
+      setIsSubmitting(false);
+      setTimeout(() => setMessage(null), 4000);
+    }
+  };
+
+  const messageStyle = messageType === 'success' ? styles.successMessage : styles.errorMessage;
+  
+  // Dynamische stapnummering
+  const totalSteps = isSubcategoryRequired ? 5 : 4;
+  const mainCategoryStep = 3;
+  const subCategoryStep = 4;
+  const paymentMethodStep = isSubcategoryRequired ? 5 : 4;
+
+  const navigateToCategoryManagement = (type: 'Main' | 'Sub') => {
+    const context = type === 'Main' 
+      ? 'Hoofdcategorieën' 
+      : `Subcategorieën voor ${selectedMainCategory || 'deze categorie'}`;
+    console.log(`NAVIGATIE: Ga naar Categoriebeheer om ${context} toe te voegen/wijzigen.`);
+    Alert.alert("Navigatie Simulatie", `Je zou nu naar het Beheerscherm navigeren om ${context} toe te voegen.`);
+  };
+
+  let formattedAmountForButton;
+  try {
+    const amountNum = getNumericAmount(amountInput);
+    formattedAmountForButton = amountNum.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  } catch {
+    formattedAmountForButton = '0,00';
+  }
+
+  // Bepaal welke snelle datum geselecteerd is (of 'Anders')
+  const isQuickDateSelected = (optionDate: Date) => isSameDay(selectedDate, optionDate);
+  const isCustomDateSelected = !(isQuickDateSelected(TODAY) || isQuickDateSelected(YESTERDAY) || isQuickDateSelected(DAY_BEFORE_YESTERDAY));
+
+
+  // Toon een laadscherm tijdens initialisatie (nu alleen als isInitializing true is, wat nu niet het geval is)
+  if (isInitializing) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Initialiseren...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContainer} 
+        keyboardShouldPersistTaps="handled"
+        style={{ paddingVertical: 8 }} 
+      >
+        <View style={styles.container}>
+          <Text style={styles.title}>Snelle Uitgave Toevoegen</Text>
+          <Text style={styles.subtitle}>Snel, {totalSteps}-staps invoer. (Opslag: Webhook POST)</Text>
+
+          {/* 1. BEDRAG INVOER */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>1. Bedrag (€):</Text>
+            <View style={styles.amountInputWrapper}>
+              <Text style={styles.euroSign}>€</Text>
+              <TextInput
+                style={styles.amountInput}
+                onChangeText={handleAmountChange}
+                value={amountInput}
+                placeholder="0,00"
+                keyboardType="numeric"
+                autoFocus={true}
+                placeholderTextColor={COLORS.neutral_accent + '99'} 
+              />
+            </View>
+          </View>
+          
+          {/* 2. DATUM SELECTIE */}
+          <View style={styles.dateGroup}>
+            <Text style={styles.label}>2. Datum:</Text>
+            
+            <View style={styles.dateOptionList}>
+              {QUICK_DATE_OPTIONS.map((option) => {
+                
+                const isAndersButton = option.label === 'Anders...';
+                const isSelected = isAndersButton ? isCustomDateSelected : isQuickDateSelected(option.date);
+
+                return (
+                  <TouchableOpacity 
+                    key={option.label}
+                    style={[
+                      styles.dateOptionButton,
+                      isSelected && styles.dateOptionButtonSelected,
+                      isAndersButton && styles.dateOtherButton,
+                    ]} 
+                    onPress={() => isAndersButton ? setShowDatePicker(true) : handleQuickDateSelect(option.offset)}
+                  >
+                    <Text 
+                      style={[
+                        styles.dateOptionText,
+                        isSelected && styles.dateOptionTextSelected,
+                      ]}
+                    >
+                      {isAndersButton ? option.label : option.label}
+                    </Text>
+                    {/* Hulptekst/subtitel om de datum aan te geven */}
+                    {isAndersButton && isCustomDateSelected && 
+                        <Text style={[styles.dateOptionSubtitle, styles.dateOptionTextSelected]}>
+                          ({formatDate(selectedDate).split(' ')[0]})
+                        </Text>
+                    }
+                     {!isAndersButton && isSelected && 
+                        <Text style={[styles.dateOptionSubtitle, styles.dateOptionTextSelected]}>
+                          ({formatDate(option.date).split(' ')[0]})
+                        </Text>
+                    }
+                    {isAndersButton && !isCustomDateSelected && 
+                        <Text style={styles.dateOptionSubtitle}>📅</Text>
+                    }
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+          
+          {/* DATE PICKER MODAL (conditioneel) */}
+          {showDatePicker && (
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={selectedDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={handleDateChange}
+              maximumDate={TODAY} 
+            />
+          )}
+
+          {/* 3. HOOFDCATEGORIE SELECTIE */}
+          <View style={styles.selectionGroup}>
+            <View style={styles.labelWithAction}>
+              <Text style={styles.label}>{mainCategoryStep}. Hoofdcategorie:</Text>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => navigateToCategoryManagement('Main')}
+              >
+                <Text style={styles.addButtonText}>+</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.selectionList}>
+              {MOCK_HIERARCHICAL_CATEGORIES.map((cat) => (
+                <TouchableOpacity
+                  key={cat.name}
+                  style={[
+                    styles.selectionButton,
+                    selectedMainCategory === cat.name && styles.selectionButtonSelected,
+                  ]}
+                  onPress={() => handleMainCategorySelect(cat.name)}
+                >
+                  <Text style={styles.selectionIcon}>{cat.icon}</Text>
+                  <Text 
+                    style={[
+                      styles.selectionText, 
+                      selectedMainCategory === cat.name && styles.selectionTextSelected
+                    ]}
+                  >
+                    {cat.isChildCategory ? CHILD_NAME_PLACEHOLDER : cat.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          
+          {/* 4. SUBCATEGORIE SELECTIE (CONDITIONEEL) */}
+          {isSubcategoryRequired && selectedMainCategory && (
+            <View style={styles.selectionGroup}>
+                <View style={styles.labelWithAction}>
+                    <Text style={styles.label}>{subCategoryStep}. Subcategorie:</Text>
+                    <TouchableOpacity
+                        style={styles.addButton}
+                        onPress={() => navigateToCategoryManagement('Sub')}
+                    >
+                        <Text style={styles.addButtonText}>+</Text>
+                    </TouchableOpacity>
+                </View>
+              <View style={styles.selectionList}>
+                {availableSubcategories.map((subcat) => (
+                  <TouchableOpacity
+                    key={subcat.name}
+                    style={[
+                      styles.selectionButton,
+                      selectedSubCategory === subcat.name && styles.selectionButtonSelected,
+                    ]}
+                    onPress={() => handleSubCategorySelect(subcat.name)}
+                  >
+                    <Text style={styles.selectionIcon}>{subcat.icon}</Text>
+                    <Text 
+                      style={[
+                        styles.selectionText, 
+                        selectedSubCategory === subcat.name && styles.selectionTextSelected
+                      ]}
+                    >
+                      {subcat.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {/* 5. BETAALMETHODE SELECTIE */}
+          <View style={styles.selectionGroup}>
+            <Text style={styles.label}>{paymentMethodStep}. Betaalmethode (Voor Analyse):</Text>
+            <View style={styles.selectionList}>
+              {MOCK_PAYMENT_METHODS.map((method) => (
+                <TouchableOpacity
+                  key={method.name}
+                  style={[
+                    styles.selectionButton,
+                    selectedPaymentMethod === method.name && styles.selectionButtonSelected,
+                  ]}
+                  onPress={() => handlePaymentMethodSelect(method.name)}
+                >
+                  <Text style={styles.selectionIcon}>{method.icon}</Text>
+                  <Text 
+                    style={[
+                      styles.selectionText, 
+                      selectedPaymentMethod === method.name && styles.selectionTextSelected
+                    ]}
+                  >
+                    {method.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* MELDINGSVELD */}
+          {message && (
+            <View style={[styles.messageBox, messageStyle]}>
+              <Text style={styles.messageText}>{message}</Text>
+            </View>
+          )}
+
+          {/* ACTIE KNOP */}
+          <TouchableOpacity
+            style={[
+              styles.submitButton,
+              !isButtonActive && styles.submitButtonDisabled
+            ]}
+            onPress={handleSubmit}
+            disabled={!isButtonActive || isSubmitting}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color={COLORS.card} />
+            ) : (
+              <Text style={styles.submitButtonText}>
+                {isButtonActive 
+                  ? `Sla €${formattedAmountForButton} op` 
+                  : `Voltooi de ${totalSteps} stappen om op te slaan`}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+// --- STYLING (Aangepast voor 'Kalme Kleuren') ---
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  scrollContainer: {
+    flexGrow: 1, 
+    paddingTop: 16, 
+    paddingBottom: 40, 
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: CONTAINER_HORIZONTAL_PADDING, 
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 5,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: COLORS.neutral_accent,
+    marginBottom: 20, 
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.background,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: COLORS.text,
+  },
+  
+  // Input Group (Bedrag)
+  inputGroup: {
+    marginBottom: 15, 
+    backgroundColor: COLORS.card,
+    borderRadius: 15,
+    padding: 15, 
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  
+  amountInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.neutral_accent + '66', 
+    paddingVertical: 8, 
+  },
+  euroSign: {
+    fontSize: 48, 
+    fontWeight: '800',
+    color: COLORS.neutral_accent,
+    marginRight: 8, 
+    lineHeight: 50, 
+  },
+  amountInput: {
+    flex: 1, 
+    fontSize: 48, 
+    fontWeight: '800',
+    color: COLORS.text,
+    textAlign: 'left', 
+    padding: 0, 
+    height: 50, 
+  },
+
+  // Datum Selectie Stijl
+  dateGroup: {
+    marginBottom: 20, 
+    backgroundColor: COLORS.card,
+    borderRadius: 15,
+    padding: 15, 
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  dateOptionList: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 10,
+  },
+  dateOptionButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginHorizontal: 4,
+    borderRadius: 10,
+    backgroundColor: COLORS.dateNeutral,
+    borderWidth: 2,
+    borderColor: COLORS.dateNeutral,
+  },
+  dateOtherButton: {
+    backgroundColor: '#E0E7FF', // Lichtblauwe tint
+    borderColor: '#C3D1FF',
+  },
+  dateOptionButtonSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  dateOptionText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  dateOptionTextSelected: {
+    color: COLORS.card,
+  },
+  dateOptionSubtitle: {
+    fontSize: 10,
+    color: COLORS.neutral_accent,
+    marginTop: 2,
+  },
+  
+  // Stijlen voor de + knop
+  labelWithAction: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  addButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 999, 
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addButtonText: {
+    color: COLORS.card,
+    fontSize: 16,
+    fontWeight: 'bold',
+    lineHeight: 22, 
+  },
+
+  // Selection Group (Categorie/Betaalmethode)
+  selectionGroup: {
+    marginBottom: 20, 
+    backgroundColor: COLORS.card,
+    borderRadius: 15,
+    padding: 15, 
+    shadowColor: COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  selectionList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start', 
+    marginTop: 10,
+  },
+  selectionButton: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    padding: 8, 
+    marginVertical: CATEGORY_BUTTON_MARGIN,
+    marginHorizontal: CATEGORY_BUTTON_MARGIN,
+    borderRadius: 12,
+    backgroundColor: COLORS.background, // Achtergrondkleur
+    width: DYNAMIC_CATEGORY_BUTTON_WIDTH, 
+    borderWidth: 2,
+    borderColor: COLORS.background,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    minHeight: 65, // Zorgt voor goede touch target
+    justifyContent: 'center',
+  },
+  selectionButtonSelected: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  selectionIcon: {
+    fontSize: 24,
+    marginBottom: 3, 
+  },
+  selectionText: {
+    fontSize: 11, 
+    fontWeight: '600',
+    color: COLORS.text,
+    textAlign: 'center',
+  },
+  selectionTextSelected: {
+    color: COLORS.card, 
+  },
+
+  // Button
+  submitButton: {
+    padding: 20,
+    borderRadius: 15,
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    marginTop: 20,
+    height: 60, 
+    justifyContent: 'center',
+  },
+  submitButtonDisabled: {
+    backgroundColor: COLORS.neutral_accent + '99', 
+  },
+  submitButtonText: {
+    color: COLORS.card,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  
+  // Message Box
+  messageBox: {
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  successMessage: {
+    backgroundColor: COLORS.primary + '33', 
+    borderColor: COLORS.primary,
+    borderWidth: 1,
+  },
+  errorMessage: {
+    backgroundColor: COLORS.secondary + '33', 
+    borderColor: COLORS.secondary,
+    borderWidth: 1,
+  },
+  messageText: {
+    fontWeight: '600',
+    color: COLORS.text,
+    textAlign: 'center',
+  }
+});
+
+export default QuickAddExpense;
+
+//SetupScreen.tsx - in map screens
+
+import React, { useState } from 'react';
+import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+
+// Importeer het Setup Scherm vanuit de 'screens' map
+import SetupScreen from './screens/SetupScreen';
+
+// --- MOCK DASHBOARD (Ter Vervanging in de echte app) ---
+const DashboardScreen = ({ onReset }) => (
+  <View style={dashboardStyles.container}>
+    <Text style={dashboardStyles.title}>Dashboard (Mock)</Text>
+    <Text style={dashboardStyles.subtitle}>
+      Dit is waar de app na succesvolle setup naartoe navigeert.
+    </Text>
+    <TouchableOpacity 
+        style={dashboardStyles.resetButton} 
+        onPress={onReset}
+    >
+      <Text style={dashboardStyles.resetButtonText}>Herstart Setup (Test)</Text>
+    </TouchableOpacity>
+  </View>
+);
+
+const dashboardStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#00A98F',
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#333',
+    marginBottom: 30,
+  },
+  resetButton: {
+    padding: 15,
+    borderRadius: 10,
+    backgroundColor: '#FF6B6B',
+  },
+  resetButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  }
+});
+
+
+// --- HOOFD COMPONENT MET NAVIGATIE LOGICA ---
+
+const App: React.FC = () => {
+  // 'setup' toont het Setup scherm, 'dashboard' toont het Dashboard (Mock)
+  const [currentScreen, setCurrentScreen] = useState<'setup' | 'dashboard'>('setup');
+
+  const handleSetupComplete = () => {
+    // Navigatie logica na succesvol opslaan in SetupScreen
+    setCurrentScreen('dashboard');
+  };
+  
+  const handleReset = () => {
+      // Om de setup opnieuw te testen
+      setCurrentScreen('setup');
+  }
+
+  // Hier renderen we het gekozen scherm
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F9F9F9' }}>
+      {currentScreen === 'setup' ? (
+        // We injecteren de navigatie functie als prop in het SetupScreen
+        <SetupScreen onSetupComplete={handleSetupComplete} />
+      ) : (
+        <DashboardScreen onReset={handleReset} />
+      )}
+    </SafeAreaView>
+  );
+};
+
+export default App;

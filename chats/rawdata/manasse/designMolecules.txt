@@ -1,0 +1,411 @@
+/**
+ * DesignMolecules.tsx
+ * Fase 4.2 - Design System Molecules
+ * 
+ * Herbruikbare samengestelde componenten (Molecules) die Atoms combineren
+ * voor de Financiële Vrijheid Budget App
+ */
+
+import React from 'react';
+import { 
+  PrimaryButton, 
+  SecondaryButton, 
+  CurrencyInput, 
+  SegmentedControl, 
+  BodyText, 
+  Heading2, 
+  COLORS 
+} from './DesignAtoms';
+
+// ============================================================================
+// INTERFACES
+// ============================================================================
+
+interface FormHeaderProps {
+  title: string;
+  currentStep: number;
+  totalSteps: number;
+}
+
+interface NumberStepperProps {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+}
+
+interface SalaryInputGroupProps {
+  value: number | string;
+  onValueChange: (value: number | string) => void;
+  frequency: string;
+  onFrequencyChange: (frequency: string) => void;
+  label: string;
+  required?: boolean;
+}
+
+interface ToggleCardProps {
+  title: string;
+  isActive: boolean;
+  onToggle: () => void;
+}
+
+interface YNQuestionCardProps {
+  question: string;
+  value: boolean | null;
+  onChange: (value: boolean) => void;
+  required?: boolean;
+}
+
+// ============================================================================
+// MOLECULE: FORM HEADER
+// ============================================================================
+/**
+ * FormHeader - Titel + Voortgangsbalk voor elke Setup-stap
+ * 
+ * Features:
+ * - Heading2 voor stap titel
+ * - BodyText voor stap indicatie
+ * - Visuele progressbar met segmenten
+ */
+export const FormHeader: React.FC<FormHeaderProps> = ({
+  title,
+  currentStep,
+  totalSteps
+}) => {
+  return (
+    <div style={{ marginBottom: '24px' }}>
+      <Heading2 style={{ marginBottom: '8px' }}>{title}</Heading2>
+      <BodyText size="small" style={{ marginBottom: '16px' }}>
+        Stap {currentStep} van {totalSteps}
+      </BodyText>
+      
+      {/* Progress Bar */}
+      <div 
+        style={{ 
+          display: 'flex', 
+          gap: '8px',
+          width: '100%'
+        }}
+      >
+        {Array.from({ length: totalSteps }, (_, index) => (
+          <div
+            key={index}
+            style={{
+              flex: 1,
+              height: '6px',
+              borderRadius: '3px',
+              backgroundColor: index < currentStep ? COLORS.primary : COLORS.border,
+              transition: 'background-color 0.3s ease'
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// MOLECULE: NUMBER STEPPER
+// ============================================================================
+/**
+ * NumberStepper - Voor het instellen van huishoudgrootte
+ * 
+ * Features:
+ * - Grote + en - knoppen (PrimaryButton gebaseerd)
+ * - Duidelijke waarde weergave in center
+ * - Disabled state voor min/max grenzen
+ * - Visuele feedback conform Mockup 1
+ */
+export const NumberStepper: React.FC<NumberStepperProps> = ({
+  label,
+  value,
+  onChange,
+  min = 0,
+  max = 8
+}) => {
+  const isAtMin = value <= min;
+  const isAtMax = value >= max;
+
+  return (
+    <div style={{ marginBottom: '20px' }}>
+      <label 
+        style={{
+          display: 'block',
+          fontSize: '15px',
+          fontWeight: 600,
+          color: COLORS.text,
+          marginBottom: '12px'
+        }}
+      >
+        {label}
+      </label>
+      
+      <div 
+        style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          gap: '16px',
+          padding: '8px'
+        }}
+      >
+        {/* Minus Button */}
+        <button
+          onClick={() => !isAtMin && onChange(value - 1)}
+          disabled={isAtMin}
+          style={{
+            width: '56px',
+            height: '56px',
+            fontSize: '28px',
+            fontWeight: 700,
+            color: 'white',
+            backgroundColor: isAtMin ? COLORS.disabled : COLORS.primary,
+            border: 'none',
+            borderRadius: '12px',
+            cursor: isAtMin ? 'not-allowed' : 'pointer',
+            opacity: isAtMin ? 0.6 : 1,
+            transition: 'all 0.2s ease',
+            boxShadow: isAtMin ? 'none' : '0 2px 6px rgba(0, 169, 143, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          −
+        </button>
+        
+        {/* Value Display */}
+        <div 
+          style={{
+            minWidth: '80px',
+            textAlign: 'center',
+            fontSize: '36px',
+            fontWeight: 700,
+            color: COLORS.primary,
+            padding: '0 16px'
+          }}
+        >
+          {value}
+        </div>
+        
+        {/* Plus Button */}
+        <button
+          onClick={() => !isAtMax && onChange(value + 1)}
+          disabled={isAtMax}
+          style={{
+            width: '56px',
+            height: '56px',
+            fontSize: '28px',
+            fontWeight: 700,
+            color: 'white',
+            backgroundColor: isAtMax ? COLORS.disabled : COLORS.primary,
+            border: 'none',
+            borderRadius: '12px',
+            cursor: isAtMax ? 'not-allowed' : 'pointer',
+            opacity: isAtMax ? 0.6 : 1,
+            transition: 'all 0.2s ease',
+            boxShadow: isAtMax ? 'none' : '0 2px 6px rgba(0, 169, 143, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// MOLECULE: SALARY INPUT GROUP
+// ============================================================================
+/**
+ * SalaryInputGroup - Combineert bedrag + frequentie selectie
+ * 
+ * Features:
+ * - CurrencyInput voor bedrag invoer (70% breedte)
+ * - SegmentedControl voor frequentie (30% breedte)
+ * - Layout: flex-row met gap
+ * - Conform Mockup 2 styling
+ */
+export const SalaryInputGroup: React.FC<SalaryInputGroupProps> = ({
+  value,
+  onValueChange,
+  frequency,
+  onFrequencyChange,
+  label,
+  required = false
+}) => {
+  const frequencyOptions = [
+    { label: 'Maand', value: 'month' },
+    { label: 'Week', value: 'week' },
+    { label: '4 Wkn', value: '4weeks' }
+  ];
+
+  return (
+    <div style={{ marginBottom: '20px' }}>
+      {/* Bedrag Input (Full Width) */}
+      <CurrencyInput
+        label={label}
+        value={value}
+        onChange={onValueChange}
+        type="income"
+        required={required}
+      />
+      
+      {/* Frequentie Selector */}
+      <div style={{ marginTop: '12px' }}>
+        <label 
+          style={{
+            display: 'block',
+            fontSize: '14px',
+            fontWeight: 600,
+            color: COLORS.text,
+            marginBottom: '8px'
+          }}
+        >
+          Frequentie
+        </label>
+        <SegmentedControl
+          options={frequencyOptions}
+          selectedValue={frequency}
+          onChange={onFrequencyChange}
+          fullWidth={true}
+        />
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// MOLECULE: TOGGLE CARD
+// ============================================================================
+/**
+ * ToggleCard - Klikbare kaart voor binaire opties
+ * 
+ * Features:
+ * - Visuele feedback bij active state
+ * - Border: 2px (#DDD) -> active: border #00A98F
+ * - Achtergrond: wit -> active: licht groen (#F0FFF0)
+ * - Checkbox-achtige indicator aan rechterkant
+ */
+export const ToggleCard: React.FC<ToggleCardProps> = ({
+  title,
+  isActive,
+  onToggle
+}) => {
+  return (
+    <div
+      onClick={onToggle}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '16px 20px',
+        backgroundColor: isActive ? '#F0FFF0' : COLORS.inputBackground,
+        border: `${isActive ? '3px' : '2px'} solid ${isActive ? COLORS.primary : COLORS.border}`,
+        borderRadius: '12px',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+        marginBottom: '12px',
+        boxShadow: isActive ? '0 2px 8px rgba(0, 169, 143, 0.15)' : 'none'
+      }}
+    >
+      <BodyText style={{ margin: 0 }}>{title}</BodyText>
+      
+      {/* Checkbox Indicator */}
+      <div
+        style={{
+          width: '28px',
+          height: '28px',
+          borderRadius: '6px',
+          backgroundColor: isActive ? COLORS.primary : COLORS.inputBackground,
+          border: `2px solid ${isActive ? COLORS.primary : COLORS.border}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.2s ease',
+          flexShrink: 0,
+          marginLeft: '12px'
+        }}
+      >
+        {isActive && (
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 16 16" 
+            fill="none"
+            style={{ display: 'block' }}
+          >
+            <path 
+              d="M13.5 4L6 11.5L2.5 8" 
+              stroke="white" 
+              strokeWidth="2.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ============================================================================
+// MOLECULE: YN QUESTION CARD
+// ============================================================================
+/**
+ * YNQuestionCard - Ja/Nee vragen met SegmentedControl
+ * 
+ * Features:
+ * - Heading2 voor de vraag
+ * - SegmentedControl voor Ja/Nee opties
+ * - Styling conform Mockup 1
+ */
+export const YNQuestionCard: React.FC<YNQuestionCardProps> = ({
+  question,
+  value,
+  onChange,
+  required = false
+}) => {
+  const options = [
+    { label: 'Ja', value: true },
+    { label: 'Nee', value: false }
+  ];
+
+  return (
+    <div style={{ marginBottom: '20px' }}>
+      <label 
+        style={{
+          display: 'block',
+          fontSize: '15px',
+          fontWeight: 600,
+          color: COLORS.text,
+          marginBottom: '12px'
+        }}
+      >
+        {question} {required && <span style={{ color: COLORS.secondary }}>*</span>}
+      </label>
+      
+      <SegmentedControl
+        options={options}
+        selectedValue={value === null ? '' : value}
+        onChange={(val) => onChange(val as boolean)}
+        fullWidth={true}
+      />
+    </div>
+  );
+};
+
+// ============================================================================
+// EXPORT ALL MOLECULES
+// ============================================================================
+export default {
+  FormHeader,
+  NumberStepper,
+  SalaryInputGroup,
+  ToggleCard,
+  YNQuestionCard
+};

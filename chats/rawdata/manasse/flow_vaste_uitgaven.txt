@@ -1,0 +1,8 @@
+FLOWCHART – Form 3: Vaste Uitgaven (Stap 3/4)
+Generated: 2025-11-24 19:18:07
+===============================================
+
+Enter fixed expense rows → Normalize amounts monthly → Compute total → Validate required fields
+Optional: mark auto-incasso items
+Next → Form 4 (Dagelijkse uitgaven)
+Previous → Form 2

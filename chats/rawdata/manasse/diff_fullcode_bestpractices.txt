@@ -1,0 +1,86 @@
+DIFFLIST – FULLcode Alignment with Best Practices
+Generated: 2025-11-24 19:55:57
+============================================================
+
+### OVERVIEW
+This file lists all changes needed in FULLcode to align with best practices for VBA UserForms:
+- Error handling improvements
+- Dynamic layout adjustments
+- Shape-based buttons integration
+- Progressive disclosure logic
+- Accessibility and UX enhancements
+
+### CHANGES TO APPLY
+
+1) **General Error Handling**
+
+### EERST //SUB FUNCTIE_NAAM() //
+On Error GoTo ErrHandler
+' --- Jouw code hier ---
+Exit Sub
+
+ErrHandler:
+    Utils.LogError4 "MODULE_NAAM", "FUNCTIE_NAAM", Err.Number, Err.Description
+    MsgBox "Fout in FUNCTIE_NAAM: " & Err.Description, vbCritical
+End Sub
+### Alle ErrHandler Aangepast
+
+2) **Dynamic UserForms**
+   - In `BuildDynamicFrmInvoer`:
+     * Wrap UI build in `Application.ScreenUpdating = False` and restore at end.
+     * Use `FormLayout.RemoveDynamicControls frm` before adding new controls.
+     * Add `FormBackground.EnsureBackgroundImage frm` for consistent BG.
+### Dynamic UsFrm Aangepast ### EERST HIERONDER VERDERGAAN
+
+3) **Shape-based Buttons**
+   - Replace CommandButton creation with:
+     ```vba
+     If ShapeExists("btnOpslaanShape") Then
+         AddShapeAsImage frm, "btnOpslaanShape", FormLayout.DYN_PREFIX & "imgBtnOpslaan"
+     Else
+         ' fallback CommandButton
+     End If
+     ```
+   - Repeat for btnAnnulerenShape, btnVorigeShape, btnVolgendeShape, btnRowAddShape, btnRowDelShape.
+
+4) **Progressive Disclosure**
+   - For frmHuishouden: hide child frame unless TotalPersons > 1.
+   - For frmVast: enable Next only if at least one valid row or user selects "Geen vaste inkomsten".
+
+5) **Accessibility & UX**
+   - Set TabIndex sequentially.
+   - Use Calibri 10 for all controls.
+   - Ensure consistent spacing (6pt min).
+
+6) **Navigation Logic**
+   - Add event handlers for Next/Previous:
+     * frmHuishouden.Next → frmVast.MultiPage.Value = 0
+     * frmVast.Next Page(0) → Page(1); Page(1) → frmInvoer.Show
+     * Previous returns to prior form.
+
+7) **Update Existing Modules**
+   - FormEvents.bas: extend HookEventsDynamic to include shape-based Image controls.
+   - FormLayout.bas: add helpers from helper_routines.txt.
+
+### RECOMMENDED BUTTON DIMENSIONS (for shapes on sheet "Referenties")
+Use these sizes in points (Excel shape properties):
+
+- **btnVorigeShape**: Width = 80 pt, Height = 28 pt
+- **btnVolgendeShape**: Width = 100 pt, Height = 28 pt
+- **btnOpslaanShape**: Width = 100 pt, Height = 28 pt
+- **btnAnnulerenShape**: Width = 100 pt, Height = 28 pt
+- **btnRowAddShape (+)**: Width = 28 pt, Height = 28 pt
+- **btnRowDelShape (–)**: Width = 28 pt, Height = 28 pt
+
+### BEGINNER HOW-TO
+1. Open VBE (Alt+F11).
+2. Locate modules: FormEvents, FormLayout, FormBackground.
+3. Apply changes above step-by-step:
+   - Add error handling blocks.
+   - Insert shape logic using AddShapeAsImage.
+   - Adjust TabIndex and font.
+4. On sheet "Referenties": create shapes with names and dimensions listed above.
+5. Compile (Debug → Compile VBAProject).
+6. Test navigation and validation.
+
+============================================================

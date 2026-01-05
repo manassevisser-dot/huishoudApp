@@ -1,0 +1,974 @@
+AI excel formule agent 1) # Excel Formules voor Uitgebreide Financiële Analyses
+Ik help je graag met formules voor je financiële dashboard. Hieronder vind je een complete set formules georganiseerd per analyse-categorie.
+---
+## 📊 **1. BASISSTRUCTUUR - Aannames over je data**
+Ik ga ervan uit dat je data in deze sheets/tabellen staat:
+- **Huishouden** (A:B) - Gezinsleden en gegevens
+- **Uitgaven** (A:E) - Datum, Betaalwijze, Categorie, Subcategorie, Bedrag
+- **VasteLasten** (A:C) - Omschrijving, Categorie, Bedrag
+- **Inkomsten** (A:C) - Bron, Type, Bedrag
+## 💰 **2. TOTAALOVERZICHTEN**
+### Basis totalen
+```excel
+# Totaal uitgaven
+=SOM(Uitgaven[Bedrag])
+# Totaal vaste lasten
+=SOM(VasteLasten[Bedrag])
+# Totaal inkomsten
+=SOM(Inkomsten[Bedrag])
+# Maandelijks beschikbaar budget
+=SOM(Inkomsten[Bedrag])-SOM(VasteLasten[Bedrag])
+# Restant na alle uitgaven
+=SOM(Inkomsten[Bedrag])-SOM(VasteLasten[Bedrag])-SOM(Uitgaven[Bedrag])
+```
+---
+## 📅 **3. PERIODE-ANALYSES**
+### Per maand/jaar filteren
+```excel
+# Uitgaven huidige maand
+=SOM.ALS(Uitgaven[Bedrag];Uitgaven[Datum];">="&DATUM(JAAR(VANDAAG());MAAND(VANDAAG());1))
+-SOM.ALS(Uitgaven[Bedrag];Uitgaven[Datum];">"&EOMAAND(VANDAAG();0))
+# Beter alternatief met SOMPRODUCT
+=SOMPRODUCT((MAAND(Uitgaven[Datum])=MAAND(VANDAAG()))*(JAAR(Uitgaven[Datum])=JAAR(VANDAAG()))*(Uitgaven[Bedrag]))
+# Uitgaven specifieke maand (maandnummer in cel G1, jaar in G2)
+=SOMPRODUCT((MAAND(Uitgaven[Datum])=G1)*(JAAR(Uitgaven[Datum])=G2)*(Uitgaven[Bedrag]))
+# Uitgaven per week (weeknummer in cel H1)
+=SOMPRODUCT((WEEKNUMMER(Uitgaven[Datum])=H1)*(JAAR(Uitgaven[Datum])=JAAR(VANDAAG()))*(Uitgaven[Bedrag]))
+# Gemiddelde dagelijkse uitgaven deze maand
+=SOMPRODUCT((MAAND(Uitgaven[Datum])=MAAND(VANDAAG()))*(JAAR(Uitgaven[Datum])=JAAR(VANDAAG()))*(Uitgaven[Bedrag]))/DAG(VANDAAG())
+```
+---
+## 🏷️ **4. CATEGORIE-ANALYSES**
+### Per categorie
+```excel
+# Totaal per categorie (categorienaam in cel F1)
+=SOM.ALS(Uitgaven[Bedrag];Uitgaven[Categorie];F1)
+# Totaal per subcategorie
+=SOM.ALS(Uitgaven[Bedrag];Uitgaven[Subcategorie];F2)
+# Categorie + specifieke maand combineren
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Categorie];F1;Uitgaven[Datum];">="&DATUM(G2;G1;1);Uitgaven[Datum];"<="&EOMAAND(DATUM(G2;G1;1);0))
+# Percentage van totaal per categorie
+=SOM.ALS(Uitgaven[Bedrag];Uitgaven[Categorie];F1)/SOM(Uitgaven[Bedrag])
+# Top 3 categorieën ophalen (gebruik in 3 cellen)
+=INDEX(Uitgaven[Categorie];VERGELIJKEN(GROOTSTE(SOM.ALS(Uitgaven[Bedrag];Uitgaven[Categorie];Uitgaven[Categorie]);1);SOM.ALS(Uitgaven[Bedrag];Uitgaven[Categorie];Uitgaven[Categorie]);0))
+```
+### Dynamische categorie-tabel met UNIEK (Microsoft 365)
+```excel
+# Unieke categorieën ophalen
+=UNIEK(Uitgaven[Categorie])
+
+# Bedragen per unieke categorie (naast bovenstaande)
+=SOM.ALS(Uitgaven[Bedrag];Uitgaven[Categorie];[@Categorie])
+```
+---
+## 💳 **5. BETAALWIJZE-ANALYSES**
+```excel
+# Totaal per betaalwijze (bijv. "PIN", "Cash", "Creditcard")
+=SOM.ALS(Uitgaven[Bedrag];Uitgaven[Betaalwijze];"PIN")
+=SOM.ALS(Uitgaven[Bedrag];Uitgaven[Betaalwijze];"Cash")
+=SOM.ALS(Uitgaven[Bedrag];Uitgaven[Betaalwijze];"Creditcard")
+# Aantal transacties per betaalwijze
+=AANTAL.ALS(Uitgaven[Betaalwijze];"PIN")
+# Gemiddeld bedrag per betaalwijze
+=GEMIDDELDE.ALS(Uitgaven[Bedrag];Uitgaven[Betaalwijze];"PIN")
+# Percentage cash betalingen
+=SOM.ALS(Uitgaven[Bedrag];Uitgaven[Betaalwijze];"Cash")/SOM(Uitgaven[Bedrag])
+```
+---
+
+## 👨‍👩‍👧‍👦 **6. HUISHOUDEN-ANALYSES**
+
+```excel
+# Aantal gezinsleden
+=AANTALARG(Huishouden[Naam])
+# Uitgaven per persoon (als er een kolom 'Persoon' is in Uitgaven)
+=SOM.ALS(Uitgaven[Bedrag];Uitgaven[Persoon];J1)
+# Gemiddelde uitgaven per gezinslid
+=SOM(Uitgaven[Bedrag])/AANTALARG(Huishouden[Naam])
+# Budget per persoon per maand
+=(SOM(Inkomsten[Bedrag])-SOM(VasteLasten[Bedrag]))/AANTALARG(Huishouden[Naam])
+```
+---
+## 📈 **7. TREND-ANALYSES**
+```excel
+# Maandelijkse totalen voor trend (voor maand 1-12 in kolom)
+=SOMPRODUCT((MAAND(Uitgaven[Datum])=RIJ()-1)*(JAAR(Uitgaven[Datum])=JAAR(VANDAAG()))*(Uitgaven[Bedrag]))
+# Verschil met vorige maand
+=K2-K1  (waar K de kolom met maandtotalen is)
+# Percentage stijging/daling t.o.v. vorige maand
+=(K2-K1)/K1
+# Voortschrijdend gemiddelde (3 maanden)
+=GEMIDDELDE(K1:K3)
+# Voorspelling volgende maand (lineaire trend)
+=VOORSPELLEN(13;K1:K12;{1;2;3;4;5;6;7;8;9;10;11;12})
+```
+---
+## ⚠️ **8. BUDGET-WAARSCHUWINGEN**
+```excel
+# Budget per categorie instellen (budget in kolom M, werkelijk in N)
+=ALS(N2>M2;"⚠️ OVER BUDGET";"✓ OK")
+# Percentage van budget gebruikt
+=N2/M2
+# Resterend budget
+=M2-N2
+# Voorspelling einde maand (op basis van huidige uitgaven)
+=N2/DAG(VANDAAG())*DAG(EOMAAND(VANDAAG();0))
+# Waarschuwing als voorspelling > budget
+=ALS((N2/DAG(VANDAAG())*DAG(EOMAAND(VANDAAG();0)))>M2;"⚠️ Dreigt over budget";"Op schema")
+# Spaarquote
+=(SOM(Inkomsten[Bedrag])-SOM(VasteLasten[Bedrag])-SOM(Uitgaven[Bedrag]))/SOM(Inkomsten[Bedrag])
+```
+---
+## 🔍 **9. GEAVANCEERDE ANALYSES**
+### Top uitgaven
+```excel
+# Hoogste enkele uitgave
+=MAX(Uitgaven[Bedrag])
+# Top 5 uitgaven (in 5 cellen onder elkaar)
+=GROOTSTE(Uitgaven[Bedrag];RIJ())
+# Datum van hoogste uitgave
+=INDEX(Uitgaven[Datum];VERGELIJKEN(MAX(Uitgaven[Bedrag]);Uitgaven[Bedrag];0))
+# Categorie van hoogste uitgave
+=INDEX(Uitgaven[Categorie];VERGELIJKEN(MAX(Uitgaven[Bedrag]);Uitgaven[Bedrag];0))
+```
+### Statistische analyses
+```excel
+# Standaarddeviatie uitgaven (spreiding)
+=STDEV(Uitgaven[Bedrag])
+# Mediaan uitgave
+=MEDIAAN(Uitgaven[Bedrag])
+# Aantal transacties
+=AANTAL(Uitgaven[Bedrag])
+# Transacties boven €50
+=AANTAL.ALS(Uitgaven[Bedrag];">50")
+```
+---
+## 📋 **10. DASHBOARD SAMENVATTINGSFORMULES**
+```excel
+# === FINANCIEEL OVERZICHT ===
+Totaal Inkomsten:        =SOM(Inkomsten[Bedrag])
+Vaste Lasten:            =SOM(VasteLasten[Bedrag])
+Variabele Uitgaven:      =SOMPRODUCT((MAAND(Uitgaven[Datum])=MAAND(VANDAAG()))*(Uitgaven[Bedrag]))
+Beschikbaar:             =B1-B2
+Besteed:                 =B3
+Resterend:               =B4-B5
+Spaarpercentage:         =B6/B1
+# === SNELLE STATUS ===
+=ALS(B6<0;"🔴 TEKORT";ALS(B6<B1*0.1;"🟡 LET OP";"🟢 GEZOND"))
+```
+---
+## 💡 **TIPS VOOR IMPLEMENTATIE**
+1. **Maak benoemde bereiken** voor makkelijker formulegebruik
+2. **Gebruik Excel Tabellen** (Ctrl+T) voor automatisch uitbreidende bereiken
+3. **Draaitabellen** zijn ook zeer krachtig voor dit soort analyses
+4. **Voorwaardelijke opmaak** voor visuele waarschuwingen
+Wil je dat ik specifieke formules verder uitwerk of heb je vragen over een bepaalde analyse?
+Dynamische Presentatie van Financiële Analyses in Excel
+Ik leg je stap voor stap uit hoe je een professioneel, dynamisch dashboard bouwt dat automatisch actualiseert.
+________________________________________
+🎯 OVERZICHT: WAT GAAN WE BOUWEN
+text
+┌─────────────────────────────────────────────────────────────────┐
+│  FINANCIEEL DASHBOARD                           [Maand ▼] 2024 │
+├─────────────────────────────────────────────────────────────────┤
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐ │
+│  │ INKOMSTEN│  │  UITGAVEN│  │ RESTEREND│  │    STATUS        │ │
+│  │  €3.450  │  │  €2.180  │  │  €1.270  │  │  🟢 GEZOND       │ │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────────────┘ │
+│                                                                 │
+│  ┌─────────────────────────┐  ┌─────────────────────────────┐   │
+│  │   UITGAVEN PER CATEGORIE │  │    TREND LAATSTE 6 MAANDEN  │   │
+│  │      [RINGDIAGRAM]       │  │       [LIJNGRAFIEK]         │   │
+│  └─────────────────────────┘  └─────────────────────────────┘   │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              BUDGET VS WERKELIJK PER CATEGORIE           │   │
+│  │                    [STAAFDIAGRAM]                        │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+________________________________________
+📁 STAP 1: SHEET-STRUCTUUR OPZETTEN
+Maak deze sheets aan:
+Sheet	Doel
+Data_Uitgaven	Ruwe data uit UserForms
+Data_Inkomsten	Ruwe data inkomsten
+Data_VasteLasten	Ruwe data vaste lasten
+Data_Huishouden	Gezinssamenstelling
+Berekeningen	Alle formules (verborgen)
+Dashboard	Visuele presentatie
+Instellingen	Dropdowns en parameters
+________________________________________
+⚙️ STAP 2: INSTELLINGEN SHEET MAKEN
+A. Maak keuzelijsten voor filters
+text
+Sheet: Instellingen
+    A               B                   C
+1   Parameter       Waarde              Opties
+2   Maand           Januari             =UNIEK(TEKST(Data_Uitgaven[Datum];"MMMM"))
+3   Jaar            2024                =UNIEK(JAAR(Data_Uitgaven[Datum]))
+4   Categorie       Alle                =UNIEK(Data_Uitgaven[Categorie])
+5   Betaalwijze     Alle                =UNIEK(Data_Uitgaven[Betaalwijze])
+B. Gegevensvalidatie voor dropdowns
+1.	Selecteer cel B2 (Maand)
+2.	Data → Gegevensvalidatie
+3.	Toestaan: Lijst
+4.	Bron: =Maanden (benoemd bereik) of direct de lijst
+excel
+# Maak benoemde bereiken (Formules → Namen beheren)
+Maanden = {"Januari";"Februari";"Maart";"April";"Mei";"Juni";"Juli";"Augustus";"September";"Oktober";"November";"December"}
+Jaren = {2023;2024;2025}
+________________________________________
+🔢 STAP 3: BEREKENINGEN SHEET
+Deze sheet bevat alle formules die het dashboard voeden.
+text
+Sheet: Berekeningen
+# === SECTIE A: GEFILTERDE TOTALEN ===
+    A                           B
+1   KERNCIJFERS
+2   Geselecteerde Maand         =Instellingen!B2
+3   Geselecteerd Jaar           =Instellingen!B3
+4   Maandnummer                 =VERGELIJKEN(B2;{"Januari";"Februari";"Maart";"April";"Mei";"Juni";"Juli";"Augustus";"September";"Oktober";"November";"December"};0)
+5   
+6   Totaal Inkomsten            =SOM(Data_Inkomsten[Bedrag])
+7   Totaal Vaste Lasten         =SOM(Data_VasteLasten[Bedrag])
+8   Beschikbaar Budget          =B6-B7
+9   
+10  Uitgaven Deze Maand         =SOMPRODUCT((MAAND(Data_Uitgaven[Datum])=B4)*(JAAR(Data_Uitgaven[Datum])=B3)*(Data_Uitgaven[Bedrag]))
+11  Resterend Deze Maand        =B8-B10
+12  Percentage Besteed          =B10/B8
+13  
+14  # === SECTIE B: STATUS INDICATOREN ===
+15  Status Code                 =ALS(B11<0;3;ALS(B12>0.9;2;1))
+16  Status Tekst                =KIEZEN(B15;"🟢 GEZOND";"🟡 LET OP";"🔴 TEKORT")
+17  Status Kleur                =KIEZEN(B15;"Groen";"Geel";"Rood")
+Categorie-uitsplitsing (dynamisch)
+text
+    A                           B                       C
+20  CATEGORIE                   BEDRAG                  PERCENTAGE
+21  Boodschappen                =SOMMEN.ALS(...)        =B21/$B$30
+22  Vervoer                     =SOMMEN.ALS(...)        =B22/$B$30
+23  Entertainment               =SOMMEN.ALS(...)        =B23/$B$30
+24  Kleding                     =SOMMEN.ALS(...)        =B24/$B$30
+25  Horeca                      =SOMMEN.ALS(...)        =B25/$B$30
+26  Gezondheid                  =SOMMEN.ALS(...)        =B26/$B$30
+27  Overig                      =SOMMEN.ALS(...)        =B27/$B$30
+28  
+29  
+30  TOTAAL                      =SOM(B21:B27)           100%
+Formule voor elke categorie (voorbeeld Boodschappen):
+excel
+=SOMMEN.ALS(Data_Uitgaven[Bedrag];
+            Data_Uitgaven[Categorie];"Boodschappen";
+            Data_Uitgaven[Datum];">="&DATUM(Berekeningen!$B$3;Berekeningen!$B$4;1);
+            Data_Uitgaven[Datum];"<="&EOMAAND(DATUM(Berekeningen!$B$3;Berekeningen!$B$4;1);0))
+Trend data (laatste 6 maanden)
+text
+    E               F           G
+32  MAAND           NUMMER      UITGAVEN
+33  =TEKST(...)     -5          =SOMPRODUCT(...)
+34  =TEKST(...)     -4          =SOMPRODUCT(...)
+35  =TEKST(...)     -3          =SOMPRODUCT(...)
+36  =TEKST(...)     -2          =SOMPRODUCT(...)
+37  =TEKST(...)     -1          =SOMPRODUCT(...)
+38  =TEKST(...)     0           =SOMPRODUCT(...)
+Formules voor trenddata:
+excel
+# Maandnaam (E33)
+=TEKST(EOMAAND(VANDAAG();F33);"MMM")
+
+# Uitgaven per maand (G33)
+=SOMPRODUCT((MAAND(Data_Uitgaven[Datum])=MAAND(EOMAAND(VANDAAG();F33)))*
+            (JAAR(Data_Uitgaven[Datum])=JAAR(EOMAAND(VANDAAG();F33)))*
+            (Data_Uitgaven[Bedrag]))
+________________________________________
+🎨 STAP 4: DASHBOARD SHEET ONTWERPEN
+A. Pagina-indeling instellen
+text
+1. Selecteer Dashboard sheet
+2. Beeld → Pagina-indeling
+3. Rasterlijnen: UIT
+4. Koppen: UIT
+5. Pagina-indeling → Achtergrond → Kies subtiele kleur of afbeelding
+B. Cellen voorbereiden
+text
+# Verberg rijen/kolommen die je niet nodig hebt
+# Maak cellen breder voor dashboard-layout
+
+Kolom A: 5 pixels (marge)
+Kolom B-M: 80 pixels elk
+Kolom N: 5 pixels (marge)
+C. KPI-kaarten maken
+text
+STAP-VOOR-STAP: KPI KAART "INKOMSTEN"
+
+1. Selecteer bereik B2:D6
+2. Rechtermuisknop → Celeigenschappen → Rand → Dikke rand rondom
+3. Achtergrondkleur: Lichtblauw
+4. Cel C3: "INKOMSTEN" (titel, vet, 10pt)
+5. Cel C4: =Berekeningen!B6 (bedrag)
+6. Cel C4 opmaken: Valuta, 18pt, Vet
+7. Cel C5: "maandelijks" (subtekst, grijs, 8pt)
+Herhaal voor andere KPI's:
+KPI	Formule	Kleur
+Inkomsten	=Berekeningen!B6	Blauw
+Uitgaven	=Berekeningen!B10	Oranje
+Resterend	=Berekeningen!B11	Groen/Rood
+Status	=Berekeningen!B16	Dynamisch
+D. Dynamische kleuren met Voorwaardelijke Opmaak
+text
+Voor de "Resterend" KPI:
+
+1. Selecteer de cel met het bedrag
+2. Start → Voorwaardelijke opmaak → Nieuwe regel
+3. Regel 1: Celwaarde < 0 → Rode achtergrond
+4. Regel 2: Celwaarde < 200 → Gele achtergrond  
+5. Regel 3: Celwaarde >= 200 → Groene achtergrond
+________________________________________
+📊 STAP 5: DYNAMISCHE GRAFIEKEN MAKEN
+A. Ringdiagram (Categorieën)
+text
+1. Selecteer Berekeningen!A21:B27 (categorieën + bedragen)
+2. Invoegen → Grafieken → Cirkel → Ringdiagram
+3. Verplaats naar Dashboard sheet
+4. Grafiek opmaken:
+   - Titel: "Uitgaven per Categorie"
+   - Gegevenslabels: Percentages
+   - Legenda: Rechts of onder
+   - Kleuren: Consistente kleurenschema
+Grafiekstijl aanpassen:
+text
+Rechtermuisknop op grafiek → Gegevens selecteren
+→ Zorg dat bereik naar Berekeningen sheet verwijst
+
+Grafiek automatisch bijwerken:
+- Gebruik Excel Tabellen als brongegevens
+- Of gebruik dynamische benoemde bereiken
+B. Lijngrafiek (Trend)
+text
+1. Selecteer Berekeningen!E33:E38 + G33:G38
+2. Invoegen → Grafieken → Lijn → Lijn met markeringen
+3. Aanpassen:
+   - X-as: Maandnamen
+   - Y-as: Bedragen
+   - Titel: "Uitgaven Trend"
+   - Trendlijn toevoegen (optioneel)
+C. Staafdiagram (Budget vs Werkelijk)
+text
+# Eerst in Berekeningen sheet:
+    A               B           C
+40  CATEGORIE       BUDGET      WERKELIJK
+41  Boodschappen    500         =B21
+42  Vervoer         200         =B22
+43  Entertainment   150         =B23
+...
+
+Dan grafiek maken:
+1. Selecteer A40:C47
+2. Invoegen → Staafdiagram → Gegroepeerde staaf
+3. Budget = Grijze kleur
+4. Werkelijk = Kleur afhankelijk van overschrijding
+________________________________________
+🎛️ STAP 6: INTERACTIEVE ELEMENTEN
+A. Dropdown filters op Dashboard
+text
+1. Voeg cellen toe voor filters (bijv. P2:Q3)
+2. Cel Q2: Gegevensvalidatie → Lijst → =Maanden
+3. Cel Q3: Gegevensvalidatie → Lijst → =Jaren
+4. Link deze aan Instellingen sheet:
+
+   In Instellingen!B2: =Dashboard!Q2
+   In Instellingen!B3: =Dashboard!Q3
+
+OF
+
+   Maak de dropdowns direct in Instellingen en
+   verwijs Dashboard naar die cellen
+B. Slicer toevoegen (elegantere optie)
+text
+1. Klik op een Excel Tabel (Data_Uitgaven)
+2. Tabelontwerp → Slicer invoegen
+3. Kies: Categorie, Betaalwijze, Maand
+4. Verplaats slicers naar Dashboard
+5. Opmaken: Slicer → Slicerstijlen
+C. Tijdlijn toevoegen (voor datums)
+text
+1. Klik op Excel Tabel met datumkolom
+2. Invoegen → Tijdlijn
+3. Selecteer datumveld
+4. Verplaats naar Dashboard
+5. Kies weergave: Maanden/Kwartalen/Jaren
+________________________________________
+🎨 STAP 7: PROFESSIONELE OPMAAK
+A. Kleurenschema
+text
+Aanbevolen kleurenpalet:
+
+Primair:     #2E86AB (Blauw)      - Headers, titels
+Secundair:   #A23B72 (Magenta)    - Accenten
+Positief:    #28A745 (Groen)      - Positieve waarden
+Waarschuwing:#FFC107 (Geel)       - Waarschuwingen
+Negatief:    #DC3545 (Rood)       - Negatieve waarden
+Neutraal:    #6C757D (Grijs)      - Subtekst
+Achtergrond: #F8F9FA (Lichtgrijs) - Dashboard achtergrond
+Kaarten:     #FFFFFF (Wit)        - KPI kaarten
+B. Lettertypen
+text
+Titels:      Segoe UI Bold, 14-18pt
+Subtitels:   Segoe UI Semibold, 11-12pt
+Bedragen:    Segoe UI Bold, 16-24pt
+Bodytekst:   Segoe UI Regular, 10pt
+Subtekst:    Segoe UI Light, 8-9pt, Grijs
+C. Dashboard Layout Template
+text
+┌────────────────────────────────────────────────────────────────────┐
+│ [LOGO]    FINANCIEEL DASHBOARD           [Maand ▼] [Jaar ▼]  [👤] │ Rij 1-3
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │ Rij 4 (spacer)
+│   ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────────┐ │ Rij 5-10
+│   │INKOMSTEN│ │ VASTE   │ │VARIABEL │ │RESTEREND│ │   STATUS    │ │
+│   │  €3.450 │ │ €1.200  │ │  €980   │ │ €1.270  │ │ 🟢 GEZOND   │ │
+│   │         │ │ LASTEN  │ │UITGAVEN │ │         │ │             │ │
+│   └─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────────┘ │
+│                                                                    │ Rij 11 (spacer)
+│   ┌──────────────────────────┐  ┌──────────────────────────────┐  │ Rij 12-25
+│   │                          │  │                              │  │
+│   │   UITGAVEN PER CATEGORIE │  │    TREND LAATSTE 6 MAANDEN   │  │
+│   │      [RINGDIAGRAM]       │  │        [LIJNGRAFIEK]         │  │
+│   │                          │  │                              │  │
+│   └──────────────────────────┘  └──────────────────────────────┘  │
+│                                                                    │ Rij 26 (spacer)
+│   ┌─────────────────────────────────────────────────────────────┐ │ Rij 27-40
+│   │                                                             │ │
+│   │              BUDGET VS WERKELIJK PER CATEGORIE              │ │
+│   │                    [STAAFDIAGRAM]                           │ │
+│   │                                                             │ │
+│   └─────────────────────────────────────────────────────────────┘ │
+│                                                                    │ Rij 41 (spacer)
+│   ┌─────────────────────────────────────────────────────────────┐ │ Rij 42-52
+│   │  RECENTE TRANSACTIES                                        │ │
+│   │  ─────────────────────────────────────────────────────────  │ │
+│   │  Datum      Categorie        Omschrijving         Bedrag    │ │
+│   │  15-01      Boodschappen     Albert Heijn         €67,50    │ │
+│   │  14-01      Vervoer          NS                   €23,40    │ │
+│   │  14-01      Horeca           Restaurant           €45,00    │ │
+│   └─────────────────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────────┘
+________________________________________
+🔄 STAP 8: AUTOMATISCHE UPDATES
+A. Formules automatisch herberekenen
+text
+Bestand → Opties → Formules → Automatisch herberekenen: AAN
+B. Laatste transacties tonen (dynamisch)
+excel
+# In Dashboard, voor recente transacties tabel:
+
+# Datum (meest recent bovenaan)
+=INDEX(SORTEREN(Data_Uitgaven;1;-1);RIJ()-41;1)
+
+# Categorie
+=INDEX(SORTEREN(Data_Uitgaven;1;-1);RIJ()-41;3)
+
+# Bedrag  
+=INDEX(SORTEREN(Data_Uitgaven;1;-1);RIJ()-41;5)
+
+# Of met FILTER functie (Microsoft 365):
+=FILTER(SORTEREN(Data_Uitgaven;1;-1);RIJAANTAL(Data_Uitgaven)>0)
+C. Timestamp laatste update
+excel
+# In een cel op Dashboard:
+="Laatst bijgewerkt: "&TEKST(NU();"DD-MM-JJJJ UU:MM")
+________________________________________
+📱 STAP 9: EXTRA INTERACTIEVE FEATURES
+A. Sparklines (mini-grafieken in cellen)
+text
+1. Selecteer lege cel naast KPI
+2. Invoegen → Sparklines → Lijn
+3. Gegevensbereik: Berekeningen!G33:G38
+4. Locatiebereik: De geselecteerde cel
+5. Opmaken: Hoog/laag punten markeren
+B. Pictogrammensets
+text
+1. Selecteer cel met percentage/status
+2. Voorwaardelijke opmaak → Pictogrammensets
+3. Kies: Verkeerslichten of Vlaggen
+4. Regels aanpassen voor jouw drempelwaarden
+C. Gegevensbalken
+text
+1. Selecteer bereik met bedragen
+2. Voorwaardelijke opmaak → Gegevensbalken
+3. Kies kleurverloop
+4. Goed voor vergelijking categorieën
+AI excel formule agent 2)# Excel Formules voor Huishoudboekhouding Analyses
+
+Ik ga ervan uit dat je data in tabellen staat. Hieronder vind je formules georganiseerd per analysetype.
+
+---
+
+## 📊 Aangenomen Datastructuur
+
+### Tabel: Uitgaven (bijv. kolom A:E)
+| A | B | C | D | E |
+|------|------------|-----------|--------------|---------|
+| Datum | Betaalwijze | Categorie | Subcategorie | Bedrag |
+
+### Tabel: Vaste Lasten (bijv. kolom G:H)
+| G | H |
+|------------|--------|
+| Omschrijving | Bedrag |
+
+### Tabel: Inkomsten (bijv. kolom J:K)
+| J | K |
+|--------|--------|
+| Bron | Bedrag |
+
+### Tabel: Huishouden (bijv. kolom M:N)
+| M | N |
+|------|----------|
+| Naam | Relatie |
+
+---
+
+## 1️⃣ Basis Overzichten
+
+```excel
+# Totaal dagelijkse uitgaven
+=SOM(Uitgaven[Bedrag])
+
+# Totaal vaste lasten
+=SOM(VasteLasten[Bedrag])
+
+# Totaal inkomsten
+=SOM(Inkomsten[Bedrag])
+
+# Maandelijks beschikbaar (vrij besteedbaar)
+=SOM(Inkomsten[Bedrag]) - SOM(VasteLasten[Bedrag])
+
+# Totaal saldo
+=SOM(Inkomsten[Bedrag]) - SOM(VasteLasten[Bedrag]) - SOM(Uitgaven[Bedrag])
+```
+
+---
+
+## 2️⃣ Tijdgebonden Analyses
+
+```excel
+# Uitgaven per specifieke maand (bijv. januari 2025)
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Datum];">="&DATUM(2025;1;1);Uitgaven[Datum];"<="&DATUM(2025;1;31))
+
+# Dynamisch: uitgaven huidige maand
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Datum];">="&EOMAAND(VANDAAG();-1)+1;Uitgaven[Datum];"<="&EOMAAND(VANDAAG();0))
+
+# Uitgaven vorige maand
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Datum];">="&EOMAAND(VANDAAG();-2)+1;Uitgaven[Datum];"<="&EOMAAND(VANDAAG();-1))
+
+# Uitgaven per week (weeknummer in cel F1)
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Datum];">="&DATUM(JAAR(VANDAAG());1;1)+(F1-1)*7;Uitgaven[Datum];"<"&DATUM(JAAR(VANDAAG());1;1)+F1*7)
+
+# Uitgaven vandaag
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Datum];VANDAAG())
+
+# Uitgaven per jaar (jaar in cel F2)
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Datum];">="&DATUM(F2;1;1);Uitgaven[Datum];"<="&DATUM(F2;12;31))
+
+# Gemiddelde dagelijkse uitgaven (huidige maand)
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Datum];">="&EOMAAND(VANDAAG();-1)+1;Uitgaven[Datum];"<="&EOMAAND(VANDAAG();0))/DAG(VANDAAG())
+```
+
+---
+
+## 3️⃣ Categorie Analyses
+
+```excel
+# Totaal per categorie (categorie in cel F3)
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Categorie];F3)
+
+# Totaal per subcategorie
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Subcategorie];F4)
+
+# Percentage van totaal per categorie
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Categorie];F3)/SOM(Uitgaven[Bedrag])*100
+
+# Categorie + maand combinatie
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Categorie];F3;Uitgaven[Datum];">="&DATUM(2025;1;1);Uitgaven[Datum];"<="&DATUM(2025;1;31))
+
+# Aantal transacties per categorie
+=AANTAL.ALS(Uitgaven[Categorie];F3)
+
+# Gemiddeld bedrag per transactie per categorie
+=GEMIDDELDE.ALS(Uitgaven[Bedrag];Uitgaven[Categorie];F3)
+
+# Hoogste uitgave per categorie
+=MAXIFS(Uitgaven[Bedrag];Uitgaven[Categorie];F3)
+
+# Laagste uitgave per categorie
+=MINIFS(Uitgaven[Bedrag];Uitgaven[Categorie];F3)
+```
+
+---
+
+## 4️⃣ Betaalwijze Analyses
+
+```excel
+# Totaal per betaalwijze (bijv. "PIN" in cel F5)
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Betaalwijze];F5)
+
+# Percentage contant
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Betaalwijze];"Contant")/SOM(Uitgaven[Bedrag])*100
+
+# Aantal PIN-transacties
+=AANTAL.ALS(Uitgaven[Betaalwijze];"PIN")
+
+# Gemiddelde PIN-transactie
+=GEMIDDELDE.ALS(Uitgaven[Bedrag];Uitgaven[Betaalwijze];"PIN")
+
+# Betaalwijze per categorie
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Betaalwijze];F5;Uitgaven[Categorie];F3)
+```
+
+---
+
+## 5️⃣ Huishouden Analyses
+
+```excel
+# Aantal huishoudleden
+=AANTALARG(Huishouden[Naam])
+
+# Uitgaven per persoon (gelijk verdeeld)
+=SOM(Uitgaven[Bedrag])/AANTALARG(Huishouden[Naam])
+
+# Inkomsten per persoon
+=SOM(Inkomsten[Bedrag])/AANTALARG(Huishouden[Naam])
+
+# Beschikbaar per persoon per maand
+=(SOM(Inkomsten[Bedrag])-SOM(VasteLasten[Bedrag]))/AANTALARG(Huishouden[Naam])
+```
+
+---
+
+## 6️⃣ Trendanalyses & Vergelijkingen
+
+```excel
+# Verschil huidige maand vs vorige maand
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Datum];">="&EOMAAND(VANDAAG();-1)+1;Uitgaven[Datum];"<="&EOMAAND(VANDAAG();0)) - SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Datum];">="&EOMAAND(VANDAAG();-2)+1;Uitgaven[Datum];"<="&EOMAAND(VANDAAG();-1))
+
+# Procentuele verandering t.o.v. vorige maand
+=(HuidigeMaand-VorigeMaand)/VorigeMaand*100
+
+# 3-maanden gemiddelde
+=(Maand1+Maand2+Maand3)/3
+
+# Budget overschrijding (budget in cel F6)
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Categorie];F3)-F6
+```
+
+---
+
+## 7️⃣ Dashboard Formules (Samenvattingen)
+
+```excel
+# Top 3 categorieën - hoogste uitgaven (gebruik met SORTEREN)
+=SORTEREN(UNIEK(Uitgaven[Categorie]);;-1)
+
+# Maandoverzicht met SOMMEN.ALS matrix (voor draaitabel-achtige weergave)
+# Rij = Categorie, Kolom = Maand
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Categorie];$A2;MAAND(Uitgaven[Datum]);B$1)
+
+# Unieke categorieën lijst
+=UNIEK(Uitgaven[Categorie])
+
+# Unieke betaalwijzes
+=UNIEK(Uitgaven[Betaalwijze])
+```
+
+---
+
+## 8️⃣ Geavanceerde Formules
+
+```excel
+# Lopend totaal (uitgaven cumulatief)
+=SOM($E$2:E2)
+
+# Weekdag met hoogste uitgaven
+=INDEX({"ma";"di";"wo";"do";"vr";"za";"zo"};VERGELIJKEN(MAX(SOMMEN.ALS(Uitgaven[Bedrag];WEEKDAG(Uitgaven[Datum];2);{1;2;3;4;5;6;7}));SOMMEN.ALS(Uitgaven[Bedrag];WEEKDAG(Uitgaven[Datum];2);{1;2;3;4;5;6;7});0))
+
+# Voorspelling einde maand (op basis van huidige uitgaven)
+=SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Datum];">="&EOMAAND(VANDAAG();-1)+1;Uitgaven[Datum];"<="&VANDAAG())/DAG(VANDAAG())*DAG(EOMAAND(VANDAAG();0))
+
+# Spaarpotentieel
+=SOM(Inkomsten[Bedrag])-SOM(VasteLasten[Bedrag])-SOM(Uitgaven[Bedrag])
+```
+
+---
+
+## 💡 Tips
+
+| Tip | Uitleg |
+|-----|--------|
+| **Gebruik Excel Tabellen** | Converteer bereiken naar tabellen (Ctrl+T) voor dynamische formules |
+| **Benoemde Bereiken** | Geef bereiken namen voor leesbaardere formules |
+| **Draaitabellen** | Combineer met draaitabellen voor interactieve analyses |
+| **Voorwaardelijke opmaak** | Markeer overschrijdingen automatisch rood |
+
+---
+
+Wil je dat ik specifieke formules verder uitwerk, of heb je een bepaalde analyse die je wilt toevoegen? Ik kan ook helpen met de VBA-code om de data vanuit de UserForms naar de juiste tabellen te schrijven.
+🏗️ Structuur: Werkbladen Opzet
+
+📁 Jouw Excel Bestand
+├── 📄 Data_Uitgaven        ← Ruwe data uit UserForms
+├── 📄 Data_VasteLasten     ← Ruwe data uit UserForms
+├── 📄 Data_Inkomsten       ← Ruwe data uit UserForms
+├── 📄 Data_Huishouden      ← Ruwe data uit UserForms
+├── 📄 Berekeningen         ← Alle formules (verborgen)
+├── 📄 Dashboard            ← Hoofdoverzicht
+├── 📄 Detail_Categorie     ← Diepere analyse
+└── 📄 Trends               ← Tijdlijn analyses
+1️⃣ Het Berekeningenblad (Motor achter alles)
+Dit blad bevat alle berekeningen en wordt later verborgen.
+
+Structuur Berekeningenblad
+Rij	A	B	C
+1	Parameter	Waarde	Formule
+2	Geselecteerde Maand	1	(dropdown invoer)
+3	Geselecteerd Jaar	2025	(dropdown invoer)
+4	Geselecteerde Categorie	Boodschappen	(dropdown invoer)
+5			
+6	KPI's		
+7	Totaal Inkomsten	€ 3.500	=SOM(...)
+			
+8	Totaal Vaste Lasten	€ 1.800	=SOM(...)
+9	Vrij Besteedbaar	€ 1.700	=B7-B8
+10	Uitgaven Deze Maand	€ 1.234	=SOMMEN.ALS(...)
+11	Resterend Budget	€ 466	=B9-B10
+12	Spaarquote	27%	=B11/B7
+
+Dynamische Datumbereiken
+
+# In Berekeningenblad - deze worden overal hergebruikt
+# Cel B2 = geselecteerde maand, B3 = geselecteerd jaar
+
+# Startdatum geselecteerde periode
+StartDatum: =DATUM(B3;B2;1)
+
+# Einddatum geselecteerde periode
+EindDatum: =EOMAAND(DATUM(B3;B2;1);0)
+
+# Startdatum vorige maand
+StartVorig: =EOMAAND(DATUM(B3;B2;1);-1)+1
+
+# Einddatum vorige maand
+EindVorig: =EOMAAND(DATUM(B3;B2;1);-1)
+2️⃣ Dashboard Layout
+Visuele Indeling (Grid-systeem)
+
+┌─────────────────────────────────────────────────────────────────┐
+│  🏠 HUISHOUDBOEKHOUDING                    📅 Januari 2025  ▼   │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
+│  │ INKOMSTEN│  │  VASTE   │  │  VRIJ    │  │ UITGAVEN │        │
+│  │  € 3.500 │  │  LASTEN  │  │BESTEEDBAR│  │ € 1.234  │        │
+│  │    ▲     │  │  € 1.800 │  │  € 1.700 │  │    ▼     │        │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘        │
+│                                                                 │
+│  ┌─────────────────────────────┐  ┌─────────────────────────┐  │
+│  │                             │  │   CATEGORIE VERDELING   │  │
+│  │    UITGAVEN PER WEEK        │  │                         │  │
+│  │    📊 Staafdiagram          │  │      🥧 Taartdiagram    │  │
+│  │                             │  │                         │  │
+│  └─────────────────────────────┘  └─────────────────────────┘  │
+│                                                                 │
+│  ┌─────────────────────────────┐  ┌─────────────────────────┐  │
+│  │   TOP 5 UITGAVEN            │  │   TREND 6 MAANDEN       │  │
+│  │   1. Boodschappen  € 456    │  │   📈 Lijndiagram        │  │
+│  │   2. Transport     € 234    │  │                         │  │
+│  │   3. ...                    │  │                         │  │
+│  └─────────────────────────────┘  └─────────────────────────┘  │
+│                                                                 │
+
+3️⃣ Interactieve Elementen
+A. Dropdown Menu's (Gegevensvalidatie)
+
+Stap 1: Maak lijsten in Berekeningenblad
+        Kolom Z: 1,2,3,4,5,6,7,8,9,10,11,12 (maanden)
+        Kolom AA: 2024,2025,2026 (jaren)
+        Kolom AB: =UNIEK(Uitgaven[Categorie])
+
+Stap 2: Selecteer invoercel op Dashboard
+        → Data → Gegevensvalidatie
+        → Toestaan: Lijst
+        → Bron: =Berekeningenblad!$Z$1:$Z$12
+B. Slicers (Meest Visueel)
+
+Stap 1: Maak een draaitabel van je uitgaven
+Stap 2: Klik in draaitabel → Invoegen → Slicer
+Stap 3: Selecteer: Categorie, Maand, Betaalwijze
+Stap 4: Verplaats slicers naar Dashboard
+Stap 5: Stijl aanpassen: Slicer → Opties → Slicerstijlen
+C. Tijdlijn Slicer (Voor Datums)
+
+Stap 1: Selecteer draaitabel
+Stap 2: Invoegen → Tijdlijn
+Stap 3: Selecteer datumveld
+Stap 4: Kies weergave: Dagen/Weken/Maanden/Jaren
+Stap 1: Invoegen → Vormen → Afgeronde rechthoek
+4️⃣ KPI-Kaarten Maken
+Methode 1: Vormen met Gekoppelde Cellen
+
+Stap 2: Teken de vorm op je dashboard
+Stap 3: Selecteer de vorm
+Stap 4: Klik in de formulebalk
+Stap 5: Typ: =Berekeningenblad!B7
+Stap 6: De vorm toont nu de celwaarde!
+
+Opmaak:
+- Vulkleur: Groen voor positief, Rood voor negatief
+- Tekstgrootte: 28pt voor bedrag, 10pt voor label
+- Schaduw: Licht voor diepte-effect
+Methode 2: Samengevoegde Cellen met Opmaak
+
+Stap 1: Selecteer bereik bijv. B2:D4
+Stap 2: Samenvoegen en centreren
+Stap 3: Formule invoeren die verwijst naar Berekeningenblad
+Stap 4: Opmaak: Grote font, achtergrondkleur, rand
+KPI met Pijl-Indicator
+
+# In cel naast bedrag - toont ▲ of ▼
+=ALS(HuidigeMaand>VorigeMaand;"▲ "&TEKST((HuidigeMaand-VorigeMaand)/VorigeMaand;"0%");"▼ "&TEKST((VorigeMaand-HuidigeMaand)/VorigeMaand;"0%"))
+5️⃣ Dynamische Grafieken
+A. Uitgaven per Categorie (Ringdiagram)
+
+Databron (in Berekeningenblad):
+┌────────────────┬──────────┐
+│ Categorie      │ Bedrag   │
+├────────────────┼──────────┤
+│ Boodschappen   │ =SOMMEN.ALS(Uitgaven[Bedrag];Uitgaven[Categorie];"Boodschappen";Uitgaven[Datum];">="&StartDatum;Uitgaven[Datum];"<="&EindDatum)
+│ Transport      │ =SOMMEN.ALS(...)
+│ Horeca         │ =SOMMEN.ALS(...)
+│ Kleding        │ =SOMMEN.ALS(...)
+│ Overig         │ =SOMMEN.ALS(...)
+└────────────────┴──────────┘
+
+Grafiek:
+→ Invoegen → Grafieken → Cirkel → Ringdiagram
+→ Selecteer databereik
+→ Gegevenslabels toevoegen met percentages
+B. Trend Lijndiagram (6 Maanden)
+
+Databron:
+┌─────────┬──────────┬──────────┬──────────┐
+│ Maand   │ Inkomsten│ Uitgaven │ Saldo    │
+├─────────┼──────────┼──────────┼──────────┤
+│ Aug     │ € 3.500  │ € 2.100  │ € 1.400  │
+│ Sep     │ € 3.500  │ € 2.300  │ € 1.200  │
+│ Okt     │ € 3.600  │ € 2.000  │ € 1.600  │
+│ Nov     │ € 3.500  │ € 2.800  │ € 700    │
+│ Dec     │ € 4.000  │ € 3.200  │ € 800    │
+│ Jan     │ € 3.500  │ € 1.234  │ € 2.266  │
+└─────────┴──────────┴──────────┴──────────┘
+C. Budget vs Werkelijk (Staafdiagram)
+
+Grafiek:	
+→ Invoegen → Grafieken → Lijn → Lijn met markeringen
+
+Databron:
+┌─────────────┬─────────┬──────────┐
+│ Categorie   │ Budget  │ Werkelijk│
+├─────────────┼─────────┼──────────┤
+│ Boodschappen│ € 500   │ € 456    │
+│ Transport   │ € 200   │ € 234    │ ← Overschrijding!
+│ Horeca      │ € 150   │ € 120    │
+└─────────────┴─────────┴──────────┘
+
+Grafiek:
+→ Invoegen → Grafieken → Kolom → Gegroepeerde kolom
+→ Budget = Blauw, Werkelijk = Groen/Rood
+6️⃣ Sparklines (Mini-Grafieken in Cellen)
+Ideaal voor snelle trends in KPI-kaarten
+
+Stap 1: Selecteer cel waar sparkline moet komen
+Stap 2: Invoegen → Sparklines → Lijn/Kolom/Winst-verlies
+Stap 3: Selecteer databereik (bijv. laatste 6 maanden)
+
+Voorbeeld:
+┌─────────────────────────────────────┐
+│ Uitgaven Trend        📈 ▁▂▄▃▅▇    │
+│ € 1.234                             │
+└─────────────────────────────────────┘
+
+Opties:
+→ Sparkline → Ontwerpen → Markeringen tonen
+→ Hoge punt markeren (rood)
+→ Lage punt markeren (groen)
+7️⃣ Voorwaardelijke Opmaak
+Automatische Kleurcodes
+
+Budget Status Indicator:
+→ Selecteer cel met resterend budget
+→ Start → Voorwaardelijke opmaak → Regels beheren
+
+Regel 1: Als waarde > 0 → Groene achtergrond
+Regel 2: Als waarde < 0 → Rode achtergrond
+Regel 3: Als waarde < -100 → Donkerrood + witte tekst
+Gegevensbalk in Cellen
+
+→ Selecteer uitgavenbedragen
+→ Voorwaardelijke opmaak → Gegevensbalken
+→ Kies gradiëntvulling
+→ Resultaat: Visuele balk achter elk bedrag
+Pictogrammensets
+
+→ Selecteer vergelijkingscellen (bijv. % t.o.v. vorige maand)
+→ Voorwaardelijke opmaak → Pictogrammensets
+→ Kies: Pijlen (groen/geel/rood)
+
+Resultaat:
++15%  ▲ (groen)
+-2%   ● (geel)
+-20%  ▼ (rood)
+8️⃣ Navigatie & Gebruiksvriendelijkheid
+Navigatieknoppen
+
+Stap 1: Invoegen → Vormen → Afgeronde rechthoek
+Stap 2: Tekst toevoegen: "Naar Details →"
+Stap 3: Rechtsklik → Hyperlink → Plaats in dit document
+Stap 4: Selecteer doelwerkblad
+
+Knoppen maken voor:
+[🏠 Dashboard] [📊 Details] [📈 Trends] [⚙️ Instellingen]
+Werkbladen Verbergen
+
+# Verberg technische bladen voor eindgebruiker
+Rechtsklik op bladtab → Verbergen
+
+Te verbergen:
+- Berekeningenblad
+- Ruwe data bladen (als UserForm deze beheert)
+9️⃣ Dynamische Titels
+
+# Titel die meebeweegt met selectie
+="Uitgavenoverzicht - "&TEKST(DATUM(JaarSelectie;MaandSelectie;1);"MMMM JJJJ")
+
+# Resultaat: "Uitgavenoverzicht - Januari 2025"
+# Subtitel met context
+="Totaal "&AANTALARG(Huishouden[Naam])&" personen | "&TEKST(SOM(Uitgaven[Bedrag]);"€ #.##0")&" uitgegeven"
+
+# Resultaat: "Totaal 4 personen | € 1.234 uitgegeven"
+
+🔟 Complete Dashboard Checklist
+Element	Locatie	Status
+□ Maand/Jaar selector	Rechtsboven	
+□ KPI-kaart: Inkomsten	Rij 1	
+□ KPI-kaart: Vaste Lasten	Rij 1	
+□ KPI-kaart: Vrij Besteedbaar	Rij 1	
+□ KPI-kaart: Resterend	Rij 1	
+□ Ringdiagram categorieën	Rij 2 Links	
+□ Staafdiagram weekverdeling	Rij 2 Rechts	
+□ Trendlijn 6 maanden	Rij 3	
+□ Top 5 uitgaven tabel	Rij 4 Links	
+□ Slicer: Categorie	Zijpaneel	
+□ Navigatieknoppen	Bovenbalk	
+□ Voorwaardelijke opmaak	Overal	
+ 
+
+

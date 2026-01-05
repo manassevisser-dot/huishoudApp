@@ -1,0 +1,82 @@
+============================================================
+MASTER HANDOVER DOCUMENT — W&I Excel UserForms Wizard (v5.2)
+Owner: Manasse Visser | Date: 2025-11-26
+Context: Dit bestand bundelt alle instructies, diff-lijsten, QA-checks en startprompt voor de volgende AI-agent.
+============================================================
+
+## SAMENVATTING VERSIES & WIJZIGINGEN
+
+- Bronbestand: Alles.txt (projectdocumentatie, diff-lijsten, layout specs, testplan)
+- Belangrijkste wijzigingen: DYN_PREFIX fix, enums toegevoegd, foutafhandeling uniform, shape-gebaseerde knoppen, safe-area layout, inclusieve labels.
+- Zie sectie [Diff-secties] voor details.
+
+## INI-PLAN (Stap-voor-stap)
+
+1. Open Excel (.xlsm) en VBE (Alt+F11).
+2. Voeg modules toe: Utils, FormBackground, FormHelpers, FormLayout, LayoutSpecsHelpers, FormData, FormEvents, frmBuilders, MonthlySheet, Navigation, Reporting, TableSetup.
+3. Voeg klassen toe: CImgEvents, CBtnEvents, CCmbEvents, CTxtEvents.
+4. Voeg UserForms toe: frmHuishouden, frmVast (MultiPage), frmInvoer, frmDebugDashboard.
+5. Compileer (Debug → Compile VBAProject).
+6. Test via frmDebugDashboard (Smoke Tests, Sanity-check).
+
+## DIFF-SECTIES (Belangrijkste wijzigingen sinds Fullcode)
+
+DIFFLIST – Mockups & Flowcharts Integration (Step: Designs)
+DIFFLIST – Step: Mock-ups 2–4 + MultiPage plan
+DIFFLIST – Apply Visual Layout Grid
+### DONE
+### DONE
+###GEDAAN
+### GEDAAN
+;### MEE BEZIG! Tussendoor nieuwe code ontvangen voor update via tabel en even de weg kwijt geraakt
+DIFFLIST – Layout Specs Integration (Shapes Reuse + Hover + Table-driven)
+DIFFLIST – FULLcode Alignment with Best Practices
+### OVERVIEW
+### CHANGES TO APPLY
+### EERST //SUB FUNCTIE_NAAM() //
+### Alle ErrHandler Aangepast
+### Dynamic UsFrm Aangepast ### EERST HIERONDER VERDERGAAN
+### RECOMMENDED BUTTON DIMENSIONS (for shapes on sheet "Referenties")
+### BEGINNER HOW-TO
+DIFFLIST – Mockups & Flowcharts Integration (Step: Designs)
+DIFFLIST – Step: Mock-ups 2–4 + MultiPage plan
+DIFFLIST – Apply Visual Layout Grid
+### DONE
+### DONE
+###GEDAAN
+### GEDAAN
+;### MEE BEZIG! Tussendoor nieuwe code ontvangen voor update via tabel en even de weg kwijt geraakt
+DIFFLIST – Layout Specs Integration (Shapes Reuse + Hover + Table-driven)
+DIFFLIST – FULLcode Alignment with Best Practices
+### OVERVIEW
+### CHANGES TO APPLY
+### EERST //SUB FUNCTIE_NAAM() //
+### Alle ErrHandler Aangepast
+### Dynamic UsFrm Aangepast ### EERST HIERONDER VERDERGAAN
+### RECOMMENDED BUTTON DIMENSIONS (for shapes on sheet "Referenties")
+### BEGINNER HOW-TO
+### Codevoorbeeld
+### frmHuishouden
+### frmVast
+### frmInvoer
+### Optie later toevoegen; weet niet waar code te plaatsten
+### Codepatch
+
+## TAKENLIJST + QA-CHECKLIST
+
+- [ ] Shapes op Referenties-sheet aanwezig (btnShapeSmall/Medium/Large + hover, bg_frmInvoer_landscape).
+- [ ] tblLayoutSpecs gevuld met Keys: Prev, Next, Save, Cancel, RowAdd, RowDel.
+- [ ] Geen hardcoded Left/Top/Width/Height in frm-code; alles via LayoutSpecsHelpers.
+- [ ] Hover werkt binnen 100ms; sanity-check OK.
+- [ ] Inclusieve labels toegepast.
+- [ ] ErrorLog blijft leeg of toont gecontroleerde waarschuwingen.
+
+## STARTPROMPT VOOR VOLGENDE AGENT
+
+```
+Je bent de volgende AI-agent voor het W&I Excel UserForms Wizard project. Ga verder bij INI stap [22_test_frminvoer]. Fix layout op alle UserForms via Referenties!tblLayoutSpecs. Verwijder hardcoded coords. Zorg voor hover en safe-area. Draai sanity-check en lever patches.
+```
+
+============================================================
+END OF MASTER HANDOVER v5.2
+============================================================

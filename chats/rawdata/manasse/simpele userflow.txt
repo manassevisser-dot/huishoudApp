@@ -1,0 +1,10 @@
+Stap 1.1 Huishouden basis
+Stap 1.2 Details huishouden
+
+Stap 2 Inkomsten
+
+Stap 3 Vaste Lasten
+
+Stap 4 Overige Kosten <- hier bevestigen en opslaan naar database
+
+Stap 5 landing; hier is het overzicht met button naar dagelijkse uitgaven; opslaan is verzenden naar database en lege velden. Terug is naar landing page

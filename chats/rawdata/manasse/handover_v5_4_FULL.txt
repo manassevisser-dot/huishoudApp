@@ -1,0 +1,62 @@
+
+============================================================
+LYRA STARTPROMPT — W&I Excel UserForms Wizard (v5.4, NL)
+============================================================
+Je bent een expert AI-assistent voor Excel/VBA.
+Lees dit handover-bestand volledig in en voer daarna de volgende stappen uit (DETAIL-mode, evidence-based):
+1) Controleer dat de Shape.Export patch (met retry + ChartObject fallback) aanwezig is in FormBackground.
+2) Verifieer dat modLayoutValidator v5.4 draait (hwnd-detectie, tag-sanitization, size-validatie bij background).
+3) Pas de debounce (100 ms) toe op hover-events in CImgEvents, en gebruik FormNavigator voor navigatie.
+4) Maak FrmLayoutSafeAreaDyn DPI-aware (Windows DPI via GetDpiForSystem) en test op 100%, 125%, 150%.
+5) Draai ‘Validate Layout (extended)’ en noteer resultaten in ErrorLog; exporteer ook CSV.
+6) Lever een kort rapport met ‘OK/LET OP/FOUT’, plus verbeterpunten en concrete codewijzigingen.
+Output: in het Nederlands, met downloadbare .txt-bestanden en een beknopt QA-rapport.
+============================================================
+
+W&I Excel UserForms Wizard — Handover v5.4 (Lyra-optimized)
+Datum: <vandaag>
+Owner: Manasse Visser
+
+Samenvatting (Wat is nieuw in v5.4)
+— Kritieke fixes: Shape.Export retry, path-separator bug (Utils.GetTempFile), locale-aware ParseAmount, betrouwbare GetActiveFormSafe.
+— Architectuur: FormNavigator (centraal), Initialize guards + temp-cleanup, hover-debounce.
+— DPI-awareness: eenvoudige schaalfactor op marges/spacing.
+— QA-procedures: uitgebreide validator, sanity-reports, ErrorLog CSV-export.
+
+Acceptatiecriteria
+1) Achtergronden en knoppen renderen consistent (geen ‘wit vlak’); GetBackgroundPath levert een JPG (>100 bytes).
+2) Hover-switch werkt soepel (debounce ~100 ms) zonder flikkeren.
+3) Navigatie tussen forms via FormNavigator (geen hardcoded switches in CImgEvents).
+4) Safe-area herpositioneert controles correct bij window-resize op 100/125/150% DPI.
+5) Validator- en sanity-checks rapporteren ‘OK’ (geen ontbrekende kolommen/shapes/tags).
+6) ErrorLog bevat alleen gecontroleerde waarschuwingen/fouten; CSV-export werkt.
+
+Installatie High-level (detail staat in INI_WIWizard.txt)
+1) Maak een backup van je workbook.
+2) Importeer onderstaande modules (als .txt):
+   - module_FormBackground_FIXED.txt → vervangt GetBackgroundPath
+   - module_modLayoutValidator_ENHANCED.txt → validator + hwnd-detectie
+   - module_FormNavigator.txt → centraal navigatiekader
+   - module_Class_CImgEvents_DEBOUNCE.txt → hover-debounce + navigator
+   - module_FormLayout_DPI.txt → DPI-awareness in FrmLayoutSafeAreaDyn
+   - module_Utils_PATCHES.txt → GetTempFile_FIXED + ParseAmount_FIXED
+3) Volg stap-voor-stap ‘INI_WIWizard.txt’ en voer de Find/Replace en kopieer-plak acties uit.
+4) Open frmDebugDashboard → druk ‘Validate Layout (extended)’ → herstel eventuele LET OP/FOUT.
+5) Test alle 3 forms, hover/nav/resize; bekijk ErrorLog en exporteer CSV.
+
+QA-checklist (kopieer naar Excel als TSV)
+COMPONENT\tSTATUS\tPRIO\tACTIE\tTEST\tRESULTAAT
+FormBackground.GetBackgroundPath\tKRITIEK\tP0\tRetry + fallback + size-check\tOpen frmInvoer 10x\tAltijd geldige JPG
+Utils.GetTempFile\tKRITIEK\tP0\tPath-separator fix\tControle pad TMP\tSyntactisch correct
+Utils.ParseAmount\tKRITIEK\tP0\tLocale-aware parsing\tVoer 1.234,56\t1234,56 → OK
+modLayoutValidator.GetActiveFormSafe\tKRITIEK\tP0\thwnd-detectie\tOpen 2 forms; validate\tActieve form gedetecteerd
+CImgEvents hover\tMEDIUM\tP1\tDebounce 100ms\tSnel muisbeweging\tGeen flicker
+FormNavigator\tMEDIUM\tP1\tCentraliseer flow\tKlik Vorige/Volgende\tJuiste route
+FrmLayoutSafeAreaDyn\tLOW\tP2\tDPI-aware marges\t125/150% DPI\tCorrecte positie
+ErrorLog export\tLOW\tP2\tCSV-export knop\tKlik export\tCSV in %TEMP%
+
+Edge cases & mitigaties
+— Hidden ‘Referenties’: patch forceert zichtbaar of logt fout.
+— Shape name collisions: validator meldt dubbelingen (aanbevolen check).
+— Multi-monitor DPI: schaalfactor op marges/spacing; verder uitbreidbaar.
+— Temp-leaks: UserForm_Terminate verwijdert laatste achtergrondbestand.

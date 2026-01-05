@@ -1,0 +1,355 @@
+--- dashboard_oud.txt
++++ dashboard_nieuw.txt
+@@ -1,63 +1,300 @@
+-import React from 'react';
+-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
++import React, { useState, useEffect, useCallback } from 'react';
++import { 
++    SafeAreaView, 
++    ScrollView, 
++    View, 
++    Text, 
++    StyleSheet, 
++    TouchableOpacity,
++    Alert,
++    Platform,
++    Dimensions
++} from 'react-native';
++import QuickAddExpense from './QuickAddExpense';
++
++// Definieer financiële interfaces
++interface Expense {
++    amount: number;
++    categoryId: string;
++    note: string;
++    timestamp: string; // ISO string
++}
++
++interface FinancialSummary {
++    netIncome: number; // Netto inkomen (bijv. €2500)
++    fixedCosts: number; // Vaste lasten (bijv. €1200)
++    buffer: number; // Marge/buffer (Netto - Vaste Lasten)
++    riskMarginPercentage: number; // Percentage van de buffer t.o.v. Netto Inkomen
++}
++
++// Mock Data
++const MOCK_SUMMARY: FinancialSummary = {
++    netIncome: 3200, // €3200
++    fixedCosts: 1600, // €1600
++    buffer: 1600, // €1600 (50% buffer)
++    riskMarginPercentage: 50, 
++};
+ 
+ // Kleuren volgens de UX/UI Analyse
+ const COLORS = {
+-  primary: '#00A98F', // Teal
+-  background: '#F9F9F9',
+-  text: '#333333',
+-  action: '#FF6B6B', // Zacht Rood voor waarschuwing/actie
++    primary: '#00A98F', // Teal
++    primaryLight: '#E6F4F2',
++    secondary: '#FFB84C', // Oranje/Geel voor acties
++    background: '#F9F9F9',
++    card: '#FFFFFF',
++    text: '#333333',
++    danger: '#FF6B6B',
++    success: '#4BB543',
+ };
+ 
+-interface DashboardProps {
+-    onReset: () => void;
+-}
+-
+-/**
+- * Dit is de placeholder voor het hoofd dashboard. 
+- * Dit scherm moet later vervangen worden door de implementatie 
+- * van de Risicomarge Visualisatie.
+- */
+-const Dashboard: React.FC<DashboardProps> = ({ onReset }) => {
+-    return (
+-        <View style={styles.container}>
+-            <Text style={styles.title}>Dashboard (Werk in Uitvoering)</Text>
+-            <Text style={styles.subtitle}>
+-                De setup is succesvol voltooid. Hier komt de Risicomarge visualisatie.
+-            </Text>
+-            
+-            <TouchableOpacity style={styles.resetButton} onPress={onReset}>
+-                <Text style={styles.resetButtonText}>Herstart Setup</Text>
+-            </TouchableOpacity>
++// Hulpprogramma om bedragen te formatteren
++const formatCurrency = (amount: number): string => {
++    return new Intl.NumberFormat('nl-NL', {
++        style: 'currency',
++        currency: 'EUR',
++    }).format(amount);
++};
++
++const DashboardScreen: React.FC<{ onReset: () => void }> = ({ onReset }) => {
++    const [summary, setSummary] = useState<FinancialSummary>(MOCK_SUMMARY);
++    const [isQuickAddVisible, setIsQuickAddVisible] = useState(true); // Standaard zichtbaar voor snelle invoer
++    const [expenses, setExpenses] = useState<Expense[]>([]); // Hier slaan we de nieuwe uitgaven tijdelijk op
++
++    // --- SUPABASE DATA LOGICA (Simulatie) ---
++    const fetchFinancialSummary = useCallback(async () => {
++        console.log("Supabase: Ophalen van Financiële Samenvatting...");
++        // In een echte Supabase app zou hier de 'await supabase.from('summary').select('*').single()' staan.
++        
++        // Simuleer een vertraging en gebruik de Mock Data
++        setTimeout(() => {
++            setSummary(MOCK_SUMMARY);
++            console.log("Dashboard Samenvatting geladen.");
++        }, 500);
++    }, []);
++
++    const handleExpenseAdded = useCallback(async (expenseData: Omit<Expense, 'timestamp'>) => {
++        // Voeg de timestamp toe
++        const newExpense: Expense = { ...expenseData, timestamp: new Date().toISOString() };
++
++        console.log("Supabase: Uitgave invoegen:", newExpense);
++        
++        // Hier zou de Supabase call komen:
++        // const { data, error } = await supabase.from('expenses').insert([newExpense]);
++        
++        // Simuleer succesvolle Supabase-invoer
++        console.log("Uitgave succesvol gesimuleerd ingevoegd in Supabase.");
++        
++        // Werk de lokale lijst bij
++        setExpenses(prev => [newExpense, ...prev]);
++        
++        // Toon feedback in de QuickAdd component (reeds gedaan)
++        // Werk de financiële samenvatting bij (dit zou in de backend moeten gebeuren)
++        // Voor nu passen we de buffer lokaal aan als simulatie:
++        setSummary(prev => ({
++            ...prev,
++            buffer: prev.buffer - newExpense.amount
++        }));
++
++    }, []);
++    // --- EINDE SUPABASE DATA LOGICA ---
++
++    useEffect(() => {
++        fetchFinancialSummary();
++    }, [fetchFinancialSummary]);
++
++    // Visuele representatie van de Risicomarge (Barometer/Progress Bar)
++    const renderRiskMargin = () => {
++        const { buffer, netIncome, fixedCosts } = summary;
++        // Berekent de 'gezondheid' van de buffer. Max is 100% van de buffer t.o.v. Netto Inkomen.
++        const percentage = (buffer / netIncome) * 100;
++        const width = Math.min(100, Math.max(0, percentage)); // Zorg dat het tussen 0 en 100 blijft
++
++        // Kleurindicatie: Groen (goed), Oranje (waarschuwing), Rood (laag)
++        let barColor = COLORS.success;
++        if (percentage < 30) {
++            barColor = COLORS.danger;
++        } else if (percentage < 50) {
++            barColor = COLORS.secondary;
++        }
++
++        return (
++            <View style={dashboardStyles.marginContainer}>
++                <Text style={dashboardStyles.marginTitle}>Risicomarge (Buffer)</Text>
++                <View style={dashboardStyles.marginBarBackground}>
++                    <View style={[dashboardStyles.marginBarFill, { width: `${width}%`, backgroundColor: barColor }]} />
++                </View>
++                <Text style={dashboardStyles.marginValue}>
++                    {formatCurrency(buffer)} over van {formatCurrency(netIncome)} na vaste lasten ({fixedCosts > 0 ? formatCurrency(fixedCosts) : '€0,00'})
++                </Text>
++            </View>
++        );
++    };
++    
++    // Lijst van recent toegevoegde uitgaven (voor feedback)
++    const renderRecentExpenses = () => (
++        <View style={dashboardStyles.recentExpensesContainer}>
++            <Text style={dashboardStyles.recentExpensesTitle}>Laatst Toegevoegde Uitgaven</Text>
++            {expenses.slice(0, 5).map((expense, index) => (
++                <View key={index} style={dashboardStyles.expenseItem}>
++                    <Text style={dashboardStyles.expenseAmount}>{formatCurrency(expense.amount)}</Text>
++                    <Text style={dashboardStyles.expenseDetails}>{expense.categoryId.toUpperCase()} - {expense.note}</Text>
++                </View>
++            ))}
++            {expenses.length === 0 && (
++                <Text style={dashboardStyles.noDataText}>Nog geen uitgaven toegevoegd in deze sessie.</Text>
++            )}
+         </View>
+     );
++
++    return (
++        <SafeAreaView style={dashboardStyles.safeArea}>
++            <ScrollView contentContainerStyle={dashboardStyles.scrollContent}>
++                <Text style={dashboardStyles.headerText}>Jouw Financieel Overzicht</Text>
++
++                {/* Hoofdsectie - Risicomarge */}
++                <View style={dashboardStyles.summaryCard}>
++                    <Text style={dashboardStyles.cardTitle}>Maandelijkse Buffer</Text>
++                    {renderRiskMargin()}
++                </View>
++                
++                {/* Quick Add Uitgave Component */}
++                <View style={dashboardStyles.quickAddContainer}>
++                    <QuickAddExpense 
++                        onClose={() => setIsQuickAddVisible(true)} // Kan gebruikt worden als modal
++                        onExpenseAdded={handleExpenseAdded} // Gebruik de Supabase handler
++                    />
++                </View>
++                
++                {/* Recente Uitgaven Lijst */}
++                {renderRecentExpenses()}
++
++                {/* Reset Knop voor Testen */}
++                <TouchableOpacity 
++                    style={dashboardStyles.resetButton} 
++                    onPress={onReset}
++                >
++                    <Text style={dashboardStyles.resetButtonText}>Herstart Setup (Test)</Text>
++                </TouchableOpacity>
++
++            </ScrollView>
++        </SafeAreaView>
++    );
+ };
+ 
+-const styles = StyleSheet.create({
+-    container: {
++const { width } = Dimensions.get('window');
++
++const dashboardStyles = StyleSheet.create({
++    safeArea: {
+         flex: 1,
+-        justifyContent: 'center',
+-        alignItems: 'center',
+         backgroundColor: COLORS.background,
++    },
++    scrollContent: {
++        padding: width * 0.05, // 5% padding voor responsiviteit
++        paddingBottom: 50,
++    },
++    headerText: {
++        fontSize: 28,
++        fontWeight: 'bold',
++        color: COLORS.text,
++        marginBottom: 25,
++        textAlign: 'center',
++    },
++    summaryCard: {
++        backgroundColor: COLORS.card,
++        borderRadius: 15,
+         padding: 20,
+-    },
+-    title: {
+-        fontSize: 24,
++        marginBottom: 25,
++        ...Platform.select({
++            ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 },
++            android: { elevation: 5 },
++        }),
++    },
++    cardTitle: {
++        fontSize: 18,
++        fontWeight: '600',
++        color: COLORS.primary,
++        marginBottom: 15,
++    },
++    // Risicomarge Styles
++    marginContainer: {
++        marginTop: 10,
++    },
++    marginTitle: {
++        fontSize: 14,
++        fontWeight: '500',
++        color: COLORS.text,
++        marginBottom: 8,
++    },
++    marginBarBackground: {
++        height: 12,
++        backgroundColor: COLORS.primaryLight,
++        borderRadius: 6,
++        overflow: 'hidden',
++        marginBottom: 5,
++    },
++    marginBarFill: {
++        height: '100%',
++        borderRadius: 6,
++    },
++    marginValue: {
++        fontSize: 12,
++        color: COLORS.text,
++        textAlign: 'right',
+         fontWeight: 'bold',
+-        color: COLORS.primary,
++    },
++    // Quick Add Container
++    quickAddContainer: {
++        marginBottom: 25,
++    },
++    // Recente Uitgaven Styles
++    recentExpensesContainer: {
++        marginTop: 10,
++        padding: 20,
++        backgroundColor: COLORS.card,
++        borderRadius: 15,
++        ...Platform.select({
++            ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 },
++            android: { elevation: 5 },
++        }),
++    },
++    recentExpensesTitle: {
++        fontSize: 16,
++        fontWeight: '600',
++        color: COLORS.text,
+         marginBottom: 10,
+-    },
+-    subtitle: {
+-        fontSize: 16,
++        borderBottomWidth: 1,
++        borderBottomColor: COLORS.inputBorder,
++        paddingBottom: 5,
++    },
++    expenseItem: {
++        flexDirection: 'row',
++        justifyContent: 'space-between',
++        paddingVertical: 8,
++        borderBottomWidth: 1,
++        borderBottomColor: '#EEE',
++    },
++    expenseAmount: {
++        fontWeight: 'bold',
++        color: COLORS.danger,
++        fontSize: 14,
++    },
++    expenseDetails: {
++        fontSize: 14,
++        color: COLORS.text,
++    },
++    noDataText: {
++        fontStyle: 'italic',
++        color: '#999',
+         textAlign: 'center',
+-        color: COLORS.text,
+-        marginBottom: 30,
+-    },
++        paddingVertical: 10,
++    },
++    // Reset Knop
+     resetButton: {
+         padding: 15,
+         borderRadius: 10,
+-        backgroundColor: COLORS.action,
+-        marginTop: 20,
++        backgroundColor: COLORS.danger,
++        marginTop: 30,
++        alignItems: 'center',
+     },
+     resetButtonText: {
+         color: 'white',
+@@ -65,4 +302,8 @@
+     }
+ });
+ 
+-export default Dashboard;
++export default DashboardScreen;
++
++
++
++

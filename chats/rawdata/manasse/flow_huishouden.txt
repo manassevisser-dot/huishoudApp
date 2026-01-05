@@ -1,0 +1,25 @@
+FLOWCHART – Form 1: Huishouden (Stap 1/4)
+Generated: 2025-11-24 19:18:07
+===============================================
+
+Start → Load background → Set totalPersons via SpinButton
+  ├─ If totalPersons == 1:
+  │    Show Adults frame only
+  │    ├─ Select adult identity: Man | Vrouw | Zelf beschrijven | Niet aangegeven
+  │    ├─ If (identity implies pregnancy/lactation option) offer chkAdult_PregnantOrLactating
+  │    └─ Age band selection
+  ├─ If totalPersons == 2:
+  │    Ask number of adults (SpinButtonAdults) → children = totalPersons - adults
+  │    Show children frame if children == 1; restrict to one child category
+  │    Adults: repeat per count (rows)
+  └─ If totalPersons >= 3:
+       Ask adults vs children (SpinButtonAdults) → children = totalPersons - adults
+       Render dynamic rows for adults and children; enforce sum consistency
+Validation (real-time):
+  - adults + children == totalPersons
+  - If chkAdult_PregnantOrLactating=True then allow selection regardless of gender entry
+Pets:
+  - Always visible; if Yes → require count
+Navigation:
+  - Next enabled only when validation passes → Next → Form 2 (Vaste Inkomsten)
+  - Cancel/Close allowed (shape btnAnnulerenShape)

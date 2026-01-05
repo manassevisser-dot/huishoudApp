@@ -1,0 +1,69 @@
+============================================================
+Handover for Next AI Agent — W&I Excel UserForms Wizard (v5.3)
+Owner: Manasse Visser
+Date: 2025-11-26
+Context: Patch Shape.Export for background export, include diffs and findings.
+============================================================
+
+# CRUCIALE BEVINDINGEN VAN VANDAAG
+- tblLayoutSpecs headers mismatch veroorzaakte Type mismatch errors.
+- Background export faalde door ChartObject.Add methode (Shape.Copy error).
+- Fix: gebruik Shape.Export direct (Excel ondersteunt dit) met fallback naar ChartObject.
+- Hover werkt alleen als Tag correct gevuld is met base/hover.
+- Safe-area correctie moet na background en knoppenbouw komen.
+
+
+# DIFFLIST VAN VANAVOND
+- [PATCH] FormBackground.GetBackgroundPath: vervang ChartObject export door Shape.Export.
+- [PATCH] Voeg fallback toe: als Shape.Export faalt, gebruik ChartObject methode.
+- [UPDATE] LayoutSpecsHelpers: extra logging toegevoegd.
+- [UPDATE] frmBuilders: aanroepvolgorde EnsureBackgroundImage -> Build -> SafeArea -> HookEvents.
+- [FIX] modSanityChecks: rapport toont nu hover-warnings correct.
+
+
+# PATCH VOOR SHAPE.EXPORT + FALLBACK
+vba
+' FormBackground — nieuwe exportmethode
+Public Function GetBackgroundPath() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    If wsRef Is Nothing Then Exit Function
+
+    Dim bgShapeName As String
+    bgShapeName = LayoutSpecsHelpers.GetBackgroundShapeNameFromSpecs()
+    If Len(bgShapeName) = 0 Then bgShapeName = "bg_frmInvoer_landscape" ' fallback
+
+    Dim shp As Shape: Set shp = wsRef.Shapes(bgShapeName)
+    If shp Is Nothing Then Exit Function
+
+    Dim tmp As String
+    tmp = Utils.GetTempFile("frmInvoer_bg", ".jpg")
+
+    ' Probeer Shape.Export direct
+    On Error Resume Next
+    shp.Export tmp, "JPG"
+    If Err.Number = 0 And Dir(tmp) <> "" Then
+        GetBackgroundPath = tmp
+        Exit Function
+    End If
+    On Error GoTo ErrHandler
+
+    ' Fallback: ChartObject methode
+    Dim ch As ChartObject
+    Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=shp.Width, Height:=shp.Height)
+    shp.Copy: ch.Activate: ch.Chart.Paste
+    ch.Chart.Export tmp, "JPG": ch.Delete
+    If Dir(tmp) <> "" Then GetBackgroundPath = tmp
+    Exit Function
+ErrHandler:
+    Utils.LogError4 "FormBackground", "GetBackgroundPath", Err.Number, Err.Description
+End Function
+
+# STARTPROMPT VOOR VOLGENDE AGENT
+
+Je bent de volgende AI-agent voor het W&I Excel UserForms Wizard project.
+Directe actiepunten:
+1. Controleer dat FormBackground.GetBackgroundPath patch is toegepast (Shape.Export + fallback).
+2. Draai sanity-check en valideer hover en layout.
+3. Pas indien nodig frmHuishouden, frmVast, frmInvoer Initialize/Resize aan volgens specs.
+4. Documenteer wijzigingen en lever finale QA.

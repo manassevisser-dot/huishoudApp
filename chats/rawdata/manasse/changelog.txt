@@ -1,0 +1,7 @@
+Changelog for update3:
+- Added 'Beschrijving:' comments above all Subs and Functions.
+- Cleaned Enum definitions: removed invalid comment lines inside Enum.
+- Added clear header comment above each Enum.
+- Preserved LogError4 and LogError wrappers.
+- Preserved configuration helpers (EnsureConfigSheet, ConfigGet).
+- Improved readability and documentation across all modules.

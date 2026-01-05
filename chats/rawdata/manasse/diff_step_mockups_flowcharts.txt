@@ -1,0 +1,28 @@
+DIFFLIST – Mockups & Flowcharts Integration (Step: Designs)
+Generated: 2025-11-24 19:18:07
+===============================================
+
+New/Changed Components:
+1) New UserForms to add:
+   - frmHuishouden (dynamic adults/children/pets)
+   - frmVastInkomsten (separate from frmVast OR MultiPage on frmVast)
+   - frmVastUitgaven (separate form OR second page)
+   - Existing frmInvoer (Dagelijkse) retained; minor layout updates
+2) Shape assets required on sheet "Referenties":
+   - bg_frmInvoer_landscape (already present)
+   - btnVorigeShape, btnVolgendeShape, btnOpslaanShape, btnAnnulerenShape, btnRowAddShape, btnRowDelShape
+3) New modules/functions:
+   - FormEvents_Huishouden.bas – build, hook events, validation
+   - FormEvents_VastInkomsten.bas – row editor, monthly normalization
+   - FormEvents_VastUitgaven.bas – row editor
+   - Navigation updates: sequence (Huishouden → Inkomsten → Uitgaven → Dagelijks)
+4) Inclusive labels/terminology updates:
+   - Replace binary gender labels with options: Man, Vrouw, Zelf beschrijven, Geen antwoord
+   - Pregnancy/lactation checkbox phrasing: "Zwangere of lacterende personen" (neutral)
+5) Validation additions:
+   - Sum(adults)+sum(children) == totalPersons (Huishouden)
+   - At least one valid row before Next on incomes/expenses
+6) Event wiring:
+   - Extend HookEventsDynamic to support shape clicks (Image controls) mapped to actions
+7) Background handling:
+   - Reuse FormBackground.EnsureBackgroundImage for all new forms

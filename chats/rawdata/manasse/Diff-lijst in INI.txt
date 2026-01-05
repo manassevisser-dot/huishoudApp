@@ -1,0 +1,146 @@
+[00_global_instructions]
+notes=Volg stappen 01..21 exact. Sla vaak op. Als compile errors verschijnen: Tools->References -> zorg dat "Microsoft Forms 2.0 Object Library" aangevinkt is.
+
+[01_create_module_FormHelpers]
+path=VBE -> Insert -> Module
+name=FormHelpers
+action=Plak de code uit de sectie "Module: FormHelpers".
+why=Helpers voor shapes/achtergrond/temporaries.
+
+[02_create_module_LayoutSpecsHelpers]
+path=VBE -> Insert -> Module
+name=LayoutSpecsHelpers
+action=Plak de code uit "Module: LayoutSpecsHelpers".
+why=Leest tblLayoutSpecs en plaatst knoppen op formulier.
+
+[03_create_module_FormLayout]
+path=VBE -> Insert -> Module
+name=FormLayout
+action=Plak code uit "Module: FormLayout".
+why=Verwijdert oude dynamische controls en heb je DYN_PREFIX.
+
+[04_create_class_CImgEvents]
+path=VBE -> Insert -> Class Module
+name=CImgEvents
+action=Plak "Class: CImgEvents" code.
+why=Maakt hover gedrag voor Image-knoppen.
+
+[05_create_module_FormEvents]
+path=VBE -> Insert -> Module
+name=FormEvents
+action=Plak code uit "Module: FormEvents".
+why=Bevat BuildDynamicFrmInvoer en event-hooking.
+
+[06_create_module_frmBuilders]
+path=VBE -> Insert -> Module
+name=frmBuilders
+action=Plak code uit "Module: frmBuilders".
+why=Build routines voor frmHuishouden en frmVast.
+
+[07_update_existing_frmInvoer]
+path=VBE -> Project -> Forms -> frmInvoer (open)
+name=frmInvoer
+action=Vervang UserForm_Initialize met de code in sectie "UserForm code: frmInvoer".
+why=Maakt dagformulier consistent met nieuwe layout.
+
+[08_create_userform_frmHuishouden]
+path=VBE -> Insert -> UserForm
+name=frmHuishouden
+action=Open code-pane van frmHuishouden en plak Initialize code zoals aangegeven.
+then=Open Module frmBuilders en roep BuildForm_Huishouden(Me) aan indien nodig.
+why=Nieuwe stap 1 van 4.
+
+[09_create_userform_frmVast]
+path=VBE -> Insert -> UserForm
+name=frmVast
+action=In code-pane: UserForm_Initialize met call BuildFrmVast Me (gebruik module frmBuilders).
+why=MultiPage voor vaste inkomsten/uitgaven.
+
+[10_create_tblLayoutSpecs]
+path=Referenties sheet in workbook
+action=Maak een tabel met name=tblLayoutSpecs met kolommen:
+    Key, ShapeName, Width, Height, X, Y, DefaultColor, HoverColor, Notes
+FillRows:
+    Prev, btnVorigeShape, 80,28, 280,428
+    Next, btnVolgendeShape, 100,28, 376,428
+    Save, btnOpslaanShape, 100,28, 486,428
+    Cancel, btnAnnulerenShape, 100,28, 596,428
+    RowAdd, btnRowAddShape, 28,28, 692,80
+    RowDel, btnRowDelShape, 28,28, 724,80
+why=Table drives button placement and hover images.
+
+[11_create_shapes_on_Referenties]
+path=Referenties sheet
+action=Maak shapes met exact de volgende namen:
+    bg_frmInvoer_landscape
+    btnVorigeShape
+    btnVorigeShape_hover
+    btnVolgendeShape
+    btnVolgendeShape_hover
+    btnOpslaanShape
+    btnOpslaanShape_hover
+    btnAnnulerenShape
+    btnAnnulerenShape_hover
+    btnRowAddShape
+    btnRowAddShape_hover
+    btnRowDelShape
+    btnRowDelShape_hover
+note=Zorg voor exacte naamgevingen; voer juiste sizes volgens tblLayoutSpecs.
+why=Vorm assets die worden geëxporteerd naar JPG en in forms gebruikt.
+
+[12_compile_and_fix_references]
+path=VBE -> Debug -> Compile VBAProject
+action=Als er compile errors: Tools -> References -> vink "Microsoft Forms 2.0 Object Library" en "Microsoft Office XX.X Object Library".
+why=MSForms controls en ChartObjects vereist.
+
+[13_test_frmInvoer]
+path=VBE -> dubbelklik frmInvoer -> Run
+action=Controleer of titel, datum en velden verschijnen en buttons zichtbaar zijn.
+why=Basisvalidatie van BuildDynamicFrmInvoer.
+
+[14_test_frmHuishouden]
+path=VBE -> dubbelklik frmHuishouden -> Run
+action=Controleer of titel, persons controls en frames verschijnen.
+why=UI check stap 1.
+
+[15_test_frmVast]
+path=VBE -> dubbelklik frmVast -> Run
+action=Controleer MultiPage met twee pagina's en de row-template.
+why=UI check stap 2–3.
+
+[16_navigation_tests]
+path=frmHuishouden, frmVast, frmInvoer
+action=Gebruik Next/Prev shapes (klik) — als shapes niet clickable maak fallback CommandButton (zie note).
+note=Image controls do not have Click event by default. To handle clicks you can implement a tiny routine to detect MouseDown on the image controls and route action — alternative: create invisible CommandButtons over buttons as fallback.
+
+[17_additional_events]
+path=Module FormEvents / Class CImgEvents
+action=Indien gewenst: maak CBtnEvents, CCmbEvents, CTxtEvents classmodules (pattern gelijk aan CImgEvents) en hook in HookEventsDynamic.
+why=Volledige hooking voor runtime events.
+
+[18_validation_rules]
+path=frmBuilders / FormEvents
+action=Implementeer validatie:
+    - Adults + Children = total (frmHuishouden)
+    - For frmVast pages: row valid when Bron & Periode & Bedrag>0
+    - For daily: Category chosen & Bedrag>0
+why=Voorkomt doorgaan zonder noodzakelijke gegevens.
+
+[19_error_logging]
+path=Module Utils (if exists) or create new module Logger
+action=Zorg dat Utils.LogError4 bestaat of maak een eenvoudige fallback:
+    Public Sub LogError4(modName As String, procName As String, errNum As Long, errDesc As String)
+        ' Append to ErrorLog sheet or Debug.Print
+        Debug.Print Now & " | " & modName & "." & procName & " | " & errNum & " | " & errDesc
+    End Sub
+why=Consistente error logging.
+
+[20_final_compile_test]
+path=VBE -> Debug -> Compile VBAProject
+action=Los alle compile fouten op. Test run forms end-to-end: frmHuishouden -> frmVast -> frmInvoer.
+why=Accepteer release.
+
+[21_save_and_document]
+path=Excel -> Save (maak backup copy)
+action=Maak backup .xlsm en documenteer de wijzigingen (wij hebben handover YAML gemaakt).
+why=Veiligheid & overdracht.

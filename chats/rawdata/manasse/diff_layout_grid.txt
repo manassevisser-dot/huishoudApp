@@ -1,0 +1,12 @@
+DIFFLIST – Apply Visual Layout Grid
+Generated: 2025-11-24 19:58:29
+============================================================
+1) On sheet "Referenties", design shapes with sizes listed in layout_grid_specs.txt.
+2) In FormLayout.FrmLayoutSafeAreaDyn, ensure controls are positioned within safe area (Left=12, Top=12, Width=776, Height=476).
+3) Update Build routines to use coordinates from layout_grid_specs.txt:
+   - frmHuishouden: place frames and buttons as specified.
+   - frmVast Page 0: row editor coordinates + summary + buttons.
+   - frmVast Page 1: row editor coordinates + summary + buttons.
+   - frmInvoer: align inputs and buttons.
+4) Verify TabIndex order follows visual top-to-bottom, left-to-right.
+5) Test on different screen DPIs; adjust InsideWidth/Height proportionally if needed.
