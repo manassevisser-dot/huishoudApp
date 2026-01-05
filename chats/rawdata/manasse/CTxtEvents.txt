@@ -1,0 +1,21 @@
+' Class: CTxtEvents
+Option Explicit
+Public WithEvents txt As MSForms.TextBox
+Public ParentForm As Object
+Public RowInfo As String
+
+Private Sub txt_Change()
+    On Error Resume Next
+    ' Basic numeric validation for amount fields
+    Dim v As String: v = Replace(txt.Text, ",", ".")
+    If Len(Trim(v)) = 0 Then
+        txt.BackColor = RGB(255, 255, 255)
+    ElseIf IsNumeric(v) Then
+        txt.BackColor = RGB(255, 255, 255)
+    Else
+        txt.BackColor = RGB(255, 230, 230)
+    End If
+    If Not ParentForm Is Nothing Then
+        FormEvents.DynamicRowChanged ParentForm, RowInfo
+    End If
+End Sub

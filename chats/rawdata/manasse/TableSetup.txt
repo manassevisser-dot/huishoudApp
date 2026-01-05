@@ -1,0 +1,111 @@
+'Start of code for Module TableSetup
+'=========
+
+Option Explicit
+
+' Converteer de huidige "Vast"-ranges naar tabellen en maak categorie/subcategorie-tabellen
+Public Sub SetupVastEnCategorieTabellen()
+    On Error GoTo ErrHandler
+    Dim wsV As Worksheet: Set wsV = ThisWorkbook.Worksheets("Vast")
+
+    ' 1) Vaste Inkomsten: zoek header en maak tabel
+    Dim rngInk As Range
+    On Error Resume Next
+    Set rngInk = ThisWorkbook.Names("rngVastInkomsten").RefersToRange
+    On Error GoTo 0
+    If rngInk Is Nothing Then
+        ' Probeer een heuristiek: zoek kopregel met tekst "Inkomsten" of bekende kolomkoppen
+        Dim c As Range
+        For Each c In wsV.UsedRange.Rows(1).EntireRow
+            ' noop: laten zoals is, gebruiker kan Named Range maken indien nodig
+        Next c
+    End If
+    If Not rngInk Is Nothing Then
+        Call Utils.EnsureTable(wsV, "tblVastInkomsten", rngInk)
+    End If
+
+    ' 2) Vaste Uitgaven
+    Dim rngUit As Range
+    On Error Resume Next
+    Set rngUit = ThisWorkbook.Names("rngVastUitgaven").RefersToRange
+    On Error GoTo 0
+    If Not rngUit Is Nothing Then
+        Call Utils.EnsureTable(wsV, "tblVastUitgaven", rngUit)
+    End If
+
+    ' 3) Categorieen + Subcategorieen op een nieuw blad "Referenties"
+    Dim wsRef As Worksheet
+    If Not Utils.SheetBestaat("Referenties") Then
+        Set wsRef = ThisWorkbook.Worksheets.Add
+        wsRef.name = "Referenties"
+    Else
+        Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    End If
+
+    ' Tabel tblCategorieen [Categorie]
+    If wsRef.Cells(1, 1).Value = "" Then wsRef.Range("A1").Value = "Categorie"
+    Dim loCat As ListObject
+    Set loCat = Utils.EnsureTable(wsRef, "tblCategorieen", wsRef.Range("A1"))
+
+    ' Tabel tblSubcategorieen [Categorie, Subcategorie]
+    If wsRef.Cells(1, 3).Value = "" Then
+        wsRef.Range("C1").Value = "Categorie"
+        wsRef.Range("D1").Value = "Subcategorie"
+    End If
+    Dim loSub As ListObject
+    Set loSub = Utils.EnsureTable(wsRef, "tblSubcategorieen", wsRef.Range("C1:D1"))
+
+    ' Voeg startdata toe (Lisa/Kyra en zakgeld/kleding/onzin)
+    Call SeedCategorieen(loCat, loSub)
+
+    MsgBox "Tabellen ingesteld: tblVastInkomsten/tblVastUitgaven (indien aanwezig), tblCategorieen, tblSubcategorieen.", vbInformation
+    Exit Sub
+
+ErrHandler:
+    MsgBox "Fout in SetupVastEnCategorieTabellen: " & Err.Description, vbCritical
+End Sub
+
+Private Sub SeedCategorieen(ByVal loCat As ListObject, ByVal loSub As ListObject)
+    Dim cats As Variant: cats = Array("Eten", "Vervoer", "Hapje/Drankje", "Cadeau", "Lisa", "Kyra", "Kleding e.d", "Overig")
+    Dim i As Long
+    For i = LBound(cats) To UBound(cats)
+        If Not CategoryExists(loCat, CStr(cats(i))) Then AddCategory loCat, CStr(cats(i))
+    Next i
+
+    ' Lisa/Kyra subcategorieen
+    AddSub loSub, "Lisa", "Zakgeld"
+    AddSub loSub, "Lisa", "Kleding"
+    AddSub loSub, "Lisa", "Onzin"
+    AddSub loSub, "Kyra", "Zakgeld"
+    AddSub loSub, "Kyra", "Kleding"
+    AddSub loSub, "Kyra", "Onzin"
+End Sub
+
+Public Function CategoryExists(ByVal loCat As ListObject, ByVal cat As String) As Boolean
+    Dim r As Range
+    For Each r In loCat.ListColumns(1).DataBodyRange
+        If LCase$(Trim$(r.Value)) = LCase$(Trim$(cat)) Then CategoryExists = True: Exit Function
+    Next r
+End Function
+
+Public Sub AddCategory(ByVal loCat As ListObject, ByVal cat As String)
+    Dim lr As ListRow: Set lr = loCat.ListRows.Add
+    lr.Range.Cells(1, 1).Value = cat
+End Sub
+
+Public Sub AddSub(ByVal loSub As ListObject, ByVal cat As String, ByVal subcat As String)
+    ' Voeg subcategorie toe als niet bestaat
+    Dim r As Range
+    If loSub.DataBodyRange Is Nothing Then GoTo AddNew
+    For Each r In loSub.DataBodyRange.Rows
+        If LCase$(Trim$(r.Cells(1, 1).Value)) = LCase$(Trim$(cat)) And _
+           LCase$(Trim$(r.Cells(1, 2).Value)) = LCase$(Trim$(subcat)) Then Exit Sub 'bestaat al
+    Next r
+AddNew:
+    Dim lr As ListRow: Set lr = loSub.ListRows.Add
+    lr.Range.Cells(1, 1).Value = cat
+    lr.Range.Cells(1, 2).Value = subcat
+End Sub
+
+'=========
+'End of code for 

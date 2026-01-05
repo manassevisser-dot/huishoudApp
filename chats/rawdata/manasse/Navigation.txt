@@ -1,0 +1,16 @@
+'Start of code for Module Navigation
+'=========
+Sub OpenFrmDagelijks()
+    frmInvoer.Show
+End Sub
+
+Sub OpenFrmHuishouden()
+    frmHuishouden.Show
+End Sub
+
+Sub OpenFrmVast()
+    frmVast.Show
+End Sub
+
+'=========
+'End of code for 

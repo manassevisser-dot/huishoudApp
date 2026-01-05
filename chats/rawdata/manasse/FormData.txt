@@ -1,0 +1,92 @@
+'Start of code for Module FormData
+'=========
+' FormData.bas
+Option Explicit
+
+Public Sub LoadCategoriesIntoCombo(frm As Object)
+    On Error GoTo ErrHandler
+    Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = ws.ListObjects("tbl_cat")
+    Dim cmb As MSForms.ComboBox: Set cmb = frm.Controls(FormLayout.DYN_PREFIX & "cmbCategorie")
+
+    cmb.Clear
+
+    Dim r As Range
+    For Each r In lo.DataBodyRange.Columns(1).Cells
+        If Len(r.Value) > 0 Then cmb.AddItem r.Value
+    Next r
+
+    cmb.ListIndex = -1
+    Exit Sub
+
+ErrHandler:
+    MsgBox "Fout LoadCategoriesIntoCombo: " & Err.Description
+End Sub
+
+Public Sub LoadSubcategoriesIntoCombo(frm As Object, ByVal cat As String)
+    On Error GoTo ErrHandler
+    Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = ws.ListObjects("tbl_cat_sub")
+    Dim cmb As MSForms.ComboBox: Set cmb = frm.Controls(FormLayout.DYN_PREFIX & "cmbSubcategorie")
+
+    cmb.Clear
+
+    Dim r As Range
+    For Each r In lo.DataBodyRange.Rows
+        If LCase(r.Cells(1, 1).Value) = LCase(cat) Then
+            cmb.AddItem r.Cells(1, 2).Value
+        End If
+    Next r
+
+    cmb.ListIndex = -1
+    Exit Sub
+
+ErrHandler:
+    MsgBox "Fout LoadSubcategoriesIntoCombo: " & Err.Description
+End Sub
+
+Public Sub LoadPaymentMethodsIntoCombo(frm As Object)
+    On Error GoTo ErrHandler
+    Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Referenties")
+    Dim cmb As MSForms.ComboBox: Set cmb = frm.Controls(FormLayout.DYN_PREFIX & "cmbBetaalwijze")
+
+    cmb.Clear
+
+    If WorksheetHasTable(ws, "tbl_payment") Then
+        Dim lo As ListObject: Set lo = ws.ListObjects("tbl_payment")
+        Dim r As Range
+        For Each r In lo.DataBodyRange.Columns(1).Cells
+            cmb.AddItem r.Value
+        Next r
+    Else
+        cmb.AddItem "Contant"
+        cmb.AddItem "Pin"
+        cmb.AddItem "Creditcard"
+        cmb.AddItem "Tikkie"
+        cmb.AddItem "iDEAL"
+        cmb.AddItem "Automatische Incasso"
+    End If
+
+    cmb.ListIndex = 0
+    Exit Sub
+
+ErrHandler:
+    MsgBox "Fout LoadPaymentMethodsIntoCombo: " & Err.Description
+End Sub
+
+Public Function Utils.ParseAmount(s As String) As Double
+    On Error Resume Next
+    Dim decSep As String: decSep = Application.International(xlDecimalSeparator)
+    s = Trim(s)
+    s = Replace(s, ",", decSep)
+    s = Replace(s, ".", decSep)
+    Utils.ParseAmount = CDbl(s)
+End Function
+
+Public Function WorksheetHasTable(ws As Worksheet, tblName As String) As Boolean
+    On Error Resume Next
+    WorksheetHasTable = Not ws.ListObjects(tblName) Is Nothing
+End Function
+
+'=========
+'End of code for 

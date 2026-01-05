@@ -1,0 +1,9 @@
+Private Sub UserForm_Initialize()
+On Error GoTo ErrHandler
+    FormEvents.BuildDynamicFrmInvoer Me
+    LayoutSpecsHelpers.BuildButtonsFromSpecs Me
+    HookEventsDynamic Me
+Exit Sub
+ErrHandler:
+    MsgBox "frmInvoer Initialize: " & Err.Description, vbCritical
+End Sub

@@ -1,0 +1,151 @@
+'Start of code for Module Reporting
+'=========
+
+Option Explicit
+
+Private Const WEEK_SUMMARY_COL As Long = 12 'L: Jaar|Week, Jaar, Weeknr, Totaal, Meest gebruikte categorie
+Private Const MONTH_SUMMARY_COL As Long = 16 'P: mnd, ttl, gpd, gpw, dudg, duwk, m_u_a
+
+Public Function WeekTotaalBestaat(ByVal jaar As Long, ByVal weeknr As Long) As Boolean
+    Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Database")
+    Dim lr As Long: lr = Utils.LastRow(ws, WEEK_SUMMARY_COL)
+    If lr < 2 Then WeekTotaalBestaat = False: Exit Function
+    Dim rng As Range
+    Set rng = ws.Range(ws.Cells(2, WEEK_SUMMARY_COL), ws.Cells(lr, WEEK_SUMMARY_COL)).Find( _
+                what:=CStr(jaar) & "|" & CStr(weeknr), LookIn:=xlValues, LookAt:=xlWhole)
+    WeekTotaalBestaat = Not rng Is Nothing
+End Function
+
+Public Function LaatsteMaandInMaandTabel() As String
+    Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Database")
+    Dim lr As Long: lr = Utils.LastRow(ws, MONTH_SUMMARY_COL)
+    If lr < 2 Then LaatsteMaandInMaandTabel = "" Else LaatsteMaandInMaandTabel = CStr(ws.Cells(lr, MONTH_SUMMARY_COL).Value)
+End Function
+
+Public Sub BerekenWeekTotaal()
+    On Error GoTo ErrHandler
+    Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Database")
+    Utils.EnsureDBHeaders
+
+    Dim lr As Long: lr = Utils.LastRow(ws, Utils.dbDate)
+    If lr < 2 Then Exit Sub
+
+    ' Vorige week
+    Dim dPrev As Date: dPrev = DateAdd("d", -7, Date)
+    Dim tgtWeek As Long: tgtWeek = Utils.IsoWeek(dPrev)
+    Dim tgtYear As Long: tgtYear = Year(dPrev)
+
+    Dim i As Long, total As Double
+    Dim catDict As Object: Set catDict = CreateObject("Scripting.Dictionary")
+
+    For i = 2 To lr
+        If CLng(Val(ws.Cells(i, Utils.dbYear).Value)) = tgtYear And _
+           CLng(Val(ws.Cells(i, Utils.dbWeek).Value)) = tgtWeek And _
+           CStr(ws.Cells(i, Utils.dbType).Value) = "Uitgave" Then
+            Dim amount As Double: amount = CDbl(Val(ws.Cells(i, Utils.dbAmount).Value))
+            total = total + amount
+            Dim cat As String: cat = CStr(ws.Cells(i, Utils.dbCategory).Value)
+            If Len(Trim$(cat)) > 0 Then Utils.DictAddOrIncrement catDict, cat, 1
+        End If
+    Next i
+
+    Dim mostCat As String, maxCount As Long, k As Variant
+    For Each k In catDict.Keys
+        If catDict(k) > maxCount Then maxCount = catDict(k): mostCat = CStr(k)
+    Next k
+
+    If ws.Cells(1, WEEK_SUMMARY_COL).Value = "" Then
+        ws.Cells(1, WEEK_SUMMARY_COL).Resize(1, 5).Value = Array("Jaar|Week", "Jaar", "Weeknr", "Totaal", "Meest gebruikte categorie")
+    End If
+    Dim outRow As Long: outRow = Utils.LastRow(ws, WEEK_SUMMARY_COL) + 1
+    ws.Cells(outRow, WEEK_SUMMARY_COL).Value = CStr(tgtYear) & "|" & CStr(tgtWeek)
+    ws.Cells(outRow, WEEK_SUMMARY_COL + 1).Value = tgtYear
+    ws.Cells(outRow, WEEK_SUMMARY_COL + 2).Value = tgtWeek
+    ws.Cells(outRow, WEEK_SUMMARY_COL + 3).Value = total
+    ws.Cells(outRow, WEEK_SUMMARY_COL + 4).Value = mostCat
+    Exit Sub
+
+ErrHandler:
+    MsgBox "Fout in BerekenWeekTotaal: " & Err.Description, vbCritical
+End Sub
+
+Public Sub BerekenMaandTotaal()
+    On Error GoTo ErrHandler
+    Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Database")
+    Utils.EnsureDBHeaders
+
+    Dim lr As Long: lr = Utils.LastRow(ws, Utils.dbDate)
+    If lr < 2 Then Exit Sub
+
+    Dim prevMonthKey As String: prevMonthKey = Format(DateAdd("m", -1, Date), "YYYY-MM")
+
+    Dim i As Long
+    Dim totaal As Double, dagenCount As Long
+    Dim weekDict As Object: Set weekDict = CreateObject("Scripting.Dictionary")
+    Dim catDict As Object: Set catDict = CreateObject("Scripting.Dictionary")
+    Dim catCountDict As Object: Set catCountDict = CreateObject("Scripting.Dictionary")
+    Dim duursteDag As Double, duursteWeek As Double
+    Dim maxCatValue As Double, minCatValue As Double
+    Dim maxCatName As String, minCatName As String
+    maxCatValue = 0: minCatValue = 1E+20
+
+    For i = 2 To lr
+        If CStr(ws.Cells(i, Utils.dbMonthKey).Value) = prevMonthKey And CStr(ws.Cells(i, Utils.dbType).Value) = "Uitgave" Then
+            Dim bedrag As Double: bedrag = CDbl(Val(ws.Cells(i, Utils.dbAmount).Value))
+            totaal = totaal + bedrag
+            dagenCount = dagenCount + 1
+            If bedrag > duursteDag Then duursteDag = bedrag
+
+            Dim weekKey As String: weekKey = CStr(ws.Cells(i, Utils.dbYear).Value) & "-W" & CStr(ws.Cells(i, Utils.dbWeek).Value)
+            Utils.DictAddOrIncrement weekDict, weekKey, bedrag
+
+            Dim categorie As String: categorie = CStr(ws.Cells(i, Utils.dbCategory).Value)
+            Utils.DictAddOrIncrement catDict, categorie, bedrag
+            Utils.DictAddOrIncrement catCountDict, categorie, 1
+        End If
+    Next i
+
+    Dim key As Variant
+    For Each key In weekDict.Keys
+        If weekDict(key) > duursteWeek Then duursteWeek = weekDict(key)
+    Next key
+
+    For Each key In catDict.Keys
+        If catDict(key) > maxCatValue Then maxCatValue = catDict(key): maxCatName = CStr(key)
+        If catDict(key) < minCatValue Then minCatValue = catDict(key): minCatName = CStr(key)
+    Next key
+
+    Dim overzichtRow As Long: overzichtRow = Utils.LastRow(ws, MONTH_SUMMARY_COL) + 1
+    If ws.Cells(1, MONTH_SUMMARY_COL).Value = "" Then
+        ws.Cells(1, MONTH_SUMMARY_COL).Resize(1, 7).Value = Array("mnd", "ttl", "gpd", "gpw", "dudg", "duwk", "m_u_a")
+    End If
+
+    ws.Cells(overzichtRow, MONTH_SUMMARY_COL).Value = prevMonthKey
+    ws.Cells(overzichtRow, MONTH_SUMMARY_COL + 1).Value = totaal
+    ws.Cells(overzichtRow, MONTH_SUMMARY_COL + 2).Value = IIf(dagenCount > 0, totaal / dagenCount, 0)
+    ws.Cells(overzichtRow, MONTH_SUMMARY_COL + 3).Value = IIf(weekDict.Count > 0, totaal / weekDict.Count, 0)
+    ws.Cells(overzichtRow, MONTH_SUMMARY_COL + 4).Value = duursteDag
+    ws.Cells(overzichtRow, MONTH_SUMMARY_COL + 5).Value = duursteWeek
+    ws.Cells(overzichtRow, MONTH_SUMMARY_COL + 6).Value = maxCatName
+
+    ' Categorie-overzicht append met maandkolom
+    Dim catStartCol As Long: catStartCol = MONTH_SUMMARY_COL + 8 'X
+    If ws.Cells(1, catStartCol - 1).Value = "" Then
+        ws.Cells(1, catStartCol - 1).Resize(1, 4).Value = Array("Maand", "Categorie", "Aantal", "Totaal")
+    End If
+    Dim r As Long: r = Utils.LastRow(ws, catStartCol - 1) + 1
+    For Each key In catDict.Keys
+        ws.Cells(r, catStartCol - 1).Value = prevMonthKey
+        ws.Cells(r, catStartCol).Value = key
+        ws.Cells(r, catStartCol + 1).Value = catCountDict(key)
+        ws.Cells(r, catStartCol + 2).Value = catDict(key)
+        r = r + 1
+    Next key
+    Exit Sub
+
+ErrHandler:
+    MsgBox "Fout in BerekenMaandTotaal: " & Err.Description, vbCritical
+End Sub
+
+'=========
+'End of code for 

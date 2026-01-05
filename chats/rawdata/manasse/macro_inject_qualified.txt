@@ -1,0 +1,171 @@
+
+Option Explicit
+
+' macro_inject_qualified.txt
+' Injecteert gekwalificeerde code uit .txt-bestanden in het huidige project.
+' - Verwijdert en hermaakt StdModules en ClassModules.
+' - Update code van ThisWorkbook (Document module).
+' - Update code van bestaande UserForms (geen creatie van nieuwe forms uit .txt).
+
+Public Sub InjectQualifiedModules()
+    On Error GoTo ErrHandler
+
+    ' === Vereisten ===
+    ' 1) Trust center: "Trust access to the VBA project object model" moet aan staan.
+    ' 2) Alle .txt-bestanden staan in dezelfde map als het workbook.
+
+    Dim vbProj As Object          ' VBIDE.VBProject (late-bound)
+    Dim vbComp As Object          ' VBIDE.VBComponent (late-bound)
+    Dim codeMod As Object         ' VBIDE.CodeModule (late-bound)
+    Dim fso As Object             ' Scripting.FileSystemObject
+    Dim ts As Object              ' TextStream
+    Dim folder As String
+    Dim names() As String
+    Dim types() As Long
+    Dim i As Long
+    Dim codeText As String
+    Dim compName As String
+    Dim exists As Boolean
+
+    ' Component type constants (late-bound, numeric)
+    Const vbext_ct_StdModule As Long = 1
+    Const vbext_ct_ClassModule As Long = 2
+    Const vbext_ct_MSForm As Long = 3
+    Const vbext_ct_Document As Long = 100
+
+    ' Map (workbook folder)
+    folder = ThisWorkbook.Path
+
+    ' === Lijst van componenten die we willen injecteren ===
+    ' StdModules
+    names = Split("Utils,Reporting,MonthlySheet,FormLayout,FormData,FormEvents,FormBackground,DataCategories,CallForm,Navigation,TableSetup", ",")
+    types = Array(vbext_ct_StdModule, vbext_ct_StdModule, vbext_ct_StdModule, vbext_ct_StdModule, vbext_ct_StdModule, vbext_ct_StdModule, vbext_ct_StdModule, vbext_ct_StdModule, vbext_ct_StdModule, vbext_ct_StdModule, vbext_ct_StdModule)
+
+    Set vbProj = ThisWorkbook.VBProject
+    Set fso = CreateObject("Scripting.FileSystemObject")
+
+    ' === Stap 1: injecteer standaard modules ===
+    For i = LBound(names) To UBound(names)
+        compName = Trim$(names(i))
+        Call ReplaceStdOrClassModule vbProj, fso, folder, compName, vbext_ct_StdModule
+    Next i
+
+    ' === Stap 2: injecteer classes ===
+    Call ReplaceStdOrClassModule(vbProj, fso, folder, "CBtnEvents", vbext_ct_ClassModule)
+    Call ReplaceStdOrClassModule(vbProj, fso, folder, "CCmbEvents", vbext_ct_ClassModule)
+
+    ' === Stap 3: update ThisWorkbook (Document) ===
+    Call UpdateDocumentCode(vbProj, fso, folder, "ThisWorkbook")
+
+    ' === Stap 4: update bestaande UserForms (alleen als ze al bestaan) ===
+    ' Voorbeeld: frmInvoer
+    Call UpdateFormCodeIfExists(vbProj, fso, folder, "frmInvoer")
+
+    MsgBox "Injectie gereed. Compileer nu: Debug → Compile VBAProject.", vbInformation
+    Exit Sub
+
+ErrHandler:
+    MsgBox "InjectQualifiedModules: " & Err.Description, vbCritical
+End Sub
+
+' -----------------------
+' Helpers
+' -----------------------
+
+Private Sub ReplaceStdOrClassModule(ByVal vbProj As Object, ByVal fso As Object, ByVal folder As String, ByVal compName As String, ByVal compType As Long)
+    On Error GoTo ErrHandler
+
+    Dim filePath As String
+    Dim vbComp As Object
+    Dim ts As Object
+    Dim codeText As String
+
+    filePath = folder & "\" & compName & ".txt"
+    If Not fso.FileExists(filePath) Then Exit Sub
+
+    ' Lees code uit bestand
+    Set ts = fso.OpenTextFile(filePath, 1)
+    codeText = ts.ReadAll
+    ts.Close
+
+    ' Verwijder bestaande component (indien aanwezig)
+    Set vbComp = GetVBComponentSafe(vbProj, compName)
+    If Not vbComp Is Nothing Then
+        vbProj.VBComponents.Remove vbComp
+        Set vbComp = Nothing
+    End If
+
+    ' Voeg nieuwe component toe
+    Set vbComp = vbProj.VBComponents.Add(compType)
+    vbComp.Name = compName
+    vbComp.CodeModule.AddFromString codeText
+    Exit Sub
+
+ErrHandler:
+    MsgBox "ReplaceStdOrClassModule(" & compName & "): " & Err.Description, vbCritical
+End Sub
+
+Private Sub UpdateDocumentCode(ByVal vbProj As Object, ByVal fso As Object, ByVal folder As String, ByVal docName As String)
+    On Error GoTo ErrHandler
+
+    Dim filePath As String
+    Dim vbComp As Object
+    Dim ts As Object
+    Dim codeText As String
+
+    filePath = folder & "\" & docName & ".txt"
+    If Not fso.FileExists(filePath) Then Exit Sub
+
+    Set ts = fso.OpenTextFile(filePath, 1)
+    codeText = ts.ReadAll
+    ts.Close
+
+    Set vbComp = GetVBComponentSafe(vbProj, docName)
+    If vbComp Is Nothing Then Exit Sub
+
+    With vbComp.CodeModule
+        .DeleteLines 1, .CountOfLines
+        .AddFromString codeText
+    End With
+    Exit Sub
+
+ErrHandler:
+    MsgBox "UpdateDocumentCode(" & docName & "): " & Err.Description, vbCritical
+End Sub
+
+Private Sub UpdateFormCodeIfExists(ByVal vbProj As Object, ByVal fso As Object, ByVal folder As String, ByVal formName As String)
+    On Error GoTo ErrHandler
+
+    Dim filePath As String
+    Dim vbComp As Object
+    Dim ts As Object
+    Dim codeText As String
+
+    filePath = folder & "\" & formName & ".txt"
+    If Not fso.FileExists(filePath) Then Exit Sub
+
+    Set vbComp = GetVBComponentSafe(vbProj, formName)
+    If vbComp Is Nothing Then
+        ' Form bestaat niet; kan niet aangemaakt worden uit .txt
+        Exit Sub
+    End If
+    If vbComp.Type <> 3 Then Exit Sub ' vbext_ct_MSForm
+
+    Set ts = fso.OpenTextFile(filePath, 1)
+    codeText = ts.ReadAll
+    ts.Close
+
+    With vbComp.CodeModule
+        .DeleteLines 1, .CountOfLines
+        .AddFromString codeText
+    End With
+    Exit Sub
+
+ErrHandler:
+    MsgBox "UpdateFormCodeIfExists(" & formName & "): " & Err.Description, vbCritical
+End Sub
+
+Private Function GetVBComponentSafe(ByVal vbProj As Object, ByVal name As String) As Object
+    On Error Resume Next
+    Set GetVBComponentSafe = vbProj.VBComponents(name)
+End Function

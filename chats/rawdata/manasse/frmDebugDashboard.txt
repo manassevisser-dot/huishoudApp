@@ -1,0 +1,111 @@
+1) UserForm: frmDebugDashboard
+
+Maak in VBE: Insert → UserForm, geef het de naam frmDebugDashboard. Plak daarna deze code in de code van die UserForm:
+
+====
+' UserForm: frmDebugDashboard (paste into the UserForm code window)
+Option Explicit
+
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    Me.Caption = "Debug Dashboard - W&I Wizard"
+    Me.Width = 720
+    Me.Height = 420
+
+    ' Title label
+    Dim lblTitle As MSForms.Label
+    Set lblTitle = Me.Controls.Add("Forms.Label.1", "lblTitle", True)
+    lblTitle.Caption = "Debug Dashboard"
+    lblTitle.Font.Size = 14
+    lblTitle.Left = 12: lblTitle.Top = 8: lblTitle.Width = 300: lblTitle.Height = 22
+
+    ' Tables status list (ListBox)
+    Dim lsbTables As MSForms.ListBox
+    Set lsbTables = Me.Controls.Add("Forms.ListBox.1", "lsbTables", True)
+    lsbTables.Left = 12: lsbTables.Top = 40: lsbTables.Width = 340: lsbTables.Height = 160
+    lsbTables.ColumnCount = 2
+    lsbTables.ColumnWidths = "220;80"
+
+    ' Buttons on left
+    Dim btnRefresh As MSForms.CommandButton
+    Set btnRefresh = Me.Controls.Add("Forms.CommandButton.1", "btnRefresh", True)
+    btnRefresh.Caption = "Refresh status"
+    btnRefresh.Left = 12: btnRefresh.Top = 210: btnRefresh.Width = 110
+
+    Dim btnRun As MSForms.CommandButton
+    Set btnRun = Me.Controls.Add("Forms.CommandButton.1", "btnRunTests", True)
+    btnRun.Caption = "Run Smoke Tests"
+    btnRun.Left = 130: btnRun.Top = 210: btnRun.Width = 120
+
+    Dim btnExport As MSForms.CommandButton
+    Set btnExport = Me.Controls.Add("Forms.CommandButton.1", "btnExportLog", True)
+    btnExport.Caption = "Export ErrorLog CSV"
+    btnExport.Left = 260: btnExport.Top = 210: btnExport.Width = 120
+
+    Dim btnOpenYaml As MSForms.CommandButton
+    Set btnOpenYaml = Me.Controls.Add("Forms.CommandButton.1", "btnOpenYaml", True)
+    btnOpenYaml.Caption = "Open handover YAML"
+    btnOpenYaml.Left = 12: btnOpenYaml.Top = 248: btnOpenYaml.Width = 160
+
+    Dim btnClose As MSForms.CommandButton
+    Set btnClose = Me.Controls.Add("Forms.CommandButton.1", "btnClose", True)
+    btnClose.Caption = "Close"
+    btnClose.Left = 260: btnClose.Top = 248: btnClose.Width = 120
+
+    ' Forms health listbox
+    Dim lsbForms As MSForms.ListBox
+    Set lsbForms = Me.Controls.Add("Forms.ListBox.1", "lsbForms", True)
+    lsbForms.Left = 360: lsbForms.Top = 40: lsbForms.Width = 340: lsbForms.Height = 160
+    lsbForms.ColumnCount = 2
+    lsbForms.ColumnWidths = "220;80"
+    lsbForms.AddItem "Form": lsbForms.ListCount - 1
+    lsbForms.Clear
+
+    ' Log text box (multi-line)
+    Dim txtLog As MSForms.TextBox
+    Set txtLog = Me.Controls.Add("Forms.TextBox.1", "txtLog", True)
+    txtLog.Left = 12: txtLog.Top = 292: txtLog.Width = 688: txtLog.Height = 110
+    txtLog.MultiLine = True
+    txtLog.ScrollBars = fmScrollBarsVertical
+    txtLog.WordWrap = True
+
+    ' Hook button events (inline handlers call modDebugDashboard routines)
+    ' Note: We use control names and call module routines on click
+    ' Add immediate status refresh
+    Call modDebugDashboard.RefreshDashboardContents(Me)
+
+    Exit Sub
+ErrHandler:
+    MsgBox "Initialize Dashboard error: " & Err.Description, vbCritical
+End Sub
+
+' Button click handlers delegate to module
+Private Sub btnRefresh_Click()
+    On Error Resume Next
+    Call modDebugDashboard.RefreshDashboardContents(Me)
+End Sub
+
+Private Sub btnRunTests_Click()
+    On Error Resume Next
+    Call modDebugDashboard.RunSmokeTests(Me)
+End Sub
+
+Private Sub btnExportLog_Click()
+    On Error Resume Next
+    Call modDebugDashboard.ExportErrorLogToCSV(Me)
+End Sub
+
+Private Sub btnOpenYaml_Click()
+    On Error GoTo ErrHandler
+    ' local file path (from your upload)
+    Dim yamlPath As String
+    yamlPath = "file:///mnt/data/handover_copilot_v2_and_v3.yaml"
+    Application.FollowHyperlink Address:=yamlPath
+    Exit Sub
+ErrHandler:
+    MsgBox "Kan YAML niet openen: " & Err.Description, vbExclamation
+End Sub
+
+Private Sub btnClose_Click()
+    Unload Me
+End Sub

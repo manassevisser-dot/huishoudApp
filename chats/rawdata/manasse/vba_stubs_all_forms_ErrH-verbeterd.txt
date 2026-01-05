@@ -1,0 +1,97 @@
+'VBA STUBS FOR ALL FORMS WITH HOW-TO COMMENTS
+'Generated: 2025-11-24 19:51:43
+'============================================================
+'### EERST //SUB FUNCTIE_NAAM() //
+'On Error GoTo ErrHandler
+' --- Jouw code hier ---
+'Exit Sub
+
+'ErrHandler:
+    'Utils.LogError4 "MODULE_NAAM", "FUNCTIE_NAAM", Err.Number, Err.Description
+    'MsgBox "Fout in FUNCTIE_NAAM: " & Err.Description, vbCritical
+'End Sub
+' === EINDE ErrHandler===
+
+' === FORM 1: frmHuishouden ===
+' Steps:
+' 1) Insert new UserForm in VBE, name it frmHuishouden.
+' 2) Paste this Initialize event:
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    FormBackground.EnsureBackgroundImage Me
+    Call BuildForm_Huishouden
+    Exit Sub
+ErrHandler:
+	Utils.LogError4 "frmHuishouden", "UserForm_Initialize", Err.Number, Err.Description
+    MsgBox "Fout in UserForm_Initialize: " & Err.Description, vbCritical
+End Sub
+
+Public Sub BuildForm_Huishouden()
+    FormLayout.RemoveDynamicControls Me
+	On Error GoTo ErrHandler
+    ' Add SpinButton + TextBox for total persons
+    ' Add Frames for Adults and Children dynamically
+    ' Use FormLayout.DYN_PREFIX for naming
+    ' Example:
+    Dim lbl As MSForms.Label
+    Set lbl = Me.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblTitle", True)
+    lbl.Caption = "Stap 1 van 4 – Huishouden"
+    ' Add navigation buttons via AddShapeAsImage or fallback CommandButton
+ErrHandler:
+	Utils.LogError4 "frmHuishouden", "BuildForm_Huishouden", Err.Number, Err.Description
+    MsgBox "Fout in BuildForm_Huishouden: " & Err.Description, vbCritical
+End Sub
+
+
+' Validation:
+' - Ensure Adults + Children = TotalPersons
+' - Enable Next only when valid
+
+' === FORM 2 & 3: frmVast (MultiPage) ===
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    FormBackground.EnsureBackgroundImage Me
+    Call BuildFrmVast
+    Exit Sub
+ErrHandler:
+	Utils.LogError4 "frmVast", "UserForm_Initialize", Err.Number, Err.Description
+    MsgBox "Fout in UserForm_Initialize: " & Err.Description, vbCritical
+End Sub
+
+
+Public Sub BuildFrmVast()
+    FormLayout.RemoveDynamicControls Me
+    ' Add MultiPage control with Pages(0) = Inkomsten, Pages(1) = Uitgaven
+    ' BuildPage_Inkomsten: add row editor controls (cmbBron, cmbPeriode, txtBedrag, cmbOntvanger)
+    ' BuildPage_Uitgaven: add row editor controls (cmbCategorie, txtOmschrijving, cmbPeriode, txtBedrag, cmbBetaalwijze)
+    ' Add navigation shapes: Vorige, Volgende, Opslaan, Annuleren
+	Exit Sub
+ErrHandler:
+	Utils.LogError4 "frmVast", "BuildFrmVast", Err.Number, Err.Description
+    MsgBox "Fout in BuildFrmVast: " & Err.Description, vbCritical
+End Sub
+
+' === FORM 4: frmInvoer (Dagelijkse) ===
+' Already exists; update Initialize to add Prev button and step indicator
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    FormEvents.BuildDynamicFrmInvoer Me
+    ' Add shape buttons if available
+	Exit Sub
+ErrHandler:
+	Utils.LogError4 "frmInvoer", "UserForm_Initialize", Err.Number, Err.Description
+    MsgBox "Fout in UserForm_Initialize: " & Err.Description, vbCritical
+End Sub
+
+' === HOW-TO FOR NOOBS ===
+' 1) Open VBE (Alt+F11)
+' 2) Insert UserForms: frmHuishouden, frmVast (with MultiPage), reuse frmInvoer
+' 3) Copy above stubs into respective code windows
+' 4) Ensure helpers from helper_routines.txt are in a StdModule (e.g., FormHelpers)
+
+'### === Ik ben hier gebleven === ###
+
+' 5) On sheet "Referenties", add shapes named: btnVorigeShape, btnVolgendeShape, btnOpslaanShape, btnAnnulerenShape, btnRowAddShape, btnRowDelShape
+' 6) Compile (Debug → Compile VBAProject)
+' 7) Test navigation: frmHuishouden → frmVast.Page(0) → frmVast.Page(1) → frmInvoer
+' 8) Validate totals and row completeness before enabling Next

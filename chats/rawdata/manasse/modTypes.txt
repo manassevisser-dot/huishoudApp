@@ -1,0 +1,28 @@
+
+' modTypes.bas
+Option Explicit
+
+' ======================
+' DATABASE COLUMNS (RAW)
+' ======================
+' A: Datum | B: Jaar | C: MaandKey (YYYY-MM) | D: WeekISO | E: DagNaam
+' F: Categorie | G: Subcategorie | H: Omschrijving | I: Bedrag
+' J: Betaalwijze | K: Soort (Uitgave/Inkomen)
+
+' Beschrijving:
+' Centrale enum voor kolomnummers van het Database-werkblad.
+' Declaratie op module-niveau, één keer in het hele project (zie Microsoft Learn).
+Public Enum DBCols
+    dbDate = 1        ' A
+    dbYear = 2        ' B
+    dbMonthKey = 3    ' C
+    dbWeek = 4        ' D
+    dbDay = 5         ' E
+    dbCategory = 6    ' F
+    dbSubcategory = 7 ' G
+    dbNote = 8        ' H
+    dbAmount = 9      ' I
+    dbPayment = 10    ' J
+    dbType = 11       ' K
+End Enum
+

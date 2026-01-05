@@ -1,0 +1,13 @@
+MOCKUP SPEC – Form 3: Vaste Uitgaven (Stap 3/4)
+Generated: 2025-11-24 19:18:07
+===============================================
+
+Background label: "Stap 3 van 4 – Vaste uitgaven".
+Repeating row editor similar to incomes:
+  - cmbCategorie (from Referenties.tblVastUitgaven or tblCategorieen)
+  - txtOmschrijving (optional)
+  - cmbPeriode + txtBedrag
+  - cmbBetaalwijze (from Referenties.tbl_payment if present)
+  - Row add/del shapes
+Summary footer with monthly total.
+Navigation shapes: Vorige/Volgende/Opslaan/Annuleren.

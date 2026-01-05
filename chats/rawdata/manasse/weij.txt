@@ -1,0 +1,267 @@
+
+============================================================
+W&I Excel UserForms Wizard — Code Overzicht (v5.4)
+Datum: 2025-11-27
+============================================================
+
+INHOUD
+- [FORMS] UserForms en hun code-behind
+- [MODULES] Standaardmodules met procedures/functies
+- [CLASSES] Klassenmodules met event-handlers
+- [THISWORKBOOK] Workbook_Open
+
+Opmerking:
+Dit overzicht is gebaseerd op je aangeleverde "fulltext_patched" set + de oude FormLayout,
+en houdt rekening met de patches die we samen hebben besproken (ParseAmount_FIXED, RemoveDynamicControls, MaxDbl).
+Waar van toepassing staat erbij dat een blok nog toegevoegd/gepatcht moet worden.
+
+============================================================
+[FORMS] UserForms (code-behind)
+============================================================
+
+1) frmHuishouden
+   - UserForm_Initialize()
+     • FormHelpers.EnsureBackgroundImage Me
+     • frmBuilders.BuildForm_Huishouden Me
+     • LayoutSpecsHelpers.BuildButtonsFromSpecs Me
+     • FormLayout.FrmLayoutSafeAreaDyn Me
+     • FormEvents.HookEventsDynamic Me
+   - UserForm_Resize()
+     • FormLayout.FrmLayoutSafeAreaDyn Me
+
+2) frmInvoer
+   - UserForm_Initialize()
+     • FormEvents.BuildDynamicFrmInvoer Me
+     • LayoutSpecsHelpers.BuildButtonsFromSpecs Me
+     • FormLayout.FrmLayoutSafeAreaDyn Me
+     • FormEvents.HookEventsDynamic Me
+   - UserForm_Resize()
+     • FormLayout.FrmLayoutSafeAreaDyn Me
+
+3) frmVast
+   - UserForm_Initialize()
+     • FormHelpers.EnsureBackgroundImage Me
+     • frmBuilders.BuildFrmVast Me
+     • LayoutSpecsHelpers.PlaceButtonFromSpec Me, "dyn_imgBtnVorige", "Prev"
+     • LayoutSpecsHelpers.PlaceButtonFromSpec Me, "dyn_imgBtnVolgende", "Next"
+     • LayoutSpecsHelpers.PlaceButtonFromSpec Me, "dyn_imgBtnOpslaan", "Save"
+     • LayoutSpecsHelpers.PlaceButtonFromSpec Me, "dyn_imgBtnAnnuleren", "Cancel"
+     • FormLayout.FrmLayoutSafeAreaDyn Me
+     • FormEvents.HookEventsDynamic Me
+   - UserForm_Resize()
+     • FormLayout.FrmLayoutSafeAreaDyn Me
+
+4) frmDebugDashboard
+   - UserForm_Initialize()
+   - cmdValidateLayout_Click()
+     • modLayoutValidator.ValidateLayoutAll True
+   - cmdExportErrorLog_Click()
+     • ExportErrorLogCSV
+   - cmdSmokeTests_Click()
+     • RunSmokeTests
+   - cmdRefreshStatus_Click()
+     • RefreshStatus Me
+
+============================================================
+[MODULES] Standaardmodules
+============================================================
+
+A) ThisWorkbook (code-pane)
+   - Workbook_Open()
+     • Utils.EnsureDBHeaders
+     • Week-/maandoverzicht triggers via Reporting:
+       - Reporting.WeekTotaalBestaat(Y, w) ± Reporting.BerekenWeekTotaal
+       - Reporting.LaatsteMaandInMaandTabel() ± Reporting.BerekenMaandTotaal
+     • MonthlySheet.MaakHuidigeMaandSheet
+     • Foutafhandeling → Utils.LogError4
+
+B) FormBackground
+   - GetBackgroundPath()         ' v5.4 FIXED: Export met retry + fallback via ChartObject
+
+C) FormData
+   - LoadCategoriesIntoCombo(frm)
+   - LoadSubcategoriesIntoCombo(frm, cat)
+   - LoadPaymentMethodsIntoCombo(frm)
+   - WorksheetHasTable(ws, tblName)
+
+D) FormEvents
+   - BuildDynamicFrmInvoer(frm)
+   - HookEventsDynamic(frm)
+   - HandleOpslaan_dyn(frm)      ' gebruikt Utils.ParseAmount_FIXED (PATCH)
+   - HandleAnnuleren_dyn(frm)
+   - HandleCategorieChange_dyn(frm)
+
+E) FormHelpers
+   - ShapeExists(shapeName)
+   - AddShapeAsImage(frm, shapeName, ctlName)
+   - EnsureBackgroundImage(frm)
+
+F) FormLayout  (* NIEUWE baseline zonder *SCALE multipliers / met MaxDbl *)
+   - FrmLayoutSafeAreaDyn(frm)       ' safe-area layout voor labels/inputs/knoppen
+   - RemoveDynamicControls(frm)      ' backwards loop; houdt dyn_imgBackground
+   - TryGetControl(frm, ctlName)     ' returns MSForms.Control
+   - TryGetImageDyn(frm, ctlName)    ' returns MSForms.Image
+   - (Private) DpiScale()            ' voorlopig 1.0; DPI later optioneel via modDpi
+   - (Private) MaxDbl(a, b)          ' pure-VBA Max vervangt Application.Max
+
+G) frmBuilders
+   - BuildForm_Huishouden(frm)
+   - BuildFrmVast(frm)
+
+H) LayoutSpecsHelpers   ('PATCH v5.4 ENHANCED' — lookup en hover tagging)
+   - GetLayoutSpec(keyName, fieldName)
+   - PlaceButtonFromSpec(frm, controlName, keyName)
+   - BuildButtonsFromSpecs(frm)
+   - ApplyHoverPicture(frm, controlName)
+   - ResetHoverPicture(frm, controlName)
+   - GetShapePath(shapeName, [suffix])
+   - GetBackgroundShapeNameFromSpecs()
+   - RefreshStatus(frm)             ' statusbericht + MsgBox
+   - RunSmokeTests()
+   - ExportErrorLogCSV()
+   - OpenHandoverLatest()
+   - ValidateLayoutSpecs()
+   - (Helpers)
+     • ModuleExists(moduleName)
+     • FormExists(formName)
+     • YesNo(cond)
+     • HasStatusBox(frm)
+
+I) modLayoutValidator  (v5.4 ENHANCED)
+   - ValidateLayoutAll(Optional attachToDashboard As Boolean = True)
+   - SpecsColumnsAndRowsCheck()
+   - ShapesExistenceCheck()
+   - FormImageTagCheck()
+   - BackgroundExportCheck()
+   - (Helpers)
+     • ParseTagLocal(tagText, key)
+     • GetActiveFormSafe()
+     • ShapeExistsOn(ws, shapeName)
+     • FindColumnIndex(lo, headerName)
+
+J) FormNavigator
+   - Initialize()
+   - NavigateNext(currentForm)
+   - NavigatePrevious(currentForm)
+   - (Helpers)
+     • GetNextSeq(formName)
+     • GetPrevSeq(formName)
+     • GetSeq(formName)
+     • GetFormName(seq)
+   - (Enum) FormSequence { fsHuishouden, fsVast, fsInvoer }
+
+K) modSanityChecks
+   - RunAssetSanity(Optional includeSpecsCheck As Boolean = True)
+   - SanityCheck_ShowReport()
+   - (Per-check functies)
+     • CheckGenericButtonShapes()
+     • CheckBackgroundShape(bgShapeName)
+     • CheckLayoutSpecsKeys()
+   - (Helpers)
+     • ShapeExistsOn(ws, shapeName)
+     • FindColumnIndex(lo, headerName)
+     • AppendReport(total, part)
+   - (Enums)
+     • DBCols (A..K)
+     • SummaryCols (L..)
+
+L) MonthlySheet
+   - EnsureConfigSheet()
+   - ConfigGet(key, defaultValue)
+   - MaakHuidigeMaandSheet()
+
+M) Navigation
+   - OpenFrmDagelijks()
+   - OpenFrmHuishouden()
+   - OpenFrmVast()
+   - OpenDebugDashboard()
+
+N) NormalizeSpecsHeaders
+   - NormalizeSpecsHeaders()
+   - (Helpers)
+     • GetWorksheetSafe(sheetName)
+     • TryGetListObjectSafe(ws, tableName)
+
+O) Reporting
+   - WeekTotaalBestaat(jaar, weeknr)
+   - LaatsteMaandInMaandTabel()
+   - BerekenWeekTotaal()
+   - BerekenMaandTotaal()
+
+P) TableSetup
+   - SetupVastEnCategorieTabellen()
+   - (Helpers)
+     • SeedCategorieen(loCat, loSub)
+     • CategoryExists(loCat, cat)
+     • AddCategory(loCat, cat)
+     • AddSub(loSub, cat, subcat)
+
+Q) Utils
+   - LogError4(moduleName, funcName, errNum, errDesc)
+   - LogError(source, errDesc)
+   - SheetBestaat(sheetNaam)
+   - LastRow(ws, [col])
+   - IsoWeek(d)
+   - ParseAmount(s)               ' BASIS
+   - EnsureDBHeaders()
+   - DictAddOrIncrement(dict, key, [inc])
+   - ToMonthlyAmount(periode, bedrag)
+   - TryGetListObject(ws, tableName)
+   - TryGetNamedRange(nm)
+   - EnsureTable(ws, tableName, headerRange)
+   - MonthNameNL(m)
+   - GetTempFile_FIXED(baseName, ext)    ' sanitized underscores — PATCH
+   - (PATCH TOEVOEGEN — indien nog niet aanwezig)
+     • ParseAmount_FIXED(s)    ' locale-aware parsing voor HandleOpslaan_dyn
+
+============================================================
+[CLASSES] Klassenmodules (event handlers)
+============================================================
+
+1) CBtnEvents
+   - Btn_Click()
+     • dyn_btnOpslaan → FormEvents.HandleOpslaan_dyn
+     • dyn_btnAnnuleren → FormEvents.HandleAnnuleren_dyn
+
+2) CCmbEvents
+   - cmb_Change()
+     • dyn_cmbCategorie → FormEvents.HandleCategorieChange_dyn
+
+3) CImgEvents  (hover debounce + mouse)
+   - Img_MouseMove(Button, Shift, X, Y)
+     • LayoutSpecsHelpers.ApplyHoverPicture ParentForm, Img.Name
+   - Img_MouseDown(Button, Shift, X, Y)
+     • dyn_imgBtnOpslaan → FormEvents.HandleOpslaan_dyn
+     • dyn_imgBtnAnnuleren → FormEvents.HandleAnnuleren_dyn
+     • dyn_imgBtnVolgende → FormNavigator.NavigateNext
+     • dyn_imgBtnVorige → FormNavigator.NavigatePrevious
+
+4) CTxtEvents
+   - Txt_KeyPress(KeyAscii)
+     • alleen cijfers/decimaal/backspace
+   - Txt_Exit(Cancel)
+     • formatteer naar "0.00"
+
+============================================================
+[OVERIGE] Aanvullingen / Patches / Afhankelijkheden
+============================================================
+
+• ParseAmount_FIXED (Utils) — gebruikt door FormEvents.HandleOpslaan_dyn
+  - Toevoegen als het blok nog niet aanwezig is (locale-aware parsing).
+
+• RemoveDynamicControls (FormLayout) — is aanwezig in nieuwe baseline.
+  - Wordt aangeroepen door FormEvents/frmBuilders.
+
+• MaxDbl (FormLayout) — vervangt Application.Max en WorksheetFunction.Max
+  - Vermijdt "Expected: (various)" compile-markeringen op die regels.
+
+• DPI-optie (later, optioneel):
+  - Houd DpiScale() voorlopig op 1.0 voor stabiliteit.
+  - Zet DPI aan via aparte module `modDpi` en schakel in FormLayout om naar modDpi.DpiScaleSafe() als alles compile-clean is.
+
+• Referentie:
+  - VBE ▸ Tools ▸ References → vink "Microsoft Forms 2.0 Object Library" aan voor MSForms.* types.
+
+============================================================
+EINDE OVERZICHT
+============================================================

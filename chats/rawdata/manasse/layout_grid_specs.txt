@@ -1,0 +1,86 @@
+VISUAL LAYOUT GRID – Common Metrics
+Generated: 2025-11-24 19:58:29
+============================================================
+Units: points (pt)
+Default UserForm size (guideline): InsideWidth = 800 pt, InsideHeight = 500 pt
+Background margin (visual frame): 12 pt
+Safe area: Left = 12 pt, Top = 12 pt, Width = 776 pt, Height = 476 pt
+Baseline grid: 8 pt increments; Row spacing = 36 pt; Column gutter = 24 pt
+Label column width = 140 pt; Input column width = 320 pt
+Button row Y = SafeTop + SafeHeight - 60 pt  (≈ 428 pt)
+Center anchor X = SafeLeft + SafeWidth/2  (≈ 400 pt)
+Recommended button sizes:
+- btnVorigeShape:   80 × 28 pt
+- btnVolgendeShape: 100 × 28 pt
+- btnOpslaanShape:  100 × 28 pt
+- btnAnnulerenShape:100 × 28 pt
+- btnRowAddShape:    28 × 28 pt
+- btnRowDelShape:    28 × 28 pt
+Note: Buttons are exported from sheet "Referenties" and placed as Image controls; they will be positioned to these specs.
+
+FORM 1 – Huishouden (Stap 1/4)
+------------------------------------------------------------
+Title label: Left=24, Top=24, Width=300, Height=20
+Total persons (txt + spin):
+- txtTotalPersons: Left=620, Top=24, Width=40, Height=22
+- spnTotalPersons: Left=666, Top=24, Width=40, Height=22
+Adults frame (left column): Left=24, Top=80, Width=360, Height=260
+Children frame (right column): Left=412, Top=80, Width=360, Height=260
+Pets frame: Left=24, Top=350, Width=300, Height=60
+Buttons (bottom row):
+- imgBtnVorige:   Left=280, Top=428, Width=80, Height=28  (hidden on step 1)
+- imgBtnVolgende: Left=376, Top=428, Width=100, Height=28
+- imgBtnAnnuleren:Left=486, Top=428, Width=100, Height=28 (optional)
+
+FORM 2 – Vaste Inkomsten (frmVast MultiPage Page 0)
+------------------------------------------------------------
+Step title: Left=24, Top=24, Width=350, Height=20
+Row editor (single-row template coordinates):
+- txtBron:     Left=24,  Top=80,  Width=200, Height=22
+- cmbPeriode:  Left=244, Top=80,  Width=120, Height=22
+- txtBedrag:   Left=380, Top=80,  Width=140, Height=22
+- cmbOntvanger:Left=536, Top=80,  Width=140, Height=22
+- imgAddRow:   Left=692, Top=80,  Width=28,  Height=28
+- imgDelRow:   Left=724, Top=80,  Width=28,  Height=28
+Row N uses Top = 80 + (N-1)*36
+Summary footer:
+- lblTotaalMaand: Left=24, Top=360, Width=200, Height=22
+Buttons (bottom row):
+- imgBtnVorige:   Left=280, Top=428, Width=80,  Height=28
+- imgBtnVolgende: Left=376, Top=428, Width=100, Height=28  (go to Page 1)
+- imgBtnOpslaan:  Left=486, Top=428, Width=100, Height=28
+- imgBtnAnnuleren:Left=596, Top=428, Width=100, Height=28
+
+FORM 3 – Vaste Uitgaven (frmVast MultiPage Page 1)
+------------------------------------------------------------
+Step title: Left=24, Top=24, Width=350, Height=20
+Row editor (single-row template coordinates):
+- cmbCategorie:  Left=24,  Top=80,  Width=200, Height=22
+- txtOmschrijving:Left=244, Top=80,  Width=200, Height=22
+- cmbPeriode:    Left=460, Top=80,  Width=100, Height=22
+- txtBedrag:     Left=572, Top=80,  Width=120, Height=22
+- cmbBetaalwijze:Left=24,  Top=116, Width=200, Height=22  (optional per row layout)
+- imgAddRow:     Left=712, Top=80,  Width=28,  Height=28
+- imgDelRow:     Left=744, Top=80,  Width=28,  Height=28
+Row N uses Top = 80 + (N-1)*36
+Summary footer:
+- lblTotaalMaand: Left=24, Top=360, Width=200, Height=22
+Buttons (bottom row):
+- imgBtnVorige:   Left=280, Top=428, Width=80,  Height=28
+- imgBtnVolgende: Left=376, Top=428, Width=100, Height=28  (go to Dagelijks)
+- imgBtnOpslaan:  Left=486, Top=428, Width=100, Height=28
+- imgBtnAnnuleren:Left=596, Top=428, Width=100, Height=28
+
+FORM 4 – Dagelijkse Uitgaven (frmInvoer)
+------------------------------------------------------------
+Step title: Left=24, Top=24, Width=380, Height=20
+Today label: Left=24, Top=56, Width=300, Height=20
+Inputs:
+- cmbCategorie:   Left=24,  Top=96,  Width=240, Height=22
+- cmbSubcategorie:Left=280, Top=96,  Width=240, Height=22
+- txtBedrag:      Left=536, Top=96,  Width=200, Height=22
+- cmbBetaalwijze: Left=24,  Top=136, Width=240, Height=22
+Buttons (bottom row):
+- imgBtnVorige:   Left=280, Top=428, Width=80,  Height=28
+- imgBtnOpslaan:  Left=376, Top=428, Width=100, Height=28
+- imgBtnAnnuleren:Left=486, Top=428, Width=100, Height=28

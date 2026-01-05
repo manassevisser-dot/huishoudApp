@@ -1,0 +1,293 @@
+' Module: FormEvents (update/extend)
+Option Explicit
+
+' Collections to hold event class instances so they don't go out of scope
+Public g_btnEvents As Collection
+Public g_cmbEvents As Collection
+Public g_txtEvents As Collection
+
+' ------------------------------
+' Central overlay action handler
+' ------------------------------
+Public Sub HandleOverlayAction(frm As Object, action As String)
+On Error GoTo ErrHandler
+    Dim parts() As String
+    parts = Split(action, ":")
+    Dim verb As String: verb = parts(0)
+    Select Case verb
+        Case "Next"
+            On Error Resume Next
+            frm.Hide
+            frmVast.Show ' adjust if different naming; or route accordingly
+        Case "Prev"
+            On Error Resume Next
+            frm.Hide
+            frmHuishouden.Show
+        Case "Save"
+            Call HandleSave(frm)
+        Case "Cancel"
+            Unload frm
+        Case "AddRow"
+            ' parts(1) = sheet/key e.g. "Inkomsten"
+            If UBound(parts) >= 1 Then AddRowToPage frm, parts(1)
+        Case "DelRow"
+            If UBound(parts) >= 2 Then RemoveRowFromPage frm, parts(1), CLng(parts(2))
+        Case Else
+            ' fallback for custom actions
+    End Select
+Exit Sub
+ErrHandler:
+    Debug.Print "HandleOverlayAction error: " & Err.Description
+End Sub
+
+Public Sub HandleSave(frm As Object)
+    ' Implement save logic: collect values and write to sheet tables
+    ' This is placeholder: expand to your project's persistence logic
+    MsgBox "Opslaan - implementatie nog te doen", vbInformation
+End Sub
+
+' ------------------------------
+' Overlay overlay builder
+' ------------------------------
+Public Sub EnsureOverlayButtons(frm As Object)
+On Error GoTo ErrHandler
+    Dim c As Control
+    Dim name As String
+    If g_btnEvents Is Nothing Then Set g_btnEvents = New Collection
+    ' Remove previous overlays if present
+    On Error Resume Next
+    For Each c In frm.Controls
+        If Left$(c.Name, 4) = "ovr_" Then
+            frm.Controls.Remove c.Name
+        End If
+    Next c
+    On Error GoTo ErrHandler
+    ' Create overlay buttons for every Image control that has a Tag with "base=" or "shape="
+    For Each c In frm.Controls
+        If TypeOf c Is MSForms.Image Then
+            If Len(c.Tag) > 0 Then
+                ' create transparent CommandButton overlay
+                name = "ovr_" & c.Name
+                Dim cb As MSForms.CommandButton
+                On Error Resume Next
+                Set cb = frm.Controls(name)
+                On Error GoTo ErrHandler
+                If cb Is Nothing Then
+                    Set cb = frm.Controls.Add("Forms.CommandButton.1", name, True)
+                End If
+                With cb
+                    .Left = c.Left
+                    .Top = c.Top
+                    .Width = c.Width
+                    .Height = c.Height
+                    .Caption = ""
+                    .BackColor = RGB(255, 255, 255)
+                    .TakeFocusOnClick = False
+                    .SpecialEffect = fmSpecialEffectFlat
+                    .Visible = True ' keep visible; caption empty so looks transparent
+                    .Enabled = True
+                    ' propagate action from Tag if Tag includes action key e.g. "action=Next"
+                    Dim action As String
+                    action = ParseImageActionTag(c.Tag)
+                    .Tag = action
+                End With
+                ' hook event
+                Dim ev As CBtnEvents
+                Set ev = New CBtnEvents
+                Set ev.btn = cb
+                Set ev.ParentForm = frm
+                g_btnEvents.Add ev
+            End If
+        End If
+    Next c
+Exit Sub
+ErrHandler:
+    Debug.Print "EnsureOverlayButtons error: " & Err.Description
+End Sub
+
+Private Function ParseImageActionTag(tagText As String) As String
+    ' expecting patterns like "base=btnVolgendeShape|hover=btnVolgendeShape_hover|action=Next"
+    On Error Resume Next
+    Dim segs() As String: segs = Split(tagText, "|")
+    Dim i As Long, kv() As String
+    For i = LBound(segs) To UBound(segs)
+        kv = Split(segs(i), "=")
+        If UBound(kv) = 1 Then
+            If LCase$(Trim(kv(0))) = "action" Then
+                ParseImageActionTag = Trim(kv(1))
+                Exit Function
+            End If
+        End If
+    Next i
+    ParseImageActionTag = ""
+End Function
+
+' ------------------------------
+' Dynamic row handling for Inkomsten/Uitgaven
+' ------------------------------
+' Row naming convention:
+' Inkomsten rows on mp.Pages(0) -> controls named:
+' txtBron_{n}, cmbPeriode_{n}, txtBedrag_{n}, cmbOntvanger_{n}, imgRowDel_{n}
+'
+Public Sub AddRowToPage(frm As Object, pageKey As String)
+On Error GoTo ErrHandler
+    Dim mp As MSForms.MultiPage
+    Set mp = frm.Controls("dyn_mpVast")
+    Dim pgIndex As Long
+    If LCase(pageKey) = "inkomsten" Then pgIndex = 0 Else pgIndex = 1
+    Dim pg As MSForms.Page
+    Set pg = mp.Pages(pgIndex)
+
+    ' find existing rows count using a hidden label
+    Dim lblRowsName As String: lblRowsName = "dyn_lblRows_" & LCase(pageKey)
+    Dim lblRows As MSForms.Label
+    On Error Resume Next
+    Set lblRows = pg.Controls(lblRowsName)
+    On Error GoTo ErrHandler
+    If lblRows Is Nothing Then
+        Set lblRows = pg.Controls.Add("Forms.Label.1", lblRowsName, True)
+        lblRows.Visible = False
+        lblRows.Caption = "0"
+    End If
+    Dim n As Long: n = CLng(lblRows.Caption) + 1
+
+    ' create controls for row n
+    Dim topY As Long: topY = 40 + (n - 1) * 36
+
+    Dim txtBron As MSForms.TextBox
+    Set txtBron = pg.Controls.Add("Forms.TextBox.1", "dyn_txtBron_" & n, True)
+    txtBron.Left = 24: txtBron.Top = topY: txtBron.Width = 200
+
+    Dim cmbPer As MSForms.ComboBox
+    Set cmbPer = pg.Controls.Add("Forms.ComboBox.1", "dyn_cmbPeriode_" & n, True)
+    cmbPer.Left = 244: cmbPer.Top = topY: cmbPer.Width = 120
+    cmbPer.AddItem "maand": cmbPer.AddItem "week": cmbPer.AddItem "4 weken": cmbPer.AddItem "kwartaal": cmbPer.AddItem "jaar"
+
+    Dim txtBed As MSForms.TextBox
+    Set txtBed = pg.Controls.Add("Forms.TextBox.1", "dyn_txtBedrag_" & n, True)
+    txtBed.Left = 380: txtBed.Top = topY: txtBed.Width = 140
+
+    Dim cmbOnt As MSForms.ComboBox
+    Set cmbOnt = pg.Controls.Add("Forms.ComboBox.1", "dyn_cmbOntvanger_" & n, True)
+    cmbOnt.Left = 536: cmbOnt.Top = topY: cmbOnt.Width = 140
+    cmbOnt.AddItem "Zelf": cmbOnt.AddItem "Partner": cmbOnt.AddItem "Gezamenlijk"
+
+    ' delete row image/button placeholder (we create overlay later)
+    Dim imgDel As MSForms.Image
+    Set imgDel = pg.Controls.Add("Forms.Image.1", "dyn_imgRowDel_" & n, True)
+    imgDel.Left = 692: imgDel.Top = topY: imgDel.Width = 28: imgDel.Height = 28
+    imgDel.Tag = "action=DelRow:" & pageKey & ":" & n
+
+    ' store new count
+    lblRows.Caption = CStr(n)
+
+    ' Hook events for new controls
+    If g_cmbEvents Is Nothing Then Set g_cmbEvents = New Collection
+    If g_txtEvents Is Nothing Then Set g_txtEvents = New Collection
+
+    Dim ce As CCmbEvents
+    Set ce = New CCmbEvents
+    Set ce.cmb = cmbPer
+    Set ce.ParentForm = frm
+    ce.RowInfo = pageKey & ":" & n
+    g_cmbEvents.Add ce
+
+    Dim ce2 As CCmbEvents
+    Set ce2 = New CCmbEvents
+    Set ce2.cmb = cmbOnt
+    Set ce2.ParentForm = frm
+    ce2.RowInfo = pageKey & ":" & n
+    g_cmbEvents.Add ce2
+
+    Dim te As CTxtEvents
+    Set te = New CTxtEvents
+    Set te.txt = txtBed
+    Set te.ParentForm = frm
+    te.RowInfo = pageKey & ":" & n
+    g_txtEvents.Add te
+
+    ' recreate overlays so delete overlays are clickable
+    EnsureOverlayButtons frm
+Exit Sub
+ErrHandler:
+    Debug.Print "AddRowToPage error: " & Err.Description
+End Sub
+
+Public Sub RemoveRowFromPage(frm As Object, pageKey As String, rowIndex As Long)
+On Error GoTo ErrHandler
+    Dim mp As MSForms.MultiPage: Set mp = frm.Controls("dyn_mpVast")
+    Dim pgIndex As Long
+    If LCase(pageKey) = "inkomsten" Then pgIndex = 0 Else pgIndex = 1
+    Dim pg As MSForms.Page: Set pg = mp.Pages(pgIndex)
+
+    ' remove controls for that row: txtBron_{i}, cmbPeriode_{i}, txtBedrag_{i}, cmbOntvanger_{i}, dyn_imgRowDel_{i}
+    Dim names As Variant
+    names = Array("dyn_txtBron_", "dyn_cmbPeriode_", "dyn_txtBedrag_", "dyn_cmbOntvanger_", "dyn_imgRowDel_")
+    Dim nm As Variant
+    For Each nm In names
+        On Error Resume Next
+        pg.Controls.Remove nm & rowIndex
+    Next nm
+
+    ' shift subsequent rows up: re-create them by reading values and rewriting (simple approach)
+    ' We'll rebuild rows: collect values for rows > rowIndex, remove them, then re-add sequentially
+    Dim i As Long, maxRow As Long
+    maxRow = 0
+    On Error Resume Next
+    maxRow = CLng(pg.Controls("dyn_lblRows_" & LCase(pageKey)).Caption)
+    On Error GoTo ErrHandler
+
+    Dim dataArr As Collection: Set dataArr = New Collection
+    For i = rowIndex + 1 To maxRow
+        Dim b As String, p As String, amt As String, o As String
+        On Error Resume Next
+        p = pg.Controls("dyn_cmbPeriode_" & i).Text
+        b = pg.Controls("dyn_txtBron_" & i).Text
+        amt = pg.Controls("dyn_txtBedrag_" & i).Text
+        o = pg.Controls("dyn_cmbOntvanger_" & i).Text
+        Dim rec As Variant
+        rec = Array(b, p, amt, o)
+        dataArr.Add rec
+        ' remove controls
+        For Each nm In names
+            On Error Resume Next
+            pg.Controls.Remove nm & i
+        Next nm
+    Next i
+
+    ' update row count label
+    Dim lblRows As MSForms.Label
+    Set lblRows = pg.Controls("dyn_lblRows_" & LCase(pageKey))
+    lblRows.Caption = CStr(rowIndex - 1)
+
+    ' re-add rows from dataArr starting at rowIndex
+    Dim idx As Long: idx = rowIndex
+    Dim rec2 As Variant
+    For Each rec2 In dataArr
+        ' re-add a new row at idx and fill values
+        AddRowToPage frm, pageKey
+        ' fill most recent row (which is the last added)
+        Dim last As Long: last = CLng(pg.Controls("dyn_lblRows_" & LCase(pageKey)).Caption)
+        On Error Resume Next
+        pg.Controls("dyn_txtBron_" & last).Text = rec2(0)
+        pg.Controls("dyn_cmbPeriode_" & last).Text = rec2(1)
+        pg.Controls("dyn_txtBedrag_" & last).Text = rec2(2)
+        pg.Controls("dyn_cmbOntvanger_" & last).Text = rec2(3)
+        idx = idx + 1
+    Next rec2
+
+    ' refresh overlays
+    EnsureOverlayButtons frm
+Exit Sub
+ErrHandler:
+    Debug.Print "RemoveRowFromPage error: " & Err.Description
+End Sub
+
+' called by CCmbEvents/CTxtEvents when values change
+Public Sub DynamicRowChanged(frm As Object, RowInfo As String)
+    ' RowInfo example: "Inkomsten:3" or "Uitgaven:2"
+    ' You can implement live totals here (Utils.ToMonthlyAmount)
+    On Error Resume Next
+    ' For simplicity we just update a debug print
+    Debug.Print "Row changed: " & RowInfo
+End Sub

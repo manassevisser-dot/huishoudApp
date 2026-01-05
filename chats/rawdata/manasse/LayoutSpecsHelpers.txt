@@ -1,0 +1,128 @@
+
+' ===== LayoutSpecsHelpers.bas (TXT for import) =====
+Option Explicit
+
+' Returns a field value from Referenties!tblLayoutSpecs for a given Key
+Public Function GetLayoutSpec(ByVal keyName As String, ByVal fieldName As String) As Variant
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    Dim hdr As Range, data As Range, r As Range, colIndex As Long
+    Set hdr = lo.HeaderRowRange
+    Set data = lo.DataBodyRange
+    If data Is Nothing Then Exit Function
+    colIndex = Application.Match(fieldName, Application.Transpose(hdr.Value), 0)
+    If IsError(colIndex) Or colIndex <= 0 Then Exit Function
+    For Each r In data.Rows
+        If StrComp(CStr(r.Cells(1, 1).Value), keyName, vbTextCompare) = 0 Then
+            GetLayoutSpec = r.Cells(1, colIndex).Value
+            Exit Function
+        End If
+    Next r
+    Exit Function
+ErrHandler:
+    Utils.LogError4 "LayoutSpecsHelpers", "GetLayoutSpec", Err.Number, Err.Description
+End Function
+
+' Exports a shape from Referenties sheet to a temporary JPG path and returns the path
+Public Function GetShapePath(ByVal shapeName As String, Optional ByVal suffix As String = "") As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim shp As Shape: Set shp = wsRef.Shapes(shapeName)
+    If shp Is Nothing Then Exit Function
+    Dim tmp As String: tmp = Utils.GetTempFile(shapeName & suffix, ".jpg")
+    Dim ch As ChartObject
+    Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=shp.Width, Height:=shp.Height)
+    shp.Copy: ch.Activate: ch.Chart.Paste
+    ch.Chart.Export tmp, "JPG": ch.Delete
+    If Dir(tmp) <> "" Then GetShapePath = tmp
+    Exit Function
+ErrHandler:
+    Utils.LogError4 "LayoutSpecsHelpers", "GetShapePath", Err.Number, Err.Description
+End Function
+
+' Creates/places an Image button on a form using specs for a logical key (Prev/Next/Save/Cancel/RowAdd/RowDel)
+Public Sub PlaceButtonFromSpec(frm As Object, ByVal controlName As String, ByVal keyName As String)
+    On Error GoTo ErrHandler
+    Dim baseShape As String, hoverShape As String
+    baseShape = CStr(GetLayoutSpec(keyName, "ShapeName"))
+    hoverShape = baseShape & "_hover" ' naming convention
+    Dim x As Single, y As Single, w As Single, h As Single
+    x = CSng(GetLayoutSpec(keyName, "X"))
+    y = CSng(GetLayoutSpec(keyName, "Y"))
+    w = CSng(GetLayoutSpec(keyName, "Width"))
+    h = CSng(GetLayoutSpec(keyName, "Height"))
+    ' Create image control (or re-use if exists)
+    Dim img As MSForms.Image
+    Set img = FormLayout.TryGetImageDyn(frm, controlName)
+    If img Is Nothing Then
+        Set img = frm.Controls.Add("Forms.Image.1", controlName, True)
+    End If
+    ' Set default picture
+    Dim picPath As String: picPath = GetShapePath(baseShape)
+    If Len(picPath) > 0 Then img.Picture = LoadPicture(picPath)
+    ' Position and size
+    img.Left = x: img.Top = y: img.Width = w: img.Height = h
+    ' Store hover base in Tag for event handlers
+    img.Tag = "base=" & baseShape & "|hover=" & hoverShape
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "LayoutSpecsHelpers", "PlaceButtonFromSpec", Err.Number, Err.Description
+End Sub
+
+' Applies hover image (reads hover from Tag)
+Public Sub ApplyHoverPicture(frm As Object, ByVal controlName As String)
+    On Error GoTo ErrHandler
+    Dim img As MSForms.Image: Set img = FormLayout.TryGetImageDyn(frm, controlName)
+    If img Is Nothing Then Exit Sub
+    Dim hoverShape As String: hoverShape = ParseTag(img.Tag, "hover")
+    If Len(hoverShape) = 0 Then Exit Sub
+    Dim p As String: p = GetShapePath(hoverShape, "_hover")
+    If Len(p) > 0 Then img.Picture = LoadPicture(p)
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "LayoutSpecsHelpers", "ApplyHoverPicture", Err.Number, Err.Description
+End Sub
+
+' Resets to default (base) image
+Public Sub ResetHoverPicture(frm As Object, ByVal controlName As String)
+    On Error GoTo ErrHandler
+    Dim img As MSForms.Image: Set img = FormLayout.TryGetImageDyn(frm, controlName)
+    If img Is Nothing Then Exit Sub
+    Dim baseShape As String: baseShape = ParseTag(img.Tag, "base")
+    If Len(baseShape) = 0 Then Exit Sub
+    Dim p As String: p = GetShapePath(baseShape)
+    If Len(p) > 0 Then img.Picture = LoadPicture(p)
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "LayoutSpecsHelpers", "ResetHoverPicture", Err.Number, Err.Description
+End Sub
+
+' Parses "key=value" pairs in Image.Tag; format: "base=btnShapeLarge|hover=btnShapeLarge_hover"
+Private Function ParseTag(ByVal tagText As String, ByVal key As String) As String
+    On Error Resume Next
+    Dim parts() As String: parts = Split(tagText, "|")
+    Dim i As Long, kv()
+    For i = LBound(parts) To UBound(parts)
+        kv = Split(parts(i), "=")
+        If UBound(kv) = 1 Then
+            If StrComp(kv(0), key, vbTextCompare) = 0 Then
+                ParseTag = kv(1)
+                Exit Function
+            End If
+        End If
+    Next i
+End Function
+
+' Builds a set of standard buttons using the spec table
+Public Sub BuildButtonsFromSpecs(frm As Object)
+    On Error GoTo ErrHandler
+    PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVorige",   "Prev"
+    PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVolgende", "Next"
+    PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnOpslaan",  "Save"
+    PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnAnnuleren","Cancel"
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "LayoutSpecsHelpers", "BuildButtonsFromSpecs", Err.Number, Err.Description
+End Sub
+

@@ -1,0 +1,17 @@
+MOCKUP SPEC – Form 2: Vaste Inkomsten (Stap 2/4)
+Generated: 2025-11-24 19:18:07
+===============================================
+
+Background: bg_frmInvoer_landscape; label "Stap 2 van 4 – Vaste inkomsten".
+Repeating row editor (dynamic table-like):
+  - For each income source:
+      * txtBron (TextBox) or cmbBron (ComboBox) populated from Referenties.tblVastInkomsten (if exists)
+      * cmbPeriode (maand, week, 4 weken, kwartaal, jaar)
+      * txtBedrag (TextBox) – numeric parsing via Utils.ParseAmount
+      * optOntvanger (ComboBox): "Zelf", "Partner", "Gezamenlijk" (optional)
+      * btnRowAdd (shape: btnRowAddShape), btnRowDel (shape: btnRowDelShape)
+  - Summary: lblTotaal + calc field using Utils.ToMonthlyAmount
+Navigation shapes:
+  - imgBtnVorige (btnVorigeShape) ← to Huishouden
+  - imgBtnVolgende (btnVolgendeShape) → to Vaste Uitgaven
+  - imgBtnOpslaan (btnOpslaanShape), imgBtnAnnuleren (btnAnnulerenShape)

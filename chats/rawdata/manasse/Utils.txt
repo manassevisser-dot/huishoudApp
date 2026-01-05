@@ -1,0 +1,160 @@
+'Start of code for Module Utils
+'=========
+
+Option Explicit
+
+' Beschrijving: LogError4 - Logt fouten met module/func/nummer/omschrijving naar ErrorLog.
+Public Sub LogError4(ByVal moduleName As String, ByVal funcName As String, ByVal errNum As Long, ByVal errDesc As String)
+    On Error Resume Next
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Worksheets("ErrorLog")
+    If ws Is Nothing Then
+        Set ws = ThisWorkbook.Worksheets.Add
+        ws.Name = "ErrorLog"
+        ws.Range("A1:D1").Value = Array("Datum", "Module", "Functie", "Foutmelding")
+    End If
+    Dim r As Long: r = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row + 1
+    ws.Cells(r, 1).Value = Now
+    ws.Cells(r, 2).Value = moduleName
+    ws.Cells(r, 3).Value = funcName
+    ws.Cells(r, 4).Value = "[" & errNum & "] " & errDesc
+End Sub
+
+' Beschrijving: LogError - Backwards compatible wrapper (source, description).
+Public Sub LogError(ByVal source As String, ByVal errDesc As String)
+    On Error Resume Next
+    Call LogError4(source, "", Err.Number, errDesc)
+End Sub
+
+
+Public Function SheetBestaat(ByVal sheetNaam As String) As Boolean
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets(sheetNaam)
+    SheetBestaat = Not ws Is Nothing
+    Set ws = Nothing
+    On Error GoTo 0
+End Function
+
+Public Function LastRow(ByVal ws As Worksheet, Optional ByVal col As Long = 1) As Long
+    With ws
+        If Application.WorksheetFunction.CountA(.Columns(col)) = 0 Then
+            LastRow = 1
+        Else
+            LastRow = .Cells(.Rows.Count, col).End(xlUp).Row
+        End If
+    End With
+End Function
+
+Public Function IsoWeek(ByVal d As Date) As Long
+    IsoWeek = DatePart("ww", d, vbMonday, vbFirstFourDays)
+End Function
+
+Public Function ParseAmount(ByVal s As String) As Double
+    Dim decSep As String: decSep = Application.International(xlDecimalSeparator)
+    s = Trim$(s)
+    If s = "" Then ParseAmount = 0: Exit Function
+    s = Replace(Replace(s, ".", decSep), ",", decSep)
+    ParseAmount = CDbl(s)
+End Function
+
+Public Sub EnsureDBHeaders()
+    Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Database")
+    If ws.Cells(1, dbDate).Value = "" Then
+        ws.Cells(1, dbDate).Resize(1, 11).Value = Array( _
+            "Datum", "Jaar", "MaandKey", "WeekISO", "DagNaam", "Categorie", "Subcategorie", "Omschrijving", "Bedrag", "Betaalwijze", "Soort")
+    End If
+End Sub
+
+Public Function DictAddOrIncrement(ByRef dict As Object, ByVal key As Variant, Optional ByVal inc As Double = 1) As Double
+    If Not dict.Exists(key) Then dict(key) = inc Else dict(key) = dict(key) + inc
+    DictAddOrIncrement = dict(key)
+End Function
+
+Public Function ToMonthlyAmount(ByVal periode As String, ByVal bedrag As Double) As Double
+    periode = LCase$(Trim$(periode))
+    Select Case periode
+        Case "jaar", "per jaar":         ToMonthlyAmount = bedrag / 12
+        Case "kwartaal", "per kwartaal": ToMonthlyAmount = bedrag / 3
+        Case "maand", "per maand":       ToMonthlyAmount = bedrag
+        Case "4 weken":                   ToMonthlyAmount = bedrag * 13 / 12
+        Case "week", "per week":         ToMonthlyAmount = bedrag * 52 / 12
+        Case "dag", "per dag":           ToMonthlyAmount = bedrag * 365 / 12
+        Case Else:                         ToMonthlyAmount = bedrag
+    End Select
+End Function
+
+' ==========================
+' Table / Named Range Utilities
+' ==========================
+Public Function TryGetListObject(ByVal ws As Worksheet, ByVal tableName As String) As ListObject
+    On Error Resume Next
+    Set TryGetListObject = ws.ListObjects(tableName)
+    On Error GoTo 0
+End Function
+
+Public Function TryGetNamedRange(ByVal nm As String) As Range
+    On Error Resume Next
+    Set TryGetNamedRange = ThisWorkbook.Names(nm).RefersToRange
+    On Error GoTo 0
+End Function
+
+Public Function EnsureTable(ByVal ws As Worksheet, ByVal tableName As String, ByVal headerRange As Range) As ListObject
+    Dim lo As ListObject
+    Set lo = TryGetListObject(ws, tableName)
+    If lo Is Nothing Then
+        Set lo = ws.ListObjects.Add(xlSrcRange, headerRange.CurrentRegion, , xlYes)
+        lo.name = tableName
+    End If
+    Set EnsureTable = lo
+End Function
+
+Public Function MonthNameNL(ByVal m As Long) As String
+    Dim arr
+    arr = Array("Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December")
+    If m >= 1 And m <= 12 Then MonthNameNL = arr(m - 1) Else MonthNameNL = "Onbekend"
+End Function
+
+' --- Helpers: temp-pad en chart-export ---
+Private Function GetTempFile(ByVal baseName As String, ByVal ext As String) As String
+    ' ext vb. ".jpg" of ".png"
+    Dim tmp As String
+    tmp = Environ$("TEMP")
+    If Len(tmp) = 0 Then tmp = Environ$("TMP")
+    If Len(tmp) = 0 Then tmp = ThisWorkbook.Path
+    If Right$(tmp, 1) <> "\" Then tmp = tmp & "\"
+    GetTempFile = tmp & baseName & "_" & Format(Now, "yyyymmdd_hhnnss") & ext
+End Function
+
+Private Function ExportShapeToJpg(ByVal ws As Worksheet, ByVal shapeName As String) As String
+    ' Exporteer een shape naar JPG via een tijdelijke Chart
+    On Error GoTo ErrHandler
+    Dim shp As Shape
+    Set shp = ws.Shapes(shapeName)
+
+    ' Maak een tijdelijke Chart-object (inline), kopieer shape erin en exporteer
+    Dim ch As ChartObject
+    Set ch = ws.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=shp.Width, Height:=shp.Height)
+
+    ' Chart heeft een Chart-area; we plakken de shape als afbeelding in de chart
+    shp.Copy
+    ch.Activate
+    ch.Chart.Paste
+
+    ' Export
+    Dim outPath As String
+    outPath = GetTempFile("bg_frmInvoer", ".jpg")
+    ch.Chart.Export Filename:=outPath, FilterName:="JPG"
+
+    ' Opruimen
+    ch.Delete
+
+    ExportShapeToJpg = outPath
+    Exit Function
+
+ErrHandler:
+    ExportShapeToJpg = vbNullString
+End Function
+
+'=========
+'End of code for 

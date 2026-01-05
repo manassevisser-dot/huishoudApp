@@ -1,0 +1,22 @@
+'Start of code for ClassModule CBtnEvents
+'=========
+' ===== CBtnEvents.cls =====
+Option Explicit
+
+Public WithEvents Btn As MSForms.CommandButton
+Public ParentForm As Object   ' krijgt de UserForm-instantie
+
+Private Sub Btn_Click()
+    On Error Resume Next
+    Select Case LCase(Btn.name)
+        Case "dyn_btnopslaan"
+            ParentForm.HandleOpslaan_dyn ParentForm
+        Case "dyn_btnannuleren"
+            ParentForm.HandleAnnuleren_dyn ParentForm
+        Case "dyn_btnnieuwsub"
+            ParentForm.HandleNieuwSub_dyn ParentForm
+    End Select
+End Sub
+
+'=========
+'End of code for ClassModule CBtnEvents

@@ -1,0 +1,28 @@
+MOCKUP SPEC – Form 1: Huishouden (Stap 1/4)
+Generated: 2025-11-24 19:18:07
+===============================================
+
+Background: use shape "bg_frmInvoer_landscape" from sheet "Referenties" (export via FormBackground.EnsureBackgroundImage).
+Progress: label "Stap 1 van 4 – Huishouden" top-left.
+Controls (dynamic, all names prefixed with FormLayout.DYN_PREFIX):
+  - lblTitle (Label): caption as above.
+  - spnTotalPersons (SpinButton) + txtTotalPersons (TextBox): total persons (1..8).
+  - FrameAdults (Frame): visible if totalPersons >= 1.
+      * chkAdult_Man
+      * chkAdult_Vrouw
+      * txtAdult_GenderSelfDescribe (TextBox) – label "Ik beschrijf mijn gender als:"
+      * chkAdult_NoAnswer ("Geen antwoord / niet aangegeven")
+      * chkAdult_PregnantOrLactating ("Zwangere of lacterende personen?")
+      * Age selectors per adult count (dynamic rows with ComboBox age bands: "tot 50", "51–69", "70+")
+  - FrameChildren (Frame): visible if totalPersons - adults > 0.
+      * Numeric inputs per kindercategorie (1–3, 4–8, 9–13, 14–18 (zoon/dochter), Volwassen kind (zoon/dochter))
+  - grpPets (Frame): RadioButtons optPetsYes/optPetsNo; if Yes, txtPetCount, cmbPetType.
+  - Navigation buttons loaded as shapes (from sheet "Referenties"):
+      * imgBtnVorige (shape name: btnVorigeShape) – hidden on Step 1.
+      * imgBtnVolgende (shape name: btnVolgendeShape).
+Notes:
+  - Labels use inclusive terminology; see research.
+  - Tooltips: add brief help for “Zwanger/lacterend” (inclusive of chest/breastfeeding).
+Layout:
+  - Two columns: Adults (left), Children (right). Pets and buttons bottom.
+  - Use FormLayout.FrmLayoutSafeAreaDyn to place controls within bg margins.

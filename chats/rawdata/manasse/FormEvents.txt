@@ -1,0 +1,190 @@
+'Start of code for Module FormEvents
+'=========
+' FormEvents.bas
+Option Explicit
+
+Public mBtnHandlers As Collection
+Public mCmbHandlers As Collection
+Public mTxtHandlers As Collection
+
+Public Sub BuildDynamicFrmInvoer(frm As Object)
+    On Error GoTo ErrHandler
+
+    FormLayout.RemoveDynamicControls frm
+    FormBackground.EnsureBackgroundImage frm
+
+    Dim lbl As MSForms.Label
+    Dim cmb As MSForms.ComboBox
+    Dim Txt As MSForms.TextBox
+    Dim Btn As MSForms.CommandButton
+
+    Set lbl = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblDatumVandaag", True)
+    lbl.Caption = "Het is vandaag " & Format(Date, "dddd dd-mm-yyyy")
+
+    Set lbl = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblCat", True)
+    lbl.Caption = "Categorie"
+    Set cmb = frm.Controls.Add("Forms.ComboBox.1", FormLayout.DYN_PREFIX & "cmbCategorie", True)
+    cmb.Style = fmStyleDropDownList
+
+    Set lbl = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblSub", True)
+    lbl.Caption = "Subcategorie"
+    Set cmb = frm.Controls.Add("Forms.ComboBox.1", FormLayout.DYN_PREFIX & "cmbSubcategorie", True)
+    cmb.Enabled = False
+    cmb.Style = fmStyleDropDownList
+    Set Btn = frm.Controls.Add("Forms.CommandButton.1", FormLayout.DYN_PREFIX & "btnNieuwSub", True)
+    Btn.Caption = "+"
+
+    Set lbl = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblBedrag", True)
+    lbl.Caption = "Bedrag"
+    Set Txt = frm.Controls.Add("Forms.TextBox.1", FormLayout.DYN_PREFIX & "txtBedrag", True)
+
+    Set lbl = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblBetaal", True)
+    lbl.Caption = "Betaalwijze"
+    Set cmb = frm.Controls.Add("Forms.ComboBox.1", FormLayout.DYN_PREFIX & "cmbBetaalwijze", True)
+    cmb.Style = fmStyleDropDownList
+
+    Set Btn = frm.Controls.Add("Forms.CommandButton.1", FormLayout.DYN_PREFIX & "btnOpslaan", True)
+    Btn.Caption = "Opslaan"
+    Set Btn = frm.Controls.Add("Forms.CommandButton.1", FormLayout.DYN_PREFIX & "btnAnnuleren", True)
+    Btn.Caption = "Annuleren"
+
+    FormData.LoadCategoriesIntoCombo frm
+    FormData.LoadPaymentMethodsIntoCombo frm
+
+    Dim c As Control
+    For Each c In frm.Controls
+        If TypeOf c Is MSForms.ComboBox Then FormLayout.AutoFitDropdownDyn c
+    Next c
+
+    FormLayout.FrmLayoutSafeAreaDyn frm
+    HookEventsDynamic frm
+    Exit Sub
+
+ErrHandler:
+    MsgBox "Fout in BuildDynamicFrmInvoer: " & Err.Description
+End Sub
+
+Public Sub HookEventsDynamic(frm As Object)
+    Set mBtnHandlers = New Collection
+    Set mCmbHandlers = New Collection
+    Set mTxtHandlers = New Collection
+
+    AddBtnHandler frm, FormLayout.DYN_PREFIX & "btnOpslaan"
+    AddBtnHandler frm, FormLayout.DYN_PREFIX & "btnAnnuleren"
+    AddBtnHandler frm, FormLayout.DYN_PREFIX & "btnNieuwSub"
+
+    AddCmbHandler frm, FormLayout.DYN_PREFIX & "cmbCategorie"
+    AddCmbHandler frm, FormLayout.DYN_PREFIX & "cmbSubcategorie"
+    AddCmbHandler frm, FormLayout.DYN_PREFIX & "cmbBetaalwijze"
+
+    AddTxtHandler frm, FormLayout.DYN_PREFIX & "txtBedrag"
+End Sub
+
+Private Sub AddBtnHandler(frm As Object, ByVal name As String)
+    On Error Resume Next
+    Dim h As CBtnEvents: Set h = New CBtnEvents
+    Set h.Btn = frm.Controls(name)
+    Set h.ParentForm = frm
+    mBtnHandlers.Add h
+End Sub
+
+Private Sub AddCmbHandler(frm As Object, ByVal name As String)
+    On Error Resume Next
+    Dim h As CCmbEvents: Set h = New CCmbEvents
+    Set h.cmb = frm.Controls(name)
+    Set h.ParentForm = frm
+    mCmbHandlers.Add h
+End Sub
+
+Private Sub AddTxtHandler(frm As Object, ByVal name As String)
+    On Error Resume Next
+    Dim h As CTxtEvents: Set h = New CTxtEvents
+    Set h.Txt = frm.Controls(name)
+    mTxtHandlers.Add h
+End Sub
+
+Public Sub HandleOpslaan_dyn(frm As Object)
+    On Error GoTo ErrHandler
+    Dim wsDB As Worksheet: Set wsDB = ThisWorkbook.Worksheets("Database")
+    Utils.EnsureDBHeaders
+
+    Dim outR As Long: outR = Utils.LastRow(wsDB, Utils.dbDate) + 1
+    Dim d As Date: d = Date
+
+    Dim cat As String: cat = frm.Controls(FormLayout.DYN_PREFIX & "cmbCategorie").Value
+    Dim subcat As String: subcat = frm.Controls(FormLayout.DYN_PREFIX & "cmbSubcategorie").Value
+    Dim bedrag As Double: bedrag = Utils.ParseAmount(frm.Controls(FormLayout.DYN_PREFIX & "txtBedrag").Text)
+    Dim betaal As String: betaal = frm.Controls(FormLayout.DYN_PREFIX & "cmbBetaalwijze").Value
+
+    If Len(cat) = 0 Then MsgBox "Kies een categorie": Exit Sub
+
+    With wsDB
+        .Cells(outR, Utils.dbDate).Value = d
+        .Cells(outR, Utils.dbYear).Value = Year(d)
+        .Cells(outR, Utils.dbMonthKey).Value = Format(d, "yyyy-mm")
+        .Cells(outR, Utils.dbWeek).Value = Utils.IsoWeek(d)
+        .Cells(outR, Utils.dbDay).Value = Format(d, "dddd")
+        .Cells(outR, Utils.dbCategory).Value = cat
+        .Cells(outR, Utils.dbSubcategory).Value = subcat
+        .Cells(outR, Utils.dbAmount).Value = Round(bedrag, 2)
+        .Cells(outR, Utils.dbPayment).Value = betaal
+        .Cells(outR, Utils.dbType).Value = "Uitgave"
+    End With
+
+    MsgBox "Opgeslagen!"
+    Unload frm
+    Exit Sub
+
+ErrHandler:
+    MsgBox "Fout: " & Err.Description
+End Sub
+
+Public Sub HandleAnnuleren_dyn(frm As Object)
+    Unload frm
+End Sub
+
+Public Sub HandleNieuwSub_dyn(frm As Object)
+    On Error GoTo ErrHandler
+    Dim cat As String: cat = frm.Controls(FormLayout.DYN_PREFIX & "cmbCategorie").Value
+    If Len(cat) = 0 Then MsgBox "Kies eerst een categorie": Exit Sub
+
+    Dim nm As String
+    nm = InputBox("Nieuwe subcategorie voor " & cat & ":", "Subcategorie")
+    If Len(nm) = 0 Then Exit Sub
+
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim loSub As ListObject: Set loSub = wsRef.ListObjects("tbl_cat_sub")
+
+    Dim r As Range
+    For Each r In loSub.DataBodyRange.Rows
+        If LCase(r.Cells(1, 1).Value) = LCase(cat) And LCase(r.Cells(1, 2).Value) = LCase(nm) Then
+            MsgBox "Bestaat al": Exit Sub
+        End If
+    Next r
+
+    Dim lr As ListRow: Set lr = loSub.ListRows.Add
+    lr.Range.Cells(1, 1).Value = cat
+    lr.Range.Cells(1, 2).Value = nm
+
+    FormData.LoadSubcategoriesIntoCombo frm, cat
+    frm.Controls(FormLayout.DYN_PREFIX & "cmbSubcategorie").Enabled = True
+    Exit Sub
+
+ErrHandler:
+    MsgBox "Fout: " & Err.Description
+End Sub
+
+Public Sub HandleCategorieChange_dyn(frm As Object)
+    Dim cat As String: cat = frm.Controls(FormLayout.DYN_PREFIX & "cmbCategorie").Value
+    If Len(cat) = 0 Then
+        frm.Controls(FormLayout.DYN_PREFIX & "cmbSubcategorie").Clear
+        frm.Controls(FormLayout.DYN_PREFIX & "cmbSubcategorie").Enabled = False
+        Exit Sub
+    End If
+
+    FormData.LoadSubcategoriesIntoCombo frm, cat
+    frm.Controls(FormLayout.DYN_PREFIX & "cmbSubcategorie").Enabled = True
+End Sub
+
+'=========
+'End of code for 

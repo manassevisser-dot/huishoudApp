@@ -1,0 +1,30 @@
+'Start of code for Module DataCategories
+'=========
+
+
+Public Function GetSubcategories(ByVal cat As String) As Collection
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject
+    On Error Resume Next: Set lo = wsRef.ListObjects("tbl_cat_sub"): On Error GoTo 0
+    If lo Is Nothing Then Exit Function
+
+    Dim res As New Collection
+    Dim rng As Range, r As Range
+    Set rng = lo.DataBodyRange
+    If rng Is Nothing Then
+        Set GetSubcategories = res
+        Exit Function
+    End If
+
+    For Each r In rng.Rows
+        If LCase$(Trim$(CStr(r.Cells(1, 1).Value))) = LCase$(Trim$(cat)) Then
+            On Error Resume Next
+            res.Add CStr(r.Cells(1, 2).Value), CStr(r.Cells(1, 2).Value)
+            On Error GoTo 0
+        End If
+    Next r
+
+    Set GetSubcategories = res
+End Function
+'=========
+'End of code for 

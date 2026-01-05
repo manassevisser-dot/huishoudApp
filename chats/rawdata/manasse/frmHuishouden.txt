@@ -1,0 +1,8 @@
+Private Sub UserForm_Initialize()
+On Error GoTo ErrHandler
+    FrmLayoutSafeAreaDyn Me
+    BuildForm_Huishouden Me
+Exit Sub
+ErrHandler:
+    MsgBox "frmHuishouden Initialize: " & Err.Description, vbCritical
+End Sub

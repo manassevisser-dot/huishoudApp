@@ -1,0 +1,40 @@
+' Class: CImgEvents
+Option Explicit
+Public WithEvents img As MSForms.Image
+
+Private Sub img_MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+    On Error Resume Next
+    Dim t As String: t = img.Tag
+    Dim hover As String
+    hover = ParseTag(t, "hover")
+    If Len(hover) > 0 Then
+        Dim p As String: p = GetShapePath(hover, "_hover")
+        If Len(p) > 0 Then img.Picture = LoadPicture(p)
+    End If
+End Sub
+
+Public Sub ResetToBase()
+    On Error Resume Next
+    Dim t As String: t = img.Tag
+    Dim base As String
+    base = ParseTag(t, "base")
+    If Len(base) > 0 Then
+        Dim p As String: p = GetShapePath(base)
+        If Len(p) > 0 Then img.Picture = LoadPicture(p)
+    End If
+End Sub
+
+Private Function ParseTag(ByVal tagText As String, ByVal key As String) As String
+    On Error Resume Next
+    Dim parts() As String: parts = Split(tagText, "|")
+    Dim i As Long, kv()
+    For i = LBound(parts) To UBound(parts)
+        kv = Split(parts(i), "=")
+        If UBound(kv) = 1 Then
+            If StrComp(kv(0), key, vbTextCompare) = 0 Then
+                ParseTag = kv(1)
+                Exit Function
+            End If
+        End If
+    Next i
+End Function

@@ -1,0 +1,8 @@
+/*ALL SHAPES: color scheme. Added defaultvalue-line to cells in DefaultColor and same for Hoover */
+# default{
+	background-color: #EFF2F; border: 2pt; border-color: #514AC9;
+}
+# hoover{
+	background-color: #C1CDFF; border: 2,5pt; border-color: #514AC9;/* there's a glow around the shape: color: #267DE6 // 4pt // oppacitiy 60% <-- i dont know how to explain in code*/
+}
+

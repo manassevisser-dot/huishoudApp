@@ -1,0 +1,110 @@
+' Module: frmBuilders
+Option Explicit
+
+Public Sub BuildForm_Huishouden(frm As Object)
+On Error GoTo ErrHandler
+    FormLayout.RemoveDynamicControls frm
+    FormHelpers.EnsureBackgroundImage frm
+
+    ' Title
+    Dim lbl As MSForms.Label
+    Set lbl = frm.Controls.Add("Forms.Label.1", DYN_PREFIX & "lblTitle", True)
+    lbl.Caption = "Stap 1 van 4 – Huishouden"
+    lbl.Left = 24: lbl.Top = 24: lbl.Width = 300: lbl.Height = 20
+
+    ' Total persons textbox + spin
+    Dim txtTotal As MSForms.TextBox
+    Set txtTotal = frm.Controls.Add("Forms.TextBox.1", DYN_PREFIX & "txtTotalPersons", True)
+    txtTotal.Left = 620: txtTotal.Top = 24: txtTotal.Width = 40: txtTotal.Text = "1"
+
+    Dim spn As MSForms.SpinButton
+    Set spn = frm.Controls.Add("Forms.SpinButton.1", DYN_PREFIX & "spnTotalPersons", True)
+    spn.Left = 666: spn.Top = 24: spn.Min = 1: spn.Max = 8: spn.Value = 1
+
+    ' Build adults frame
+    Dim frAdults As MSForms.Frame
+    Set frAdults = frm.Controls.Add("Forms.Frame.1", DYN_PREFIX & "frAdults", True)
+    frAdults.Caption = "Volwassenen"
+    frAdults.Left = 24: frAdults.Top = 80: frAdults.Width = 360: frAdults.Height = 260
+
+    ' Add one adult row template (you can extend as needed)
+    Dim lblA As MSForms.Label
+    Set lblA = frm.Controls.Add("Forms.Label.1", DYN_PREFIX & "lblAdult1", True)
+    lblA.Caption = "Persoon 1: Leeftijdscategorie"
+    lblA.Left = frAdults.Left + 8: lblA.Top = frAdults.Top + 8
+
+    ' Build children frame
+    Dim frKids As MSForms.Frame
+    Set frKids = frm.Controls.Add("Forms.Frame.1", DYN_PREFIX & "frChildren", True)
+    frKids.Caption = "Kinderen"
+    frKids.Left = 412: frKids.Top = 80: frKids.Width = 360: frKids.Height = 260
+
+    ' Build pets frame
+    Dim frPets As MSForms.Frame
+    Set frPets = frm.Controls.Add("Forms.Frame.1", DYN_PREFIX & "frPets", True)
+    frPets.Caption = "Huisdieren"
+    frPets.Left = 24: frPets.Top = 350: frPets.Width = 300: frPets.Height = 60
+
+    ' Buttons
+    LayoutSpecsHelpers.BuildButtonsFromSpecs frm
+
+    HookEventsDynamic frm
+Exit Sub
+ErrHandler:
+    MsgBox "BuildForm_Huishouden: " & Err.Description, vbCritical
+End Sub
+
+Public Sub BuildFrmVast(frm As Object)
+On Error GoTo ErrHandler
+    FormLayout.RemoveDynamicControls frm
+    FormHelpers.EnsureBackgroundImage frm
+
+    Dim mp As MSForms.MultiPage
+    Set mp = frm.Controls.Add("Forms.MultiPage.1", DYN_PREFIX & "mpVast", True)
+    mp.Left = 24: mp.Top = 60: mp.Width = 760: mp.Height = 350
+
+    ' Ensure pages
+    mp.Pages.Add
+    mp.Pages(0).Name = "pgInkomsten"
+    mp.Pages.Add
+    mp.Pages(1).Name = "pgUitgaven"
+
+    ' Build Page Inkomsten (a simple row template)
+    Dim lbl As MSForms.Label
+    Set lbl = mp.Pages(0).Controls.Add("Forms.Label.1", DYN_PREFIX & "lblStepTitle", True)
+    lbl.Caption = "Stap 2 van 4 – Vaste inkomsten"
+    lbl.Left = 8: lbl.Top = 8
+
+    ' Single-row template (repeat programmatically if many)
+    Dim txtBron As MSForms.TextBox
+    Set txtBron = mp.Pages(0).Controls.Add("Forms.TextBox.1", DYN_PREFIX & "txtBron_1", True)
+    txtBron.Left = 24: txtBron.Top = 40: txtBron.Width = 200
+
+    Dim cmbPer As MSForms.ComboBox
+    Set cmbPer = mp.Pages(0).Controls.Add("Forms.ComboBox.1", DYN_PREFIX & "cmbPeriode_1", True)
+    cmbPer.Left = 244: cmbPer.Top = 40: cmbPer.Width = 120
+    cmbPer.AddItem "maand": cmbPer.AddItem "week": cmbPer.AddItem "4 weken": cmbPer.AddItem "kwartaal": cmbPer.AddItem "jaar"
+
+    Dim txtBed As MSForms.TextBox
+    Set txtBed = mp.Pages(0).Controls.Add("Forms.TextBox.1", DYN_PREFIX & "txtBedrag_1", True)
+    txtBed.Left = 380: txtBed.Top = 40: txtBed.Width = 140
+
+    Dim cmbOnt As MSForms.ComboBox
+    Set cmbOnt = mp.Pages(0).Controls.Add("Forms.ComboBox.1", DYN_PREFIX & "cmbOntvanger_1", True)
+    cmbOnt.Left = 536: cmbOnt.Top = 40: cmbOnt.Width = 140
+    cmbOnt.AddItem "Zelf": cmbOnt.AddItem "Partner": cmbOnt.AddItem "Gezamenlijk"
+
+    ' Page Uitgaven: simpler template
+    Dim lbl2 As MSForms.Label
+    Set lbl2 = mp.Pages(1).Controls.Add("Forms.Label.1", DYN_PREFIX & "lblStepTitle2", True)
+    lbl2.Caption = "Stap 3 van 4 – Vaste uitgaven"
+    lbl2.Left = 8: lbl2.Top = 8
+
+    ' Buttons global
+    LayoutSpecsHelpers.BuildButtonsFromSpecs frm
+
+    HookEventsDynamic frm
+Exit Sub
+ErrHandler:
+    MsgBox "BuildFrmVast: " & Err.Description, vbCritical
+End Sub

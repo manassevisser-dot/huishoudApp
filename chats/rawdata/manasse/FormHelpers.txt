@@ -1,0 +1,96 @@
+' Module: FormHelpers
+Option Explicit
+
+' Use existing Utils.GetTempFile where available. If Utils missing, create a simple temp helper:
+Public Function GetTempFile(ByVal baseName As String, ByVal ext As String) As String
+    On Error Resume Next
+    Dim tmp As String
+    tmp = Environ$("TEMP") & "\" & baseName & "_" & Format(Now, "yyyymmdd_hhnnss") & ext
+    GetTempFile = tmp
+End Function
+
+Public Function ShapeExists(ByVal shapeName As String) As Boolean
+    On Error Resume Next
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim shp As Shape
+    Set shp = wsRef.Shapes(shapeName)
+    ShapeExists = (Not shp Is Nothing)
+End Function
+
+Public Sub AddShapeAsImage(frm As Object, ByVal shapeName As String, ByVal ctlName As String)
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim shp As Shape: Set shp = wsRef.Shapes(shapeName)
+    If shp Is Nothing Then Exit Sub
+
+    Dim tmpPath As String: tmpPath = GetTempFile(shapeName, ".jpg")
+    Dim ch As ChartObject
+    Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=shp.Width, Height:=shp.Height)
+    shp.Copy
+    ch.Activate
+    ch.Chart.Paste
+    ch.Chart.Export tmpPath, "JPG"
+    ch.Delete
+
+    Dim img As MSForms.Image
+    On Error Resume Next
+    Set img = frm.Controls(ctlName)
+    If img Is Nothing Then
+        Set img = frm.Controls.Add("Forms.Image.1", ctlName, True)
+    End If
+    On Error GoTo ErrHandler
+
+    img.Picture = LoadPicture(tmpPath)
+    img.PictureSizeMode = fmPictureSizeModeStretch
+    img.Left = shp.Left: img.Top = shp.Top
+    img.Width = shp.Width: img.Height = shp.Height
+    img.Tag = "shape=" & shapeName
+    Exit Sub
+ErrHandler:
+    MsgBox "AddShapeAsImage error: " & Err.Description, vbCritical
+End Sub
+
+Public Function LoadImage(ByVal imgPath As String) As StdPicture
+    On Error Resume Next
+    Set LoadImage = LoadPicture(imgPath)
+End Function
+
+Public Sub EnsureBackgroundImage(frm As Object)
+    On Error Resume Next
+    Dim tmpName As String: tmpName = "dyn_imgBackground"
+    On Error Resume Next
+    frm.Controls.Remove tmpName
+    On Error GoTo 0
+
+    Dim imgPath As String
+    ' Prefer shape bg_frmInvoer_landscape on Referenties
+    imgPath = GetShapePath("bg_frmInvoer_landscape", "")
+    If Len(imgPath) = 0 Then Exit Sub
+
+    Dim img As MSForms.Image
+    Set img = frm.Controls.Add("Forms.Image.1", tmpName, True)
+    img.Picture = LoadPicture(imgPath)
+    img.PictureSizeMode = fmPictureSizeModeStretch
+    img.Left = 0: img.Top = 0
+    img.Width = frm.InsideWidth: img.Height = frm.InsideHeight
+    img.ZOrder 1
+End Sub
+
+Public Function GetShapePath(ByVal shapeName As String, Optional ByVal suffix As String = "") As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim shp As Shape: Set shp = wsRef.Shapes(shapeName)
+    If shp Is Nothing Then Exit Function
+    Dim tmp As String: tmp = GetTempFile(shapeName & suffix, ".jpg")
+    Dim ch As ChartObject
+    Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=shp.Width, Height:=shp.Height)
+    shp.Copy
+    ch.Activate
+    ch.Chart.Paste
+    ch.Chart.Export tmp, "JPG"
+    ch.Delete
+    If Dir(tmp) <> "" Then GetShapePath = tmp
+    Exit Function
+ErrHandler:
+    GetShapePath = ""
+End Function

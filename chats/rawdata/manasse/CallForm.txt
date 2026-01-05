@@ -1,0 +1,7 @@
+'Start of code for Module CallForm
+'=========
+Sub Rechthoekafgerondehoeken1_Klikken()
+frmInvoer.Show
+End Sub
+'=========
+'End of code for 

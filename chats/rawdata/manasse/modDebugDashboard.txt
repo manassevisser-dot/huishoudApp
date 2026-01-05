@@ -1,0 +1,142 @@
+' Module: modDebugDashboard
+Option Explicit
+
+' Refresh top-level dashboard content
+Public Sub RefreshDashboardContents(frm As Object)
+On Error GoTo ErrHandler
+    Dim lsbTables As MSForms.ListBox: Set lsbTables = frm.Controls("lsbTables")
+    Dim lsbForms As MSForms.ListBox: Set lsbForms = frm.Controls("lsbForms")
+    Dim txtLog As MSForms.TextBox: Set txtLog = frm.Controls("txtLog")
+
+    lsbTables.Clear
+    lsbTables.AddItem "tblHuishouden": lsbTables.List(lsbTables.ListCount - 1, 1) = GetTableRowCount("tblHuishouden")
+    lsbTables.AddItem "tblVasteInkomsten": lsbTables.List(lsbTables.ListCount - 1, 1) = GetTableRowCount("tblVasteInkomsten")
+    lsbTables.AddItem "tblVasteUitgaven": lsbTables.List(lsbTables.ListCount - 1, 1) = GetTableRowCount("tblVasteUitgaven")
+    lsbTables.AddItem "tblDagelijks": lsbTables.List(lsbTables.ListCount - 1, 1) = GetTableRowCount("tblDagelijks")
+
+    lsbForms.Clear
+    lsbForms.AddItem "frmHuishouden": lsbForms.List(lsbForms.ListCount - 1, 1) = IIf(FormExists("frmHuishouden"), "OK", "Missing")
+    lsbForms.AddItem "frmVast": lsbForms.List(lsbForms.ListCount - 1, 1) = IIf(FormExists("frmVast"), "OK", "Missing")
+    lsbForms.AddItem "frmInvoer": lsbForms.List(lsbForms.ListCount - 1, 1) = IIf(FormExists("frmInvoer"), "OK", "Missing")
+
+    txtLog.Text = Now & " - Status refreshed" & vbCrLf & txtLog.Text
+    Exit Sub
+ErrHandler:
+    MsgBox "Refresh error: " & Err.Description, vbCritical
+End Sub
+
+' Utility: count rows of ListObject if exists
+Public Function GetTableRowCount(tblName As String) As Long
+On Error Resume Next
+    Dim ws As Worksheet
+    Dim lo As ListObject
+    For Each ws In ThisWorkbook.Worksheets
+        On Error Resume Next
+        Set lo = Nothing
+        Set lo = ws.ListObjects(tblName)
+        On Error GoTo 0
+        If Not lo Is Nothing Then
+            GetTableRowCount = lo.ListRows.Count
+            Exit Function
+        End If
+    Next ws
+    GetTableRowCount = 0
+End Function
+
+' Utility: check if a userform module exists in the project
+Public Function FormExists(frmName As String) As Boolean
+On Error Resume Next
+    Dim vbComp As VBIDE.VBComponent
+    Set vbComp = ThisWorkbook.VBProject.VBComponents(frmName)
+    If vbComp Is Nothing Then
+        FormExists = False
+    Else
+        FormExists = True
+    End If
+End Function
+
+' Run smoke tests: attempt to show/hide each form and report success/failure
+Public Sub RunSmokeTests(frmDashboard As Object)
+On Error GoTo ErrHandler
+    Dim txtLog As MSForms.TextBox: Set txtLog = frmDashboard.Controls("txtLog")
+    txtLog.Text = Now & " - Starting smoke tests..." & vbCrLf & txtLog.Text
+
+    Dim results As Collection: Set results = New Collection
+    results.Add TestFormShowHide("frmHuishouden")
+    results.Add TestFormShowHide("frmVast")
+    results.Add TestFormShowHide("frmInvoer")
+
+    Dim res As Variant
+    For Each res In results
+        txtLog.Text = Now & " - " & res & vbCrLf & txtLog.Text
+    Next res
+
+    MsgBox "Smoke tests finished. Zie log onderaan dashboard.", vbInformation
+    ' refresh status after tests
+    RefreshDashboardContents frmDashboard
+    Exit Sub
+ErrHandler:
+    MsgBox "RunSmokeTests error: " & Err.Description, vbCritical
+End Sub
+
+Private Function TestFormShowHide(frmName As String) As String
+On Error GoTo ErrHandler
+    If Not FormExists(frmName) Then
+        TestFormShowHide = frmName & ": NOT FOUND"
+        Exit Function
+    End If
+
+    ' Use the UserForms collection to load by name
+    Dim uf As Object
+    On Error Resume Next
+    Set uf = VBA.UserForms.Add(frmName)
+    If uf Is Nothing Then
+        TestFormShowHide = frmName & ": FAILED to Add"
+        Exit Function
+    End If
+
+    ' show and then hide
+    On Error Resume Next
+    uf.Show vbModeless
+    DoEvents
+    uf.Hide
+    Unload uf
+    TestFormShowHide = frmName & ": OK"
+    Exit Function
+ErrHandler:
+    TestFormShowHide = frmName & ": ERROR - " & Err.Description
+End Function
+
+' Export ErrorLog sheet to CSV (temp file)
+Public Sub ExportErrorLogToCSV(frm As Object)
+On Error GoTo ErrHandler
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Worksheets("ErrorLog")
+    On Error GoTo ErrHandler
+
+    If ws Is Nothing Then
+        MsgBox "Geen sheet 'ErrorLog' gevonden.", vbExclamation
+        Exit Sub
+    End If
+
+    Dim tmp As String
+    tmp = Environ$("TEMP") & "\ErrorLog_export_" & Format(Now, "yyyymmdd_hhnnss") & ".csv"
+    ws.Copy
+    Dim wb2 As Workbook
+    Set wb2 = ActiveWorkbook
+    Application.DisplayAlerts = False
+    wb2.SaveAs Filename:=tmp, FileFormat:=xlCSV, CreateBackup:=False
+    wb2.Close SaveChanges:=False
+    Application.DisplayAlerts = True
+
+    MsgBox "ErrorLog geëxporteerd naar: " & tmp, vbInformation
+    ' write to dashboard log
+    Dim txtLog As MSForms.TextBox: Set txtLog = frm.Controls("txtLog")
+    txtLog.Text = Now & " - Exported ErrorLog to " & tmp & vbCrLf & txtLog.Text
+    ' open file location
+    Shell "explorer.exe /select," & Replace(tmp, "/", "\"), vbNormalFocus
+    Exit Sub
+ErrHandler:
+    MsgBox "ExportErrorLogToCSV error: " & Err.Description, vbCritical
+End Sub

@@ -1,0 +1,15 @@
+'Start of code for Form frmInvoer
+'=========
+
+Option Explicit
+
+Private Sub UserForm_Initialize()
+    FormEvents.BuildDynamicFrmInvoer Me
+End Sub
+
+Private Sub UserForm_Resize()
+    On Error Resume Next
+    FormLayout.FrmLayoutSafeAreaDyn Me
+End Sub
+'=========
+'End of code for 

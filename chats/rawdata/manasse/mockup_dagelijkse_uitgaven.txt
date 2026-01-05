@@ -1,0 +1,9 @@
+MOCKUP SPEC – Form 4: Dagelijkse Uitgaven (Stap 4/4)
+Generated: 2025-11-24 19:18:07
+===============================================
+
+Background label: "Stap 4 van 4 – Dagelijkse uitgaven".
+Reuse existing frmInvoer pipeline, but align labels and spacing:
+  - lblDatumVandaag, cmbCategorie, cmbSubcategorie (+ btnNieuwSub), txtBedrag, cmbBetaalwijze
+  - Add: lblStapIndicator, imgBtnVorige (to Vaste Uitgaven), imgBtnOpslaan (finalize), imgBtnAnnuleren
+  - Ensure shape buttons loaded if present; fallback to CommandButton.

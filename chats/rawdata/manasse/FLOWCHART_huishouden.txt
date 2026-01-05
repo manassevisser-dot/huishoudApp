@@ -1,0 +1,33 @@
+*** alle keuzes die de user maakt staan tussen [] om deze flow duidelijk te maken
+Aantal personen in huishouden:
+
+ [SpinButton bepaalt het aantal]. (max van 8 personen)
+
+Bij wijziging wordt de inhoud van het formulier aangepast.
+
+Scenario's:
+
+	1 persoon: 	-> [man/vrouw/anders] 	-> Bij vrouw: [volwassen categorieën] tonen (toon extra optie: [zwanger] en geen kinderen)
+					-> Bij man: [volwassen categorieën] tonen (toon geen extra optie en geen kinderen).
+					-> Bij anders: [volwassen categorieën] tonen (toon extra optie: [zwanger] en geen kinderen).
+
+	2 personen: 	-> kind? [ja/nee]	-> Als ja: "ik ben een" [man/vrouw/anders] 	-> Bij vrouw: [volwassen categorieën] tonen (toon extra optie: [zwanger en borstvoeding])	-> "en mijn kind is" [man/vrouw/anders] van [(beperking bij borstvoeding, vanwege logica in leeftijd kind) categorieën kinderen (beperking 1 "kind"optie kiezen)]
+										
+										-> Bij man: [volwassen categorieën] tonen (toon geen extra optie) 				-> "en mijn kind is" [man/vrouw/anders] van [categorieën kinderen (beperking 1 "kind"optie kiezen)])
+										
+										-> Bij anders: [volwassen categorieën] tonen (toon extra optie: [zwangeren en borstvoeding]) 	-> "en mijn kind is" [man/vrouw/anders] van [(beperking bij borstvoeding, vanwege logica in leeftijd kind) categorieën kinderen (beperking 1 "kind"optie kiezen)]
+
+					-> Als nee: "wij zijn een [man/vrouw/anders] van [volwassen categorien] (bij vrouw/anders, extra optie [zwanger]) en een [man/vrouw/anders] van [volwassen categorien] (bij vrouw/anders, extra optie [zwanger])"
+
+	3+ personen: 	-> "Wij zijn met [Spinbutton aantal volwassenen] en <label: uit logica aantal> kinderen" -> Toon per volwassene [alle volwassen categorieën voluit; bv ik ben een <anders> van <leeftijdcategorie>] en toon per kind [alle kindercategorieën voluit]
+
+
+Extra regels:
+
+Validatie: Som van alle categorieën = totaal aantal personen -> moet kloppen met eerste spinbutton.
+
+	Huisdieren? -> Altijd zichtbaar, Ja/Nee optie.
+
+Knop voor {opslaan} en {reset} en/of {annuleren}
+
+Dit form alleen tonen wanneer huishouden nog niet bekend is

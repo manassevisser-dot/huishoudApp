@@ -1,0 +1,74 @@
+'Start of code for Module FormBackground
+'=========
+' FormBackground.bas
+' Background helpers for frmInvoer (uses shapes on sheet "Referenties")
+Option Explicit
+
+' Beschrijving: EnsureBackgroundImage - automatisch gegenereerde omschrijving.
+
+Public Sub EnsureBackgroundImage(frm As Object)
+    On Error Resume Next
+    frm.Controls.Remove "dyn_imgBackground"
+    On Error GoTo 0
+
+    Dim imgPath As String
+    imgPath = GetBackgroundPath()
+    If Len(imgPath) = 0 Then Exit Sub
+
+    Dim img As MSForms.Image
+    Set img = frm.Controls.Add("Forms.Image.1", "dyn_imgBackground", True)
+
+    Dim pic As StdPicture
+    Set pic = LoadPicture(imgPath)
+    If pic Is Nothing Then Exit Sub
+
+    Dim BG_MARGIN As Single: BG_MARGIN = 6
+    Dim availW As Single: availW = frm.InsideWidth - 2 * BG_MARGIN
+    Dim availH As Single: availH = frm.InsideHeight - 2 * BG_MARGIN
+
+    Dim ar As Double: ar = pic.Width / pic.Height
+    If ar <= 0 Then ar = 16 / 9
+
+    Dim fitW As Single: fitW = availW
+    Dim fitH As Single: fitH = fitW / ar
+    If fitH > availH Then
+        fitH = availH
+        fitW = fitH * ar
+    End If
+
+    With img
+        .Left = BG_MARGIN + (availW - fitW) / 2
+        .Top = BG_MARGIN + (availH - fitH) / 2
+        .Width = fitW
+        .Height = fitH
+        .Picture = pic
+        .PictureSizeMode = fmPictureSizeModeStretch
+        .ZOrder 1
+    End With
+End Sub
+
+Public Function GetBackgroundPath() As String
+    On Error Resume Next
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    If wsRef Is Nothing Then Exit Function
+
+    Dim shp As Shape
+    Set shp = wsRef.Shapes("bg_frmInvoer_landscape")
+    If shp Is Nothing Then Exit Function
+
+    Dim tmp As String
+    tmp = Environ$("TEMP") & "\frmInvoer_bg_" & Format(Now, "yyyymmdd_hhnnss") & ".jpg"
+
+    Dim ch As ChartObject
+    Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=shp.Width, Height:=shp.Height)
+    shp.Copy
+    ch.Activate
+    ch.Chart.Paste
+    ch.Chart.Export tmp, "JPG"
+    ch.Delete
+
+    If Dir(tmp) <> "" Then GetBackgroundPath = tmp
+End Function
+
+'=========
+'End of code for 

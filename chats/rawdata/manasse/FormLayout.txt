@@ -1,0 +1,172 @@
+'Start of code for Module FormLayout
+'=========
+' FormLayout.bas
+' Layout helpers for frmInvoer (dynamic controls).
+Option Explicit
+
+Public Const DYN_PREFIX As String = "dyn_"
+
+' Call after controls created (or on Resize) to place them in the safe area.
+Public Sub FrmLayoutSafeAreaDyn(frm As Object)
+    On Error Resume Next
+    Dim bgLeft As Single, bgTop As Single, bgW As Single, bgH As Single
+    Dim availW As Single, availH As Single
+    Dim BG_MARGIN As Single: BG_MARGIN = 6
+    Dim ROW_SPACING As Single: ROW_SPACING = 34
+    Dim LABEL_WIDTH As Single: LABEL_WIDTH = 120
+    Dim GAP_LABEL_TO_INPUT As Single: GAP_LABEL_TO_INPUT = 12
+    Dim COL_LABEL_TO_INPUT As Single: COL_LABEL_TO_INPUT = LABEL_WIDTH + GAP_LABEL_TO_INPUT
+    Dim RIGHT_PADDING As Single: RIGHT_PADDING = 20
+    Dim INP_MAX As Single: INP_MAX = 360
+
+    ' Try to find dynamic background image control
+    Dim bg As MSForms.Image: Set bg = TryGetImageDyn(frm, DYN_PREFIX & "imgBackground")
+    If bg Is Nothing Then
+        bgLeft = BG_MARGIN
+        bgTop = BG_MARGIN
+        bgW = frm.InsideWidth - 2 * BG_MARGIN
+        bgH = frm.InsideHeight - 2 * BG_MARGIN
+    Else
+        bgLeft = bg.Left
+        bgTop = bg.Top
+        bgW = bg.Width
+        bgH = bg.Height
+    End If
+
+    Dim L_SAFE_LEFT_PCT As Double: L_SAFE_LEFT_PCT = 0.12
+    Dim L_SAFE_RIGHT_PCT As Double: L_SAFE_RIGHT_PCT = 0.88
+    Dim L_SAFE_TOP_PCT As Double: L_SAFE_TOP_PCT = 0.2
+    Dim L_SAFE_BOTTOM_PCT As Double: L_SAFE_BOTTOM_PCT = 0.8
+
+    Dim safeLeft As Single, safeTop As Single, safeWidth As Single, safeHeight As Single
+    safeLeft = bgLeft + (L_SAFE_LEFT_PCT * bgW)
+    safeTop = bgTop + (L_SAFE_TOP_PCT * bgH)
+    safeWidth = (L_SAFE_RIGHT_PCT - L_SAFE_LEFT_PCT) * bgW
+    safeHeight = (L_SAFE_BOTTOM_PCT - L_SAFE_TOP_PCT) * bgH
+
+    Dim colLbl As Single, colInp As Single, inpWidth As Single, t As Single
+    colLbl = safeLeft
+    colInp = safeLeft + COL_LABEL_TO_INPUT
+    inpWidth = safeWidth - (colInp - safeLeft) - RIGHT_PADDING
+    If inpWidth > INP_MAX Then
+        Dim extraSpace As Single
+        extraSpace = (inpWidth - INP_MAX) / 2
+        colInp = colInp + extraSpace
+        inpWidth = INP_MAX
+    End If
+
+    t = safeTop
+
+    Dim ctrl As Control
+
+    Set ctrl = TryGetControl(frm, DYN_PREFIX & "lblDatumVandaag")
+    If Not ctrl Is Nothing Then
+        ctrl.Left = colLbl
+        ctrl.Top = t
+    End If
+
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, DYN_PREFIX & "lblCat")
+    If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, DYN_PREFIX & "cmbCategorie")
+    If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, DYN_PREFIX & "lblSub")
+    If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, DYN_PREFIX & "cmbSubcategorie")
+    If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth - 36
+    Set ctrl = TryGetControl(frm, DYN_PREFIX & "btnNieuwSub")
+    If Not ctrl Is Nothing Then
+        ctrl.Left = colInp + (inpWidth - 36) + 8
+        ctrl.Top = t
+        ctrl.Width = 28
+        ctrl.Height = 22
+    End If
+
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, DYN_PREFIX & "lblBedrag")
+    If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, DYN_PREFIX & "txtBedrag")
+    If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, DYN_PREFIX & "lblBetaal")
+    If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, DYN_PREFIX & "cmbBetaalwijze")
+    If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+
+    Dim btnOps As Control, btnAnn As Control
+    Set btnOps = TryGetControl(frm, DYN_PREFIX & "btnOpslaan")
+    Set btnAnn = TryGetControl(frm, DYN_PREFIX & "btnAnnuleren")
+
+    If Not btnOps Is Nothing And Not btnAnn Is Nothing Then
+        Dim btnTotalWidth As Single: btnTotalWidth = btnOps.Width + 24 + btnAnn.Width
+        Dim btnLeft As Single: btnLeft = safeLeft + (safeWidth - btnTotalWidth) / 2
+        Dim btnY As Single: btnY = safeTop + safeHeight - 60
+        btnOps.Left = btnLeft: btnOps.Top = btnY
+        btnAnn.Left = btnLeft + btnOps.Width + 24: btnAnn.Top = btnY
+    End If
+End Sub
+
+Public Sub RemoveDynamicControls(frm As Object)
+    Dim toRemove As New Collection
+    Dim c As Control
+    On Error Resume Next
+    For Each c In frm.Controls
+        If Left$(c.name, Len(DYN_PREFIX)) = DYN_PREFIX Then
+            toRemove.Add c.name, c.name
+        End If
+    Next c
+
+    Dim k As Variant
+    For Each k In toRemove
+        frm.Controls.Remove k
+    Next k
+End Sub
+
+Public Function TryGetControl(frm As Object, ctlName As String) As Control
+    Dim c As Control
+    On Error Resume Next
+    For Each c In frm.Controls
+        If StrComp(c.name, ctlName, vbTextCompare) = 0 Then
+            Set TryGetControl = c
+            Exit Function
+        End If
+    Next c
+End Function
+
+Public Function TryGetImageDyn(frm As Object, ctlName As String) As MSForms.Image
+    Dim c As Control
+    On Error Resume Next
+    For Each c In frm.Controls
+        If StrComp(c.name, ctlName, vbTextCompare) = 0 Then
+            If TypeOf c Is MSForms.Image Then Set TryGetImageDyn = c
+            Exit Function
+        End If
+    Next c
+End Function
+
+Public Sub AutoFitDropdownDyn(cmb As MSForms.ComboBox)
+    On Error Resume Next
+    Dim i As Long, maxLen As Long
+    Dim s As String
+    For i = 0 To cmb.ListCount - 1
+        s = CStr(cmb.List(i))
+        If Len(s) > maxLen Then maxLen = Len(s)
+    Next i
+
+    Const MINW As Long = 120
+    Const MAXW As Long = 360
+    Dim newW As Long
+    If maxLen = 0 Then
+        newW = MINW
+    Else
+        newW = Application.Max(MINW, maxLen * 7)
+        If newW > MAXW Then newW = MAXW
+    End If
+    cmb.Width = newW
+End Sub
+
+'=========
+'End of code for 

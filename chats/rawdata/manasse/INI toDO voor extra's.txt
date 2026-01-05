@@ -1,0 +1,37 @@
+[00_prepare]
+notes=Open Excel, save as .xlsm if not already. Alt+F11 to open VBE.
+
+[01_enable_references_if_needed]
+path=VBE -> Tools -> References
+action=Ensure these are checked:
+    - Microsoft Forms 2.0 Object Library
+    - Microsoft Visual Basic for Applications Extensibility 5.3
+why=Required for runtime form detection & MSForms controls.
+
+[02_create_userform_dashboard]
+path=VBE -> Insert -> UserForm
+name=frmDebugDashboard
+action=Open frmDebugDashboard code window and paste the "UserForm: frmDebugDashboard" code block from the instructions.
+
+[03_create_module_modDebugDashboard]
+path=VBE -> Insert -> Module
+name=modDebugDashboard
+action=Paste the "Module: modDebugDashboard" code block exactly.
+
+[04_compile]
+path=VBE -> Debug -> Compile VBAProject
+action=Fix any missing references. If you see compile errors referencing other modules (e.g. modDebugDashboard calls functions in Utils or other modules), ignore for now but ensure the dashboard module compiles.
+
+[05_run_dashboard]
+path=VBE -> Project -> Forms -> frmDebugDashboard -> Run (F5) or call via Immediate: frmDebugDashboard.Show
+action=Dashboard opens. Click "Refresh status", "Run Smoke Tests", "Export ErrorLog CSV", "Open handover YAML".
+
+[06_handover_yaml]
+note=The YAML is at the local path: file:///mnt/data/handover_copilot_v2_and_v3.yaml
+action=Use dashboard "Open handover YAML" button to open it (Application.FollowHyperlink).
+
+[07_troubleshooting]
+notes=If buttons do not seem to do anything:
+    - Ensure modDebugDashboard exists and code compiled
+    - Ensure ErrorLog sheet exists for export
+    - If "TestFormShowHide" reports "FAILED to Add" maybe the forms require other modules to exist; check VBE Immediate window for error messages.

@@ -1,0 +1,64 @@
+HELPER ROUTINES FOR VBA USERFORMS
+Generated: 2025-11-24 19:51:43
+============================================================
+
+' === ShapeExists ===
+Public Function ShapeExists(ByVal shapeName As String) As Boolean
+    On Error Resume Next
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim shp As Shape
+    Set shp = wsRef.Shapes(shapeName)
+    ShapeExists = Not shp Is Nothing
+End Function
+
+' === AddShapeAsImage ===
+Public Sub AddShapeAsImage(frm As Object, ByVal shapeName As String, ByVal ctlName As String)
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim shp As Shape: Set shp = wsRef.Shapes(shapeName)
+    If shp Is Nothing Then Exit Sub
+
+    Dim tmpPath As String: tmpPath = Utils.GetTempFile(shapeName, ".jpg")
+    Dim ch As ChartObject
+    Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=shp.Width, Height:=shp.Height)
+    shp.Copy
+    ch.Activate
+    ch.Chart.Paste
+    ch.Chart.Export tmpPath, "JPG"
+    ch.Delete
+
+    Dim img As MSForms.Image
+    Set img = frm.Controls.Add("Forms.Image.1", ctlName, True)
+    img.Picture = LoadPicture(tmpPath)
+    img.PictureSizeMode = fmPictureSizeModeStretch
+    Exit Sub
+ErrHandler:
+    MsgBox "AddShapeAsImage: " & Err.Description, vbCritical
+End Sub
+
+' === LockWindowUpdate ===
+Public Sub LockWindowUpdate(Optional ByVal hwnd As Long = 0)
+    On Error Resume Next
+    If hwnd = 0 Then hwnd = Application.Hwnd
+    Call LockWindowUpdate(hwnd)
+End Sub
+
+' === LoadImage (WIA/GDI+ fallback) ===
+Public Function LoadImage(ByVal imgPath As String) As StdPicture
+    On Error Resume Next
+    Set LoadImage = LoadPicture(imgPath)
+End Function
+
+' === EnsureBackgroundImage (Improved) ===
+Public Sub EnsureBackgroundImage(frm As Object)
+    On Error Resume Next
+    frm.Controls.Remove "dyn_imgBackground"
+    On Error GoTo 0
+    Dim imgPath As String: imgPath = FormBackground.GetBackgroundPath()
+    If Len(imgPath) = 0 Then Exit Sub
+    Dim img As MSForms.Image
+    Set img = frm.Controls.Add("Forms.Image.1", "dyn_imgBackground", True)
+    img.Picture = LoadPicture(imgPath)
+    img.PictureSizeMode = fmPictureSizeModeStretch
+    img.ZOrder 1
+End Sub

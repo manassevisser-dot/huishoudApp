@@ -1,0 +1,38 @@
+'==========
+'start of Code for ThisWorkbook
+'==========
+Option Explicit
+
+' Beschrijving: Workbook_Open - automatisch gegenereerde omschrijving.
+Private Sub Workbook_Open()
+    On Error GoTo ErrHandler
+    EnsureDBHeaders
+
+    ' Alleen vorige week samenvatten
+    Dim dPrev As Date: dPrev = DateAdd("d", -7, Date)
+    Dim w As Long: w = IsoWeek(dPrev)
+    Dim y As Long: y = Year(dPrev)
+
+    If Weekday(Date, vbMonday) = 1 Then
+        If Not WeekTotaalBestaat(y, w) Then BerekenWeekTotaal
+    Else
+        If Not WeekTotaalBestaat(y, w) Then
+            Dim antwoord As VbMsgBoxResult
+            antwoord = MsgBox("Weekoverzicht van vorige week ontbreekt. Nu berekenen?", vbYesNo + vbQuestion, "Weekoverzicht")
+            If antwoord = vbYes Then BerekenWeekTotaal
+        End If
+    End If
+
+    ' Maandoverzicht: alleen als vorige maand niet aanwezig
+    If Format(Date, "YYYY-MM") <> LaatsteMaandInMaandTabel() Then BerekenMaandTotaal
+
+    ' Huidige maandblad: alleen aanmaken als nog niet bestaat
+    MaakHuidigeMaandSheet
+    Exit Sub
+
+ErrHandler:
+    MsgBox "Fout tijdens opstarten: " & Err.Description, vbExclamation
+End Sub
+'=========
+'End of code for ThisWorkbook
+'=========

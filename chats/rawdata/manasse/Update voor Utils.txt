@@ -1,0 +1,10 @@
+Public Function UtilsToMonthlyAmount(amount As Double, periode As String) As Double
+    Select Case LCase(periode)
+        Case "maand": UtilsToMonthlyAmount = amount
+        Case "week": UtilsToMonthlyAmount = amount * 52 / 12
+        Case "4 weken": UtilsToMonthlyAmount = amount * 13
+        Case "kwartaal": UtilsToMonthlyAmount = amount / 3
+        Case "jaar": UtilsToMonthlyAmount = amount / 12
+        Case Else: UtilsToMonthlyAmount = amount
+    End Select
+End Function

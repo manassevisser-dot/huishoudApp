@@ -1,0 +1,57 @@
+' Ergänzungen voor BuildFrmVast: ensure mp named dyn_mpVast and default first row
+Public Sub BuildFrmVast(frm As Object)
+On Error GoTo ErrHandler
+    FormLayout.RemoveDynamicControls frm
+    FormHelpers.EnsureBackgroundImage frm
+
+    Dim mp As MSForms.MultiPage
+    Set mp = frm.Controls.Add("Forms.MultiPage.1", "dyn_mpVast", True)
+    mp.Left = 24: mp.Top = 60: mp.Width = 760: mp.Height = 350
+
+    ' Pages
+    mp.Pages.Add
+    mp.Pages(0).Name = "pgInkomsten"
+    mp.Pages.Add
+    mp.Pages(1).Name = "pgUitgaven"
+
+    ' Page titles
+    Dim lbl As MSForms.Label
+    Set lbl = mp.Pages(0).Controls.Add("Forms.Label.1", "dyn_lblStepTitle_Inkomsten", True)
+    lbl.Caption = "Stap 2 van 4 – Vaste inkomsten": lbl.Left = 8: lbl.Top = 8
+
+    Dim lbl2 As MSForms.Label
+    Set lbl2 = mp.Pages(1).Controls.Add("Forms.Label.1", "dyn_lblStepTitle_Uitgaven", True)
+    lbl2.Caption = "Stap 3 van 4 – Vaste uitgaven": lbl2.Left = 8: lbl2.Top = 8
+
+    ' make one starter row each
+    ' via central AddRowToPage so event hooking is correct
+    AddRowToPage frm, "Inkomsten"
+    AddRowToPage frm, "Uitgaven"
+
+    ' Buttons and overlays
+    LayoutSpecsHelpers.BuildButtonsFromSpecs frm
+    ' Add actions to the image Tags so overlays get action mapping
+    ' e.g. dyn_imgBtnVolgende -> action=Next
+    On Error Resume Next
+    Dim imgNext As MSForms.Image
+    Set imgNext = frm.Controls("dyn_imgBtnVolgende")
+    If Not imgNext Is Nothing Then imgNext.Tag = imgNext.Tag & "|action=Next"
+    Dim imgPrev As MSForms.Image
+    Set imgPrev = frm.Controls("dyn_imgBtnVorige")
+    If Not imgPrev Is Nothing Then imgPrev.Tag = imgPrev.Tag & "|action=Prev"
+    Dim imgSave As MSForms.Image
+    Set imgSave = frm.Controls("dyn_imgBtnOpslaan")
+    If Not imgSave Is Nothing Then imgSave.Tag = imgSave.Tag & "|action=Save"
+    Dim imgCancel As MSForms.Image
+    Set imgCancel = frm.Controls("dyn_imgBtnAnnuleren")
+    If Not imgCancel Is Nothing Then imgCancel.Tag = imgCancel.Tag & "|action=Cancel"
+    On Error GoTo ErrHandler
+
+    ' finally ensure overlays clickable
+    EnsureOverlayButtons frm
+
+    HookEventsDynamic frm
+Exit Sub
+ErrHandler:
+    MsgBox "BuildFrmVast error: " & Err.Description, vbCritical
+End Sub

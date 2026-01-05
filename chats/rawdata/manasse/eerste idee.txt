@@ -1,0 +1,70 @@
+
+## FORM 1 – frmHuishouden
+- Voeg UserForm via VBE → naam: frmHuishouden
+- In frmHuishouden_Initialize:
+  * Center form, set default font/colors per design
+  * Call BuildForm_Huishouden – clear controls
+- BuildForm_Huishouden routine:
+  * txtTotalPersons + SpinButton
+  * Frames: AdultOptions & ChildOptions
+  * For each adult category: create dynamic controls with DYN_PREFIX
+  * Show/hide child frame based on total >1
+  * Add shape buttons using AddShapeAsImage from Referenties
+- Event Handlers:
+  * txtTotalPersons_Change → recalc visibility
+  * AdultCount_Change, ChildCount_Change → recalc totals + enable/disable Next button
+  * btnNext_Click → Validate Sum Adults+Children = total, else MsgBox. On success: frmHuishouden.Hide, frmVast.MultiPage.Value = 0, frmVast.Show
+  * QueryClose event: If X clicked, ask confirmation unless cancel allowed
+- Validation Tips:
+  * Use IsNumeric() before Val()
+  * Prevent negative or >8 totals (enforce Max Persons)
+  * Focus = .SetFocus, TabIndex sequence
+
+## FORM 2–3 – frmVast (MultiPage)
+- Import UserForm frmVast with MultiPage
+- Initialize:
+  * Center form, set default styles
+  * BuildPages: BuildPage_Inkomsten(), BuildPage_Uitgaven()
+- BuildPage_Inkomsten:
+  * Frame with rows: cmbBron, cmbPeriode, txtBedrag, cmbOntvanger
+  * + and – shape controls
+  * Use Utils.ToMonthlyAmount
+  * imgBtnNext_Page0.Click: PageIndex → 1 or if validation fails show MsgBox
+- BuildPage_Uitgaven:
+  * Frame with cmbCategorie, txtOmschrijving, cmbPeriode, txtBedrag, cmbBetaalwijze
+  * Same Next logic → Next leads to frmInvoer.Show
+- Navigation:
+  * imgBtnPrev on Page1 → frmHuishouden.Show
+  * imgBtnCancel → Unload Me
+- Validation:
+  * RowComplete if all cols filled & positive amount
+  * TotalMonth updated Live
+
+## FORM 4 – frmInvoer (Daily)
+- Modify existing Initialize:
+  * imgBtnPrev = builds via AddShapeAsImage
+  * Change btnOpslaan_Click to navigate to ExitWizard (Unload)
+- Ensure existing code uses taborder
+
+## GENERAL
+- Shapes from Referenties: btnVolgendeShape, btnVorigeShape, btnCancelShape, btnAddRowShape, btnDelRowShape
+- Add image via WIA LoadImage function
+- In frmInitialize: `LockWindowUpdate Application.VBE.MainWindow.HWnd` before adding controls, unlock after
+- Add `On Error GoTo ErrHandler` in all frm modules; show MsgBox and log using Logger
+- Naming guideline: prefix controls with DYN_PREFIX + Category + Index (e.g. txtAdultMan_1)
+- In each btnProceed, ensure to update ProgressIndicatorLabel.Caption = "Stap X van 4"
+
+## FILES TO EDIT
+- Ensure in module Utils: LoadImage, AddShapeAsImage, LockFormStyle helpers
+- Application.FormsSettings: Default font/color is Calibri 10, grey/white/blue border
+
+## TESTING
+- Simulate "only one adult no kid"
+- Simulate "2 adults 3 kids"
+- Simulate "pregnant/chestfeeding"
+- Try closing via [X], check QueryClose behavior
+
+## TODO for User
+- On Referenties sheet: ensure shapes with proper names exist
+- Add PNG styles to sheet
+- Copy code stubs from **vba_stubs_huishouden.bas**, etc.

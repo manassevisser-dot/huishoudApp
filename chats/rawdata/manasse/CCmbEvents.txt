@@ -1,0 +1,19 @@
+'Start of code for ClassModule CCmbEvents
+'=========
+
+' ===== CCmbEvents.cls =====
+Option Explicit
+
+Public WithEvents cmb As MSForms.ComboBox
+Public ParentForm As Object
+
+Private Sub cmb_Change()
+    On Error Resume Next
+
+    Select Case LCase(cmb.name)
+        Case "dyn_cmbcategorie"
+            ParentForm.HandleCategorieChange_dyn ParentForm
+    End Select
+End Sub
+'=========
+'End of code for 
