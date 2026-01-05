@@ -1,0 +1,444 @@
+# 🔍 ADR-Integratie in Flow Protocol v3.7 - Analyse & Implementatie
+
+## 📊 **HUIDIGE SITUATIE**
+
+Je hebt twee parallelle systemen:
+1. **Flow Protocol v3.7** - Procesgovernance (hoe we werken)
+2. **ADR Canon** - Architectuurgovernance (wat we bouwen)
+
+**Probleem**: Ze zijn nog niet expliciet gekoppeld. Hier is hoe je ze samensmeedt.
+
+---
+
+## ✅ **HOE ADR'S INTEGREREN IN BESTAANDE ROLLEN**
+
+### **MAPPING: Rol → ADR Verantwoordelijkheid**
+
+| Rol | ADR Mandate | Specifieke ADR's |
+|-----|-------------|------------------|
+| **Iris (Archeoloog)** | Detecteert ADR-schendingen in bestaande code | ADR-01 t/m ADR-18 (passief toetsen) |
+| **Max (Architect)** | ENIGE rol die nieuwe ADR's mag voorstellen | ADR-00 (besluitvorming), ADR-16 (eenvoud) |
+| **Dex (Dissenter)** | Toetst voorstellen op ADR-consistentie | ADR-01, 03, 04, 06 (scheiding concerns) |
+| **Ava (Auditor)** | Binaire ADR-compliance scoring | ADR-12 (auditability zelf), ADR-02, 05, 10 |
+| **Nova (Migratie)** | Vertaalt ADR's naar implementatieplan | ADR-11 (testing), ADR-17 (risk acceptance) |
+| **Kai (Assembler)** | Dwingt ADR-naleving in contract | ADR-04, 06, 13, 14 (concrete regels) |
+| **Leo (Debugger)** | Onderzoekt root cause via ADR-lens | ADR-01, 03, 07 (waar ging ontwerp mis?) |
+| **Quinn (CTO)** | Bewaakt ADR Index integriteit | ADR-00 (proces), ADR-18 (AI-grenzen) |
+
+---
+
+## 🔧 **CONCRETE IMPLEMENTATIE PER ROL**
+
+### **1. IRIS (Archeoloog) - SVZ-1 Upgrade**
+
+**Toevoegen aan output_structure:**
+
+```xml
+## 🧠 ADR-Signalen (Input voor Max)
+> **ADR-Signaal:**
+> *Code-observatie: [Fragment X] lijkt ADR-[NR] te schenden.*
+> *Bewijs: [Concrete regel/functie die de regel breekt].*
+> *Hypothese: [Waarom dit patroon ontstaan kan zijn].*
+
+**Voorbeeld:**
+> **ADR-Signaal:**
+> *Code-observatie: `calculateNetIncome()` zit in `MoneyInput.tsx`*
+> *Bewijs: Regel 47-63, financiële logica in UI-component*
+> *ADR Schending: ADR-03 (Domeinlogica hoort in kernel)*
+> *Hypothese: Legacy pattern vóór Finance Kernel bestond.*
+```
+
+**Waarom**: Iris *mag* geen oordelen vellen, maar wel architecturale "geuren" signaleren.
+
+---
+
+### **2. MAX (Architect) - SVZ-2 Upgrade**
+
+**Toevoegen aan mandatory_pre_analysis:**
+
+```xml
+<internal_analysis>
+1. Role Identification: [bestaand]
+2. ADR Compliance Check: Welke ADR's zijn relevant voor deze module?
+3. ADR Gap Analysis: Zijn er ADR's die deze koers zouden blokkeren?
+4. Principle Mapping: [bestaand]
+5. Quantify: [bestaand]
+</internal_analysis>
+```
+
+**Toevoegen aan output_structure (nieuwe sectie):**
+
+```markdown
+## 📜 ADR Alignment
+**Relevante ADR's:**
+- **ADR-03** (Domeinlogica in kernel): Deze koers isoleert finance logic → ✅
+- **ADR-04** (Dumb UI): MoneyInput wordt pure projector → ✅
+- **ADR-06** (Input Hardening): Parsing centraal in `parseMoneyInput()` → ✅
+
+**Potentiële Conflicten:**
+- *Geen*
+
+**Voorgestelde ADR Updates:**
+- *Geen nieuwe ADR's nodig. Bestaande ADR-13 (Finance Kernel) wordt versterkt.*
+```
+
+**Waarom**: Max moet aantonen dat zijn koers *consistent* is met de canon, of expliciet een ADR-wijziging voorstellen.
+
+---
+
+### **3. DEX (Dissenter) - Verdict Upgrade**
+
+**Toevoegen aan mandatory_pre_analysis:**
+
+```xml
+<internal_analysis>
+1. Complexity Theater: [bestaand]
+2. ADR Canon Check: Gebruikt Max ADR's als rookgordijn?
+3. Logic Leaks: [bestaand]
+4. ADR Contradiction Hunt: Zegt Max "conform ADR-X" terwijl hij ADR-Y schendt?
+</internal_analysis>
+```
+
+**Toevoegen aan output_structure (nieuwe sectie onder Evidence):**
+
+```markdown
+### 🚩 ADR Canon Violations
+**ADR-03 Schending:**
+- **Claim Max:** "Finance logica naar kernel"
+- **Realiteit:** Code draft toont `calculateTax()` in `TaxInput.tsx`
+- **Bewijs:** SVZ-2 sectie 4, regel "Helper function for local validation"
+- **Impact:** Dit is geen helper maar business logic → Major schending
+
+**Hard-Stop Vraag:**
+"Max, hoe leg je uit dat je `calculateTax()` in UI plaatst terwijl ADR-03 dit verbiedt?"
+```
+
+**Waarom**: Dex wordt de ADR-sheriff. Hij gebruikt de canon als juridische basis voor zijn aanval.
+
+---
+
+### **4. AVA (Auditor) - SVZ-3 Upgrade**
+
+**Toevoegen aan Weighted Scoring Table:**
+
+```markdown
+| Criterium | Gewicht | Status | Score | ADR Ref |
+|-----------|---------|--------|-------|---------|
+| **ADR Compliance** | 12x | VALID | 95 | ADR-00 |
+| **Type Safety** | 10x | VALID | 100 | ADR-02 |
+| **SRP / Ontkoppeling** | 8x | VALID | 90 | ADR-01, 03 |
+| **Resilience** | 8x | VALID | 85 | ADR-08, 17 |
+```
+
+**Nieuwe sectie:**
+
+```markdown
+## 📋 ADR Canon Audit
+**Naleving:**
+- ✅ ADR-03: Finance Kernel geïsoleerd
+- ✅ ADR-04: MoneyInput is dumb projector
+- ✅ ADR-06: Parsing via `parseMoneyInput()`
+
+**Afwijkingen:**
+- ⚠️ ADR-05: Code gebruikt `parseFloat` in debug logger (minor)
+
+**ADR Index Update:**
+- ADR-13 (Finance Kernel): Status blijft ACCEPTED
+- ADR-04 (Dumb UI): Versterkt door deze implementatie
+```
+
+**Waarom**: Ava krijgt een extra "ADR-lens" in haar scoring. Dit wordt het zwaarste criterium (12x) omdat architecturale drift de dodelijkste vorm van tech debt is.
+
+---
+
+### **5. NOVA (Migratie) - WAI Upgrade**
+
+**Toevoegen aan output_template:**
+
+```markdown
+## 📜 ADR Impact Assessment
+**Getroffen ADR's:**
+- ADR-13 (Finance Kernel): Migratie naar `src/domain/finance/`
+- ADR-10 (Schema Versioning): Storage format wijzigt → migratie nodig
+
+**ADR Compliance Strategy:**
+Per fase:
+- **Fase 1 (Pilot)**: Test ADR-02 (Zod validation) op 10 households
+- **Fase 2 (Canary)**: Verify ADR-05 (minor-unit) correctness
+- **Fase 3 (Progressive)**: Audit ADR-12 (traceability) via changelog
+
+**Audit-Check Injectie:**
+```bash
+# WAI-007: Finance Kernel Isolation
+audit_wai_007() {
+    check_pattern "calculateNetIncome|calculateTax" "src/components/" \
+        "ADR-03 violation: Finance logic in UI"
+    
+    check_pattern "parseFloat|Number\(" "src/domain/finance/" \
+        "ADR-05 violation: Floating point in finance kernel"
+}
+```
+```
+
+**Waarom**: Nova vertaalt ADR's naar concrete test-criteria. De Audit Engine checkt niet alleen *of* code werkt, maar *of het conform de canon is*.
+
+---
+
+### **6. KAI (Assembler) - CU Contract Upgrade**
+
+**Toevoegen aan Logic Contract sectie:**
+
+```markdown
+## 3️⃣ 🗺️ Logic Contract
+- **Remove:** `calculateTax()` functie uit `TaxInput.tsx`
+- **Replace with:** Import van `finance.calculateTax()` kernel
+- **Preserve:** UI rendering logic, event handlers
+- **ADR Enforcement:**
+  * ✅ ADR-03: Logic moves to kernel
+  * ✅ ADR-04: Component blijft dumb projector
+  * ⚠️ ADR-06: Verify input komt via `parseMoneyInput()`
+```
+
+**Nieuwe sectie 8:**
+
+```markdown
+## 8️⃣ 📜 ADR Compliance Checklist
+Voor de Developer:
+- [ ] ADR-03: Geen business logic in UI-files
+- [ ] ADR-05: Bedragen in centen (niet floats)
+- [ ] ADR-06: Parsing via designated parser
+- [ ] ADR-14: Reducer blijft dumb (geen side effects)
+```
+
+**Waarom**: Kai's contract wordt de *executeerbare specificatie van de ADR's*. Developer kan niet "per ongeluk" de canon schenden.
+
+---
+
+### **7. LEO (Debugger) - Forensics Upgrade**
+
+**Toevoegen aan Five Whys:**
+
+```markdown
+## 🧪 Stap 5: Five Whys + ADR Root Cause
+1. Why crashed? → `NaN` in calculation
+2. Why NaN? → Input was `"1.234,56"` (European format)
+3. Why not parsed? → Component used `Number()` directly
+4. Why no central parser? → **ADR-06 violation** (Input Hardening)
+5. Why ADR-06 violated? → Legacy pattern, never refactored
+
+**Sixth Why (Process):**
+6. Why didn't audit catch this? → **ADR-12 gap** - geen check op `Number()` in audit script
+
+**Fix-Specificatie:**
+- **Target:** `MoneyInput.tsx`, regel 34
+- **Fix-Eis:** Replace `Number(value)` met `parseMoneyInput(value)`
+- **ADR Restoration:** Compliant met ADR-06
+- **Process Fix:** Add audit check: `grep -r "Number(" src/components/`
+```
+
+**Waarom**: Leo graaft dieper dan "wat crashte" - hij identificeert welke ADR-schending de root cause is, én waarom het proces het niet ving.
+
+---
+
+### **8. QUINN (CTO) - Statusrapport Upgrade**
+
+**Toevoegen aan output_structure:**
+
+```markdown
+## 🧠 ADR Index Status
+**Transitie Log:**
+| ADR | Van Status | Naar Status | Reden |
+|-----|-----------|-------------|-------|
+| ADR-13 | ACCEPTED | **STRENGTHENED** | WAI-007 voltooit isolatie |
+| ADR-04 | ACCEPTED | ACCEPTED | Geen wijziging |
+
+**Canon Integriteit:**
+- ✅ Geen tegenstrijdige ADR's actief
+- ✅ Alle voorstellen van Max refereren bestaande ADR's
+- ⚠️ ADR-05 (minor-unit) heeft 2 edge cases in backlog
+
+**Risk Ledger - ADR Gerelateerd:**
+| Risk_ID | ADR | Omschrijving | Severity |
+|---------|-----|--------------|----------|
+| R-007-A | ADR-06 | Parser niet overal gebruikt | Major |
+```
+
+**Waarom**: Quinn wordt de "ADR Index Curator". Hij ziet in één oogopslag welke ADR's onder druk staan of versterkt worden.
+
+---
+
+## 🎯 **IS HET HANDIG OM ADR'S AAN AI'S TE VOEREN?**
+
+### **JA - Met deze structuur:**
+
+```xml
+<adr_canon_context>
+  <integration_rule>
+    Elke AI-rol ontvangt ALLEEN de ADR's die relevant zijn voor hun mandate.
+    Dit voorkomt cognitieve overload en houdt de focus scherp.
+  </integration_rule>
+  
+  <distribution_matrix>
+    - Iris: ADR-00 (context) + volledige canon (passief)
+    - Max: ADR-00, 01-18 (actief - moet ernaar refereren)
+    - Dex: ADR-00, 01-18 (actief - moet schendingen vinden)
+    - Ava: ADR-00, 02, 05, 10, 12 (scoring criteria)
+    - Nova: ADR-10, 11, 12, 17 (migratie-relevant)
+    - Kai: ADR-03, 04, 05, 06, 13, 14 (enforceable rules)
+    - Leo: ADR-01, 03, 07, 12 (root cause lens)
+    - Quinn: ADR-00, 12, 18 (governance)
+  </distribution_matrix>
+</adr_canon_context>
+```
+
+---
+
+## 🔧 **PRAKTISCHE IMPLEMENTATIE**
+
+### **Stap 1: Voeg ADR Canon toe aan elk Persona-document**
+
+**Voorbeeld voor Max:**
+
+```xml
+<!-- Toevoegen na <governance_contract> -->
+<adr_canon>
+  <mandate>
+    Max is de ENIGE rol die ADR's mag voorstellen, wijzigen of intrekken.
+    Elke SVZ-2 MOET aangeven welke ADR's relevant zijn.
+  </mandate>
+  
+  <active_adrs>
+    <!-- Voeg hier ADR-00 t/m ADR-18 toe als referentie -->
+    <adr id="00" title="Phoenix Reset" status="ACCEPTED" />
+    <adr id="01" title="Separation of Concerns" status="ACCEPTED" />
+    <!-- etc. -->
+  </active_adrs>
+  
+  <decision_protocol>
+    Nieuwe architectuurkeuzes volgen deze flow:
+    1. Check: Past dit binnen bestaande ADR's?
+    2. Ja → Refereer de ADR in SVZ-2
+    3. Nee → Stel nieuwe ADR voor OF wijs ADR-conflict expliciet aan
+  </decision_protocol>
+</adr_canon>
+```
+
+---
+
+### **Stap 2: Update Protocol.txt met ADR Governance**
+
+```markdown
+## 📜 7. ADR Canon Governance
+
+### Hierarchie
+1. **ADR-00** (Phoenix Reset) is de grondwet
+2. **ADR-01 t/m ADR-18** zijn uitvoeringsregels
+3. Bij conflict: ADR-00 wint
+
+### Lifecycle
+- **Proposed**: Max stelt voor in SVZ-2
+- **Challenged**: Dex valt aan in Verdict
+- **Accepted**: Ava/Quinn keurt goed
+- **Strengthened**: Implementatie versterkt de regel
+- **Superseded**: Nieuwe ADR vervangt oude (met expliciete verwijzing)
+
+### Immutability
+- Accepted ADR's zijn **locked** (net als SVZ's)
+- Wijziging vereist nieuwe ADR die de oude superseded
+- Geen "stille updates"
+
+### Audit Traceability (ADR-12 in actie)
+Elke code-change MOET refereren naar:
+- Welke ADR(s) het respecteert
+- Welke ADR(s) het versterkt
+- Welke ADR(s) het potentieel bedreigt (+ mitigatie)
+```
+
+---
+
+### **Stap 3: Voeg ADR Check toe aan ELKE Gate**
+
+| Gate | ADR Check |
+|------|-----------|
+| **A** (Iris) | Zijn ADR-schendingen gesignaleerd? |
+| **B** (Max) | Zijn relevante ADR's genoemd + uitgelegd? |
+| **C** (Ava) | Is ADR Compliance Score > 90? |
+| **D** (Nova) | Bevat WAI-plan ADR compliance tests? |
+| **E** (Kai) | Heeft CU-Contract ADR checklist? |
+| **F** (Dev) | Respecteert code de ADR's uit contract? |
+| **G** (Sam) | [Geen ADR-check - Sam is proces] |
+| **H** (Audit) | Detecteert script ADR-violations? |
+
+---
+
+## ⚡ **ULTIMATE SYNERGY: Protocol × ADR Canon**
+
+### **Wat je nu hebt:**
+
+```text
+┌──────────────────────────────────────────┐
+│   FLOW PROTOCOL v3.7 (Het "Hoe")        │
+│   ↓                                      │
+│   Binaire Workflow, Rollen, Gates       │
+└──────────────┬───────────────────────────┘
+               │
+               ↓ (gekoppeld via)
+┌──────────────────────────────────────────┐
+│   ADR CANON (Het "Wat")                  │
+│   ↓                                      │
+│   Architectuurregels, Design Principles  │
+└──────────────────────────────────────────┘
+```
+
+**Resultaat**: 
+- Protocol = De *procedure* (wie doet wat wanneer)
+- ADR's = De *inhoud* (wat moet het opleveren)
+- Samen = **Volledige Governance**
+
+---
+
+## 🎯 **ANTWOORD OP JOUW VRAAG**
+
+### **"Hoe laat ik dit uitvoeren door mijn AI's?"**
+
+**Stap 1**: Voeg bovenstaande XML-blokken toe aan elke persona-prompt
+
+**Stap 2**: Update Protocol.txt met ADR Governance sectie
+
+**Stap 3**: Test met één WAI (bijv. WAI-007):
+- Iris: Vindt ADR-schendingen in oude code
+- Max: Refereert ADR-03, 04, 13 in zijn SVZ-2
+- Dex: Valt aan op ADR-compliance
+- Ava: Scoort ADR Compliance (12x gewicht)
+- Nova: Maakt ADR-tests in Audit Engine
+- Kai: Schrijft ADR-checklist in contract
+- Leo: Zoekt ADR-root-cause bij bugs
+
+### **"Is het handig?"**
+
+**Absoluut JA**, om deze redenen:
+
+1. **Voorkomt Drift**: AI's kunnen niet "per ongeluk" antipatterns introduceren
+2. **Maakt Discussies Objectief**: "Dit schendt ADR-03" is krachtiger dan "dit voelt raar"
+3. **Versterkt Audit Engine**: Scripts checken nu ADR-naleving, niet arbitraire regels
+4. **Documenterend Effect**: Elke SVZ/WAI/CU wordt automatisch een ADR-case-study
+5. **Onboarding**: Nieuwe devs/AI's leren de canon door te zien hoe hij toegepast wordt
+
+---
+
+## 🏆 **FINALE AANBEVELING**
+
+**DO THIS**:
+1. Voeg ADR Canon als `<adr_canon>` blok toe aan **Max, Dex, Ava** (kritieke rollen)
+2. Update Quinn's prompt met ADR Index tracking
+3. Test met WAI-007 (Finance Kernel isolatie)
+4. Itereer op basis van hoe natuurlijk de AI's ADR's gebruiken
+
+**DON'T DO THIS**:
+- ❌ Alle 18 ADR's in elke prompt dumpen (cognitive overload)
+- ❌ ADR's als "suggesties" presenteren (ze zijn **LAW**)
+- ❌ ADR's achteraf toevoegen (ze moeten vanaf SVZ-1 zichtbaar zijn)
+
+---
+
+**Wil je dat ik de volledige Max v3.3 prompt schrijf met ADR Canon geïntegreerd als proof-of-concept?** Dan zie je exact hoe het eruitziet in productie.

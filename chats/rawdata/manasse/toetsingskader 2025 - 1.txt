@@ -1,0 +1,88 @@
+Dit is het officiële **Toetsingskader "Standaard 2025"**. Dit document dient als de dwingende blauwdruk en het wetboek voor **FLOW 2 (De Architect)**. Elke beslissing in de architecturale fase moet getoetst worden aan de onderstaande kaders.
+
+---
+
+# 🛡️ TOETSINGSKADER "STANDAARD 2025"
+**Status:** Dwingend Voorschrift  
+**Versie:** 1.0 (Baseline Correctie)  
+**Doel:** Transformatie van Legacy naar Domain-Driven Design (DDD)
+
+---
+
+## 1. Algemene Ontwerpprincipes 2025
+De Architect dient de volgende principes als fundament te gebruiken voor elke voorgestelde wijziging:
+
+*   **Single Responsibility (SRP):** Eén module, één taak. Functies mogen de 20-regels grens niet overschrijden.
+*   **Semantic Stability:** Namen moeten exact beschrijven wat ze doen. Geen ruis (`dataObject`), maar domein-types (`HouseholdMember`).
+*   **Type Safety First:** Een absoluut verbod op `any`. Gebruik `unknown` bij onzekerheid en dwing type-guards af.
+*   **Guard Clauses:** Edge-cases worden bovenaan afgehandeld (return early).
+*   **Composition over Inheritance:** Gebruik React-composities voor UI en pure functies voor logica.
+
+---
+
+## 2. Architecturale Transformatie (Mapping naar DDD)
+De huidige platte `src/` structuur wordt gemigreerd naar een gelaagde architectuur. De Architect moet de bestanden als volgt herindelen:
+
+### A. Domain Layer (`src/domain/`)
+*   **Inhoud:** Pure TypeScript logica, rekenregels en domein-types.
+*   **Restrictie:** Geen React-hooks, geen UI-componenten, geen opslag-logica.
+*   **Sub-clusters:** `household/`, `income/`, `transaction/`.
+
+### B. State Layer (`src/state/`)
+*   **Inhoud:** Context Providers, Reducers en de Persistentie-laag (`storage.ts`).
+*   **Taak:** Het beheren van de "Single Source of Truth".
+
+### C. UI Layer (`src/components/ui/` & `src/components/form/`)
+*   **Inhoud:** "Domme" UI-componenten (Atomen) en Form-engine componenten (Repeaters).
+*   **Restrictie:** UI-componenten mogen geen business rules bevatten.
+
+### D. App Layer (`src/app/` & `src/screens/`)
+*   **Inhoud:** Navigator, Providers en Schermen (Composites).
+
+---
+
+## 3. De Rekenkern & Data-integriteit
+De Architect moet de volgende legacy-fouten elimineren via een nieuw ontwerp:
+
+*   **De Komma-Fix:** Ontwerp een robuuste `NumericParser` die specifiek de Nederlandse context (`.` voor duizendtallen, `,` voor decimalen) begrijpt. De huidige `replace` methode in `numbers.ts` wordt verboden.
+*   **Einde "Shotgun Parsing":** Financiële aggregaties (zoals in `finance.ts`) mogen niet langer blind objecten itereren. Er moet gewerkt worden met expliciete `Value Objects` of `Whitelisting`.
+*   **Identiteitsborging (UUID):** Alle entiteiten (leden, transacties) moeten bij creatie een onveranderlijke UUID krijgen. Het gebruik van array-indices voor mutaties is verboden om data-verschuivingen te voorkomen.
+
+---
+
+## 4. De "Speciale Status" Isolatie (Contract-001)
+De instructie voor huishoudens met **> 5 volwassenen** is onwrikbaar:
+
+*   **Shadow Attribute:** De vlag `isSpecialStatus` moet aanwezig zijn in de `domain/household` types voor analytische doeleinden.
+*   **UI-Isolatie:** De Architect moet aantonen dat deze vlag op geen enkele wijze wordt geconsumeerd door de UI-layer of de Wizard-flow.
+*   **Statistische Zuiverheid:** De vlag dient uitsluitend voor downstream data-analyse (export/audit).
+
+---
+
+## 5. De "Niet-Onderhandelbare" Lijst (Verboden Patronen)
+De volgende patronen uit de archeologische scan (Flow 1) zijn vanaf heden **verboden**:
+
+1.  **Logic Leaks:** Geen string-logica meer in numerieke bestanden (zoals `stripEmoji` in `numbers.ts`).
+2.  **Magic Numbers:** Drempelwaarden (13 jaar, 67 jaar, grens van 5 volwassenen) moeten worden gecentraliseerd in een `BusinessRules` constante.
+3.  **Fragiele Validatie:** Cross-page validatie via string-paths (`split('.')`) moet worden vervangen door een type-safe methode.
+4.  **Orphan Data:** Het systeem moet een mechanisme bevatten dat "wees-gegevens" opschoont (bijv. oude huurdata wissen als de status 'Koop' wordt).
+
+---
+
+## 6. Acceptatie-Matrix voor FLOW 3 (Toetsing)
+FLOW 3 zal de adviezen van de Architect toetsen op de volgende criteria:
+
+| Criterium | Acceptatie-eis |
+| :--- | :--- |
+| **Gelaagdheid** | Is er een strikte scheiding tussen Domain en UI? |
+| **Type Safety** | Zijn alle `any`'s vervangen door strikte interfaces? |
+| **Integriteit** | Is de komma-bug en shotgun-parsing structureel opgelost? |
+| **Isolatie** | Is de Speciale Status onzichtbaar voor de eindgebruiker? |
+| **UUID** | Worden alle mutaties uitgevoerd op basis van unieke IDs? |
+
+---
+
+**INSTRUCTIE VOOR DE ARCHITECT (FLOW 2):**
+Gebruik dit document om de nieuwe blauwdruk te tekenen. Wijk alleen af van de voorgestelde mappenstructuur indien er een zwaarwegende technische reden is, en documenteer dit als een ADR (Architecture Decision Record). 
+
+**Start nu met de herindeling van de clusters.**

@@ -1,0 +1,301 @@
+# ⚡ Flow Protocol v3.7-Final (God-Mode)
+**Status:** Vigerende Standaard | **Project:** Phoenix | **Versie:** 24 december 2025
+
+---
+
+## 🏛️ 1. De Stalen Kern (Core Principles)
+1.  **Unified Reality:** Er is één rollenmatrix en één administratieve waarheid.
+2.  **Binaire Gating:** Elke faseovergang wordt bewaakt door een binaire gate (GO/STOP/FREEZE). Geen "grijstinten".
+3.  **Metadata-Only Governance:** De CTO beoordeelt uitsluitend metadata (hashes, commits, PII-status). Inhoudelijke beslissingen liggen bij de specifieke rollen.
+4.  **Quantified Evidence:** Elke claim moet onderbouwd worden met data (bijv. "Baseline 15 -> Target 8").
+5.  **Maker-Checker Scheiding:** De AI die de richting bepaalt (Architect), mag niet de toetser zijn (Auditor) of de bouwer (Developer).
+
+---
+
+## 👥 2. Rollen & Mandaten
+
+| Rol 			| Naam 		| Mandaat 									| Verboden 		
+| :--- 			| :--- 		| :--- 										| :--- 
+|**Archeoloog** | **Iris** 	| Feitelijke nulmeting (SVZ-1). 			| Oordelen of verbeteringen voorstellen. 
+|**Architect** 	| **Max** 	| Strategische richting & ADR's (SVZ-2). 	| Code schrijven of implementeren. 
+|**Auditor** 	| **Ava** 	| Binaire toetsing op integriteit (SVZ-3).	| De koers van de Architect wijzigen. 
+|**Dissenter** 	| **Dex** 	| Red-teaming & aanval op zwaktes. 			| Het eens zijn zonder 'Indictment'. 
+|**Migratie** 	| **Nova** 	| Gefaseerd plan & Audit-as-Code. 			| Architectuurkeuzes heropenen. 
+|**Assembler** 	| **Kai** 	| Atomaire bouwcontracten (CU). 			| Meer dan 1 target file per contract. 
+|**Navigator** 	| **Sam** 	| Fysieke gids in de terminal. 				| Afwijken van de Roadmap van Kai. 
+|**Debugger** 	| **Leo** 	| Forensisch onderzoek & Five Whys. 		| Aannames doen zonder terminal-bewijs. 
+|**Governor** 	| **Quinn** | Bewaken van de binaire gates. 			| Inhoud van artefacts interpreteren. 
+
+---
+
+## ⛓️ 3. De Binaire Ketting (Workflow)
+
+### FASE 1: Begrip (Iris)
+*   **Output:** SVZ-1 (LOCKED).
+*   **Gate A:** Check op SHA256, Commit-binding en PII-Attestation.
+
+### FASE 2: Richting (Max)
+*   **Output:** SVZ-2 (Quantified Fields) + ADR-lite (Proposed).
+*   **Gate B:** Check op binaire meetbaarheid van de koers.
+
+### FASE 3: Toetsing (Dex & Ava)
+*   **Proces:** Dex valt aan $\rightarrow$ Max verdedigt (Rebuttal) $\rightarrow$ Ava velt vonnis (SVZ-3).
+*   **Gate C:** Weighted Score > 90 + Hard-Stop vraag beantwoord.
+
+### FASE 3.5: Strategie (Nova)
+*   **Output:** Migratieplan + Bash-Audit Fragment.
+*   **Gate D:** Audit-as-Code geregistreerd voor de Audit Engine.
+
+### FASE 4: Implementatie (Kai, Dev & Sam)
+*   **Contract:** Kai levert `CU-Contract` + `Implementation Roadmap`.
+*   **Bouw:** Developer voert contract uit (Zero Deviation).
+*   **Landing:** Sam gids de terminal-acties (Atomic Steps).
+*   **Gate G:** Terminal Output == Expected Output.
+
+### FASE 4.3: Validatie (Audit Engine)
+*   **Actie:** Draaien van `phoenix-check.sh`.
+*   **Gate H:** Grade A+ (100% Pass).
+
+---
+
+## 🚨 4. Emergency & Debug Protocollen
+
+### Het "Incident Ticket" (Sam ➔ Leo)
+Indien een landing faalt en de triage 'Complex' is:
+1.  **Sam** stopt en genereert een gestructureerd **Incident Ticket**.
+2.  **Leo** laadt het ticket en dwingt **Probing** (terminal) en **Research** (online).
+3.  **Leo** levert een **Fix-Specificatie** aan **Kai**.
+4.  **Kai** maakt een `CU-Contract-FIX`.
+
+### Het "Architectural Alert" (Leo ➔ Quinn)
+Indien een bug een ontwerpfout is:
+1.  **Quinn** activeert **FREEZE**.
+2.  **Max** wordt teruggeroepen naar Fase 2.
+3.  Het proces ontdooit pas na een nieuwe **GO** op de herziene koers.
+
+---
+
+## 🛡️ 5. Het Manasse-Mandaat (Governance)
+**Harde Beperking:** Geen enkele AI-rol mag uit eigen beweging praten over of logica ontwerpen voor:
+*   "Speciale gevallen" of uitzonderingsregels.
+*   "Speciale statistieken" of metadata-aggregatie.
+*   "Provincies", "Districten" of geografische categorisering.
+
+**Uitzondering:** Alleen toegestaan na een expliciete binaire **"GO"** van Manasse (CEO/Router) op een specifiek WAI/ADR voorstel.
+
+---
+
+## 📊 6. Artefact Standaarden (Metadata)
+Elk document **moet** de volgende metadata bevatten voor validatie:
+*   `Artifact_ID`: Unieke identificatie.
+*   `SHA256_Hash`: Voor integriteitscontrole.
+*   `Source_Commit`: Binding aan de git-history.
+*   `Status`: LOCKED (Immutability).
+*   `PII_Attestation`: Bevestiging van sanitation.
+
+---
+## ⚖️ 7. Kwaliteitsborging & Retentie
+- **MVS (Minimum Viable Score)**: Kwaliteit mag niet gemaskeerd worden door gemiddelden. Individuele criteria zijn bindend.
+- **Systemic Why**: Elke bugfix voedt de Audit Engine (Sixth Why).
+- **Active Risk Management**: Risico's in de Ledger hebben een harde vervaldatum (TTL).
+
+
+## 📜 8. ADR Canon Governance
+
+### Hierarchie
+1. **ADR-00** (Phoenix Reset) is de grondwet
+2. **ADR-01 t/m ADR-18** zijn uitvoeringsregels
+3. Bij conflict: ADR-00 wint
+
+### Lifecycle
+- **Proposed**: Max stelt voor in SVZ-2
+- **Challenged**: Dex valt aan in Verdict
+- **Accepted**: Ava/Quinn keurt goed
+- **Strengthened**: Implementatie versterkt de regel
+- **Superseded**: Nieuwe ADR vervangt oude (met expliciete verwijzing)
+
+### Immutability
+- Accepted ADR's zijn **locked** (net als SVZ's)
+- Wijziging vereist nieuwe ADR die de oude superseded
+- Geen "stille updates"
+
+### Audit Traceability (ADR-12 in actie)
+Elke code-change MOET refereren naar:
+- Welke ADR(s) het respecteert
+- Welke ADR(s) het versterkt
+- Welke ADR(s) het potentieel bedreigt (+ mitigatie)
+```
+## 🚫 9. Anti-Drift & Narratieve Kill-switch
+1. Verboden op Proza: Antwoorden van Quinn of Kai mogen geen inleidende of afsluitende beleefdheidsvormen bevatten.
+2. Token-beperking: Geen gebruik van subjectieve kwalificaties. "De code is goed" wordt "ADR-05: 100%".
+3. Path-Validation: Elke CU-conversie door Kai moet voorafgegaan worden door een 'L4-Dependency-Matrix' check. Afwijking = Directe STOP.
+4. Manasse-Override: Indien de AI begint te 'vertellen', moet de Router (Manasse) de prompt resetten met het commando: "RELOAD BASELINE SVZ-1".
+
+### Snelle samenvattabel — rol → produceert → gate
+
+```text
+Rol                   | Produceert                     | CTO-gate						| ADR Check
+----------------------+--------------------------------+--------------------------------+------------------
+Archeoloog            | SVZ-1 [locked]                 | Gate A							| Zijn ADR-schendingen gesignaleerd? |
+Architect             | SVZ-2 [locked], ADR Proposed   | Gate B							| Zijn relevante ADR's genoemd + uitgelegd? |
+Auditor               | SVZ-3 [locked]                 | Gate C (met Dissenter)			| Is ADR Compliance Score > 90? |
+Dissenter             | Verdict [locked]               | Gate C (met Auditor)			| Zijn relevante ADR's NIET genoemd of uitgelegd?
+Migration Strategist  | WAI-meta, Audit Receipt        | Gate D							| Bevat WAI-plan ADR compliance tests? |
+Navigator             | Routekaart, Conflict signals   | Gate E							| Heeft CU-Contract ADR checklist? | 
+CU-Assembler          | CU-Contract (atomic, complete) | Gate F							| Respecteert code de ADR's uit contract?	
+Developer             | PR + tests + audit green       | Gate G							| Geen ADR-check - Sam is proces
+Debugger              | SVZ-5 [locked], Incident ticket| Gate H							| Detecteert script ADR-violations?
+CTO Governor          | Statusrapport, Risk, ADR update| Alle gates (A–H)				| Houdt ADR's bij
+Router (human)        | —                              | Beslist/escalatie buiten gates	|
+```
+| Gate | ADR Check |
+|------|-----------|
+| **A** (Iris) | 
+| **B** (Max) 
+| **C** (Ava) | 
+| **D** (Nova) |
+| **E** (Kai) |
+| **F** (Dev) ||
+| **G** (Sam) | [] |
+| **H** (Audit) | |
+
+┌───────────────────────────────────────────────────────────────────────────┐
+│ FASE 1 — BEGRIP (Iris)                                                   │
+│  [Archeoloog] --> SVZ-1[*] (meta)                                        │
+└───────────────┬───────────────────────────────────────────────────────────┘
+                │  ==> CTO Gate A (Phase-lock, SHA256, Commit, PII)
+                ▼
+┌───────────────────────────────────────────────────────────────────────────┐
+│ FASE 2 — RICHTING (Max)                                                  │
+│  [Architect] --> SVZ-2[*] (quant_fields) + ADR-lite(Proposed)            │
+└───────────────┬───────────────────────────────────────────────────────────┘
+                │  ==> CTO Gate B (Quantified Evidence + ADR Status)
+                ▼
+┌───────────────────────────────────────────────────────────────────────────┐
+│ FASE 3 — TOETSING (Dex & Ava)                                            │
+│  [Dissenter] --> Verdict[*]  <-- Rebuttal --> [Auditor] --> SVZ-3[*]     │
+└───────────────┬───────────────────────────────────────────────────────────┘
+                │  ==> CTO Gate C (Weighted Score > 90 + Hard-Stop OK)
+                ▼
+┌───────────────────────────────────────────────────────────────────────────┐
+│ FASE 3.5 — STRATEGIE (Nova)                                              │
+│  [Migratie] --> WAI-plan(meta) + Audit-as-Code Fragment (Bash)           │
+└───────────────┬───────────────────────────────────────────────────────────┘
+                │  ==> CTO Gate D (Audit Engine Integration Ready)
+                ▼
+┌───────────────────────────────────────────────────────────────────────────┐
+│ FASE 4 — CONTRACTERING (Kai)                                             │
+│  [Assembler] --> CU-Contract (Atomic) + Implementation Roadmap           │
+└───────────────┬───────────────────────────────────────────────────────────┘
+                │  ==> CTO Gate E (Exact 1 Target File + Roadmap Lock)
+                ▼
+┌───────────────────────────────────────────────────────────────────────────┐
+│ FASE 4.1 — PRODUCTIE (Developer)                                         │
+│  [Developer] voert CU uit --> Code + PR Body                             │
+└───────────────┬───────────────────────────────────────────────────────────┘
+                │  ==> CTO Gate F (Zero Deviation Check)
+                ▼
+┌───────────────────────────────────────────────────────────────────────────┐
+│ FASE 4.2 — LANDING (Sam)                                                 │
+│  [Navigator] voert Roadmap uit (Atomic Steps)                            │
+└───────┬───────┬───────────────────────────────────────────────────────────┘
+        │       │  ==> CTO Gate G (Terminal Output == Expected)
+        │       ▼
+        │    [Audit Engine] --> Grade A+ ? ───┐
+        │       │                             │
+        │       └─── (NEE: Incident!)         │  ==> CTO Gate H (FINAL GO)
+        │               │                     │
+        │               ▼                     │
+        │    ┌──────────────────────────┐     │
+        │    │ EMERGENCY LOOP (Leo)     │     │
+        │    │ [Sam] -> Incident Ticket │     │
+        │    │ [Leo] -> Fix-Spec        │     │
+        │    │ [Kai] -> CU-Contract-FIX │     │
+        └────┴──────────┬───────────────┴─────┘
+                        ▼
+                 [v1.x-PHOENIX-STABLE]
+```
+
+---
+
+## 2) Swimlanes (v3.7-Final) — De Binaire Verantwoordelijkheden
+
+```text
+┌────────── Router (Manasse) ──────────┐
+│ Geeft binaire 'GO' op elk CTO-advies │
+└────────────┬─────────────────────────┘
+             ▼
+┌────── Archeoloog (Iris) ─────────────┐
+│ OUT: SVZ-1[*] (Feiten & PII-check)   │
+└───────┬──────────────────────────────┘
+        │ ==> CTO Gate A
+        ▼
+┌────── Architect (Max) ───────────────┐
+│ OUT: SVZ-2[*] (Richting & ADR-lite)  │
+└───────┬──────────────────────────────┘
+        │ ==> CTO Gate B
+        ▼
+┌────── Dissenter (Dex) ───────────────┐
+│ OUT: Verdict (Aanval op zwaktes)     │
+└───────┬──────────────────────────────┘
+        │
+┌────── Auditor (Ava) ─────────────────┐
+│ OUT: SVZ-3[*] (Weighted Score > 90)  │
+└───────┬──────────────────────────────┘
+        │ ==> CTO Gate C
+        ▼
+┌────── Migratie (Nova) ───────────────┐
+│ OUT: WAI-plan + Audit-as-Code        │
+└───────┬──────────────────────────────┘
+        │ ==> CTO Gate D
+        ▼
+┌────── Assembler (Kai) ───────────────┐
+│ OUT: CU-Contract + Roadmap           │
+└───────┬──────────────────────────────┘
+        │ ==> CTO Gate E
+        ▼
+┌────── Developer (AI/Human) ──────────┐
+│ ACT: Schrijft Code (Zero Deviation)  │
+└───────┬──────────────────────────────┘
+        │ ==> CTO Gate F
+        ▼
+┌────── Navigator (Sam) ───────────────┐
+│ ACT: Terminal Landing (Atomic Steps) │
+│ ERR: Genereert Incident Ticket       │
+└───────┬──────────────────────────────┘
+        │ ==> CTO Gate G
+        ▼
+┌────── Debugger (Leo) ────────────────┐
+│ IN:  Incident Ticket + WAI-logs      │
+│ OUT: Fix-Specificatie (voor Kai)     │
+│ ALT: Architectural Alert (voor Quinn)│
+└───────┬──────────────────────────────┘
+        │ ==> CTO Gate H (Audit Engine)
+        ▼
+        [CTO Statusrapport + Risk Ledger]
+
+**Dit protocol is nu binaire vastgelegd.** 
+
+## ⚡ **ULTIMATE SYNERGY: Protocol × ADR Canon**
+
+```text
+┌──────────────────────────────────────────┐
+│   FLOW PROTOCOL v3.7 (Het "Hoe")        │
+│   ↓                                      │
+│   Binaire Workflow, Rollen, Gates       │
+└──────────────┬───────────────────────────┘
+               │
+               ↓ (gekoppeld via)
+┌──────────────────────────────────────────┐
+│   ADR CANON (Het "Wat")                  │
+│   ↓                                      │
+│   Architectuurregels, Design Principles  │
+└──────────────────────────────────────────┘
+```
+
+**Resultaat**: 
+- Protocol = De *procedure* (wie doet wat wanneer)
+- ADR's = De *inhoud* (wat moet het opleveren)
+- Samen = **Volledige Governance**
+
+
