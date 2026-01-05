@@ -1,0 +1,130 @@
+Het is belangrijk om te verduidelijken dat Project Phoenix is gestart met een **architecturale reset**. In de overgang van de "Legacy" fase naar de "Standaard 2025" zijn de ADR's 1 t/m 11 komen te vervallen of opgegaan in de nieuwe clusters. Ze dienden als fundament voor de initiële bouw, maar zijn nu "deprecated" ten gunste van de DDD-structuur.
+
+Hieronder volgen de feitelijke omschrijvingen van de relevante ADR's uit de vroege fase die de huidige staat hebben gevormd, eindigend bij de reeds bekende ADR-12.
+
+---
+
+### 📜 Project Phoenix: Historische ADR Register (v0.1 - v0.8)
+
+#### **ADR-01: Technologie Stack Keuze**
+
+* **Besluit:** Gebruik van **React Native (Expo)** met **TypeScript**.
+* **Rationale:** Noodzaak voor cross-platform compatibiliteit (iOS/Android) met strikte type-veiligheid om runtime errors in financiële berekeningen te minimaliseren.
+
+#### **ADR-02: Mapstructuur (Legacy)**
+
+* **Besluit:** Groepering op basis van component-type (`components/`, `screens/`, `utils/`).
+* **Status:** **Vervangen** door Cluster-gebaseerde DDD-structuur in WAI-001.
+
+#### **ADR-03: State Management Keuze**
+
+* **Besluit:** Gebruik van **React Context API** in plaats van Redux.
+* **Rationale:** De state-omvang van een enkel huishouden is compact genoeg om zonder de overhead van Redux te beheren, mits gecombineerd met `useReducer`.
+
+#### **ADR-04: Datum Formatering**
+
+* **Besluit:** Interne opslag van datums als **ISO-8601 strings**.
+* **Rationale:** Voorkomen van tijdzone-conflicten en inconsistenties tussen verschillende mobiele besturingssystemen.
+
+#### **ADR-05: Styling Methodiek**
+
+* **Besluit:** Gebruik van `StyleSheet.create` (CSS-in-JS).
+* **Status:** **Gevolueerd** naar Design Tokens (WAI-003) om Dark Mode integriteit te waarborgen.
+
+#### **ADR-06: Formulier Afhandeling**
+
+* **Besluit:** Handmatige state-binding in plaats van zware form-libraries (zoals Formik).
+* **Rationale:** Maximale controle over de "live-sync" tussen verschillende wizard-secties.
+
+#### **ADR-07: Data Persistentie**
+
+* **Besluit:** Gebruik van **AsyncStorage**.
+* **Rationale:** Lokale opslag is verplicht; data mag de telefoon niet verlaten zonder expliciete export-actie (Privacy-First).
+
+#### **ADR-08: Error Boundary Strategie**
+
+* **Besluit:** Implementatie van een globale Error Boundary op root-niveau.
+* **Rationale:** De app mag nooit "stille" crashes vertonen tijdens het opslaan van vitale financiële data.
+
+#### **ADR-09: Unit Testing Framework**
+
+* **Besluit:** **Jest** als primaire test-runner.
+* **Rationale:** Integratie met de Expo-ecosysteem en snelheid van uitvoering voor de Functional Core.
+
+#### **ADR-10: Icoon Set**
+
+* **Besluit:** Exclusief gebruik van **Lucide React Native**.
+* **Rationale:** Consistente lijnvoering en schaalbaarheid zonder extra asset-overhead.
+
+#### **ADR-11: Lokalisatie Strategie**
+
+* **Besluit:** Hardcoded Nederlandse strings in de UI, Engelse terminologie in de code.
+* **Status:** **Gecodificeerd** in de Handover Memo als de "Ubiquitous Language".
+
+---
+
+### 🏛️ De Brug naar de Huidige Architectuur
+
+#### **ADR-12: Logic Centralization (De overgang naar DDD)**
+
+* **Besluit:** Volledige scheiding tussen UI en Business Rules.
+* **Impact:** Dit markeerde het einde van de "Legacy" fase en het begin van de Phoenix-stabilisatie. Vanaf hier zijn alle berekeningen verplaatst van schermen naar selectors.
+
+---
+Hier is het volledige overzicht van de **Architectural Decision Records (ADRs)** die de ruggengraat vormen van Project Phoenix. Deze documentatie is essentieel voor de CU-Assembler om de integriteit van de "Standaard 2025" te bewaken.
+
+---
+
+## 📜 Project Phoenix: Centrale ADR Register
+
+### **ADR-12: Logic Centralization (Domain vs. UI)**
+
+* **Status:** ✅ Decided
+* **Context:** Business rules (zoals de "Speciale Status") raakten verspreid over verschillende schermen, wat leidde tot inconsistente berekeningen.
+* **Besluit:** Alle business logica moet worden gecentraliseerd in **Selectors** of de **Domain Layer** (`src/logic`). UI-componenten mogen alleen data tonen en events afvuren; ze mogen zelf geen berekeningen uitvoeren.
+* **Gevolg:** Wijzigingen in regels hoeven maar op één plek te worden doorgevoerd.
+
+### **ADR-14: The Dumb Reducer Pattern**
+
+* **Status:** ✅ Decided
+* **Context:** De `formReducer` werd te complex door inline berekeningen tijdens acties.
+* **Besluit:** De reducer wordt gedegradeerd tot een "domme" boekhouder. Hij voert uitsluitend atomaire state-updates uit. Alle afgeleide data (zoals totalen) wordt berekend via selectors op het moment dat de UI het nodig heeft.
+* **Gevolg:** De state blijft "lean" en de reducer is makkelijker te testen.
+
+### **ADR-15: Minor Units Strategy (Cents)**
+
+* **Status:** ✅ Decided
+* **Context:** JavaScript floating-point berekeningen veroorzaakten afrondingsfouten in financiële overzichten (bijv. `0.1 + 0.2 !== 0.3`).
+* **Besluit:** Alle financiële bedragen worden in de state en de kernel opgeslagen als **integers in centen**.
+* **Gevolg:** 100% rekenkundige nauwkeurigheid. Formatting naar Euro's gebeurt uitsluitend in de render-fase.
+
+### **ADR-16: Normalization Gatekeeper (NumericParser)**
+
+* **Status:** ✅ Decided
+* **Context:** Gebruikers voeren bedragen in met verschillende separators (punten, komma's, spaties).
+* **Besluit:** Implementatie van de **NumericParser** als enige sluis voor financiële invoer. "Parse, Don't Validate": data wordt bij de grens direct getransformeerd naar een valide integer (centen).
+* **Gevolg:** De interne applicatie-logica hoeft nooit rekening te houden met vervuilde string-input.
+
+### **ADR-17: Idempotent Hydration & Migration**
+
+* **Status:** ✅ Decided
+* **Context:** De noodzaak om legacy data (floats) veilig te laden in de nieuwe Phoenix-architectuur (centen).
+* **Besluit:** De `MigrationGuard` in de storage-service controleert bij boot-up de `schemaVersion`. Oude data wordt eenmalig getransformeerd naar de nieuwe standaard. De operatie is idempotent (veilig om vaker uit te voeren).
+* **Gevolg:** Geen dataverlies voor bestaande gebruikers tijdens de transitie.
+
+---
+
+## 🛠️ Aanvullende Richtlijnen (Mandaat Lyra)
+
+Naast de formele ADR's gelden de volgende architecturale mandaten:
+
+1. **PII-Stripping (Privacy):** Namen en geboortedata mogen de applicatie nooit verlaten. In de export-payload worden deze vervangen door de constante `anonymous_member`.
+2. **Special Status Logic [2025-12-07]:** Huishoudens met **meer dan 5 volwassenen** krijgen automatisch de vlag `isSpecialStatus: true`. Deze logica is diep verankerd in de `householdSelectors`.
+3. **Ubiquitous Language:** Code-keys en interfaces zijn in het **Engels**; waarden die aan de gebruiker worden getoond zijn in het **Nederlands**.
+4. **Path Aliasing:** Relatieve imports (`../../../`) zijn verboden. Gebruik uitsluitend de aliassen (`@ui`, `@state`, `@domain`, `@utils`).
+
+---
+
+**Status voor CU-Assembler:** Dit register is de "Source of Truth". Elke code-injectie die strijdig is met deze ADR's zal door de Audit Engine (v1.4.1) worden geblokkeerd.
+
+Zou je willen dat ik een specifieke **Audit-check** uitschrijf voor een van deze ADR's om de handhaving te automatiseren?

@@ -1,0 +1,381 @@
+npx tsc --noEmit
+src/App.tsx:7:42 - error TS2554: Expected 0 arguments, but got 1.
+
+7   const { status } = useAppOrchestration(null);
+                                           ~~~~
+
+src/__tests__/App.projector.test.tsx:3:33 - error TS2307: Cannot find module '@test-utils/render' or its corresponding type declarat
+ions.                                                                                                                               
+3 import { renderWithState } from '@test-utils/render';
+                                  ~~~~~~~~~~~~~~~~~~~~
+
+src/__tests__/App.projector.test.tsx:5:34 - error TS2307: Cannot find module '@test-utils/state' or its corresponding type declarati
+ons.                                                                                                                                
+5 import { makePhoenixState } from '@test-utils/state';
+                                   ~~~~~~~~~~~~~~~~~~~
+
+src/__tests__/WAI009_FocusManagement.test.tsx:3:32 - error TS2307: Cannot find module '@test-utils' or its corresponding type declar
+ations.                                                                                                                             
+3 import { TestAppWrapper } from '@test-utils';
+                                 ~~~~~~~~~~~~~
+
+src/app/context/__test__/formReducer.test.ts:2:33 - error TS2307: Cannot find module '../../test-utils/fixtures' or its correspondin
+g type declarations.                                                                                                                
+2 import { createBaseState } from '../../test-utils/fixtures';
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/app/context/__test__/formReducer.test.ts:3:27 - error TS2307: Cannot find module '../../domain/constants/registry' or its corres
+ponding type declarations.                                                                                                          
+3 import { DATA_KEYS } from '../../domain/constants/registry';
+                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/app/context/__test__/formReducer.test.ts:16:12 - error TS7053: Element implicitly has an 'any' type because expression of type '
+any' can't be used to index type '{ setup: { [key: string]: unknown; aantalMensen: number; aantalVolwassen: number; autoCount: "Nee" | "Een" | "Twee"; heeftHuisdieren?: boolean | undefined; }; household: { members: Record<string, unknown>[]; }; finance: { ...; }; }'.                                                                                                                                 
+16     expect(newState.data[DATA_KEYS.SETUP].aantalVolwassen).toBe(5);
+              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/app/hooks/__tests__/useAppOrchestration.test.tsx:2:41 - error TS2307: Cannot find module '@test-utils/render' or its correspondi
+ng type declarations.                                                                                                               
+2 import { renderHookWithProviders } from '@test-utils/render';
+                                          ~~~~~~~~~~~~~~~~~~~~
+
+src/app/hooks/__tests__/useAppOrchestration.test.tsx:4:34 - error TS2307: Cannot find module '@test-utils/fixtures' or its correspon
+ding type declarations.                                                                                                             
+4 import { FormStateFixture } from '@test-utils/fixtures';
+                                   ~~~~~~~~~~~~~~~~~~~~~~
+
+src/app/hooks/__tests__/useAppOrchestration.test.tsx:20:31 - error TS2554: Expected 0 arguments, but got 1.
+
+20     () => useAppOrchestration(mockEnvelope)
+                                 ~~~~~~~~~~~~
+
+src/app/hooks/__tests__/useAppOrchestration.test.tsx:28:33 - error TS2554: Expected 0 arguments, but got 1.
+
+28       () => useAppOrchestration(null)
+                                   ~~~~
+
+src/app/hooks/useAppOrchestration.ts:4:27 - error TS2307: Cannot find module '@constants/registry' or its corresponding type declara
+tions.                                                                                                                              
+4 import { DATA_KEYS } from '@constants/registry'; // Herstelde import
+                            ~~~~~~~~~~~~~~~~~~~~~
+
+src/app/hooks/useAppOrchestration.ts:5:10 - error TS2305: Module '"../../services/storage"' has no exported member 'storage'.
+
+5 import { storage } from '../../services/storage'; // Voor loadState
+           ~~~~~~~
+
+src/selectors/__tests__/financialFlow.test.ts:2:34 - error TS2307: Cannot find module '@test-utils/state' or its corresponding type 
+declarations.                                                                                                                       
+2 import { makePhoenixState } from '@test-utils/state';
+                                   ~~~~~~~~~~~~~~~~~~~
+
+src/selectors/__tests__/householdSelectors.test.ts:3:21 - error TS2305: Module '"../../domain/constants/registry"' has no exported m
+ember 'SUB_KEYS'.                                                                                                                   
+3 import { DATA_KEYS, SUB_KEYS } from '../../domain/constants/registry';
+                      ~~~~~~~~
+
+src/selectors/__tests__/householdSelectors.test.ts:16:7 - error TS2418: Type of computed property's value is '{ aantalVolwassen: num
+ber; }', which is not assignable to type '{ [key: string]: unknown; aantalMensen: number; aantalVolwassen: number; autoCount: "Nee" | "Een" | "Twee"; heeftHuisdieren?: boolean | undefined; }'.                                                                          Type '{ aantalVolwassen: number; }' is missing the following properties from type '{ [key: string]: unknown; aantalMensen: number;
+ aantalVolwassen: number; autoCount: "Nee" | "Een" | "Twee"; heeftHuisdieren?: boolean | undefined; }': aantalMensen, autoCount     
+16       [DATA_KEYS.SETUP]: { aantalVolwassen },
+         ~~~~~~~~~~~~~~~~~
+
+  src/shared-types/form.ts:12:5
+    12     setup: {
+           ~~~~~
+    The expected type comes from property 'setup' which is declared here on type '{ setup: { [key: string]: unknown; aantalMensen: n
+umber; aantalVolwassen: number; autoCount: "Nee" | "Een" | "Twee"; heeftHuisdieren?: boolean | undefined; }; household: { members: Record<string, unknown>[]; }; finance: { ...; }; }'                                                                                  
+src/selectors/__tests__/householdSelectors.test.ts:28:7 - error TS2418: Type of computed property's value is '{ [SUB_KEYS.INCOME]: {
+ items: never[]; }; [SUB_KEYS.EXPENSES]: { items: never[]; }; }', which is not assignable to type '{ income: { items: Record<string, unknown>[]; totalAmount?: number | undefined; }; expenses: { items: Record<string, unknown>[]; totalAmount?: number | undefined; }; }'.                                                                                                                                  Type '{ [x: number]: { items: never[]; }; }' is missing the following properties from type '{ income: { items: Record<string, unkn
+own>[]; totalAmount?: number | undefined; }; expenses: { items: Record<string, unknown>[]; totalAmount?: number | undefined; }; }': income, expenses                                                                                                                    
+28       [DATA_KEYS.FINANCE]: {
+         ~~~~~~~~~~~~~~~~~~~
+
+  src/shared-types/form.ts:22:5
+    22     finance: {
+           ~~~~~~~
+    The expected type comes from property 'finance' which is declared here on type '{ setup: { [key: string]: unknown; aantalMensen:
+ number; aantalVolwassen: number; autoCount: "Nee" | "Een" | "Twee"; heeftHuisdieren?: boolean | undefined; }; household: { members: Record<string, unknown>[]; }; finance: { ...; }; }'                                                                                
+src/services/__tests__/migration.members.test.ts:81:10 - error TS2614: Module '"../dataOrchestrator"' has no exported member 'collec
+tFinancialAndMemberData'. Did you mean to use 'import collectFinancialAndMemberData from "../dataOrchestrator"' instead?            
+81 import { collectFinancialAndMemberData } from '../dataOrchestrator';
+            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/services/__tests__/storage.migration.test.ts:16:19 - error TS2339: Property 'schemaVersion' does not exist on type '{ data: { ho
+usehold: { members: any; }; transactions: any; }; metadata: { migratedAt: string; schemaVersion: string; itemsProcessed: any; }; }'.
+16     expect(result.schemaVersion).toBe('1.0');
+                     ~~~~~~~~~~~~~
+
+src/services/__tests__/storage.migration.test.ts:17:24 - error TS2339: Property 'setup' does not exist on type '{ household: { membe
+rs: any; }; transactions: any; }'.                                                                                                  
+17     expect(result.data.setup.aantalMensen).toBe(4);
+                          ~~~~~
+
+src/services/__tests__/storage.migration.test.ts:18:24 - error TS2339: Property 'setup' does not exist on type '{ household: { membe
+rs: any; }; transactions: any; }'.                                                                                                  
+18     expect(result.data.setup.aantalVolwassen).toBe(2);
+                          ~~~~~
+
+src/services/__tests__/storage.migration.test.ts:24:24 - error TS2339: Property 'setup' does not exist on type '{ household: { membe
+rs: any; }; transactions: any; }'.                                                                                                  
+24     expect(result.data.setup.aantalMensen).toBe(0);
+                          ~~~~~
+
+src/services/__tests__/storage.migration.test.ts:25:19 - error TS2339: Property 'schemaVersion' does not exist on type '{ data: { ho
+usehold: { members: any; }; transactions: any; }; metadata: { migratedAt: string; schemaVersion: string; itemsProcessed: any; }; }'.
+25     expect(result.schemaVersion).toBe('1.0');
+                     ~~~~~~~~~~~~~
+
+src/services/__tests__/storageShim.test.ts:2:34 - error TS2307: Cannot find module '@test-utils/state' or its corresponding type dec
+larations.                                                                                                                          
+2 import { makePhoenixState } from '@test-utils/state';
+                                   ~~~~~~~~~~~~~~~~~~~
+
+src/services/householdAlign.ts:32:5 - error TS2353: Object literal may only specify known properties, and 'leeftijd' does not exist 
+in type 'Member'.                                                                                                                   
+32     leeftijd: undefined,
+       ~~~~~~~~
+
+src/test-utils/factories/stateFactory.ts:87:7 - error TS2418: Type of computed property's value is '{}', which is not assignable to 
+type '{ [key: string]: unknown; aantalMensen: number; aantalVolwassen: number; autoCount: "Nee" | "Een" | "Twee"; heeftHuisdieren?: boolean | undefined; }'.                                                                                                              Type '{}' is missing the following properties from type '{ [key: string]: unknown; aantalMensen: number; aantalVolwassen: number; 
+autoCount: "Nee" | "Een" | "Twee"; heeftHuisdieren?: boolean | undefined; }': aantalMensen, aantalVolwassen, autoCount              
+87       [DATA_KEYS.SETUP]: {},
+         ~~~~~~~~~~~~~~~~~
+
+  src/shared-types/form.ts:12:5
+    12     setup: {
+           ~~~~~
+    The expected type comes from property 'setup' which is declared here on type '{ setup: { [key: string]: unknown; aantalMensen: n
+umber; aantalVolwassen: number; autoCount: "Nee" | "Een" | "Twee"; heeftHuisdieren?: boolean | undefined; }; household: { members: Record<string, unknown>[]; }; finance: { ...; }; }'                                                                                  
+src/test-utils/factories/stateFactory.ts:103:5 - error TS2353: Object literal may only specify known properties, and 'data' does not
+ exist in type 'Omit<FormState, "data">'.                                                                                           
+103     data: base.data, // data apart
+        ~~~~
+
+src/test-utils/index.ts:8:15 - error TS2307: Cannot find module '@test-utils/name' or its corresponding type declarations.
+
+8 export * from '@test-utils/name';
+                ~~~~~~~~~~~~~~~~~~
+
+src/test-utils/render/providers.tsx:30:23 - error TS2339: Property 'Provider' does not exist on type '() => { state: FormState; disp
+atch: Dispatch<FormAction>; }'.                                                                                                     
+30       <useFormContext.Provider value={value}>{children}</useFormContext.Provider>
+                         ~~~~~~~~
+
+src/test-utils/render/providers.tsx:30:73 - error TS2339: Property 'Provider' does not exist on type '() => { state: FormState; disp
+atch: Dispatch<FormAction>; }'.                                                                                                     
+30       <useFormContext.Provider value={value}>{children}</useFormContext.Provider>
+                                                                           ~~~~~~~~
+
+src/ui/components/FieldRenderer.tsx:22:40 - error TS2339: Property 'visibleIf' does not exist on type 'FieldConfig'.
+
+22         const isVisible = typeof field.visibleIf === 'function'
+                                          ~~~~~~~~~
+
+src/ui/components/FieldRenderer.tsx:23:11 - error TS2339: Property 'visibleIf' does not exist on type 'FieldConfig'.
+
+23   ? field.visibleIf(state)
+             ~~~~~~~~~
+
+src/ui/components/FieldRenderer.tsx:24:11 - error TS2339: Property 'visibleIf' does not exist on type 'FieldConfig'.
+
+24   : field.visibleIf
+             ~~~~~~~~~
+
+src/ui/components/FieldRenderer.tsx:25:32 - error TS2339: Property 'visibleIf' does not exist on type 'FieldConfig'.
+
+25     ? !!state.data.setup[field.visibleIf] // Als het een string is, check of die waarde bestaat
+                                  ~~~~~~~~~
+
+src/ui/components/FieldRenderer.tsx:34:20 - error TS7053: Element implicitly has an 'any' type because expression of type 'string' c
+an't be used to index type 'FormState'.                                                                                               No index signature with a parameter of type 'string' was found on type 'FormState'.
+
+34             value={state[field.fieldId]}
+                      ~~~~~~~~~~~~~~~~~~~~
+
+src/ui/components/__tests__/InputCounter.test.tsx:3:35 - error TS2307: Cannot find module '@test-utils/render' or its corresponding 
+type declarations.                                                                                                                  
+3 import { render, fireEvent } from '@test-utils/render';
+                                    ~~~~~~~~~~~~~~~~~~~~
+
+src/ui/components/fields/ConditionalField.tsx:13:34 - error TS2339: Property 'condition' does not exist on type 'FieldConfig'.
+
+13   const isVisible = typeof field.condition === 'function'
+                                    ~~~~~~~~~
+
+src/ui/components/fields/ConditionalField.tsx:14:11 - error TS2339: Property 'condition' does not exist on type 'FieldConfig'.
+
+14   ? field.condition(state)
+             ~~~~~~~~~
+
+src/ui/components/fields/ConditionalField.tsx:17:28 - error TS2339: Property 'dependentField' does not exist on type 'FieldConfig'.
+
+17   if (!isVisible || !field.dependentField) {
+                              ~~~~~~~~~~~~~~
+
+src/ui/components/fields/ConditionalField.tsx:24:22 - error TS2339: Property 'dependentField' does not exist on type 'FieldConfig'.
+
+24         field={field.dependentField}
+                        ~~~~~~~~~~~~~~
+
+src/ui/components/fields/ConditionalField.tsx:27:16 - error TS7053: Element implicitly has an 'any' type because expression of type 
+'any' can't be used to index type 'FormState'.                                                                                      
+27         value={state[field.dependentField.id]}
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/ui/components/fields/ConditionalField.tsx:27:28 - error TS2339: Property 'dependentField' does not exist on type 'FieldConfig'.
+
+27         value={state[field.dependentField.id]}
+                              ~~~~~~~~~~~~~~
+
+src/ui/components/fields/FormField.tsx:21:7 - error TS2322: Type '"SET_FIELD"' is not assignable to type '"SET_STEP" | "UPDATE_DATA"
+ | "SYNC_MEMBERS" | "RESET_APP" | "NEXT_STEP" | "PREV_STEP"'.                                                                       
+21       type: 'SET_FIELD',
+         ~~~~
+
+  src/shared-types/form.ts:41:7
+    41   | { type: 'SET_STEP'; payload: string }
+             ~~~~
+    The expected type comes from property 'type' which is declared here on type 'FormAction'
+
+src/ui/components/fields/FormField.tsx:39:10 - error TS2678: Type '"section"' is not comparable to type '"counter" | "text" | "radio
+-chips" | "toggle" | "repeater" | "date" | "select"'.                                                                               
+39     case 'section':
+            ~~~~~~~~~
+
+src/ui/components/fields/FormField.tsx:40:10 - error TS2678: Type '"collapsible-section"' is not comparable to type '"counter" | "te
+xt" | "radio-chips" | "toggle" | "repeater" | "date" | "select"'.                                                                   
+40     case 'collapsible-section':
+            ~~~~~~~~~~~~~~~~~~~~~
+
+src/ui/screens/Wizard/WizardPage.tsx:7:28 - error TS2307: Cannot find module 'src/config/Strings' or its corresponding type declarat
+ions.                                                                                                                               
+7 import { WizStrings } from 'src/config/Strings'
+                             ~~~~~~~~~~~~~~~~~~~~
+
+src/ui/screens/Wizard/WizardPage.tsx:49:20 - error TS7053: Element implicitly has an 'any' type because expression of type 'any' can
+'t be used to index type 'FormState'.                                                                                               
+49             value={state[field.fieldId] ?? state.setup?.[field.fieldId]}
+                      ~~~~~~~~~~~~~~~~~~~~
+
+src/ui/screens/Wizard/WizardPage.tsx:49:50 - error TS2339: Property 'setup' does not exist on type 'FormState'.
+
+49             value={state[field.fieldId] ?? state.setup?.[field.fieldId]}
+                                                    ~~~~~
+
+src/ui/screens/Wizard/__tests__/WizardController.test.tsx:2:10 - error TS2300: Duplicate identifier 'makePhoenixState'.
+
+2 import { makePhoenixState } from '@test-utils/state';
+           ~~~~~~~~~~~~~~~~
+
+src/ui/screens/Wizard/__tests__/WizardController.test.tsx:2:34 - error TS2307: Cannot find module '@test-utils/state' or its corresp
+onding type declarations.                                                                                                           
+2 import { makePhoenixState } from '@test-utils/state';
+                                   ~~~~~~~~~~~~~~~~~~~
+
+src/ui/screens/Wizard/__tests__/WizardController.test.tsx:4:62 - error TS2307: Cannot find module '@test-utils/render' or its corres
+ponding type declarations.                                                                                                          
+4 import { render, screen, fireEvent,  HouseholdFixture } from '@test-utils/render';
+                                                               ~~~~~~~~~~~~~~~~~~~~
+
+src/ui/screens/Wizard/__tests__/WizardController.test.tsx:5:10 - error TS2300: Duplicate identifier 'makePhoenixState'.
+
+5 import { makePhoenixState } from '@test-utils/state';
+           ~~~~~~~~~~~~~~~~
+
+src/ui/screens/Wizard/__tests__/WizardController.test.tsx:5:34 - error TS2307: Cannot find module '@test-utils/state' or its corresp
+onding type declarations.                                                                                                           
+5 import { makePhoenixState } from '@test-utils/state';
+                                   ~~~~~~~~~~~~~~~~~~~
+
+src/ui/screens/Wizard/__tests__/WizardController.test.tsx:7:10 - error TS2300: Duplicate identifier 'makePhoenixState'.
+
+7 import { makePhoenixState } from '@test-utils/state';
+           ~~~~~~~~~~~~~~~~
+
+src/ui/screens/Wizard/__tests__/WizardController.test.tsx:7:34 - error TS2307: Cannot find module '@test-utils/state' or its corresp
+onding type declarations.                                                                                                           
+7 import { makePhoenixState } from '@test-utils/state';
+                                   ~~~~~~~~~~~~~~~~~~~
+
+src/utils/validation.ts:6:13 - error TS2339: Property 'required' does not exist on type 'FieldConfig'.
+
+6   if (field.required && (value === undefined || value === null || value === '')) {
+              ~~~~~~~~
+
+src/utils/validation.ts:9:13 - error TS2339: Property 'validation' does not exist on type 'FieldConfig'.
+
+9   if (field.validation) {
+              ~~~~~~~~~~
+
+src/utils/validation.ts:11:13 - error TS2339: Property 'validation' does not exist on type 'FieldConfig'.
+
+11       field.validation.min !== undefined &&
+               ~~~~~~~~~~
+
+src/utils/validation.ts:13:21 - error TS2339: Property 'validation' does not exist on type 'FieldConfig'.
+
+13       value < field.validation.min
+                       ~~~~~~~~~~
+
+src/utils/validation.ts:15:44 - error TS2339: Property 'validation' does not exist on type 'FieldConfig'.
+
+15       return `Waarde moet minimaal ${field.validation.min} zijn.`;
+                                              ~~~~~~~~~~
+
+src/utils/validation.ts:18:13 - error TS2339: Property 'validation' does not exist on type 'FieldConfig'.
+
+18       field.validation.max !== undefined &&
+               ~~~~~~~~~~
+
+src/utils/validation.ts:20:21 - error TS2339: Property 'validation' does not exist on type 'FieldConfig'.
+
+20       value > field.validation.max
+                       ~~~~~~~~~~
+
+src/utils/validation.ts:22:43 - error TS2339: Property 'validation' does not exist on type 'FieldConfig'.
+
+22       return `Waarde mag maximaal ${field.validation.max} zijn.`;
+                                             ~~~~~~~~~~
+
+src/utils/validation.ts:24:15 - error TS2339: Property 'validation' does not exist on type 'FieldConfig'.
+
+24     if (field.validation?.postcode && typeof value === 'string' && !/^\d{4}$/.test(value.trim())) {
+                 ~~~~~~~~~~
+
+src/utils/validation.ts:30:37 - error TS2339: Property 'validation' does not exist on type 'FieldConfig'.
+
+30   if (Array.isArray(value) && field.validation?.lengthEqualsTo) {
+                                       ~~~~~~~~~~
+
+src/utils/validation.ts:32:31 - error TS2339: Property 'validation' does not exist on type 'FieldConfig'.
+
+32     const path = String(field.validation.lengthEqualsTo);
+                                 ~~~~~~~~~~
+
+
+Found 66 errors in 22 files.
+
+Errors  Files
+     1  src/App.tsx:7
+     2  src/__tests__/App.projector.test.tsx:3
+     1  src/__tests__/WAI009_FocusManagement.test.tsx:3
+     3  src/app/context/__test__/formReducer.test.ts:2
+     4  src/app/hooks/__tests__/useAppOrchestration.test.tsx:2
+     2  src/app/hooks/useAppOrchestration.ts:4
+     1  src/selectors/__tests__/financialFlow.test.ts:2
+     3  src/selectors/__tests__/householdSelectors.test.ts:3
+     1  src/services/__tests__/migration.members.test.ts:81
+     5  src/services/__tests__/storage.migration.test.ts:16
+     1  src/services/__tests__/storageShim.test.ts:2
+     1  src/services/householdAlign.ts:32
+     2  src/test-utils/factories/stateFactory.ts:87
+     1  src/test-utils/index.ts:8
+     2  src/test-utils/render/providers.tsx:30
+     5  src/ui/components/FieldRenderer.tsx:22
+     1  src/ui/components/__tests__/InputCounter.test.tsx:3
+     6  src/ui/components/fields/ConditionalField.tsx:13
+     3  src/ui/components/fields/FormField.tsx:21
+     3  src/ui/screens/Wizard/WizardPage.tsx:7
+     7  src/ui/screens/Wizard/__tests__/WizardController.test.tsx:2
+    11  src/utils/validation.ts:6

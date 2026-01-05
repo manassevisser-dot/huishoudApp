@@ -1,0 +1,344 @@
+Je hebt volkomen gelijk. De "valkuil van C7" staat in ons collectieve geheugen gegrift als het moment waarop de complexiteit de overhand nam. Het is de directe aanleiding voor ons huidige regime van micro-commits en de **B1-Invariant-plicht**. We gaan die fout niet herhalen door C7 nu te overhaasten.
+
+We sluiten C4 eerst **volledig en superieur** af. Pas als de UI daar weer perfect swiped en de data-normalisatie (hoofdletters/leestekens) geruisloos op de achtergrond werkt, hebben we een stabiel platform om de rest van de wizard aan te pakken.
+
+### **Strategisch besluit: C4 Polijsten**
+
+We houden de console.logs voorlopig nog even aan voor de bewijsvoering van de smoketests, zoals je voorstelt. We focussen ons nu op de visuele en functionele verfijning.
+
+---
+
+### **🚀 Opdracht voor de Developer: C4 UI-Restore & Normalisatie**
+
+Dit is de opdracht voor de eerste microstappen van morgen:
+
+```text
+ROL: Senior Developer
+CONTEXT: Branch 'pre-c7-hardening', Phase 0.5 - UI & UX Restoration.
+TAAK: Herstel de horizontale swipe-functionaliteit op C4 en activeer de naam-normalisatie.
+
+INSTRUCTIES:
+1. UI-RESTORE (Swipes):
+   - Pas src/organisms/HouseholdMemberRepeater.tsx aan.
+   - Implementeer een horizontale ScrollView met 'pagingEnabled'.
+   - Voeg de navigatiehint "----> volgende" toe onder de kaarten.
+   - Conditie: Hint is alleen zichtbaar als (index < totaalLeden - 1) EN (totaalLeden > 1).
+
+2. LOGICA-ACTIVATIE (Naam-normalisatie):
+   - Zorg dat de reeds voorbereide 'cleanName()' helper actief wordt gebruikt bij de 'onBlur' van het naamveld.
+   - Functionaliteit: Automatische hoofdletters (PascalCase) en verwijderen van ongewenste leestekens.
+
+CONTRACT-EIS:
+Lever de 'Vaste Step Completion Template'. 
+Toon bij 'Effect & bewijs (B3)' aan dat:
+- De horizontale swipe werkt zonder dat de focus verspringt.
+- Een invoer zoals "jAn-wiLlem!" na blur automatisch wordt omgezet naar "Jan-Willem".
+
+```
+
+---
+
+### **CTO-Checklist (Vooraf)**
+
+* **[ ] Invariant:** Leden-data blijft consistent tijdens swipe; UI-translatie heeft geen invloed op state-integriteit.
+* **[ ] Reversibiliteit:** De swipe-layout is een pure UI-wijziging in de Repeater, makkelijk te reverten zonder dataverlies.
+* **[ ] Micro-stap:** We raken alleen de UI en de blur-handler aan.
+
+**Zodra de Developer morgen start met deze "GO C4-UI", hebben we C4 weer op het niveau van vóór de setback, maar dan met de robuuste fundering van nu.** Welterusten voor nu; de baseline is stabiel en het plan voor morgen is waterdicht.
+
+CONTEXT: Branch 'pre-c7-hardening', Phase 0.5 - UI Decoupling & Data Integrity.
+TAAK: Verplaats sync-logica (auto/huisdier) van de UI naar de Reducer/Service.
+
+INSTRUCTIES:
+1. Aanpassen src/services/householdAlign.ts:
+   - Breid 'alignMembers' uit zodat deze ook de status van 'heeftAuto' en 'heeftHuisdieren' (vanuit C1 state) synchroniseert naar elk lid-object in de array.
+2. Aanpassen src/context/FormContext.tsx:
+   - Update de case 'ALIGNHOUSEHOLDMEMBERS'. Zorg dat de payload de actuele C1-metadata (auto/huisdier) bevat en geef dit door aan de helper.
+3. Aanpassen src/organisms/HouseholdMemberRepeater.tsx:
+   - VERWIJDER alle useEffects of inline logica die de leden-data probeert te synchroniseren of te 'seeden'.
+   - De component mag alleen data lezen uit de state en wijzigingen doorgeven via dispatch.
+
+CONTRACT-EIS:
+Lever na uitvoering de volledige 'Vaste Step Completion Template'. 
+Toon bij 'Invariant-inzicht (B1)' aan hoe de data-integriteit nu gewaarborgd is in de state-laag in plaats van de UI-laag.
+
+CONTRACT: 
+
+# 📜 Definitieve Contracttekst
+
+## WE VOEREN HET ECHT UIT; DIT IS GEEN SIMULATIE
+
+## Transparantie- en Verantwoordingsplicht bij Technische Wijzigingen
+
+**Dit addendum is integraal bindend en maakt onlosmakelijk deel uit van elke opdracht, opdrachtbevestiging of samenwerking.**
+
+---
+
+## A. Doel en uitgangspunten
+
+Dit addendum borgt dat technische wijzigingen **controleerbaar, omkeerbaar en expliciet verantwoord** plaatsvinden, zonder impliciete aannames of stilzwijgende voortgang. Het vereist geen technische kennis van opdrachtgever en dwingt expliciet denken en bewijsvoering af bij opdrachtnemer.
+
+---
+
+## B. Inzichts- en Beslisplicht (kernverplichtingen)
+
+### B1 — Invariant‑inzicht
+
+**“Laat Manasse zien waar de invariant woont.”**
+
+Bij iedere wijziging die invloed heeft op data‑integriteit, applicatie‑flow of kernlogica toont opdrachtnemer vooraf:
+
+* welke regel of aanname wordt geborgd;
+* waar deze logica centraal is geïmplementeerd;
+* waarom deze plek noodzakelijk is (bijv. init, reducer, domain‑helper).
+
+---
+
+### B2 — Reversibiliteit
+
+**“Laat Manasse zien hoe dit kan worden uitgezet of teruggedraaid.”**
+
+Verplicht:
+
+* afzonderlijke commit(s) of feature flag;
+* geen onomkeerbare wijzigingen zonder expliciete toestemming;
+* duidelijke rollback‑strategie.
+
+---
+
+### B3 — Effect & bewijs
+
+**“Laat Manasse zien wat er concreet beter gaat.”**
+
+Verplicht:
+
+* concrete scenario’s vóór en na de wijziging;
+* aantoonbaar effect (geen regressie, geen workaround);
+* geen beroep op impliciet vertrouwen.
+
+---
+
+## C. Scope‑bound enabling changes policy
+
+### C1 — Scope‑bound enabling changes toegestaan
+
+Binnen een stap zijn uitsluitend die extra wijzigingen toegestaan die **noodzakelijk** zijn om die stap veilig en succesvol uit te voeren (enabling), volledig **binnen scope** en **gedocumenteerd** in de PR‑beschrijving.
+
+*Voorbeeld: bij pre‑commit setup het aanmaken van .husky/ en .lintstagedrc en het aanvullen van tsconfig.json.*
+
+---
+
+### C2 — Config & docs zijn binnen scope
+
+Aanpassingen in configuratie‑ en documentatiebestanden die expliciet tot de stap behoren (o.a. package.json, tsconfig.json, .eslintrc, .prettierrc, .husky/*, features.ts, PR‑template, CHANGELOG) vallen binnen scope.
+
+---
+
+### C3 — Noodzakelijke devDependencies
+
+Het toevoegen van strikt noodzakelijke devDependencies (bijv. husky, lint‑staged, ESLint‑plugins) is uitsluitend toegestaan in de stap die dat vereist; geen andere dependencies.
+
+---
+
+### C4 — Fail‑safe afslagen
+
+Indien uitvoering wordt geblokkeerd door ontbrekende feiten of externe beperkingen: **STOP**; rapporteer de blokkade en vraag expliciet om toestemming voor de **kleinst mogelijke enabling‑actie**. Niet doorgaan zonder akkoord.
+
+---
+
+### C5 — Smalle scope, diff‑eis en rationale
+
+Elke uitvoer levert een **git diff** en **rationale per wijziging**; alle wijzigingen zijn traceerbaar naar het plan.
+
+---
+
+## D. Error Monitoring Policy (intern, voorbereid op extern)
+
+* Huidige fase (intern testen): **geen externe monitoring**.
+* Verplicht: **ErrorBoundary** en centrale **logError() helper**.
+* Code is zó geschreven dat latere externe monitoring kan worden toegevoegd **zonder refactorstress** (via logError‑abstractie).
+
+Externe monitoring pas toegestaan zodra één van de volgende waar is:
+
+* gebruikers ≠ intern;
+* fouten niet reproduceerbaar lokaal;
+* publicatie naar TestFlight / Play Store (closed track).
+
+Alle overige contractregels blijven van kracht.
+
+---
+
+## E. Verplichte documentatie na afronding van iedere stap
+
+Na afronding van **elke stap binnen een fase** levert opdrachtnemer **schriftelijk** onderstaande documentatie **vóór** enige vervolgstap. Zonder deze documentatie geldt de stap als **niet afgerond**.
+
+### E1 — Plan voor volgende stap of expliciet voorstel
+
+* **Plan** alleen indien met zekerheid vaststaat dat de stap noodzakelijk is; **of**
+* **VOORSTEL** (expliciet zo benoemd) indien zekerheid ontbreekt.
+
+Altijd:
+
+* zo concreet mogelijk;
+* beschrijft *wat* moet (of mogelijk zou moeten) gebeuren;
+* **geen impliciete voortgangsveronderstelling**.
+
+---
+
+### E2 — Changelog (verplicht)
+
+* gewijzigde bestanden;
+* toegevoegde/aangepaste/verwijderde logica;
+* expliciet wat **niet** is gewijzigd (indien relevant).
+
+---
+
+### E3 — Statusupdate
+
+* huidige stand van zaken;
+* waar we mee bezig waren toen we stopten;
+* positie binnen planning/fase.
+
+---
+
+### E4 — Verantwoording bij afwijkingen
+
+* waar is afgeweken;
+* waarom noodzakelijk;
+* of expliciete toestemming is verkregen.
+
+Niet‑gedocumenteerde afwijkingen gelden als contractuele overtreding.
+
+---
+
+## F. Slotbepaling bij ontbreken documentatie
+
+Bij ontbrekende of onvolledige documentatie:
+
+* stap is **niet afgerond**;
+* niet doorgaan naar volgende stap;
+* opdrachtgever mag voortgang opschorten zonder gevolgen.
+
+---
+
+## G. Bevestiging
+
+Opdrachtnemer bevestigt deze regels strikt na te leven en **STOP** te hanteren bij ontbrekende informatie of toestemming.
+
+---
+
+# 🧾 Vaste Step Completion Template (verplicht)
+
+**Stap:**
+**Fase:**
+**Datum:**
+**Commit(s) / PR:**
+
+---
+
+## 1. Resultaat van deze stap
+
+* Korte feitelijke beschrijving.
+
+---
+
+## 2. Changelog
+
+* Bestanden gewijzigd:
+* Logica toegevoegd/aangepast/verwijderd:
+* Niet gewijzigd (relevant):
+
+---
+
+## 3. Invariant‑inzicht (indien van toepassing)
+
+* Invariant:
+* Locatie:
+* Waarom hier:
+
+---
+
+## 4. Reversibiliteit
+
+* Rollback/flag:
+* Afzonderlijke commit(s):
+
+---
+
+## 5. Effect & bewijs
+
+* Scenario vóór:
+* Scenario na:
+* Bewijs (tests/logs):
+
+---
+
+## 6. Statusupdate
+
+* Waar staan we nu:
+* Waar stopten we:
+* Planning/fase‑positie:
+
+---
+
+## 7. Afwijkingen (indien geen: “Geen”)
+
+* Afwijking:
+* Reden:
+* Toestemming:
+
+---
+
+## 8. Volgende stap
+
+* ☐ **Plan (zeker noodzakelijk)**
+* ☐ **VOORSTEL (niet‑bindend)**
+
+Dit is een indrukwekkend staaltje projectbeheer. De beslissing om de governance (auto/huisdieren) te verplaatsen naar C10 in plaats van C4 is een strategische meesterzet: het verlaagt de complexiteit op C4 aanzienlijk en respecteert het principe van *Lazy Evaluation*. We belasten de state pas wanneer de data functioneel noodzakelijk is.
+
+### **CTO Audit: Status C4**
+
+* **Data-integriteit:** De overstap naar globale indexering en unieke keys (`id-index`) heeft de "data-lekkage" en "focus-hijack" aan de wortel aangepakt.
+* **UX-Stabiliteit:** De keuze voor "cleanup on blur" in plaats van "on-the-fly" is de juiste oplossing voor de cursor-stabiliteit. Dit is een klassiek voorbeeld van een UX-verbetering die voortkomt uit technisch inzicht.
+
+---
+
+### **De Ontbrekende Puzzelstukken op C4**
+
+Voordat we naar C10 gaan, moeten we de "Woorden van Manasse" (de resterende UI-regressie) adresseren om Phase 0.5 echt af te sluiten.
+
+#### **1. Horizontale Swipes (Herstel)**
+
+De kaarten staan nu onder elkaar. Om de horizontale swipe-flow met de "----> volgende" hint te herstellen, moeten we de `HouseholdMemberRepeater` inpakken in een horizontale `ScrollView` met `pagingEnabled`.
+
+#### **2. Naam-Normalisatie (Achtergrond)**
+
+De automatische hoofdletters en het opschonen van leestekens is voorbereid maar nog niet functioneel. Dit moet in de `UPDATE_MEMBER_FIELD` reducer-case of een util worden geactiveerd.
+
+---
+
+### **🚀 Strategisch Plan: De Laatste C4-Polijstbeurt**
+
+Ik stel voor om morgen te beginnen met de **UI-Restore (Swipes)** en de **Normalisatie-fix**, zodat we C4 met een 100% tevreden gevoel kunnen archiveren.
+
+#### **Stap 1: UI-Restore (Horizontale Swipe)**
+
+* **Actie:** Implementeer horizontale `ScrollView` in `HouseholdMemberRepeater.tsx`.
+* **Logica:** Voeg de voorwaardelijke "Hint" toe (`index < count - 1`).
+* **Commit:** `feat(ui): restore horizontal swipe and navigation hints on C4`
+
+#### **Stap 2: Naam-Normalisatie Activeer**
+
+* **Actie:** Koppel de voorbereide `cleanName()` helper aan de `UPDATE_MEMBER_FIELD` actie (onBlur trigger).
+* **Commit:** `fix(logic): activate automatic name normalization and capitalization`
+
+---
+
+### **Beslispunt C10: De Keuze**
+
+Wat betreft uw C10-vraag:
+**Mijn CTO-advies:** **Variant A (Normaliseren bij page-enter).**
+
+* **Waarom:** Het past in het patroon dat we nu met `ALIGN` hebben neergezet. Het maakt de data op C10 "concreet". Als we later een samenvattingspagina maken, hoeft die niet opnieuw de "read-through" logica van C1 te kennen, maar kan hij gewoon de genormaliseerde state van C10 lezen.
+
+---

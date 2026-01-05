@@ -1,0 +1,98 @@
+
+// src/services/dataProcessor.ts
+import { toCents } from '@utils/numbers';
+
+type SetupData = {
+  maandelijksInkomen?: number;            // in euro (wordt naar centen geconverteerd)
+  housingIncluded?: boolean;              // of wonen-lasten al in Setup zijn opgenomen
+  // ... breid uit naar wens
+};
+
+type CsvItem = {
+  amount: number;                         // in CENTEN (van csvService)
+  description: string;
+  date: string;
+  original: Record<string, unknown>;
+  category?: string;
+};
+
+export const dataProcessor = {
+  // A. Strip IBAN (PII-vrij maken)
+  stripPII: (description: string): string => {
+    // Grovere IBAN regex; matcht NL/algemene IBAN patronen redelijk
+    const ibanRegex = /\b[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7,}\b/gi;
+    return description.replace(ibanRegex, 'NL** [REDACTED]');
+  },
+
+  // B. Categoriseren (MVP)
+  categorize: (description: string): string => {
+    const desc = description.toLowerCase();
+    if (desc.includes('huur') || desc.includes('hypotheek')) return 'Wonen';
+    if (desc.includes('zorg') || desc.includes('zilveren') || desc.includes('vgz') || desc.includes('cz')) return 'Zorgverzekering';
+    if (desc.includes('supermarkt') || desc.includes('ah ') || desc.includes('jumbo') || desc.includes('lidl')) return 'Boodschappen';
+    if (desc.includes('salaris') || desc.includes('loon')) return 'Inkomen';
+    return 'Overig';
+  },
+
+  // C. Inkomens- & Lasten-vergelijking
+  reconcileWithSetup: (csvData: CsvItem[], setupData: SetupData) => {
+    const THRESHOLD_CENTS = 5000; // €50, expliciet in centen
+
+    const csvIncome = csvData
+      .filter(d => dataProcessor.categorize(d.description) === 'Inkomen')
+      .reduce((acc, curr) => acc + (Number.isFinite(curr.amount) ? curr.amount : 0), 0);
+
+    const setupIncomeCents = toCents(setupData.maandelijksInkomen ?? 0);
+
+    const finalIncome = csvIncome > 0 ? csvIncome : setupIncomeCents;
+    const source = csvIncome > 0 ? 'CSV' : 'Setup';
+    const isDiscrepancy = csvIncome > 0 && Math.abs(csvIncome - setupIncomeCents) > THRESHOLD_CENTS;
+
+    return { finalIncome, source, isDiscrepancy };
+  },
+};
+====================
+import { toCents } from '../utils/formatters';
+
+export const dataProcessor = {
+  // A. Robuuste IBAN-redactie (Voldoet aan Privacy Guard)
+  stripPII: (description: string): string => {
+    // Matcht NL en algemene IBAN patronen
+    const ibanRegex = /\b[A-Z]{2}\d{2}[A-Z0-9]{4}\d{7,}\b/gi;
+    return description.replace(ibanRegex, 'NL** [REDACTED]');
+  },
+
+  // B. Slimme Categorisering (Breid dit uit op basis van bank-voorbeelden)
+  categorize: (description: string): string => {
+    const desc = description.toLowerCase();
+    if (desc.includes('huur') || desc.includes('hypotheek') || desc.includes('woon')) return 'Wonen';
+    if (desc.includes('zilveren') || desc.includes('vgz') || desc.includes('cz') || desc.includes('zorg')) return 'Zorgverzekering';
+    if (desc.includes('ah ') || desc.includes('jumbo') || desc.includes('lidl') || desc.includes('supermarkt')) return 'Boodschappen';
+    if (desc.includes('salaris') || desc.includes('loon') || desc.includes('stipendium')) return 'Inkomen';
+    return 'Overig';
+  },
+
+  // C. Inkomens- & Lasten-reconciliatie
+  reconcileWithSetup: (csvData: any[], setupData: any) => {
+    const THRESHOLD_CENTS = 5000; // Verschil groter dan €50 is een discrepantie
+
+    // Bereken totaal inkomen uit de CSV
+    const csvIncome = csvData
+      .filter(d => dataProcessor.categorize(d.description) === 'Inkomen')
+      .reduce((acc, curr) => acc + curr.amount, 0);
+
+    // Converteer setup inkomen naar centen (indien nog in euro's)
+    const setupIncome = toCents(setupData.maandelijksInkomen || 0);
+
+    // Logica: CSV is leidend als er data is, anders Setup
+    const finalIncome = csvIncome > 0 ? csvIncome : setupIncome;
+    const isDiscrepancy = csvIncome > 0 && Math.abs(csvIncome - setupIncome) > THRESHOLD_CENTS;
+
+    return {
+      finalIncome,
+      source: csvIncome > 0 ? 'CSV' : 'Setup',
+      isDiscrepancy,
+      diff: csvIncome - setupIncome
+    };
+  }
+};

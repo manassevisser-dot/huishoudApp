@@ -1,0 +1,117 @@
+Helemaal—ik plaats **de processen** (rollen, flow, gates, flags, exits) **bij het juiste cluster** en lever drie complete clusters op. Ik baseer de indeling op jouw *cluster.txt* (wat bij welke cluster hoort) en koppel daar de relevante **PHOENIX\_PROTOCOL v3.7** processen uit *ennu.txt* aan. [\[cluster | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/cluster.txt), [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+
+***
+
+## 🔷 Cluster 1 — Architecture & Domain Integrity
+
+*(Designfase: “Hoe hoort de softwarewereld eruit te zien?”)* [\[cluster | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/cluster.txt)
+
+### ADR’s
+
+*   **01 SEPARATION** — UI | State | Domain | Infra; business logic ∉ UI. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **02 TYPE\_SAFETY** — validate at boundaries; schema versioned; runtime check (Zod); FormState = domain object. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **03 KERNEL** — calculations → kernel modules; pure functions; no framework deps; UI “calls”, not “contains”. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **04 DUMB\_UI** — components = projectors; no parsing/no rules; logic → hooks|services|kernel. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **05 MONEY** — internal = cents; no floats in domain; central parsing; explicit rounding. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **06 INPUT\_HARDENING** — clean|validate|limit; central parser; geen `parseFloat` in UI. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **07 FLAGS** — explicit boolean/enum; no implicit derivation; accessor functions only. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **08 FSM** — finite state machine; explicit transitions; no magic strings; error recovery included. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **09 PURE\_VIEWS** — App.tsx = state→screen; geen business logic; kent FSM, niet details. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **10 SCHEMA\_VERSIONING** — `schemaVersion` on persist; explicit migrations; validate before use. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **13 FINANCE\_KERNEL** — inkomens/uitgaven in cents; pure deterministic; UI/persist = adapters. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **14 DUMB\_REDUCERS** — `(state, action) → state`; geen API/calc/parse/log in reducers. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **16 SIMPLICITY** — fewest concepts wins; avoid abstraction bloat. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+
+### Processen (Design/Architectuur)
+
+*   **ROLE: IRIS** — *analyze(#CODE)* → `#AS_IS` (huidige staat). *(Start van ontwerp: inventariseren wat er is)* [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **ROLE: MAX** — *design(#AS\_IS)* → `#TO_BE` (doelarchitectuur). *(Jouw gewenste domein‑architectuur)* [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **ROLE: DEX** — *attack(#TO\_BE)* → `@INDICTMENT`. *(Architectuurkritiek: vind gaten/zwaktes)*
+    *   **Gate G\_C:** `@INDICTMENT == 0 ? GO : LOOP_MAX` (≥3 loops → escalate to human). *(Zorgt dat ontwerp robuust is vóór besluit)* [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **Design‑Gates relevant aan architectuurregels:**
+    *   **G\_B:** `#AS_IS ∈ #ADR_CANON ? DOCUMENT GO` *(check dat huidige code strookt met de canon)* [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **CORE/CONTROLS (architectuurdiscipline):**
+    *   **RULE: MAKER ≠ CHECKER** *(scheiding van rollen tijdens design/controle)*
+    *   **#STRICT\_TS** *(TypeScript strict + max 20 lines/fn; houdt domein strak)* [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **CHECKLIST\_2025 (ontwerppraktijk):** naming, pure functions, DRY, Strangler Fig/Façade/Repository, Zod aan boundaries, result types, RN/TS regels, etc. *(verlaagt complexiteit en waarborgt domeinzuiverheid)* [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+
+> **Samenvatting (Cluster 1):** Het **ontwerp** wordt vastgelegd en getest op **domein‑zuiverheid** (IRIS → MAX → DEX). Alle **structurele regels** (ADR 01–16) houden de code voorspelbaar, type‑veilig en “dom” op de juiste plekken.
+
+***
+
+## 🛡️ Cluster 2 — Governance & Human Sovereignty
+
+*(Beslisfase: “Wie beslist? Is het verantwoord? Kunnen we het uitleggen?”)* [\[cluster | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/cluster.txt)
+
+### ADR’s
+
+*   **11 TEST\_PYRAMID** — domain heavy; UI light integration; golden master scenarios. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **12 AUDITABILITY** — decisions traceable; WAI‑level changelog; scripts allowed ≠ architecture. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **15 PROCESS\_ROLES** — navigator/debugger ondersteunen; niet: beslissen/nieuwe patronen introduceren. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **17 ACCEPTED\_RISK** — document explicit; silent ignore forbidden. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **18 HUMAN\_DECIDES** — AI = analysis+options; human = final call; document decisions. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **19 MANASSE‑MANDATE** — policy ∉ AI autonomy; observe|signal|describe; **no self‑made rules** impacting access/decisions.
+    *   **19.1 VERBOD / 19.2 GO / 19.3 AUDITABILITY / 19.4 ROOT‑SAFETY / 19.5 INTENT / 19.6 RELATIE / 19.7 RUNTIME‑REGEL** (compleet zoals in ennu.txt). [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+
+### Processen (Governance/Besluit)
+
+*   **ROLES:**
+    *   **QUINN** — validate(`#H_REF`, `#H_ACT`) → GO|STOP. *(Waarheidscontrole/mandaat‑check)*
+    *   **AVA** — audit(`#TO_BE_REV`) → `@SCORE`. *(Compliance score)*
+    *   **NOVA** — strategy(`@APPROVED`) → `#MIGRATION_SPEC`. *(Governance: hoe zetten we het verantwoord om?)*
+    *   **TRANSFORM** — parse(`@SCORE`) → `@APPROVED`. *(Deterministische vertaling audit → advies)* [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **Gates (governance):**
+    *   **G\_A:** `#H_REF == #H_ACT ? GO : STOP` *(realiteits‑sync; document vs feit)*
+    *   **G\_D:** `@SCORE ≥ 8 ? GO : STOP` *(audit‑drempel)*
+    *   **NOVA STOP:** unresolved risk **AND NOT** in **ACCEPTED\_RISK** → **STOP**. *(geen ongedocumenteerd risico)* [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **FLAGS/Registers:**
+    *   **#ADR\_CANON**, **#MIGRATION\_SPEC**, **@APPROVED**, **@INDICTMENT**, **@SCORE** — *herleidbaarheid en besluitsporen*. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **#MANASSE FREEZE (runtime governance rule):**
+    *   **Triggers:** ADR bypass, AI‑decision zonder human record, governance stappen “samengevouwen”, policy buiten mandaat.
+    *   **Actie:** `FREEZE (exit 99)` → escalate QUINN.
+    *   **UNFREEZE vereist:** QUINN + HUMAN sign‑off, root cause gelogd, preventieve rule of gedocumenteerde uitzondering. *(Geen retroactieve goedkeuring)* [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **TEST\_PYRAMID & AUDITABILITY als governance‑praktijk:** golden tests en WAI‑changelog zorgen dat besluiten **herhaalbaar** en **uitlegbaar** zijn. [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+
+> **Samenvatting (Cluster 2):** **Mensen beslissen**, volledig **traceerbaar**. AI ondersteunt met analyse/audit, maar policy/segmentatie kan **alleen** met **MANASSE‑GO** en volledige **audit trail**.
+
+***
+
+## 🧭 Cluster 3 — Delivery & Operational Safety
+
+*(Bouwfase: “Hoe veranderen we veilig en beheersbaar?”)* [\[cluster | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/cluster.txt)
+
+### Praktijkregels (uit Canon & Checklist)
+
+*   **Atomic Scope / 1 File per Change / Max 20 lines per function / Strict TS / Result Types / Golden Tests / Freeze Protocol / ADR → Plan → Contract → Execute → Verify**. [\[cluster | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/cluster.txt)
+*   **Checklist\_2025\_v1.0** — naming, functions, React/RN, TS strict, architecture patterns, testing discipline, refactoring methoden, tooling, AI development, cognitive load, daily checks. *(Operationele kwaliteit & veiligheid)* [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+
+### Processen (Delivery/Runtime)
+
+*   **ROLES:**
+    *   **KAI** — contract(` #MIGRATION_SPEC`, `#FILE`) → `@CU_CONTRACT`. *(Atomic work order; klein en toetsbaar)*
+    *   **DEV** — code(`@CU_CONTRACT`) → `@CODE_DELTA`. *(Implementatie van één contract)*
+    *   **SAM** — execute(`@NAV_ROADMAP`) → `@CLI_RESULT`. *(Terminal‑stappen: scripts/commando’s)*
+    *   **LEO** — debug(`@CLI_ERROR`) → `@FIX_SPEC`. *(Incident‑afhandeling, herstelplan)* [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **Gates (runtime/delivery):**
+    *   **G\_E:** `#FILE_COUNT == 1 ? GO : STOP` *(Atomic Scope enforced)*
+    *   **G\_F:** `@CLI_EXIT == 0 ? GO : LEO` *(Alleen groen door; anders naar debug)*
+    *   **G\_G:** Functional invariants hold? **YES** → GO, **NO** → LEO *(Gedragsverificatie vóór vertrouwen)* [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **Incidents & Exits:**
+    *   **EXITS:** `0=GO`, `1=STOP`, `99=FREEZE (#MANASSE violation)`
+    *   **Incident flow:** `@CLI_ERROR → LEO → @FIX_SPEC → RE‑ENTRY_S3` (terug naar **delivery** na fix).
+    *   **Freeze flow:** `#MANASSE → FREEZE → ESCALATE_QUINN` (governance break → menselijke beslissing). [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+*   **CORE‑regels voor runtime veiligheid:**
+    *   **STATE:** `#SYNC_REALITY (1 truth source)`
+    *   **CHECK:** `METADATA_ONLY (hashes, flags)`
+    *   **RULE:** `MAKER ≠ CHECKER` *(bouw ≠ controle)* [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+
+> **Samenvatting (Cluster 3):** **Kleine, gecontroleerde stappen**, altijd **deployable**, fouten **isoleren**, blast radius **minimaliseren**, en **toetsen** vóór vertrouwen (gates + incident flow).
+
+***
+
+## 🎁 Oplevering
+
+*   Elke **cluster** bevat nu **zowel de ADR’s** uit *cluster.txt* als de **bijbehorende processen** uit *PHOENIX\_PROTOCOL v3.7* (*ennu.txt*).
+*   Dit maakt de **Canon context‑volledig**: ontwerp (Cluster 1), besluit (Cluster 2), bouw/operatie (Cluster 3). [\[cluster | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/cluster.txt), [\[ennu | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/ennu.txt)
+
+Wil je dat ik deze drie clusters als **aparte Markdown‑bestanden** genereer (`cluster1.md`, `cluster2.md`, `cluster3.md`) inclusief een **mini‑index** en **paginanaam** voor jouw canon‑repo? Ik kan ze meteen klaarzetten voor commit op `feat/wia-008-purified`.

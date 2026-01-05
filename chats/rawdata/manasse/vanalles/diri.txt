@@ -1,0 +1,49 @@
+const path = require('path');
+const logger = require('./logger');
+const { paths, flags, reservedPrefixes } = require('./config');
+const { restoreLatestBackup } = require('./utils');
+const { parseTsConfig, extractAliases } = require('./core');
+const { updateBabel } = require('./handlers/babel');
+const { updateJest } = require('./handlers/jest');
+const { updateJsconfig } = require('./handlers/json');
+
+function main() {
+  if (flags.help) logger.help();
+
+  if (flags.restore) {
+    logger.info('Restore procedure gestart...');
+    [paths.babel, paths.jest, paths.jsconfig].forEach(p => {
+      const res = restoreLatestBackup(p);
+      res ? logger.ok(`Hersteld: ${res}`) : logger.warn(`Geen backup voor ${path.basename(p)}`);
+    });
+    return; // Exit via natuurlijke flow
+  }
+
+  logger.info('🚀 Phoenix Sync gestart...');
+
+  try {
+    const tsconfig = parseTsConfig(paths.tsconfig);
+    const aliases = extractAliases(tsconfig, paths.root, reservedPrefixes);
+    
+    logger.verbose(`Mapping: ${aliases.length} aliassen gevonden`, flags.verbose);
+
+    // Handlers uitvoeren
+    [
+      updateBabel(aliases, flags),
+      updateJest(aliases, flags),
+      updateJsconfig(aliases, flags)
+    ].forEach(res => res.success ? logger.ok(res.msg) : logger.warn(res.msg));
+
+    if (!flags.dryRun) logger.ok('Phoenix integriteit hersteld.');
+
+  } catch (err) {
+    if (!flags.dryRun && flags.backup) {
+      logger.warn('Fout tijdens uitvoering. Rollback gestart...');
+      [paths.babel, paths.jest, paths.jsconfig].forEach(p => restoreLatestBackup(p));
+    }
+    // De logger doet de exit
+    logger.die(err.message);
+  }
+}
+
+main();

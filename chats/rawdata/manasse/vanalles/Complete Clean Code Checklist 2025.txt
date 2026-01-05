@@ -1,0 +1,217 @@
+# 🎯 Complete Clean Code Checklist 2025
+## React + TypeScript + React Native
+
+---
+
+## 📋 **BASIS PRINCIPES**
+
+### Naamgeving
+- ✅ **Betekenisvolle namen**: `daysUntilDeadline` ipv `d`
+- ✅ **Boolean prefixen**: `isLoading`, `hasAccess`, `shouldRender`
+- ✅ **Geen ruis**: vermijd `dataObject`, `userInfo`, `tempVariable`
+- ✅ **Vermijd disinformatie**: geen `accountMap` als het een array is
+- ✅ **Domain Types**: `type UserId = string` ipv overal `string`
+
+### Functies
+- ✅ **Single Responsibility**: één functie = één taak
+- ✅ **Max 20 regels** (vuistregel voor leesbaarheid)
+- ✅ **Max 2 argumenten** (meer? → gebruik object)
+- ✅ **Guard Clauses**: handel edge cases bovenaan af (return early)
+- ✅ **Geen side effects**: voorspelbaar gedrag
+- ✅ **Pure functions waar mogelijk**: zelfde input = zelfde output
+
+---
+
+## ⚛️ **REACT BEST PRACTICES**
+
+### Component Structuur
+- ✅ **Kleine componenten**: max 100-150 regels JSX
+- ✅ **Destructuring props**: `({ title, onClick })` ipv `props.title`
+- ✅ **Fragmenten**: gebruik `<>...</>` ipv onnodige divs
+- ✅ **Composition over Inheritance**: gebruik `children` prop
+- ✅ **Logica uit UI**: verplaats naar Custom Hooks (`useUserAuth`)
+- ✅ **Feature-based structure**: alles van één feature in één map
+
+### Hooks
+- ✅ **Expliciet typen**: `useState<User | null>(null)`
+- ✅ **useCallback/useMemo**: alleen bij échte performance issues
+- ✅ **Custom Hooks**: extraheer herbruikbare logica
+- ✅ **React.FC**: vermijd (tenzij je children expliciet nodig hebt)
+
+---
+
+## 🔷 **TYPESCRIPT ESSENTIALS**
+
+### Type Safety
+- ✅ **NOOIT `any`**: gebruik `unknown` als je type niet weet
+- ✅ **Interfaces voor props**: beter uitbreidbaar dan `type`
+- ✅ **Discriminated Unions voor state**:
+  ```typescript
+  type State = 
+    | { status: 'loading' }
+    | { status: 'error', message: string }
+    | { status: 'success', data: User }
+  ```
+- ✅ **Enums/Unions voor constanten**: `type Status = 'open' | 'closed'`
+- ✅ **`readonly`** voor immutable data
+- ✅ **Utility Types**: `Omit`, `Pick`, `ReturnType<typeof fn>`
+
+### Geavanceerd
+- ✅ **Generics met constraints**: flexibel maar type-safe
+- ✅ **Parse, don't validate**: gebruik Zod aan systeemgrenzen
+- ✅ **Result types**: `{ success: boolean, data?: T, error?: string }`
+- ✅ **Strict tsconfig**: schakel `strict: true` in
+
+---
+
+## 🏗️ **ARCHITECTUUR & STRUCTUUR**
+
+### Code Organisatie
+- ✅ **Shallow codebase**: max 3-4 niveaus diep
+- ✅ **Feature-based folders**: `/features/auth/*` ipv `/components/*`
+- ✅ **Domain layer**: business logica apart van UI
+- ✅ **Just Use Functions**: vermijd onnodige classes
+- ✅ **DRY (Don't Repeat Yourself)**: Regel van Drie
+  - 1x = schrijf het
+  - 2x = dupliceer (acceptabel)
+  - 3x = refactor naar herbruikbare functie
+
+### Patterns
+- ✅ **Strangler Fig**: vervang legacy code geleidelijk
+- ✅ **Façade pattern**: wrap oude code, route verkeer om
+- ✅ **Repository pattern**: scheid data-access van business logica
+- ✅ **Discriminated Unions**: voorkom onmogelijke states
+
+---
+
+## 🧪 **TESTING & KWALITEIT**
+
+### Test Strategie
+- ✅ **Test gedrag, niet implementatie**
+- ✅ **Gebruik Testing Library**: `getByRole`, `getByText`
+- ✅ **Red-Green-Refactor**: test → code → refactor
+- ✅ **Vang gedrag voor refactoring**: schrijf eerst test
+- ✅ **Integration > Unit**: test user flows
+
+### Code Quality
+- ✅ **ESLint strict mode**: waarschuw bij `any`, complexiteit
+- ✅ **Prettier**: automatische formatting
+- ✅ **Husky**: pre-commit hooks voor linting
+- ✅ **TypeScript strict mode**: `noImplicitAny`, `strictNullChecks`
+
+---
+
+## 📦 **REFACTORING LEGACY CODE**
+
+### Strategieën
+- ✅ **Boy Scout Rule**: laat code schoner achter dan je het vond
+- ✅ **Mikado Method**:
+  1. Stel doel → probeer → visualiseer blokkades
+  2. Revert → los sub-doelen op → werk terug naar doel
+- ✅ **Prioriteer op impact**:
+  - High-change areas
+  - Bug-prone modules
+  - Onboarding blockers
+- ✅ **Incremental refactoring**: kleine stappen, blijf deploybaar
+
+---
+
+## 🚀 **2025-SPECIFIC TIPS**
+
+### Modern Tooling
+- ✅ **Custom Path Aliases**: `@components/*` ipv `../../components`
+- ✅ **React Compiler**: bereid je voor (minder handmatige memo's)
+- ✅ **Vitest**: snellere test runner dan Jest
+- ✅ **Biome**: all-in-one linter/formatter (alternatief voor ESLint+Prettier)
+
+### AI-Assisted Development
+- ✅ **Don't outsource thinking**: AI voor boilerplate, jij voor architectuur
+- ✅ **Vermijd "vibe coding"**: begrijp wat AI genereert
+- ✅ **Validate AI output**: check logica en edge cases
+- ✅ **Use AI for refactoring suggestions**: maar neem bewuste beslissingen
+
+### Observability
+- ✅ **Structured logging**: niet `console.log`, maar structured data
+- ✅ **Error boundaries**: vang React errors gracefully
+- ✅ **Distributed tracing**: in microservices (Jaeger, OpenTelemetry)
+- ✅ **Performance monitoring**: Lighthouse, React DevTools Profiler
+
+---
+
+## 💡 **COGNITIEVE BELASTING REDUCEREN**
+
+### Leesbaarheid
+- ✅ **Leave No Questions**: code is self-explanatory
+- ✅ **Commentaar op "waarom", niet "wat"**
+- ✅ **Magic Numbers elimineren**: `const MAX_RETRIES = 3`
+- ✅ **JSDoc voor complexe functies**: hover-documentatie in IDE
+- ✅ **Code is voor mensen**: machine compileert alles, mensen moeten het begrijpen
+
+### Mentale Energie
+- ✅ **Vermijd deep nesting**: max 2-3 niveaus
+- ✅ **Ternary overkill voorkomen**: complexe conditie? → `if` statement
+- ✅ **Failing gracefully**: voorspelbaar foutgedrag
+- ✅ **Consistent naming**: zelfde concepten, zelfde namen
+
+---
+
+## 🔧 **REACT NATIVE SPECIFIEK**
+
+### Setup
+- ✅ **TypeScript default sinds 0.71**: gebruik het
+- ✅ **Babel voor transforms**: niet `tsc` voor compilatie
+- ✅ **Type-check met CLI**: `npx tsc --noEmit`
+- ✅ **@react-native/typescript-config**: gebruik officiële config
+
+### Performance
+- ✅ **FlatList voor lange lijsten**: niet `.map()`
+- ✅ **Memoize zware componenten**: `React.memo` met zorg
+- ✅ **Hermes engine**: snellere JS-uitvoering
+- ✅ **Native modules**: schrijf performance-kritieke code in native
+
+---
+
+## ✅ **DAILY CHECKLIST**
+
+Voor elke feature/bugfix:
+
+1. ⬜ **Naamgeving check**: zijn alle namen self-explanatory?
+2. ⬜ **Functie lengte**: < 20 regels per functie?
+3. ⬜ **TypeScript strict**: geen `any`, expliciete types?
+4. ⬜ **Tests aanwezig**: gedekt met betekenisvolle tests?
+5. ⬜ **Boy Scout Rule**: code schoner achtergelaten?
+6. ⬜ **Discriminated Unions**: onmogelijke states voorkomen?
+7. ⬜ **Import paths**: relatieve paths < 3 niveaus of gebruik aliases?
+8. ⬜ **Side effects**: functies voorspelbaar en pure?
+9. ⬜ **Commentaar nodig?**: zo ja, leg "waarom" uit, niet "wat"
+10. ⬜ **Leave No Questions**: zou een nieuwe dev dit snappen?
+
+---
+
+## 🎯 **EXPERT MINDSET**
+
+> "Code is een verhaal dat je vertelt aan je toekomstige zelf en je teamgenoten. Maak het een goed verhaal."
+
+- **Refactoring is geen taak, het is een workflow** (Martin Fowler)
+- **20-regels limiet**: meer = waarschijnlijk SRP-schending
+- **Regel van Drie**: 3x duplicatie = tijd voor abstractie
+- **Parse, don't validate**: dwing types af aan grenzen
+- **Shallow over deep**: minder nesting = minder cognitieve load
+
+---
+
+## 📚 **QUICK REFERENCE**
+
+| Situatie | Actie |
+|----------|-------|
+| Complexe state | Discriminated Union |
+| Herhaalde logica (3x) | Extraheer functie/hook |
+| Onduidelijke naam | Hernoem naar doel |
+| Lange functie (>20) | Split op (SRP) |
+| API data | Parse met Zod |
+| Legacy code | Boy Scout + Mikado |
+| Test schrijven | Test gedrag, niet impl |
+| Performance issue | Meet eerst, dan optimize |
+
+---
+

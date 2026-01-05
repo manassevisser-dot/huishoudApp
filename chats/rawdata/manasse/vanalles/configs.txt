@@ -1,0 +1,361 @@
+Wizard.ts:
+import * as React from 'react';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { useForm } from '../../../app/context/FormContext';
+import { useAppStyles } from '../../styles/useAppStyles';
+import FormField from '../../components/fields/FormField';
+import { Logger } from '../../../services/logger';
+import { WizStrings } from 'src/config/WizStrings';
+
+interface WizardPageProps {
+  config: any;
+  onNext: () => void;
+  onBack: () => void;
+  isFirst: boolean;
+  isLast: boolean;
+}
+
+export const WizardPage: React.FC<WizardPageProps> = ({
+  config,
+  onNext,
+  onBack,
+  isFirst,
+  isLast,
+}) => {
+  const { state, dispatch } = useForm();
+  const { styles } = useAppStyles();
+
+  React.useEffect(() => {
+    Logger.info(`Scherm geladen: ${config.title}`);
+  }, [config.title]);
+
+  return (
+    <View style={styles.container}>
+      <Text 
+        style={styles.pageTitle}
+        accessibilityRole="header"
+        accessibilityLiveRegion="assertive"
+      >
+        {config.title}
+      </Text>
+      
+      <ScrollView style={styles.container}>
+        {config.fields.map((field: any) => {
+          // ✅ FIX voor TS7053 & TS2339 conform Phoenix 2025 SSOT:
+          // We zoeken de waarde in de 'data' bak. 
+          // Prioriteit ligt bij 'setup', fallback naar root van 'data'.
+          const value = (state.data.setup as any)?.[field.fieldId] ?? (state.data as any)[field.fieldId];
+
+          return (
+            <FormField
+              key={field.fieldId}
+              field={field}
+              state={state}
+              dispatch={dispatch}
+              value={value} 
+            />
+          );
+        })}
+      </ScrollView>
+
+      <View style={styles.buttonContainer}>
+        {!isFirst && (
+          <TouchableOpacity onPress={onBack} style={styles.secondaryButton}>
+            <Text style={styles.buttonText}>{WizStrings.wizard.back}</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity 
+          onPress={onNext} 
+          style={styles.button}
+          accessibilityLabel={isLast ? WizStrings.wizard.finish : WizStrings.wizard.next}
+        >
+          <Text style={styles.buttonText}>
+            {isLast ? WizStrings.wizard.finish : WizStrings.wizard.next}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default WizardPage;
+
+//WizardContext:
+import * as React from 'react'; import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+
+export interface WizardState {
+  pageIndex: number;
+  steps: string[];
+}
+
+interface WizardContextType {
+  state: WizardState;
+  setPageIndex: (index: number) => void;
+}
+
+const WizardContext = createContext<WizardContextType | undefined>(undefined);
+
+export const WizardProvider = ({ children }: { children: ReactNode }) => {
+  const [state, setState] = useState<WizardState>({ pageIndex: 0, steps: [] });
+
+  const setPageIndex = useCallback((index: number) => {
+    setState(prev => ({ ...prev, pageIndex: index }));
+  }, []);
+
+  return (
+    <WizardContext.Provider value={{ state, setPageIndex }}>
+      {children}
+    </WizardContext.Provider>
+  );
+};
+
+export const useWizard = () => {
+  const context = useContext(WizardContext);
+  if (!context) throw new Error('useWizard must be used within WizardProvider');
+  return context;
+};
+//WizardController:
+import * as React from 'react';
+import { useForm } from '../../../app/context/FormContext';
+import { WizardPage } from './WizardPage'; 
+// Importeer de losse configs als bouwstenen
+import { setupHouseholdConfig } from './pages/1setupHousehold.config';
+import { detailsHouseholdConfig } from './pages/2detailsHousehold.config';
+import { incomeDetailsConfig } from './pages/3incomeDetails.config';
+import { fixedExpensesConfig } from './pages/4fixedExpenses.config';
+
+const WizardController: React.FC = () => {
+  const { state, dispatch } = useForm();
+  
+  // Dynamische mapping op basis van activeStep (conform je stateModel)
+  const getConfig = () => {
+    switch (state.activeStep) {
+      case 'WIZARD_SETUP': return setupHouseholdConfig;
+      case 'WIZARD_DETAILS': return detailsHouseholdConfig;
+      case 'WIZARD_INCOME': return incomeDetailsConfig;
+      case 'WIZARD_EXPENSES': return fixedExpensesConfig;
+      default: return setupHouseholdConfig;
+    }
+  };
+
+  const config = getConfig();
+
+  return (
+    <WizardPage 
+      config={config}
+      isFirst={state.activeStep === 'WIZARD_SETUP'}
+      isLast={state.activeStep === 'WIZARD_EXPENSES'}
+      onNext={() => dispatch({ type: 'NEXT_STEP' })}
+      onBack={() => dispatch({ type: 'PREV_STEP' })}
+    />
+  );
+};
+
+export default WizardController;
+
+1setupHousehold:
+// ADR-02: Type-Safety via relatieve paden
+import { FormState, WizardPageConfig } from '@shared-types/form';
+
+import { DATA_KEYS } from '@domain/constants/datakeys';
+import { UX_TOKENS } from '@domain/constants/registry';
+
+/**
+ * ADR-04: UI Components zijn “dumb”. 
+ * De projector (WizardPage) haalt de teksten op via de tokens.
+ */
+export const setupHouseholdConfig: WizardPageConfig = {
+  pageId: DATA_KEYS.SETUP,
+  titleToken: UX_TOKENS.PAGES[DATA_KEYS.SETUP], // "Huishouden opzetten"
+  componentName: 'WizardPage',
+  fields: [
+    {
+      fieldId: 'aantalMensen', // De technische key in je state.data.setup
+      label: 'Totaal aantal bewoners (N)', // Of gebruik: labelToken: UX_TOKENS.FIELDS.TOTAL_MEMBERS
+      type: 'counter',
+      defaultValue: 1,
+      min: 1,
+      max: 20,
+    },
+    {
+      fieldId: 'aantalVolwassen',
+      label: 'Aantal volwassenen (M)',
+      type: 'counter',
+      defaultValue: 1,
+      min: 1,
+      // ADR-01: Businesslogica in UI niet toegestaan, maar view-logic wel
+      visibleIf: (state: FormState) => (state.data[DATA_KEYS.SETUP]?.aantalMensen || 0) > 0,
+      maxGetter: (state: FormState) => state.data[DATA_KEYS.SETUP]?.aantalMensen || 1,
+    },
+    {
+      fieldId: 'kinderenLabel',
+      label: 'Waarvan aantal kinderen (K)',
+      type: 'derived-label',
+      // ADR-03: Berekening op basis van de state
+      valueGetter: (state: FormState) => {
+        const n = state.data[DATA_KEYS.SETUP]?.aantalMensen || 0;
+        const m = state.data[DATA_KEYS.SETUP]?.aantalVolwassen || 0;
+        return Math.max(0, n - m);
+      },
+      visibleIf: (state: FormState) => {
+        const n = state.data[DATA_KEYS.SETUP]?.aantalMensen || 0;
+        const m = state.data[DATA_KEYS.SETUP]?.aantalVolwassen || 0;
+        return n > m;
+      },
+    },
+    {
+      fieldId: 'autoCount',
+      labelToken: UX_TOKENS.FIELDS.CAR_COUNT, // Werkt nu!
+      type: 'radio-chips',
+      options: [
+        { label: 'Geen', value: 'Nee' }, // Tip: gebruik 'Nee' ipv '0' als je visibleIf daarop checkt
+        { label: '1 auto', value: 'Een' },
+        { label: '2+ auto\'s', value: 'Twee' },
+      ],
+      defaultValue: 'Nee',
+    },
+    {
+      fieldId: 'heeftHuisdieren',
+      label: 'Zijn er huisdieren aanwezig?',
+      type: 'toggle',
+      defaultValue: false,
+    },
+  ],
+};
+
+2detailsHousehold:
+import { DATA_KEYS, SUB_KEYS } from '@domain/constants/datakeys';
+import { UX_TOKENS } from '@domain/constants/registry';
+import { WizardPageConfig  } from '@shared-types/form';
+
+export const detailsHouseholdConfig: WizardPageConfig  = {
+  pageId: DATA_KEYS.HOUSEHOLD,
+  titleToken: UX_TOKENS.PAGES[DATA_KEYS.HOUSEHOLD], // Automatisch 'Wie zijn de bewoners?'
+  componentName: 'WizardPage',
+  fields: [
+    {
+      fieldId: SUB_KEYS.MEMBERS,
+      type: 'repeater',
+      fields: [
+        {
+          fieldId: 'fullName',
+          labelToken: UX_TOKENS.FIELDS.NAME, // 'Volledige naam'
+          type: 'text',
+          required: true,
+        }
+      ]
+    }
+  ]
+};
+3incomeDetails:
+import { WizardPageConfig , FormState } from '@shared-types/form';
+import { DATA_KEYS, SUB_KEYS } from '@domain/constants/datakeys';
+import { UX_TOKENS } from '@domain/constants/registry';
+
+export const incomeDetailsConfig: WizardPageConfig = {
+  // Gebruik de technische key voor consistentie
+  pageId: '3incomeDetails', 
+  titleToken: UX_TOKENS.PAGES[DATA_KEYS.FINANCE], // Gebruikt "Inkomsten & lasten" uit labels.ts
+  componentName: 'WizardPage',
+  
+  fields: [
+    {
+      // Dit zorgt dat de data onder state.data.finance.income terecht komt
+      fieldId: SUB_KEYS.INCOME, 
+      label: 'Inkomen algemeen',
+      type: 'section',
+      fields: [
+        { 
+          fieldId: 'work_salary', 
+          label: 'Inkomen uit werk (€/mnd)', 
+          type: 'money' 
+        },
+      ],
+    },
+    {
+      // De repeater die over de bewoners loopt
+      fieldId: 'member_income_repeater', 
+      label: 'Inkomen per gezinslid',
+      type: 'repeater',
+      // ADR-03: Filter de leden uit het juiste state-pad
+      filter: (state: FormState) => state.data[DATA_KEYS.HOUSEHOLD]?.members ?? [],
+      fields: [
+        {
+          fieldId: 'member_income_details',
+          type: 'section',
+          label: 'Inkomensspecificatie',
+          // Zorg dat we alleen iets tonen als er een memberId is (voor de context)
+          visibleIf: (state: FormState, context?: { memberId?: string }) => !!context?.memberId,
+          fields: [
+            { 
+              fieldId: 'salary', 
+              label: 'Salaris (€/mnd)', 
+              type: 'money' 
+            },
+            { 
+              fieldId: 'benefits', 
+              label: 'Uitkering/Toeslagen (€/mnd)', 
+              type: 'money' 
+            }
+          ],
+        },
+      ],
+    },
+  ],
+};
+4fixedExpenses:
+import { WizardPageConfig , FormState } from '@shared-types/form';
+import { DATA_KEYS, SUB_KEYS } from '@domain/constants/datakeys';
+import { UX_TOKENS } from '@domain/constants/registry';
+
+export const fixedExpensesConfig: WizardPageConfig  = {
+  pageId: '4fixedExpenses',
+  titleToken: UX_TOKENS.PAGES[DATA_KEYS.FINANCE], // Gebruikt de 'Inkomsten & lasten' token
+  componentName: 'WizardPage',
+  fields: [
+    {
+      // We nesten dit onder EXPENSES voor de orchestrator
+      fieldId: SUB_KEYS.EXPENSES, 
+      label: 'Wonen',
+      type: 'section',
+      fields: [
+        { 
+          fieldId: 'living_costs', 
+          label: 'Huur / Hypotheek (€/mnd)', 
+          type: 'money' 
+        },
+      ],
+    },
+    {
+      fieldId: 'car_repeater',
+      label: 'Vervoer (Auto)',
+      type: 'repeater',
+      // ADR-01: View-logic gebaseerd op de SETUP state
+      visibleIf: (state: FormState) => 
+        state.data[DATA_KEYS.SETUP]?.autoCount !== 'Nee',
+      
+      // ADR-03: De repeater lengte wordt bepaald door de eerdere keuze
+      countGetter: (state: FormState) => {
+        const val = state.data[DATA_KEYS.SETUP]?.autoCount;
+        if (val === 'Een') return 1;
+        if (val === 'Twee') return 2;
+        return 0;
+      },
+      fields: [
+        { fieldId: 'car_fixed', label: 'Verzekering + Belasting', type: 'money' },
+        { fieldId: 'car_fuel', label: 'Brandstof / Laden', type: 'money' },
+      ],
+    },
+    {
+      fieldId: 'subscription_section',
+      label: 'Streaming & Abonnementen',
+      type: 'collapsible-section',
+      fields: [
+        { fieldId: 'netflix', label: 'Netflix', type: 'money' },
+        { fieldId: 'videoland', label: 'Videoland', type: 'money' },
+        { fieldId: 'hbo', label: 'HBO Max', type: 'money' },
+        { fieldId: 'disneyPlus', label: 'Disney+', type: 'money' },
+      ],
+    },
+  ],
+};

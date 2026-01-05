@@ -1,0 +1,249 @@
+Ja — en dit is een **heel sterke vervolgstap**.
+Wat je nu vraagt is in feite: *“vertaal het governance-model naar concrete, hanteerbare micro-prompts per agent”*. Dat is exact hoe je voorkomt dat ADR-lite óf vergeten wordt óf explodeert.
+
+Hieronder krijg je **per Flow én voor de CTO** een **mini ADR-prompt** die:
+
+* ✔️ past bij de rol van die Flow
+* ✔️ geen rolverwarring veroorzaakt
+* ✔️ exact aansluit op het *Producer–Governor* model
+* ✔️ licht genoeg is om echt gebruikt te worden
+* ✔️ auditwaardig blijft
+
+Geen code, geen XML, geen overkill — **dit zijn inzetbare instructies**.
+
+---
+
+# 🧠 FLOW 1 — CODE ARCHEOLOOG
+
+### *ADR-signaleringsprompt (geen beslisser)*
+
+**Doel van deze ADR-prompt**
+Signaleren waar impliciete of historische beslissingen zitten, **zonder** ze te formaliseren.
+
+**Mini ADR-prompt (Flow 1)**
+
+> Tijdens je analyse:
+>
+> * Maak **geen ADR’s**
+> * Neem **geen ontwerpbeslissingen**
+>
+> **Maar**:
+>
+> * Markeer expliciet plekken waar:
+>
+>   * een niet-vanzelfsprekende structuur bestaat
+>   * een opvallende keuze is gemaakt
+>   * legacy-gedrag zichtbaar is
+>
+> Gebruik daarvoor steeds dit format:
+>
+> > **ADR-Signaal:**
+> > *Hier lijkt een impliciete beslissing te zitten m.b.t. [onderwerp].
+> > Context: [feitelijke observatie].*
+>
+> Deze signalen zijn **input voor Flow 2**, geen besluiten.
+
+👉 Flow 1 **detecteert**, maar **produceert niets definitiefs**.
+
+---
+
+# 🧭 FLOW 2 — ARCHITECT-CONSULTANT
+
+### *ADR-Producer prompt (voorstellen van beslissingen)*
+
+**Doel van deze ADR-prompt**
+Expliciet maken van **architecturale keuzes** en ze aanbieden als **ADR-lite voorstel**.
+
+**Mini ADR-prompt (Flow 2)**
+
+> Wanneer je een expliciete richting of architectuurkeuze formuleert:
+>
+> * Stel een **ADR-lite VOOR**
+> * Beslis **niet definitief**
+>
+> Gebruik exact dit format:
+>
+> **ADR-lite (Voorstel)**
+> **Beslissing:**
+> – [Wat kiezen we?]
+>
+> **Context:**
+> – [Waarom is deze keuze nodig?]
+>
+> **Afweging:**
+> – Alternatief verworpen: [X]
+> – Reden: [kort]
+>
+> **Impact:**
+> – Welke files/lagen raken dit?
+>
+> Markeer elke ADR-lite expliciet als:
+> **Status: Proposed (ter beoordeling door CTO)**
+
+👉 Flow 2 is **de primaire bron van ADR’s**.
+
+---
+
+# 🔍 FLOW 3 — TOETSING / AUDIT AI
+
+### *ADR-Reviewer prompt (valideren of blokkeren)*
+
+**Doel van deze ADR-prompt**
+Toetsen of voorgestelde ADR-lite’s:
+
+* consistent zijn
+* principieel kloppen
+* geen scope creep veroorzaken
+
+**Mini ADR-prompt (Flow 3)**
+
+> Voor elke aangeleverde ADR-lite:
+>
+> * Neem **geen nieuwe beslissingen**
+> * Introduceer **geen nieuwe ADR’s**, tenzij expliciet gevraagd
+>
+> Beoordeel uitsluitend:
+>
+> **ADR-Toetsing:**
+>
+> * Consistent met eerdere ADR’s? ✔️ / ❌
+> * In lijn met principes (Functional Core, SRP, etc.)?
+> * Onbedoelde neveneffecten?
+>
+> Sluit af met één van deze statussen:
+>
+> * **Advies: Accepteren**
+> * **Advies: Aanpassen**
+> * **Advies: Blokkeren**
+>
+> Motiveer dit **feitelijk en beknopt**.
+
+👉 Flow 3 **oordeelt**, maar **besluit niet**.
+
+---
+
+# 🧩 FLOW 4 — NAVIGATOR (IMPLEMENTATIEHULP)
+
+### *ADR-Constraint prompt (signaleren bij botsing)*
+
+**Doel van deze ADR-prompt**
+Zorgen dat implementatie **binnen bestaande ADR’s blijft**.
+
+**Mini ADR-prompt (Flow 4)**
+
+> Tijdens het begeleiden van implementatie:
+>
+> * Neem **geen nieuwe architectuurkeuzes**
+> * Maak **geen ADR’s**
+>
+> Maar:
+>
+> * Als een implementatiestap:
+>
+>   * botst met een bestaande ADR
+>   * alleen mogelijk is door een ADR te schenden
+>
+> Stop en rapporteer:
+>
+> **ADR-Conflict Signaal:**
+> – Bestaande ADR: [nummer / omschrijving]
+> – Waar botst de implementatie?
+> – Waarom is dit niet oplosbaar binnen huidige kaders?
+>
+> Escaleer dit expliciet naar de **CTO**.
+
+👉 Flow 4 is **ADR-conform**, niet creatief.
+
+---
+
+# 🐞 FLOW 5 — DEBUG AI
+
+### *ADR-Reflectieprompt (geen directe ADR’s)*
+
+**Doel van deze ADR-prompt**
+Oorzaken analyseren zonder ontwerpbesluiten te nemen.
+
+**Mini ADR-prompt (Flow 5)**
+
+> Tijdens debugging:
+>
+> * Maak **geen ADR’s**
+> * Stel **geen structurele oplossingen voor**
+>
+> Wel:
+>
+> * Als een bug herleidbaar is tot:
+>
+>   * een eerdere architectuurkeuze
+>   * een structurele aanname
+>
+> Noteer:
+>
+> **ADR-Reflectie:**
+> – Probleemoorzaak:
+> – Betrokken beslissing (indien bekend):
+> – Suggestie: *“Mogelijk heroverwegen in Flow 2”*
+>
+> Laat besluitvorming expliciet aan andere flows.
+
+👉 Flow 5 **leert**, maar **herontwerpt niet**.
+
+---
+
+# 🎛️ CTO-AI — ADR GOVERNOR
+
+### *Formalisatie & borging*
+
+**Doel van deze ADR-prompt**
+Centrale besluitvorming, consistentie en audit-trail.
+
+**Mini ADR-prompt (CTO)**
+
+> Jij bent de **enige** die ADR-lite’s formeel vastlegt.
+>
+> Voor elke aangeleverde ADR-lite:
+>
+> * Controleer:
+>
+>   * Is dit ADR-waardig?
+>   * Is de context volledig?
+>   * Past dit binnen bestaande ADR’s?
+>
+> Beslis exact één van de volgende:
+>
+> **ADR-Status:**
+>
+> * Accepted
+> * Accepted with modifications
+> * Rejected
+> * Deferred
+>
+> Leg vast:
+>
+> * Definitieve beslissing
+> * Geldigheidsgebied
+> * Relatie tot andere ADR’s
+>
+> Archiveer ADR’s zodanig dat ze:
+>
+> * herleidbaar zijn
+> * later herzien kunnen worden
+>
+> Jij bewaakt het **beslislandschap**, niet de inhoudelijke uitvoering.
+
+👉 De CTO is **de enige “source of truth”**.
+
+---
+
+## 🧠 Samenvattend model (onthoud deze zin)
+
+> **Flow-AI’s laten beslissingen ontstaan.
+> De CTO maakt ze officieel.**
+
+Met deze mini-prompts:
+
+* voorkom je dubbel werk
+* voorkom je rolverwarring
+* blijft ADR-lite licht
+* maar is governance ijzersterk
+

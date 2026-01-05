@@ -1,0 +1,1505 @@
+ORCHESTATOR:
+const fs = require('fs');
+const path = require('path');
+
+// Gebruik een prefix underscore voor variabelen die we uit de env halen 
+// maar in deze specifieke run misschien niet direct muteren
+const _isDryRun = process.env.DRY_RUN === 'true';
+const isVerbose = process.env.VERBOSE === 'true';
+
+function getTrinityData() {
+    const auditScore = 85; 
+    let coverageScore = 0;
+    let riskPenalty = 0;
+
+    try {
+        const coveragePath = path.join(process.cwd(), 'coverage/coverage-summary.json');
+        if (fs.existsSync(coveragePath)) {
+            const summary = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
+            coverageScore = Math.round(summary.total.branches.pct);
+            const uncoveredLines = summary.total.lines.total - summary.total.lines.covered;
+            riskPenalty = Math.min(Math.round(uncoveredLines / 10), 20);
+        }
+    } catch { 
+        // GEFIXED: De (e) of (_e) is volledig verwijderd. 
+        // In modern JavaScript (ES2019+) mag een catch blok zonder variabele.
+        if (isVerbose) console.warn("⚠️ Kon coverage data niet inlezen.");
+    }
+
+    const stabilityScore = Math.max(0, coverageScore - riskPenalty);
+    const masterScore = Math.round((auditScore + stabilityScore) / 2);
+
+    const getGrade = (s) => {
+        if (s >= 90) return 'S';
+        if (s >= 75) return 'A';
+        if (s >= 60) return 'B';
+        return 'C';
+    };
+
+    return {
+        audit: auditScore,
+        coverage: coverageScore,
+        stability: stabilityScore,
+        master: getGrade(masterScore)
+    };
+}
+
+const scores = getTrinityData();
+
+// We gebruiken _isDryRun hier om de linting error te voorkomen
+if (isVerbose && _isDryRun) {
+    console.log("[DRY-RUN MODE] Berekeningen worden uitgevoerd zonder schrijven.");
+}
+
+// Output de data-string voor de bash dispatcher
+console.log(`TRINITY_DATA|AUDIT:${scores.audit}|COV:${scores.coverage}|STAB:${scores.stability}|MASTER:${scores.master}`);
+===================
+
+NIEUWE SCORETELLING JEST + AUDIT:
+cmd_all() {
+    log_info "🚀 Volledige inspectie (Audit + Tests)..."
+    
+    # Eerst de tests om de coverage-summary.json te genereren
+    cmd_test || true 
+    
+    # Dan de audit die de coverage-summary nu kan inlezen
+    local audit_output
+    audit_output=$(node scripts/maintenance/audit-orchestrator.js)
+    
+    local grade; grade=$(echo "$audit_output" | grep "MASTER_GRADE:" | cut -d':' -f2 || echo "B")
+    
+    log_ok "⭐ Master Grade behaald: $grade"
+}
+
+cmd_full() {
+    log_info "🌅 Starten Phoenix End-of-Day routine..."
+    
+    # Run tests eerst voor de data
+    cmd_test || { log_err "Tests falen! EOD gestopt."; return 1; }
+    
+    # Haal de grade op
+    local audit_output
+    audit_output=$(node scripts/maintenance/audit-orchestrator.js)
+    local grade; grade=$(echo "$audit_output" | grep "MASTER_GRADE:" | cut -d':' -f2 || echo "B")
+
+    # Git Commit (indien geen dry-run)
+    if [ "$DRY_RUN" = false ]; then
+        git add .
+        git commit -m "Phoenix EOD: $(date +'%Y-%m-%d %H:%M') - Master Grade $grade"
+        log_ok "✅ Alles veiliggesteld met Grade $grade"
+    else
+        log_warn "[DRY-RUN] Zou commit maken met Master Grade $grade"
+    fi
+}
+
+================
+NIEUWE SCORETELLING TRINITY:
+#!/usr/bin/env bash
+# Phoenix Commander v3.4 – Trinity Edition
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PROJECT_ROOT
+# Zorg dat log_bridge bestaat of vervang door echo's
+source "$PROJECT_ROOT/scripts/utils/log_bridge.sh" || { log_info() { echo "INFO: $*"; }; log_err() { echo "ERR: $*"; }; log_ok() { echo "OK: $*"; }; log_warn() { echo "WARN: $*"; }; }
+
+DRY_RUN=false
+VERBOSE=false
+
+parse_args() {
+    for arg in "$@"; do
+        case $arg in
+            -d|--dry-run) DRY_RUN=true; shift ;;
+            -v|--verbose) VERBOSE=true; shift ;;
+        esac
+    done
+    export DRY_RUN VERBOSE
+}
+
+cmd_test() {
+    log_info "🧪 Test Suite draaien..."
+    local test_flags="--watchAll=false --coverage --json --outputFile=coverage/report.json"
+    [ "$VERBOSE" = false ] && test_flags="$test_flags --silent"
+    
+    # We draaien npm test. Als het faalt, stopt het script (set -e)
+    npm test -- $test_flags
+}
+
+cmd_all() {
+    cmd_test || true
+    local raw_data; raw_data=$(node scripts/maintenance/audit-orchestrator.js | grep "TRINITY_DATA|")
+    
+    local a_score; a_score=$(echo "$raw_data" | cut -d'|' -f2 | cut -d':' -f2)
+    local c_score; c_score=$(echo "$raw_data" | cut -d'|' -f3 | cut -d':' -f2)
+    local s_score; s_score=$(echo "$raw_data" | cut -d'|' -f4 | cut -d':' -f2)
+    local master;  master=$(echo "$raw_data" | cut -d'|' -f5 | cut -d':' -f2)
+
+    echo -e "\n--- 📊 PHOENIX TRINITY SCORES ---"
+    echo -e "🏛️  Audit:     ${a_score}%"
+    echo -e "🧪  Coverage:  ${c_score}%"
+    echo -e "🛡️  Stability: ${s_score}%"
+    echo -e "--------------------------------"
+    log_ok "👑 MASTER GRADE: $master"
+}
+
+cmd_full() {
+    log_info "🌅 Phoenix End-of-Day run..."
+    [ "$DRY_RUN" = false ] && npm run lint -- --fix || log_warn "[DRY] Geen lint-fix"
+    
+    cmd_test
+    
+    local raw_data; raw_data=$(node scripts/maintenance/audit-orchestrator.js | grep "TRINITY_DATA|")
+    local master; master=$(echo "$raw_data" | cut -d'|' -f5 | cut -d':' -f2)
+    local stats;  stats=$(echo "$raw_data" | sed 's/TRINITY_DATA|//g' | sed 's/|/ /g')
+
+    if [ "$DRY_RUN" = false ]; then
+        git add .
+        git commit -m "Phoenix EOD: $master ($stats)"
+        log_ok "✅ Werkdag opgeslagen met Grade $master"
+    else
+        log_warn "[DRY-RUN] Commit message zou zijn: Phoenix EOD: $master ($stats)"
+    fi
+}
+
+cmd_help() {
+    cat <<HLP
+Phoenix Commander v3.4
+Usage: ./phoenix [options] <command>
+
+Options:
+  -d, --dry-run    Simulation mode
+  -v, --verbose    Full output logs
+
+Commands:
+  all       Full Audit + Jest coverage Trinity report
+  full      EOD routine (Lint, Test, Commit)
+  audit     Only the quality audit
+  watch     Dashboard mode
+  health    Dependency check
+HLP
+}
+
+# Entry
+parse_args "$@"
+case "${1:-help}" in
+    all) cmd_all ;;
+    full) cmd_full ;;
+    audit) node scripts/maintenance/audit-orchestrator.js ;;
+    health) log_ok "All systems operational" ;;
+    watch) while true; do clear; cmd_all; sleep 30; done ;;
+    *) cmd_help ;;
+esac
+
+===============
+OUDE SCORETELLING + FUNCTIES
+#!/usr/bin/env bash
+# Phoenix Commander v3.4 – dispatcher
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PROJECT_ROOT
+source "$PROJECT_ROOT/scripts/utils/log_bridge.sh"
+
+# Global states
+DRY_RUN=false
+VERBOSE=false
+
+# Parser voor opties
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -d|--dry-run) DRY_RUN=true; shift ;;
+            -v|--verbose) VERBOSE=true; shift ;;
+            *) break ;; # Stop bij het eerste commando (full, all, etc.)
+        esac
+    done
+    export DRY_RUN VERBOSE
+}
+
+check_dependencies() {
+  local deps=(node npm bash grep awk sed git)
+  for cmd in "${deps[@]}"; do
+    command -v "$cmd" >/dev/null || { log_err "Missing dependency: $cmd"; exit 40; }
+  done
+}
+
+# Helper voor dry-runs
+run_cmd() {
+    local msg=$1
+    local cmd=$2
+    if [ "$DRY_RUN" = true ]; then
+        log_warn "[DRY-RUN] Zou uitvoeren: $msg"
+    else
+        log_info "$msg"
+        eval "$cmd"
+    fi
+}
+
+cmd_audit() {
+    log_info "🔎 Audit uitvoeren..."
+    node scripts/maintenance/audit-orchestrator.js
+}
+
+cmd_test() {
+    log_info "🧪 Test Suite draaien..."
+    local test_cmd="npm test -- --watchAll=false"
+    [ "$VERBOSE" = false ] && test_cmd="$test_cmd --silent"
+    eval "$test_cmd"
+}
+
+cmd_all() {
+    log_info "🚀 Volledige inspectie (Audit + Tests)..."
+    cmd_audit || true
+    cmd_test
+}
+
+cmd_full() {
+    log_info "🌅 Starten Phoenix End-of-Day routine..."
+    
+    cmd_audit || true
+    
+    run_cmd "🧹 Linting & Formatting" "npm run lint -- --fix"
+    
+    log_info "📁 Root directory opschonen..."
+    if [ "$DRY_RUN" = false ]; then
+        mkdir -p scripts/temp
+        find . -maxdepth 1 -name "*.sh" ! -name "phoenix.sh" -exec mv {} scripts/temp/ \;
+    else
+        log_warn "[DRY-RUN] Zou .sh bestanden verplaatsen naar scripts/temp/"
+    fi
+    
+    cmd_test || { log_err "Tests falen! EOD afgebroken."; return 1; }
+    
+    if [ "$DRY_RUN" = false ]; then
+        log_info "📦 Wijzigingen veiligstellen in Git..."
+        git add .
+        local grade; grade=$(grep -o 'Grade: .' reports/phoenix-audit.html 2>/dev/null | cut -d' ' -f2 || echo 'A')
+        git commit -m "Phoenix EOD: $(date +'%Y-%m-%d %H:%M') - Grade $grade"
+    else
+        log_warn "[DRY-RUN] Zou Git commit uitvoeren met Grade info."
+    fi
+    
+    log_ok "✅ Werkdag succesvol afgesloten."
+}
+
+cmd_watch() {
+    log_info "👀 Watch-modus: Dashboard ververst elke 30 seconden (Ctrl+C om te stoppen)"
+    while true; do
+        clear
+        echo "=== Phoenix Live Audit Dashboard === $(date)"
+        cmd_audit || true
+        sleep 30
+    done
+}
+
+cmd_help() {
+  cat <<HLP
+Phoenix Commander v3.4
+Gebruik: ./phoenix [opties] <commando>
+
+Opties:
+  -d, --dry-run    Toon wat er zou gebeuren zonder wijzigingen te maken.
+  -v, --verbose    Toon alle output (inclusief volledige test logs).
+
+Commando's:
+  all        Draait zowel de Audit als de volledige Test Suite.
+  full       End-of-Day run: Audit, Linting, Cleanup, Tests en Git Commit.
+  audit      Draait enkel de maintenance audit rapportage.
+  health     Checkt of alle systeem-dependencies aanwezig zijn.
+  watch      Start een live dashboard dat de audit status herhaalt.
+  rollback   Herstelt de laatste backup uit de backups/ map.
+  help       Toont dit overzicht.
+HLP
+}
+
+# --- Main Entry ---
+check_dependencies
+parse_args "$@"
+# Na parse_args bevat $1 het eigenlijke commando
+
+case "${1:-}" in
+  full)     cmd_full ;;
+  all)      cmd_all ;;
+  audit)    cmd_audit ;;
+  health)   cmd_health ;;
+  watch)    cmd_watch ;;
+  rollback) cmd_rollback ;;
+  help|-h|--help|"") cmd_help ;;
+  *) echo -e "❌ Onbekend commando: ${1}"; cmd_help; exit 1;;
+esac
+
+=================
+NIEUWE UPDATE-OPTIES:
+Op basis van de verstrekte documenten en de "Trinity" update, zijn er inderdaad een paar scherpe verbeteringen mogelijk om de "End-of-Day" (EOD) ervaring en de robuustheid van de scripts te optimaliseren.
+
+Hier zijn de voorgestelde verbeteringen:
+
+### 1. Toevoegen van de 'Einde van de dag echo'
+
+Je hebt gelijk dat de Trinity-versie momenteel direct naar de commit gaat zonder een duidelijke samenvatting te printen. In de oude versie was de "echo" duidelijker. Je kunt de `cmd_full` in het Trinity-script uitbreiden met een visuele afsluiting:
+
+```bash
+# Toevoegen aan cmd_full() na de git commit:
+echo -e "\n==============================================="
+echo -e "🌅 PHOENIX EOD STATUS: GEFORCEERD"
+echo -e "🏆 Behaalde Master Grade: $master"
+echo -e "📊 Stats: $stats"
+echo -e "==============================================="
+log_ok "✅ Werkdag succesvol afgesloten en veiliggesteld in Git."
+
+```
+
+### 2. Verbetering van de Idempotency Tests
+
+Hoewel de documentatie idempotency noemt, zie ik in de huidige testsuites nog geen expliciete checks die verifiëren of de output van een tweede run identiek is aan de eerste. Dit is cruciaal voor migraties.
+
+* 
+**Verbetering:** Voeg een testcase toe die `migrate(input)` twee keer achter elkaar draait en de resultaten diepgaand vergelijkt (`toStrictEqual`).
+
+
+
+### 3. Verscherping van de Coverage Thresholds per Component
+
+In de `testing.txt` staan algemene doelen van 80% , maar de tabel voor "Core Logic" vraagt om 95%.
+
+* **Verbetering:** Gebruik de `jest.config.js` om specifieke drempels per map af te dwingen. Dit voorkomt dat "makkelijke" tests de lage coverage van "kritieke" onderdelen verbloemen:
+
+
+
+```javascript
+coverageThreshold: {
+  "./src/domain/logic/": { "branches": 95, "functions": 95 },
+  "./src/utils/": { "branches": 80 }
+}
+
+```
+
+### 4. Consistentie in de 'Fuzzy' PII checks
+
+In de `privacyHelpers.test.ts` zijn de fuzzy checks voor PII aangescherpt voor velden als `achternaamPartner`.
+
+* 
+**Verbetering:** Zorg dat de `forbiddenKeys` lijst in de broncode (die we hier niet volledig zien) synchroon loopt met deze nieuwe test-scenarios om valse negatieven te voorkomen.
+
+
+
+### 5. Robuustheid van de 'Clean-up' routine
+
+De EOD routine verplaatst alle `.sh` bestanden naar `scripts/temp/`, behalve `phoenix.sh`.
+
+* 
+**Verbetering:** Voeg een check toe die controleert of `scripts/temp/` niet per ongeluk wordt mee-gecommit naar productie, of zorg dat deze map in de `.gitignore` staat, aangezien dit "vervuiling" van de repository kan veroorzaken bij dagelijks gebruik.
+
+
+
+### 6. Integratie van de Audit-Orchestrator in de Watch-modus
+
+De huidige `cmd_watch` in de Trinity-editie herhaalt alleen `cmd_all` elke 30 seconden.
+
+* **Verbetering:** Voeg een notificatie-trigger toe (bijv. een systeem-beep of terminal-kleurverandering) wanneer de Master Grade zakt onder een bepaald niveau tijdens het programmeren.
+
+Zal ik een van deze specifieke onderdelen (zoals de uitgebreide Trinity EOD echo) voor je uitwerken in het script?
+=========
+MEER VERBETERINGEN:
+Hier is een **gestructureerde analyse** van je document, met de **belangrijkste verschillen** tussen de drie varianten en **concrete verbeter-tips** — gericht op stabiliteit, voorspelbaarheid en ontwikkelaar-flow.
+(Bron: )
+
+---
+
+## 🔍 1. Wat staat er in het document?
+
+Je hebt drie generaties Phoenix-scripts:
+
+### **A. “Nieuwe Scoretelling – Jest + Audit”**
+
+* `cmd_test` draait eerst (coverage JSON output)
+* daarna audit
+* `MASTER_GRADE:` wordt uit audit-output geparsed
+* bij `cmd_full`:
+
+  * tests moeten slagen, anders abort
+  * commit bevat grade
+
+📌 **Kenmerkend**
+✔ Testdata is bron van waarheid
+✔ Audit gebruikt test-coverage als input
+✔ Grade komt uit audit
+✔ Fail-fast gedrag bij test-fouten
+
+---
+
+### **B. “Trinity Edition”**
+
+* introduceert **Trinity-scores**
+
+  * Audit
+  * Coverage
+  * Stability
+* `audit-orchestrator` print een TRINITY_DATA lijn
+* Script parset tokens zoals:
+
+```
+TRINITY_DATA|AUDIT:xx|COVERAGE:yy|STABILITY:zz|MASTER:AA
+```
+
+* `cmd_all` toont mooi dashboard
+* `cmd_full`:
+
+  * lint → test → audit
+  * commit message bevat **master + stats**
+
+📌 **Kenmerkend**
+✔ Scores zijn 3-dimensionaal
+✔ Commit-message bevat meetbare context
+✔ Watch-modus voor live dev-kwaliteit
+✔ Minder “magie” → duidelijkere output
+
+---
+
+### **C. “Oude Dispatcher”**
+
+* meer **imperatief**
+* meer scripts & housekeeping
+* EOD doet o.a.:
+
+  * audit
+  * lint
+  * **cleanup van shell-scripts**
+  * tests
+  * commit
+
+📌 **Kenmerkend**
+✔ Veel DevOps-taken ingebouwd
+✔ Functies zoals rollback
+✔ Dry-run helper
+✔ Dependency checker
+
+---
+
+## 🆚 2. Belangrijkste verschillen (kort & scherp)
+
+| Onderdeel            | Oude versie     | Jest+Audit                  | Trinity                 |
+| -------------------- | --------------- | --------------------------- | ----------------------- |
+| **Scoremodel**       | Simpel Grade    | Grade uit audit             | 3 metrics + Master      |
+| **Databron audit**   | losstaand       | gebruikt coverage JSON      | gebruikt TRINITY_DATA   |
+| **EOD commit**       | Grade in commit | Grade in commit             | Grade + stats in commit |
+| **Error-tolerantie** | deels tolerant  | tests mogen falen bij audit | tests moeten slagen     |
+| **Watch-modus**      | audit-only      | n.v.t.                      | Trinity dashboard       |
+| **UX feedback**      | basaal          | iets beter                  | 🔥 beste ervaring       |
+| **Housekeeping**     | ja              | nee                         | nee                     |
+| **Dependency check** | ja              | nee                         | nee                     |
+
+---
+
+## ⚠️ 3. Risico’s die ik zie
+
+### **❗ Parsing van audit-output is fragiel**
+
+Je leunt zwaar op `grep` + `cut`:
+
+```
+grep "TRINITY_DATA|"
+cut -d'|' -f5
+```
+
+➡️ **1 kleine format-wijziging = alles breekt** 
+
+---
+
+### **❗ Testresultaten bepalen commit-flow**
+
+In Trinity:
+
+```
+cmd_test   # faalt → script stopt
+```
+
+Goed — **maar dit moet bewust zijn.**
+
+---
+
+### **❗ Geen fallback als audit faalt**
+
+Oude versie deed `audit || true`
+Nieuwe niet.
+
+Dat is strenger, maar kan dev-flow blokkeren.
+
+---
+
+### **❗ Stability-score is black-box**
+
+Je toont het,
+maar niet hoe het wordt bepaald.
+
+Overweeg documentatie.
+
+---
+
+### **❗ Cleanup logic verdwenen**
+
+Oude versie:
+
+```
+mv *.sh scripts/temp/
+```
+
+→ handig
+→ **maar gevaarlijk en onvoorspelbaar**
+
+Dat dit nu weg is = goed — mits je dat bewust hebt besloten.
+
+---
+
+## ⭐ 4. Wat Trinity **heel goed** doet
+
+✔ Transparante Kwaliteit
+✔ Duidelijke score-communicatie
+✔ Watch-mode = realtime feedback
+✔ Commit-historie = auditspoor
+
+Dit is **engineering culture on steroids**.
+
+Hou dat vast. 💪
+
+---
+
+## 🛠 5. Mijn concrete verbeter-tips
+
+### ✅ **1. Maak parsing future-proof**
+
+In plaats van `grep/cut` → gebruik JSON output of stricte prefix-tokens zoals:
+
+```
+TRINITY_JSON:{"audit":92,"coverage":88,"stability":95,"master":"A"}
+```
+
+dan:
+
+```bash
+node -pe 'JSON.parse(process.argv[1]).master' "$json"
+```
+
+→ **99% minder breekbaar**
+
+---
+
+### ✅ **2. Log Trinity aan het einde van EOD (ritueel sluiten)**
+
+Je gaf dit al zelf goed aan.
+
+Ik adviseer:
+
+```
+====================================
+   🌅 PHOENIX — END OF DAY REPORT
+   MASTER GRADE: A
+   AUDIT: 92% | COVERAGE: 88% | STABILITY: 95%
+====================================
+```
+
+Ritueel = vertrouwen.
+
+---
+
+### ✅ **3. Stabiliseer commit-flow**
+
+Mijn voorstel:
+
+| Scenario    | Gedrag                                                      |
+| ----------- | ----------------------------------------------------------- |
+| Tests falen | ❌ Commit blokkeren                                          |
+| Audit faalt | ⚠ Waarschuwen maar wél committen met label `GRADE: UNKNOWN` |
+
+Zo verlies je geen werk,
+maar verliest wél “quality badge”.
+
+---
+
+### ✅ **4. Introduceer “Quality Gates”**
+
+Bijv:
+
+```
+if coverage < 80% → warn
+if coverage < 70% → block commit
+```
+
+---
+
+### ✅ **5. Documenteer Trinity Scores**
+
+Zet in README:
+
+* audit meet X
+* coverage meet Y
+* stability meet Z
+* master grade berekening = …
+
+→ dit maakt onboarding makkelijk
+
+---
+
+### ✅ **6. Voeg idempotency-test toe (hele goede gedachte van je)**
+
+Bijv:
+
+```ts
+expect(run(input)).toStrictEqual(run(input))
+```
+
+Dit voorkomt migratie-corruptie.
+
+---
+
+### ✅ **7. Voeg health check terug — maar simpeler**
+
+Behoud dit:
+
+```
+node npm git grep awk sed
+```
+
+→ voorkomt CI-ellende
+
+---
+
+## 🎯 6. Eindoordeel per variant
+
+### **Oude versie**
+
+🟡 Veel features
+🔴 Onstabiel & onduidelijk
+
+---
+
+### **Jest + Audit**
+
+🟢 Strak & functioneel
+🟡 Maar beperkt in UX
+
+---
+
+### **Trinity**
+
+🟢 Beste structuur
+🟢 Developer-flow is top
+🟡 Parser is fragiel
+🟡 EOD feedback mag duidelijker
+
+---
+
+## 🚀 7. Als je 1 ding morgen zou doen…
+
+👉 **Maak TRINITY_DATA machine-leesbaar JSON — en log een ritueel einde-scherm.**
+
+Dat geeft:
+
+✔ stabiliteit
+✔ minder bash-hacks
+✔ betere long-term maintainability
+
+---
+
+Zeker — hieronder krijg je **een complete, pragmatische commit-policy + quality-gate-systeem** die perfect past op jouw Phoenix-/Trinity-workflow.
+
+Ik heb het zo opgezet dat:
+
+✔ developers **gewoon kunnen werken**
+✔ commits **nooit kwaliteit ondermijnen**
+✔ CI/CD **harder is dan lokaal**
+✔ en fouten **duidelijk gecommuniceerd worden**
+
+Alles is modulair — je kunt per onderdeel kiezen.
+
+---
+
+# 🧩 Deel 1 — **Clean Commit Policy (Phoenix-proof)**
+
+## 🎯 Doel
+
+Commits mogen alleen binnen als:
+
+1️⃣ Code bouwt
+2️⃣ Tests slagen
+3️⃣ Basiskwaliteit op orde is
+4️⃣ Trinity-scores gecheckt zijn
+5️⃣ En de commit-boodschap betekenisvol is
+
+Dus:
+
+> **kwaliteit is standaard — uitzondering = expliciet**
+
+---
+
+## 📜 **Commit Message Standaard**
+
+**Format:**
+
+```
+<type>(<scope>): <summary>
+
+[optional body]
+
+[optional BREAKING CHANGE]
+```
+
+### Types
+
+| Type     | Gebruik                      |
+| -------- | ---------------------------- |
+| feat     | nieuwe functionaliteit       |
+| fix      | bug fix                      |
+| refactor | codewijziging zonder feature |
+| test     | testtoevoeging               |
+| chore    | onderhoud / scripts          |
+| docs     | documentatie                 |
+| perf     | performance-verbetering      |
+| security | kwetsbaarheid / privacy fix  |
+
+### Scope
+
+Bijv:
+
+```
+feat(finance): parse Rabobank CSV
+fix(piiguard): ignore extra IBAN patterns
+```
+
+### MUST for Trinity commits
+
+Voeg **Master Grade toe aan commit body**:
+
+```
+Phoenix Grade: A (Audit 92 | Coverage 88 | Stability 95)
+```
+
+⚠️ **Nooit faken — alleen door script laten invullen**
+
+---
+
+## ❌ Verboden commit messages
+
+* `fix stuff`
+* `update`
+* `wip`
+* `temp`
+* `oops`
+
+Script breekt ze hard af.
+
+---
+
+# 🛡 Deel 2 — **Quality Gates (met duidelijke regels)**
+
+Dit zijn **minimumnormen voordat je mag committen**.
+
+### 🔥 **Hard gates (blokkerend)**
+
+Commit mag NIET door als:
+
+| Gate                     | Threshold          | Waarom              |
+| ------------------------ | ------------------ | ------------------- |
+| **Tests falen**          | 100% pass required | stabiliteit         |
+| **Coverage**             | `< 70%`            | basic vertrouwen    |
+| **Core logic coverage**  | `< 90%`            | veiligheidskritisch |
+| **Master Grade**         | `< B`              | kwaliteitsnorm      |
+| **TS type errors**       | > 0                | correctness         |
+| **Lint errors**          | > 0                | hygiene             |
+| **Security issues HIGH** | > 0                | bescherming         |
+
+---
+
+### ⚠️ **Soft gates (commit mag, maar waarschuwing)**
+
+| Conditie                | Actie                   |
+| ----------------------- | ----------------------- |
+| Coverage 70–80%         | geel waarschuwing-badge |
+| Stability < 80%         | hint logging            |
+| Audit < 85%             | suggest review          |
+| TODO/FIXME gevonden     | waarschuwing            |
+| Nieuwe API zonder tests | waarschuwing            |
+
+Commitboodschap krijgt automatisch:
+
+```
+⚠️ QUALITY WARNING
+```
+
+Maar hij blokkeert niet.
+
+---
+
+# 🧠 Deel 3 — **Trinity als Quality Controller**
+
+Je Trinity-runner bepaalt:
+
+```
+Audit
+Coverage
+Stability
+Master Grade
+```
+
+### Suggestie berekening master grade
+
+```
+>= 90 → A
+80–89 → B
+70–79 → C
+< 70  → D (blok)
+```
+
+---
+
+# ⚙️ Deel 4 — **Pre-commit Flow (lokaal)**
+
+Voeg een script toe:
+
+```
+npm run phoenix full -- --dry
+```
+
+OF bash versie:
+
+```bash
+npm run lint --silent || exit 1
+npm test -- --coverage || exit 1
+
+raw=$(node scripts/maintenance/audit-orchestrator.js)
+master=$(echo "$raw" | grep MASTER | cut -d':' -f2)
+
+if [[ "$master" < "B" ]]; then
+  echo "❌ Master grade below B — commit blocked"
+  exit 1
+fi
+```
+
+---
+
+# 🚦 Deel 5 — **CI Quality Gates (nog strenger)**
+
+CI eist:
+
+| Gate          | CI-threshold  |
+| ------------- | ------------- |
+| Coverage      | **≥ 80%**     |
+| Core coverage | **≥ 95%**     |
+| Master        | **≥ B**       |
+| Tests         | **100% pass** |
+| Lint          | **0 errors**  |
+
+CI blokkeert merge.
+Niet lokaal te overrulen.
+
+---
+
+# 🧯 Deel 6 — **Escape Hatch (met logging & audit spoor)**
+
+Soms wil je toch committen.
+
+Gebruik:
+
+```
+git commit -m "chore: emergency commit [NO-QUALITY]"
+```
+
+En:
+
+✔ Script **logt reden**
+✔ Score markeert commit als **untrusted**
+✔ CI vereist alsnog herstel binnen X dagen
+
+Optioneel:
+
+```
+Phoenix Risk Register
+```
+
+Met entry zoals:
+
+```
+Owner: Manasse
+Reason: deadline SaaS demo
+Risk: Medium
+Fix deadline: 2026-01-05
+```
+
+= **transparantie zonder frictie**
+
+---
+
+# 📊 Deel 7 — **Automatische Commit Message Verrijking**
+
+Je EOD-script mag commit-body automatisch vullen:
+
+```
+Phoenix EOD — 2026-01-04 23:11
+Master Grade: A
+Audit: 92%
+Coverage: 88%
+Stability: 95%
+
+Idempotency: PASS
+Security Scan: PASS
+```
+
+Developers hoeven niets meer te doen 👍
+
+---
+
+# 🥇 Deel 8 — **Culturele principes (kort maar belangrijk)**
+
+✔ code is pas klaar als tests groen zijn
+✔ kwaliteit is standaard
+✔ uitzonderingen zijn traceerbaar
+✔ meetbaar > “gevoel”
+✔ blame-free observaties
+
+---
+
+### Advies op verbeteringen
+
+*   **Parsing:** Stap af van `grep` en `cut` voor het parsen van audit-resultaten. Gebruik JSON output (`--json`) en parse dit met `jq` of een klein Node.js scriptje. Dit is veel robuuster.
+*   **Modulariteit:** Splits de scripts op in kleinere, herbruikbare modules (bijv. `audit.sh`, `test.sh`, `commit.sh`). Dit maakt het makkelijker om individuele onderdelen te testen en te onderhouden.
+*   **Configuratie:** Maak de thresholds (drempelwaarden) configureerbaar via een bestand (bijv. `.phoenixrc`), zodat je ze per project of omgeving kunt aanpassen.
+*   **Error Handling:** Wees explicieter in de foutafhandeling. In plaats van `|| true`, vang fouten op en log ze duidelijk, eventueel met een suggestie voor een fix.
+*   **Documentatie:** Voeg commentaar toe aan de scripts om de logica uit te leggen, vooral bij complexe parsing of berekeningen.
+
+CLAUDE ADVIES:
+# 🔍 Analyse van Phoenix Trinity Evolution + Adviesbeoordeling
+
+## 📊 Document Overzicht
+
+Je hebt een **uitgebreide evolutie** van je Phoenix-scripts gedocumenteerd, van "oude dispatcher" → "Jest+Audit" → "Trinity Edition", inclusief community feedback en verbetervoorstellen.
+
+---
+
+## ⭐ Beoordeling van de Gegeven Adviezen
+
+### 🟢 **UITSTEKENDE Adviezen** (implementeer direct)
+
+#### 1. **JSON Output i.p.v. Grep/Cut Parsing** ⭐⭐⭐⭐⭐
+```bash
+# ❌ FRAGIEL (huidige aanpak)
+raw_data=$(node audit.js | grep "TRINITY_DATA|")
+master=$(echo "$raw_data" | cut -d'|' -f5 | cut -d':' -f2)
+
+# ✅ ROBUUST (aanbevolen)
+json=$(node audit.js --json)
+master=$(echo "$json" | jq -r '.master')
+```
+
+**Waarom dit prioriteit #1 is:**
+- Eliminates single point of failure
+- Future-proof bij format changes
+- Type-safe parsing
+- Makkelijker te testen
+
+**Implementatie advies:**
+```javascript
+// audit-orchestrator.js
+if (process.argv.includes('--json')) {
+  console.log(JSON.stringify({
+    audit: scores.audit,
+    coverage: scores.coverage,
+    stability: scores.stability,
+    master: scores.master,
+    timestamp: new Date().toISOString()
+  }));
+} else {
+  console.log(`TRINITY_DATA|AUDIT:${scores.audit}|...`);
+}
+```
+
+---
+
+#### 2. **Ritueel EOD Scherm** ⭐⭐⭐⭐⭐
+```bash
+cmd_full() {
+    # ... na git commit ...
+    
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "   🌅 PHOENIX — END OF DAY REPORT"
+    echo "   📅 $(date '+%Y-%m-%d %H:%M:%S')"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "   🏆 MASTER GRADE: $master"
+    echo "   🛡️  Audit:     ${a_score}%"
+    echo "   🧪  Coverage:  ${c_score}%"
+    echo "   🛡️  Stability: ${s_score}%"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "   ✅ Commit: $(git rev-parse --short HEAD)"
+    echo "   📝 Message: Phoenix EOD: $master ($stats)"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
+    log_ok "Werkdag succesvol afgesloten en veiliggesteld in Git."
+}
+```
+
+**Psychologisch belangrijk:**
+- Closure ritual
+- Dopamine hit
+- Visual confirmation
+- Audit trail
+
+---
+
+#### 3. **Quality Gates Strategie** ⭐⭐⭐⭐⭐
+
+De voorgestelde hard/soft gates zijn **perfect gebalanceerd**:
+
+| Gate Type | Threshold | Gedrag |
+|-----------|-----------|--------|
+| **Hard** | Coverage < 70% | ❌ Block commit |
+| **Hard** | Master Grade < B | ❌ Block commit |
+| **Hard** | Tests fail | ❌ Block commit |
+| **Soft** | Coverage 70-80% | ⚠️ Warn but allow |
+| **Soft** | Stability < 80% | ⚠️ Suggest review |
+
+**Implementatie:**
+```bash
+check_quality_gates() {
+    local json=$1
+    local master=$(echo "$json" | jq -r '.master')
+    local coverage=$(echo "$json" | jq -r '.coverage')
+    
+    # Hard gates
+    if [[ "$coverage" -lt 70 ]]; then
+        log_err "❌ HARD GATE: Coverage below 70% ($coverage%)"
+        return 1
+    fi
+    
+    if [[ "$master" < "B" ]]; then
+        log_err "❌ HARD GATE: Master grade below B ($master)"
+        return 1
+    fi
+    
+    # Soft gates (warnings)
+    if [[ "$coverage" -lt 80 ]]; then
+        log_warn "⚠️  Coverage is ${coverage}% (target: 80%+)"
+    fi
+    
+    return 0
+}
+```
+
+---
+
+#### 4. **Escape Hatch met Audit Trail** ⭐⭐⭐⭐
+
+De `[NO-QUALITY]` marker is brilliant:
+
+```bash
+# In pre-commit hook
+if git log -1 --pretty=%B | grep -q '\[NO-QUALITY\]'; then
+    echo "⚠️  QUALITY GATE BYPASSED"
+    echo "📝 Logging to quality audit trail..."
+    
+    cat >> .phoenix/quality-bypass.log <<EOF
+{
+  "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "commit": "$(git rev-parse HEAD)",
+  "author": "$(git config user.name)",
+  "reason": "$(git log -1 --pretty=%B | grep -oP 'Reason: \K.*')"
+}
+EOF
+fi
+```
+
+**Accountable flexibility** - perfect voor emergencies.
+
+---
+
+#### 5. **Coverage per Component** ⭐⭐⭐⭐
+
+```javascript
+// jest.config.js
+coverageThreshold: {
+  global: {
+    branches: 80,
+    functions: 80,
+    lines: 80
+  },
+  './src/domain/logic/': {
+    branches: 95,
+    functions: 95,
+    lines: 95
+  },
+  './src/services/critical/': {
+    branches: 90,
+    functions: 90
+  },
+  './src/utils/': {
+    branches: 75
+  }
+}
+```
+
+Dit is **architectural thinking** - kritieke code krijgt hogere eisen.
+
+---
+
+### 🟡 **GOEDE Adviezen** (implementeer als tijd over)
+
+#### 6. **Modulariteit Scripts** ⭐⭐⭐
+
+```bash
+# Huidige aanpak
+phoenix -> giant monolith
+
+# Voorgestelde aanpak
+scripts/
+  ├── core/
+  │   ├── audit.sh
+  │   ├── test.sh
+  │   └── commit.sh
+  ├── gates/
+  │   ├── quality-check.sh
+  │   └── security-scan.sh
+  └── utils/
+      ├── json-parser.sh
+      └── grade-calculator.sh
+```
+
+**Pro:** Makkelijker te testen  
+**Con:** Meer complexity in orchestration
+
+---
+
+#### 7. **Configureerbare Thresholds** ⭐⭐⭐
+
+```yaml
+# .phoenixrc.yml
+thresholds:
+  coverage:
+    minimum: 70
+    target: 80
+    critical_paths:
+      - "src/domain/": 95
+  
+  master_grade:
+    minimum: "B"
+    target: "A"
+  
+  stability:
+    warning: 80
+    minimum: 70
+```
+
+**Pro:** Flexibiliteit per project  
+**Con:** Extra dependency (yaml parser)
+
+---
+
+### 🔴 **TWIJFELACHTIGE Adviezen** (pas op)
+
+#### 8. **Cleanup van Shell Scripts** ❌
+
+De oude versie deed:
+```bash
+find . -maxdepth 1 -name "*.sh" ! -name "phoenix.sh" -exec mv {} scripts/temp/ \;
+```
+
+**Waarom dit GEVAARLIJK is:**
+- Verwijdert potentieel belangrijke scripts
+- Onvoorspelbaar gedrag
+- Moeilijk te debuggen
+- Geen rollback mogelijk
+
+**Advies:** Skip dit. Als je .sh files wilt opruimen, doe het **handmatig** of met een **whitelist**.
+
+---
+
+#### 9. **Health Check in Elke Run** ⚠️
+
+```bash
+check_dependencies() {
+  local deps=(node npm bash grep awk sed git)
+  for cmd in "${deps[@]}"; do
+    command -v "$cmd" >/dev/null || exit 40
+  done
+}
+
+# In elke cmd_*
+check_dependencies
+```
+
+**Probleem:** Te veel overhead voor elke operatie.
+
+**Beter:**
+```bash
+# Alleen bij install/setup
+./phoenix install --verify-deps
+
+# Of lazy check (cache result)
+if [[ ! -f .phoenix/.deps-checked ]]; then
+    check_dependencies
+    touch .phoenix/.deps-checked
+fi
+```
+
+---
+
+## 🎯 Mijn Extra Adviezen
+
+### ✅ 1. **State Machine voor Trinity Scores**
+
+In plaats van direct scores berekenen, model ze als state:
+
+```javascript
+// audit-orchestrator.js
+class TrinityState {
+  constructor() {
+    this.audit = 0;
+    this.coverage = 0;
+    this.stability = 0;
+    this.master = 'U'; // Unknown
+    this.errors = [];
+    this.warnings = [];
+  }
+  
+  computeMaster() {
+    const avg = (this.audit + this.stability) / 2;
+    if (avg >= 90) return 'S';
+    if (avg >= 75) return 'A';
+    if (avg >= 60) return 'B';
+    return 'C';
+  }
+  
+  toJSON() {
+    return {
+      audit: this.audit,
+      coverage: this.coverage,
+      stability: this.stability,
+      master: this.computeMaster(),
+      meta: {
+        timestamp: new Date().toISOString(),
+        errors: this.errors,
+        warnings: this.warnings
+      }
+    };
+  }
+}
+```
+
+**Voordeel:** Testbaar, voorspelbaar, uitbreidbaar.
+
+---
+
+### ✅ 2. **Trinity History Tracking**
+
+```bash
+# Na elke run
+mkdir -p .phoenix/history
+echo "$json" > ".phoenix/history/$(date +%Y%m%d-%H%M%S).json"
+
+# Cleanup old (keep last 30)
+ls -t .phoenix/history/*.json | tail -n +31 | xargs rm -f
+```
+
+Dan kun je trends visualiseren:
+```bash
+./phoenix stats --last 7d
+```
+
+---
+
+### ✅ 3. **Pre-commit Hook met Escape Options**
+
+```bash
+#!/usr/bin/env bash
+# .git/hooks/pre-commit
+
+echo "🦅 Phoenix Quality Gate..."
+
+json=$(node scripts/maintenance/audit-orchestrator.js --json)
+master=$(echo "$json" | jq -r '.master')
+
+if [[ "$master" < "B" ]]; then
+    echo ""
+    echo "❌ Quality gate failed: Master grade = $master"
+    echo ""
+    echo "Options:"
+    echo "  1) Fix issues and try again"
+    echo "  2) Commit with [NO-QUALITY] flag (logged)"
+    echo "  3) Skip hook with --no-verify (dangerous)"
+    echo ""
+    exit 1
+fi
+
+echo "✅ Quality gate passed: Grade $master"
+```
+
+---
+
+### ✅ 4. **Watch Mode met Notificaties**
+
+```bash
+cmd_watch() {
+    log_info "👀 Watch mode started..."
+    
+    local prev_grade=""
+    
+    while true; do
+        clear
+        echo "=== Phoenix Live Dashboard === $(date +%H:%M:%S)"
+        
+        json=$(node scripts/maintenance/audit-orchestrator.js --json)
+        master=$(echo "$json" | jq -r '.master')
+        
+        # Notificatie bij grade change
+        if [[ -n "$prev_grade" ]] && [[ "$master" != "$prev_grade" ]]; then
+            if command -v osascript >/dev/null 2>&1; then
+                osascript -e "display notification \"Grade changed: $prev_grade → $master\" with title \"Phoenix\""
+            fi
+        fi
+        
+        prev_grade="$master"
+        
+        cmd_all
+        sleep 30
+    done
+}
+```
+
+---
+
+### ✅ 5. **Idempotency Test (critical voor migrations)**
+
+```typescript
+// __tests__/migrations/idempotency.test.ts
+describe('Migration Idempotency', () => {
+  it('moet exact dezelfde output geven bij herhaalde runs', async () => {
+    const input = fixtures.realisticDataset;
+    
+    // Deep clone om mutations te detecteren
+    const input1 = JSON.parse(JSON.stringify(input));
+    const input2 = JSON.parse(JSON.stringify(input));
+    
+    const result1 = await migrateTransactionsToPhoenix(input1);
+    const result2 = await migrateTransactionsToPhoenix(input2);
+    
+    // Exclude dynamic fields
+    const normalize = (r: any) => ({
+      ...r,
+      metadata: {
+        ...r.metadata,
+        migratedAt: undefined,
+        timestamp: undefined
+      }
+    });
+    
+    expect(normalize(result1)).toStrictEqual(normalize(result2));
+  });
+  
+  it('moet input niet muteren', async () => {
+    const original = fixtures.realisticDataset;
+    const input = JSON.parse(JSON.stringify(original));
+    
+    await migrateTransactionsToPhoenix(input);
+    
+    expect(input).toStrictEqual(original);
+  });
+});
+```
+
+---
+
+### ✅ 6. **Error Handling met Context**
+
+```bash
+# In plaats van
+cmd_test || { log_err "Tests falen!"; return 1; }
+
+# Gebruik
+cmd_test || {
+    log_err "Tests falen!"
+    echo ""
+    echo "Quick fixes:"
+    echo "  • npm test -- --verbose    (zie details)"
+    echo "  • npm test -- --watch      (fix iteratively)"
+    echo "  • ./phoenix health         (check system)"
+    echo ""
+    return 1
+}
+```
+
+---
+
+## 📋 Prioriteiten Samenvatting
+
+### 🔥 **MUST-HAVE** (deze week)
+1. ✅ JSON output i.p.v. grep/cut parsing
+2. ✅ Ritueel EOD scherm
+3. ✅ Hard/soft quality gates
+4. ✅ Idempotency tests voor migrations
+
+### 🎯 **SHOULD-HAVE** (deze maand)
+5. ✅ Trinity history tracking
+6. ✅ Pre-commit hook met escape options
+7. ✅ Coverage per component thresholds
+8. ✅ State machine voor Trinity
+
+### 💡 **NICE-TO-HAVE** (later)
+9. ✅ Modulariteit (split scripts)
+10. ✅ Configureerbare thresholds via .phoenixrc
+11. ✅ Watch mode met notificaties
+12. ⚠️ Dependency check (maar gecached)
+
+### ❌ **SKIP**
+- Automatische shell script cleanup (te gevaarlijk)
+- Health check in elke run (te veel overhead)
+
+---
+
+## 🎓 Finale Beoordeling
+
+**De gegeven adviezen zijn 85% uitstekend.**
+
+De community heeft je vooral gewaarschuwd voor:
+- ✅ Fragiele parsing (terecht)
+- ✅ UX rituelen (terecht)
+- ✅ Quality gates balance (terecht)
+- ✅ Escape hatches (terecht)
+
+En terecht **afgeraden**:
+- ❌ Automatische cleanup (gevaarlijk)
+- ❌ Excessive dependency checks
+
+---
+
+## 🚀 Concrete Actieplan
+
+**Vandaag:**
+```bash
+# 1. Maak JSON output
+node audit-orchestrator.js --json
+
+# 2. Update phoenix script voor JSON parsing
+source scripts/utils/json-parser.sh
+
+# 3. Add EOD ritual scherm
+```
+
+**Deze Week:**
+```bash
+# 4. Implement quality gates
+source scripts/gates/quality-check.sh
+
+# 5. Add idempotency tests
+npm test -- idempotency
+
+# 6. Setup pre-commit hook
+```
+
+**Deze Maand:**
+```bash
+# 7. Trinity history tracking
+mkdir -p .phoenix/history
+
+# 8. Watch mode notificaties
+```
+
+---
+

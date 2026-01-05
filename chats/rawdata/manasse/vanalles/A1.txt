@@ -1,0 +1,109 @@
+Dank voor je logs — ze vertellen precies wat we nodig hebben.  
+**Kernobservaties uit de logs:**
+
+*   **ALIGN‑trigger gaat af** en reducer **align**’t correct:  
+    `[REDUCER] ALIGN done {"alignedLen": 3, "adultsCount": 2, "childrenCount": 1}`
+*   **Bij binnenkomst op C4** blijft `ledenLen = 0` in de repeater:  
+    `[C4-REPEATER] intake ... "ledenLen": 0`
+
+➡️ Conclusie: de **post‑hydrate** alignment is correct, maar **tegen de tijd dat C4 rendert** is `state.C4.leden` weer leeg of nog niet (meer) op het gewenste formaat. Dit is klassiek **timing/flow**: counters (A/B) of state (C4) veranderen nog tussen hydrate en navigatie. De meest robuuste oplossing is **just‑in‑time** alignen **vlak vóór** we naar **C4** gaan (jouw suggestie: trigger op **\[Volgende]** vanuit **C1**).
+
+We blijven strikt binnen je voorwaarden: **minimaal**, **non‑functional**, **reversibel**, en **alleen** wat nodig is.
+
+***
+
+## ✅ Doel & aanpak
+
+**Doel:** kaarten op **C4** moeten **altijd** overeenkomen met de actuele **C1‑counters** zodra je C4 binnenkomt.  
+**Aanpak (kleinst mogelijk):** één extra **ALIGN**‑dispatch in `navigateNext` in `App.tsx`, **alleen** wanneer de volgende pagina **C4** is.
+
+*   **Invariant (B1) “woont”** nog steeds in:  
+    `src/services/householdAlign.ts` (pure helper) + reducer‑case in `FormContext.tsx`  
+    → we voegen **géén** logica toe in UI, alleen een **tijdstip** waarop we de invariant afdwingen.
+*   **Reversibiliteit (B2):** aparte commit, direct revertbaar.
+*   **Effect & bewijs (B3):** kaarten renderen bij binnenkomst C4; smoke‑tests moeten positief worden.
+
+***
+
+## 🔧 Micro‑patch (exacte regels, minimaal)
+
+**Bestand:** `App.tsx` (root), in de functie **`navigateNext`**  
+Zoek het blok waar je bepaalt dat de next stap **C4** is (jij hebt al `c4Index = useMemo(...)` en logic in `handleSignin/handleSignup`/`navigateNext`).  
+**Vóór** het `setCurrentPageIndex(...)` naar `c4Index`, **voeg**:
+
+```ts
+// Just-in-time alignment wanneer de volgende pagina C4 is
+if (c4Index >= 0 && currentPageIndex === 0 /* van C1 naar C4 */) {
+  const a = Number(state.C1?.aantalMensen ?? 0);
+  const bRaw = Number(state.C1?.aantalVolwassen ?? 0);
+  // B-regel expliciet: min 1 volwassene, nooit meer dan mensen
+  const b = Math.min(a, Math.max(1, bRaw));
+
+  // Dispatch ALIGN met actuele counters uit state vlak voor we C4 binnenkomen
+  dispatch({
+    type: 'ALIGN_HOUSEHOLD_MEMBERS',
+    payload: { aantalMensen: a, aantalVolwassen: b },
+  });
+}
+```
+
+> **Waarom hier?**  
+> Dit garandeert dat **net voor** C4, `leden[]` in sync is met **actuele A/B**.  
+> Het is tijdstip‑correct en **deterministisch** (geen reliance op hydrate‑timing).
+
+***
+
+## 💾 Commit (atomair, 1 file)
+
+```bash
+git add App.tsx
+git commit -m "fix(C4): just-in-time ALIGN before navigating from C1 to C4 (current counters)"
+git push origin pre-c7-hardening
+git --no-pager show HEAD -- App.tsx
+```
+
+> **Rollback‑pad:** deze commit kun je onafhankelijk terugdraaien; de post‑hydrate trigger in `loadAndInit()` blijft bestaan.
+
+***
+
+## 🔁 Test — exact zoals afgesproken (smoke‑tests)
+
+1.  Start bundler (LAN of `--tunnel`); herlaad met `r`.
+2.  Voer **C1 → C4 → Verder** uit voor:
+
+*   **Scenario 1**: A=1, B=1, C=0  
+    *Verwacht*: C4 **1 adult** kaart; **Verder OK**
+
+*   **Scenario 2**: A=2, B=1, C=1  
+    *Verwacht*: C4 **1 adult + 1 child**; **Verder OK**
+
+*   **Scenario 3**: A=3, B=2, C=1  
+    *Verwacht*: C4 **2 adults + 1 child**; **Verder OK**
+
+**Plak 3 korte regels** (resultaat per scenario).  
+Als er nog “negatief” uitvalt, laat dan de bijbehorende logs staan (we hebben nog debug‑logs actief), en ik maak **nóg kleinere** aanpassing (bijv. page‑enter trigger in `WizardController` met `useFormContext`, maar dat doen we pas als dit JIT‑pad niet voldoende is).
+
+***
+
+## ℹ️ Waarom dit correct is, gezien je logs
+
+*   **Post‑hydrate ALIGN** werkte (reducer **alignedLen: 3**), maar **intake** op C4 zag **ledenLen: 0**.  
+    → counters of state zijn **gewijzigd** tussen hydrate en C4, óf `leden[]` is daarna overschreven / niet meegenomen in het pad.
+*   **JIT‑ALIGN op \[Volgende] (C1→C4)** borgt dat **direct** voor render van C4 **leden\[]** correct is — timing‑proof, flow‑hack vrij.
+*   **Non‑functional**: we veranderen geen businessregels; alleen **wanneer** we de invariant afdwingen.
+
+***
+
+## 📜 Contract‑borging (B1/B2/B3)
+
+*   **B1 (Invariant‑inzicht):**
+    *   `C4.leden.length === C1.aantalMensen` en eerste `C1.aantalVolwassen` zijn `adult`, rest `child`.
+    *   **Locatie:** helper/reducer; **tijdstip:** `loadAndInit()` + **voor C4‑navigatie**.
+*   **B2 (Reversibiliteit):**
+    *   Aparte commit; revertbaar zonder nevenschade.
+*   **B3 (Effect & bewijs):**
+    *   Vóór: intake op C4 ziet `ledenLen=0`, kaarten renderen niet.
+    *   Na: intake ziet `ledenLen > 0`, kaarten renderen, “Verder” OK.
+    *   Bewijs via **exact 3 smoke‑tests**.
+
+Als je wil, kan ik de page‑enter variant voorbereiden als **Plan B** (ook non‑functional, een paar regels in `WizardController` met `useFormContext`). Maar eerst testen we **de commit hierboven**, conform jouw “één stap tegelijk”.

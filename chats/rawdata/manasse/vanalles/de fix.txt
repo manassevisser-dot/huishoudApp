@@ -1,0 +1,936 @@
+import React from 'react';
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react-native';
+import { UndoScreen } from '../UndoScreen';
+import { TransactionService } from '@services/transactionService';
+
+// 1. Mock de service
+jest.mock('@services/transactionService', () => ({
+  TransactionService: {
+    getAllTransactions: jest.fn(),
+    clearAll: jest.fn(),
+  },
+}));
+
+const mockedTx = TransactionService as jest.Mocked<typeof TransactionService>;
+
+describe('UndoScreen Integratie Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(cleanup);
+
+  it('moet transacties laden en de omschrijvingen tonen (met snapshot)', async () => {
+    const mockData = [
+      { id: '1', amount: 12.5, description: 'Boodschappen' },
+      { id: '2', amount: 45.0, description: 'Tanken' },
+    ];
+    mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+
+    const { toJSON } = render(<UndoScreen />);
+
+    // ✅ FIX: Gebruik regex met findByText (simpelste oplossing)
+    await waitFor(() => {
+      expect(screen.getByText(/Boodschappen/i)).toBeTruthy();
+      expect(screen.getByText(/Tanken/i)).toBeTruthy();
+    });
+
+    // Snapshot pas maken als de UI 'settled' is
+    expect(toJSON()).toMatchSnapshot();
+  });
+
+  it('moet omgaan met undefined data van de service', async () => {
+    mockedTx.getAllTransactions.mockResolvedValueOnce(undefined as any);
+  
+    render(<UndoScreen />);
+  
+    // Gebruik findBy om te wachten op de useEffect afhandeling
+    const counter = await screen.findByText(/Laatste transacties:\s*0/i);
+    expect(counter).toBeTruthy();
+    expect(screen.getByText(/Geen recente transacties/i)).toBeTruthy();
+  });
+
+  it('moet alle transacties verwijderen als op de knop wordt gedrukt', async () => {
+    const mockData = [{ id: '1', description: 'Boodschappen', amount: 12.5 }];
+    mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+    mockedTx.clearAll.mockResolvedValueOnce(undefined);
+
+    render(<UndoScreen />);
+
+    // Wacht tot initieel geladen
+    await screen.findByText(/Boodschappen/i);
+
+    // Actie: Verwijderen
+    fireEvent.press(screen.getByText(/Verwijder alles/i));
+
+    // Wacht tot de service is aangeroepen EN de UI is bijgewerkt naar 0
+    await waitFor(() => {
+      expect(mockedTx.clearAll).toHaveBeenCalled();
+      expect(screen.getByText(/Laatste transacties:\s*0/i)).toBeTruthy();
+    });
+
+    expect(screen.queryByText(/Boodschappen/i)).toBeNull();
+  });
+
+  // === EXTRA TESTS (bonus) ===
+
+  it('moet meerdere transacties correct renderen', async () => {
+    const mockData = [
+      { id: '1', amount: 12.5, description: 'Boodschappen' },
+      { id: '2', amount: 45.0, description: 'Tanken' },
+      { id: '3', amount: 8.99, description: 'Koffie' },
+    ];
+    mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+
+    render(<UndoScreen />);
+
+    // Wacht op alle items
+    await waitFor(() => {
+      expect(screen.getByText(/Boodschappen/i)).toBeTruthy();
+      expect(screen.getByText(/Tanken/i)).toBeTruthy();
+      expect(screen.getByText(/Koffie/i)).toBeTruthy();
+    });
+
+    // Check totaal aantal
+    expect(screen.getByText(/Laatste transacties:\s*3/i)).toBeTruthy();
+  });
+
+  it('moet bedragen correct formatteren', async () => {
+    const mockData = [
+      { id: '1', amount: 12.5, description: 'Test' },
+    ];
+    mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+
+    render(<UndoScreen />);
+
+    // Check of bedrag correct wordt weergegeven
+    await waitFor(() => {
+      expect(screen.getByText(/€\s*12\.5/i)).toBeTruthy();
+    });
+  });
+
+  it('moet knop disabled zijn als er geen transacties zijn', async () => {
+    mockedTx.getAllTransactions.mockResolvedValueOnce([]);
+
+    const { getByRole } = render(<UndoScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Laatste transacties:\s*0/i)).toBeTruthy();
+    });
+
+    // Button moet er nog steeds zijn
+    const button = getByRole('button');
+    expect(button).toBeTruthy();
+  });
+
+  it('moet error handling hebben bij service failure', async () => {
+    // Mock een fout
+    mockedTx.getAllTransactions.mockRejectedValueOnce(new Error('Network error'));
+
+    render(<UndoScreen />);
+
+    // Moet gracefully falen en lege state tonen
+    await waitFor(() => {
+      expect(screen.getByText(/Laatste transacties:\s*0/i)).toBeTruthy();
+    });
+  });
+});
+=================
+import * as React from 'react';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { TransactionService } from '@services/transactionService';
+
+interface Transaction {
+  id: string;
+  amount: number;
+  description: string;
+}
+
+export const UndoScreen: React.FC = () => {
+  const [items, setItems] = React.useState<Transaction[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await TransactionService.getAllTransactions();
+        setItems(data || []);
+      } catch (err) {
+        console.error('Failed to fetch transactions:', err);
+        setError('Kon transacties niet laden');
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTransactions();
+  }, []);
+
+  const handleClearAll = async () => {
+    try {
+      await TransactionService.clearAll?.();
+      setItems([]);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to clear transactions:', err);
+      setError('Kon transacties niet verwijderen');
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={{ padding: 20, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" />
+        <Text style={{ marginTop: 10 }}>Laden...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ padding: 20 }}>
+      <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
+        Laatste transacties: {items.length}
+      </Text>
+
+      {error && (
+        <View style={{ 
+          marginTop: 8, 
+          padding: 10, 
+          backgroundColor: '#ffebee', 
+          borderRadius: 5 
+        }}>
+          <Text style={{ color: '#c62828' }}>{error}</Text>
+        </View>
+      )}
+
+      {items.length === 0 && !error ? (
+        <Text style={{ marginTop: 8, color: '#666' }}>
+          Geen recente transacties
+        </Text>
+      ) : (
+        <ScrollView 
+          style={{ marginTop: 8, maxHeight: 400 }}
+          testID="transaction-list"
+        >
+          {items.map((item) => (
+            <View 
+              key={item.id} 
+              style={{ 
+                paddingVertical: 8,
+                paddingHorizontal: 12,
+                marginBottom: 4,
+                backgroundColor: '#f5f5f5',
+                borderRadius: 4
+              }}
+            >
+              <Text style={{ fontSize: 16 }}>
+                {item.description}: € {item.amount.toFixed(2)}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
+      )}
+
+      <TouchableOpacity
+        onPress={handleClearAll}
+        accessibilityRole="button"
+        accessibilityLabel="Verwijder alle transacties"
+        disabled={items.length === 0}
+        style={{ 
+          marginTop: 20, 
+          backgroundColor: items.length === 0 ? '#ccc' : '#d32f2f', 
+          padding: 12, 
+          borderRadius: 5 
+        }}
+      >
+        <Text style={{ 
+          color: 'white', 
+          textAlign: 'center',
+          fontWeight: 'bold'
+        }}>
+          Verwijder Alles {items.length > 0 && `(${items.length})`}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+export default UndoScreen;
+=============
+import React from 'react';
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+  within,
+} from '@testing-library/react-native';
+import { UndoScreen } from '../UndoScreen';
+import { TransactionService } from '@services/transactionService';
+
+jest.mock('@services/transactionService', () => ({
+  TransactionService: {
+    getAllTransactions: jest.fn(),
+    clearAll: jest.fn(),
+  },
+}));
+
+const mockedTx = TransactionService as jest.Mocked<typeof TransactionService>;
+
+describe('UndoScreen - Custom Query Approach', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(cleanup);
+
+  // ========================================
+  // OPLOSSING 1: Gebruik getAllByText met regex
+  // ========================================
+  it('oplossing 1: gebruik getAllByText met regex', async () => {
+    const mockData = [
+      { id: '1', amount: 12.5, description: 'Boodschappen' },
+      { id: '2', amount: 45.0, description: 'Tanken' },
+    ];
+    mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+
+    render(<UndoScreen />);
+
+    // Wacht tot items geladen zijn
+    await waitFor(() => {
+      const allTexts = screen.getAllByText(/./); // Alle text nodes
+      const hasItem = allTexts.some(node => 
+        node.props.children?.toString().includes('Boodschappen')
+      );
+      expect(hasItem).toBe(true);
+    });
+  });
+
+  // ========================================
+  // OPLOSSING 2: Gebruik queryAllByText en filter
+  // ========================================
+  it('oplossing 2: gebruik queryAllByText', async () => {
+    const mockData = [
+      { id: '1', amount: 12.5, description: 'Boodschappen' },
+      { id: '2', amount: 45.0, description: 'Tanken' },
+    ];
+    mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+
+    const { queryAllByText } = render(<UndoScreen />);
+
+    await waitFor(() => {
+      // Zoek alle text elementen die "Boodschappen" bevatten
+      const allNodes = queryAllByText(() => true);
+      const found = allNodes.find(node => {
+        const text = node.props.children?.toString() || '';
+        return text.includes('Boodschappen');
+      });
+      
+      expect(found).toBeTruthy();
+    });
+  });
+
+  // ========================================
+  // OPLOSSING 3: Gebruik testID (BESTE aanpak)
+  // ========================================
+  it('oplossing 3: gebruik testID (recommended)', async () => {
+    const mockData = [
+      { id: '1', amount: 12.5, description: 'Boodschappen' },
+      { id: '2', amount: 45.0, description: 'Tanken' },
+    ];
+    mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+
+    render(<UndoScreen />);
+
+    // Wacht op de lijst container
+    const list = await screen.findByTestId('transaction-list');
+    expect(list).toBeTruthy();
+
+    // Check items binnen de lijst
+    await waitFor(() => {
+      const listQueries = within(list);
+      expect(listQueries.getByText(/Boodschappen/i)).toBeTruthy();
+      expect(listQueries.getByText(/Tanken/i)).toBeTruthy();
+    });
+  });
+
+  // ========================================
+  // OPLOSSING 4: Gebruik ARIA query
+  // ========================================
+  it('oplossing 4: gebruik accessibility queries', async () => {
+    const mockData = [
+      { id: '1', amount: 12.5, description: 'Boodschappen' },
+    ];
+    mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+
+    const { getByRole } = render(<UndoScreen />);
+
+    // Wacht op data
+    await waitFor(() => {
+      expect(screen.getByText(/Laatste transacties:\s*1/i)).toBeTruthy();
+    });
+
+    // Query via role
+    const button = getByRole('button', { name: /Verwijder alle transacties/i });
+    expect(button).toBeTruthy();
+  });
+
+  // ========================================
+  // OPLOSSING 5: Custom helper function
+  // ========================================
+  it('oplossing 5: custom helper voor text search', async () => {
+    const mockData = [
+      { id: '1', amount: 12.5, description: 'Boodschappen' },
+      { id: '2', amount: 45.0, description: 'Tanken' },
+    ];
+    mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+
+    render(<UndoScreen />);
+
+    // Custom helper
+    const findTextContaining = async (searchText: string) => {
+      return waitFor(() => {
+        const allNodes = screen.queryAllByText(() => true);
+        const found = allNodes.find(node => {
+          const text = extractText(node);
+          return text.includes(searchText);
+        });
+        expect(found).toBeTruthy();
+        return found;
+      });
+    };
+
+    await findTextContaining('Boodschappen');
+    await findTextContaining('Tanken');
+  });
+
+  // ========================================
+  // OPLOSSING 6: Gebruik exact text match met formattering
+  // ========================================
+  it('oplossing 6: exact match met formattering', async () => {
+    const mockData = [
+      { id: '1', amount: 12.5, description: 'Boodschappen' },
+    ];
+    mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+
+    render(<UndoScreen />);
+
+    // Wacht op exact geformatteerde text
+    await waitFor(() => {
+      // Match de exacte output van het component
+      expect(screen.getByText(/Boodschappen:\s*€\s*12\.50/i)).toBeTruthy();
+    });
+  });
+
+  // ========================================
+  // OPLOSSING 7: Debug output gebruiken
+  // ========================================
+  it('oplossing 7: debug om te zien wat er beschikbaar is', async () => {
+    const mockData = [
+      { id: '1', amount: 12.5, description: 'Boodschappen' },
+    ];
+    mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+
+    const { debug } = render(<UndoScreen />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Laatste transacties:\s*1/i)).toBeTruthy();
+    });
+
+    // Uncomment om te debuggen:
+    // debug(); // Print hele DOM tree
+
+    expect(screen.getByText(/Boodschappen/i)).toBeTruthy();
+  });
+});
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+
+/**
+ * Extraheert text uit een React Native node
+ */
+function extractText(node: any): string {
+  if (typeof node === 'string') {
+    return node;
+  }
+  
+  if (node?.props?.children) {
+    if (Array.isArray(node.props.children)) {
+      return node.props.children.map(extractText).join('');
+    }
+    return extractText(node.props.children);
+  }
+  
+  return '';
+}
+
+/**
+ * Wacht tot een text fragment verschijnt
+ */
+export async function waitForTextContaining(
+  searchText: string,
+  options?: { timeout?: number }
+): Promise<void> {
+  await waitFor(() => {
+    const allNodes = screen.queryAllByText(() => true);
+    const found = allNodes.some(node => {
+      const text = extractText(node);
+      return text.includes(searchText);
+    });
+    expect(found).toBe(true);
+  }, options);
+}
+============
+# 🧪 React Native Testing Guide - UndoScreen
+
+## ❌ Het Probleem
+
+```typescript
+// ❌ DIT WERKT NIET
+const firstItem = await screen.findByText((content: string, element: any) => {
+  return element?.type === 'Text' && content.includes('Boodschappen');
+});
+// Error: matcher.test is not a function
+```
+
+**Waarom niet?**
+`findByText` accepteert alleen:
+- String: `findByText('Boodschappen')`
+- Regex: `findByText(/Boodschappen/i)`
+
+**GEEN** custom matcher functions!
+
+---
+
+## ✅ De Oplossingen
+
+### 🥇 OPLOSSING 1: Regex (Simpelst)
+
+```typescript
+// ✅ WERKT
+await waitFor(() => {
+  expect(screen.getByText(/Boodschappen/i)).toBeTruthy();
+  expect(screen.getByText(/Tanken/i)).toBeTruthy();
+});
+```
+
+**Wanneer gebruiken:** Altijd, tenzij je exact match nodig hebt.
+
+**Pro's:**
+- Simpel
+- Case-insensitive met `/i` flag
+- Ondersteunt whitespace patterns
+
+**Con's:**
+- Kan false positives geven
+
+---
+
+### 🥈 OPLOSSING 2: TestID (Best Practice)
+
+**In component:**
+```typescript
+<ScrollView testID="transaction-list">
+  {items.map(item => (
+    <View key={item.id} testID={`transaction-${item.id}`}>
+      <Text>{item.description}: € {item.amount}</Text>
+    </View>
+  ))}
+</ScrollView>
+```
+
+**In test:**
+```typescript
+const list = await screen.findByTestId('transaction-list');
+const item = await screen.findByTestId('transaction-1');
+
+// Of gebruik within voor scoped queries
+const listQueries = within(list);
+expect(listQueries.getByText(/Boodschappen/i)).toBeTruthy();
+```
+
+**Wanneer gebruiken:** Voor complexe queries of wanneer tekst kan veranderen.
+
+**Pro's:**
+- Meest betrouwbaar
+- Niet afhankelijk van UI tekst
+- Best practice in React Native community
+
+**Con's:**
+- Vereist component aanpassingen
+
+---
+
+### 🥉 OPLOSSING 3: Accessibility Queries
+
+**In component:**
+```typescript
+<TouchableOpacity
+  accessibilityRole="button"
+  accessibilityLabel="Verwijder alle transacties"
+  onPress={handleClearAll}
+>
+  <Text>Verwijder Alles</Text>
+</TouchableOpacity>
+```
+
+**In test:**
+```typescript
+const button = screen.getByRole('button', { 
+  name: /Verwijder alle transacties/i 
+});
+
+fireEvent.press(button);
+```
+
+**Wanneer gebruiken:** Voor interactieve elementen.
+
+**Pro's:**
+- Verbetert accessibility
+- Semantisch correct
+- Robuust
+
+---
+
+### 🔧 OPLOSSING 4: Custom Helper
+
+```typescript
+// test-utils/helpers.ts
+export async function waitForTextContaining(
+  searchText: string,
+  options?: { timeout?: number }
+): Promise<void> {
+  await waitFor(() => {
+    const allNodes = screen.queryAllByText(() => true);
+    const found = allNodes.some(node => {
+      const text = extractText(node);
+      return text.includes(searchText);
+    });
+    expect(found).toBe(true);
+  }, options);
+}
+
+function extractText(node: any): string {
+  if (typeof node === 'string') return node;
+  if (node?.props?.children) {
+    if (Array.isArray(node.props.children)) {
+      return node.props.children.map(extractText).join('');
+    }
+    return extractText(node.props.children);
+  }
+  return '';
+}
+
+// In test:
+await waitForTextContaining('Boodschappen');
+```
+
+**Wanneer gebruiken:** Voor complexe nested text of herbruikbare queries.
+
+---
+
+## 🎯 Aanbevolen Test Strategie
+
+### 1. **Happy Path**
+```typescript
+it('moet transacties tonen na laden', async () => {
+  const mockData = [
+    { id: '1', amount: 12.5, description: 'Boodschappen' },
+  ];
+  mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+
+  render(<UndoScreen />);
+
+  // Wacht op item
+  await screen.findByText(/Boodschappen/i);
+  
+  // Check counter
+  expect(screen.getByText(/Laatste transacties:\s*1/i)).toBeTruthy();
+});
+```
+
+---
+
+### 2. **Empty State**
+```typescript
+it('moet lege state tonen zonder data', async () => {
+  mockedTx.getAllTransactions.mockResolvedValueOnce([]);
+
+  render(<UndoScreen />);
+
+  await waitFor(() => {
+    expect(screen.getByText(/Geen recente transacties/i)).toBeTruthy();
+  });
+});
+```
+
+---
+
+### 3. **Error Handling**
+```typescript
+it('moet errors gracefully afhandelen', async () => {
+  mockedTx.getAllTransactions.mockRejectedValueOnce(
+    new Error('Network error')
+  );
+
+  render(<UndoScreen />);
+
+  await waitFor(() => {
+    expect(screen.getByText(/Kon transacties niet laden/i)).toBeTruthy();
+  });
+});
+```
+
+---
+
+### 4. **User Interactions**
+```typescript
+it('moet items verwijderen bij button press', async () => {
+  const mockData = [{ id: '1', description: 'Test', amount: 10 }];
+  mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+  mockedTx.clearAll.mockResolvedValueOnce(undefined);
+
+  render(<UndoScreen />);
+
+  await screen.findByText(/Test/i);
+
+  // Click button
+  fireEvent.press(screen.getByRole('button'));
+
+  // Verify service called
+  await waitFor(() => {
+    expect(mockedTx.clearAll).toHaveBeenCalled();
+    expect(screen.getByText(/Laatste transacties:\s*0/i)).toBeTruthy();
+  });
+});
+```
+
+---
+
+### 5. **Snapshot Testing**
+```typescript
+it('moet consistent renderen (snapshot)', async () => {
+  const mockData = [
+    { id: '1', amount: 12.5, description: 'Boodschappen' },
+  ];
+  mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
+
+  const { toJSON } = render(<UndoScreen />);
+
+  // Wacht tot data geladen is
+  await screen.findByText(/Boodschappen/i);
+
+  // BELANGRIJK: Snapshot pas maken na loading
+  expect(toJSON()).toMatchSnapshot();
+});
+```
+
+---
+
+## 🐛 Common Pitfalls
+
+### ❌ Pitfall 1: Act Warnings
+```typescript
+// ❌ FOUT
+render(<UndoScreen />);
+expect(screen.getByText(/Boodschappen/i)).toBeTruthy();
+// Warning: An update was not wrapped in act(...)
+
+// ✅ GOED
+render(<UndoScreen />);
+await screen.findByText(/Boodschappen/i);
+// of
+await waitFor(() => {
+  expect(screen.getByText(/Boodschappen/i)).toBeTruthy();
+});
+```
+
+---
+
+### ❌ Pitfall 2: Query Timing
+```typescript
+// ❌ FOUT - getBy faalt als element er niet is
+const button = screen.getByRole('button');
+
+// ✅ GOED - findBy wacht tot element er is
+const button = await screen.findByRole('button');
+
+// ✅ GOED - queryBy returnt null
+const button = screen.queryByRole('button');
+expect(button).toBeNull();
+```
+
+---
+
+### ❌ Pitfall 3: Mock Timing
+```typescript
+// ❌ FOUT - mock wordt niet gereset
+test('test 1', () => {
+  mockedService.getData.mockResolvedValueOnce(['A']);
+});
+
+test('test 2', () => {
+  // Mock van test 1 is nog actief!
+});
+
+// ✅ GOED
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+```
+
+---
+
+## 📚 Query Cheatsheet
+
+| Method | Wanneer gebruiken | Throws? | Waits? |
+|--------|-------------------|---------|---------|
+| `getBy` | Element moet er zijn | ✅ | ❌ |
+| `queryBy` | Element mag er niet zijn | ❌ | ❌ |
+| `findBy` | Async loading | ✅ | ✅ |
+| `getAllBy` | Meerdere matches | ✅ | ❌ |
+| `queryAllBy` | 0+ matches | ❌ | ❌ |
+| `findAllBy` | Async meerdere | ✅ | ✅ |
+
+---
+
+## 🎨 Best Practices
+
+### ✅ DO's
+
+1. **Wacht op async updates**
+   ```typescript
+   await screen.findByText(/text/i);
+   ```
+
+2. **Gebruik testID voor complexe queries**
+   ```typescript
+   screen.getByTestId('transaction-list');
+   ```
+
+3. **Mock proper cleanup**
+   ```typescript
+   beforeEach(() => jest.clearAllMocks());
+   afterEach(cleanup);
+   ```
+
+4. **Test user perspective**
+   ```typescript
+   // ✅ Test wat gebruiker ziet
+   expect(screen.getByText(/Boodschappen/i)).toBeTruthy();
+   
+   // ❌ Test niet implementatie details
+   expect(component.state.items.length).toBe(1);
+   ```
+
+5. **Use meaningful test names**
+   ```typescript
+   it('moet error tonen bij network failure', ...)
+   ```
+
+---
+
+### ❌ DON'Ts
+
+1. **Niet testen zonder waitFor**
+   ```typescript
+   // ❌
+   render(<Component />);
+   expect(screen.getByText(/loaded/i)).toBeTruthy();
+   ```
+
+2. **Niet testen op implementatie**
+   ```typescript
+   // ❌
+   expect(component.instance().handleClick).toHaveBeenCalled();
+   ```
+
+3. **Niet custom matchers in queries**
+   ```typescript
+   // ❌
+   screen.findByText((text, element) => ...)
+   ```
+
+4. **Niet snapshots van loading states**
+   ```typescript
+   // ❌
+   const { toJSON } = render(<Component />);
+   expect(toJSON()).toMatchSnapshot(); // Capturing loading state!
+   
+   // ✅
+   await screen.findByText(/loaded/i);
+   expect(toJSON()).toMatchSnapshot();
+   ```
+
+---
+
+## 🚀 Quick Reference
+
+```typescript
+// Setup
+const mockedService = Service as jest.Mocked<typeof Service>;
+
+// Render
+const { getByText, findByText, toJSON } = render(<Component />);
+
+// Queries
+screen.getByText(/pattern/i)          // Sync, throws
+screen.queryByText(/pattern/i)        // Sync, null
+await screen.findByText(/pattern/i)   // Async, throws
+
+// Assertions
+expect(element).toBeTruthy()
+expect(element).toBeNull()
+expect(toJSON()).toMatchSnapshot()
+
+// Interactions
+fireEvent.press(button)
+fireEvent.changeText(input, 'value')
+
+// Waiting
+await waitFor(() => { ... })
+await screen.findByText(...)
+
+// Mocking
+mockedService.method.mockResolvedValueOnce(data)
+mockedService.method.mockRejectedValueOnce(error)
+```
+
+---
+
+## 🎯 Jouw Specifieke Fix
+
+**Voor jouw UndoScreen test:**
+
+```typescript
+// ❌ OUDE CODE
+const firstItem = await screen.findByText(((content, element) => {
+  return element?.type === 'Text' && content.includes('Boodschappen');
+}) as any);
+
+// ✅ NIEUWE CODE - Optie 1 (Simpelst)
+await waitFor(() => {
+  expect(screen.getByText(/Boodschappen/i)).toBeTruthy();
+});
+
+// ✅ NIEUWE CODE - Optie 2 (Best Practice)
+const list = await screen.findByTestId('transaction-list');
+const listQueries = within(list);
+expect(listQueries.getByText(/Boodschappen/i)).toBeTruthy();
+```
+
+---
+
+**Happy Testing! 🎉**

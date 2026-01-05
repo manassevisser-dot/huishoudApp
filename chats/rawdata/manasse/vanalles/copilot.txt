@@ -1,0 +1,701 @@
+
+IDEE TWEE
+
+## 1) Plan voor vandaag (concreet, microstappen)
+
+**Doel van de dag**
+
+*   C4‑vastloper oplossen **zonder** feature‑breuk, volledig binnen **Phase 0/0.5**: data‑consistentie en scheiding van zorgen.
+*   Align/seed‑logica **uit** de UI (HhMR) en **in** een pure helper + reducer‑actie.
+*   Smoke‑testen van 3 scenario’s (A/B/C) op device.
+
+**Voorwaarden (vandaag al oké):**
+
+*   Branch: `pre-c7-hardening` in `../pre7`
+*   `npx expo-doctor` → 17/17 ✔︎
+*   App start lokaal (desnoods via `--tunnel`) ✔︎
+
+### 🔹 Stap 1 — (read‑only) Member‑type verifiëren
+
+```bash
+cd ../pre7
+sed -n '1,200p' src/types/household.ts
+```
+
+**Acceptatie:** `export type Member = { id: string; memberType: 'adult' | 'child'; ... }` of equivalent.
+
+> Als dit OK is → door naar stap 2.
+
+***
+
+### 🔹 Stap 2 — Pure align‑helper toevoegen (Phase 0: data‑hardening)
+
+**Bestand:** `src/services/householdAlign.ts`
+
+```ts
+// src/services/householdAlign.ts
+import { Member } from '../types/household';
+
+export function alignMembers(
+  current: Member[] | undefined,
+  aantalMensen: number,
+  aantalVolwassen: number
+): Member[] {
+  const targetLen = Math.max(0, Number(aantalMensen || 0));
+  const targetAdults = Math.max(0, Math.min(Number(aantalVolwassen || 0), targetLen));
+
+  let next = Array.isArray(current) ? current.map((m) => ({ ...m })) : [];
+
+  if (next.length > targetLen) {
+    next = next.slice(0, targetLen);
+  } else if (next.length < targetLen) {
+    let i = next.filter((m) => m?.memberType === 'adult').length;
+    while (i < targetAdults && next.length < targetLen) {
+      const idx = i;
+      next.splice(idx, 0, {
+        id: `m-${idx}`,
+        memberType: 'adult',
+        naam: '',
+        gender: undefined,
+        dateOfBirth: undefined,
+        leeftijd: undefined,
+      });
+      i++;
+    }
+    while (next.length < targetLen) {
+      const idx = next.length;
+      next.push({
+        id: `m-${idx}`,
+        memberType: 'child',
+        naam: '',
+        gender: undefined,
+        dateOfBirth: undefined,
+        leeftijd: undefined,
+      });
+    }
+  }
+
+  for (let i = 0; i < next.length; i++) {
+    const shouldType: Member['memberType'] = i < targetAdults ? 'adult' : 'child';
+    if (next[i]?.memberType !== shouldType) {
+      next[i] = { ...next[i], memberType: shouldType };
+    }
+  }
+  return next;
+}
+```
+
+**Commit (micro):**
+
+```bash
+git add src/services/householdAlign.ts
+git commit -m "feat(C4): add household align helper (pure, type-safe)"
+git push origin pre-c7-hardening
+```
+
+**Acceptatie:** alleen dit nieuwe bestand toegevoegd.
+
+***
+
+### 🔹 Stap 3 — Reducer‑actie toevoegen (Phase 0.5: scheiding van zorgen)
+
+**Wijzig:** `src/context/FormContext.tsx`
+
+1.  **Actietype** toevoegen:
+
+```ts
+export type AlignHouseholdAction = {
+  type: 'ALIGN_HOUSEHOLD_MEMBERS';
+  payload: { aantalMensen: number; aantalVolwassen: number };
+};
+export type FormAction =
+  | SetPageDataAction
+  | LoadSavedStateAction
+  | SetUserIdAction
+  | ResetStateAction
+  | AlignHouseholdAction;
+```
+
+2.  **Reducer‑case** (boven `default`), gebruik de helper:
+
+```ts
+import { alignMembers } from '../services/householdAlign';
+
+case 'ALIGN_HOUSEHOLD_MEMBERS': {
+  const { aantalMensen, aantalVolwassen } = action.payload;
+  const current = state?.C4?.leden;
+  const aligned = alignMembers(current, aantalMensen, aantalVolwassen);
+  return {
+    ...state,
+    C4: { ...(state.C4 ?? {}), leden: aligned },
+  };
+}
+```
+
+**Commit (micro):**
+
+```bash
+git add src/context/FormContext.tsx
+git commit -m "feat(C4): add ALIGN_HOUSEHOLD_MEMBERS reducer case (uses pure helper)"
+git push origin pre-c7-hardening
+```
+
+**Acceptatie:** geen andere files geraakt.
+
+***
+
+### 🔹 Stap 4 — Trigger-moment kiezen (één van de twee; jij kiest)
+
+**Optie A (aanrader):** in `App.tsx` **na hydrate/init** uit jouw `loadAndInit` effect
+
+```ts
+// na het zetten van defaults en setIsLoading(false):
+dispatch({
+  type: 'ALIGN_HOUSEHOLD_MEMBERS',
+  payload: {
+    aantalMensen: Number(state.C1?.aantalMensen ?? 0),
+    aantalVolwassen: Number(state.C1?.aantalVolwassen ?? 0),
+  },
+});
+```
+
+**Optie B:** in `WizardController` **bij render van C4** (controlled flow)
+
+```ts
+// Net voordat WizardPage voor C4 wordt gerenderd:
+if (page.id === 'C4') {
+  // haal state via context of geef via props door naar controller
+  dispatch({
+    type: 'ALIGN_HOUSEHOLD_MEMBERS',
+    payload: { aantalMensen, aantalVolwassen },
+  });
+}
+```
+
+**Commit (micro):**
+
+```bash
+git add src/App.tsx   # of src/screens/Wizard/WizardController.tsx
+git commit -m "chore(C4): trigger ALIGN_HOUSEHOLD_MEMBERS on init/enter"
+git push origin pre-c7-hardening
+```
+
+**Acceptatie:** alleen trigger toegevoegd; geen UI‑wijzigingen.
+
+***
+
+### 🔹 Stap 5 — (optioneel) Feature Flag toevoegen
+
+**Bestand:** `src/config/features.ts`
+
+```ts
+export const enableC4AutoAlign = true;
+```
+
+Gebruik de flag bij de **trigger**: alleen dispatchen als `enableC4AutoAlign` `true` is.  
+**Commit (micro):**
+
+```bash
+git add src/config/features.ts src/App.tsx
+git commit -m "chore(flags): add enableC4AutoAlign and guard alignment trigger"
+git push origin pre-c7-hardening
+```
+
+***
+
+### 🔹 Stap 6 — Smoke‑tests (device)
+
+*   **A=1, B=1, C=0** → C4 toont **1 adult**; “Verder” OK.
+*   **A=2, B=1, C=1** → **1 adult + 1 child**; “Verder” OK.
+*   **A=3, B=2, C=1** → **2 adults + 1 child**; “Verder” OK.
+
+**Herlaad:**
+
+```bash
+npx expo start     # of --tunnel
+# in Metro: druk 'r'
+```
+
+**Als iets faalt:** plak fouttekst; we doen 1 microfix (enkel reducer/helper).
+
+***
+
+## 2) Changelog (vandaag)
+
+**Branches**
+
+*   `snack-min`
+    *   RN patch naar **0.81.5** (SDK 54) via `expo install` → **Expo Doctor 17/17 OK**.
+    *   Lockfile aanwezig; minimal branch functioneel.
+
+*   `pre-c7-hardening`
+    *   **Worktree** aangemaakt (`../pre7`), `npm install`, bundler draait.
+    *   RN patch naar **0.81.5** → **Expo Doctor 17/17 OK**.
+    *   **Feature flag**: `showWizardProgress = true` (commit `aa9ff22`) → progress‑dots zichtbaar.
+    *   **Tunnel** voorbereid: `@expo/ngrok` lokaal geïnstalleerd (voor `--tunnel` gebruik). *(niet per se gecommit)*
+
+**Files & commits (kern):**
+
+*   `package.json` / `package-lock.json` (pre7): RN **0.81.5** aligned (doctor groen).
+*   `src/config/features.ts`:
+    *   `showWizardProgress` **true** → *feat(ui): enable wizard progress indicator via feature flag* (`aa9ff22`).
+*   Geen wijzigingen in business‑logica; enkel enabling/config.
+
+**Onderzoek & analyse (geen code‑wijzigingen):**
+
+*   C4 vastloper herleid naar `validation.lengthEqualsTo = 'C1.aantalMensen'` + ontbreken van seed/align.
+*   Historie bevestigt dat align‑logica eerder bestond (`computeAligned`) en bij een delete/redo is verdwenen.
+
+***
+
+## Tot slot — Manasse moet hierover beslissen:
+
+1.  **Bevestig** waar we de trigger willen plaatsen:
+    *   **A (aanrader)**: in `App.tsx` na hydrate/init, **of**
+    *   **B**: in `WizardController` bij betreden van C4.
+2.  **Korte GO**: “GO helper + reducer + trigger(A|B)”.
+3.  Daarna voer je 3 microcommits uit (ik lever copy‑paste blokken + commands), en we testen direct met de 3 scenario’s.
+
+
+CONTEXT: Branch 'pre-c7-hardening', Phase 0.5 - UI Decoupling & Data Integrity.
+TAAK: Verplaats sync-logica (auto/huisdier) van de UI naar de Reducer/Service.
+
+INSTRUCTIES:
+1. Aanpassen src/services/householdAlign.ts:
+   - Breid 'alignMembers' uit zodat deze ook de status van 'heeftAuto' en 'heeftHuisdieren' (vanuit C1 state) synchroniseert naar elk lid-object in de array.
+2. Aanpassen src/context/FormContext.tsx:
+   - Update de case 'ALIGNHOUSEHOLDMEMBERS'. Zorg dat de payload de actuele C1-metadata (auto/huisdier) bevat en geef dit door aan de helper.
+3. Aanpassen src/organisms/HouseholdMemberRepeater.tsx:
+   - VERWIJDER alle useEffects of inline logica die de leden-data probeert te synchroniseren of te 'seeden'.
+   - De component mag alleen data lezen uit de state en wijzigingen doorgeven via dispatch.
+
+CONTRACT-EIS:
+Lever na uitvoering de volledige 'Vaste Step Completion Template'. 
+Toon bij 'Invariant-inzicht (B1)' aan hoe de data-integriteit nu gewaarborgd is in de state-laag in plaats van de UI-laag.
+
+CONTRACT: 
+
+# 📜 Definitieve Contracttekst
+
+## WE VOEREN HET ECHT UIT; DIT IS GEEN SIMULATIE
+
+## Transparantie- en Verantwoordingsplicht bij Technische Wijzigingen
+
+**Dit addendum is integraal bindend en maakt onlosmakelijk deel uit van elke opdracht, opdrachtbevestiging of samenwerking.**
+
+---
+
+## A. Doel en uitgangspunten
+
+Dit addendum borgt dat technische wijzigingen **controleerbaar, omkeerbaar en expliciet verantwoord** plaatsvinden, zonder impliciete aannames of stilzwijgende voortgang. Het vereist geen technische kennis van opdrachtgever en dwingt expliciet denken en bewijsvoering af bij opdrachtnemer.
+
+---
+
+## B. Inzichts- en Beslisplicht (kernverplichtingen)
+
+### B1 — Invariant‑inzicht
+
+**“Laat Manasse zien waar de invariant woont.”**
+
+Bij iedere wijziging die invloed heeft op data‑integriteit, applicatie‑flow of kernlogica toont opdrachtnemer vooraf:
+
+* welke regel of aanname wordt geborgd;
+* waar deze logica centraal is geïmplementeerd;
+* waarom deze plek noodzakelijk is (bijv. init, reducer, domain‑helper).
+
+---
+
+### B2 — Reversibiliteit
+
+**“Laat Manasse zien hoe dit kan worden uitgezet of teruggedraaid.”**
+
+Verplicht:
+
+* afzonderlijke commit(s) of feature flag;
+* geen onomkeerbare wijzigingen zonder expliciete toestemming;
+* duidelijke rollback‑strategie.
+
+---
+
+### B3 — Effect & bewijs
+
+**“Laat Manasse zien wat er concreet beter gaat.”**
+
+Verplicht:
+
+* concrete scenario’s vóór en na de wijziging;
+* aantoonbaar effect (geen regressie, geen workaround);
+* geen beroep op impliciet vertrouwen.
+
+---
+
+## C. Scope‑bound enabling changes policy
+
+### C1 — Scope‑bound enabling changes toegestaan
+
+Binnen een stap zijn uitsluitend die extra wijzigingen toegestaan die **noodzakelijk** zijn om die stap veilig en succesvol uit te voeren (enabling), volledig **binnen scope** en **gedocumenteerd** in de PR‑beschrijving.
+
+*Voorbeeld: bij pre‑commit setup het aanmaken van .husky/ en .lintstagedrc en het aanvullen van tsconfig.json.*
+
+---
+
+### C2 — Config & docs zijn binnen scope
+
+Aanpassingen in configuratie‑ en documentatiebestanden die expliciet tot de stap behoren (o.a. package.json, tsconfig.json, .eslintrc, .prettierrc, .husky/*, features.ts, PR‑template, CHANGELOG) vallen binnen scope.
+
+---
+
+### C3 — Noodzakelijke devDependencies
+
+Het toevoegen van strikt noodzakelijke devDependencies (bijv. husky, lint‑staged, ESLint‑plugins) is uitsluitend toegestaan in de stap die dat vereist; geen andere dependencies.
+
+---
+
+### C4 — Fail‑safe afslagen
+
+Indien uitvoering wordt geblokkeerd door ontbrekende feiten of externe beperkingen: **STOP**; rapporteer de blokkade en vraag expliciet om toestemming voor de **kleinst mogelijke enabling‑actie**. Niet doorgaan zonder akkoord.
+
+---
+
+### C5 — Smalle scope, diff‑eis en rationale
+
+Elke uitvoer levert een **git diff** en **rationale per wijziging**; alle wijzigingen zijn traceerbaar naar het plan.
+
+---
+
+## D. Error Monitoring Policy (intern, voorbereid op extern)
+
+* Huidige fase (intern testen): **geen externe monitoring**.
+* Verplicht: **ErrorBoundary** en centrale **logError() helper**.
+* Code is zó geschreven dat latere externe monitoring kan worden toegevoegd **zonder refactorstress** (via logError‑abstractie).
+
+Externe monitoring pas toegestaan zodra één van de volgende waar is:
+
+* gebruikers ≠ intern;
+* fouten niet reproduceerbaar lokaal;
+* publicatie naar TestFlight / Play Store (closed track).
+
+Alle overige contractregels blijven van kracht.
+
+---
+
+## E. Verplichte documentatie na afronding van iedere stap
+
+Na afronding van **elke stap binnen een fase** levert opdrachtnemer **schriftelijk** onderstaande documentatie **vóór** enige vervolgstap. Zonder deze documentatie geldt de stap als **niet afgerond**.
+
+### E1 — Plan voor volgende stap of expliciet voorstel
+
+* **Plan** alleen indien met zekerheid vaststaat dat de stap noodzakelijk is; **of**
+* **VOORSTEL** (expliciet zo benoemd) indien zekerheid ontbreekt.
+
+Altijd:
+
+* zo concreet mogelijk;
+* beschrijft *wat* moet (of mogelijk zou moeten) gebeuren;
+* **geen impliciete voortgangsveronderstelling**.
+
+---
+
+### E2 — Changelog (verplicht)
+
+* gewijzigde bestanden;
+* toegevoegde/aangepaste/verwijderde logica;
+* expliciet wat **niet** is gewijzigd (indien relevant).
+
+---
+
+### E3 — Statusupdate
+
+* huidige stand van zaken;
+* waar we mee bezig waren toen we stopten;
+* positie binnen planning/fase.
+
+---
+
+### E4 — Verantwoording bij afwijkingen
+
+* waar is afgeweken;
+* waarom noodzakelijk;
+* of expliciete toestemming is verkregen.
+
+Niet‑gedocumenteerde afwijkingen gelden als contractuele overtreding.
+
+---
+
+## F. Slotbepaling bij ontbreken documentatie
+
+Bij ontbrekende of onvolledige documentatie:
+
+* stap is **niet afgerond**;
+* niet doorgaan naar volgende stap;
+* opdrachtgever mag voortgang opschorten zonder gevolgen.
+
+---
+
+## G. Bevestiging
+
+Opdrachtnemer bevestigt deze regels strikt na te leven en **STOP** te hanteren bij ontbrekende informatie of toestemming.
+
+---
+
+# 🧾 Vaste Step Completion Template (verplicht)
+
+**Stap:**
+**Fase:**
+**Datum:**
+**Commit(s) / PR:**
+
+---
+
+## 1. Resultaat van deze stap
+
+* Korte feitelijke beschrijving.
+
+---
+
+## 2. Changelog
+
+* Bestanden gewijzigd:
+* Logica toegevoegd/aangepast/verwijderd:
+* Niet gewijzigd (relevant):
+
+---
+
+## 3. Invariant‑inzicht (indien van toepassing)
+
+* Invariant:
+* Locatie:
+* Waarom hier:
+
+---
+
+## 4. Reversibiliteit
+
+* Rollback/flag:
+* Afzonderlijke commit(s):
+
+---
+
+## 5. Effect & bewijs
+
+* Scenario vóór:
+* Scenario na:
+* Bewijs (tests/logs):
+
+---
+
+## 6. Statusupdate
+
+* Waar staan we nu:
+* Waar stopten we:
+* Planning/fase‑positie:
+
+---
+
+## 7. Afwijkingen (indien geen: “Geen”)
+
+* Afwijking:
+* Reden:
+* Toestemming:
+
+---
+
+## 8. Volgende stap
+
+* ☐ **Plan (zeker noodzakelijk)**
+* ☐ **VOORSTEL (niet‑bindend)**
+
+STAND VAN ZAKEN: 
+Fantastisch: **doel behaald** — de **C4‑cards worden getoond**. Hieronder lever ik de gevraagde documentatie **exact volgens jouw contract** (transparant, controleerbaar, rollbackbaar).
+
+***
+
+# 🧾 Vaste Step Completion Template
+
+**Stap:** C4 uitlijning deterministisch maken (A2 — ALIGN bij page‑enter in `WizardController`)  
+**Fase:** Phase 0 (data‑hardening) & Phase 0.5 (architectonische hardening)  
+**Datum:** 2025‑12‑17  
+**Commit(s) / PR:**
+
+*   `feat(C4): add household align helper (pure, type-safe)` — `src/services/householdAlign.ts`
+*   `feat(C4): add ALIGN_HOUSEHOLD_MEMBERS reducer case (uses pure helper); de-duplicate FormAction union` — `src/context/FormContext.tsx`
+*   `chore(C4): close init effect; align C4 from savedState post-hydration; simplify B-rule` — `App.tsx` (root)
+*   `fix(C4): align household members at C4 page-enter (last-write semantics)` — `src/screens/Wizard/WizardController.tsx`
+
+> *Alle commits zijn atomaire, smalle diffs en onafhankelijk terug te draaien.*
+
+***
+
+## 1. Resultaat van deze stap (feitelijk)
+
+*   **Invariant wordt nu afgedwongen op het juiste moment**: bij **page‑enter van C4** voeren we `ALIGN_HOUSEHOLD_MEMBERS` uit met **actuele** C1‑counters.
+*   **Effect in UI**: C4 toont direct de juiste **leden‑kaarten** (volwassenen eerst, daarna kinderen).
+*   **Smoke‑doel geslaagd**: kaarten worden getoond; “Verder” blokkeert niet meer op array‑lengte.
+
+***
+
+## 2. Changelog
+
+**Bestanden gewijzigd (en waarom):**
+
+1.  `src/services/householdAlign.ts`
+    *   **Toegevoegd**: `alignMembers(current, aantalMensen, aantalVolwassen)` — *pure*, type‑safe helper die:
+        *   lijstlengte exact op `aantalMensen` zet;
+        *   eerste `aantalVolwassen` als `'adult'`, rest `'child'`;
+        *   bestaande invoer behoudt waar mogelijk.
+
+2.  `src/context/FormContext.tsx`
+    *   **Union** uitgebreid met `AlignHouseholdAction` (duplicate union verwijderd).
+    *   **Reducer‑case** `ALIGN_HOUSEHOLD_MEMBERS` toegevoegd die de helper aanroept en `state.C4.leden` zet.
+
+3.  `App.tsx` (root)
+    *   **Init‑effect** correct afgesloten (hooks structureren).
+    *   **Post‑hydrate normalisatie**: indien `savedState` aanwezig is, éénmalig alignen met counters **uit `savedState`** (deterministisch, geen race).
+    *   **Geen** `setTimeout` fallback meer; geen timing‑trucjes.
+
+4.  `src/screens/Wizard/WizardController.tsx`
+    *   **A2‑oplossing**: `useFormContext()` + `useEffect` die **bij `page.id === 'C4'`** `ALIGN_HOUSEHOLD_MEMBERS` dispatcht (last‑write semantics).
+
+**Niet gewijzigd (relevant):**
+
+*   `HouseholdMemberRepeater.tsx` (UI blijft presentational).
+*   Validatie‑ en conditional‑hulpfuncties (`validation.ts`, `conditions.ts`).
+*   Overige flow (Navigator, WizardPage).
+
+***
+
+## 3. Invariant‑inzicht (B1)
+
+*   **Invariant:**
+    1.  `state.C4.leden.length === state.C1.aantalMensen`
+    2.  De eerste `state.C1.aantalVolwassen` leden hebben `memberType: 'adult'`, de rest `memberType: 'child'`.
+
+*   **Waar “woont” dit nu:**
+    *   **Implementatie:** `src/services/householdAlign.ts` (pure helper) + reducer‑case `ALIGN_HOUSEHOLD_MEMBERS` in `FormContext.tsx`.
+    *   **Tijdstip (waarom hier):**
+        *   **Post‑hydrate** in `App.tsx` (indien `savedState`): normaliseert persistente data deterministisch.
+        *   **Page‑enter C4** in `WizardController.tsx`: garandeert **last‑write** ná alle `SET_PAGE_DATA`‑writes (defaults, auto/huisdieren), zodat de invariant **altijd** als laatste wordt afgedwongen.
+
+***
+
+## 4. Reversibiliteit (B2)
+
+*   **Volledig rollbackbaar** per stap:
+    *   Revert `WizardController`‑commit → A2 uit; post‑hydrate blijft.
+    *   Revert `App.tsx`‑commit → post‑hydrate normalisatie uit; A2 blijft.
+    *   Revert reducer‑actie of helper → invariant‑handhaving geheel uit.
+*   Geen schema‑wijzigingen of data‑migraties — *dus* geen onomkeerbare stappen.
+
+***
+
+## 5. Effect & bewijs (B3)
+
+**Voor:**
+
+*   `[REDUCER] ALIGN done { alignedLen: 3 }` → **werkt**, maar C4‑intake: `ledenLen: 0` (overschreven door latere `SET_PAGE_DATA`).
+
+**Na (A2):**
+
+*   Bij C4‑enter: `[WIZARD] entering C4 – aligning household members`
+*   Reducer log: `[REDUCER] ALIGN done { alignedLen: ..., adultsCount: ..., childrenCount: ... }`
+*   C4‑intake: `[C4-REPEATER] intake { ledenLen: > 0 }` → **kaarten renderen**.
+*   “Verder” geeft **geen** lengte‑fout meer.
+
+**Doctor:** `17/17 checks passed. No issues detected!` (pre‑commit hook doorgekomen).
+
+***
+
+## 6. Statusupdate
+
+*   **Nu:**
+    *   Baseline **groen** (Doctor 17/17).
+    *   **C4‑kaarten renderen deterministisch** conform C1‑counters (A2 actief).
+    *   Progress‑dots actief via feature flag (layout‑fine‑tuning later).
+
+*   **Waar we stopten:**
+    *   Debug‑logs staan **nog** aan (bewust).
+    *   Overige issues zijn geparkeerd voor een volgende stap.
+
+*   **Fase‑positie:**
+    *   **Phase 0**: data‑hardening (consistentie/invariant) ✔️
+    *   **Phase 0.5**: scheiding van zorgen (helper/reducer; UI presentational) ✔️
+
+***
+
+## 7. Afwijkingen
+
+*   **Geen** inhoudelijke afwijkingen van het afgesproken plan in deze stap.
+    *   We hebben A2 gekozen (zoals besproken) om de **root cause** (write‑order) op te lossen i.p.v. symptoombestrijding.
+
+***
+
+## 8. Volgende stap
+
+### ☐ **Plan (zeker noodzakelijk, klein & non‑functional)**
+
+1.  **Log cleanup** (tijdelijke `console.log`’s verwijderen) in:  
+    `App.tsx`, `src/context/FormContext.tsx`, `src/screens/Wizard/WizardController.tsx`, `src/organisms/HouseholdMemberRepeater.tsx`.  
+    **Commit**: `chore(debug): remove temporary alignment logs`
+
+2.  **Effect‑deps minimaliseren (optioneel, “page‑enter only”)**  
+    In `WizardController.tsx` het effect beperken tot `[page?.id]` (en ESLint‑regel onderdrukken) zodat ALIGN niet opnieuw vuurt binnen C4.  
+    **Commit**: `chore(wizard): limit C4 enter ALIGN effect deps to page.id`
+
+> Beide zijn **non‑functional**, volledig rollbackbaar, en houden de codebase strak.
+
+***
+
+### ☐ **VOORSTEL (niet‑bindend, na cleanup)**
+
+*   **C1→C4 sync** (auto, huisdieren) verplaatsen uit UI‑component naar reducer/service (zelfde architectuurprincipe als A2).
+    *   **Doel:** UI 100% presentational; alle data‑rules centraal en testbaar.
+    *   **Uitvoering:** kleine helper + reducer‑actie (zoals met ALIGN).
+    *   **Scope:** smalle commit(s), zonder feature‑wijziging.
+
+***
+
+## Bijlagen / Artefacten (samenvatting diff)
+
+**WizardController.tsx — A2 (essentie):**
+
+```ts
+import { useFormContext } from '../../context/FormContext';
+// ...
+const { state, dispatch } = useFormContext();
+// ...
+React.useEffect(() => {
+  if (page?.id === 'C4') {
+    const aantalMensen = Math.max(1, Number(state.C1?.aantalMensen ?? 1));
+    const aantalVolwassen = Math.min(
+      aantalMensen,
+      Math.max(1, Number(state.C1?.aantalVolwassen ?? 1))
+    );
+    dispatch({
+      type: 'ALIGN_HOUSEHOLD_MEMBERS',
+      payload: { aantalMensen, aantalVolwassen },
+    });
+  }
+}, [page?.id, currentPageIndex, totalPages, state.C1?.aantalMensen, state.C1?.aantalVolwassen, dispatch]);
+```
+
+**FormContext.tsx — reducer‑case (essentie):**
+
+```ts
+case 'ALIGN_HOUSEHOLD_MEMBERS': {
+  const { aantalMensen, aantalVolwassen } = action.payload;
+  const current = state?.C4?.leden;
+  const aligned = alignMembers(current, aantalMensen, aantalVolwassen);
+  return { ...state, C4: { ...(state.C4 ?? {}), leden: aligned } };
+}
+```
+
+**householdAlign.ts — helper (essentie):**
+
+```ts
+export function alignMembers(current, aantalMensen, aantalVolwassen): Member[] {
+  // lengte exact + eerste N adults, rest children; behoud bestaande velden
+}
+```
+
+***
+

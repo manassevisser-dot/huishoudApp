@@ -1,0 +1,1935 @@
+// ./src/components/ChipButton.tsx
+import React from 'react';
+import { TouchableOpacity, Text } from 'react-native';
+import { useAppStyles } from '../styles/useAppStyles';
+
+export type ChipButtonProps = {
+  label: string;
+  selected: boolean;
+  error?: boolean;
+  onPress: () => void;
+  accessibilityLabel?: string;
+};
+
+const ChipButton: React.FC<ChipButtonProps> = ({
+  label,
+  selected,
+  error,
+  onPress,
+  accessibilityLabel,
+}) => {
+  const { styles, colors } = useAppStyles();
+
+  return (
+    <TouchableOpacity
+      style={[
+        styles.chip,
+        selected && styles.chipSelected,
+        error && styles.chipError,
+      ]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ selected }}
+    >
+      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+};
+
+export default ChipButton;
+
+// ./src/components/ConditionalField.tsx
+import React from 'react';
+import { useFormContext } from '../context/FormContext';
+import { ConditionalConfig } from '../types/form';
+import { evaluateCondition } from '../utils/conditions';
+
+export type ConditionalFieldProps = {
+  conditional?: ConditionalConfig;
+  pageId: string;
+  children: React.ReactNode;
+};
+
+const ConditionalField: React.FC<ConditionalFieldProps> = ({
+  conditional,
+  pageId,
+  children,
+}) => {
+  const { state } = useFormContext();
+  const visible = evaluateCondition(conditional, state, pageId);
+
+  if (!visible) return null;
+
+  return <>{children}</>;
+};
+
+export default ConditionalField;
+
+// ./src/components/DateField.tsx
+import * as React from 'react';
+import { Platform, View, Text, Pressable } from 'react-native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useAppStyles } from '../styles/useAppStyles';
+import { formatDate } from '../utils/date';
+
+type Props = {
+label: string;
+valueISO?: string;                         // canoniek: 'YYYY-MM-DD'
+onChangeISO: (iso: string | undefined) => void;
+minISO?: string;                           // default: '1920-01-01'
+maxISO?: string;                           // default: vandaag
+errorText?: string | null;
+accessibilityLabel?: string;
+};
+
+const isoToDate = (iso?: string): Date => {
+if (!iso) return new Date();
+const [y, m, d] = iso.split('-').map(Number);
+// UTC noon voorkomt dagverschuiving door tijdzones
+return new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1, 12, 0, 0));
+};
+
+const isoToday = (): string => {
+const now = new Date();
+const y = now.getFullYear();
+const m = String(now.getMonth() + 1).padStart(2, '0');
+const d = String(now.getDate()).padStart(2, '0');
+return `${y}-${m}-${d}`;
+};
+
+const dateToISO = (dt: Date): string => {
+// Niet toISOString(); dat geeft TZ issues. Formatteer zelf naar YYYY-MM-DD (UTC)
+const y = dt.getUTCFullYear();
+const m = String(dt.getUTCMonth() + 1).padStart(2, '0');
+const d = String(dt.getUTCDate()).padStart(2, '0');
+return `${y}-${m}-${d}`;
+};
+
+const DateField: React.FC<Props> = ({
+label,
+valueISO,
+onChangeISO,
+minISO = '1920-01-01',
+maxISO,
+errorText,
+accessibilityLabel,
+}) => {
+const { styles, colors } = useAppStyles();
+const [show, setShow] = React.useState(false);
+
+const max = maxISO ?? isoToday();
+const display = valueISO ? formatDate(valueISO, 'dd-mm-yyyy') : '';
+
+return (
+  <View style={styles.fieldContainer}>
+    <Text style={styles.label}>{label}</Text>
+
+    <Pressable
+      onPress={() => setShow(true)}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      style={[styles.input, { justifyContent: 'center' }, errorText && styles.inputError]}
+    >
+      <Text style={{ color: display ? colors.textPrimary : colors.textSecondary }}>
+        {display || 'DD-MM-YYYY'}
+      </Text>
+    </Pressable>
+
+    {show && (
+      <DateTimePicker
+        mode="date"
+        value={valueISO ? isoToDate(valueISO) : isoToDate(max)}
+        minimumDate={isoToDate(minISO)}
+        maximumDate={isoToDate(max)}
+        display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
+        onChange={(event: DateTimePickerEvent, date?: Date) => {
+          if (Platform.OS === 'android') setShow(false);
+          if (event.type === 'dismissed') return;
+          if (!date) return;
+          const iso = dateToISO(date);
+          onChangeISO(iso);
+        }}
+      />
+    )}
+
+    {errorText && <Text style={styles.errorTextStyle}>{errorText}</Text>}
+  </View>
+);
+};
+
+export default DateField;
+
+// ./src/components/FormField.tsx
+import React from 'react';
+import { View, Text, TextInput, ScrollView } from 'react-native';
+import { useAppStyles } from '../styles/useAppStyles';
+import ChipButton from './ChipButton';
+import ToggleSwitch from './ToggleSwitch';
+import InputCounter from './InputCounter';
+import HouseholdMemberRepeater from '../organisms/HouseholdMemberRepeater';
+import IncomeRepeater from '../organisms/IncomeRepeater';
+import ExpenseRepeater from '../organisms/ExpenseRepeater';
+import { FieldConfig } from '../types/form';
+import { validateField } from '../utils/validation';
+
+export type FormFieldProps = {
+  pageId: string;
+  field: FieldConfig;
+  value: any;
+  onChange: (fieldId: string, value: any) => void;
+  error: string | null;
+  errorColor?: string | null;
+  state?: any;
+};
+
+const FormField: React.FC<FormFieldProps> = ({
+  pageId,
+  field,
+  value,
+  onChange,
+  error,
+  errorColor,
+  state,
+}) => {
+  const { styles, colors } = useAppStyles();
+  const displayLabel = field.labelDynamic ? value : field.label;
+
+  const handleChange = (newValue: any) => {
+    onChange(field.id, newValue);
+  };
+
+  const renderInput = () => {
+    // 1. Text
+    if (field.type === 'text') {
+      return (
+        <TextInput
+          style={[styles.input, error && styles.inputError]}
+          onChangeText={handleChange}
+          value={value}
+          placeholder={field.placeholder ?? 'Voer tekst in'}
+          accessibilityLabel={displayLabel}
+        />
+      );
+    }
+
+    // 2. Numeric
+    if (field.type === 'numeric') {
+      const numericValue = value != null ? String(value) : '';
+      return (
+        <View style={styles.numericWrapper}>
+          <Text style={styles.currencyPrefix}>€</Text>
+          <TextInput
+            style={[styles.numericInput, error && styles.inputError]}
+            onChangeText={(text) => {
+              const cleanText = text.replace(/[^0-9.,]/g, '').replace(',', '.');
+              const numberValue =
+                parseFloat(cleanText) || (cleanText === '' ? '' : 0);
+              handleChange(numberValue);
+            }}
+            value={numericValue}
+            keyboardType="numeric"
+            placeholder={field.placeholder ?? '0.00'}
+            accessibilityLabel={displayLabel}
+          />
+        </View>
+      );
+    }
+
+    // 3. Radio chips
+    if (field.type === 'radio-chips' && field.options) {
+      return (
+        <ScrollView
+          horizontal
+          contentContainerStyle={styles.chipContainer}
+          showsHorizontalScrollIndicator={false}
+        >
+          {field.options.map((opt) => (
+            <ChipButton
+              key={opt.value}
+              label={opt.label}
+              selected={value === opt.value}
+              error={!!error}
+              onPress={() => handleChange(opt.value)}
+              accessibilityLabel={`${displayLabel}: ${opt.label}`}
+            />
+          ))}
+        </ScrollView>
+      );
+    }
+
+    // 4. Toggle
+    if (field.type === 'toggle') {
+      const isTrue = value === true;
+      return (
+        <ToggleSwitch
+          value={isTrue}
+          onToggle={() => handleChange(!isTrue)}
+          accessibilityLabel={displayLabel}
+        />
+      );
+    }
+
+    // 5. Counter
+    if (field.type === 'counter') {
+      const min = field.validation?.min ?? 0;
+      const max = field.validation?.max;
+      
+      // Ensure value is always a valid number (never NaN or undefined)
+      let numericValue: number;
+      if (typeof value === 'number' && !isNaN(value)) {
+        numericValue = value;
+      } else if (typeof value === 'string' && value !== '') {
+        const parsed = Number(value);
+        numericValue = !isNaN(parsed) ? parsed : min;
+      } else {
+        numericValue = min;
+      }
+
+      const staticMax = field.validation?.max;
+      const dynamicAdultsMax =
+        field.id === 'aantalVolwassen'
+          ? Math.min(Number(state?.C1?.aantalMensen ?? Infinity), 7)
+          : undefined;
+      const finalMax = field.id === 'aantalVolwassen' ? dynamicAdultsMax : staticMax;
+
+      return (
+        <InputCounter
+          value={numericValue}
+          min={min}
+          max={finalMax}
+          onValueChange={handleChange}
+          accessibilityLabel={displayLabel}
+        />
+      );
+    }
+
+    // 6. Repeater-array (C4 members)
+    if (field.type === 'repeater-array') return <HouseholdMemberRepeater />;
+
+    // 7. Income repeater (C7)
+    if (field.type === 'income-repeater') return <IncomeRepeater />;
+
+    // 8. Expense repeater (C10)
+    if (field.type === 'expense-repeater') return <ExpenseRepeater />;
+
+    return (
+      <Text style={styles.errorTextStyle}>Onbekend veldtype: {field.type}</Text>
+    );
+  };
+
+  return (
+    <View style={styles.fieldContainer}>
+      <Text
+        style={[
+          styles.label,
+          error && styles.labelError,
+          errorColor ? { color: errorColor } : {},
+        ]}
+      >
+        {displayLabel}
+      </Text>
+      {renderInput()}
+      {error && (
+        <Text
+          style={[
+            styles.errorTextStyle,
+            errorColor ? { color: errorColor } : {},
+          ]}
+        >
+          {error}
+        </Text>
+      )}
+    </View>
+  );
+};
+
+export default FormField;
+// ./src/components/InputCounter.tsx
+
+import * as React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { useAppStyles } from '../styles/useAppStyles';
+
+type Props = {
+  value: number;
+  min?: number;
+  max?: number;
+  onValueChange: (value: number) => void;
+  accessibilityLabel?: string;
+};
+
+const InputCounter: React.FC<Props> = ({
+  value,
+  min = 0,
+  max,
+  onValueChange,
+  accessibilityLabel,
+}) => {
+  const { styles, colors } = useAppStyles();
+  
+  // Ensure value is always a valid number
+  const safeValue = typeof value === 'number' && !isNaN(value) ? value : min;
+
+  const handleDecrement = () => {
+    const newValue = safeValue - 1;
+    if (newValue >= min) {
+      onValueChange(newValue);
+    }
+  };
+
+  const handleIncrement = () => {
+    const newValue = safeValue + 1;
+    if (max === undefined || newValue <= max) {
+      onValueChange(newValue);
+    }
+  };
+
+  const canDecrement = safeValue > min;
+  const canIncrement = max === undefined || safeValue < max;
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+      <TouchableOpacity
+        onPress={handleDecrement}
+        disabled={!canDecrement}
+        style={{
+          backgroundColor: canDecrement ? colors.primary : colors.secondary,
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          borderRadius: 8,
+          opacity: canDecrement ? 1 : 0.5,
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`${accessibilityLabel || 'Waarde'} verlagen`}
+      >
+        <Text style={{ color: canDecrement ? colors.primaryText : colors.textSecondary, fontSize: 20, fontWeight: 'bold' }}>
+          −
+        </Text>
+      </TouchableOpacity>
+
+      <Text
+        style={{
+          marginHorizontal: 20,
+          fontSize: 24,
+          fontWeight: 'bold',
+          minWidth: 40,
+          textAlign: 'center',
+          color: colors.textPrimary,
+        }}
+        accessibilityLabel={accessibilityLabel}
+      >
+        {safeValue}
+      </Text>
+
+      <TouchableOpacity
+        onPress={handleIncrement}
+        disabled={!canIncrement}
+        style={{
+          backgroundColor: canIncrement ? colors.primary : colors.secondary,
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          borderRadius: 8,
+          opacity: canIncrement ? 1 : 0.5,
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`${accessibilityLabel || 'Waarde'} verhogen`}
+      >
+        <Text style={{ color: canIncrement ? colors.primaryText : colors.textSecondary, fontSize: 20, fontWeight: 'bold' }}>
+          +
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+export default InputCounter;
+// ./src/components/ToggleSwitch.tsx
+import React from 'react';
+import { View, TouchableOpacity, Text } from 'react-native';
+import { useAppStyles } from '../styles/useAppStyles';
+
+export type ToggleSwitchProps = {
+  value: boolean;
+  onToggle: () => void;
+  labelTrue?: string;
+  labelFalse?: string;
+  accessibilityLabel?: string;
+};
+
+const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
+  value,
+  onToggle,
+  labelTrue = 'Ja',
+  labelFalse = 'Nee',
+  accessibilityLabel,
+}) => {
+  const { styles, colors } = useAppStyles();
+
+  return (
+    <View style={styles.toggleWrapper}>
+      <TouchableOpacity
+        style={[
+          styles.toggleButton,
+          value ? styles.toggleActive : styles.toggleInactive,
+        ]}
+        onPress={onToggle}
+        accessibilityRole="switch"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ checked: value }}
+      >
+        <Text style={styles.toggleText}>{value ? labelTrue : labelFalse}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+export default ToggleSwitch;
+// ./src/organisms/HouseholdMemberRepeater
+import * as React from 'react';
+import { View, Text, TextInput, ScrollView } from 'react-native';
+import { useAppStyles } from '../styles/useAppStyles';
+import ChipButton from '../components/ChipButton';
+import { useFormContext } from '../context/FormContext';
+import {
+  Member,
+  GENDER_OPTIONS,
+} from '../types/household';
+import { stripEmojiAndLimit } from '../utils/numbers';
+import {
+  calculateAge,
+  getAdultMaxISO,
+  getChildMinISO,
+  getChildMaxISO,
+} from '../utils/date';
+import DateField from '../components/DateField';
+
+const HouseholdMemberRepeater: React.FC = () => {
+  const { styles } = useAppStyles();
+  const { state, dispatch } = useFormContext();
+
+  // ---- C1 → C4 sync ----
+  React.useEffect(() => {
+    if (state.C1?.auto && state.C1.auto !== state.C4?.auto) {
+      dispatch({
+        type: 'SET_PAGE_DATA',
+        pageId: 'C4',
+        data: { auto: state.C1.auto },
+      });
+    }
+    if (state.C1?.huisdieren && state.C1.huisdieren !== state.C4?.huisdieren) {
+      dispatch({
+        type: 'SET_PAGE_DATA',
+        pageId: 'C4',
+        data: { huisdieren: state.C1.huisdieren },
+      });
+    }
+  }, [
+    state.C1?.auto,
+    state.C1?.huisdieren,
+    state.C4?.auto,
+    state.C4?.huisdieren,
+    dispatch,
+  ]);
+
+  const aantalMensen = Math.max(0, Number(state.C1?.aantalMensen ?? 0));
+
+  const rawVolwassen = state.C1?.aantalVolwassen;
+  const volwassenDefault = aantalMensen > 0 && rawVolwassen == null ? 1 : 0;
+
+  const aantalVolwassen = Math.max(
+    0,
+    Math.min(Number(rawVolwassen ?? volwassenDefault), aantalMensen),
+  );
+
+  const aantalKinderen = Math.max(0, aantalMensen - aantalVolwassen);
+
+  const leden: Member[] = Array.isArray(state.C4?.leden)
+    ? (state.C4!.leden as Member[])
+    : [];
+
+  const updateMember = (index: number, patch: Partial<Member>) => {
+    const next = leden.map((m, i) => (i === index ? { ...m, ...patch } : m));
+    dispatch({ type: 'SET_PAGE_DATA', pageId: 'C4', data: { leden: next } });
+  };
+
+  // ---- render helpers ----
+  let adultDisplayIndex = 0;
+  let childDisplayIndex = 0;
+
+  const renderAdultCard = (m: Member, index: number) => {
+    const idx = ++adultDisplayIndex;
+    const title = m.naam?.trim()
+      ? `Volwassene ${idx}: ${m.naam}`
+      : `Volwassene ${idx}`;
+
+    let ageError: string | null = null;
+    if (typeof m.leeftijd === 'number') {
+      if (m.leeftijd < 18) {
+        ageError =
+          'Leeftijd moet ≥ 18 voor volwassenen. Registreer deze persoon anders als kind.';
+      } else if (!Number.isInteger(m.leeftijd)) {
+        ageError = 'Leeftijd moet een geheel getal zijn.';
+      }
+    }
+
+    return (
+      <View key={m.id} style={styles.dashboardCard}>
+        <Text style={styles.summaryLabelBold}>{title}</Text>
+
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Naam</Text>
+          <TextInput
+            style={styles.input}
+            value={m.naam ?? ''}
+            onChangeText={(text) =>
+              updateMember(index, { naam: stripEmojiAndLimit(text, 25) })
+            }
+          />
+        </View>
+
+        <DateField
+          label="Geboortedatum"
+          valueISO={m.dateOfBirth}
+          minISO="1920-01-01"
+          maxISO={getAdultMaxISO()}
+          onChangeISO={(iso) => {
+            if (iso) {
+              updateMember(index, {
+                dateOfBirth: iso,
+                leeftijd: calculateAge(iso) ?? undefined,
+              });
+            } else {
+              updateMember(index, {
+                dateOfBirth: undefined,
+                leeftijd: undefined,
+              });
+            }
+          }}
+          errorText={ageError}
+        />
+
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Gender</Text>
+          <ScrollView horizontal contentContainerStyle={styles.chipContainer}>
+            {GENDER_OPTIONS.map((g) => (
+              <ChipButton
+                key={g}
+                label={g ?? ''}
+                selected={m.gender === g}
+                onPress={() => updateMember(index, { gender: g })}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    );
+  };
+
+  const renderChildCard = (m: Member, index: number) => {
+    const idx = ++childDisplayIndex;
+    const title = m.naam?.trim() ? `Kind ${idx}: ${m.naam}` : `Kind ${idx}`;
+
+    let ageError: string | null = null;
+    if (typeof m.leeftijd === 'number') {
+      if (m.leeftijd >= 18) {
+        ageError = 'Leeftijd moet < 18 voor kinderen.';
+      } else if (!Number.isInteger(m.leeftijd)) {
+        ageError = 'Leeftijd moet een geheel getal zijn.';
+      }
+    }
+
+    return (
+      <View key={m.id} style={styles.dashboardCard}>
+        <Text style={styles.summaryLabelBold}>{title}</Text>
+
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Naam</Text>
+          <TextInput
+            style={styles.input}
+            value={m.naam ?? ''}
+            onChangeText={(text) =>
+              updateMember(index, { naam: stripEmojiAndLimit(text, 25) })
+            }
+          />
+        </View>
+
+        <DateField
+          label="Geboortedatum"
+          valueISO={m.dateOfBirth}
+          minISO={getChildMinISO()}
+          maxISO={getChildMaxISO()}
+          onChangeISO={(iso) => {
+            if (iso) {
+              updateMember(index, {
+                dateOfBirth: iso,
+                leeftijd: calculateAge(iso) ?? undefined,
+              });
+            } else {
+              updateMember(index, {
+                dateOfBirth: undefined,
+                leeftijd: undefined,
+              });
+            }
+          }}
+          errorText={ageError}
+        />
+
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Gender</Text>
+          <ScrollView horizontal contentContainerStyle={styles.chipContainer}>
+            {GENDER_OPTIONS.map((g) => (
+              <ChipButton
+                key={g}
+                label={g ?? ''}
+                selected={m.gender === g}
+                onPress={() => updateMember(index, { gender: g })}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    );
+  };
+
+  if (aantalMensen <= 0) {
+    return (
+      <View style={styles.pageContainer}>
+        <Text style={styles.summaryDetail}>
+          Vul eerst het aantal personen in op C1.
+        </Text>
+      </View>
+    );
+  }
+
+  const adults = leden.filter((m) => m.memberType === 'adult');
+  const children = leden.filter((m) => m.memberType === 'child');
+
+  return (
+    <View style={styles.pageContainer}>
+      {adults.map((m, i) => renderAdultCard(m, i))}
+      {children.map((m, i) => renderChildCard(m, i))}
+    </View>
+  );
+};
+
+export default HouseholdMemberRepeater;
+
+// ./src/screens/CSV/CsvUploadScreen.tsx
+import * as React from 'react';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { csvService } from '../../services/csvService';
+import { TransactionService } from '../../services/transactionService';
+import { getISOWeek } from '../../utils/date';
+import { useAppStyles } from '../../styles/useAppStyles';
+type Props = {
+  onClose: () => void;
+};
+
+const CsvUploadScreen: React.FC<Props> = ({ onClose }) => {
+  const insets = useSafeAreaInsets();
+  const { styles, colors } = useAppStyles();
+  const [csvText, setCsvText] = React.useState('');
+  const [isUploading, setIsUploading] = React.useState(false);
+  
+  const handleUpload = async () => {
+    try {
+      const rows = csvService.parse(csvText);
+      
+      if (rows.length === 0) {
+        Alert.alert('Fout', 'Geen geldige rijen gevonden in CSV');
+        return;
+      }
+      
+      if (!csvService.validateRange(rows)) {
+        Alert.alert(
+          'Datum validatie fout',
+          'De datum range in uw CSV overschrijdt de maximale 62 dagen'
+        );
+        return;
+      }
+      
+      Alert.alert(
+        'CSV Uploaden',
+        `${rows.length} transacties gevonden. Weet u zeker dat u deze wilt uploaden?`,
+        [
+          { text: 'Annuleren', style: 'cancel' },
+          {
+            text: 'Uploaden',
+            onPress: async () => {
+              setIsUploading(true);
+              await csvService.postToN8N({ rows, count: rows.length });
+              
+              // Mock: Add to local storage
+              for (const row of rows) {
+                if (row.date && row.amount) {
+                  await TransactionService._mockLocalSave({
+                    date: row.date,
+                    amount: row.amount,
+                    category: 'Overig',
+                    paymentMethod: 'pin',
+                    weekNumber: getISOWeek(new Date(row.date)),
+                  });
+                }
+              }
+              
+              setIsUploading(false);
+              Alert.alert('Success', 'CSV geüpload!', [{ text: 'OK', onPress: onClose }]);
+            },
+          },
+        ]
+      );
+    } catch (error: any) {
+      Alert.alert('Parse Error', error.message || 'Ongeldige CSV formaat');
+    }
+  };
+  
+  return (
+    <View style={styles.container}>
+      <View style={styles.pageContainer}>
+        <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}>
+          <Text style={styles.pageTitle}>CSV Upload</Text>
+          
+          <Text style={styles.label}>Plak uw CSV hier (format: date,amount,note)</Text>
+          <TextInput
+            style={[styles.input, { height: 200, textAlignVertical: 'top' }]}
+            multiline
+            placeholder={`date,amount,note\n2024-12-01,25.50,Groceries\n2024-12-02,15.00,Coffee`}
+            value={csvText}
+            onChangeText={setCsvText}
+          />
+          
+          <TouchableOpacity
+            style={[styles.button, { marginTop: 16, marginLeft: 0 }]}
+            onPress={handleUpload}
+            disabled={isUploading || !csvText.trim()}
+          >
+            <Text style={styles.buttonText}>
+              {isUploading ? 'Uploaden...' : 'Uploaden'}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+      
+      <View style={[styles.buttonContainer, { bottom: insets.bottom, paddingBottom: Math.max(20, insets.bottom + 8) }]}>
+        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onClose}>
+          <Text style={styles.secondaryButtonText}>Terug</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+
+export default CsvUploadScreen
+
+// ./src/screens/Daily/UndoScreen.tsx
+import * as React from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TransactionService } from '../../services/transactionService';
+import { DailyTransaction } from '../../types/transaction';
+import { formatCurrency } from '../../utils/numbers';
+import { useAppStyles } from '../../styles/useAppStyles';
+
+type Props = {
+  onClose: () => void;
+};
+
+const UndoScreen: React.FC<Props> = ({ onClose }) => {
+  const insets = useSafeAreaInsets();
+  const { styles, colors } = useAppStyles();
+  const [transactions, setTransactions] = React.useState<DailyTransaction[]>([]);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  
+  const loadTransactions = React.useCallback(async () => {
+    setLoading(true);
+    const data = await TransactionService.list(5);
+    setTransactions(data);
+    setSelectedIds([]);
+    setLoading(false);
+  }, []);
+  
+  React.useEffect(() => {
+    loadTransactions();
+  }, [loadTransactions]);
+  
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+  
+  const handleDelete = () => {
+    if (selectedIds.length === 0) return;
+    
+    Alert.alert(
+      'Wissen bevestigen',
+      `Weet u zeker dat u ${selectedIds.length} transactie(s) wilt verwijderen?`,
+      [
+        { text: 'Annuleren', style: 'cancel' },
+        {
+          text: 'Wissen',
+          style: 'destructive',
+          onPress: async () => {
+            const success = await TransactionService.deleteMultiple(selectedIds);
+            if (success) {
+              Alert.alert('Success', 'Transacties verwijderd!');
+              await loadTransactions();
+            } else {
+              Alert.alert('Fout', 'Kon transacties niet verwijderen');
+            }
+          },
+        },
+      ]
+    );
+  };
+  
+  return (
+    <View style={styles.container}>
+      <View style={styles.pageContainer}>
+        <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}>
+          <Text style={styles.pageTitle}>Herstel laatste uitgave</Text>
+          
+          {loading ? (
+            <Text>Laden...</Text>
+          ) : transactions.length === 0 ? (
+            <View style={styles.dashboardCard}>
+              <Text style={styles.summaryDetail}>
+                Geen recente transacties gevonden
+              </Text>
+              <TouchableOpacity 
+                style={[styles.button, { marginTop: 16, marginLeft: 0 }]} 
+                onPress={onClose}
+              >
+                <Text style={styles.buttonText}>Terug naar Dashboard</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.summaryDetail}>
+                Selecteer 1 of meer transacties om te verwijderen:
+              </Text>
+              {transactions.map((t) => {
+                const isSelected = selectedIds.includes(t.id || '');
+                
+                return (
+                  <TouchableOpacity
+                    key={t.id}
+                    style={[
+                      styles.dashboardCard,
+                      { marginBottom: 12 },
+                      isSelected && { borderColor: colors.primary, borderWidth: 2 },
+                    ]}
+                    onPress={() => toggleSelection(t.id || '')}
+                  >
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.label}>{t.category}</Text>
+                        <Text style={styles.summaryDetail}>
+                          {t.date} • {t.paymentMethod}
+                        </Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={[styles.summaryValue, { color: colors.error }]}>
+                          {formatCurrency(t.amount)}
+                        </Text>
+                        {/* UPDATED: Use theme-aware checkbox styles */}
+                        <View
+                          style={[
+                            styles.checkbox,
+                            isSelected && styles.checkboxSelected,
+                            { marginTop: 8 }
+                          ]}
+                        />
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+              
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  { backgroundColor: colors.error, marginTop: 16, marginLeft: 0 },
+                  selectedIds.length === 0 && { opacity: 0.5 },
+                ]}
+                onPress={handleDelete}
+                disabled={selectedIds.length === 0}
+              >
+                <Text style={styles.buttonText}>Wissen ({selectedIds.length})</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </ScrollView>
+      </View>
+      
+      <View style={[styles.buttonContainer, { bottom: insets.bottom, paddingBottom: Math.max(20, insets.bottom + 8) }]}>
+        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onClose}>
+          <Text style={styles.secondaryButtonText}>Terug naar Dashboard</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default UndoScreen;
+// ./src/screens/DailyInput/DailyInputScreen.tsx
+import * as React from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppStyles } from '../../styles/useAppStyles';
+import ChipButton from '../../components/ChipButton';
+import { TransactionService } from '../../services/transactionService';
+import { DailyTransaction, PaymentMethod, TransactionCategory } from '../../types/transaction';
+import { getCurrentDateISO, getISOWeek } from '../../utils/date';
+import { onlyDigitsDotsComma } from '../../utils/numbers';
+
+type Props = {
+  onBack: () => void;
+};
+
+const CATEGORIES: TransactionCategory[] = [
+  'Boodschappen',
+  'Vervoer',
+  'Horeca',
+  'Winkelen',
+  'Cadeaus',
+  'Overig',
+];
+
+const PAYMENT_METHODS: PaymentMethod[] = ['pin', 'contant', 'creditcard'];
+
+const DailyInputScreen: React.FC<Props> = ({ onBack }) => {
+  const insets = useSafeAreaInsets();
+  const { styles, colors } = useAppStyles(); // ✅ verplaatst naar binnen
+
+  // Form State
+  const [date, setDate] = React.useState(getCurrentDateISO());
+  const [amount, setAmount] = React.useState('');
+  const [category, setCategory] =
+    React.useState<TransactionCategory | null>(null);
+  const [subcategory, setSubcategory] = React.useState('');
+  const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>('pin');
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  // Derived State
+  const isDirty =
+    amount !== '' &&
+    category !== null &&
+    subcategory !== '';
+
+  const handleBack = () => {
+    if (isDirty) {
+      Alert.alert(
+        'Niet opgeslagen wijzigingen',
+        'Er staan nog niet opgeslagen gegevens klaar. Weet je zeker dat je terug wilt?',
+        [
+          { text: 'Annuleren', style: 'cancel' },
+          { text: 'Ja, terug', style: 'destructive', onPress: onBack },
+        ]
+      );
+    } else {
+      onBack();
+    }
+  };
+
+  const handleSavePress = () => {
+    // Basic Validation
+    if (!amount ||
+        parseFloat(amount.replace(',', '.')) <= 0) {
+      Alert.alert('Fout', 'Vul een geldig bedrag in.');
+      return;
+    }
+    if (!category) {
+      Alert.alert('Fout', 'Kies een categorie.');
+      return;
+    }
+    Alert.alert(
+      'Opslaan',
+      'Data wordt opgeslagen.',
+      [
+        { text: 'Nee', style: 'cancel' },
+        { text: 'Ok', onPress: executeSave },
+      ]
+    );
+  };
+
+  const executeSave = async () => {
+    setIsSaving(true);
+    const numAmount = parseFloat(amount.replace(',', '.'));
+    const d = new Date(date);
+    const transaction: DailyTransaction = {
+      date: date,
+      amount: numAmount,
+      category: category!,
+      subcategory: subcategory.trim() || undefined,
+      paymentMethod: paymentMethod,
+      weekNumber: getISOWeek(d),
+    };
+
+    const success = await TransactionService.saveTransaction(transaction);
+    setIsSaving(false);
+
+    if (success) {
+      // Reset form for next entry (Rapid Entry pattern)
+      setAmount('');
+      setCategory(null);
+      setSubcategory('');
+      setPaymentMethod('pin');
+      // Keep date as is, user might be logging multiple for same day
+      // Optional: Toast or simple visual cue could go here.
+      // For now, we just rely on the form clearing as feedback.
+    } else {
+      Alert.alert('Fout', 'Er is iets misgegaan bij het opslaan. Probeer het opnieuw.');
+    }
+  };
+
+  return (
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <View style={styles.headerBar}>
+        <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
+          <Text style={styles.headerButtonText}>← Terug</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Nieuwe Uitgave</Text>
+        <View style={{ width: 60 }} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Date Field */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Datum (YYYY-MM-DD)</Text>
+          <TextInput
+            style={styles.input}
+            value={date}
+            onChangeText={setDate}
+            placeholder="YYYY-MM-DD"
+            keyboardType="numbers-and-punctuation"
+            maxLength={10}
+          />
+        </View>
+
+        {/* Amount Field - Highlighted */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Bedrag</Text>
+          <View style={[styles.numericWrapper, { borderColor: '#007AFF', borderWidth: 2 }]}>
+            <Text style={[styles.currencyPrefix, { fontSize: 24, fontWeight: 'bold' }]}>€</Text>
+            <TextInput
+              style={[styles.numericInput, { fontSize: 24, fontWeight: 'bold', paddingVertical: 12 }]}
+              value={amount}
+              onChangeText={(t) => setAmount(onlyDigitsDotsComma(t))}
+              placeholder="0,00"
+              keyboardType="numeric"
+              autoFocus
+            />
+          </View>
+        </View>
+
+        {/* Category Grid */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Categorie</Text>
+          <View style={styles.gridContainer}>
+            {CATEGORIES.map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[
+                  styles.gridItem,
+                  category === cat && styles.gridItemSelected,
+                ]}
+                onPress={() => setCategory(cat)}
+              >
+                <Text
+                  style={[
+                    styles.gridItemText,
+                    category === cat && styles.gridItemTextSelected,
+                  ]}
+                >
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Subcategory (Optional) */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Omschrijving (Optioneel)</Text>
+          <TextInput
+            style={styles.input}
+            value={subcategory}
+            onChangeText={setSubcategory}
+            placeholder="Bijv. welke winkel?"
+          />
+        </View>
+
+        {/* Payment Method */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Betaalmethode</Text>
+          <ScrollView horizontal contentContainerStyle={styles.chipContainer}>
+            {PAYMENT_METHODS.map((m) => (
+              <ChipButton
+                key={m}
+                label={m.charAt(0).toUpperCase() + m.slice(1)}
+                selected={paymentMethod === m}
+                onPress={() => setPaymentMethod(m)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+      </ScrollView>
+
+      {/* Footer Action */}
+      <View style={[styles.buttonContainer, { paddingBottom: Math.max(20, insets.bottom + 8) }]}>
+        <TouchableOpacity
+          style={[styles.button, isSaving && { opacity: 0.7 }]}
+          onPress={handleSavePress}
+          disabled={isSaving}
+        >
+          {isSaving ? (
+            <ActivityIndicator color="#FFF" />
+          ) : (
+            <Text style={styles.buttonText}>Opslaan & Nieuwe</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+   );
+};
+
+export default DailyInputScreen
+
+// ./src/screens/Dashboard/DashboardScreen.tsx
+import * as React from 'react';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppStyles } from '../../styles/useAppStyles';
+import { useFormContext } from '../../context/FormContext';
+import { calculateFinancialSummary } from '../../utils/finance';
+import { formatCurrency } from '../../utils/numbers';
+import { TransactionService } from '../../services/transactionService';
+
+type Props = {
+  onAddTransaction: () => void;
+  onLogout: () => void;
+  onOpenOptions: () => void;
+  onOpenUndo: () => void;
+};
+
+const DashboardScreen: React.FC<Props> = ({
+  onAddTransaction,
+  onLogout,
+  onOpenOptions,
+  onOpenUndo
+}) => {
+  const insets = useSafeAreaInsets();
+  const { styles, colors } = useAppStyles(); // ✅ verplaatst naar binnen
+  const { state } = useFormContext();
+  const [variableExpenses, setVariableExpenses] = React.useState(0);
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const summary = React.useMemo(
+    () => calculateFinancialSummary(state.C7, state.C10),
+    [state.C7, state.C10]
+  );
+
+  const fetchTransactions = React.useCallback(async () => {
+    const data = await TransactionService.fetchSummary();
+    setVariableExpenses(data.totalVariableMonth);
+    setRefreshing(false);
+  }, []);
+
+  React.useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  const totalExpenses = summary.lastenTotaalVast + variableExpenses;
+  const remainingBudget = summary.inkomenTotaalMaand - totalExpenses;
+  const isPositive = remainingBudget >= 0;
+
+  return (
+    <View style={styles.pageContainer}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: 120 + insets.bottom },
+        ]}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <Text style={styles.pageTitle}>Dashboard</Text>
+
+        {/* NEW P1: Top row with 70/30 split */}
+        <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+          <TouchableOpacity
+            style={[styles.button, { flex: 7, marginRight: 8, marginLeft: 0 }]}
+            onPress={onOpenUndo}
+          >
+            <Text style={styles.buttonText}>Herstel laatste uitgave</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.secondaryButton, { flex: 3, marginRight: 0 }]}
+            onPress={onOpenOptions}
+          >
+            <Text style={styles.secondaryButtonText}>Options</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Financial Overview Card */}
+        <View style={styles.dashboardCard}>
+          <Text style={styles.dashboardLabel}>Resterend Budget (Deze Maand)</Text>
+          <Text
+            style={[
+              styles.dashboardKPI,
+              { color: isPositive ? '#34C759' : '#FF3B30' },
+            ]}
+          >
+            {formatCurrency(remainingBudget)}
+          </Text>
+          <Text style={styles.dashboardMessage}>
+            {isPositive
+              ? 'U blijft binnen uw budget!'
+              : 'Let op: Uw uitgaven zijn hoger dan uw inkomsten.'}
+          </Text>
+        </View>
+
+        {/* Detailed Breakdown */}
+        <View style={styles.summarySection}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Inkomen (Maand)</Text>
+            <Text style={[styles.summaryValue, { color: '#34C759' }]}>
+              {formatCurrency(summary.inkomenTotaalMaand)}
+            </Text>
+          </View>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Vaste Lasten</Text>
+            <Text style={[styles.summaryValue, { color: '#FF3B30' }]}>
+              {formatCurrency(summary.lastenTotaalVast)}
+            </Text>
+          </View>
+
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Variabele Uitgaven (Dit moment)</Text>
+            <Text style={[styles.summaryValue, { color: '#FF3B30', fontWeight: 'bold' }]}>
+              {formatCurrency(variableExpenses)}
+            </Text>
+          </View>
+
+          <View style={styles.summaryRowTotal}>
+            <Text style={styles.summaryLabelBold}>Totaal Uitgaven</Text>
+            <Text style={styles.summaryValueBold}>
+              {formatCurrency(totalExpenses)}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.summaryDetail}>
+          Gebruik de "+ Nieuwe Uitgave" knop om uw dagelijkse boodschappen en andere
+          variabele kosten toe te voegen.
+        </Text>
+      </ScrollView>
+
+      {/* NEW P1: Footer with Uitloggen + Nieuwe Uitgave */}
+      <View
+        style={[
+          styles.buttonContainer,
+          { bottom: insets.bottom, paddingBottom: Math.max(20, insets.bottom + 8) },
+        ]}
+      >
+        <TouchableOpacity
+          style={[styles.button, styles.secondaryButton]}
+          onPress={onLogout}
+        >
+          <Text style={styles.secondaryButtonText}>Uitloggen</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button} onPress={onAddTransaction}>
+          <Text style={styles.buttonText}>+ Nieuwe Uitgave</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+export default DashboardScreen;
+
+// ./src/screens/LandingScreen.tsx
+import * as React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppStyles } from '../styles/useAppStyles';
+
+type Props = {
+  onSignup: () => void; // Start wizard at C1
+  onSignin: () => void; // Go to Dashboard
+};
+
+const LandingScreen: React.FC<Props> = ({ onSignup, onSignin }) => {
+  const { styles, colors } = useAppStyles(); // ✅ verplaatst naar binnen
+  const insets = useSafeAreaInsets();
+
+  return (
+    <View
+      style={[
+        styles.container,
+        { paddingBottom: Math.max(20, insets.bottom + 8) },
+      ]}
+    >
+      <View style={styles.pageContainer}>
+        <Text style={styles.pageTitle}>Welkom</Text>
+        <Text style={styles.summaryDetail}>
+                   Start met het instellen van uw huishouding of ga direct naar het
+          dashboard als u al bekend bent.
+        </Text>
+      </View>
+
+      <View style={[styles.buttonContainer, { bottom: insets.bottom }]}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={onSignup}
+          accessibilityRole="button"
+          accessibilityLabel="Aanmelden en starten met setup"
+        >
+          <Text style={styles.buttonText}>Aanmelden</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, styles.secondaryButton]}
+          onPress={onSignin}
+          accessibilityRole="button"
+          accessibilityLabel="Inloggen en ga naar dashboard"
+        >
+          <Text style={styles.secondaryButtonText}>Inloggen</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default LandingScreen;
+
+// ./src/screens/Options/OptionsScreen.tsx
+import * as React from 'react';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppStyles } from '../../styles/useAppStyles';
+
+type Props = {
+  onClose: () => void;
+  onSettings: () => void;
+  onCsvUpload: () => void;
+  onReset: () => void;
+};
+
+const OptionsScreen: React.FC<Props> = ({ onClose, onSettings, onCsvUpload, onReset }) => {
+  const insets = useSafeAreaInsets();
+  const { styles, colors } = useAppStyles();
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.pageContainer}>
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
+        >
+          <Text style={styles.pageTitle}>Options</Text>
+
+          <TouchableOpacity
+            style={[styles.button, { marginBottom: 16, marginLeft: 0 }]}
+            onPress={onSettings}
+          >
+            <Text style={styles.buttonText}>Settings</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, { marginBottom: 16, marginLeft: 0 }]}
+            onPress={onCsvUpload}
+          >
+            <Text style={styles.buttonText}>CSV upload</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, { marginBottom: 16, marginLeft: 0 }]}
+            onPress={onReset}
+          >
+            <Text style={styles.buttonText}>Reset</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+
+      <View
+        style={[
+          styles.buttonContainer,
+          { bottom: insets.bottom, paddingBottom: Math.max(20, insets.bottom + 8) },
+        ]}
+      >
+        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onClose}>
+          <Text style={styles.secondaryButtonText}>Terug naar Dashboard</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default OptionsScreen;
+
+// ./src/screens/Reset/ResetScreen.tsx
+import * as React from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppStyles } from '../../styles/useAppStyles';
+
+type Props = {
+  onClose: () => void;
+  onWissen: () => void;
+  onHerstel: () => void;
+};
+
+const ResetScreen: React.FC<Props> = ({ onClose, onWissen, onHerstel }) => {
+  const insets = useSafeAreaInsets();
+  const { styles, colors } = useAppStyles();
+
+  const handleWissen = () => {
+    Alert.alert(
+      'WISSEN - Alle data verwijderen',
+      'Dit verwijdert ALLE data inclusief setup, transacties en instellingen. Deze actie kan niet ongedaan worden gemaakt.',
+      [
+        { text: 'Annuleren', style: 'cancel' },
+        { text: 'WISSEN', style: 'destructive', onPress: onWissen },
+      ]
+    );
+  };
+
+  const handleHerstel = () => {
+    Alert.alert(
+      'HERSTEL - Setup opnieuw doorlopen',
+      'Dit reset de setup wizard naar lege velden. Uw transacties en instellingen blijven behouden.',
+      [
+        { text: 'Annuleren', style: 'cancel' },
+        { text: 'HERSTEL', onPress: onHerstel },
+      ]
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.pageContainer}>
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
+        >
+          <Text style={styles.pageTitle}>Reset Opties</Text>
+
+          <View style={[styles.dashboardCard, { marginBottom: 24 }]}>
+            <Text style={[styles.label, { marginBottom: 8 }]}>WISSEN</Text>
+            <Text style={styles.summaryDetail}>
+              Verwijdert ALLE data: setup, transacties, en instellingen. U moet de app opnieuw instellen.
+            </Text>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: '#FF3B30', marginTop: 16, marginLeft: 0 }]}
+              onPress={handleWissen}
+            >
+              <Text style={styles.buttonText}>WISSEN</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.dashboardCard, { marginBottom: 24 }]}>
+            <Text style={[styles.label, { marginBottom: 8 }]}>HERSTEL</Text>
+            <Text style={styles.summaryDetail}>
+              Reset alleen de setup wizard naar lege velden. Transacties en instellingen blijven behouden.
+            </Text>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: '#007AFF', marginTop: 16, marginLeft: 0 }]}
+              onPress={handleHerstel}
+            >
+              <Text style={styles.buttonText}>HERSTEL</Text>
+            </TouchableOpacity>
+          </View>
+
+        </ScrollView>
+      </View>
+    </View>
+  );
+};
+
+export default ResetScreen;
+
+// ./src/screens/Settings/SettingsScreen.tsx
+import * as React from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppStyles } from '../../styles/useAppStyles';
+import { useTheme } from '../../context/ThemeContext';
+
+type Props = {
+  onClose: () => void;
+};
+
+const SettingsScreen: React.FC<Props> = ({ onClose }) => {
+  const insets = useSafeAreaInsets();
+  const { styles, colors } = useAppStyles();
+  const { theme, setTheme } = useTheme();
+  const [notificationsEnabled, setNotificationsEnabled] = React.useState(false);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.pageContainer}>
+        <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}>
+          <Text style={styles.pageTitle}>Settings</Text>
+
+          {/* Dark Mode Toggle */}
+          <View style={[styles.dashboardCard, { marginBottom: 16 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.label}>Dark mode</Text>
+              <Switch
+                value={theme === 'dark'}
+                onValueChange={(value) => setTheme(value ? 'dark' : 'light')}
+              />
+            </View>
+            <Text style={styles.summaryDetail}>
+              Status: {theme === 'dark' ? 'Aan' : 'Uit'}
+            </Text>
+          </View>
+
+          {/* Notifications Toggle */}
+          <View style={[styles.dashboardCard, { marginBottom: 16 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={styles.label}>Meldingen</Text>
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={setNotificationsEnabled}
+              />
+            </View>
+            <Text style={styles.summaryDetail}>
+              Status: {notificationsEnabled ? 'Aan' : 'Uit'} (Placeholder functie)
+            </Text>
+          </View>
+
+        </ScrollView>
+      </View>
+
+      {/* Footer */}
+      <View style={[styles.buttonContainer, { bottom: insets.bottom, paddingBottom: Math.max(20, insets.bottom + 8) }]}>
+        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onClose}>
+          <Text style={styles.secondaryButtonText}>Terug naar Options</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default SettingsScreen;
+
+// ./src/screens/Wizard/WizardPage.tsx
+import * as React from 'react';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppStyles } from '../../styles/useAppStyles';
+import FormField from '../../components/FormField';
+import ConditionalField from '../../components/ConditionalField';
+import { useFormContext } from '../../context/FormContext';
+import { validateField } from '../../utils/validation';
+import { evaluateCondition } from '../../utils/conditions';
+import { PageConfig } from '../../types/form';
+
+type PageProps = {
+  page: PageConfig;
+  onNext: () => void;
+  onPrev: () => void;
+  isFirst: boolean;
+  isLast: boolean;
+};
+
+const WizardPage: React.FC<PageProps> = ({
+  page,
+  onNext,
+  onPrev,
+  isFirst,
+  isLast,
+}) => {
+  const insets = useSafeAreaInsets();
+  const { styles, colors } = useAppStyles();
+  const { state, dispatch } = useFormContext();
+  const [errors, setErrors] = React.useState<Record<string, string | null>>({});
+  const currentPageData = state[page.id] ?? {};
+  const scrollViewRef = React.useRef<ScrollView>(null);
+
+  // Ensure aantalVolwassen <= aantalMensen & max 7
+  React.useEffect(() => {
+    if (page.id !== 'C1') return;
+    const mensen = Number(state.C1?.aantalMensen ?? 0);
+    const volwassen = Number(state.C1?.aantalVolwassen ?? 0);
+
+    if (volwassen > mensen) {
+      dispatch({
+        type: 'SET_PAGE_DATA',
+        pageId: 'C1',
+        data: { aantalVolwassen: mensen },
+      });
+    } else if (volwassen > 7) {
+      dispatch({
+        type: 'SET_PAGE_DATA',
+        pageId: 'C1',
+        data: { aantalVolwassen: 7 },
+      });
+    }
+  }, [page.id, state.C1?.aantalMensen, state.C1?.aantalVolwassen, dispatch]);
+
+  const handleChange = (fieldId: string, value: any) => {
+    const newErrors = { ...errors };
+    const field = page.fields.find((f) => f.id === fieldId)!;
+    newErrors[fieldId] = validateField(field, value, state);
+    setErrors(newErrors);
+
+    dispatch({
+      type: 'SET_PAGE_DATA',
+      pageId: page.id,
+      data: { [fieldId]: value },
+    });
+  };
+
+  const handleNext = () => {
+    let hasError = false;
+    const newErrors: Record<string, string | null> = {};
+
+    page.fields.forEach((field) => {
+      if (evaluateCondition(field.conditional, state, page.id)) {
+        const value = currentPageData[field.id];
+        const error = validateField(field, value, state);
+        if (error) {
+          newErrors[field.id] = error;
+          hasError = true;
+        } else {
+          newErrors[field.id] = null;
+        }
+      }
+    });
+
+    setErrors(newErrors);
+
+    if (hasError && scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: 0, animated: true });
+    } else if (!hasError) {
+      onNext();
+    }
+  };
+
+  return (
+    <View style={styles.pageContainer}>
+      <Text style={styles.pageTitle}>{page.title}</Text>
+
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: 120 + insets.bottom },
+        ]}>
+        {page.fields.map((field) => (
+          <React.Fragment key={field.id}>
+            <ConditionalField conditional={field.conditional} pageId={page.id}>
+              <FormField
+                pageId={page.id}
+                field={field}
+                value={currentPageData[field.id] ?? field.defaultValue ?? ''}
+                onChange={(fieldId, value) => handleChange(fieldId, value)}
+                error={errors[field.id]}
+                state={state}
+              />
+            </ConditionalField>
+
+            {/* Waarschuwingen C1 */}
+            {page.id === 'C1' &&
+              evaluateCondition(field.conditional, state, page.id) && (
+                <>
+                  {(field.id === 'aantalMensen' ||
+                    field.id === 'aantalVolwassen') &&
+                    (() => {
+                      const val = Number(currentPageData[field.id] ?? 0);
+                      if (
+                        (field.id === 'aantalMensen' && val >= 10) ||
+                        (field.id === 'aantalVolwassen' && val >= 7)
+                      ) {
+                        return (
+                          <Text style={styles.warningTextRed}>
+                            maximaal aantal personen bereikt
+                          </Text>
+                        );
+                      }
+                      if (
+                        (field.id === 'aantalMensen' && val >= 7) ||
+                        (field.id === 'aantalVolwassen' && val >= 5)
+                      ) {
+                        return (
+                          <Text style={styles.warningTextOrange}>
+                            u nadert het maximaal aantal
+                          </Text>
+                        );
+                      }
+                      return null;
+                    })()}
+
+                  {/* Totaal aantal kinderen */}
+                  {field.id === 'aantalVolwassen' &&
+                    (() => {
+                      const mensen = Number(currentPageData.aantalMensen ?? 0);
+                      const volwassen = Number(
+                        currentPageData.aantalVolwassen ?? 0
+                      );
+                      const kinderen = Math.max(0, mensen - volwassen);
+                      return kinderen > 0 ? (
+                        <View style={styles.fieldContainer}>
+                          <Text style={styles.summaryLabelBold}>
+                            Totaal aantal kinderen: {kinderen}
+                          </Text>
+                        </View>
+                      ) : null;
+                    })()}
+                </>
+              )}
+          </React.Fragment>
+        ))}
+      </ScrollView>
+
+      <View
+        style={[
+          styles.buttonContainer,
+          {
+            bottom: insets.bottom,
+            paddingBottom: Math.max(20, insets.bottom + 8),
+          },
+        ]}>
+        {!isFirst && (
+          <TouchableOpacity
+            style={[styles.button, styles.secondaryButton]}
+            onPress={onPrev}>
+            <Text style={styles.secondaryButtonText}>Vorige</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={styles.button} onPress={handleNext}>
+          <Text style={styles.buttonText}>
+            {isLast ? 'Bekijk Resultaat' : 'Volgende'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default WizardPage;
+
+// ./src/screens/Wizard/pages/C1.config.ts
+import { PageConfig } from '../../../types/form';
+
+export const C1Config: PageConfig = {
+  id: 'C1',
+  title: 'Gezinssituatie',
+  fields: [
+    {
+      id: 'aantalMensen',
+      label: 'Totaal aantal personen in huishouden',
+      type: 'counter',
+      required: true,
+      validation: { min: 1, max: 10 },
+      defaultValue: 1,
+    },
+    {
+      id: 'aantalVolwassen',
+      label: 'Aantal volwassenen (18+)',
+      type: 'counter',
+      required: true,
+      defaultValue: 1,
+      conditional: { field: 'C1.aantalMensen', operator: '>', value: 1 },
+      validation: { min: 0, max: 7 },
+    },
+    // P4: REORDERED - Huisdieren now comes BEFORE Auto
+    {
+      id: 'huisdieren',
+      label: 'Huisdier(en)',
+      type: 'radio-chips',
+      required: true,
+      defaultValue: 'Nee',
+      options: [
+        { label: 'Ja', value: 'Ja' },
+        { label: 'Nee', value: 'Nee' },
+      ],
+    },
+    {
+      id: 'auto',
+      label: 'Auto',
+      type: 'radio-chips',
+      required: true,
+      defaultValue: 'Nee',
+      options: [
+        { label: 'Nee', value: 'Nee' },
+        { label: 'Één', value: 'Één' },
+        { label: 'Twee', value: 'Twee' },
+      ],
+    },
+  ],
+};
+// ./src/screens/Wizard/pages/C4.config.ts
+import { PageConfig } from '../../../types/form';
+
+export const C4Config: PageConfig = {
+  id: 'C4',
+  title: 'Huishouden Details',
+  fields: [
+    {
+      id: 'leden',
+      label: 'Leden van het huishouden',
+      type: 'repeater-array',
+      required: true,
+      defaultValue: [],
+      validation: { lengthEqualsTo: 'C1.aantalMensen' },
+    },
+  ],
+};
+
+// ./src/screens/Wizard/pages/C7.config.ts
+import { PageConfig } from '../../../types/form';
+
+export const C7Config: PageConfig = {
+  id: 'C7',
+  title: 'Inkomsten',
+  fields: [
+    {
+      id: 'inkomsten',
+      label: 'Inkomsten per volwassene',
+      type: 'income-repeater',
+      required: false,
+      defaultValue: {},
+    },
+  ],
+};
+
+// ./src/screens/Wizard/pages/C10.config.ts
+import { PageConfig } from '../../../types/form';
+
+export const C10Config: PageConfig = {
+  id: 'C10',
+  title: 'Vaste Lasten',
+  fields: [
+    {
+      id: 'lasten',
+      label: 'Maandelijkse vaste lasten',
+      type: 'expense-repeater',
+      required: false,
+      defaultValue: [],
+    },
+  ],
+};

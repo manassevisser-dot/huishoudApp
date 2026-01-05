@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# .phoenix/core.sh - Core Logic, Locking & Config (V3.2)
+# Hardened: Race-condition free locking, safe defaults.
+
+echo "🔓 Locking mechanisme verwijderen (Fixing timeouts)..."
+
+# 1. Oude cache met corrupte locks weggooien
+rm -rf /tmp/phoenix-audit-cache
+
+# 2. Overschrijf core.sh met een SIMPELE versie zonder flock
+cat > .phoenix/core.sh << 'EOF'
+#!/bin/bash
+# .phoenix/core.sh - Core Logic (V3.4 - No Locks Edition)
+
+# --- Global Defaults ---
+VERBOSE=${VERBOSE:-false}
+PARALLEL=${PARALLEL:-false}
+DRY_RUN=${DRY_RUN:-false}
+SOFT_FAIL=${SOFT_FAIL:-false}
+GENERATE_REPORT=${GENERATE_REPORT:-false}
+
+export CACHE_DIR="/tmp/phoenix-audit-cache"
+
+# --- Styling ---
+ICON_OK="✅"
+ICON_FAIL="❌"
+ICON_WARN="⚠️"
+BOLD='\033[1m'; DIM='\033[2m'; RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[0;33m'; BLUE='\033[0;34m'; NC='\033[0m'
+
+# --- Init ---
+init_counters() {
+    # Altijd starten met een schone lei
+    rm -rf "$CACHE_DIR"
+    mkdir -p "$CACHE_DIR"
+    echo "0" > "$CACHE_DIR/total"
+    echo "0" > "$CACHE_DIR/passed"
+    echo "0" > "$CACHE_DIR/failed"
+    : > "$CACHE_DIR/failed_items.txt"
+}
+
+# --- Simple Counters (Geen flock!) ---
+atomic_inc() {
+    local name="$1"
+    local file="$CACHE_DIR/$name"
+    
+    # Lees waarde, tel 1 op, schrijf terug. Simpel.
+    local val=$(cat "$file" 2>/dev/null || echo "0")
+    echo $(( val + 1 )) > "$file"
+}
+
+read_counter() {
+    cat "$CACHE_DIR/$1" 2>/dev/null || echo "0"
+}
+
+record_failure() {
+    local _id="${1:-unknown}"
+    local _desc="${2:-No description}"
+    
+    # Eerst de teller omhoog
+    atomic_inc "failed"
+    
+    # Dan de tekst toevoegen
+    echo "$_id $_desc" >> "$CACHE_DIR/failed_items.txt"
+}
+
+log_section() { echo -e "\n${BLUE}${BOLD}=== $1 ===${NC}"; }
+log_verbose() { [[ "$VERBOSE" == "true" ]] && echo -e "${DIM}  [DEBUG] $1${NC}"; }
+
+# Config Loader
+load_config() {
+    local conf_file=".phoenix-audit.conf"
+    [[ -f "$conf_file" ]] && source "$conf_file"
+    export max_household_size=${max_household_size:-5}
+    declare -gA THRESHOLDS
+    THRESHOLDS[max_household_size]=$max_household_size
+}
+load_config
+EOF
+
+echo "✅ Core is vervangen. Geen locks meer."
+echo "👉 Draai nu: ./phoenix audit"

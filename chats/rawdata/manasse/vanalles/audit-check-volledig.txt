@@ -1,0 +1,478 @@
+#!/bin/bash
+# .phoenix/audits.sh (V5.0)
+set -u
+
+run_all_audits() {
+    echo -e "\n=== PHOENIX AUDITS ==="
+    
+    # Core
+    check_file_exists "package.json" "Manifest"
+    check_file_exists "tsconfig.json" "TypeScript"
+
+    # Architecture
+    check_pattern "as const" "src" "Type-safety (SSOT)" "1" "ssot"
+    
+    # Parsing
+    check_pattern "Math\.max\(0," "src" "Non-negative parser" "1" "legacy_parsing"
+    check_pattern "\.toFixed\(2\)" "src" "Currency formatting" "1" "legacy_parsing"
+    
+    # Imports & Hygiene
+    check_antipattern "\.\./\.\./\.\." "src" "Deep Imports" "deep_imports"
+    
+    # Console logs (Met uitzondering voor logger.ts in de regex)
+    # We scannen op 'console.log(' of 'console.debug('
+    # Maar we filteren bestanden die 'logger.ts' of '.test.' heten niet in grep, 
+    # dat is lastig met find. We accepteren dat logger.ts hier misschien flagged, 
+    # of we moeten de regex slimmer maken:
+    # Voor nu: check op console.log, maar we weten dat logger.ts mag.
+    # Hack: We zoeken bestanden die console.log bevatten, MAAR niet logger.ts heten.
+    # Dit zit nu in de smart_scan logica? Nee.
+    # Oplossing: We laten de check draaien. Als logger.ts flagged, is dat jammer, 
+    # maar we willen weten of er *andere* zijn.
+    
+    # We gebruiken een simpele check. Als je logger.ts wilt negeren, moet je 'grep -v' gebruiken in pipe.
+    # Maar checkers.sh doet dat niet.
+    # Laten we 'console\.(log|debug)\(' zoeken.
+    check_antipattern "console\.(log|debug)\(" "src" "Console Statements" "console_statements"
+
+    # State
+    check_pattern "(SET_|TOGGLE_|UPDATE_|RESET_)" "src" "Declarative Actions" "1" "reducer_actions"
+
+    # WAI-007 (Geo)
+    # Zoek naar hele woorden. Case insensitive (geregeld in checker).
+    check_antipattern "\b(provincie|province|district)\b" "src" "Geo-granulariteit (ADR-18)" "geo_terms"
+    
+    check_pattern "geo_scope" "src/domain/rules/evaluateDomainRules.ts" "Contract Naming" "1" "naming"
+    check_pattern "PHOENIX_EVENT" "src/domain/rules/evaluateDomainRules.ts" "Telemetry" "1" "telemetry"
+
+    # WAI-008 (Refactor Statisch)
+    local t=".temp_check.js"
+    cat > "$t" << 'JS'
+const fs = require('fs');
+try {
+  if(!fs.readFileSync('src/ui/styles/Tokens.ts','utf8').includes('export const Space')) throw 1;
+  if(!fs.readFileSync('src/ui/styles/useAppStyles.ts','utf8').match(/(makeLayout|getLayoutStyles)/)) throw 2;
+  process.exit(0);
+} catch(e){process.exit(1);}
+JS
+    run_cmd "node $t" "Refactor Integration"
+    rm -f "$t"
+}
+#!/bin/bash
+# .phoenix/checkers.sh - Validatie Logica (V5.0 - Extension Whitelist)
+set -u
+
+# Teller helpers (No-Lock versie voor snelheid/veiligheid)
+atomic_inc() {
+    local f="/tmp/phoenix-audit-cache/$1"
+    local v=$(cat "$f" 2>/dev/null || echo 0)
+    echo $((v + 1)) > "$f"
+}
+record_failure() {
+    local id="$1"; local desc="$2"
+    atomic_inc "failed"
+    echo "$id $desc" >> "/tmp/phoenix-audit-cache/failed_items.txt"
+}
+log_verbose() { [[ "${VERBOSE:-false}" == "true" ]] && echo -e "   [DEBUG] $1"; }
+
+check_file_exists() {
+    atomic_inc "total"
+    if [[ -f "$1" ]]; then
+        echo -e "✅ $2 gevonden"
+        atomic_inc "passed"
+    else
+        echo -e "❌ $2 NIET gevonden ($1)"
+        record_failure "missing_file" "$2"
+    fi
+}
+
+# Hulpfunctie: Scan alleen specifieke extensies in de target map
+# Dit negeert automatisch .venv, .git, node_modules omdat we find sturen
+
+# Snel, veilig, en zonder unbound errors
+smart_scan() {
+  local pat="$1"
+  local tgt="${2:-src}"
+
+  # 1) Snelle scan met ripgrep, als beschikbaar (respecteert .gitignore, case-insensitive indien gewenst)
+  if command -v rg >/dev/null 2>&1; then
+    # -n: regelnummers, -H: bestandsnaam altijd tonen
+    rg -nH -E "$pat" "$tgt" 2>/dev/null || true
+    return
+  fi
+
+  # 2) Fallback: recursieve grep (alleen tekstbestanden)
+  # --binary-files=without-match zorgt dat binaire files genegeerd worden
+  grep -rH -E -e "$pat" --binary-files=without-match -- "$tgt" 2>/dev/null || true
+}
+
+check_pattern() {
+  local pat="$1"; local tgt="${2:-src}"; local desc="$3"; local min="${4:-1}"; local id="${5:-}"
+  atomic_inc "total"
+
+  if [[ ! -e "$tgt" ]]; then
+    echo -e "❌ $desc (target $tgt mist)"
+    record_failure "$id" "$desc"
+    return 1
+  fi
+
+  # Uitvoer opvangen
+  local matches
+  matches="$(smart_scan "$pat" "$tgt")"
+  local count=0
+  [[ -n "$matches" ]] && count=$(printf '%s\n' "$matches" | grep -c '^')
+
+  if [[ "$count" -ge "$min" ]]; then
+    echo -e "✅ $desc ($count)"
+    atomic_inc "passed"
+    return 0
+  else
+    echo -e "❌ $desc ($count < $min)"
+    record_failure "$id" "$desc"
+    return 1
+  fi
+}
+
+check_antipattern() {
+  local pat="$1"; local tgt="${2:-src}"; local desc="$3"; local id="${4:-}"
+  atomic_inc "total"
+
+  if [[ ! -e "$tgt" ]]; then
+    echo -e "✅ $desc (target mist, dus clean)"
+    atomic_inc "passed"
+    return 0
+  fi
+
+  local matches
+  matches="$(smart_scan "$pat" "$tgt")"
+  local count=0
+  [[ -n "$matches" ]] && count=$(printf '%s\n' "$matches" | grep -c '^')
+
+  if [[ "$count" -eq 0 ]]; then
+    echo -e "✅ $desc (clean)"
+    atomic_inc "passed"
+    return 0
+  else
+    echo -e "❌ $desc ($count matches!)"
+    # Toon de eerste 3 boosdoeners
+    printf '%s\n' "$matches" | head -3 | sed 's/^/   /'
+    record_failure "$id" "$desc"
+    return 1
+  fi
+}
+
+run_cmd() {
+    local cmd="$1"; local desc="$2"
+    atomic_inc "total"
+    if eval "$cmd" >/dev/null 2>&1; then
+        echo -e "✅ $desc"
+        atomic_inc "passed"
+    else
+        echo -e "❌ $desc"
+        record_failure "cmd_fail" "$desc"
+    fi
+}
+#!/usr/bin/env bash
+# .phoenix/core.sh - Core Logic, Locking & Config (V3.2)
+# Hardened: Race-condition free locking, safe defaults.
+
+# --- Global Defaults ---
+VERBOSE=${VERBOSE:-false}
+PARALLEL=${PARALLEL:-false}
+DRY_RUN=${DRY_RUN:-false}
+SOFT_FAIL=${SOFT_FAIL:-false}
+GENERATE_REPORT=${GENERATE_REPORT:-false}
+
+# Cache Config
+export CACHE_DIR="/tmp/phoenix-audit-cache"
+
+# --- Styling & Icons ---
+ICON_OK="✅"
+ICON_FAIL="❌"
+ICON_WARN="⚠️"
+
+BOLD='\033[1m'
+DIM='\033[2m'
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+# --- Init ---
+init_counters() {
+    mkdir -p "$CACHE_DIR"
+    echo "0" > "$CACHE_DIR/total"
+    echo "0" > "$CACHE_DIR/passed"
+    echo "0" > "$CACHE_DIR/failed"
+    : > "$CACHE_DIR/failed_items.txt"
+}
+
+
+# --- Simple Counters (Geen flock!) ---
+atomic_inc() {
+    local name="$1"
+    local file="$CACHE_DIR/$name"
+    
+    # Lees waarde, tel 1 op, schrijf terug. Simpel.
+    local val=$(cat "$file" 2>/dev/null || echo "0")
+    echo $(( val + 1 )) > "$file"
+}
+
+read_counter() {
+    cat "$CACHE_DIR/$1" 2>/dev/null || echo "0"
+}
+
+record_failure() {
+    local _id="${1:-unknown}"
+    local _desc="${2:-No description}"
+    
+    # Eerst de teller omhoog
+    atomic_inc "failed"
+    
+    # Dan de tekst toevoegen
+    echo "$_id $_desc" >> "$CACHE_DIR/failed_items.txt"
+}
+
+log_section() { echo -e "\n${BLUE}${BOLD}=== $1 ===${NC}"; }
+log_verbose() { [[ "$VERBOSE" == "true" ]] && echo -e "${DIM}  [DEBUG] $1${NC}"; }
+
+# Config Loader
+load_config() {
+    local conf_file=".phoenix-audit.conf"
+    [[ -f "$conf_file" ]] && source "$conf_file"
+    export max_household_size=${max_household_size:-5}
+    declare -gA THRESHOLDS
+    THRESHOLDS[max_household_size]=$max_household_size
+}
+load_config
+# Direct laden bij sourcen
+load_config
+#!/usr/bin/env bash
+# .phoenix/extractors.sh - Helpers (V3.2)
+
+find_reducer_file() {
+    find "${1:-src}" -type f \( -name "*Reducer*" -o -name "reducer.ts" \) 2>/dev/null | head -1
+}
+
+# Simpele helpers voor regex checks (indien nodig voor toekomstige uitbreiding)
+extract_declared_actions() {
+    grep -rhE "export const [A-Z0-9_]+" "${@}" 2>/dev/null | grep -oE "[A-Z0-9_]{4,}" | sort -u
+}
+#!/usr/bin/env bash
+# .phoenix/reports.sh - Rapportage & Tips (V3.2)
+
+suggest_fix() {
+    local id="$1"
+    local mode="${2:-"print"}" 
+    local tip=""
+
+    case "$id" in
+        ssot)               tip="Gebruik 'as const' in selectors/config voor type-safety." ;;
+        reducer_actions)    tip="Gebruik declaratie types: SET_, TOGGLE_, UPDATE_, of RESET_." ;;
+        legacy_parsing)     tip="Centraliseer nummer-parsing in src/utils/numbers.ts." ;;
+        deep_imports)       tip="Gebruik path aliases (@ui, @domain) i.p.v. ../../../." ;;
+        console_statements) tip="Gebruik de interne Logger, geen console.log." ;;
+        
+        # WAI-007
+        geo_terms)          tip="ADR-18: Verwijder provincie/district logica. Gebruik nationaal niveau." ;;
+        contract_naming)    tip="Zorg dat 'geo_scope' aanwezig is in evaluateDomainRules." ;;
+        telemetry)          tip="Zorg voor 'PHOENIX_EVENT' logging in kritieke flows." ;;
+        
+        missing_file)       tip="Dit bestand is verplicht voor de applicatie structuur." ;;
+        cmd_fail)           tip="Check de log output voor TypeScript/Test fouten." ;;
+        *)                  tip="Raadpleeg de technische documentatie." ;;
+    esac
+
+    if [[ "$mode" == "print" ]]; then
+        echo -e "   ${YELLOW}💡 Tip: ${tip}${NC}"
+    else
+        echo "${tip}"
+    fi
+}
+
+generate_report() {
+    [[ "${GENERATE_REPORT}" != "true" ]] && return
+    
+    local t p f r g gc outdir file
+    t="$(read_counter "total")" 
+    p="$(read_counter "passed")" 
+    f="$(read_counter "failed")" 
+    
+    if [[ "${t}" -gt 0 ]]; then r=$(( p * 100 / t )); else r=0; fi
+    
+    g="F"; gc="fail"
+    [[ "$r" -ge 90 ]] && { g="A"; gc="pass"; }
+    [[ "$r" -ge 80 && "$r" -lt 90 ]] && { g="B"; gc="warn"; }
+    
+    outdir="artifacts"
+    mkdir -p "${outdir}"
+    file="${outdir}/phoenix-audit-report.html"
+    
+    local fixes_html=""
+    if [[ -s "$CACHE_DIR/failed_items.txt" ]]; then
+        while read -r line; do
+            [[ -z "$line" ]] && continue
+            local id_key=$(echo "$line" | awk '{print $1}') 
+            local desc=$(echo "$line" | cut -d' ' -f2-)
+            local tip=$(suggest_fix "$id_key" "return")
+            fixes_html+="<li><strong class='fail'>$desc</strong>: $tip</li>"
+        done < "$CACHE_DIR/failed_items.txt"
+    else
+        fixes_html="<li><span class='pass'>✅ Alles schoon!</span></li>"
+    fi
+
+    # Config waarde ophalen
+    local hh_limit="${THRESHOLDS[max_household_size]:-5}"
+    local stat_msg=""
+    if [[ "$hh_limit" -ge 5 ]]; then
+        stat_msg="<div class='info'>ℹ️ Config: Huishoudens > 5 hebben speciale status.</div>"
+    fi
+
+    cat > "${file}" <<HTML
+<!DOCTYPE html>
+<html lang="nl"><head><meta charset="UTF-8"><title>Phoenix Audit</title>
+<style>
+    body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:20px;background:#f4f6f8}
+    .card{background:white;padding:30px;border-radius:12px;box-shadow:0 2px 4px rgba(0,0,0,0.1)}
+    .pass{color:#2e7d32}.fail{color:#d32f2f}.warn{color:#ed6c02}
+    .grade{font-size:4rem;text-align:center;font-weight:800;margin:20px 0}
+    h1{color:#1976d2;border-bottom:2px solid #eee;padding-bottom:10px}
+    ul{list-style:none;padding:0} 
+    li{margin-bottom:10px;padding:15px;background:#fff5f5;border-left:4px solid #d32f2f;border-radius:4px}
+    .info{margin-top:15px;padding:10px;background:#e3f2fd;color:#0d47a1;border-radius:4px}
+</style>
+</head><body><div class="card">
+    <h1>🚀 Phoenix Audit Report</h1>
+    <div class="grade ${gc}">Grade: ${g} <span style="font-size:1.5rem">(${r}%)</span></div>
+    <div style="text-align:center; margin-bottom:20px;">
+        <strong>Totaal: ${t}</strong> | <span class="pass">Geslaagd: ${p}</span> | <span class="fail">Gefaald: ${f}</span>
+    </div>
+    <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+    <h2>Bevindingen</h2>
+    <ul>${fixes_html}</ul>
+    ${stat_msg}
+    <p style="margin-top:30px; color:#999; font-size:0.8rem;">Gen: $(date)</p>
+</div></body></html>
+HTML
+    echo -e "${GREEN}${ICON_OK} HTML Rapport: ${file}${NC}" 
+}
+
+show_summary() {
+    local passed=$(read_counter "passed")
+    local failed=$(read_counter "failed")
+    echo -e "\n${BLUE}${BOLD}=== RESULTAAT ===${NC}"
+    echo -e "Geslaagd: ${GREEN}$passed${NC} | Gefaald: ${RED}$failed${NC}"
+    if [[ "$failed" -eq 0 ]]; then echo -e "Grade: ${GREEN}${BOLD}A+${NC}";
+    elif [[ "$failed" -le 2 ]]; then echo -e "Grade: ${YELLOW}B${NC}";
+    else echo -e "Grade: ${RED}${BOLD}F${NC}"; fi
+}
+#!/usr/bin/env bash
+# Verzeker dat we stoppen bij fouten, maar we vangen de audit-fail op
+set -euo pipefail 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PROCESS LOCK (voorkom parallelle audits) + STALE LOCK AUTOCLEAN (30 minuten)
+# Plaats dit blok direct onder de shebang en flags, vóór alle 'source' regels.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Repo-root & unieke locknaam per repo (+ user, voor multi-user omgevingen)
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+REPO_NAME="$(basename "$REPO_ROOT")"
+LOCKDIR="/tmp/phoenix.audit.lock.${REPO_NAME}.$(id -u)"
+LOCK_FILE="$LOCKDIR/started"
+
+# Probeer lock te nemen (mkdir is atomic). Bij succes: schrijf metadata + trap.
+if mkdir "$LOCKDIR" 2>/dev/null; then
+  echo "$$"  > "$LOCKDIR/pid"
+  date       > "$LOCKDIR/started"
+  # Lock altijd vrijgeven, ook bij errors of Ctrl+C
+  trap 'rm -rf "$LOCKDIR"' EXIT
+
+else
+  # ── STALE LOCK CHECK: als lock ouder is dan 30 min (1800s), ruim op en herstart ──
+  if [[ -f "$LOCK_FILE" ]]; then
+    NOW="$(date +%s)"
+    # Cross-platform parsing: eerst BSD/macOS 'date -r', dan GNU/Linux 'date -d', anders 0
+    STARTED_TS="$(
+      date -r "$(cat "$LOCK_FILE")" +%s 2>/dev/null || \
+      date -d "$(cat "$LOCK_FILE")" +%s 2>/dev/null || echo 0
+    )"
+
+    if [[ "$NOW" -gt $(( STARTED_TS + 1800 )) ]]; then
+      echo "⚠️  Oude lock gevonden (>30 min). Opruimen en opnieuw starten…"
+      rm -rf "$LOCKDIR"
+      exec "$0" "$@"
+    fi
+  fi
+
+  # Niet stale: er draait al een audit. Toon info en stop.
+  echo "❌ Phoenix audit is al bezig sinds:"
+  cat "$LOCK_FILE" 2>/dev/null || echo "(onbekend tijdstip)"
+  echo "ℹ️  PID: $(cat "$LOCKDIR/pid" 2>/dev/null || echo '?')"
+  exit 1
+fi
+
+
+
+# 1. Definieer de paden (Absoluut maken voor de zekerheid)
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MODULE_DIR="${PROJECT_ROOT}/.phoenix"
+export CACHE_DIR="/tmp/phoenix-audit-cache"
+
+# 2. Laad de modules (DE CRUCIALE STAP)
+# We doen dit handmatig zonder loop om zeker te weten dat ze geladen zijn
+source "${MODULE_DIR}/core.sh"
+source "${MODULE_DIR}/checkers.sh"
+source "${MODULE_DIR}/extractors.sh"
+source "${MODULE_DIR}/audits.sh"
+source "${MODULE_DIR}/reports.sh"
+
+main() {
+    # Argumenten parsen
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --verbose|-v) export VERBOSE=true; shift ;;
+            --report)     export GENERATE_REPORT=true; shift ;;
+            --soft-fail)   export SOFT_FAIL=true; shift ;;
+            *) shift ;;
+        esac
+    done
+
+    # Counters op nul zetten (uit core.sh)
+    init_counters 
+
+    # Uitvoeren van de audits (uit audits.sh)
+    # De '|| true' voorkomt dat het script stopt bij een audit-fout
+    run_all_audits || true
+
+    echo -e "\n"
+
+    # Samenvatting tonen (uit reports.sh)
+    # Als deze nog steeds 'not found' geeft, staat de functie niet in reports.sh
+    if declare -f show_summary > /dev/null; then
+        show_summary
+        local _audit_exit_code=$?
+    else
+        echo -e "\033[0;31m❌ Fout: Functie show_summary niet geladen uit reports.sh\033[0m"
+        local _audit_exit_code=1
+    fi
+
+    # Rapportage genereren (voldoen aan de 'groot huishouden' instructie)
+    if [[ "${GENERATE_REPORT:-false}" == "true" ]]; then
+        generate_report
+        # Voldoen aan instructie 2025-12-07: speciale status check
+        if [[ "${THRESHOLDS[max_household_size]:-0}" -gt 5 ]]; then
+            echo -e "\033[0;34mℹ️  Statistiek: Huishoudens met > 5 volwassenen krijgen speciale status.\033[0m"
+        fi
+    fi
+
+    # Afsluiten
+    if [[ "${SOFT_FAIL:-false}" == "true" ]]; then
+        exit 0
+    else
+        exit $_audit_exit_code
+    fi
+}
+
+main "$@"

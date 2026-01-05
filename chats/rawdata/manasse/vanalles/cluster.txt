@@ -1,0 +1,180 @@
+# 🔺 **CLUSTER 1 — STRUCTURE & DOMAIN PURITY**
+
+*(“Hoe hoort software in Phoenix eruit te zien?”)*
+
+Dit cluster bewaakt **architectuur, types, money & scheiding der lagen.**
+
+Neem hierin op:
+
+```
+01 SEPARATION
+02 TYPE_SAFETY
+03 KERNEL
+04 DUMB_UI
+05 MONEY
+06 INPUT_HARDENING
+07 FLAGS
+08 FSM
+09 PURE_VIEWS
+10 SCHEMA_VERSIONING
+13 FINANCE_KERNEL
+14 DUMB_REDUCERS
+16 SIMPLICITY
+```
+
+### 🎯 Doel van dit cluster
+
+* Domain-logica is *schoon en gedisciplineerd*
+* Data is nooit vaag of half-gestructureerd
+* Gedrag is voorspelbaar en bewijsbaar
+* UI is “dom” en vervangbaar
+* Geld is **altijd** cents en deterministisch
+* Edge cases zijn *ontwerpkeuzes*, geen toeval
+
+**Dit cluster kun je samenvatten als:**
+
+> *Code is streng, voorspelbaar, gecontroleerd en niet slim op de verkeerde plek.*
+
+---
+
+# 🛡 **CLUSTER 2 — GOVERNANCE, TRACEABILITY & HUMAN SOVEREIGNTY**
+
+*(“Wie beslist? Wie controleert? Waar blijft het bewijs?”)*
+
+Hier bundel je alle ADR’s die zorgen dat:
+
+* beslissingen **herleidbaar** zijn
+* risico’s **bewust genomen** worden
+* AI **nooit regeert**
+* audit altijd mogelijk is
+* rollen gescheiden blijven
+
+Dit cluster bevat:
+
+```
+11 TEST_PYRAMID
+12 AUDITABILITY
+15 PROCESS_ROLES
+17 ACCEPTED_RISK
+18 HUMAN_DECIDES
+19 MANASSE-MANDATE
+```
+
+Je zou hier ook #MANASSE FREEZE en GATES inhoudelijk onder laten vallen.
+
+### 🎯 Doel van dit cluster
+
+* niets gebeurt “per ongeluk”
+* alles kan later gereconstrueerd worden
+* verantwoordelijkheid is menselijk
+* governance is niet optioneel
+
+**Samenvatting:**
+
+> *AI mag denken, maar nooit beslissen.
+> Mensen beslissen — volledig traceerbaar.*
+
+---
+
+# 🧰 **CLUSTER 3 — DELIVERY, QUALITY & OPERATING SAFETY**
+
+*(“Hoe zorgen we dat verandering veilig, klein en beheersbaar blijft?”)*
+
+Dit cluster richt zich op:
+
+* hoe je code verandert
+* hoe je test
+* hoe je risico beperkt
+* hoe je werkt zonder chaos
+
+Hier vallen bijvoorbeeld onder:
+
+```
+RESULT TYPES / STRICT TS (uit je ruleset)
+ATOMIC SCOPE
+STRICT LIMITS (max lines, args, etc.)
+Refactoring discipline
+Test strategy (uit 11)
+Deployment safety patterns
+Incident handling (LEO + FREEZE)
+```
+
+Deze overlappen deels met bestaande ADR’s, maar **functioneel vormen ze 1 werkpraktijk.**
+
+### 🎯 Doel van dit cluster
+
+* kleine, gecontroleerde stappen
+* altijd deployable blijven
+* fouten isoleren
+* blast radius minimaliseren
+* gedrag toetsen vóór vertrouwen
+
+**Samenvatting:**
+
+> *Klein. Controleerbaar. Veerkrachtig. Traceerbaar.*
+
+---
+
+# 📦 Zo ziet de Canon ingedeeld eruit
+
+## 🔺 **Cluster 1 — Architecture & Domain Integrity**
+
+01 Separation
+02 Type Safety
+03 Kernel
+04 Dumb UI
+05 Money
+06 Input Hardening
+07 Flags
+08 FSM
+09 Pure Views
+10 Schema Versioning
+13 Finance Kernel
+14 Dumb Reducers
+16 Simplicity
+
+---
+
+## 🛡 **Cluster 2 — Governance & Human Sovereignty**
+
+11 Test Pyramid
+12 Auditability
+15 Process Roles
+17 Accepted Risk
+18 Human Decides
+19 Manasse-Mandate
+
+---
+
+## 🧰 **Cluster 3 — Delivery & Operational Safety**
+
+(afkomstig uit je regels & runtime)
+
+* Atomic Scope
+* 1 File per Change
+* Max 20 lines per function
+* Strict TS
+* Result Types
+* Golden Tests
+* Incident Flow (→ LEO → RE-ENTRY)
+* Freeze Protocol
+* ADR → Plan → Contract → Execute → Verify
+
+---
+
+# 💡 Waarom deze clustering werkt
+
+Het volgt **natuurlijke denk- en werkfasen:**
+
+### 🧠 Ontwerpen → *(Cluster 1)*
+
+Hoe hoort de softwarewereld eruit te zien?
+
+### ⚖️ Beslissen → *(Cluster 2)*
+
+Wie bepaalt? Is het verantwoord? Kunnen we het uitleggen?
+
+### 🔧 Bouwen → *(Cluster 3)*
+
+
+

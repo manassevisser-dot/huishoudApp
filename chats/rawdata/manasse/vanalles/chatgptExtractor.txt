@@ -1,0 +1,317 @@
+
+// ==UserScript==
+// @name        ChatGPT Conversation Exporter (MD/JSON) + Table Restore
+// @namespace   manasse.tools.chatgpt
+// @version     2.1.0
+// @description Exporteer ChatGPT-gesprekken naar Markdown/JSON met lazy-load, code/table mapping én post-step tabel-restauratie (GFM)
+// @author      Manasse + Copilot
+// @match       https://chatgpt.com/*
+// @match       https://chat.openai.com/*
+// @run-at      document-idle
+// @grant       none
+// ==/UserScript==
+
+(function () {
+  "use strict";
+
+  /** ================ Helpers ================ **/
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const safe = (s) => (s || "export").replace(/[\\/:*?"<>|]+/g, "_").slice(0, 70);
+
+  function el(tag, css = "", text = "") {
+    const n = document.createElement(tag);
+    if (css) n.style.cssText = css;
+    if (text) n.textContent = text;
+    return n;
+  }
+
+  function findScroller() {
+    const cands = [
+      document.querySelector('[data-testid="conversation"]'),
+      document.querySelector("main"),
+      document.scrollingElement,
+      document.body,
+    ].filter(Boolean);
+    return cands.sort((a, b) => (b?.scrollHeight || 0) - (a?.scrollHeight || 0))[0] || document.body;
+  }
+
+  function countArticles() {
+    return document.querySelectorAll('article[data-testid^="conversation-turn"], article[data-turn], article').length;
+  }
+
+  async function lazyLoadAll(statusEl, maxMs = 45_000) {
+    const scroller = findScroller();
+    const start = Date.now();
+    let prev = 0, stable = 0;
+
+    while ((Date.now() - start) < maxMs) {
+      scroller.scrollTo({ top: 0, behavior: "instant" });
+      await sleep(900);
+      scroller.scrollTo({ top: scroller.scrollHeight, behavior: "instant" });
+      await sleep(900);
+      scroller.scrollTo({ top: Math.floor(scroller.scrollHeight / 2), behavior: "instant" });
+      await sleep(600);
+
+      const after = countArticles();
+      if (statusEl) statusEl.textContent = `🔄 Laden… artikelen: ${after}`;
+
+      if (after > prev) { prev = after; stable = 0; }
+      else if (++stable >= 3) break; // 3 cycli zonder groei -> klaar
+    }
+    if (statusEl) statusEl.textContent = `✅ Lazy-load klaar (${countArticles()} artikelen)`;
+  }
+
+  function roleOf(a) {
+    let role = a.getAttribute("data-turn") || a.dataset?.turn || "";
+    if (!role) {
+      const lbl = (a.querySelector("h6.sr-only")?.innerText || "").toLowerCase();
+      role = (/je zei|you said/.test(lbl)) ? "user" : "assistant";
+    }
+    return role;
+  }
+
+  function indexOf(a, i) {
+    const t = a.getAttribute("data-testid") || "";
+    const m = t.match(/conversation-turn-(\d+)/);
+    return m ? parseInt(m[1], 10) : i;
+  }
+
+  function toMarkdownFromArticle(a) {
+    // Verwijder "sr-only" (sprekerlabel) uit de tekstweergave
+    const sr = a.querySelector("h6.sr-only"); if (sr) sr.remove();
+
+    // Bouw blokken, met echte code- en tabel-mapping
+    const blocks = [];
+    const push = (t) => { if (t && t.trim()) blocks.push(t.trim()); };
+
+    // Neem directe children; zo niet, gebruik het element zelf
+    const children = a.children.length ? Array.from(a.children) : [a];
+
+    for (const node of children) {
+      if (node.matches?.("pre, pre code")) {
+        const codeEl = node.matches("code") ? node : node.querySelector("code");
+        const langMatch = (codeEl?.className || "").match(/language-([a-z0-9]+)/i);
+        const lang = langMatch ? langMatch[1] : "";
+        const code = (codeEl?.textContent || node.textContent || "").replace(/\u00A0/g, " ");
+        push("```" + lang + "\n" + code + "\n```");
+      } else if (node.matches?.("table")) {
+        const rows = Array.from(node.rows).map(r =>
+          Array.from(r.cells).map(c => c.textContent.replace(/\s+/g, " ").trim())
+        );
+        if (rows.length) {
+          const header = rows[0];
+          const sep = header.map(() => '---');
+          const body = rows.slice(1);
+          const lines = [
+            '| ' + header.join(' | ') + ' |',
+            '| ' + sep.join(' | ') + ' |',
+            ...body.map(r => '| ' + r.join(' | ') + ' |')
+          ];
+          push(lines.join('\n'));
+        }
+      } else if (node.matches?.("ul,ol")) {
+        const list = Array.from(node.querySelectorAll("li"))
+          .map(li => "- " + (li.textContent || "").trim())
+          .join("\n");
+        push(list);
+      } else {
+        // Verwijder UI-artefacten "Code kopiëren"
+        const txt = (node.textContent || "").replace(/\bCode kopiëren\b/gi, "");
+        push(txt);
+      }
+    }
+    return blocks.join("\n\n").trim();
+  }
+
+  /** ================ Tabel-restauratie (post-step) ================ **/
+  // Herstelt "platgeslagen" tabellen in MD, buiten codeblokken.
+  function restoreTablesInMarkdown(md) {
+    const blocks = md.split(/\n{2,}/);
+    const fixed = blocks.map(processBlock);
+    return fixed.join("\n\n");
+
+    function processBlock(block) {
+      if (isCodeFenced(block)) return block;
+      const lines = block.split('\n').filter(l => l.trim() !== '');
+      if (lines.length < 2) return block;
+
+      let res = detectDelimited(lines);
+      if (res) return toGFM(...res);
+
+      res = detectFixedWidth(lines);
+      if (res) return toGFM(...res);
+
+      res = detectKV(lines);
+      if (res) return toGFM(...res);
+
+      return block;
+    }
+
+    function isCodeFenced(text) { return /^\s*```/m.test(text); }
+
+    function toGFM(headers, rows) {
+      const hdr = '| ' + headers.join(' | ') + ' |';
+      const sep = '| ' + headers.map(() => '---').join(' | ') + ' |';
+      const body = rows.map(r => '| ' + r.join(' | ') + ' |');
+      return [hdr, sep, ...body].join('\n');
+    }
+
+    function detectDelimited(lines) {
+      const DELIMS = [',',';','\t','|'];
+      for (const d of DELIMS) {
+        const parts = lines.map(l => l.split(d).map(c => c.trim())).filter(p => p.length >= 2);
+        if (parts.length < 2) continue;
+        const cols = parts.map(p => p.length);
+        if (Math.min(...cols) === Math.max(...cols) && cols[0] >= 2) {
+          const header = parts[0];
+          const rows = parts.slice(1);
+          return [header, rows];
+        }
+      }
+      return null;
+    }
+
+    function detectFixedWidth(lines) {
+      if (lines.length < 2) return null;
+      const starts = [];
+      for (const line of lines) {
+        const matches = [...line.matchAll(/\s{2,}/g)];
+        matches.forEach(m => starts.push(m.index));
+      }
+      if (!starts.length) return null;
+      const buckets = {};
+      starts.forEach(s => { const k = Math.floor(s/4)*4; buckets[k] = (buckets[k]||0) + 1; });
+      let breaks = Object.entries(buckets).sort((a,b)=>b[1]-a[1]).map(([pos])=>Number(pos));
+      if (!breaks.length) return null;
+      if (breaks.length > 4) breaks = breaks.slice(0,4);
+      breaks.sort((a,b)=>a-b);
+
+      const colStarts = [0, ...breaks];
+      const sliceCols = (line) => {
+        const cols = [];
+        for (let i=0;i<colStarts.length;i++){
+          const cs = colStarts[i];
+          const ce = (i+1<colStarts.length)?colStarts[i+1]:null;
+          const seg = (ce!==null ? line.slice(cs,ce) : line.slice(cs)).trim();
+          cols.push(seg);
+        }
+        return cols;
+      };
+      const rows = lines.map(sliceCols);
+      const header = rows[0];
+      const body = rows.slice(1);
+      if (header.length<2 || body.some(r=>r.length!==header.length)) return null;
+      return [header, body];
+    }
+
+    function detectKV(lines) {
+      const kvRe = /^\s*[-*]?\s*([^:\-—]+)\s*[:\-—]\s*(.+)$/;
+      const rows = [];
+      for (const line of lines) {
+        const m = line.match(kvRe);
+        if (!m) return null;
+        rows.push([m[1].trim(), m[2].trim()]);
+      }
+      if (rows.length >= 2) return [["Key","Value"], rows];
+      return null;
+    }
+  }
+
+  function toMarkdown(items) {
+    const md = items.map(it => {
+      const label = it.role === "user" ? "User" : "ChatGPT";
+      return `**${label}:**\n\n${it.text}`;
+    }).join("\n\n---\n\n");
+    // Post-step: tabel-restauratie
+    return restoreTablesInMarkdown(md);
+  }
+
+  function downloadBlob(content, type, filename) {
+    const blob = new Blob([content], { type });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+    a.remove();
+  }
+
+  async function collectConversation(statusEl) {
+    if (!/chatgpt\.com|chat\.openai\.com/.test(location.hostname))
+      throw new Error("Open dit op chatgpt.com of chat.openai.com");
+
+    await lazyLoadAll(statusEl, 45_000);
+
+    let arts = [...document.querySelectorAll('article[data-testid^="conversation-turn"], article[data-turn]')];
+    if (!arts.length) arts = [...document.querySelectorAll("article")];
+    if (!arts.length) throw new Error("Geen beurten gevonden. Scroll even en probeer opnieuw.");
+
+    const items = arts.map((a, i) => {
+      const idx = indexOf(a, i);
+      const role = roleOf(a);
+      const text = toMarkdownFromArticle(a);
+      return { index: idx, role, text };
+    }).filter(x => x.text).sort((a,b)=>a.index-b.index);
+
+    const title = document.title || "export";
+    return { items, title };
+  }
+
+  /** ================ UI ================ **/
+  function ensureButton() {
+    if (document.getElementById("cgpt-exporter-btn")) return;
+
+    const box = el("div",
+      "position:fixed;top:10px;right:10px;z-index:2147483647;display:flex;gap:8px;" +
+      "background:#0e0e0e;border:1px solid #3a3a3a;border-radius:10px;padding:8px;" +
+      "font:12px/1 system-ui;color:#eee;box-shadow:0 4px 18px rgba(0,0,0,.35)"
+    );
+    box.id = "cgpt-exporter-btn";
+
+    const mdBtn = el("button",
+      "background:#1e90ff;color:#fff;border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-weight:600",
+      "Export Chat (MD)"
+    );
+    const jsonBtn = el("button",
+      "background:#2aa84a;color:#fff;border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-weight:600",
+      "Export Chat (JSON)"
+    );
+    const status = el("div", "margin-left:4px;color:#ccc;min-width:220px;font-weight:500");
+
+    mdBtn.addEventListener("click", async () => {
+      status.textContent = "Lazy-load & exporteren (MD)…";
+      try {
+        const data = await collectConversation(status);
+        const md = toMarkdown(data.items); // met tabel-restauratie
+        downloadBlob(md, "text/markdown;charset=utf-8", `chatgpt_conversation_${safe(data.title)}.md`);
+        status.textContent = "✅ MD klaar";
+      } catch (e) {
+        console.error(e);
+        status.textContent = "❌ Fout (MD): " + e.message;
+      }
+    });
+
+    jsonBtn.addEventListener("click", async () => {
+      status.textContent = "Lazy-load & exporteren (JSON)…";
+      try {
+        const data = await collectConversation(status);
+        downloadBlob(JSON.stringify(data.items, null, 2), "application/json;charset=utf-8",
+          `chatgpt_conversation_${safe(data.title)}.json`);
+        status.textContent = "✅ JSON klaar";
+      } catch (e) {
+        console.error(e);
+        status.textContent = "❌ Fout (JSON): " + e.message;
+      }
+    });
+
+    box.append(mdBtn, jsonBtn, status);
+    document.body.appendChild(box);
+  }
+
+  const observer = new MutationObserver(() => {
+    if (document.body && !document.getElementById("cgpt-exporter-btn")) ensureButton();
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+  ensureButton();
+})();

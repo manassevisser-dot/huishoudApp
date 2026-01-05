@@ -1,0 +1,100 @@
+Op basis van de gecombineerde audits (Clusters 0–5) en de strategische sessies, volgt hier de lijst met **Architectural Decision Records (ADR's)**. Dit zijn de feitelijke besluiten die de basis vormen voor de migratie naar de 2025-standaard.
+
+---
+
+### 🏛️ ADR Overzicht: Project Standaard 2025
+
+#### **Groep A: Architectuur & State**
+
+1. **Gelaagde Structuur (DDD):** De applicatie wordt strikt opgedeeld in `@domain`, `@state`, `@ui`, en `@app`. Directe cross-layer imports (bijv. UI die direct naar Storage schrijft) zijn verboden.
+2. **Reducer als Boekhouder:** De `formReducer` is uitsluitend voor pure state-transities. Transformaties, berekeningen en domeinlogica (zoals leeftijd berekenen) vinden plaats *buiten* de reducer.
+3. **State Machine Navigatie:** De "Boolean Soup" (losse booleans voor navigatie) wordt vervangen door één `AppStatus` Union Type in een centrale orchestratie-hook.
+4. **Provider-Only Root:** `App.tsx` wordt gestript van business logica en dient uitsluitend als wrapper voor Providers en de Navigator.
+
+#### **Groep B: Data & Integriteit**
+
+5. **UUID Identiteit:** Voor alle entiteiten (huishoudleden, transacties) worden stabiele UUID's gebruikt. Het gebruik van array-indices als sleutel voor mutaties is verboden.
+6. **Zod at the Gates:** Alle data die de applicatie binnenkomt (via Storage of CSV) wordt aan de grens gevalideerd en geparsed via Zod-schema's.
+7. **Stop Silent Failures:** De storage-service mag bij een mislukte leesactie (corrupte JSON) nooit een `null` of lege state retourneren die de bestaande data kan overschrijven. Er wordt gewerkt met een expliciet `Result`-type.
+8. **Precision Math:** Financiële berekeningen worden uitgevoerd met een gespecialiseerde library (`currency.js` of `big.js`). Floating-point rekenen met euro's is niet toegestaan.
+
+#### **Groep C: Domein & Business Rules**
+
+9. **UTC-Noon Datumstrategie:** Alle datums worden opgeslagen als ISO-8601 strings op 12:00 UTC om "off-by-one" fouten door tijdzones te elimineren.
+10. **Ubiquitous Language:** De code-basis hanteert Engelse termen voor alle object-keys en variabelen (`dwellingType`, `income`), terwijl de UI-labels Nederlands blijven.
+11. **Fiscale Logica in Domain:** Hardcoded drempelwaarden (zoals de 18-jaar grens of kinderbijslag-normen) worden ondergebracht in pure functies in de `@domain` laag, niet in de UI.
+12. **Shadow Attribute Isolation:** De status voor grote huishoudens (>5 volwassenen) is een puur analytisch attribuut in de metadata en mag niet zichtbaar zijn in de gebruikersinterface.
+
+#### **Groep D: UI & Styling**
+
+13. **Dumb UI Atoms:** UI-componenten (atomen) mogen geen kennis hebben van business rules of datumconversies. Ze ontvangen geparste data en sturen ruwe events terug.
+14. **Design Token Dictatuur:** Alle kleuren, marges en typografie worden aangestuurd via tokens. Hardcoded hex-kleuren in componenten zijn verboden om Dark Mode (Midnight Blue) integriteit te borgen.
+15. **Centralized Date Input:** De `useDobInput` hook is de enige toegestane methode voor het invoeren en valideren van geboortedatums.
+
+---
+
+### 🚦 Status van de ADR's
+
+Deze besluiten hebben de status **"Approved & Locked"**. Flow 4 (De Bouwer) en Flow 3.5 (De Strateeg) zijn verplicht deze besluiten te volgen bij de uitvoering van de "Big Bang" refactor.
+
+**Zal ik nu de 10 "Golden Master" scenario-datasets genereren om de huidige rekenkern tegen deze ADR's te kunnen toetsen?**
+
+Als **FLOW CTO** breng ik hieronder per cluster het definitieve advies uit. Deze adviezen zijn de directieven voor de "Big Bang" refactor en vormen de kwaliteitslat waarlangs elke Pull Request in de test-branch wordt gelegd.
+
+---
+
+### 🟢 Cluster 0: Infrastructuur & Orchestratie
+
+**Advies:** *Sloop de fundamenten om een wolkenkrabber te bouwen.*
+De huidige `App.tsx` is een "God-file" die navigatie, hydratatie en business rules mixt.
+
+* **Actie:** Strip de root tot een pure Provider-wrapper.
+* **Architectuur:** Delegeer alle opstartlogica naar een `useAppOrchestration` hook die werkt met een expliciete State Machine. Zonder de module-resolver (Babel-aliassen) mag er geen regel code worden verplaatst.
+
+### 🔵 Cluster 1: Domain & Types
+
+**Advies:** *Bescherm de integriteit van de euro.*
+De "Komma-bug" is het grootste bedrijfsrisico. We rekenen nu met "misschien-valide" strings.
+
+* **Actie:** Implementeer de `NumericParser` als enige toegangspoort voor financiële data.
+* **Directief:** Verbied het gebruik van `number` voor valuta; stap over op een precision-library (`currency.js`). Maak de domeintaal 100% Engels (keys) om schaalbaarheid naar andere markten technisch voor te bereiden.
+
+### 🟡 Cluster 2: State-laag
+
+**Advies:** *Maak identiteit onafhankelijk van positie.*
+Het gebruik van array-indices als ID is een tikkende tijdbom voor data-corruptie.
+
+* **Actie:** Injecteer bij de transformatie-gate direct **UUIDs** in elk lid en elke transactie.
+* **Borging:** Isoleer `AsyncStorage`. De state-laag mag niet weten *hoe* data wordt opgeslagen, alleen *dat* het gebeurt via een betrouwbaar `Result`-type dat silent failures blokkeert.
+
+### 🟠 Cluster 3: UI & Styling
+
+**Advies:** *UI is een passieve projector, geen rekenmachine.*
+Componenten zoals `FormField` bevatten nu domeinkennis (zoals `max=7`). Dit maakt de UI fragiel en ontestbaar.
+
+* **Actie:** Decomponeer de UI naar "domme" atomen.
+* **Design:** Forceer het gebruik van tokens voor alles (kleuren, spacing). Hardcoded hex-waarden zijn een technische schuld die Dark Mode integriteit onmogelijk maakt. Gebruik `useDobInput` als de enige legale weg voor datums.
+
+### 🔴 Cluster 4: Wizard & Business Rules
+
+**Advies:** *Centraliseer de waarheid in de Reducer.*
+De "A2 FIX" in de UI is symptoombestrijding. De UI mag nooit de verantwoordelijkheid hebben om de data-integriteit te herstellen.
+
+* **Actie:** Verplaats alle alignment-logica naar de `formReducer`.
+* **Opschoning:** Implementeer de "Auto-Purge" voor wees-data (orphan data). Als een gebruiker van 'Koop' naar 'Huur' switcht, moet de reducer de hypotheekdata actief vernietigen na een "Dirty State" waarschuwing.
+
+### 🟣 Cluster 5: Screens & I/O
+
+**Advies:** *Ontkoppel de schermen van de technische diepte.*
+Schermen doen nu bulk-transformaties en directe API-constructies.
+
+* **Actie:** Introduceer de `useDashboardSummary` hook als aggregator. Schermen vragen om data, ze berekenen het niet.
+* **I/O:** De CSV-service moet een pure transformator worden die gebruikmaakt van de centrale `NumericParser`. Geen "Shotgun Parsing" meer aan de buitenschil.
+
+---
+
+### 🛡️ CTO Slotconclusie
+
+Dit  scenario geeft ons de unieke kans om de "Big Bang" refactor zonder politieke vertraging uit te voeren. Mijn eindoordeel: **Eerst de Golden Master tests bevriezen, dan de Folder-Swap.** We accepteren geen regressie op de rekenkern.
+
+**Wilt u dat ik nu de 10 feitelijke Golden Master JSON-scenario's uitschrijf zodat we de nulmeting kunnen starten?** Dit is de eerste praktische stap in de uitvoering van mijn advies.

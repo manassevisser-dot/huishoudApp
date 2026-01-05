@@ -1,0 +1,113 @@
+
+// src/styles/useAppStyles.ts
+// CU-008.6: De Orchestrator (Main Factory)
+import { StyleSheet } from 'react-native';
+import { useTheme } from '@context/ThemeContext';
+import { Colors, Theme } from '@styles/Colors';
+import { Tokens } from '@styles/Tokens';
+import {
+  makeLayout, makeHeader, makeForms, makeButtons,
+  makeCards, makeChips, makeDashboard, makeSummary
+} from '@styles/modules';
+
+const styleCache: Partial<Record<Theme, ReturnType<typeof StyleSheet.create>>> = {};
+
+export function getAppStyles(theme: Theme) {
+  if (styleCache[theme]) return styleCache[theme]!;
+  const c = Colors[theme];
+
+  const assembled = {
+    ...makeLayout(c),        // Layout
+    ...makeHeader(c),        // Header
+    ...makeForms(c),         // Forms
+    ...makeButtons(c),       // Buttons
+    ...makeCards(c),         // Cards
+    ...makeChips(c),         // Chips
+    ...makeDashboard(c),     // Dashboard
+    ...makeSummary(c),       // Summary
+    ...makeTypography(c),    // Typography
+    ...makeAlerts(c),        // Alerts
+
+  } as const;
+
+  const styles = StyleSheet.create(assembled);
+  styleCache[theme] = styles;
+  return styles;
+}
+
+export type AppStyles = ReturnType<typeof getAppStyles>;
+
+export function useAppStyles() {
+  const { theme } = useTheme();
+  const styles = getAppStyles(theme);
+  const colors = Colors[theme];
+  return { styles, colors, Tokens };
+}
+
+
+
+// src/styles/modules/Typography.ts
+import { Tokens, Type } from '../Tokens';
+import type { ColorScheme } from '../Colors';
+
+/** Fabriek: typografiestijlen (pagina-headers etc.) */
+export function makeTypography(c: ColorScheme) {
+  return {
+    pageTitle: { fontSize: Type.h2, fontWeight: '700', marginBottom: Tokens.Space.xl, color: c.textPrimary },
+  } as const;
+}
+export type TypographyStyles = ReturnType<typeof makeTypography>;
+
+// src/styles/modules/Header.ts
+// CU-008.2: Headers (atomaire module) — Tokens + Platform-select schaduwmapping
+import { Platform } from 'react-native';
+import { Space, Type, Tokens } from '@styles/Tokens';
+import type { ColorScheme } from '@styles/Colors';
+
+/**
+ * Fabriek: header- en navigatiestijlen als plain object
+ * \nFunctie < 20 regels
+ */
+export function makeHeader(c: ColorScheme) {
+  const sh = Tokens.Shadows.level1;
+  const shadowStyle = Platform.select({
+    ios: { shadowColor: c.shadow, shadowOffset: { width: 0, height: sh.ios.y }, shadowOpacity: sh.ios.opacity, shadowRadius: sh.ios.radius },
+    android: { elevation: sh.android.elevation },
+    default: {},
+  });
+  return {
+    headerBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Space.lg, paddingVertical: Space.sm, borderBottomWidth: 1, borderBottomColor: c.border, backgroundColor: c.background, ...shadowStyle },
+    headerTitle: { fontSize: Type.lg, fontWeight: '600', color: c.textPrimary },
+    headerButton: { padding: Space.sm },
+    headerButtonText: { fontSize: Type.lg, color: c.primary },
+  } as const;
+}
+
+export type HeaderStyles = ReturnType<typeof makeHeader>;
+
+// src/styles/modules/Alerts.ts
+import { Tokens, Type } from '../Tokens';
+import type { ColorScheme } from '../Colors';
+
+/** Fabriek: alert/warning tekststijlen */
+export function makeAlerts(c: ColorScheme) {
+  return {
+    alertErrorText:   { color: c.error,   fontSize: Type.sm, marginTop: Tokens.Space.xs, marginLeft: Tokens.Space.xs, fontWeight: '600' },
+    alertWarningText: { color: c.warning, fontSize: Type.sm, marginTop: Tokens.Space.xs, marginLeft: Tokens.Space.xs },
+  } as const;
+}
+export type AlertStyles = ReturnType<typeof makeAlerts>;
+
+// src/styles/modules/index.ts
+export * from './Layout';
+export * from './Header';
+export * from './Forms';
+export * from './Buttons';
+export * from './Cards';
+export * from './Chips';
+export * from './Dashboard';
+export * from './Summary';
+export * from  './Typography';
+export * from './Alerts';
+
+

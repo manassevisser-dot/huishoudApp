@@ -1,0 +1,325 @@
+HET ORIGINEEL:
+// src/services/dataOrchestrator.ts
+
+/**
+ * ---- TUSSENLAAG / VERZAMELAAR ----
+ * Doel: data uit de UI normaliseren, PII scheiden, en twee lagen opleveren:
+ *  - LAAG A: localMember (voor UX—mag PII bevatten)
+ *  - LAAG B: researchPayload (anoniem—géén PII)
+ *
+ * Alles in één bestand (SSOT voor type-mapping + privacy guard).
+ */
+
+/* =========================
+ *        TYPES
+ * ========================= */
+
+export type MemberType = 'adult' | 'teenager' | 'child' | 'senior';
+
+export interface Member {
+  entityId: string;
+  fieldId: string;
+  memberType: MemberType;
+  firstName: string;
+  lastName: string;
+  age?: number;       // ✅ VOEG DIT TOE
+  dateOfBirth?: string; // ✅ VOEG DIT TOE voor uitlijning met household.ts
+  finance?: Record<string, unknown>;
+  // Laat extra velden toe als je dat wil (anders weglaten voor strictere types):
+  [key: string]: unknown;
+}
+
+export interface RawUIData {
+  id?: string;
+  fieldId?: string;
+  memberType?: string; // vrije invoer uit UI
+  type?: string;       // soms gelijk aan memberType
+  fullName?: string;   // "Jan Jansen"
+  firstName?: string;
+  lastName?: string;
+  age?: unknown;       
+  leeftijd?: unknown;
+  finance?: Record<string, unknown>;
+  amount?: unknown;    // string/number uit UI
+  category?: unknown;  // free text
+}
+
+export interface ResearchPayload {
+  researchId: string;
+  memberType: MemberType;
+  age: number; // ✅ Toevoegen
+  amount: number;
+  category: string;
+  timestamp: string; // ISO
+}
+
+/* =========================
+ *  HELPERS (platform-safe)
+ * ========================= */
+
+/** Platform-agnostische base64 (Node + browser). */
+function toBase64(input: string): string {
+  // Node
+  // @ts-ignore - Buffer bestaat in Node-omgevingen
+  if (typeof Buffer !== 'undefined' && typeof (Buffer as any).from === 'function') {
+    // @ts-ignore
+    return (Buffer as any).from(input, 'utf8').toString('base64');
+  }
+  // Browser
+  if (typeof btoa === 'function') {
+    // encodeURIComponent/unescape om UTF-8 veilig te encoderen
+    // eslint-disable-next-line deprecation/deprecation
+    return btoa(unescape(encodeURIComponent(input)));
+  }
+  // Fallback (geen encodering beschikbaar)
+  return input;
+}
+
+/** Veilige number-coercion (comma-decimals toegestaan). */
+function toNumber(value: unknown, fallback = 0): number {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : fallback;
+  if (typeof value === 'string') {
+    const cleaned = value.replace(',', '.').trim();
+    const n = Number(cleaned);
+    return Number.isFinite(n) ? n : fallback;
+  }
+  return fallback;
+}
+
+/** Naam splitsen: "Jan Janssen" -> { firstName: "Jan", lastName: "Janssen" } */
+function parseName(fullName: string = ''): { firstName: string; lastName: string } {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length <= 1) return { firstName: parts[0] || '', lastName: '' };
+  const firstName = parts.shift() || '';
+  const lastName = parts.join(' ');
+  return { firstName, lastName };
+}
+
+/** SSOT: map vrije invoer naar strikte MemberType (incl. NL varianten). */
+function toMemberType(input?: string): MemberType {
+  const t = (input ?? '').trim().toLowerCase();
+
+  if (t === 'puber' || t === 'teenager' || t === 'student' || t === 'scholier') return 'teenager';
+  if (t === 'senior' || t === '65+' || t === 'opa' || t === 'oma' || t === 'pensionada') return 'senior';
+  if (t === 'kind' || t === 'child' || t === 'baby' || t === 'junior') return 'child';
+  return 'adult';
+}
+
+/** Korte pseudononieme research ID (prefix + base64 van lokale ID). */
+function makeResearchId(localId: string): string {
+  return `res_${toBase64(localId).replace(/=+$/, '').substring(0, 10)}`;
+}
+
+/* =========================
+ *      PRIVACY GUARDS
+ * ========================= */
+
+/** Heuristiek om PII in waarden te detecteren (naam/e-mail/free text). */
+function containsPII(value: unknown): boolean {
+  if (value == null) return false;
+  if (typeof value === 'string') {
+    const s = value.trim();
+    if (!s) return false;
+
+    const emailRe = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
+    const hasFullNamePattern = /\b[A-Za-zÀ-ÿ]+ [A-Za-zÀ-ÿ]+\b/;
+    const nameWords = /\b(naam|name|voornaam|achternaam|surname|last\s?name|first\s?name)\b/i;
+
+    return emailRe.test(s) || hasFullNamePattern.test(s) || nameWords.test(s);
+  }
+  if (Array.isArray(value)) return value.some(containsPII);
+  if (typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>).some(containsPII);
+  }
+  return false;
+}
+
+/** Verzeker dat er géén PII in de research payload zit (keys + values). */
+function assertNoPIILeak(obj: Record<string, unknown>): void {
+  const piiKeys = ['firstName', 'lastName', 'naam', 'email', 'voornaam', 'achternaam'];
+  for (const [key, val] of Object.entries(obj)) {
+    if (piiKeys.includes(key)) {
+      throw new Error(`CRITICAL: PII key detected in researchPayload: "${key}"`);
+    }
+    if (containsPII(val)) {
+      throw new Error(`CRITICAL: PII value detected in researchPayload at key "${key}"`);
+    }
+  }
+}
+
+/* =========================
+ *    ORCHESTRATOR (API)
+ * ========================= */
+
+/**
+ * Orchestrator: verdeelt UI-data in (A) lokale member (met PII) en (B) anonieme research payload.
+ * @param rawUIData - ruwe UI-input
+ * @param index - fallback index voor ID's
+ * @param nowIso - (optioneel) injecteerbare timestamp (ISO) voor testbaarheid
+ */
+export function collectAndDistributeData(
+  rawUIData: RawUIData,
+  index: number,
+  nowIso?: string
+): { localMember: Member; researchPayload: ResearchPayload } {
+  const memberType = toMemberType(rawUIData?.type ?? rawUIData?.memberType);
+  const localEntityId: string = rawUIData?.id ?? `local-${index}`;
+
+  // Namen opbouwen: prefer fullName -> parser, val terug op losse velden
+  const parsed = parseName(rawUIData?.fullName ?? '');
+  const firstName = (rawUIData?.firstName ?? parsed.firstName ?? 'Lid').trim();
+  const lastName = (rawUIData?.lastName ?? parsed.lastName ?? '').trim();
+
+  // --- LAAG A: LOKALE UI (mag PII bevatten) ---
+  const localMember: Member = {
+    entityId: localEntityId,
+    fieldId: rawUIData?.fieldId ?? `field-${index}`,
+    memberType,
+    firstName,
+    lastName,
+    age: toNumber(rawUIData?.age ?? rawUIData?.leeftijd, 0), // ✅ Ook lokaal opslaan
+    finance: rawUIData?.finance ?? {},
+  };
+
+  // --- LAAG B: ONDERZOEK (géén PII) ---
+  const researchPayload: ResearchPayload = {
+    researchId: makeResearchId(localEntityId),
+    memberType,
+    amount: toNumber(rawUIData?.amount, 0),
+    age: toNumber(rawUIData?.age ?? rawUIData?.leeftijd, 0),
+    category: String(rawUIData?.category ?? 'unassigned'),
+    timestamp: nowIso ?? new Date().toISOString(),
+  };
+
+  // Safety net: voorkom lekken
+  assertNoPIILeak(researchPayload as unknown as Record<string, unknown>);
+
+  return { localMember, researchPayload };
+}
+
+/* =========================
+ *   OPTIONEEL: DEFAULT API
+ * ========================= */
+
+export const DataOrchestrator = {
+  toMemberType,
+  parseName,
+  makeResearchId,
+  collectAndDistributeData,
+};
+
+export default DataOrchestrator;
+
+DE UPDATE:
+import { csvService } from './csvService';
+import { dataProcessor } from './dataProcessor';
+
+export const dataOrchestrator = {
+  processUpload: (rawCsv: string, currentSetup: any) => {
+    // 1. Parse de CSV
+    const mappedData = csvService.mapToInternalModel(rawCsv);
+
+    // 2. Maak PII-vrij en Categoriseer
+    const cleanedData = mappedData.map(item => ({
+      ...item,
+      description: dataProcessor.stripPII(item.description),
+      category: dataProcessor.categorize(item.description)
+    }));
+
+    // 3. Vergelijk met Setup
+    const reconciliation = dataProcessor.reconcileWithSetup(cleanedData, currentSetup);
+
+    // 4. Update de finale state (Dashboard + Onderzoek)
+    return {
+      transactions: cleanedData,
+      financialSummary: reconciliation,
+      // De 'missing' lasten (wat zit wel in CSV maar niet in setup?)
+      missingFixedCosts: cleanedData.filter(d => 
+        d.category === 'Wonen' && !currentSetup.housingIncluded
+      )
+    };
+  }
+};
+DE HELPER:
+import { toCents } from '../utils/numbers';
+
+export const dataProcessor = {
+  // A. Strippen van IBAN (PII-vrij maken)
+  stripPII: (description: string): string => {
+    // Regex die zoekt naar NL..BANK.... patronen en vervangt door [IBAN]
+    const ibanRegex = /[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7,}/gi;
+    return description.replace(ibanRegex, 'NL** [REDACTED]');
+  },
+
+  // B. Categorisering (Simpel begin)
+  categorize: (description: string): string => {
+    const desc = description.toLowerCase();
+    if (desc.includes('huur') || desc.includes('hypotheek')) return 'Wonen';
+    if (desc.includes('zorg') || desc.includes('zilveren')) return 'Zorgverzekering';
+    if (desc.includes('supermarkt') || desc.includes('ah ') || desc.includes('jumbo')) return 'Boodschappen';
+    if (desc.includes('salaris') || desc.includes('loon')) return 'Inkomen';
+    return 'Overig';
+  },
+
+  // C. Inkomens- & Lasten-vergelijking
+  // Vergelijkt CSV data met de 'Setup' data en kiest de meest betrouwbare
+  reconcileWithSetup: (csvData: any[], setupData: any) => {
+    const csvIncome = csvData
+      .filter(d => dataProcessor.categorize(d.description) === 'Inkomen')
+      .reduce((acc, curr) => acc + curr.amount, 0);
+
+    const setupIncome = toCents(setupData.maandelijksInkomen || 0);
+
+    return {
+      finalIncome: csvIncome > 0 ? csvIncome : setupIncome,
+      source: csvIncome > 0 ? 'CSV' : 'Setup',
+      isDiscrepancy: csvIncome > 0 && Math.abs(csvIncome - setupIncome) > 5000 // Verschil > 50 euro
+    };
+  }
+};
+De BRON:
+import { parseRawCsv } from '../utils/csvHelper';
+import { toCents } from '../utils/numbers'; // Pas het pad aan naar jouw formatter-file
+
+export const csvService = {
+  /**
+   * Hoofdfunctie voor het verwerken van bank-uploads.
+   * Herkent ING, Rabo, ABN en Knab formaten automatisch.
+   */
+  mapToInternalModel: (rawCsv: string) => {
+    const rawRows = parseRawCsv(rawCsv);
+    
+    return rawRows.map(row => {
+      // 1. Zoek de juiste kolommen (case-insensitive regex)
+      const amountKey = Object.keys(row).find(k => /bedrag|amount/i.test(k));
+      const mutationKey = Object.keys(row).find(k => /Af Bij|Mutatie/i.test(k));
+      const descKey = Object.keys(row).find(k => /Naam|Omschrijving|Mededeling/i.test(k));
+      const dateKey = Object.keys(row).find(k => /Datum|Boekdatum/i.test(k));
+
+      let rawAmount = amountKey ? row[amountKey] : '0';
+
+      // 2. ING-Specifiek: Als 'Af Bij' kolom op 'Af' staat, zorg dat het bedrag negatief is
+      if (mutationKey && row[mutationKey].toLowerCase() === 'af') {
+        // Alleen een minteken toevoegen als het er nog niet staat
+        if (!rawAmount.startsWith('-')) {
+          rawAmount = `-${rawAmount}`;
+        }
+      }
+
+      // 3. Return het genormaliseerde Phoenix model
+      return {
+        amount: toCents(rawAmount),
+        description: descKey ? row[descKey] : 'Geen omschrijving',
+        date: dateKey ? row[dateKey] : new Date().toISOString(),
+        original: row // We bewaren de ruwe data voor de onderzoek-payload (PII-vrij maken gebeurt in orchestrator)
+      };
+    });
+  },
+
+  // Behoud de bestaande orchestratie-aanroepen
+  processCsvData: (rawCsv: string) => {
+    const processed = csvService.mapToInternalModel(rawCsv);
+    // Hier kan de data naar de state of database gestuurd worden
+    return processed;
+  }
+};

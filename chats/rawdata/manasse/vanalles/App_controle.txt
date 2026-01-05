@@ -1,0 +1,135 @@
+Android Bundled 36288ms index.tsx (755 modules)
+ LOG  [INIT] savedState: {"C1":{"aantalMensen":3,"aantalVolwassen":2,"huisdieren":"Ja","auto":"Één"},"C4":{"leden":[],"auto":"Één","huisdieren":"Ja"},"C7":{"inkomsten":{}},"C10":{"lasten":[]}}
+ LOG  [ALIGN-TRIGGER] payload from savedState: {"aantalMensen": 3, "aantalVolwassen": 2}
+ LOG  [ALIGN-TRIGGER] dispatched
+ LOG  [REDUCER] ALIGN start {"currentLen": 0, "payload": {"aantalMensen": 3, "aantalVolwassen": 2}}
+ LOG  [REDUCER] ALIGN done {"adultsCount": 2, "alignedLen": 3, "childrenCount": 1}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C4", "pageIndex": 1, "totalPages": 4}
+ LOG  [WIZARD] entering C4 — expecting leden aligned to C1 (post-hydrate)
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 0, "aantalMensen": 1, "aantalVolwassen": 1, "ledenLen": 0}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 0, "childrenLen": 0}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C4", "pageIndex": 1, "totalPages": 4}
+ LOG  [WIZARD] entering C4 — expecting leden aligned to C1 (post-hydrate)
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 0}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 0, "childrenLen": 0}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C4", "pageIndex": 1, "totalPages": 4}
+ LOG  [WIZARD] entering C4 — expecting leden aligned to C1 (post-hydrate)
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 3, "aantalVolwassen": 2, "ledenLen": 0}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 0, "childrenLen": 0}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C4", "pageIndex": 1, "totalPages": 4}
+ LOG  [WIZARD] entering C4 — expecting leden aligned to C1 (post-hydrate)
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 3, "aantalVolwassen": 2, "ledenLen": 0}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 0, "childrenLen": 0}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 3, "aantalVolwassen": 2, "ledenLen": 0}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 0, "childrenLen": 0}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 3, "aantalVolwassen": 2, "ledenLen": 0}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 0, "childrenLen": 0}
+› Reloading apps
+Android Bundled 608ms index.tsx (1 module)
+ LOG  [INIT] savedState: {"C1":{"aantalMensen":3,"aantalVolwassen":2,"huisdieren":"Ja","auto":"Één"},"C4":{"leden":[],"auto":"Één","huisdieren":"Ja"},"C7":{"inkomsten":{}},"C10":{"lasten":[]}}
+ LOG  [ALIGN-TRIGGER] payload from savedState: {"aantalMensen": 3, "aantalVolwassen": 2}
+ LOG  [ALIGN-TRIGGER] dispatched
+ LOG  [REDUCER] ALIGN start {"currentLen": 0, "payload": {"aantalMensen": 3, "aantalVolwassen": 2}}
+ LOG  [REDUCER] ALIGN done {"adultsCount": 2, "alignedLen": 3, "childrenCount": 1}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 0, "aantalMensen": 1, "aantalVolwassen": 1, "ledenLen": 0}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 0, "childrenLen": 0}
+ LOG  [WIZARD] enter page {"id": "C4", "pageIndex": 1, "totalPages": 4}
+ LOG  [WIZARD] entering C4 – aligning household members
+ LOG  [REDUCER] ALIGN start {"currentLen": 0, "payload": {"aantalMensen": 1, "aantalVolwassen": 1}}
+ LOG  [REDUCER] ALIGN done {"adultsCount": 1, "alignedLen": 1, "childrenCount": 0}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 0, "aantalMensen": 1, "aantalVolwassen": 1, "ledenLen": 1}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 0}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 0, "aantalMensen": 1, "aantalVolwassen": 1, "ledenLen": 1}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 0}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 0, "aantalMensen": 1, "aantalVolwassen": 1, "ledenLen": 1}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 0}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 0, "aantalMensen": 1, "aantalVolwassen": 1, "ledenLen": 1}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 0}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 0, "aantalMensen": 1, "aantalVolwassen": 1, "ledenLen": 1}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 0}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 0, "aantalMensen": 1, "aantalVolwassen": 1, "ledenLen": 1}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 0}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 0, "aantalMensen": 1, "aantalVolwassen": 1, "ledenLen": 1}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 0}
+ LOG  [WIZARD] enter page {"id": "C7", "pageIndex": 2, "totalPages": 4}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 0, "aantalMensen": 1, "aantalVolwassen": 1, "ledenLen": 1}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 0}
+ LOG  [WIZARD] enter page {"id": "C4", "pageIndex": 1, "totalPages": 4}
+ LOG  [WIZARD] entering C4 – aligning household members
+ LOG  [REDUCER] ALIGN start {"currentLen": 1, "payload": {"aantalMensen": 1, "aantalVolwassen": 1}}
+ LOG  [REDUCER] ALIGN done {"adultsCount": 1, "alignedLen": 1, "childrenCount": 0}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 0, "aantalMensen": 1, "aantalVolwassen": 1, "ledenLen": 1}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 0}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 1}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 0}
+ LOG  [WIZARD] enter page {"id": "C4", "pageIndex": 1, "totalPages": 4}
+ LOG  [WIZARD] entering C4 – aligning household members
+ LOG  [REDUCER] ALIGN start {"currentLen": 1, "payload": {"aantalMensen": 2, "aantalVolwassen": 1}}
+ LOG  [REDUCER] ALIGN done {"adultsCount": 1, "alignedLen": 2, "childrenCount": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 2, "aantalVolwassen": 1, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [WIZARD] enter page {"id": "C1", "pageIndex": 0, "totalPages": 4}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 3, "aantalVolwassen": 2, "ledenLen": 2}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 1, "childrenLen": 1}
+ LOG  [WIZARD] enter page {"id": "C4", "pageIndex": 1, "totalPages": 4}
+ LOG  [WIZARD] entering C4 – aligning household members
+ LOG  [REDUCER] ALIGN start {"currentLen": 2, "payload": {"aantalMensen": 3, "aantalVolwassen": 2}}
+ LOG  [REDUCER] ALIGN done {"adultsCount": 2, "alignedLen": 3, "childrenCount": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 3, "aantalVolwassen": 2, "ledenLen": 3}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 2, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 3, "aantalVolwassen": 2, "ledenLen": 3}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 2, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 3, "aantalVolwassen": 2, "ledenLen": 3}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 2, "childrenLen": 1}
+ LOG  [C4-REPEATER] intake {"aantalKinderen": 1, "aantalMensen": 3, "aantalVolwassen": 2, "ledenLen": 3}
+ LOG  [C4-REPEATER] render cards {"adultsLen": 2, "childrenLen": 1}

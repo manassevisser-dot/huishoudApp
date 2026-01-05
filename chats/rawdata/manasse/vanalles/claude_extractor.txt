@@ -1,0 +1,369 @@
+
+// ==UserScript==
+// @name        Claude Conversation Exporter (MD/JSON) + Table Restore
+// @namespace   manasse.tools.claude
+// @version     2.0.0
+// @description Exporteer Claude-chats naar Markdown/JSON met lazy-load, code/table mapping én post-step tabel-restauratie (GFM)
+// @author      Manasse + Copilot
+// @match       https://claude.ai/*
+// @run-at      document-idle
+// @grant       none
+// ==/UserScript==
+
+(function () {
+  "use strict";
+
+  /** ================ Helpers ================ **/
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const safe = (s) => (s || "export").replace(/[\\/:*?"<>|]+/g, "_").slice(0, 70);
+  const isOnChat = () => /\/chat\/[0-9a-f\-]+$/i.test(location.pathname);
+
+  function el(tag, cssText = "", text = "") {
+    const n = document.createElement(tag);
+    if (cssText) n.style.cssText = cssText;
+    if (text) n.textContent = text;
+    return n;
+  }
+
+  /** ================ UI ================ **/
+  function ensureButton() {
+    if (!isOnChat()) return; // alleen op chatpagina
+    if (document.getElementById("claude-exporter-btn")) return;
+
+    const box = el(
+      "div",
+      "position:fixed;top:10px;right:10px;z-index:2147483647;display:flex;gap:8px;" +
+        "background:#0e0e0e;border:1px solid #3a3a3a;border-radius:10px;padding:8px;" +
+        "font:12px system-ui;color:#eee;box-shadow:0 4px 18px rgba(0,0,0,.35)"
+    );
+    box.id = "claude-exporter-btn";
+
+    const mdBtn = el(
+      "button",
+      "background:#1e90ff;color:#fff;border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-weight:600",
+      "Export Chat (MD)"
+    );
+    const jsonBtn = el(
+      "button",
+      "background:#2aa84a;color:#fff;border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-weight:600",
+      "Export Chat (JSON)"
+    );
+    const status = el("div", "margin-left:4px;color:#ccc;min-width:220px;font-weight:500");
+
+    mdBtn.addEventListener("click", async () => {
+      status.textContent = "Lazy-load & exporteren (MD)…";
+      try {
+        const data = await collectClaude(status);
+        const md = toMarkdown(data.items, data.title);     // ⬅︎ met tabel-restauratie
+        downloadBlob(md, "text/markdown;charset=utf-8", `claude_conversation_${safe(data.title)}.md`);
+        status.textContent = "✅ MD klaar";
+      } catch (e) {
+        console.error(e);
+        status.textContent = "❌ Fout (MD): " + (e?.message || e);
+      }
+    });
+
+    jsonBtn.addEventListener("click", async () => {
+      status.textContent = "Lazy-load & exporteren (JSON)…";
+      try {
+        const data = await collectClaude(status);
+        downloadBlob(JSON.stringify(data.items, null, 2), "application/json;charset=utf-8",
+          `claude_conversation_${safe(data.title)}.json`);
+        status.textContent = "✅ JSON klaar";
+      } catch (e) {
+        console.error(e);
+        status.textContent = "❌ Fout (JSON): " + (e?.message || e);
+      }
+    });
+
+    box.append(mdBtn, jsonBtn, status);
+    document.body.appendChild(box);
+  }
+
+  function downloadBlob(content, type, filename) {
+    const blob = new Blob([content], { type });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+    a.remove();
+  }
+
+  /** ================ Claude-specifiek ================ **/
+  function findScroller() {
+    // Grootste scrollHeight = meest waarschijnlijke container
+    const candidates = [
+      document.querySelector("main"),
+      document.querySelector('[role="main"]'),
+      document.scrollingElement,
+      document.body,
+    ].filter(Boolean);
+    return candidates.sort((a, b) => (b.scrollHeight || 0) - (a.scrollHeight || 0))[0] || document.body;
+  }
+
+  function isHiddenOrOverlay(node) {
+    const st = window.getComputedStyle(node);
+    const ariaHidden = node.getAttribute?.("aria-hidden") === "true";
+    const peNone = st.pointerEvents === "none";
+    const vis = st.visibility === "hidden" || st.display === "none";
+    // overlays op Claude hebben vaak pointer-events:none en aria-hidden:true
+    return ariaHidden || peNone || vis;
+  }
+
+  function countContentBlocks() {
+    // Claude zet beurtcontent vaak in article/divs binnen main; filter overlays
+    const all = [...document.querySelectorAll("main article, main div")];
+    return all.filter(n => !isHiddenOrOverlay(n) && (n.innerText || "").trim()).length;
+  }
+
+  async function lazyLoadAll(statusEl, maxMs = 45_000) {
+    const scroller = findScroller();
+    const start = Date.now();
+    let prev = 0, stable = 0;
+
+    while ((Date.now() - start) < maxMs) {
+      scroller.scrollTo({ top: 0, behavior: "instant" });
+      await sleep(900);
+      scroller.scrollTo({ top: scroller.scrollHeight, behavior: "instant" });
+      await sleep(900);
+      scroller.scrollTo({ top: Math.floor(scroller.scrollHeight / 2), behavior: "instant" });
+      await sleep(600);
+
+      const after = countContentBlocks();
+      if (statusEl) statusEl.textContent = `🔄 Laden… contentblokken: ${after}`;
+      if (after > prev) { prev = after; stable = 0; }
+      else if (++stable >= 3) break;
+    }
+    if (statusEl) statusEl.textContent = `✅ Lazy-load klaar (${countContentBlocks()} blokken)`;
+  }
+
+  function collectTurns() {
+    const main = document.querySelector("main") || document.body;
+    const nodes = [...main.querySelectorAll("article, section, div")].filter(n => {
+      const txt = (n.innerText || "").trim();
+      return txt && !isHiddenOrOverlay(n);
+    });
+
+    // Dedupliceren op text signature
+    const seenSig = new Set();
+    const items = [];
+    let idx = 0;
+
+    for (const n of nodes) {
+      const txt = sanitizeText(n);
+      const sig = txt.slice(0, 120);
+      if (!txt) continue;
+      if (seenSig.has(sig)) continue;
+      seenSig.add(sig);
+
+      const role = detectRole(txt);
+      const md = toMDFromNode(n, txt);
+      items.push({ index: idx++, role, text: md });
+    }
+
+    // post-filter: verwijder pure navigatie/recents (bovenin UI)
+    const filtered = items.filter(it => !/^\s*(New chat|Chats|Projects|Artifacts|Code)\s*$/i.test(it.text));
+    return filtered;
+  }
+
+  function detectRole(txt) {
+    const lower = txt.toLowerCase();
+    if (lower.startsWith("vraag ") || lower.startsWith("je bent") || lower.startsWith("kunnen we")) return "user";
+    if (lower.includes("###") || lower.includes("ik adviseer") || lower.includes("n8n") || lower.includes("definitieve")) return "assistant";
+    return "assistant";
+  }
+
+  function sanitizeText(node) {
+    let t = (node.innerText || "").trim();
+    // UI/waarschuwing verwijderen (geen inhoud)
+    t = t.replace(/\b(Claude is AI and can make mistakes\.)\b.*$/i, "").trim();
+    return t;
+  }
+
+  function toMDFromNode(node, fallbackText) {
+    const blocks = [];
+    const push = (s) => { if (s && s.trim()) blocks.push(s.trim()); };
+
+    // 1) HTML-tabel → GFM
+    node.querySelectorAll("table").forEach(tbl => {
+      const rows = [...tbl.rows].map(r => [...r.cells].map(c => c.textContent.replace(/\s+/g, " ").trim()));
+      if (!rows.length) return;
+      const header = rows[0];
+      const sep = header.map(() => '---');
+      const body = rows.slice(1);
+      const lines = [
+        '| ' + header.join(' | ') + ' |',
+        '| ' + sep.join(' | ') + ' |',
+        ...body.map(r => '| ' + r.join(' | ') + ' |')
+      ];
+      push(lines.join('\n'));
+    });
+
+    // 2) Codeblokken
+    const preBlocks = [...node.querySelectorAll("pre, code")];
+    if (preBlocks.length) {
+      preBlocks.forEach(pb => {
+        const lang = guessLanguage(pb.className || "", pb.textContent || "");
+        const code = (pb.textContent || "").replace(/\u00A0/g, " ");
+        push("```" + lang + "\n" + code + "\n```");
+      });
+    }
+
+    // 3) Lijsten
+    node.querySelectorAll("ul,ol").forEach(list => {
+      const li = [...list.querySelectorAll("li")].map(x => "- " + (x.textContent || "").trim()).join("\n");
+      push(li);
+    });
+
+    // 4) Koppen/paragraphs
+    node.querySelectorAll("h1,h2,h3,h4,h5,h6,p,blockquote").forEach(el => {
+      const txt = (el.textContent || "").trim();
+      if (!txt) return;
+      if (/^\s*(New chat|Chats|Projects|Artifacts|Code)\s*$/.test(txt)) return;
+      push(txt);
+    });
+
+    if (!blocks.length) push(fallbackText);
+    return blocks
+      .join("\n\n")
+      .replace(/\bCode kopiëren\b/gi, "")
+      .replace(/\u00A0/g, " ")
+      .trim();
+  }
+
+  function guessLanguage(cls, code) {
+    const c = cls.toLowerCase();
+    if (/language-(ts|typescript)/.test(c) || /\bexport\s+type\b/.test(code)) return "ts";
+    if (/language-(js|javascript)/.test(c) || /\bfunction\b/.test(code)) return "js";
+    if (/language-(py|python)/.test(c) || /\bdef\s+\w+\(/.test(code)) return "python";
+    if (/language-(yaml|yml)/.test(c) || /^\s*[\-\w]+:\s/.test(code)) return "yaml";
+    if (/language-(json)/.test(c) || /^\s*\{[\s\S]*\}\s*$/.test(code)) return "json";
+    if (/language-(html)/.test(c) || /<\/*[a-z][\s\S]*>/i.test(code)) return "html";
+    if (/language-(csv)/.test(c) || /[,;]\s*[^,;]+/.test(code)) return "csv";
+    return "";
+  }
+
+  /** ================ Tabel-restauratie (post-step) ================ **/
+  function restoreTablesInMarkdown(md) {
+    const blocks = md.split(/\n{2,}/);
+    const fixed = blocks.map(processBlock);
+    return fixed.join("\n\n");
+
+    function processBlock(block) {
+      if (isCodeFenced(block)) return block;
+      const lines = block.split('\n').filter(l => l.trim() !== '');
+      if (lines.length < 2) return block;
+
+      let res = detectDelimited(lines);
+      if (res) return toGFM(...res);
+
+      res = detectFixedWidth(lines);
+      if (res) return toGFM(...res);
+
+      res = detectKV(lines);
+      if (res) return toGFM(...res);
+
+      return block;
+    }
+
+    function isCodeFenced(text) { return /^\s*```/m.test(text); }
+
+    function toGFM(headers, rows) {
+      const hdr = '| ' + headers.join(' | ') + ' |';
+      const sep = '| ' + headers.map(() => '---').join(' | ') + ' |';
+      const body = rows.map(r => '| ' + r.join(' | ') + ' |');
+      return [hdr, sep, ...body].join('\n');
+    }
+
+    function detectDelimited(lines) {
+      const DELIMS = [',',';','\t','|'];
+      for (const d of DELIMS) {
+        const parts = lines.map(l => l.split(d).map(c => c.trim())).filter(p => p.length >= 2);
+        if (parts.length < 2) continue;
+        const cols = parts.map(p => p.length);
+        if (Math.min(...cols) === Math.max(...cols) && cols[0] >= 2) {
+          const header = parts[0];
+          const rows = parts.slice(1);
+          return [header, rows];
+        }
+      }
+      return null;
+    }
+
+    function detectFixedWidth(lines) {
+      if (lines.length < 2) return null;
+      const starts = [];
+      for (const line of lines) {
+        const matches = [...line.matchAll(/\s{2,}/g)];
+        matches.forEach(m => starts.push(m.index));
+      }
+      if (!starts.length) return null;
+      const buckets = {};
+      starts.forEach(s => { const k = Math.floor(s/4)*4; buckets[k] = (buckets[k]||0)+1; });
+      let breaks = Object.entries(buckets).sort((a,b)=>b[1]-a[1]).map(([pos])=>Number(pos));
+      if (!breaks.length) return null;
+      if (breaks.length > 4) breaks = breaks.slice(0,4);
+      breaks.sort((a,b)=>a-b);
+
+      const colStarts = [0, ...breaks];
+      const sliceCols = (line) => {
+        const cols = [];
+        for (let i=0;i<colStarts.length;i++){
+          const cs = colStarts[i];
+          const ce = (i+1<colStarts.length)?colStarts[i+1]:null;
+          const seg = (ce!==null ? line.slice(cs,ce) : line.slice(cs)).trim();
+          cols.push(seg);
+        }
+        return cols;
+      };
+      const rows = lines.map(sliceCols);
+      const header = rows[0];
+      const body = rows.slice(1);
+      if (header.length<2 || body.some(r=>r.length!==header.length)) return null;
+      return [header, body];
+    }
+
+    function detectKV(lines) {
+      const kvRe = /^\s*[-*]?\s*([^:\-—]+)\s*[:\-—]\s*(.+)$/;
+      const rows = [];
+      for (const line of lines) {
+        const m = line.match(kvRe);
+        if (!m) return null;
+        rows.push([m[1].trim(), m[2].trim()]);
+      }
+      if (rows.length >= 2) return [["Key","Value"], rows];
+      return null;
+    }
+  }
+
+  function toMarkdown(items, title) {
+    const header = `# ${title}\n`;
+    const body = items.map(it => {
+      const who = it.role === "user" ? "User" : "Claude";
+      return `**${who}:**\n\n${it.text}`;
+    }).join("\n\n---\n\n");
+
+    // Post-step: tabel-restauratie (GFM) ⬇︎
+    return header + "\n" + restoreTablesInMarkdown(body) + "\n";
+  }
+
+  /** ================ Collect & Export ================ **/
+  async function collectClaude(statusEl) {
+    if (!isOnChat()) throw new Error("Open een specifieke chatpagina (https://claude.ai/chat/<id>).");
+    await lazyLoadAll(statusEl, 45_000);
+    const title = (document.title || "").replace(/\s*\|\s*Claude\s*$/i, "").trim() || "export";
+    const items = collectTurns();
+    if (!items.length) throw new Error("Geen inhoudelijke beurten gevonden. Scroll even en probeer opnieuw.");
+    items.sort((a, b) => a.index - b.index);
+    return { title, items };
+  }
+
+  /** ================ Observe navigatie ================ **/
+  const observer = new MutationObserver(() => {
+    if (document.body && isOnChat() && !document.getElementById("claude-exporter-btn")) ensureButton();
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+  ensureButton();
+})();

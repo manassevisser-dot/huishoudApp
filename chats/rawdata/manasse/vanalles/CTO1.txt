@@ -1,0 +1,152 @@
+Hier is het volledige overzicht van alle **Architectural Decision Records (ADR’s)** en strategische besluiten, verzameld uit de audits van Flow 2 en 3. Deze vormen de wetten waaraan de nieuwe code in de test-branch moet voldoen.
+
+### 🏛️ Architecturale Fundamenten (De Kern)
+
+1. **SSOT & Taal: De "English Core" Regel**
+* **Besluit:** We hanteren een strikte *Ubiquitous Language*. Alle code-elementen (keys, variabelen, database-velden) zijn in het Engels. De UI-labels zijn de enige plek waar Nederlands is toegestaan.
+* **Reden:** Voorkomt "Taal-Spaghetti" en maakt de code klaar voor moderne tooling en AI-ondersteuning.
+
+
+2. **Domain Isolation: De "Alchemist" Regel**
+* **Besluit:** De Reducer is een *boekhouder*, geen *alchemist*. Domeinlogica (zoals leeftijd berekenen of data-transformaties) verhuist naar pure functies in de Domain-laag (`@domain`).
+* **Reden:** Maakt de reducer puur, voorspelbaar en makkelijk te testen zonder React-overhead.
+
+
+3. **Identiteit: De "No-Index" Regel**
+* **Besluit:** We verbieden array-indices als unieke identifiers. Elk lid en elke transactie krijgt een **UUIDv4**.
+* **Reden:** Voorkomt corruptie van data bij het sorteren of verwijderen van items in een lijst.
+
+
+
+---
+
+### 💾 Data & Persistentie (Storage)
+
+4. **Storage Boundary: De "Fail-Fast" Regel**
+* **Besluit:** We stoppen met "silent failures". Als data-hydratatie faalt of corrupt is, blokkeren we de `autosave` en geven we een expliciet `Result`-type (Error/Success) terug.
+* **Reden:** Voorkomt dat corrupte state goede data in de opslag overschrijft.
+
+
+5. **I/O Validatie: "Zod at the Gates"**
+* **Besluit:** Elke byte die de app binnenkomt (vanuit AsyncStorage of CSV) wordt aan de grens gevalideerd via **Zod-schema's**.
+* **Reden:** Garandeert dat de rest van de app nooit met "misschien" valide data hoeft te rekenen.
+
+
+6. **De "Parse, Don't Validate" Regel**
+* **Besluit:** We valideren niet alleen of een string een getal is, we transformeren het direct naar een valide `number` of `currency` object via de centrale `NumericParser`.
+* **Reden:** Elimineert de "Komma-bug" (1.250,50 wordt 1.25) bij de bron.
+
+
+
+---
+
+### 📱 UI & Gebruikerservaring
+
+7. **Component Decompositie: De "Dumb Atom" Regel**
+* **Besluit:** UI-atomen (zoals `FormField` of `DateField`) mogen geen domeinkennis hebben. Ze krijgen geen `memberId` of `pageId`, maar alleen `value` en `onChange`.
+* **Reden:** Maximale herbruikbaarheid en scheiding van zorgen (Separation of Concerns).
+
+
+8. **Datum-strategie: De "UTC-Noon" Regel**
+* **Besluit:** Alle datums worden opgeslagen als **ISO-8601 op 12:00 UTC**. Lokale tijdzone-helpers in de UI zijn verboden.
+* **Reden:** Elimineert "off-by-one" fouten waarbij verjaardagen verspringen door tijdzones.
+
+
+9. **Styling: De "Token-Only" Regel**
+* **Besluit:** Hardcoded HEX-kleuren zijn verboden. Alle styling verloopt via semantische tokens (`Colors.primary`, `Spacing.medium`). Dark Mode moet de OS-instelling (`automatic`) volgen.
+* **Reden:** Garandeert een consistente visuele identiteit en eenvoudige Dark Mode ondersteuning.
+
+
+
+---
+
+### 🚀 Navigatie & Flow
+
+10. **Navigator: De "State Machine" Regel**
+* **Besluit:** We vernietigen de "Boolean Soup" (meerdere losse booleans voor schermen). De navigator werkt op basis van een **Discriminated Union** (`AppRoute`).
+* **Reden:** Voorkomt onmogelijke staten (zoals twee schermen tegelijkertijd open) en maakt de flow voorspelbaar.
+
+
+11. **State Purging: De "Clean House" Regel**
+* **Besluit:** Bij structurele wijzigingen (bijv. van 'Koop' naar 'Huur') is de reducer verantwoordelijk voor het direct wissen van "Orphan Data" (bijv. hypotheekgegevens).
+* **Reden:** Houdt de database schoon en voorkomt dat oude, irrelevante data berekeningen beïnvloedt.
+
+
+
+---
+
+### 🏁 Samenvattend Mandaat
+
+Deze ADR's zijn de fundamenten voor de **Golden Master** tests. Elke refactor die deze regels schendt, wordt in de test-branch afgekeurd. Flow 3.5 zal deze lijst gebruiken als checklist voor het migratieplan.
+
+**Moet ik een van deze ADR's verder uitdiepen met een concreet code-voorbeeld voor Flow 3.5?**
+
+Als **Back-up CTO** heb ik de resultaten van de audits (Flow 2 & 3) geconsolideerd. Dit is mijn definitieve mandaat per cluster voor de uitvoering in de test-branch. Dit advies is leidend voor de Navigator (Flow 4) en de Test Strategist (Flow 3.5).
+
+---
+
+## 🏗️ Cluster 0: Infrastructuur & Orchestratie
+
+**Status:** Kritiek – De fundering is momenteel "lek".
+
+* **Het Dictaat:** Strip `App.tsx` tot een pure **Provider Shell**. Geen navigatielogica, geen data-fetching.
+* **De Actie:** Introduceer `useAppOrchestration`. Vervang de 9 navigatie-booleans door een **Finite State Machine** (`BOOTING` -> `MIGRATING` -> `READY`).
+* **DX Upgrade:** Forceer path-aliases (@domain, @state). Geen relatieve imports meer (`../../`).
+
+---
+
+## 💎 Cluster 1: Domain & Types (De Functional Core)
+
+**Status:** Instabiel – Risico op financiële corruptie.
+
+* **Het Dictaat:** Elimineer de **Komma-bug**. De UI mag nooit meer direct `parseFloat` aanroepen.
+* **De Actie:** Implementeer een robuuste `NumericParser` die "1.250,50" als `1250.5` begrijpt. Forceer **UTC-Noon** voor alle datums.
+* **Domain Modeling:** Gebruik **Discriminated Unions** voor inkomens en lasten. Ban het keyword `any` volledig; gebruik `unknown` met type-guards.
+
+---
+
+## ⚙️ Cluster 2: State Layer & Persistence
+
+**Status:** Risicovol – Data-overschrijf gevaar.
+
+* **Het Dictaat:** Stop **Silent Failures**. Als de opslag corrupt is, moet de app stoppen of herstellen, niet "kapotte" data opslaan.
+* **De Actie:** Implementeer het **Repository Pattern**. Isoleer `AsyncStorage`. Gebruik **Zod** om de state bij het inladen te valideren.
+* **Identiteit:** Genereer **UUIDv4** voor elk object. De array-index is vanaf nu verboden als identifier.
+
+---
+
+## 🎨 Cluster 3: UI Atoms & Styling
+
+**Status:** Inconsistent – Design-drift aanwezig.
+
+* **Het Dictaat:** Maak de UI **"Dumb & Passive"**. Componenten zoals `FormField` mogen geen weet hebben van de context waarin ze staan.
+* **De Actie:** Decomponeer de "God-componenten". Verplaats alle berekeningen (leeftijd, validatie) naar Cluster 1.
+* **Styling:** Volledige overstap naar **Design Tokens**. Fix de Dark Mode bug door hardcoded `#fff` te vervangen door semantische achtergrondkleuren.
+
+---
+
+## 🧙 Cluster 4: App-laag & Wizard Logic
+
+**Status:** Vervuild – Domeinlogica lekt naar de schermen.
+
+* **Het Dictaat:** De Reducer is de **Source of Truth**, de controller is slechts de verkeersleider.
+* **De Actie:** Verplaats de "A2 FIX" (alignment van leden) naar de reducer. Hernoem `C1...C10` naar semantische keys (`household`, `expenses`).
+* **Data Hygiene:** Implementeer **Auto-Purging**. Als een gebruiker zijn woonsituatie wijzigt, moet de reducer de irrelevante oude data (zoals hypotheek bij huur) direct vernietigen.
+
+---
+
+## 📊 Cluster 5: Buitenschil & I/O
+
+**Status:** Fragiel – Directe koppeling met externe data.
+
+* **Het Dictaat:** Schermen zijn projecties, geen data-verwerkers.
+* **De Actie:** Maak `DashboardScreen` passief. Gebruik een `useDashboardSummary` hook die de data uit de domain-laag aggregeert.
+* **CSV Import:** Verplaats de transformatie-logica naar een `CsvService`. Gebruik de nieuwe `NumericParser` om bulkdata te valideren voordat deze de state raakt.
+
+---
+
+## 🛡️ Samenvattend CTO Mandaat
+
+Wij gaan niet "pleisters plakken", we gaan **transplanteren**. De test-branch moet bewijzen dat de app stabiel blijft onder de **Golden Master** test-suite.
+
+**Volgende stap:** Wilt u dat ik dit advies vertaal naar een concrete **Definition of Done (DoD)** voor de eerste sprint in de test-branch?
