@@ -1,0 +1,133 @@
+Attribute VB_Name = "FormLayout"
+'=========================
+' MODULE: FormLayout
+'=========================
+ 
+Option Explicit
+Public Const DYN_PREFIX As String = "dyn_"
+Public Sub FrmLayoutSafeAreaDyn(frm As Object)
+    On Error GoTo ErrHandler
+
+    MonthlySheet.EnsureConfigSheet
+    Dim BG_MARGIN As Double: BG_MARGIN = MonthlySheet.ConfigGet("BG_MARGIN", 6)
+    Dim ROW_SPACING As Double: ROW_SPACING = MonthlySheet.ConfigGet("ROW_SPACING", 34)
+    Dim LABEL_WIDTH As Double: LABEL_WIDTH = MonthlySheet.ConfigGet("LABEL_WIDTH", 120)
+    Dim GAP_LABEL_TO_INPUT As Double: GAP_LABEL_TO_INPUT = MonthlySheet.ConfigGet("GAP_LABEL_TO_INPUT", 12)
+    Dim RIGHT_PADDING As Double: RIGHT_PADDING = MonthlySheet.ConfigGet("RIGHT_PADDING", 20)
+    Dim INP_MAX As Double: INP_MAX = MonthlySheet.ConfigGet("INP_MAX", 360)
+    Dim SAFE_LEFT_PCT As Double: SAFE_LEFT_PCT = MonthlySheet.ConfigGet("SAFE_LEFT_PCT", 0.12)
+    Dim SAFE_RIGHT_PCT As Double: SAFE_RIGHT_PCT = MonthlySheet.ConfigGet("SAFE_RIGHT_PCT", 0.88)
+    Dim SAFE_TOP_PCT As Double: SAFE_TOP_PCT = MonthlySheet.ConfigGet("SAFE_TOP_PCT", 0.2)
+    Dim SAFE_BOTTOM_PCT As Double: SAFE_BOTTOM_PCT = MonthlySheet.ConfigGet("SAFE_BOTTOM_PCT", 0.8)
+
+    Dim bgLeft As Single, bgTop As Single, bgW As Single, bgH As Single
+    Dim bg As MSForms.Image: Set bg = TryGetImageDyn(frm, FormLayout.DYN_PREFIX & "imgBackground")
+    If bg Is Nothing Then
+        bgLeft = BG_MARGIN: bgTop = BG_MARGIN
+        bgW = frm.InsideWidth - 2 * BG_MARGIN
+        bgH = frm.InsideHeight - 2 * BG_MARGIN
+    Else
+        bgLeft = bg.Left: bgTop = bg.Top: bgW = bg.Width: bgH = bg.Height
+    End If
+    If bgW < 0 Then bgW = 0
+    If bgH < 0 Then bgH = 0
+
+    Dim safeLeft As Single, safeTop As Single, safeWidth As Single, safeHeight As Single
+    safeLeft = bgLeft + (SAFE_LEFT_PCT * bgW)
+    safeTop = bgTop + (SAFE_TOP_PCT * bgH)
+    safeWidth = (SAFE_RIGHT_PCT - SAFE_LEFT_PCT) * bgW
+    safeHeight = (SAFE_BOTTOM_PCT - SAFE_TOP_PCT) * bgH
+    If safeWidth < 0 Then safeWidth = 0
+    If safeHeight < 0 Then safeHeight = 0
+
+    Dim colLbl As Single, colInp As Single, inpWidth As Single, t As Single
+    colLbl = safeLeft
+    colInp = safeLeft + LABEL_WIDTH + GAP_LABEL_TO_INPUT
+    inpWidth = safeWidth - (colInp - safeLeft) - RIGHT_PADDING
+    If inpWidth < 0 Then inpWidth = 0
+    If inpWidth > INP_MAX Then
+        Dim extraSpace As Single
+        extraSpace = (inpWidth - INP_MAX) / 2
+        colInp = colInp + extraSpace
+        inpWidth = INP_MAX
+    End If
+
+    ' Lay-out toewijzing met guards
+    t = safeTop
+    Dim ctrl As Control
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblDatumVandaag"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblCat"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "cmbCategorie"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblSub"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Dim wSub As Single: wSub = Application.Max(0, inpWidth - 36)
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "cmbSubcategorie"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = wSub
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "btnNieuwSub"): If Not ctrl Is Nothing Then ctrl.Left = colInp + wSub + 8: ctrl.Top = t: ctrl.Width = 28: ctrl.Height = 22
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblBedrag"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "txtBedrag"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblBetaal"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "cmbBetaalwijze"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+
+    Dim btnOps As Control, btnAnn As Control
+    Set btnOps = TryGetControl(frm, FormLayout.DYN_PREFIX & "imgBtnOpslaan")
+    Set btnAnn = TryGetControl(frm, FormLayout.DYN_PREFIX & "imgBtnAnnuleren")
+    If Not btnOps Is Nothing And Not btnAnn Is Nothing Then
+        Dim btnTotalWidth As Single: btnTotalWidth = btnOps.Width + 24 + btnAnn.Width
+        Dim btnLeft As Single: btnLeft = safeLeft + Application.Max(0, (safeWidth - btnTotalWidth)) / 2
+        Dim btnY As Single: btnY = safeTop + Application.Max(0, safeHeight - 60)
+        btnOps.Left = btnLeft: btnOps.Top = btnY
+        btnAnn.Left = btnLeft + btnOps.Width + 24: btnAnn.Top = btnY
+    End If
+
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "FormLayout", "FrmLayoutSafeAreaDyn", Err.Number, Err.Description
+End Sub
+Public Sub RemoveDynamicControls(frm As Object)
+    On Error GoTo ErrHandler
+    Dim i As Long, nm As String
+    For i = frm.Controls.Count - 1 To 0 Step -1
+        nm = frm.Controls.item(i).name
+        If Left$(nm, Len(FormLayout.DYN_PREFIX)) = FormLayout.DYN_PREFIX Then
+            On Error Resume Next
+            frm.Controls.Remove nm
+            On Error GoTo ErrHandler
+        End If
+    Next i
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "FormLayout", "RemoveDynamicControls", Err.Number, Err.Description
+End Sub
+Public Function TryGetControl(frm As Object, ctlName As String) As Control
+ On Error Resume Next
+ Dim c As Control
+ For Each c In frm.Controls
+  If StrComp(c.name, ctlName, vbTextCompare) = 0 Then Set TryGetControl = c: Exit Function
+ Next c
+ On Error GoTo 0
+End Function
+Public Function TryGetImageDyn(frm As Object, ctlName As String) As MSForms.Image
+ On Error Resume Next
+ Dim c As Control
+ For Each c In frm.Controls
+  If StrComp(c.name, ctlName, vbTextCompare) = 0 Then If TypeOf c Is MSForms.Image Then Set TryGetImageDyn = c: Exit Function
+ Next c
+ On Error GoTo 0
+End Function
+Public Sub AutoFitDropdownDyn(cmb As MSForms.ComboBox)
+ On Error GoTo ErrHandler
+ Dim i As Long, maxLen As Long
+ For i = 0 To cmb.ListCount - 1
+  If Len(CStr(cmb.List(i))) > maxLen Then maxLen = Len(CStr(cmb.List(i)))
+ Next i
+ Const MINW As Long = 120, MAXW As Long = 360
+ Dim newW As Long
+ If maxLen = 0 Then newW = MINW Else newW = Application.Max(MINW, maxLen * 7): If newW > MAXW Then newW = MAXW
+ cmb.Width = newW
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "FormLayout", "AutoFitDropdownDyn", Err.Number, Err.Description
+End Sub

@@ -1026,62 +1026,6 @@ Na het inlezen:
 5) Lever QA-output en update deze handover bij nieuwe bevindingen.
 ```
 
-Manasse found this little piece of code, by using https://wand.tools/vba/
-
-Maybe we can use it to get the Shape as background 
-===== code: ======
-
-Dim shp As Shape
-
-Private Sub UserForm_Initialize()
-    ' Set the userform size
-    Me.Width = 400
-    Me.Height = 300
-    
-    ' Add a shape to the userform
-    Set shp = Me.Shapes.AddShape(msoShapeRectangle, 0, 0, Me.Width, Me.Height)
-    
-    ' Set the shape's properties
-    With shp
-        .Fill.ForeColor.RGB = RGB(200, 200, 255) ' Light blue background
-        .Line.Visible = msoFalse ' Hide the shape outline
-        .ZOrder msoSendToBack ' Send shape to back
-    End With
-End Sub
-
-This Excel VBA code is designed to customize a UserForm's appearance when it is initialized (when it first opens).
-
-Here's a breakdown of what each part does:
-
-1. **Dim shp As Shape**:
-   - This line declares a variable named `shp` that will hold a reference to a shape object.
-
-2. **Private Sub UserForm_Initialize()**:
-   - This is the beginning of a special subroutine that runs automatically when the UserForm is initialized.
-
-3. **Set the userform size**:
-   - `Me.Width = 400` and `Me.Height = 300`: These lines set the width of the UserForm to 400 pixels and its height to 300 pixels.
-
-4. **Add a shape to the userform**:
-   - `Set shp = Me.Shapes.AddShape(msoShapeRectangle, 0, 0, Me.Width, Me.Height)`:
-     This line creates a rectangle shape that fills the entire UserForm and assigns it to the `shp` variable.
-
-5. **Set the shape's properties**:
-   - The `With shp` block begins a series of commands that change the properties of the `shp` shape:
-     - `.Fill.ForeColor.RGB = RGB(200, 200, 255)`: This sets the rectangle's fill color to a light blue.
-     - `.Line.Visible = msoFalse`: This hides the outline of the rectangle, making it look more like a background.
-     - `.ZOrder msoSendToBack`: This command ensures that the rectangle is placed behind any other controls or elements on the UserForm.
-
-**Usage Scenario Example**:
-
-Imagine you're creating a custom data entry form in Excel for a project management tool. You want to make the form visually appealing and user-friendly. 
-
-By using this VBA code, you can create a UserForm that:
-
-- Has a nice light blue background.
-- Presents clear input areas for users to fill in project details.
-- Looks professional and enhances user experience, making it easier for users to focus on entering their data.
-=== end code ===
 ============================================================
 END OF APPENDIX — v5.3 FULL additions
 ============================================================

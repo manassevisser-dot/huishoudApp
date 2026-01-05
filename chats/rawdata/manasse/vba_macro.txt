@@ -1,0 +1,18 @@
+Sub OpslaanInDatabase()
+    Dim wsInvoer As Worksheet, wsDB As Worksheet
+    Dim laatsteRij As Long, nieuweRij As Long
+
+    Set wsInvoer = ThisWorkbook.Sheets("Invoer")
+    Set wsDB = ThisWorkbook.Sheets("Database")
+
+    laatsteRij = wsDB.Cells(wsDB.Rows.Count, "A").End(xlUp).Row
+    nieuweRij = laatsteRij + 1
+
+    wsDB.Cells(nieuweRij, 1).Value = wsInvoer.Range("B2").Value ' Dag
+    wsDB.Cells(nieuweRij, 2).Value = wsInvoer.Range("C2").Value ' Categorie
+    wsDB.Cells(nieuweRij, 3).Value = wsInvoer.Range("D2").Value ' Bedrag
+
+    wsInvoer.Range("B2:D2").ClearContents
+
+    MsgBox "Gegevens opgeslagen in Database!", vbInformation
+End Sub

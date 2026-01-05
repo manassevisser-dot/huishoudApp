@@ -1,0 +1,84 @@
+
+============================================================
+DEBUG DASHBOARD – LAYOUT HANDLEIDING (Eenvoudig & Duidelijk)
+============================================================
+Doel: Een simpel dashboard (UserForm) met 4 knoppen in één kolom.
+
+FORM INSTELLINGEN:
+-------------------
+Naam: frmDebugDashboard
+Breedte (Width): 300
+Hoogte (Height): 250
+BackColor: wit (optioneel)
+Font: Arial, 10pt
+
+MARGES & PADDING:
+------------------
+Linker marge: 20 punten
+Boven marge: 20 punten
+Verticale ruimte tussen knoppen: 12 punten
+Knophoogte: 28 punten
+Knopbreedte: 200 punten
+
+LAYOUT (Top/Left waarden):
+---------------------------
+Knop 1: Refresh Status | Left: 50 | Top: 20 | Width: 200 | Height: 28
+Knop 2: Run Smoke Tests | Left: 50 | Top: 60 | Width: 200 | Height: 28
+Knop 3: Export ErrorLog | Left: 50 | Top: 100 | Width: 200 | Height: 28
+Knop 4: Open Handover   | Left: 50 | Top: 140 | Width: 200 | Height: 28
+
+OPTIONEEL LABEL:
+-----------------
+Naam: lblTitle | Caption: "Debug Dashboard" | Left: 50 | Top: 0 | Width: 200 | Height: 18
+
+TIPS:
+-----
+1. Open VBE (Alt+F11), kies Insert -> UserForm.
+2. Stel form-eigenschappen in (Width, Height, BackColor).
+3. Voeg knoppen toe via Toolbox (CommandButton).
+4. Stel Name en Caption in zoals hierboven.
+5. Plaats knoppen met opgegeven Left en Top.
+6. Dubbelklik op elke knop en plak Click-event code uit Dashboard_VBA.txt.
+7. Compileer (Debug -> Compile VBAProject).
+8. Test door frmDebugDashboard te tonen (F5).
+
+HOE NIEUWE KNOP TOEVOEGEN:
+---------------------------
+- Voeg een nieuwe CommandButton toe onder de laatste knop.
+- Verhoog Top met +40 punten (bijv. 180, 220, enz.).
+- Stel Name en Caption in.
+- Voeg Click-event toe en koppel aan een Sub in modDebugDashboard.
+============================================================
+
+
+============================================================
+INI-STIJL IMPLEMENTATIESTAPPEN (Modules, Classes, Events)
+============================================================
+[00_global_instructions]
+notes=Zorg dat Microsoft Forms 2.0 en Office Object Library aangevinkt zijn.
+
+[01_add_module_modDebugDashboard]
+path=VBE -> Insert -> Module
+name=modDebugDashboard
+action=Plak code uit Dashboard_VBA.txt (modulegedeelte).
+why=Bevat alle routines voor dashboardknoppen.
+
+[02_add_userform_frmDebugDashboard]
+path=VBE -> Insert -> UserForm
+name=frmDebugDashboard
+action=Voeg knoppen toe volgens layout (zie boven) en plak Click-events.
+why=Centraal dashboard voor debug-acties.
+
+[03_link_click_events]
+path=VBE -> frmDebugDashboard -> Code
+action=Voor elke knop: plak Click-event code uit Dashboard_VBA.txt.
+why=Verbind UI met functionaliteit.
+
+[04_test_dashboard]
+path=VBE -> frmDebugDashboard -> Run (F5)
+action=Controleer dat alle knoppen werken (RefreshStatus, SmokeTests, ExportErrorLog, OpenHandover).
+why=Basisvalidatie.
+
+[05_extend_dashboard]
+notes=Nieuwe knop toevoegen? Zie layoutsectie voor Top/Left en voeg Sub in modDebugDashboard.
+============================================================

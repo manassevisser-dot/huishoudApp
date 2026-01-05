@@ -1,0 +1,263 @@
+
+W&I Excel UserForms Wizard — Layout Specs & Background Patches (ONE FILE)
+Owner: Manasse Visser
+Date: 2025-11-26
+
+============================================================
+MINI CHECKLIST — Wat verwijderen & wat toevoegen (kort en duidelijk)
+============================================================
+1) Verwijderen (alle forms/modules waar van toepassing)
+   - Hardcoded .Left/.Top/.Width/.Height voor knoppen (Prev/Next/Save/Cancel/RowAdd/RowDel).
+   - Oude AddShapeAsImage-calls voor bovenstaande knoppen (we gebruiken nu PlaceButtonFromSpec/BuildButtonsFromSpecs).
+   - Hardcoded posities in frmBuilders en in BuildDynamicFrmInvoer voor knoppen.
+
+2) Toevoegen (uniform aanroepvolgorde in elke UserForm)
+   EnsureBackgroundImage(Me)
+   → controls bouwen
+   → LayoutSpecsHelpers.BuildButtonsFromSpecs (of PlaceButtonFromSpec per knop)
+   → FormLayout.FrmLayoutSafeAreaDyn(Me)
+   → FormEvents.HookEventsDynamic(Me)
+   In UserForm_Resize: altijd FormLayout.FrmLayoutSafeAreaDyn(Me).
+
+3) Tabel ‘Referenties!tblLayoutSpecs’
+   Kopteksten exact: Key | ShapeName | Width | Height | X | Y | DefaultColor | HoverColor | Notes
+   Vul alle numerieke velden (Width/Height/X/Y) — geen lege cellen.
+   Base shape namen: btnShapeSmall/Medium/Large; hover = base + "_hover" (achtergrond heeft GEEN hover).
+
+4) Achtergrond (bg_frmInvoer_landscape)
+   - Moet als shape bestaan op ‘Referenties’. Geen hover nodig.
+   - Export gebeurt runtime naar JPG; sheet mag NIET VeryHidden tijdens export.
+
+============================================================
+MODULE PATCHES — LayoutSpecsHelpers + FormBackground (robust)
+============================================================
+' === LayoutSpecsHelpers PATCH (robust kolom-lookup, veilige conversie, hover optioneel) ===
+Option Explicit
+
+Public Function GetLayoutSpec(ByVal keyName As String, ByVal fieldName As String) As Variant
+  On Error GoTo ErrHandler
+  Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+  Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+  If lo Is Nothing Or lo.DataBodyRange Is Nothing Then Exit Function
+
+  Dim hdr As Range: Set hdr = lo.HeaderRowRange
+  Dim data As Range: Set data = lo.DataBodyRange
+  Dim i As Long, colIndex As Long: colIndex = 0
+
+  ' Zoek kolom case-insensitief, met Trim
+  For i = 1 To hdr.Columns.Count
+    If StrComp(Trim$(CStr(hdr.Cells(1, i).Value)), Trim$(fieldName), vbTextCompare) = 0 Then
+      colIndex = i: Exit For
+    End If
+  Next i
+  If colIndex = 0 Then
+    Utils.LogError4 "LayoutSpecsHelpers", "GetLayoutSpec", 1001, "Kolom '" & fieldName & "' niet gevonden"
+    Exit Function
+  End If
+
+  Dim r As Range
+  For Each r In data.Rows
+    If StrComp(Trim$(CStr(r.Cells(1, 1).Value)), Trim$(keyName), vbTextCompare) = 0 Then
+      GetLayoutSpec = r.Cells(1, colIndex).Value
+      Exit Function
+    End If
+  Next r
+  ' Niet gevonden
+  Utils.LogError4 "LayoutSpecsHelpers", "GetLayoutSpec", 1002, "Key '" & keyName & "' niet gevonden in specs"
+  Exit Function
+
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "GetLayoutSpec", Err.Number, Err.Description
+End Function
+
+Private Function NzDbl(v As Variant, ByVal def As Double) As Double
+  If IsError(v) Then NzDbl = def: Exit Function
+  If IsMissing(v) Then NzDbl = def: Exit Function
+  If IsNull(v) Then NzDbl = def: Exit Function
+  If VarType(v) = vbString And Trim$(CStr(v)) = "" Then NzDbl = def: Exit Function
+  If Not IsNumeric(v) Then NzDbl = def Else NzDbl = CDbl(v)
+End Function
+
+Public Sub PlaceButtonFromSpec(frm As Object, ByVal controlName As String, ByVal keyName As String)
+  On Error GoTo ErrHandler
+  Dim baseShape As String
+  baseShape = CStr(GetLayoutSpec(keyName, "ShapeName"))
+  If Len(Trim$(baseShape)) = 0 Then
+    Utils.LogError4 "LayoutSpecsHelpers", "PlaceButtonFromSpec", 1003, "Lege ShapeName voor key '" & keyName & "'"
+    Exit Sub
+  End If
+
+  Dim X As Single, Y As Single, W As Single, H As Single
+  X = CSng(NzDbl(GetLayoutSpec(keyName, "X"), 0))
+  Y = CSng(NzDbl(GetLayoutSpec(keyName, "Y"), 0))
+  W = CSng(NzDbl(GetLayoutSpec(keyName, "Width"), 80))   ' veilige default
+  H = CSng(NzDbl(GetLayoutSpec(keyName, "Height"), 28))  ' veilige default
+  If W < 0 Then W = 0
+  If H < 0 Then H = 0
+
+  Dim Img As MSForms.Image
+  Set Img = FormLayout.TryGetImageDyn(frm, controlName)
+  If Img Is Nothing Then Set Img = frm.Controls.Add("Forms.Image.1", controlName, True)
+
+  Dim picPath As String: picPath = GetShapePath(baseShape)
+  If Len(picPath) > 0 Then Img.Picture = LoadPicture(picPath)
+  Img.Left = X: Img.Top = Y: Img.Width = W: Img.Height = H
+
+  ' Hover alleen voor knoppen (achtergrond heeft geen hover)
+  Dim hoverShape As String
+  hoverShape = baseShape & "_hover"
+  If InStr(1, LCase$(baseShape), "bg_", vbTextCompare) > 0 Then
+    Img.Tag = "base=" & baseShape          ' geen hover
+  Else
+    Img.Tag = "base=" & baseShape & vbLf & "hover=" & hoverShape
+  End If
+  Exit Sub
+
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "PlaceButtonFromSpec", Err.Number, Err.Description
+End Sub
+
+Public Sub BuildButtonsFromSpecs(frm As Object)
+  On Error GoTo ErrHandler
+  PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVorige",   "Prev"
+  PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVolgende", "Next"
+  PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnOpslaan",  "Save"
+  PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnAnnuleren","Cancel"
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "BuildButtonsFromSpecs", Err.Number, Err.Description
+End Sub
+
+Private Function ParseTag(ByVal tagText As String, ByVal key As String) As String
+  On Error GoTo ErrHandler
+  Dim parts() As String: parts = Split(tagText, vbLf)
+  Dim i As Long, kv()
+  For i = LBound(parts) To UBound(parts)
+    kv = Split(parts(i), "=")
+    If UBound(kv) = 1 Then If StrComp(kv(0), key, vbTextCompare) = 0 Then ParseTag = kv(1): Exit Function
+  Next i
+  Exit Function
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "ParseTag", Err.Number, Err.Description
+End Function
+
+Public Sub ApplyHoverPicture(frm As Object, ByVal controlName As String)
+  On Error GoTo ErrHandler
+  Dim Img As MSForms.Image: Set Img = FormLayout.TryGetImageDyn(frm, controlName)
+  If Img Is Nothing Then Exit Sub
+  Dim hoverShape As String: hoverShape = ParseTag(Img.Tag, "hover")
+  If Len(hoverShape) = 0 Then Exit Sub
+  Dim p As String: p = GetShapePath(hoverShape, "_hover")
+  If Len(p) > 0 Then Img.Picture = LoadPicture(p)
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "ApplyHoverPicture", Err.Number, Err.Description
+End Sub
+
+Public Sub ResetHoverPicture(frm As Object, ByVal controlName As String)
+  On Error GoTo ErrHandler
+  Dim Img As MSForms.Image: Set Img = FormLayout.TryGetImageDyn(frm, controlName)
+  If Img Is Nothing Then Exit Sub
+  Dim baseShape As String: baseShape = ParseTag(Img.Tag, "base")
+  If Len(baseShape) = 0 Then Exit Sub
+  Dim p As String: p = GetShapePath(baseShape)
+  If Len(p) > 0 Then Img.Picture = LoadPicture(p)
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "ResetHoverPicture", Err.Number, Err.Description
+End Sub
+
+' === GetShapePath PATCH (robust export; sheet zichtbaar; min afmeting) ===
+Public Function GetShapePath(ByVal shapeName As String, Optional ByVal suffix As String = "") As String
+  On Error GoTo ErrHandler
+  Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+  If wsRef Is Nothing Then Exit Function
+  If wsRef.Visible = xlSheetVeryHidden Then wsRef.Visible = xlSheetVisible
+  wsRef.Activate: DoEvents
+
+  Dim shp As Shape: Set shp = wsRef.Shapes(shapeName)
+  If shp Is Nothing Then
+    Utils.LogError4 "LayoutSpecsHelpers", "GetShapePath", 1004, "Shape '" & shapeName & "' niet gevonden"
+    Exit Function
+  End If
+
+  Dim w As Single, h As Single
+  w = Application.Max(8, shp.Width)
+  h = Application.Max(8, shp.Height)
+
+  Dim tmp As String: tmp = Utils.GetTempFile(shapeName & suffix, ".jpg")
+  Dim ch As ChartObject: Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=w, Height:=h)
+
+  Dim i As Long, pasted As Boolean
+  For i = 1 To 3
+    On Error Resume Next
+    shp.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    ch.Activate
+    ch.Chart.Paste
+    On Error GoTo ErrHandler
+    If ch.Chart.Shapes.Count > 0 Then pasted = True: Exit For
+    DoEvents: Application.CutCopyMode = False
+  Next i
+
+  If pasted Then ch.Chart.Export tmp, "JPG"
+  If Dir$(tmp) <> "" Then GetShapePath = tmp
+
+CleanUp:
+  On Error Resume Next
+  ch.Delete: Application.CutCopyMode = False
+  On Error GoTo 0
+  Exit Function
+
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "GetShapePath", Err.Number, Err.Description
+  Resume CleanUp
+End Function
+
+' === Achtergrond via specs (optioneel; geen hover) ===
+Public Function GetBackgroundShapeNameFromSpecs() As String
+  On Error Resume Next
+  GetBackgroundShapeNameFromSpecs = CStr(GetLayoutSpec("Background", "ShapeName"))
+End Function
+
+' === FormBackground PATCH (gebruik specs; fallback; robust export) ===
+Option Explicit
+Public Function GetBackgroundPath() As String
+  On Error GoTo ErrHandler
+  Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+  If wsRef Is Nothing Then Exit Function
+
+  Dim bgShapeName As String
+  bgShapeName = GetBackgroundShapeNameFromSpecs()
+  If Len(bgShapeName) = 0 Then bgShapeName = "bg_frmInvoer_landscape" ' fallback
+
+  Dim shp As Shape: Set shp = wsRef.Shapes(bgShapeName)
+  If shp Is Nothing Then Exit Function
+
+  Dim tmp As String: tmp = Utils.GetTempFile("frmInvoer_bg", ".jpg")
+  Dim ch As ChartObject
+  Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=Application.Max(8, shp.Width), Height:=Application.Max(8, shp.Height))
+  shp.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+  ch.Chart.Paste
+  ch.Chart.Export tmp, "JPG": ch.Delete
+  If Dir$(tmp) <> "" Then GetBackgroundPath = tmp
+  Exit Function
+
+ErrHandler:
+  Utils.LogError4 "FormBackground", "GetBackgroundPath", Err.Number, Err.Description
+End Function
+
+============================================================
+GUIDE — Stap-voor-stap toepassen
+============================================================
+1) Open VBE (Alt+F11).
+2) In module ‘LayoutSpecsHelpers’: vervang de bestaande functies door de PATCH-secties hierboven.
+3) In module ‘FormBackground’: vervang ‘GetBackgroundPath’ door de PATCH-versie hierboven (en voeg ‘GetBackgroundShapeNameFromSpecs’ toe in LayoutSpecsHelpers).
+4) In forms (frmHuishouden, frmVast, frmInvoer): verwijder hardcoded posities & oude AddShapeAsImage voor knoppen; gebruik BuildButtonsFromSpecs/PlaceButtonFromSpec; zorg voor Initialize/Resize volgorde uit de checklist.
+5) In sheet ‘Referenties’: controleer dat tblLayoutSpecs kopteksten exact zijn en rijen voor Prev/Next/Save/Cancel/RowAdd/RowDel gevuld zijn met numerieke X/Y/Width/Height.
+6) Run ‘Debug → Compile VBAProject’. Los compilefouten op.
+7) Run ‘modSanityChecks.RunAssetSanity True’. Fix alles wat niet ‘OK’ is.
+8) Open elke UserForm, test hover (knoppen) en resize; achtergrond moet zichtbaar zijn zonder hover.
+
+============================================================
+EINDE BESTAND
+============================================================

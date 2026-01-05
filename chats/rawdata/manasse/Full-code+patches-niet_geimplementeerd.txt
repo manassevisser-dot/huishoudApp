@@ -1,0 +1,3298 @@
+' ============================================================
+' W&I Excel UserForms Wizard - CRITICAL PATCHES (P0)
+' Datum: 2025-11-27
+' Versie: 5.4
+' Bevat: 5 kritieke fixes voor production issues
+' ============================================================
+
+' ============================================================
+' PATCH 1: FormBackground.GetBackgroundPath
+' FIX: Shape.Export met retry + ChartObject fallback
+' ============================================================
+Option Explicit
+
+Public Function GetBackgroundPath() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    If wsRef Is Nothing Then
+        Utils.LogError4 "FormBackground", "GetBackgroundPath", 0, "Referenties sheet niet gevonden"
+        Exit Function
+    End If
+
+    Dim bgShapeName As String
+    bgShapeName = LayoutSpecsHelpers.GetBackgroundShapeNameFromSpecs()
+    If Len(bgShapeName) = 0 Then bgShapeName = "bg_frmInvoer_landscape"
+
+    Dim shp As Shape
+    On Error Resume Next
+    Set shp = wsRef.Shapes(bgShapeName)
+    On Error GoTo ErrHandler
+    
+    If shp Is Nothing Then
+        Utils.LogError4 "FormBackground", "GetBackgroundPath", 0, "Shape niet gevonden: " & bgShapeName
+        Exit Function
+    End If
+
+    Dim tmp As String
+    tmp = Utils.GetTempFile("frmInvoer_bg", ".jpg")
+
+    ' ===== NIEUWE METHODE: Shape.Export met retry =====
+    Dim exportSuccess As Boolean: exportSuccess = False
+    Dim attempt As Long
+    
+    For attempt = 1 To 3
+        On Error Resume Next
+        shp.Export tmp, "JPG"
+        
+        ' Wacht tot file echt bestaat + valideer grootte
+        Dim waitStart As Double: waitStart = Timer
+        Do While Timer - waitStart < 0.5
+            DoEvents
+            If Dir(tmp) <> "" Then
+                If FileLen(tmp) > 100 Then  ' Min 100 bytes = valide JPG
+                    exportSuccess = True
+                    Exit For
+                End If
+            End If
+        Loop
+        
+        If exportSuccess Then Exit For
+        On Error GoTo ErrHandler
+        
+        ' Cleanup failed attempt
+        If Dir(tmp) <> "" Then Kill tmp
+    Next attempt
+
+    If exportSuccess Then
+        GetBackgroundPath = tmp
+        Exit Function
+    End If
+
+    ' ===== FALLBACK: ChartObject methode (als Export faalt) =====
+    Utils.LogError4 "FormBackground", "GetBackgroundPath", 0, "Shape.Export gefaald, probeer ChartObject fallback"
+    
+    Dim ch As ChartObject
+    Dim safeLeft As Double, safeTop As Double, safeWidth As Double, safeHeight As Double
+    
+    ' FIX: Bounds checking voor negatieve coördinaten
+    safeLeft = IIf(shp.Left < 0, 0, shp.Left)
+    safeTop = IIf(shp.Top < 0, 0, shp.Top)
+    safeWidth = IIf(shp.Width < 10, 10, shp.Width)
+    safeHeight = IIf(shp.Height < 10, 10, shp.Height)
+    
+    On Error Resume Next
+    Set ch = wsRef.ChartObjects.Add(safeLeft, safeTop, safeWidth, safeHeight)
+    If ch Is Nothing Then
+        Utils.LogError4 "FormBackground", "GetBackgroundPath", 0, "ChartObject.Add gefaald"
+        Exit Function
+    End If
+    
+    shp.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    ch.Chart.Paste
+    ch.Chart.Export tmp, "JPG"
+    ch.Delete
+    On Error GoTo ErrHandler
+    
+    If Dir(tmp) <> "" And FileLen(tmp) > 100 Then
+        GetBackgroundPath = tmp
+    Else
+        Utils.LogError4 "FormBackground", "GetBackgroundPath", 0, "Export volledig gefaald (beide methoden)"
+    End If
+    Exit Function
+
+ErrHandler:
+    Utils.LogError4 "FormBackground", "GetBackgroundPath", Err.Number, Err.Description
+    On Error Resume Next
+    If Not ch Is Nothing Then ch.Delete
+End Function
+
+' ============================================================
+' PATCH 2: Utils.GetTempFile
+' FIX: Path separator bug
+' ============================================================
+
+Public Function GetTempFile_FIXED(ByVal baseName As String, ByVal ext As String) As String
+    On Error GoTo ErrHandler
+    
+    Dim tmp As String
+    tmp = Environ$("TEMP")
+    If Len(tmp) = 0 Then tmp = Environ$("TMP")
+    If Len(tmp) = 0 Then tmp = ThisWorkbook.Path
+    
+    ' FIX: Correcte path separator check
+    If Right$(tmp, 1) <> Application.PathSeparator Then
+        tmp = tmp & Application.PathSeparator
+    End If
+    
+    ' FIX: Sanitize baseName (verwijder invalide karakters)
+    Dim safeName As String
+    safeName = baseName
+    safeName = Replace(safeName, "\", "_")
+    safeName = Replace(safeName, "/", "_")
+    safeName = Replace(safeName, ":", "_")
+    safeName = Replace(safeName, "*", "_")
+    safeName = Replace(safeName, "?", "_")
+    safeName = Replace(safeName, """", "_")
+    safeName = Replace(safeName, "<", "_")
+    safeName = Replace(safeName, ">", "_")
+    safeName = Replace(safeName, "|", "_")
+    
+    GetTempFile_FIXED = tmp & safeName & "_" & Format(Now, "yyyymmdd_hhnnss") & ext
+    Exit Function
+    
+ErrHandler:
+    ' Fallback naar workbook directory
+    GetTempFile_FIXED = ThisWorkbook.Path & Application.PathSeparator & _
+                        baseName & "_" & Format(Now, "yyyymmdd_hhnnss") & ext
+    Utils.LogError4 "Utils", "GetTempFile_FIXED", Err.Number, Err.Description
+End Function
+
+' ============================================================
+' PATCH 3: modLayoutValidator.GetActiveFormSafe
+' FIX: Betrouwbare form detection via hwnd
+' ============================================================
+
+' Windows API declarations (plaats bovenaan modLayoutValidator)
+#If VBA7 Then
+    Private Declare PtrSafe Function GetForegroundWindow Lib "user32" () As LongPtr
+    Private Declare PtrSafe Function GetWindowText Lib "user32" Alias "GetWindowTextA" _
+        (ByVal hwnd As LongPtr, ByVal lpString As String, ByVal cch As Long) As Long
+#Else
+    Private Declare Function GetForegroundWindow Lib "user32" () As Long
+    Private Declare Function GetWindowText Lib "user32" Alias "GetWindowTextA" _
+        (ByVal hwnd As Long, ByVal lpString As String, ByVal cch As Long) As Long
+#End If
+
+Private Function GetActiveFormSafe_FIXED() As Object
+    On Error Resume Next
+    
+    ' METHODE 1: Zoek via foreground window handle (runtime)
+    #If VBA7 Then
+        Dim hwnd As LongPtr
+    #Else
+        Dim hwnd As Long
+    #End If
+    
+    hwnd = GetForegroundWindow()
+    
+    If hwnd <> 0 Then
+        Dim ufControl As Object
+        For Each ufControl In VBA.UserForms
+            ' Check of form window handle overeenkomt
+            If ufControl.hwnd = hwnd Then
+                Set GetActiveFormSafe_FIXED = ufControl
+                Exit Function
+            End If
+        Next ufControl
+    End If
+    
+    ' METHODE 2: Zoek vorm met Caption matching window title
+    If hwnd <> 0 Then
+        Dim winTitle As String: winTitle = Space$(255)
+        Dim titleLen As Long
+        titleLen = GetWindowText(hwnd, winTitle, 255)
+        winTitle = Left$(winTitle, titleLen)
+        
+        If Len(winTitle) > 0 Then
+            Dim uf As Object
+            For Each uf In VBA.UserForms
+                If StrComp(uf.Caption, winTitle, vbTextCompare) = 0 Then
+                    Set GetActiveFormSafe_FIXED = uf
+                    Exit Function
+                End If
+            Next uf
+        End If
+    End If
+    
+    ' METHODE 3: Laatste getoonde form (fallback)
+    If VBA.UserForms.Count > 0 Then
+        ' Laatste form in collectie is meestal laatst getoond
+        Set GetActiveFormSafe_FIXED = VBA.UserForms(VBA.UserForms.Count - 1)
+    End If
+    
+    On Error GoTo 0
+End Function
+
+' ============================================================
+' PATCH 4: Utils.ParseAmount
+' FIX: Locale-aware parsing met duizendtallen support
+' ============================================================
+
+Public Function ParseAmount_FIXED(ByVal s As String) As Double
+    On Error GoTo ErrHandler
+    
+    Dim decSep As String: decSep = Application.International(xlDecimalSeparator)
+    Dim thouSep As String: thouSep = Application.International(xlThousandsSeparator)
+    
+    s = Trim$(s)
+    If s = "" Then
+        ParseAmount_FIXED = 0
+        Exit Function
+    End If
+    
+    ' Verwijder currency symbolen
+    s = Replace(s, "€", "")
+    s = Replace(s, "$", "")
+    s = Replace(s, "£", "")
+    s = Trim$(s)
+    
+    ' Detecteer formaat: Europees (1.234,56) vs Amerikaans (1,234.56)
+    Dim lastDot As Long: lastDot = InStrRev(s, ".")
+    Dim lastComma As Long: lastComma = InStrRev(s, ",")
+    
+    If lastDot > lastComma Then
+        ' Amerikaans formaat: 1,234.56
+        s = Replace(s, ",", "")  ' Verwijder duizendtallen
+        s = Replace(s, ".", decSep)  ' Converteer decimaal
+    ElseIf lastComma > lastDot Then
+        ' Europees formaat: 1.234,56
+        s = Replace(s, ".", "")  ' Verwijder duizendtallen
+        s = Replace(s, ",", decSep)  ' Converteer decimaal
+    Else
+        ' Geen beide separators, of allebei op zelfde positie
+        ' Converteer naar system decimaal separator
+        If InStr(s, ",") > 0 Then s = Replace(s, ",", decSep)
+        If InStr(s, ".") > 0 Then s = Replace(s, ".", decSep)
+    End If
+    
+    ' Final sanity check
+    If Not IsNumeric(s) Then
+        Utils.LogError4 "Utils", "ParseAmount_FIXED", 0, "Kon bedrag niet parsen: " & s
+        ParseAmount_FIXED = 0
+        Exit Function
+    End If
+    
+    ParseAmount_FIXED = CDbl(s)
+    Exit Function
+    
+ErrHandler:
+    Utils.LogError4 "Utils", "ParseAmount_FIXED", Err.Number, Err.Description & " (input: " & s & ")"
+    ParseAmount_FIXED = 0
+End Function
+
+' ============================================================
+' PATCH 5: LayoutSpecsHelpers.GetShapePath
+' FIX: Betrouwbare paste detection met sleep
+' ============================================================
+
+Public Function GetShapePath_FIXED(ByVal shapeName As String, Optional ByVal suffix As String = "") As String
+    On Error GoTo ErrHandler
+    
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    If wsRef Is Nothing Then Exit Function
+    
+    ' Ensure sheet visible
+    If wsRef.Visible = xlSheetVeryHidden Then wsRef.Visible = xlSheetVisible
+    wsRef.Activate
+    DoEvents
+    
+    Dim shp As Shape
+    On Error Resume Next
+    Set shp = wsRef.Shapes(shapeName)
+    On Error GoTo ErrHandler
+    
+    If shp Is Nothing Then
+        Utils.LogError4 "LayoutSpecsHelpers", "GetShapePath_FIXED", 1004, "Shape niet gevonden: " & shapeName
+        Exit Function
+    End If
+    
+    Dim w As Single, h As Single
+    w = Application.Max(8, shp.Width)
+    h = Application.Max(8, shp.Height)
+    
+    Dim tmp As String
+    tmp = Utils.GetTempFile(shapeName & suffix, ".jpg")
+    
+    Dim ch As ChartObject
+    Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=w, Height:=h)
+    
+    ' FIX: Verbeterde paste logic met retry + validation
+    Dim i As Long, pasted As Boolean
+    pasted = False
+    
+    For i = 1 To 5  ' Verhoog van 3 naar 5 retries
+        On Error Resume Next
+        
+        ' Clear previous clipboard
+        Application.CutCopyMode = False
+        DoEvents
+        
+        ' Copy shape
+        shp.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+        
+        ' Activate chart en paste
+        ch.Activate
+        DoEvents
+        
+        ' Clear chart eerst
+        Dim tempShape As Shape
+        For Each tempShape In ch.Chart.Shapes
+            tempShape.Delete
+        Next tempShape
+        
+        ch.Chart.Paste
+        
+        ' FIX: Wacht tot paste compleet is (max 1 sec)
+        Dim waitStart As Double: waitStart = Timer
+        Do While Timer - waitStart < 1
+            DoEvents
+            If ch.Chart.Shapes.Count > 0 Then
+                ' Extra validatie: check of shape data heeft
+                If ch.Chart.Shapes(1).Width > 0 And ch.Chart.Shapes(1).Height > 0 Then
+                    pasted = True
+                    Exit For
+                End If
+            End If
+            ' Sleep 50ms tussen checks
+            Application.Wait Now + TimeValue("00:00:00.05")
+        Loop
+        
+        On Error GoTo ErrHandler
+        
+        If pasted Then Exit For
+        
+        ' Cleanup failed attempt
+        Application.CutCopyMode = False
+    Next i
+    
+    If Not pasted Then
+        Utils.LogError4 "LayoutSpecsHelpers", "GetShapePath_FIXED", 0, "Paste gefaald na 5 pogingen: " & shapeName
+        GoTo CleanUp
+    End If
+    
+    ' Export chart
+    On Error Resume Next
+    ch.Chart.Export tmp, "JPG"
+    On Error GoTo ErrHandler
+    
+    ' Validate export
+    If Dir$(tmp) <> "" And FileLen(tmp) > 100 Then
+        GetShapePath_FIXED = tmp
+    Else
+        Utils.LogError4 "LayoutSpecsHelpers", "GetShapePath_FIXED", 0, "Export gefaald of corrupt: " & tmp
+    End If
+
+CleanUp:
+    On Error Resume Next
+    ch.Delete
+    Application.CutCopyMode = False
+    On Error GoTo 0
+    Exit Function
+
+ErrHandler:
+    Utils.LogError4 "LayoutSpecsHelpers", "GetShapePath_FIXED", Err.Number, Err.Description
+    Resume CleanUp
+End Function
+
+' ============================================================
+' INSTALLATIE INSTRUCTIES
+' ============================================================
+' 
+' 1. BACKUP maken van huidige workbook
+' 
+' 2. FormBackground module:
+'    - Vervang GetBackgroundPath volledig met PATCH 1
+' 
+' 3. Utils module:
+'    - Voeg GetTempFile_FIXED toe als NIEUWE functie
+'    - Update alle calls naar GetTempFile:
+'      Find: "Utils.GetTempFile"
+'      Replace: "Utils.GetTempFile_FIXED"
+'    - Voeg ParseAmount_FIXED toe als NIEUWE functie
+'    - Update alle calls naar ParseAmount
+' 
+' 4. modLayoutValidator module:
+'    - Voeg API declares toe bovenaan (buiten subs)
+'    - Vervang GetActiveFormSafe volledig met PATCH 3
+' 
+' 5. LayoutSpecsHelpers module:
+'    - Voeg GetShapePath_FIXED toe als NIEUWE functie
+'    - Update alle calls naar GetShapePath:
+'      Find: "GetShapePath("
+'      Replace: "GetShapePath_FIXED("
+' 
+' 6. TEST PROCEDURE:
+'    a) Open frmDebugDashboard
+'    b) Druk "Validate Layout (extended)"
+'    c) Controleer dat alle checks "OK" zijn
+'    d) Open frmInvoer → check achtergrond zichtbaar
+'    e) Open frmHuishouden → check knoppen zichtbaar + hover werkt
+'    f) Voer testbedrag in: "1.234,56" → moet correct parsen
+' 
+' 7. ROLLBACK PLAN:
+'    Als er problemen zijn, restore backup en meld bevindingen
+'    via ErrorLog export
+' 
+' ============================================================
+
+Attribute VB_Name = "modLayoutValidator"
+' ============================================================
+' MODULE: modLayoutValidator (ENHANCED v5.4)
+' Auteur: W&I Wizard Project - Manasse Visser
+' Datum: 2025-11-27
+' Versie: 5.4 (Lyra optimized - met hwnd detection en tag sanitization)
+' ============================================================
+Option Explicit
+
+' Windows API declarations voor betrouwbare form detection
+#If VBA7 Then
+    Private Declare PtrSafe Function GetForegroundWindow Lib "user32" () As LongPtr
+#Else
+    Private Declare Function GetForegroundWindow Lib "user32" () As Long
+#End If
+
+' ============================================================
+' PUBLIEKE INTERFACE
+' ============================================================
+
+Public Sub ValidateLayoutAll(Optional ByVal attachToDashboard As Boolean = True)
+    On Error GoTo ErrHandler
+    Dim rep As String
+    rep = "Sanity-rapport (extended v5.4)" & vbCrLf & String(40, "-") & vbCrLf
+
+    rep = rep & SpecsColumnsAndRowsCheck() & vbCrLf
+    rep = rep & ShapesExistenceCheck() & vbCrLf
+    rep = rep & FormImageTagCheck() & vbCrLf
+    rep = rep & BackgroundExportCheck() & vbCrLf
+
+    If attachToDashboard Then
+        On Error Resume Next
+        frmDebugDashboard.txtStatus.Value = rep
+        On Error GoTo 0
+    End If
+    MsgBox rep, vbInformation, "Sanity (extended)"
+    Exit Sub
+    
+ErrHandler:
+    MsgBox "FOUT in ValidateLayoutAll: [" & Err.Number & "] " & Err.Description, vbCritical
+End Sub
+
+' ============================================================
+' PRIVATE VALIDATORS
+' ============================================================
+
+Private Function SpecsColumnsAndRowsCheck() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    If lo Is Nothing Then
+        SpecsColumnsAndRowsCheck = "FOUT: Tabel 'tblLayoutSpecs' niet gevonden."
+        Exit Function
+    End If
+
+    Dim requiredCols As Variant
+    requiredCols = Array("Key", "ShapeName", "Width", "Height", "X", "Y")
+    Dim i As Long, missing As String
+    For i = LBound(requiredCols) To UBound(requiredCols)
+        If FindColumnIndex(lo, CStr(requiredCols(i))) = 0 Then
+            missing = missing & "- Kolom ontbreekt: " & requiredCols(i) & vbCrLf
+        End If
+    Next i
+
+    If Len(missing) > 0 Then
+        SpecsColumnsAndRowsCheck = "FOUT (Specs):" & vbCrLf & missing
+        Exit Function
+    End If
+
+    If lo.DataBodyRange Is Nothing Then
+        SpecsColumnsAndRowsCheck = "LET OP: 'tblLayoutSpecs' heeft nog geen rijen."
+        Exit Function
+    End If
+
+    Dim expectedKeys As Variant
+    expectedKeys = Array("Prev", "Next", "Save", "Cancel", "RowAdd", "RowDel")
+
+    Dim colKey As Long, colShape As Long, colW As Long, colH As Long, colX As Long, colY As Long
+    colKey = FindColumnIndex(lo, "Key")
+    colShape = FindColumnIndex(lo, "ShapeName")
+    colW = FindColumnIndex(lo, "Width")
+    colH = FindColumnIndex(lo, "Height")
+    colX = FindColumnIndex(lo, "X")
+    colY = FindColumnIndex(lo, "Y")
+
+    Dim r As Range, k As Variant, found As Boolean, line As String
+    For Each k In expectedKeys
+        found = False
+        For Each r In lo.DataBodyRange.Rows
+            If Trim$(CStr(r.Cells(1, colKey).Value)) = CStr(k) Then
+                found = True
+                If Len(Trim$(CStr(r.Cells(1, colShape).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colW).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colH).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colX).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colY).Value))) = 0 Then
+                    line = line & "- Key '" & k & "': heeft lege velden (ShapeName/Width/Height/X/Y)." & vbCrLf
+                End If
+                Exit For
+            End If
+        Next r
+        If Not found Then line = line & "- Key ontbreekt in specs: " & k & vbCrLf
+    Next k
+
+    If Len(line) > 0 Then
+        SpecsColumnsAndRowsCheck = "LET OP (Specs):" & vbCrLf & line
+    Else
+        SpecsColumnsAndRowsCheck = "OK  (Specs): Kolommen & rijen zijn compleet."
+    End If
+    Exit Function
+
+ErrHandler:
+    SpecsColumnsAndRowsCheck = "FOUT in SpecsColumnsAndRowsCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+Private Function ShapesExistenceCheck() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    If lo Is Nothing Or lo.DataBodyRange Is Nothing Then
+        ShapesExistenceCheck = "LET OP: 'tblLayoutSpecs' ontbreekt of heeft geen rijen; skip shapes-check."
+        Exit Function
+    End If
+
+    Dim colShape As Long, colKey As Long
+    colShape = FindColumnIndex(lo, "ShapeName")
+    colKey = FindColumnIndex(lo, "Key")
+
+    Dim r As Range, shapeName As String, keyName As String, report As String
+    For Each r In lo.DataBodyRange.Rows
+        keyName = Trim$(CStr(r.Cells(1, colKey).Value))
+        shapeName = Trim$(CStr(r.Cells(1, colShape).Value))
+        If Len(shapeName) > 0 Then
+            If Not ShapeExistsOn(wsRef, shapeName) Then
+                report = report & "- Key '" & keyName & "': base-shape ontbreekt: " & shapeName & vbCrLf
+            Else
+                If LCase$(keyName) <> "background" Then
+                    Dim hoverName As String: hoverName = shapeName & "_hover"
+                    If Not ShapeExistsOn(wsRef, hoverName) Then
+                        report = report & "LET OP: Key '" & keyName & "': hover-shape ontbreekt: " & hoverName & vbCrLf
+                    End If
+                End If
+            End If
+        Else
+            report = report & "- Key '" & keyName & "': ShapeName is leeg." & vbCrLf
+        End If
+    Next r
+
+    If Len(report) = 0 Then
+        ShapesExistenceCheck = "OK  (Shapes): base/hover bestaan (hover niet vereist voor Background)."
+    Else
+        ShapesExistenceCheck = "LET OP (Shapes):" & vbCrLf & report
+    End If
+    Exit Function
+
+ErrHandler:
+    ShapesExistenceCheck = "FOUT in ShapesExistenceCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+Private Function FormImageTagCheck() As String
+    On Error GoTo ErrHandler
+    Dim frm As Object
+    Set frm = GetActiveFormSafe()
+
+    If frm Is Nothing Then
+        FormImageTagCheck = "LET OP (Form): geen actief form gevonden; open een UserForm en run opnieuw."
+        Exit Function
+    End If
+
+    Dim c As Control, issues As String
+    For Each c In frm.Controls
+        If TypeOf c Is MSForms.Image Then
+            Dim tagText As String: tagText = CStr(c.Tag)
+            Dim baseName As String: baseName = ParseTagLocal(tagText, "base")
+            Dim hoverName As String: hoverName = ParseTagLocal(tagText, "hover")
+
+            If Len(baseName) = 0 Then
+                issues = issues & "- Image '" & c.Name & "': Tag mist 'base='." & vbCrLf
+            Else
+                If Not ShapeExistsOn(ThisWorkbook.Worksheets("Referenties"), baseName) Then
+                    issues = issues & "- Image '" & c.Name & "': base-shape niet gevonden: " & baseName & vbCrLf
+                End If
+            End If
+
+            If InStr(1, LCase$(c.Name), "imgbtn", vbTextCompare) > 0 Or _
+               InStr(1, LCase$(c.Name), "imgaddrow", vbTextCompare) > 0 Or _
+               InStr(1, LCase$(c.Name), "imgdelrow", vbTextCompare) > 0 Then
+                If Len(hoverName) = 0 Then
+                    issues = issues & "LET OP: Image '" & c.Name & "': Tag mist 'hover='." & vbCrLf
+                ElseIf Not ShapeExistsOn(ThisWorkbook.Worksheets("Referenties"), hoverName) Then
+                    issues = issues & "LET OP: Image '" & c.Name & "': hover-shape niet gevonden: " & hoverName & vbCrLf
+                End If
+            End If
+        End If
+    Next c
+
+    If Len(issues) = 0 Then
+        FormImageTagCheck = "OK  (Form): alle Image-tags valide (base/hover) en shapes gevonden."
+    Else
+        FormImageTagCheck = "LET OP (Form):" & vbCrLf & issues
+    End If
+    Exit Function
+
+ErrHandler:
+    FormImageTagCheck = "FOUT in FormImageTagCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+Private Function BackgroundExportCheck() As String
+    On Error GoTo ErrHandler
+    Dim p As String
+    p = FormBackground.GetBackgroundPath()
+    If Len(p) = 0 Then
+        BackgroundExportCheck = "FOUT (Background): GetBackgroundPath gaf leeg pad."
+    ElseIf Dir$(p) = "" Then
+        BackgroundExportCheck = "FOUT (Background): bestand bestaat niet: " & p
+    Else
+        ' Valideer file size
+        Dim fSize As Long: fSize = FileLen(p)
+        If fSize < 100 Then
+            BackgroundExportCheck = "FOUT (Background): bestand te klein (" & fSize & " bytes): " & p
+        Else
+            BackgroundExportCheck = "OK  (Background): export pad = " & p & " (" & fSize & " bytes)"
+        End If
+    End If
+    Exit Function
+
+ErrHandler:
+    BackgroundExportCheck = "FOUT in BackgroundExportCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ============================================================
+' HELPERS (ENHANCED)
+' ============================================================
+
+Private Function FindColumnIndex(lo As ListObject, ByVal headerName As String) As Long
+    On Error Resume Next
+    Dim i As Long
+    For i = 1 To lo.HeaderRowRange.Columns.Count
+        If StrComp(CStr(lo.HeaderRowRange.Cells(1, i).Value), headerName, vbTextCompare) = 0 Then
+            FindColumnIndex = i
+            Exit Function
+        End If
+    Next i
+    FindColumnIndex = 0
+End Function
+
+Private Function ShapeExistsOn(ws As Worksheet, ByVal shapeName As String) As Boolean
+    On Error Resume Next
+    Dim shp As Shape
+    Set shp = ws.Shapes(shapeName)
+    ShapeExistsOn = Not shp Is Nothing
+    On Error GoTo 0
+End Function
+
+' PATCH 3: Verbeterde ParseTag met sanitization
+Private Function ParseTagLocal(ByVal tagText As String, ByVal key As String) As String
+    On Error GoTo ErrHandler
+    If Len(tagText) = 0 Then Exit Function
+    
+    Dim parts() As String: parts = Split(tagText, vbLf)
+    Dim i As Long, kv() As String, rawValue As String
+    
+    For i = LBound(parts) To UBound(parts)
+        kv = Split(parts(i), "=")
+        If UBound(kv) >= 1 Then  ' Support voor embedded =
+            If StrComp(Trim$(kv(0)), key, vbTextCompare) = 0 Then
+                ' Join alles na eerste =
+                rawValue = Mid$(parts(i), InStr(parts(i), "=") + 1)
+                rawValue = Trim$(rawValue)
+                
+                ' Valideer niet-leeg EN geen invalid karakters
+                If Len(rawValue) > 0 And _
+                   InStr(rawValue, vbNullChar) = 0 And _
+                   InStr(rawValue, Chr(0)) = 0 Then
+                    ParseTagLocal = rawValue
+                    Exit Function
+                End If
+            End If
+        End If
+    Next i
+    
+    Exit Function
+ErrHandler:
+    ' Log maar retourneer lege string (graceful degradation)
+    On Error Resume Next
+    Utils.LogError4 "modLayoutValidator", "ParseTagLocal", Err.Number, _
+                    "Tag parse error voor key '" & key & "': " & Err.Description
+    ParseTagLocal = ""
+End Function
+
+' PATCH 2: Robuuste active form detection met hwnd lookup
+Private Function GetActiveFormSafe() As Object
+    On Error Resume Next
+    
+    ' METHODE 1: Probeer VBE ActiveWindow (design-time)
+    Dim vbeForm As Object
+    Set vbeForm = Application.VBE.ActiveWindow
+    If Not vbeForm Is Nothing Then
+        ' Check of het een form designer window is
+        If vbeForm.Type = 3 Then  ' vbext_wt_Designer
+            Set GetActiveFormSafe = vbeForm.Designer
+            If Not GetActiveFormSafe Is Nothing Then Exit Function
+        End If
+    End If
+    
+    ' METHODE 2: Zoek form via foreground window handle (runtime)
+    #If VBA7 Then
+        Dim hwnd As LongPtr
+    #Else
+        Dim hwnd As Long
+    #End If
+    
+    hwnd = GetForegroundWindow()
+    If hwnd <> 0 Then
+        Dim ufControl As Object
+        For Each ufControl In VBA.UserForms
+            ' Check of form window handle overeenkomt
+            If ufControl.hwnd = hwnd Then
+                Set GetActiveFormSafe = ufControl
+                Exit Function
+            End If
+        Next ufControl
+    End If
+    
+    ' METHODE 3: Laatste getoonde form (fallback)
+    If VBA.UserForms.Count > 0 Then
+        Set GetActiveFormSafe = VBA.UserForms(VBA.UserForms.Count - 1)
+    End If
+    
+    On Error GoTo 0
+End Function
+
+COMPONENT	STATUS	PRIORITEIT	ACTIE	EIGENAAR
+FormBackground.GetBackgroundPath	🔴 KRITIEK	P0	Implementeer retry logic + file validation	Dev
+GetActiveFormSafe	🔴 KRITIEK	P0	Voeg hwnd detection toe	Dev
+ParseTagLocal	🟡 MEDIUM	P1	Implementeer tag sanitization	Dev
+UserForm Initialize guards	🟡 MEDIUM	P1	Voeg m_IsInitialized flag toe aan alle forms	Dev
+Unit test suite	❌ ONTBREEKT	P1	Implementeer modLayoutValidator_Tests	QA
+Utils.LogError4	⚠️ ONGEDOCUMENTEERD	P2	Documenteer signature + ErrorLog schema	Tech Writer
+Utils.GetTempFile	⚠️ ONGEDOCUMENTEERD	P2	Documenteer signature	Tech Writer
+Utils.NzDbl	⚠️ ONGEDOCUMENTEERD	P2	Documenteer signature	Tech Writer
+LayoutSpecsHelpers module	⚠️ ONGEDOCUMENTEERD	P2	Documenteer alle publieke functies	Tech Writer
+FormHelpers.EnsureBackgroundImage	⚠️ ONGEDOCUMENTEERD	P2	Documenteer implementatie	Tech Writer
+frmBuilders routines	⚠️ ONGEDOCUMENTEERD	P2	Documenteer BuildForm_* implementaties	Tech Writer
+FormLayout.FrmLayoutSafeAreaDyn	⚠️ ONGEDOCUMENTEERD	P2	Documenteer resize algorithm	Tech Writer
+FormLayout.DYN_PREFIX	⚠️ ONGEDOCUMENTEERD	P3	Documenteer constante waarde	Tech Writer
+FormEvents.HookEventsDynamic	⚠️ ONGEDOCUMENTEERD	P2	Documenteer event binding logic	Tech Writer
+ErrorLog sheet schema	⚠️ ONGEDOCUMENTEERD	P2	Specificeer kolommen + datatypes	Tech Writer
+NormalizeSpecsHeaders idempotentie	🟡 MEDIUM	P2	Test dubbele runs + voeg backup toe	Dev
+Transactional validator	🟢 NICE-TO-HAVE	P3	Wrap ValidateLayoutAll in rollback logic	Dev
+Performance profiling	🟢 NICE-TO-HAVE	P3	Meet export time Shape vs ChartObject	QA
+Cross-form conflict detection	🟢 NICE-TO-HAVE	P3	Check duplicate control names tussen forms	QA
+Safe-area unit tests	❌ ONTBREEKT	P2	Test resize met verschillende aspect ratios	QA
+
+Attribute VB_Name = "FormBackground"
+' ============================================================
+' MODULE: FormBackground (OPTIMIZED v5.4)
+' Auteur: W&I Wizard Project - Manasse Visser
+' Datum: 2025-11-27
+' Versie: 5.4 (Lyra optimized)
+' ============================================================
+Option Explicit
+
+' PATCH 1: Verbeterde Shape.Export met retry logic en file validation
+Public Function GetBackgroundPath() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    If wsRef Is Nothing Then Exit Function
+
+    Dim bgShapeName As String
+    bgShapeName = LayoutSpecsHelpers.GetBackgroundShapeNameFromSpecs()
+    If Len(bgShapeName) = 0 Then bgShapeName = "bg_frmInvoer_landscape"
+
+    Dim shp As Shape
+    On Error Resume Next
+    Set shp = wsRef.Shapes(bgShapeName)
+    On Error GoTo ErrHandler
+    If shp Is Nothing Then
+        Utils.LogError4 "FormBackground", "GetBackgroundPath", 0, "Shape niet gevonden: " & bgShapeName
+        Exit Function
+    End If
+
+    Dim tmp As String
+    tmp = Utils.GetTempFile("frmInvoer_bg", ".jpg")
+
+    ' VERBETERD: Probeer Shape.Export met retry + file validation
+    Dim exportSuccess As Boolean: exportSuccess = False
+    Dim attempt As Long
+    For attempt = 1 To 3
+        On Error Resume Next
+        shp.Export tmp, "JPG"
+        
+        ' Wacht tot file echt bestaat (max 500ms)
+        Dim waitStart As Double: waitStart = Timer
+        Do While Timer - waitStart < 0.5
+            DoEvents
+            If Dir(tmp) <> "" Then
+                ' Controleer of file > 0 bytes (niet corrupt)
+                If FileLen(tmp) > 100 Then
+                    exportSuccess = True
+                    Exit For
+                End If
+            End If
+        Loop
+        
+        If exportSuccess Then Exit For
+        On Error GoTo ErrHandler
+    Next attempt
+
+    If exportSuccess Then
+        GetBackgroundPath = tmp
+        Exit Function
+    End If
+
+    ' VERBETERD: Fallback met betere bounds checking
+    Dim ch As ChartObject
+    Dim safeLeft As Double, safeTop As Double, safeWidth As Double, safeHeight As Double
+    
+    safeLeft = IIf(shp.Left < 0, 0, shp.Left)
+    safeTop = IIf(shp.Top < 0, 0, shp.Top)
+    safeWidth = IIf(shp.Width < 10, 10, shp.Width)
+    safeHeight = IIf(shp.Height < 10, 10, shp.Height)
+    
+    On Error Resume Next
+    Set ch = wsRef.ChartObjects.Add(safeLeft, safeTop, safeWidth, safeHeight)
+    If ch Is Nothing Then Exit Function
+    
+    shp.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    ch.Chart.Paste
+    ch.Chart.Export tmp, "JPG"
+    ch.Delete
+    On Error GoTo ErrHandler
+    
+    If Dir(tmp) <> "" And FileLen(tmp) > 100 Then
+        GetBackgroundPath = tmp
+    Else
+        Utils.LogError4 "FormBackground", "GetBackgroundPath", 0, "Export gefaald na fallback"
+    End If
+    Exit Function
+
+ErrHandler:
+    Utils.LogError4 "FormBackground", "GetBackgroundPath", Err.Number, Err.Description
+    On Error Resume Next
+    If Not ch Is Nothing Then ch.Delete
+End Function
+' ============================================================
+' W&I Excel UserForms Wizard - ARCHITECTURAL PATCHES (P1)
+' Datum: 2025-11-27
+' Versie: 5.4
+' Bevat: Form navigation framework + Initialize guards
+' ============================================================
+
+' ============================================================
+' NEW MODULE: FormNavigator
+' Doel: Centraliseer form navigation (elimineer hardcoding)
+' ============================================================
+Option Explicit
+
+' Form sequence enum
+Public Enum FormSequence
+    fsHuishouden = 1
+    fsVast = 2
+    fsInvoer = 3
+End Enum
+
+' Navigation registry
+Private Type tFormInfo
+    FormName As String
+    FormObject As Object
+    SequenceIndex As FormSequence
+End Type
+
+Private m_Forms() As tFormInfo
+Private m_IsInitialized As Boolean
+
+' ===== PUBLIC INTERFACE =====
+
+Public Sub Initialize()
+    If m_IsInitialized Then Exit Sub
+    
+    ReDim m_Forms(1 To 3)
+    
+    ' Register forms
+    With m_Forms(1)
+        .FormName = "frmHuishouden"
+        .SequenceIndex = fsHuishouden
+    End With
+    
+    With m_Forms(2)
+        .FormName = "frmVast"
+        .SequenceIndex = fsVast
+    End With
+    
+    With m_Forms(3)
+        .FormName = "frmInvoer"
+        .SequenceIndex = fsInvoer
+    End With
+    
+    m_IsInitialized = True
+End Sub
+
+Public Function GetNextForm(currentForm As Object) As String
+    On Error GoTo ErrHandler
+    If Not m_IsInitialized Then Initialize
+    
+    Dim currentSeq As FormSequence
+    currentSeq = GetFormSequence(TypeName(currentForm))
+    
+    If currentSeq = 0 Then
+        Utils.LogError4 "FormNavigator", "GetNextForm", 0, "Onbekend form: " & TypeName(currentForm)
+        GetNextForm = ""
+        Exit Function
+    End If
+    
+    ' Volgende form (cyclisch)
+    Dim nextSeq As FormSequence
+    nextSeq = IIf(currentSeq = fsInvoer, fsHuishouden, currentSeq + 1)
+    
+    GetNextForm = GetFormName(nextSeq)
+    Exit Function
+    
+ErrHandler:
+    Utils.LogError4 "FormNavigator", "GetNextForm", Err.Number, Err.Description
+    GetNextForm = ""
+End Function
+
+Public Function GetPreviousForm(currentForm As Object) As String
+    On Error GoTo ErrHandler
+    If Not m_IsInitialized Then Initialize
+    
+    Dim currentSeq As FormSequence
+    currentSeq = GetFormSequence(TypeName(currentForm))
+    
+    If currentSeq = 0 Then
+        Utils.LogError4 "FormNavigator", "GetPreviousForm", 0, "Onbekend form: " & TypeName(currentForm)
+        GetPreviousForm = ""
+        Exit Function
+    End If
+    
+    ' Vorige form (cyclisch)
+    Dim prevSeq As FormSequence
+    prevSeq = IIf(currentSeq = fsHuishouden, fsInvoer, currentSeq - 1)
+    
+    GetPreviousForm = GetFormName(prevSeq)
+    Exit Function
+    
+ErrHandler:
+    Utils.LogError4 "FormNavigator", "GetPreviousForm", Err.Number, Err.Description
+    GetPreviousForm = ""
+End Function
+
+Public Sub NavigateNext(currentForm As Object)
+    On Error GoTo ErrHandler
+    Dim nextFormName As String
+    nextFormName = GetNextForm(currentForm)
+    
+    If Len(nextFormName) = 0 Then Exit Sub
+    
+    currentForm.Hide
+    
+    Select Case nextFormName
+        Case "frmHuishouden": frmHuishouden.Show
+        Case "frmVast": frmVast.Show
+        Case "frmInvoer": frmInvoer.Show
+    End Select
+    Exit Sub
+    
+ErrHandler:
+    Utils.LogError4 "FormNavigator", "NavigateNext", Err.Number, Err.Description
+End Sub
+
+Public Sub NavigatePrevious(currentForm As Object)
+    On Error GoTo ErrHandler
+    Dim prevFormName As String
+    prevFormName = GetPreviousForm(currentForm)
+    
+    If Len(prevFormName) = 0 Then Exit Sub
+    
+    currentForm.Hide
+    
+    Select Case prevFormName
+        Case "frmHuishouden": frmHuishouden.Show
+        Case "frmVast": frmVast.Show
+        Case "frmInvoer": frmInvoer.Show
+    End Select
+    Exit Sub
+    
+ErrHandler:
+    Utils.LogError4 "FormNavigator", "NavigatePrevious", Err.Number, Err.Description
+End Sub
+
+' ===== PRIVATE HELPERS =====
+
+Private Function GetFormSequence(ByVal formName As String) As FormSequence
+    Dim i As Long
+    For i = LBound(m_Forms) To UBound(m_Forms)
+        If StrComp(m_Forms(i).FormName, formName, vbTextCompare) = 0 Then
+            GetFormSequence = m_Forms(i).SequenceIndex
+            Exit Function
+        End If
+    Next i
+    GetFormSequence = 0
+End Function
+
+Private Function GetFormName(ByVal seq As FormSequence) As String
+    Dim i As Long
+    For i = LBound(m_Forms) To UBound(m_Forms)
+        If m_Forms(i).SequenceIndex = seq Then
+            GetFormName = m_Forms(i).FormName
+            Exit Function
+        End If
+    Next i
+    GetFormName = ""
+End Function
+
+' ============================================================
+' PATCH: CImgEvents.Img_MouseDown (gebruik FormNavigator)
+' ============================================================
+
+' Vervang in CImgEvents class module:
+Private Sub Img_MouseDown(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+    On Error GoTo ErrHandler
+    
+    Select Case LCase$(Img.Name)
+        Case "dyn_imgbtnopslaan"
+            FormEvents.HandleOpslaan_dyn ParentForm
+            
+        Case "dyn_imgbtnannuleren"
+            FormEvents.HandleAnnuleren_dyn ParentForm
+            
+        Case "dyn_imgbtnvolgende"
+            ' ✅ NIEUW: Gebruik FormNavigator
+            FormNavigator.NavigateNext ParentForm
+            
+        Case "dyn_imgbtnvorige"
+            ' ✅ NIEUW: Gebruik FormNavigator
+            FormNavigator.NavigatePrevious ParentForm
+    End Select
+    Exit Sub
+    
+ErrHandler:
+    Utils.LogError4 "CImgEvents", "Img_MouseDown", Err.Number, Err.Description
+End Sub
+
+' ============================================================
+' PATCH: UserForm Initialize Guards (alle 3 forms)
+' ============================================================
+
+' ===== frmHuishouden =====
+Option Explicit
+
+Private m_IsInitialized As Boolean  ' ✅ Guard flag
+Private m_BackgroundPath As String  ' ✅ Cleanup tracking
+
+Private Sub UserForm_Initialize()
+    If m_IsInitialized Then Exit Sub  ' ✅ Prevent double init
+    On Error GoTo ErrHandler
+    
+    ' Originele initialisatie
+    FormHelpers.EnsureBackgroundImage Me
+    frmBuilders.BuildForm_Huishouden Me
+    LayoutSpecsHelpers.BuildButtonsFromSpecs Me
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    FormEvents.HookEventsDynamic Me
+    
+    ' ✅ Track background path voor cleanup
+    Dim bgImg As MSForms.Image
+    Set bgImg = FormLayout.TryGetImageDyn(Me, "dyn_imgBackground")
+    If Not bgImg Is Nothing Then
+        ' Opslaan van achtergrond path (assumptie: tag bevat pad)
+        m_BackgroundPath = FormBackground.GetBackgroundPath()
+    End If
+    
+    m_IsInitialized = True
+    Exit Sub
+    
+ErrHandler:
+    m_IsInitialized = False  ' ✅ Reset on error
+    Utils.LogError4 "frmHuishouden", "UserForm_Initialize", Err.Number, Err.Description
+    MsgBox "Fout bij initialiseren formulier: " & Err.Description, vbCritical
+End Sub
+
+Private Sub UserForm_Resize()
+    If Not m_IsInitialized Then Exit Sub  ' ✅ Guard
+    On Error GoTo ErrHandler
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmHuishouden", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Terminate()
+    ' ✅ Cleanup temp files
+    On Error Resume Next
+    If Len(m_BackgroundPath) > 0 And Dir(m_BackgroundPath) <> "" Then
+        Kill m_BackgroundPath
+    End If
+    m_IsInitialized = False
+End Sub
+
+' ===== frmVast =====
+' (Identieke pattern als frmHuishouden, maar met BuildFrmVast call)
+Option Explicit
+
+Private m_IsInitialized As Boolean
+Private m_BackgroundPath As String
+
+Private Sub UserForm_Initialize()
+    If m_IsInitialized Then Exit Sub
+    On Error GoTo ErrHandler
+    
+    FormHelpers.EnsureBackgroundImage Me
+    frmBuilders.BuildFrmVast Me
+    LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnVorige", "Prev"
+    LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnVolgende", "Next"
+    LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnOpslaan", "Save"
+    LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnAnnuleren", "Cancel"
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    FormEvents.HookEventsDynamic Me
+    
+    m_BackgroundPath = FormBackground.GetBackgroundPath()
+    m_IsInitialized = True
+    Exit Sub
+    
+ErrHandler:
+    m_IsInitialized = False
+    Utils.LogError4 "frmVast", "UserForm_Initialize", Err.Number, Err.Description
+    MsgBox "Fout bij initialiseren formulier: " & Err.Description, vbCritical
+End Sub
+
+Private Sub UserForm_Resize()
+    If Not m_IsInitialized Then Exit Sub
+    On Error GoTo ErrHandler
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmVast", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Terminate()
+    On Error Resume Next
+    If Len(m_BackgroundPath) > 0 And Dir(m_BackgroundPath) <> "" Then Kill m_BackgroundPath
+    m_IsInitialized = False
+End Sub
+
+' ===== frmInvoer =====
+' (Identieke pattern, BuildDynamicFrmInvoer call)
+Option Explicit
+
+Private m_IsInitialized As Boolean
+Private m_BackgroundPath As String
+
+Private Sub UserForm_Initialize()
+    If m_IsInitialized Then Exit Sub
+    On Error GoTo ErrHandler
+    
+    FormEvents.BuildDynamicFrmInvoer Me
+    LayoutSpecsHelpers.BuildButtonsFromSpecs Me
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    FormEvents.HookEventsDynamic Me
+    
+    m_BackgroundPath = FormBackground.GetBackgroundPath()
+    m_IsInitialized = True
+    Exit Sub
+    
+ErrHandler:
+    m_IsInitialized = False
+    Utils.LogError4 "frmInvoer", "UserForm_Initialize", Err.Number, Err.Description
+    MsgBox "Fout bij initialiseren formulier: " & Err.Description, vbCritical
+End Sub
+
+Private Sub UserForm_Resize()
+    If Not m_IsInitialized Then Exit Sub
+    On Error GoTo ErrHandler
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmInvoer", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Terminate()
+    On Error Resume Next
+    If Len(m_BackgroundPath) > 0 And Dir(m_BackgroundPath) <> "" Then Kill m_BackgroundPath
+    m_IsInitialized = False
+End Sub
+
+' ============================================================
+' INSTALLATIE INSTRUCTIES
+' ============================================================
+'
+' 1. NIEUW: Voeg module "FormNavigator" toe
+'    - Kopieer volledige FormNavigator code naar nieuwe module
+'
+' 2. UPDATE: CImgEvents class
+'    - Vervang Img_MouseDown volledig met nieuwe versie
+'
+' 3. UPDATE: frmHuishouden, frmVast, frmInvoer
+'    - Vervang code-behind volledig met nieuwe versies
+'    - Voeg m_IsInitialized en m_BackgroundPath members toe
+'    - Voeg UserForm_Terminate toe
+'
+' 4. TEST:
+'    - Open frmHuishouden
+'    - Klik "Volgende" → moet naar frmVast gaan
+'    - Klik "Volgende" → moet naar frmInvoer gaan
+'    - Klik "Vorige" → moet terug naar frmVast
+'    - Sluit form → check temp folder (%TEMP%), JPG files moeten verwijderd zijn
+'
+' 5. VOORDELEN:
+'    ✅ Form flow configureerbaar via FormNavigator
+'    ✅ Geen memory leaks (temp files cleanup)
+'    ✅ Geen dubbele initialisatie crashes
+'    ✅ Makkelijk om forms toe te voegen/verwijderen
+'
+' ============================================================
+
+'=========================
+' ThisWorkbook code
+'=========================
+Option Explicit
+Private Sub Workbook_Open()
+ On Error GoTo ErrHandler
+ Utils.EnsureDBHeaders
+ ' Alleen vorige week samenvatten
+ Dim dPrev As Date: dPrev = DateAdd("d", -7, Date)
+ Dim w As Long: w = Utils.IsoWeek(dPrev)
+ Dim Y As Long: Y = Year(dPrev)
+ If Weekday(Date, vbMonday) = 1 Then
+   If Not Reporting.WeekTotaalBestaat(Y, w) Then Reporting.BerekenWeekTotaal
+ Else
+   If Not Reporting.WeekTotaalBestaat(Y, w) Then
+     Dim antwoord As VbMsgBoxResult
+     antwoord = MsgBox("Weekoverzicht van vorige week ontbreekt. Nu berekenen?", vbYesNo + vbQuestion, "Weekoverzicht")
+     If antwoord = vbYes Then Reporting.BerekenWeekTotaal
+   End If
+ End If
+ ' Maandoverzicht: alleen als vorige maand niet aanwezig
+ If Format(Date, "YYYY-MM") <> Reporting.LaatsteMaandInMaandTabel() Then Reporting.BerekenMaandTotaal
+ ' Huidige maandblad: alleen aanmaken als nog niet bestaat
+ MonthlySheet.MaakHuidigeMaandSheet
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "ThisWorkbook", "Workbook_Open", Err.Number, Err.Description
+ MsgBox "Fout in Workbook_Open: " & Err.Description, vbCritical
+End Sub
+'=========================
+' ThisWorkbook code
+'=========================
+Option Explicit
+Private Sub Workbook_Open()
+ On Error GoTo ErrHandler
+ Utils.EnsureDBHeaders
+ ' Alleen vorige week samenvatten
+ Dim dPrev As Date: dPrev = DateAdd("d", -7, Date)
+ Dim w As Long: w = Utils.IsoWeek(dPrev)
+ Dim Y As Long: Y = Year(dPrev)
+ If Weekday(Date, vbMonday) = 1 Then
+   If Not Reporting.WeekTotaalBestaat(Y, w) Then Reporting.BerekenWeekTotaal
+ Else
+   If Not Reporting.WeekTotaalBestaat(Y, w) Then
+     Dim antwoord As VbMsgBoxResult
+     antwoord = MsgBox("Weekoverzicht van vorige week ontbreekt. Nu berekenen?", vbYesNo + vbQuestion, "Weekoverzicht")
+     If antwoord = vbYes Then Reporting.BerekenWeekTotaal
+   End If
+ End If
+ ' Maandoverzicht: alleen als vorige maand niet aanwezig
+ If Format(Date, "YYYY-MM") <> Reporting.LaatsteMaandInMaandTabel() Then Reporting.BerekenMaandTotaal
+ ' Huidige maandblad: alleen aanmaken als nog niet bestaat
+ MonthlySheet.MaakHuidigeMaandSheet
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "ThisWorkbook", "Workbook_Open", Err.Number, Err.Description
+ MsgBox "Fout in Workbook_Open: " & Err.Description, vbCritical
+End Sub
+
+'=========================
+' USERFORM: frmHuishouden (code-behind)
+'=========================
+Option Explicit
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    ' 1) Background
+    FormHelpers.EnsureBackgroundImage Me
+    ' 2) Controls bouwen
+    frmBuilders.BuildForm_Huishouden Me
+    ' 3) Specs aanroepen
+    LayoutSpecsHelpers.BuildButtonsFromSpecs Me
+    ' 4) Safe-area
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    ' 5) Events
+    FormEvents.HookEventsDynamic Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmHuishouden", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+    On Error GoTo ErrHandler
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmHuishouden", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+'=========================
+' USERFORM: frmInvoer (code-behind)
+'=========================
+Option Explicit
+Private Sub UserForm_Initialize()
+ On Error GoTo ErrHandler
+ FormEvents.BuildDynamicFrmInvoer Me
+ LayoutSpecsHelpers.BuildButtonsFromSpecs Me
+ FormLayout.FrmLayoutSafeAreaDyn Me
+ FormEvents.HookEventsDynamic Me
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "frmInvoer", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+ On Error GoTo ErrHandler
+ FormLayout.FrmLayoutSafeAreaDyn Me
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "frmInvoer", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+'=========================
+' USERFORM: frmVast (code-behind)
+'=========================
+Option Explicit
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    FormHelpers.EnsureBackgroundImage Me
+    frmBuilders.BuildFrmVast Me
+    LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnVorige", "Prev"
+    LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnVolgende", "Next"
+    LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnOpslaan", "Save"
+    LayoutSpecsHelpers.PlaceButtonFromSpec Me, FormLayout.DYN_PREFIX & "imgBtnAnnuleren", "Cancel"
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    FormEvents.HookEventsDynamic Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmVast", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+    On Error GoTo ErrHandler
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmVast", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+
+'=========================
+' MODULE: FormBackground
+'=========================
+
+' === FormBackground PATCH (gebruik specs; fallback; robust export) ===
+Option Explicit
+Public Function GetBackgroundPath() As String
+  On Error GoTo ErrHandler
+  Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+  If wsRef Is Nothing Then Exit Function
+
+  Dim bgShapeName As String
+  bgShapeName = GetBackgroundShapeNameFromSpecs()
+  If Len(bgShapeName) = 0 Then bgShapeName = "bg_frmInvoer_landscape" ' fallback
+
+  Dim shp As Shape: Set shp = wsRef.Shapes(bgShapeName)
+  If shp Is Nothing Then Exit Function
+
+  Dim tmp As String: tmp = Utils.GetTempFile("frmInvoer_bg", ".jpg")
+  Dim ch As ChartObject
+  Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=Application.Max(8, shp.Width), Height:=Application.Max(8, shp.Height))
+  shp.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+  ch.Chart.Paste
+  ch.Chart.Export tmp, "JPG": ch.Delete
+  If Dir$(tmp) <> "" Then GetBackgroundPath = tmp
+  Exit Function
+
+ErrHandler:
+  Utils.LogError4 "FormBackground", "GetBackgroundPath", Err.Number, Err.Description
+End Function
+
+'=========================
+' MODULE: FormData
+'=========================
+
+Option Explicit
+Public Sub LoadCategoriesIntoCombo(frm As Object)
+ On Error GoTo ErrHandler
+ Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Referenties")
+ Dim lo As ListObject: Set lo = ws.ListObjects("tblCategorieen")
+ Dim cmb As MSForms.ComboBox: Set cmb = frm.Controls(FormLayout.DYN_PREFIX & "cmbCategorie")
+ cmb.Clear
+ Dim r As Range
+ If lo.DataBodyRange Is Nothing Then Exit Sub
+ For Each r In lo.DataBodyRange.Columns(1).Cells
+  If Len(r.Value) > 0 Then cmb.AddItem r.Value
+ Next r
+ cmb.ListIndex = -1
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "FormData", "LoadCategoriesIntoCombo", Err.Number, Err.Description
+End Sub
+Public Sub LoadSubcategoriesIntoCombo(frm As Object, ByVal cat As String)
+ On Error GoTo ErrHandler
+ Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Referenties")
+ Dim lo As ListObject: Set lo = ws.ListObjects("tblSubcategorieen")
+ Dim cmb As MSForms.ComboBox: Set cmb = frm.Controls(FormLayout.DYN_PREFIX & "cmbSubcategorie")
+ cmb.Clear
+ Dim r As Range
+ If lo.DataBodyRange Is Nothing Then Exit Sub
+ For Each r In lo.DataBodyRange.Rows
+  If LCase$(Trim$(CStr(r.Cells(1, 1).Value))) = LCase$(Trim$(cat)) Then cmb.AddItem r.Cells(1, 2).Value
+ Next r
+ cmb.ListIndex = -1
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "FormData", "LoadSubcategoriesIntoCombo", Err.Number, Err.Description
+End Sub
+Public Sub LoadPaymentMethodsIntoCombo(frm As Object)
+ On Error GoTo ErrHandler
+ Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Referenties")
+ Dim cmb As MSForms.ComboBox: Set cmb = frm.Controls(FormLayout.DYN_PREFIX & "cmbBetaalwijze")
+ cmb.Clear
+ If WorksheetHasTable(ws, "tbl_payment") Then
+  Dim lo As ListObject: Set lo = ws.ListObjects("tbl_payment")
+  Dim r As Range: For Each r In lo.DataBodyRange.Columns(1).Cells: cmb.AddItem r.Value: Next r
+ Else
+  Dim defaults As Variant
+  defaults = Array("Contant", "Pin", "Creditcard", "Tikkie", "iDEAL", "Automatische Incasso")
+  Dim i As Long: For i = LBound(defaults) To UBound(defaults): cmb.AddItem defaults(i): Next i
+ End If
+ cmb.ListIndex = 0
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "FormData", "LoadPaymentMethodsIntoCombo", Err.Number, Err.Description
+End Sub
+Public Function WorksheetHasTable(ws As Worksheet, tblName As String) As Boolean
+ On Error Resume Next
+ WorksheetHasTable = Not ws.ListObjects(tblName) Is Nothing
+ On Error GoTo 0
+End Function
+'=========================
+' MODULE: FormEvents
+'=========================
+
+Option Explicit
+' Bouwt dagformulier dynamisch en plaatst knoppen + data
+Public Sub BuildDynamicFrmInvoer(frm As Object)
+ On Error GoTo ErrHandler
+ FormLayout.RemoveDynamicControls frm
+ FormHelpers.EnsureBackgroundImage frm
+ ' Titel / datum
+ Dim lbl As MSForms.Label
+ Set lbl = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblDatumVandaag", True)
+ lbl.Caption = "Vandaag: " & Format(Date, "dddd d mmmm yyyy")
+ ' Categorie / Sub
+ Dim lblCat As MSForms.Label: Set lblCat = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblCat", True): lblCat.Caption = "Categorie"
+ Dim cmbCat As MSForms.ComboBox: Set cmbCat = frm.Controls.Add("Forms.ComboBox.1", FormLayout.DYN_PREFIX & "cmbCategorie", True)
+ Dim lblSub As MSForms.Label: Set lblSub = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblSub", True): lblSub.Caption = "Subcategorie"
+ Dim cmbSub As MSForms.ComboBox: Set cmbSub = frm.Controls.Add("Forms.ComboBox.1", FormLayout.DYN_PREFIX & "cmbSubcategorie", True)
+ ' Bedrag
+ Dim lblBedrag As MSForms.Label: Set lblBedrag = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblBedrag", True): lblBedrag.Caption = "Bedrag"
+ Dim txtBedrag As MSForms.TextBox: Set txtBedrag = frm.Controls.Add("Forms.TextBox.1", FormLayout.DYN_PREFIX & "txtBedrag", True)
+ txtBedrag.Text = ""
+ ' Betaalwijze
+ Dim lblBetaal As MSForms.Label: Set lblBetaal = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblBetaal", True): lblBetaal.Caption = "Betaalwijze"
+ Dim cmbBetaal As MSForms.ComboBox: Set cmbBetaal = frm.Controls.Add("Forms.ComboBox.1", FormLayout.DYN_PREFIX & "cmbBetaalwijze", True)
+ ' Knoppen uit specs
+ LayoutSpecsHelpers.BuildButtonsFromSpecs frm
+ ' Data laden
+ FormData.LoadCategoriesIntoCombo frm
+ FormData.LoadPaymentMethodsIntoCombo frm
+ ' Layout
+ FormLayout.FrmLayoutSafeAreaDyn frm
+ ' Events hooken
+ HookEventsDynamic frm
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "FormEvents", "BuildDynamicFrmInvoer", Err.Number, Err.Description
+End Sub
+Public Sub HookEventsDynamic(frm As Object)
+ On Error GoTo ErrHandler
+ ' Hover events voor Images
+ Dim c As Control
+ For Each c In frm.Controls
+  If TypeOf c Is MSForms.Image Then
+   Dim ie As CImgEvents
+   Set ie = New CImgEvents
+   Set ie.Img = c
+   Set ie.ParentForm = frm
+  End If
+ Next c
+ ' Combo events voor categorie
+ Dim cmbCat As MSForms.ComboBox: Set cmbCat = FormLayout.TryGetControl(frm, FormLayout.DYN_PREFIX & "cmbCategorie")
+ If Not cmbCat Is Nothing Then
+  Dim ce As CCmbEvents
+  Set ce = New CCmbEvents
+  Set ce.cmb = cmbCat
+  Set ce.ParentForm = frm
+ End If
+ ' Text events voor bedrag
+ Dim txtB As MSForms.TextBox: Set txtB = FormLayout.TryGetControl(frm, FormLayout.DYN_PREFIX & "txtBedrag")
+ If Not txtB Is Nothing Then
+  Dim te As CTxtEvents
+  Set te = New CTxtEvents
+  Set te.Txt = txtB
+ End If
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "FormEvents", "HookEventsDynamic", Err.Number, Err.Description
+End Sub
+' UI acties
+Public Sub HandleOpslaan_dyn(frm As Object)
+ On Error GoTo ErrHandler
+ Dim wsDB As Worksheet: Set wsDB = ThisWorkbook.Worksheets("Database")
+ Utils.EnsureDBHeaders
+ Dim outR As Long: outR = Utils.LastRow(wsDB, DBCols.dbDate) + 1
+ Dim d As Date: d = Date
+ Dim cat As String: cat = frm.Controls(FormLayout.DYN_PREFIX & "cmbCategorie").Value
+ Dim subcat As String: subcat = frm.Controls(FormLayout.DYN_PREFIX & "cmbSubcategorie").Value
+ Dim bedrag As Double: bedrag = Utils.ParseAmount(frm.Controls(FormLayout.DYN_PREFIX & "txtBedrag").Text)
+ Dim betaal As String: betaal = frm.Controls(FormLayout.DYN_PREFIX & "cmbBetaalwijze").Value
+ If Len(cat) = 0 Then MsgBox "Kies een categorie", vbExclamation: Exit Sub
+ With wsDB
+  .Cells(outR, DBCols.dbDate).Value = d
+  .Cells(outR, DBCols.dbYear).Value = Year(d)
+  .Cells(outR, DBCols.dbMonthKey).Value = Format(d, "yyyy-mm")
+  .Cells(outR, DBCols.dbWeek).Value = Utils.IsoWeek(d)
+  .Cells(outR, DBCols.dbDay).Value = Format(d, "dddd")
+  .Cells(outR, DBCols.dbCategory).Value = cat
+  .Cells(outR, DBCols.dbSubcategory).Value = subcat
+  .Cells(outR, DBCols.dbAmount).Value = Round(bedrag, 2)
+  .Cells(outR, DBCols.dbPayment).Value = betaal
+  .Cells(outR, DBCols.dbType).Value = "Uitgave"
+ End With
+ MsgBox "Opgeslagen!", vbInformation
+ Unload frm
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "FormEvents", "HandleOpslaan_dyn", Err.Number, Err.Description
+ MsgBox "Fout: " & Err.Description, vbCritical
+End Sub
+Public Sub HandleAnnuleren_dyn(frm As Object)
+ On Error Resume Next
+ Unload frm
+End Sub
+Public Sub HandleCategorieChange_dyn(frm As Object)
+ On Error GoTo ErrHandler
+ Dim cat As String
+ cat = frm.Controls(FormLayout.DYN_PREFIX & "cmbCategorie").Value
+ FormData.LoadSubcategoriesIntoCombo frm, cat
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "FormEvents", "HandleCategorieChange_dyn", Err.Number, Err.Description
+End Sub
+'=========================
+' MODULE: FormHelpers (DE-DUPLICATED)
+'=========================
+
+Option Explicit
+Public Function ShapeExists(ByVal shapeName As String) As Boolean
+ On Error Resume Next
+ Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+ Dim shp As Shape: Set shp = wsRef.Shapes(shapeName)
+ ShapeExists = Not shp Is Nothing
+ On Error GoTo 0
+End Function
+Public Sub AddShapeAsImage(frm As Object, ByVal shapeName As String, ByVal ctlName As String)
+ On Error GoTo ErrHandler
+ Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+ Dim shp As Shape: Set shp = wsRef.Shapes(shapeName)
+ If shp Is Nothing Then Exit Sub
+ Dim tmpPath As String: tmpPath = Utils.GetTempFile(shapeName, ".jpg")
+ Dim ch As ChartObject
+ Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=shp.Width, Height:=shp.Height)
+ shp.Copy: ch.Activate: ch.Chart.Paste
+ ch.Chart.Export tmpPath, "JPG"
+ ch.Delete
+ Dim Img As MSForms.Image
+ Set Img = frm.Controls.Add("Forms.Image.1", ctlName, True)
+ Img.Picture = LoadPicture(tmpPath)
+ Img.PictureSizeMode = fmPictureSizeModeStretch
+ Img.Width = shp.Width: Img.Height = shp.Height
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "FormHelpers", "AddShapeAsImage", Err.Number, Err.Description
+End Sub
+Public Sub EnsureBackgroundImage(frm As Object)
+ On Error GoTo ErrHandler
+ On Error Resume Next: frm.Controls.Remove "dyn_imgBackground": On Error GoTo 0
+ Dim imgPath As String
+ imgPath = FormBackground.GetBackgroundPath()
+ If Len(imgPath) = 0 Then Exit Sub
+ Dim Img As MSForms.Image
+ Set Img = frm.Controls.Add("Forms.Image.1", "dyn_imgBackground", True)
+ Img.Picture = LoadPicture(imgPath)
+ Img.PictureSizeMode = fmPictureSizeModeStretch
+ Img.ZOrder 1
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "FormHelpers", "EnsureBackgroundImage", Err.Number, Err.Description
+End Sub
+'=========================
+' MODULE: FormLayout
+'=========================
+
+Option Explicit
+Public Const DYN_PREFIX As String = "dyn_"
+Public Sub FrmLayoutSafeAreaDyn(frm As Object)
+    On Error GoTo ErrHandler
+
+    MonthlySheet.EnsureConfigSheet
+    Dim BG_MARGIN As Double: BG_MARGIN = MonthlySheet.ConfigGet("BG_MARGIN", 6)
+    Dim ROW_SPACING As Double: ROW_SPACING = MonthlySheet.ConfigGet("ROW_SPACING", 34)
+    Dim LABEL_WIDTH As Double: LABEL_WIDTH = MonthlySheet.ConfigGet("LABEL_WIDTH", 120)
+    Dim GAP_LABEL_TO_INPUT As Double: GAP_LABEL_TO_INPUT = MonthlySheet.ConfigGet("GAP_LABEL_TO_INPUT", 12)
+    Dim RIGHT_PADDING As Double: RIGHT_PADDING = MonthlySheet.ConfigGet("RIGHT_PADDING", 20)
+    Dim INP_MAX As Double: INP_MAX = MonthlySheet.ConfigGet("INP_MAX", 360)
+    Dim SAFE_LEFT_PCT As Double: SAFE_LEFT_PCT = MonthlySheet.ConfigGet("SAFE_LEFT_PCT", 0.12)
+    Dim SAFE_RIGHT_PCT As Double: SAFE_RIGHT_PCT = MonthlySheet.ConfigGet("SAFE_RIGHT_PCT", 0.88)
+    Dim SAFE_TOP_PCT As Double: SAFE_TOP_PCT = MonthlySheet.ConfigGet("SAFE_TOP_PCT", 0.2)
+    Dim SAFE_BOTTOM_PCT As Double: SAFE_BOTTOM_PCT = MonthlySheet.ConfigGet("SAFE_BOTTOM_PCT", 0.8)
+
+    Dim bgLeft As Single, bgTop As Single, bgW As Single, bgH As Single
+    Dim bg As MSForms.Image: Set bg = TryGetImageDyn(frm, FormLayout.DYN_PREFIX & "imgBackground")
+    If bg Is Nothing Then
+        bgLeft = BG_MARGIN: bgTop = BG_MARGIN
+        bgW = frm.InsideWidth - 2 * BG_MARGIN
+        bgH = frm.InsideHeight - 2 * BG_MARGIN
+    Else
+        bgLeft = bg.Left: bgTop = bg.Top: bgW = bg.Width: bgH = bg.Height
+    End If
+    If bgW < 0 Then bgW = 0
+    If bgH < 0 Then bgH = 0
+
+    Dim safeLeft As Single, safeTop As Single, safeWidth As Single, safeHeight As Single
+    safeLeft = bgLeft + (SAFE_LEFT_PCT * bgW)
+    safeTop = bgTop + (SAFE_TOP_PCT * bgH)
+    safeWidth = (SAFE_RIGHT_PCT - SAFE_LEFT_PCT) * bgW
+    safeHeight = (SAFE_BOTTOM_PCT - SAFE_TOP_PCT) * bgH
+    If safeWidth < 0 Then safeWidth = 0
+    If safeHeight < 0 Then safeHeight = 0
+
+    Dim colLbl As Single, colInp As Single, inpWidth As Single, t As Single
+    colLbl = safeLeft
+    colInp = safeLeft + LABEL_WIDTH + GAP_LABEL_TO_INPUT
+    inpWidth = safeWidth - (colInp - safeLeft) - RIGHT_PADDING
+    If inpWidth < 0 Then inpWidth = 0
+    If inpWidth > INP_MAX Then
+        Dim extraSpace As Single
+        extraSpace = (inpWidth - INP_MAX) / 2
+        colInp = colInp + extraSpace
+        inpWidth = INP_MAX
+    End If
+
+    ' Lay-out toewijzing met guards
+    t = safeTop
+    Dim ctrl As Control
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblDatumVandaag"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblCat"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "cmbCategorie"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblSub"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Dim wSub As Single: wSub = Application.Max(0, inpWidth - 36)
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "cmbSubcategorie"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = wSub
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "btnNieuwSub"): If Not ctrl Is Nothing Then ctrl.Left = colInp + wSub + 8: ctrl.Top = t: ctrl.Width = 28: ctrl.Height = 22
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblBedrag"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "txtBedrag"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblBetaal"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "cmbBetaalwijze"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+
+    Dim btnOps As Control, btnAnn As Control
+    Set btnOps = TryGetControl(frm, FormLayout.DYN_PREFIX & "imgBtnOpslaan")
+    Set btnAnn = TryGetControl(frm, FormLayout.DYN_PREFIX & "imgBtnAnnuleren")
+    If Not btnOps Is Nothing And Not btnAnn Is Nothing Then
+        Dim btnTotalWidth As Single: btnTotalWidth = btnOps.Width + 24 + btnAnn.Width
+        Dim btnLeft As Single: btnLeft = safeLeft + Application.Max(0, (safeWidth - btnTotalWidth)) / 2
+        Dim btnY As Single: btnY = safeTop + Application.Max(0, safeHeight - 60)
+        btnOps.Left = btnLeft: btnOps.Top = btnY
+        btnAnn.Left = btnLeft + btnOps.Width + 24: btnAnn.Top = btnY
+    End If
+
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "FormLayout", "FrmLayoutSafeAreaDyn", Err.Number, Err.Description
+End Sub
+Public Sub RemoveDynamicControls(frm As Object)
+    On Error GoTo ErrHandler
+    Dim i As Long, nm As String
+    For i = frm.Controls.Count - 1 To 0 Step -1
+        nm = frm.Controls.item(i).name
+        If Left$(nm, Len(FormLayout.DYN_PREFIX)) = FormLayout.DYN_PREFIX Then
+            On Error Resume Next
+            frm.Controls.Remove nm
+            On Error GoTo ErrHandler
+        End If
+    Next i
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "FormLayout", "RemoveDynamicControls", Err.Number, Err.Description
+End Sub
+Public Function TryGetControl(frm As Object, ctlName As String) As Control
+ On Error Resume Next
+ Dim c As Control
+ For Each c In frm.Controls
+  If StrComp(c.name, ctlName, vbTextCompare) = 0 Then Set TryGetControl = c: Exit Function
+ Next c
+ On Error GoTo 0
+End Function
+Public Function TryGetImageDyn(frm As Object, ctlName As String) As MSForms.Image
+ On Error Resume Next
+ Dim c As Control
+ For Each c In frm.Controls
+  If StrComp(c.name, ctlName, vbTextCompare) = 0 Then If TypeOf c Is MSForms.Image Then Set TryGetImageDyn = c: Exit Function
+ Next c
+ On Error GoTo 0
+End Function
+Public Sub AutoFitDropdownDyn(cmb As MSForms.ComboBox)
+ On Error GoTo ErrHandler
+ Dim i As Long, maxLen As Long
+ For i = 0 To cmb.ListCount - 1
+  If Len(CStr(cmb.List(i))) > maxLen Then maxLen = Len(CStr(cmb.List(i)))
+ Next i
+ Const MINW As Long = 120, MAXW As Long = 360
+ Dim newW As Long
+ If maxLen = 0 Then newW = MINW Else newW = Application.Max(MINW, maxLen * 7): If newW > MAXW Then newW = MAXW
+ cmb.Width = newW
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "FormLayout", "AutoFitDropdownDyn", Err.Number, Err.Description
+End Sub
+
+
+
+'=========================
+' MODULE: frmBuilders
+'=========================
+
+Option Explicit
+Public Sub BuildForm_Huishouden(frm As Object)
+ On Error GoTo ErrHandler
+ FormLayout.RemoveDynamicControls frm
+ FormHelpers.EnsureBackgroundImage frm
+ ' Titel
+ Dim lblTitle As MSForms.Label: Set lblTitle = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblTitle", True)
+ lblTitle.Caption = "Stap 1 van 4 – Huishouden"
+ ' Total persons
+ Dim lblTot As MSForms.Label: Set lblTot = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblTotal", True): lblTot.Caption = "Totaal personen"
+ Dim txtTot As MSForms.TextBox: Set txtTot = frm.Controls.Add("Forms.TextBox.1", FormLayout.DYN_PREFIX & "txtTotalPersons", True): txtTot.Text = "1"
+ ' Adults frame
+ Dim fraAd As MSForms.Frame: Set fraAd = frm.Controls.Add("Forms.Frame.1", FormLayout.DYN_PREFIX & "fraAdults", True): fraAd.Caption = "Volwassenen"
+ ' Children frame
+ Dim fraCh As MSForms.Frame: Set fraCh = frm.Controls.Add("Forms.Frame.1", FormLayout.DYN_PREFIX & "fraChildren", True): fraCh.Caption = "Kinderen"
+ ' Buttons
+ LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVorige", "Prev"
+ LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVolgende", "Next"
+ LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnAnnuleren", "Cancel"
+ ' Layout eenvoudige plaatsing
+ FormLayout.FrmLayoutSafeAreaDyn frm
+ ' Hook hover
+ FormEvents.HookEventsDynamic frm
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "frmBuilders", "BuildForm_Huishouden", Err.Number, Err.Description
+End Sub
+Public Sub BuildFrmVast(frm As Object)
+ On Error GoTo ErrHandler
+ FormLayout.RemoveDynamicControls frm
+ FormHelpers.EnsureBackgroundImage frm
+ ' MultiPage
+ Dim mp As MSForms.MultiPage: Set mp = frm.Controls.Add("Forms.MultiPage.1", FormLayout.DYN_PREFIX & "mpVast", True)
+ mp.Pages.Add: mp.Pages(0).Caption = "Inkomsten"
+ mp.Pages.Add: mp.Pages(1).Caption = "Uitgaven"
+ ' Page 0 – Inkomsten
+ Dim pg0 As MSForms.Page: Set pg0 = mp.Pages(0)
+ Dim lblB0 As MSForms.Label: Set lblB0 = pg0.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblInkTitel", True): lblB0.Caption = "Inkomsten"
+ ' (Hier kan je rijen-editor toevoegen: cmbBron, cmbPeriode, txtBedrag, cmbOntvanger)
+ ' Page 1 – Uitgaven
+ Dim pg1 As MSForms.Page: Set pg1 = mp.Pages(1)
+ Dim lblB1 As MSForms.Label: Set lblB1 = pg1.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblUitTitel", True): lblB1.Caption = "Uitgaven"
+ ' Row add/del knoppen op beide pages
+ LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgAddRow", "RowAdd"
+ LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgDelRow", "RowDel"
+ ' Navigatie knoppen
+ LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVorige", "Prev"
+ LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVolgende", "Next"
+ LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnOpslaan", "Save"
+ LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnAnnuleren", "Cancel"
+ ' Events
+ FormEvents.HookEventsDynamic frm
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "frmBuilders", "BuildFrmVast", Err.Number, Err.Description
+End Sub
+' === LayoutSpecsHelpers PATCH (robust kolom-lookup, veilige conversie, hover optioneel) ===
+Option Explicit
+
+Public Function GetLayoutSpec(ByVal keyName As String, ByVal fieldName As String) As Variant
+  On Error GoTo ErrHandler
+  Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+  Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+  If lo Is Nothing Or lo.DataBodyRange Is Nothing Then Exit Function
+
+  Dim hdr As Range: Set hdr = lo.HeaderRowRange
+  Dim data As Range: Set data = lo.DataBodyRange
+  Dim i As Long, colIndex As Long: colIndex = 0
+
+  ' Zoek kolom case-insensitief, met Trim
+  For i = 1 To hdr.Columns.Count
+    If StrComp(Trim$(CStr(hdr.Cells(1, i).Value)), Trim$(fieldName), vbTextCompare) = 0 Then
+      colIndex = i: Exit For
+    End If
+  Next i
+  If colIndex = 0 Then
+    Utils.LogError4 "LayoutSpecsHelpers", "GetLayoutSpec", 1001, "Kolom '" & fieldName & "' niet gevonden"
+    Exit Function
+  End If
+
+  Dim r As Range
+  For Each r In data.Rows
+    If StrComp(Trim$(CStr(r.Cells(1, 1).Value)), Trim$(keyName), vbTextCompare) = 0 Then
+      GetLayoutSpec = r.Cells(1, colIndex).Value
+      Exit Function
+    End If
+  Next r
+  ' Niet gevonden
+  Utils.LogError4 "LayoutSpecsHelpers", "GetLayoutSpec", 1002, "Key '" & keyName & "' niet gevonden in specs"
+  Exit Function
+
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "GetLayoutSpec", Err.Number, Err.Description
+End Function
+
+Private Function NzDbl(v As Variant, ByVal def As Double) As Double
+  If IsError(v) Then NzDbl = def: Exit Function
+  If IsMissing(v) Then NzDbl = def: Exit Function
+  If IsNull(v) Then NzDbl = def: Exit Function
+  If VarType(v) = vbString And Trim$(CStr(v)) = "" Then NzDbl = def: Exit Function
+  If Not IsNumeric(v) Then NzDbl = def Else NzDbl = CDbl(v)
+End Function
+
+Public Sub PlaceButtonFromSpec(frm As Object, ByVal controlName As String, ByVal keyName As String)
+  On Error GoTo ErrHandler
+  Dim baseShape As String
+  baseShape = CStr(GetLayoutSpec(keyName, "ShapeName"))
+  If Len(Trim$(baseShape)) = 0 Then
+    Utils.LogError4 "LayoutSpecsHelpers", "PlaceButtonFromSpec", 1003, "Lege ShapeName voor key '" & keyName & "'"
+    Exit Sub
+  End If
+
+  Dim X As Single, Y As Single, w As Single, h As Single
+  X = CSng(NzDbl(GetLayoutSpec(keyName, "X"), 0))
+  Y = CSng(NzDbl(GetLayoutSpec(keyName, "Y"), 0))
+  w = CSng(NzDbl(GetLayoutSpec(keyName, "Width"), 80))   ' veilige default
+  h = CSng(NzDbl(GetLayoutSpec(keyName, "Height"), 28))  ' veilige default
+  If w < 0 Then w = 0
+  If h < 0 Then h = 0
+
+  Dim Img As MSForms.Image
+  Set Img = FormLayout.TryGetImageDyn(frm, controlName)
+  If Img Is Nothing Then Set Img = frm.Controls.Add("Forms.Image.1", controlName, True)
+
+  Dim picPath As String: picPath = GetShapePath(baseShape)
+  If Len(picPath) > 0 Then Img.Picture = LoadPicture(picPath)
+  Img.Left = X: Img.Top = Y: Img.Width = w: Img.Height = h
+
+  ' Hover alleen voor knoppen (achtergrond heeft geen hover)
+  Dim hoverShape As String
+  hoverShape = baseShape & "_hover"
+  If InStr(1, LCase$(baseShape), "bg_", vbTextCompare) > 0 Then
+    Img.Tag = "base=" & baseShape          ' geen hover
+  Else
+    Img.Tag = "base=" & baseShape & vbLf & "hover=" & hoverShape
+  End If
+  Exit Sub
+
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "PlaceButtonFromSpec", Err.Number, Err.Description
+End Sub
+
+Public Sub BuildButtonsFromSpecs(frm As Object)
+  On Error GoTo ErrHandler
+  PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVorige", "Prev"
+  PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVolgende", "Next"
+  PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnOpslaan", "Save"
+  PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnAnnuleren", "Cancel"
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "BuildButtonsFromSpecs", Err.Number, Err.Description
+End Sub
+
+Private Function ParseTag(ByVal tagText As String, ByVal key As String) As String
+  On Error GoTo ErrHandler
+  Dim parts() As String: parts = Split(tagText, vbLf)
+  Dim i As Long, kv()
+  For i = LBound(parts) To UBound(parts)
+    kv = Split(parts(i), "=")
+    If UBound(kv) = 1 Then If StrComp(kv(0), key, vbTextCompare) = 0 Then ParseTag = kv(1): Exit Function
+  Next i
+  Exit Function
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "ParseTag", Err.Number, Err.Description
+End Function
+
+Public Sub ApplyHoverPicture(frm As Object, ByVal controlName As String)
+  On Error GoTo ErrHandler
+  Dim Img As MSForms.Image: Set Img = FormLayout.TryGetImageDyn(frm, controlName)
+  If Img Is Nothing Then Exit Sub
+  Dim hoverShape As String: hoverShape = ParseTag(Img.Tag, "hover")
+  If Len(hoverShape) = 0 Then Exit Sub
+  Dim p As String: p = GetShapePath(hoverShape, "_hover")
+  If Len(p) > 0 Then Img.Picture = LoadPicture(p)
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "ApplyHoverPicture", Err.Number, Err.Description
+End Sub
+
+Public Sub ResetHoverPicture(frm As Object, ByVal controlName As String)
+  On Error GoTo ErrHandler
+  Dim Img As MSForms.Image: Set Img = FormLayout.TryGetImageDyn(frm, controlName)
+  If Img Is Nothing Then Exit Sub
+  Dim baseShape As String: baseShape = ParseTag(Img.Tag, "base")
+  If Len(baseShape) = 0 Then Exit Sub
+  Dim p As String: p = GetShapePath(baseShape)
+  If Len(p) > 0 Then Img.Picture = LoadPicture(p)
+  Exit Sub
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "ResetHoverPicture", Err.Number, Err.Description
+End Sub
+
+Public Function GetShapePath(ByVal shapeName As String, Optional ByVal suffix As String = "") As String
+  On Error GoTo ErrHandler
+  Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+  If wsRef Is Nothing Then Exit Function
+  If wsRef.Visible = xlSheetVeryHidden Then wsRef.Visible = xlSheetVisible
+  wsRef.Activate: DoEvents
+
+  Dim shp As Shape: Set shp = wsRef.Shapes(shapeName)
+  If shp Is Nothing Then
+    Utils.LogError4 "LayoutSpecsHelpers", "GetShapePath", 1004, "Shape '" & shapeName & "' niet gevonden"
+    Exit Function
+  End If
+
+  Dim w As Single, h As Single
+  w = Application.Max(8, shp.Width)
+  h = Application.Max(8, shp.Height)
+
+  Dim tmp As String: tmp = Utils.GetTempFile(shapeName & suffix, ".jpg")
+  Dim ch As ChartObject: Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=w, Height:=h)
+
+  Dim i As Long, pasted As Boolean
+  For i = 1 To 3
+    On Error Resume Next
+    shp.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+    ch.Activate
+    ch.Chart.Paste
+    On Error GoTo ErrHandler
+    If ch.Chart.Shapes.Count > 0 Then pasted = True: Exit For
+    DoEvents: Application.CutCopyMode = False
+  Next i
+
+  If pasted Then ch.Chart.Export tmp, "JPG"
+  If Dir$(tmp) <> "" Then GetShapePath = tmp
+
+CleanUp:
+  On Error Resume Next
+  ch.Delete: Application.CutCopyMode = False
+  On Error GoTo 0
+  Exit Function
+
+ErrHandler:
+  Utils.LogError4 "LayoutSpecsHelpers", "GetShapePath", Err.Number, Err.Description
+  Resume CleanUp
+End Function
+
+Public Function GetBackgroundShapeNameFromSpecs() As String
+  On Error Resume Next
+  GetBackgroundShapeNameFromSpecs = CStr(GetLayoutSpec("Background", "ShapeName"))
+End Function
+
+
+Option Explicit
+
+' -------------- Refresh Status --------------
+Public Sub RefreshStatus(frm As Object)
+  On Error GoTo ErrHandler
+  Dim msg As String
+  msg = "Status Check:" & vbCrLf
+  msg = msg & "Utils module: " & YesNo(ModuleExists("Utils")) & vbCrLf
+  msg = msg & "FormEvents module: " & YesNo(ModuleExists("FormEvents")) & vbCrLf
+  msg = msg & "LayoutSpecsHelpers: " & YesNo(ModuleExists("LayoutSpecsHelpers")) & vbCrLf
+  msg = msg & "FormBackground: " & YesNo(ModuleExists("FormBackground")) & vbCrLf
+  msg = msg & "frmHuishouden: " & YesNo(FormExists("frmHuishouden")) & vbCrLf
+  msg = msg & "frmVast: " & YesNo(FormExists("frmVast")) & vbCrLf
+  msg = msg & "frmInvoer: " & YesNo(FormExists("frmInvoer")) & vbCrLf
+
+  If HasStatusBox(frm) Then frm.txtStatus.Value = msg
+  MsgBox msg, vbInformation, "Dashboard Status"
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in RefreshStatus: " & Err.Description, vbCritical
+End Sub
+
+' -------------- Smoke Tests --------------
+Public Sub RunSmokeTests()
+  On Error GoTo ErrHandler
+  MsgBox "Running Smoke Tests...", vbInformation
+  If FormExists("frmHuishouden") Then frmHuishouden.Show
+  If FormExists("frmVast") Then frmVast.Show
+  If FormExists("frmInvoer") Then frmInvoer.Show
+  MsgBox "Smoke Tests Completed.", vbInformation
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in RunSmokeTests: " & Err.Description, vbCritical
+End Sub
+
+' -------------- Export ErrorLog naar CSV --------------
+Public Sub ExportErrorLogCSV()
+  On Error GoTo ErrHandler
+  Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("ErrorLog")
+  If ws Is Nothing Then
+    MsgBox "ErrorLog sheet niet gevonden.", vbExclamation
+    Exit Sub
+  End If
+  Dim tempPath As String
+  tempPath = Environ$("TEMP")
+  If Len(tempPath) = 0 Then tempPath = Environ$("TMP")
+  If Len(tempPath) = 0 Then tempPath = ThisWorkbook.Path
+  If Right$(tempPath, 1) <> Application.PathSeparator Then tempPath = tempPath & Application.PathSeparator
+
+  Dim csv As String
+  csv = tempPath & "ErrorLog_" & Format(Now, "yyyymmdd_hhnnss") & ".csv"
+  ws.Copy
+  On Error Resume Next
+  ActiveWorkbook.SaveAs Filename:=csv, FileFormat:=xlCSV
+  ActiveWorkbook.Close False
+  On Error GoTo ErrHandler
+  MsgBox "ErrorLog geëxporteerd naar: " & csv, vbInformation
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in ExportErrorLogCSV: " & Err.Description, vbCritical
+End Sub
+
+' -------------- Open Handover (laatste v5.3) --------------
+Public Sub OpenHandoverLatest()
+  On Error GoTo ErrHandler
+  ' Pas hieronder desgewenst het pad aan (we gebruiken de laatst gemaakte v5.3 FULL)
+  Dim pathFull As String
+  pathFull = ThisWorkbook.Path
+  If Right$(pathFull, 1) <> Application.PathSeparator Then pathFull = pathFull & Application.PathSeparator
+  pathFull = pathFull & "handover_next_agent_v5_3_FULL.txt"
+
+  If Dir$(pathFull) = "" Then
+    ' fallback naar kortere v5.3 handover
+    pathFull = ThisWorkbook.Path & Application.PathSeparator & "handover_next_agent_v5_3.txt"
+  End If
+  If Dir$(pathFull) = "" Then
+    MsgBox "Handover-bestand niet gevonden in de map van de workbook.", vbExclamation
+    Exit Sub
+  End If
+  Application.FollowHyperlink pathFull
+  Exit Sub
+ErrHandler:
+  MsgBox "Fout in OpenHandoverLatest: " & Err.Description, vbCritical
+End Sub
+
+' ========== Helpers ==========
+Private Function ModuleExists(ByVal moduleName As String) As Boolean
+  On Error Resume Next
+  Dim vbComp As Object
+  Set vbComp = ThisWorkbook.VBProject.VBComponents(moduleName)
+  ModuleExists = Not vbComp Is Nothing
+End Function
+
+Private Function FormExists(ByVal formName As String) As Boolean
+  On Error Resume Next
+  Dim vbComp As Object
+  Set vbComp = ThisWorkbook.VBProject.VBComponents(formName)
+  FormExists = Not vbComp Is Nothing
+End Function
+
+Private Function YesNo(ByVal cond As Boolean) As String
+  YesNo = IIf(cond, "OK", "Missing")
+End Function
+
+Private Function HasStatusBox(frm As Object) As Boolean
+  On Error Resume Next
+  HasStatusBox = Not frm.txtStatus Is Nothing
+  On Error GoTo 0
+End Function
+
+
+Option Explicit
+
+Public Sub ValidateLayoutSpecs()
+  On Error GoTo ErrHandler
+  Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+  Dim lo As ListObject
+  On Error Resume Next: Set lo = wsRef.ListObjects("tblLayoutSpecs"): On Error GoTo ErrHandler
+  If lo Is Nothing Then
+    MsgBox "FOUT: Tabel 'tblLayoutSpecs' niet gevonden.", vbCritical: Exit Sub
+  End If
+
+  Dim requiredCols As Variant: requiredCols = Array("Key", "ShapeName", "Width", "Height", "X", "Y")
+  Dim i As Long, colIndex As Long
+  For i = LBound(requiredCols) To UBound(requiredCols)
+    colIndex = FindColumnIndex(lo, requiredCols(i))
+    If colIndex = 0 Then
+      MsgBox "FOUT: Kolom ontbreekt: " & requiredCols(i), vbCritical: Exit Sub
+    End If
+  Next i
+
+  Dim r As Range, keyName As String, shapeName As String, missingShapes As String
+  missingShapes = ""
+  For Each r In lo.DataBodyRange.Rows
+    keyName = CStr(Trim$(r.Cells(1, FindColumnIndex(lo, "Key")).Value))
+    shapeName = CStr(Trim$(r.Cells(1, FindColumnIndex(lo, "ShapeName")).Value))
+    If Len(shapeName) > 0 Then
+      If Not ShapeExistsOn(wsRef, shapeName) Then
+        missingShapes = missingShapes & "Key '" & keyName & "' -> Shape ontbreekt: " & shapeName & vbCrLf
+      End If
+    End If
+  Next r
+
+  If Len(missingShapes) > 0 Then
+    MsgBox "LET OP: Ontbrekende shapes:" & vbCrLf & missingShapes, vbExclamation
+  Else
+    MsgBox "Sanity OK: Alle shapes aanwezig.", vbInformation
+  End If
+  Exit Sub
+
+ErrHandler:
+  MsgBox "FOUT in ValidateLayoutSpecs: [" & Err.Number & "] " & Err.Description, vbCritical
+End Sub
+
+
+
+
+'=========================
+' MODULE: modLayoutValidator (extended)
+'=========================
+
+
+' Publieke entry-point: voert alle checks uit en geeft een compact rapport
+Public Sub ValidateLayoutAll(Optional ByVal attachToDashboard As Boolean = True)
+    On Error GoTo ErrHandler
+    Dim rep As String
+    rep = "Sanity-rapport (extended)" & vbCrLf & String(40, "-") & vbCrLf
+
+    ' 1) Specs: kolommen & rijen
+    rep = rep & SpecsColumnsAndRowsCheck() & vbCrLf
+
+    ' 2) Shapes: base + hover bestaan?
+    rep = rep & ShapesExistenceCheck() & vbCrLf
+
+    ' 3) Form controls: Tag-validatie (base=/hover=), shapes kloppen?
+    '    Probeert actief form te vinden via Screen.ActiveForm; anders via Application.UserForms(0)
+    rep = rep & FormImageTagCheck() & vbCrLf
+
+    ' 4) Achtergrond: export pad non-empty?
+    rep = rep & BackgroundExportCheck() & vbCrLf
+
+    ' 5) Toon het rapport
+    If attachToDashboard Then
+        On Error Resume Next
+        ' Als een dashboard-TextBox bestaat, toon daar; anders MsgBox
+        frmDebugDashboard.txtStatus.Value = rep
+        On Error GoTo 0
+    End If
+    MsgBox rep, vbInformation, "Sanity (extended)"
+
+    Exit Sub
+ErrHandler:
+    MsgBox "FOUT in ValidateLayoutAll: [" & Err.Number & "] " & Err.Description, vbCritical
+End Sub
+
+' ---- 1) Specs: verplichte kolommen en rijen gevuld ----
+Private Function SpecsColumnsAndRowsCheck() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    If lo Is Nothing Then
+        SpecsColumnsAndRowsCheck = "FOUT: Tabel 'tblLayoutSpecs' niet gevonden."
+        Exit Function
+    End If
+
+    Dim requiredCols As Variant
+    requiredCols = Array("Key", "ShapeName", "Width", "Height", "X", "Y")
+    Dim i As Long, missing As String
+    For i = LBound(requiredCols) To UBound(requiredCols)
+        If FindColumnIndex(lo, CStr(requiredCols(i))) = 0 Then
+            missing = missing & "- Kolom ontbreekt: " & requiredCols(i) & vbCrLf
+        End If
+    Next i
+
+    If Len(missing) > 0 Then
+        SpecsColumnsAndRowsCheck = "FOUT (Specs):" & vbCrLf & missing
+        Exit Function
+    End If
+
+    If lo.DataBodyRange Is Nothing Then
+        SpecsColumnsAndRowsCheck = "LET OP: 'tblLayoutSpecs' heeft nog geen rijen."
+        Exit Function
+    End If
+
+    ' Keys die we minimaal verwachten
+    Dim expectedKeys As Variant
+    expectedKeys = Array("Prev", "Next", "Save", "Cancel", "RowAdd", "RowDel")
+
+    Dim colKey As Long, colShape As Long, colW As Long, colH As Long, colX As Long, colY As Long
+    colKey = FindColumnIndex(lo, "Key")
+    colShape = FindColumnIndex(lo, "ShapeName")
+    colW = FindColumnIndex(lo, "Width")
+    colH = FindColumnIndex(lo, "Height")
+    colX = FindColumnIndex(lo, "X")
+    colY = FindColumnIndex(lo, "Y")
+
+    Dim r As Range, k As Variant, found As Boolean, line As String
+    For Each k In expectedKeys
+        found = False
+        For Each r In lo.DataBodyRange.Rows
+            If Trim$(CStr(r.Cells(1, colKey).Value)) = CStr(k) Then
+                found = True
+                ' Check leegtes
+                If Len(Trim$(CStr(r.Cells(1, colShape).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colW).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colH).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colX).Value))) = 0 _
+                   Or Len(Trim$(CStr(r.Cells(1, colY).Value))) = 0 Then
+                    line = line & "- Key '" & k & "': heeft lege velden (ShapeName/Width/Height/X/Y)." & vbCrLf
+                End If
+                Exit For
+            End If
+        Next r
+        If Not found Then line = line & "- Key ontbreekt in specs: " & k & vbCrLf
+    Next k
+
+    If Len(line) > 0 Then
+        SpecsColumnsAndRowsCheck = "LET OP (Specs):" & vbCrLf & line
+    Else
+        SpecsColumnsAndRowsCheck = "OK  (Specs): Kolommen & rijen zijn compleet."
+    End If
+    Exit Function
+
+ErrHandler:
+    SpecsColumnsAndRowsCheck = "FOUT in SpecsColumnsAndRowsCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ---- 2) Shapes bestaan? (base + hover) ----
+Private Function ShapesExistenceCheck() As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    If lo Is Nothing Or lo.DataBodyRange Is Nothing Then
+        ShapesExistenceCheck = "LET OP: 'tblLayoutSpecs' ontbreekt of heeft geen rijen; skip shapes-check."
+        Exit Function
+    End If
+
+    Dim colShape As Long, colKey As Long
+    colShape = FindColumnIndex(lo, "ShapeName")
+    colKey = FindColumnIndex(lo, "Key")
+
+    Dim r As Range, shapeName As String, keyName As String, report As String
+    For Each r In lo.DataBodyRange.Rows
+        keyName = Trim$(CStr(r.Cells(1, colKey).Value))
+        shapeName = Trim$(CStr(r.Cells(1, colShape).Value))
+        If Len(shapeName) > 0 Then
+            If Not ShapeExistsOn(wsRef, shapeName) Then
+                report = report & "- Key '" & keyName & "': base-shape ontbreekt: " & shapeName & vbCrLf
+            Else
+                ' Hover only for buttons (geen hover voor Background)
+                If LCase$(keyName) <> "background" Then
+                    Dim hoverName As String: hoverName = shapeName & "_hover"
+                    If Not ShapeExistsOn(wsRef, hoverName) Then
+                        report = report & "LET OP: Key '" & keyName & "': hover-shape ontbreekt: " & hoverName & vbCrLf
+                    End If
+                End If
+            End If
+        Else
+            report = report & "- Key '" & keyName & "': ShapeName is leeg." & vbCrLf
+        End If
+    Next r
+
+    If Len(report) = 0 Then
+        ShapesExistenceCheck = "OK  (Shapes): base/hover bestaan (hover niet vereist voor Background)."
+    Else
+        ShapesExistenceCheck = "LET OP (Shapes):" & vbCrLf & report
+    End If
+    Exit Function
+
+ErrHandler:
+    ShapesExistenceCheck = "FOUT in ShapesExistenceCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ---- 3) Form controls: Tag-validatie & shapekloppen ----
+Private Function FormImageTagCheck() As String
+    On Error GoTo ErrHandler
+    Dim frm As Object
+    Set frm = GetActiveFormSafe()
+
+    If frm Is Nothing Then
+        FormImageTagCheck = "LET OP (Form): geen actief form gevonden; open een UserForm en run opnieuw."
+        Exit Function
+    End If
+
+    Dim c As Control, issues As String
+    For Each c In frm.Controls
+        If TypeOf c Is MSForms.Image Then
+            Dim tagText As String: tagText = CStr(c.Tag)
+            Dim baseName As String: baseName = ParseTagLocal(tagText, "base")
+            Dim hoverName As String: hoverName = ParseTagLocal(tagText, "hover")
+
+            If Len(baseName) = 0 Then
+                issues = issues & "- Image '" & c.name & "': Tag mist 'base='." & vbCrLf
+            Else
+                ' base-shape moet bestaan
+                If Not ShapeExistsOn(ThisWorkbook.Worksheets("Referenties"), baseName) Then
+                    issues = issues & "- Image '" & c.name & "': base-shape niet gevonden: " & baseName & vbCrLf
+                End If
+            End If
+
+            ' Hover mag ontbreken op Background; voor buttons verwachten we hem wél
+            If InStr(1, LCase$(c.name), "imgbtn", vbTextCompare) > 0 Or _
+               InStr(1, LCase$(c.name), "imgaddrow", vbTextCompare) > 0 Or _
+               InStr(1, LCase$(c.name), "imgdelrow", vbTextCompare) > 0 Then
+                If Len(hoverName) = 0 Then
+                    issues = issues & "LET OP: Image '" & c.name & "': Tag mist 'hover='." & vbCrLf
+                ElseIf Not ShapeExistsOn(ThisWorkbook.Worksheets("Referenties"), hoverName) Then
+                    issues = issues & "LET OP: Image '" & c.name & "': hover-shape niet gevonden: " & hoverName & vbCrLf
+                End If
+            End If
+        End If
+    Next c
+
+    If Len(issues) = 0 Then
+        FormImageTagCheck = "OK  (Form): alle Image-tags valide (base/hover) en shapes gevonden."
+    Else
+        FormImageTagCheck = "LET OP (Form):" & vbCrLf & issues
+    End If
+    Exit Function
+
+ErrHandler:
+    FormImageTagCheck = "FOUT in FormImageTagCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ---- 4) Achtergrond export check ----
+Private Function BackgroundExportCheck() As String
+    On Error GoTo ErrHandler
+    Dim p As String
+    p = FormBackground.GetBackgroundPath()
+    If Len(p) = 0 Then
+        BackgroundExportCheck = "FOUT (Background): GetBackgroundPath gaf leeg pad."
+    ElseIf Dir$(p) = "" Then
+        BackgroundExportCheck = "FOUT (Background): bestand bestaat niet: " & p
+    Else
+        BackgroundExportCheck = "OK  (Background): export pad = " & p
+    End If
+    Exit Function
+
+ErrHandler:
+    BackgroundExportCheck = "FOUT in BackgroundExportCheck: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ---- Helpers ----
+Private Function FindColumnIndex(lo As ListObject, ByVal headerName As String) As Long
+    On Error Resume Next
+    Dim i As Long
+    For i = 1 To lo.HeaderRowRange.Columns.Count
+        If StrComp(CStr(lo.HeaderRowRange.Cells(1, i).Value), headerName, vbTextCompare) = 0 Then
+            FindColumnIndex = i
+            Exit Function
+        End If
+    Next i
+    FindColumnIndex = 0
+End Function
+
+Private Function ShapeExistsOn(ws As Worksheet, ByVal shapeName As String) As Boolean
+    On Error Resume Next
+    Dim shp As Shape
+    Set shp = ws.Shapes(shapeName)
+    ShapeExistsOn = Not shp Is Nothing
+    On Error GoTo 0
+End Function
+
+' Trimsamere ParseTag (lokale kopie; laat jouw Private ParseTag in LayoutSpecsHelpers intact)
+Private Function ParseTagLocal(ByVal tagText As String, ByVal key As String) As String
+    On Error GoTo ErrHandler
+    If Len(tagText) = 0 Then Exit Function
+    Dim parts() As String: parts = Split(tagText, vbLf)
+    Dim i As Long, kv()
+    For i = LBound(parts) To UBound(parts)
+        kv = Split(parts(i), "=")
+        If UBound(kv) = 1 Then If StrComp(Trim$(kv(0)), key, vbTextCompare) = 0 Then ParseTagLocal = Trim$(kv(1)): Exit Function
+    Next i
+    Exit Function
+ErrHandler:
+    ParseTagLocal = ""
+End Function
+
+' Probeer een actief UserForm te pakken (VBE of runtime)
+Private Function GetActiveFormSafe() As Object
+    On Error Resume Next
+    Dim activeForm As Object
+    If VBA.UserForms.Count > 0 Then
+        Set activeForm = VBA.UserForms(0)
+    Else
+        Set activeForm = Application.ActiveWindow
+    End If
+    Set GetActiveFormSafe = activeForm
+    On Error GoTo 0
+End Function
+
+
+' ===== modSanityChecks.bas =====
+Option Explicit
+
+' Rapporttype voor leesbare status
+Private Type tCheckReport
+    OkCount As Long
+    WarnCount As Long
+    ErrCount As Long
+    Details As String
+End Type
+
+' Publieke entry-point: voert alle sanity checks uit en geeft samenvatting terug
+Public Function RunAssetSanity(Optional ByVal includeSpecsCheck As Boolean = True) As String
+    On Error GoTo ErrHandler
+    
+    Dim rep As tCheckReport
+    rep.Details = ""
+    
+    ' 1) Check generieke button shapes + hover
+    AppendReport rep, CheckGenericButtonShapes()
+    
+    ' 2) Check background shape (statisch)
+    AppendReport rep, CheckBackgroundShape("bg_frmInvoer_landscape")
+    
+    ' 3) Optioneel: check tblLayoutSpecs keys & ShapeName koppeling
+    If includeSpecsCheck Then
+        AppendReport rep, CheckLayoutSpecsKeys()
+    End If
+    
+    Dim header As String
+    header = "Sanity-rapport" & vbCrLf & String(40, "-") & vbCrLf & _
+             "OK: " & rep.OkCount & " | Waarschuwingen: " & rep.WarnCount & " | Fouten: " & rep.ErrCount & vbCrLf & vbCrLf
+    
+    RunAssetSanity = header & rep.Details
+    Exit Function
+    
+ErrHandler:
+    RunAssetSanity = "FOUT in RunAssetSanity: [" & Err.Number & "] " & Err.Description
+End Function
+
+' ---- Helpers: per check produceer tCheckReport ----
+
+Private Function CheckGenericButtonShapes() As tCheckReport
+    On Error GoTo ErrHandler
+    Dim rc As tCheckReport
+    Dim baseNames As Variant
+    baseNames = Array("btnShapeSmall", "btnShapeMedium", "btnShapeLarge")
+    
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim i As Long, nm As String, nmHover As String
+    
+    For i = LBound(baseNames) To UBound(baseNames)
+        nm = CStr(baseNames(i))
+        nmHover = nm & "_hover"
+        
+        If ShapeExistsOn(wsRef, nm) Then
+            rc.OkCount = rc.OkCount + 1
+            rc.Details = rc.Details & "OK  : Shape '" & nm & "'" & vbCrLf
+        Else
+            rc.ErrCount = rc.ErrCount + 1
+            rc.Details = rc.Details & "FOUT: Shape '" & nm & "' ontbreekt op Referenties" & vbCrLf
+        End If
+        
+        If ShapeExistsOn(wsRef, nmHover) Then
+            rc.OkCount = rc.OkCount + 1
+            rc.Details = rc.Details & "OK  : Shape '" & nmHover & "'" & vbCrLf
+        Else
+            rc.WarnCount = rc.WarnCount + 1
+            rc.Details = rc.Details & "LET OP: Hover-shape '" & nmHover & "' ontbreekt (hover werkt dan niet)" & vbCrLf
+        End If
+    Next i
+    
+    CheckGenericButtonShapes = rc
+    Exit Function
+    
+ErrHandler:
+    CheckGenericButtonShapes.ErrCount = CheckGenericButtonShapes.ErrCount + 1
+    CheckGenericButtonShapes.Details = CheckGenericButtonShapes.Details & "FOUT in CheckGenericButtonShapes: [" & Err.Number & "] " & Err.Description & vbCrLf
+End Function
+
+Private Function CheckBackgroundShape(ByVal bgShapeName As String) As tCheckReport
+    On Error GoTo ErrHandler
+    Dim rc As tCheckReport
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    
+    If ShapeExistsOn(wsRef, bgShapeName) Then
+        rc.OkCount = rc.OkCount + 1
+        rc.Details = rc.Details & "OK  : Background-shape '" & bgShapeName & "'" & vbCrLf
+    Else
+        rc.WarnCount = rc.WarnCount + 1
+        rc.Details = rc.Details & "LET OP: Background-shape '" & bgShapeName & "' niet gevonden (form laad zonder achtergrond)" & vbCrLf
+    End If
+    
+    CheckBackgroundShape = rc
+    Exit Function
+    
+ErrHandler:
+    CheckBackgroundShape.ErrCount = CheckBackgroundShape.ErrCount + 1
+    CheckBackgroundShape.Details = CheckBackgroundShape.Details & "FOUT in CheckBackgroundShape: [" & Err.Number & "] " & Err.Description & vbCrLf
+End Function
+
+Private Function CheckLayoutSpecsKeys() As tCheckReport
+    On Error GoTo ErrHandler
+    Dim rc As tCheckReport
+    
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject
+    On Error Resume Next
+    Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    On Error GoTo ErrHandler
+    
+    If lo Is Nothing Then
+        rc.WarnCount = rc.WarnCount + 1
+        rc.Details = rc.Details & "LET OP: Tabel 'tblLayoutSpecs' niet gevonden op Referenties" & vbCrLf
+        CheckLayoutSpecsKeys = rc
+        Exit Function
+    End If
+    
+    If lo.DataBodyRange Is Nothing Then
+        rc.WarnCount = rc.WarnCount + 1
+        rc.Details = rc.Details & "LET OP: 'tblLayoutSpecs' heeft geen rijen" & vbCrLf
+        CheckLayoutSpecsKeys = rc
+        Exit Function
+    End If
+    
+    ' Zoek kolommen Key en ShapeName
+    Dim colKey As Long, colShape As Long
+    colKey = FindColumnIndex(lo, "Key")
+    colShape = FindColumnIndex(lo, "ShapeName")
+    
+    If colKey = 0 Or colShape = 0 Then
+        rc.ErrCount = rc.ErrCount + 1
+        rc.Details = rc.Details & "FOUT: Kolom 'Key' of 'ShapeName' ontbreekt in tblLayoutSpecs" & vbCrLf
+        CheckLayoutSpecsKeys = rc
+        Exit Function
+    End If
+    
+    ' Loop door rijen; check dat ShapeName bestaat als shape
+    Dim r As Range, keyName As String, shapeName As String
+    For Each r In lo.DataBodyRange.Rows
+        keyName = CStr(Trim$(r.Cells(1, colKey).Value))
+        shapeName = CStr(Trim$(r.Cells(1, colShape).Value))
+        
+        If Len(keyName) = 0 Then
+            rc.WarnCount = rc.WarnCount + 1
+            rc.Details = rc.Details & "LET OP: Lege Key in tblLayoutSpecs (rij " & r.Row & ")" & vbCrLf
+        End If
+        
+        If Len(shapeName) = 0 Then
+            rc.ErrCount = rc.ErrCount + 1
+            rc.Details = rc.Details & "FOUT: Key '" & keyName & "' heeft lege ShapeName" & vbCrLf
+        ElseIf Not ShapeExistsOn(wsRef, shapeName) Then
+            rc.ErrCount = rc.ErrCount + 1
+            rc.Details = rc.Details & "FOUT: Key '" & keyName & "' verwijst naar ontbrekende shape '" & shapeName & "'" & vbCrLf
+        Else
+            rc.OkCount = rc.OkCount + 1
+            rc.Details = rc.Details & "OK  : Key '" & keyName & "' ? Shape '" & shapeName & "'" & vbCrLf
+        End If
+    Next r
+    
+    CheckLayoutSpecsKeys = rc
+    Exit Function
+    
+ErrHandler:
+    CheckLayoutSpecsKeys.ErrCount = CheckLayoutSpecsKeys.ErrCount + 1
+    CheckLayoutSpecsKeys.Details = CheckLayoutSpecsKeys.Details & "FOUT in CheckLayoutSpecsKeys: [" & Err.Number & "] " & Err.Description & vbCrLf
+End Function
+
+' ---- Utility helpers ----
+
+Private Function ShapeExistsOn(ws As Worksheet, ByVal shapeName As String) As Boolean
+    On Error Resume Next
+    Dim shp As Shape
+    Set shp = ws.Shapes(shapeName)
+    ShapeExistsOn = Not shp Is Nothing
+    On Error GoTo 0
+End Function
+
+Private Function FindColumnIndex(lo As ListObject, ByVal headerName As String) As Long
+    On Error Resume Next
+    Dim i As Long
+    For i = 1 To lo.HeaderRowRange.Columns.Count
+        If StrComp(CStr(lo.HeaderRowRange.Cells(1, i).Value), headerName, vbTextCompare) = 0 Then
+            FindColumnIndex = i
+            Exit Function
+        End If
+    Next i
+    FindColumnIndex = 0
+End Function
+
+Private Sub AppendReport(ByRef total As tCheckReport, ByRef part As tCheckReport)
+    total.OkCount = total.OkCount + part.OkCount
+    total.WarnCount = total.WarnCount + part.WarnCount
+    total.ErrCount = total.ErrCount + part.ErrCount
+    If Len(part.Details) > 0 Then
+        total.Details = total.Details & part.Details
+        If Right$(total.Details, 2) <> vbCrLf Then total.Details = total.Details & vbCrLf
+    End If
+End Sub
+
+
+Public Sub SanityCheck_ShowReport()
+    Dim result As String
+    result = RunAssetSanity(True)
+    MsgBox result, vbInformation, "SanityCheck Rapport"
+End Sub
+
+' ======================
+' ENUMS voor Database
+' ======================
+Public Enum DBCols
+ dbDate = 1 ' A
+ dbYear = 2 ' B
+ dbMonthKey = 3 ' C
+ dbWeek = 4 ' D
+ dbDay = 5 ' E
+ dbCategory = 6 ' F
+ dbSubcategory = 7 ' G
+ dbNote = 8 ' H
+ dbAmount = 9 ' I
+ dbPayment = 10 ' J
+ dbType = 11 ' K
+End Enum
+Public Enum SummaryCols
+ colWeekSummaryStart = 12 ' L
+ colMonthSummaryStart = 16 ' P
+End Enum
+'=========================
+' MODULE: MonthlySheet (config & maandblad)
+'=========================
+
+Option Explicit
+Public Sub EnsureConfigSheet()
+ On Error GoTo ErrHandler
+ Dim ws As Worksheet
+ If Utils.SheetBestaat("Configuratie") Then Set ws = ThisWorkbook.Worksheets("Configuratie") Else Set ws = ThisWorkbook.Worksheets.Add: ws.name = "Configuratie"
+ If ws.Cells(1, 1).Value = "" Then ws.Range("A1:C1").Value = Array("Eigenschap", "Waarde", "Opmerking")
+ Dim lo As ListObject: Set lo = Utils.TryGetListObject(ws, "tblFrmInvoerConfig")
+ If lo Is Nothing Then Set lo = ws.ListObjects.Add(xlSrcRange, ws.Range("A1:C1").CurrentRegion, , True): lo.name = "tblFrmInvoerConfig"
+ Dim keys As Variant, defaults As Variant, i As Long
+ keys = Array("BG_MARGIN", "ROW_SPACING", "LABEL_WIDTH", "GAP_LABEL_TO_INPUT", "RIGHT_PADDING", "INP_MAX", _
+  "SAFE_LEFT_PCT", "SAFE_RIGHT_PCT", "SAFE_TOP_PCT", "SAFE_BOTTOM_PCT", _
+  "MINW", "MAXW")
+ defaults = Array(6, 34, 120, 12, 20, 360, 0.12, 0.88, 0.2, 0.8, 120, 360)
+ Dim found As Range
+ For i = LBound(keys) To UBound(keys)
+  Set found = Nothing
+  If Not lo.DataBodyRange Is Nothing Then Set found = lo.DataBodyRange.Columns(1).Find(what:=keys(i), LookIn:=xlValues, LookAt:=xlWhole)
+  If found Is Nothing Then
+   Dim lr As ListRow: Set lr = lo.ListRows.Add
+   lr.Range.Cells(1, 1).Value = keys(i)
+   lr.Range.Cells(1, 2).Value = defaults(i)
+   lr.Range.Cells(1, 3).Value = "frmInvoer configuratie"
+  End If
+ Next i
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "MonthlySheet", "EnsureConfigSheet", Err.Number, Err.Description
+End Sub
+Public Function ConfigGet(ByVal key As String, ByVal defaultValue As Double) As Double
+ On Error GoTo ErrHandler
+ Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Configuratie")
+ Dim lo As ListObject: Set lo = Utils.TryGetListObject(ws, "tblFrmInvoerConfig")
+ If lo Is Nothing Or lo.DataBodyRange Is Nothing Then ConfigGet = defaultValue: Exit Function
+ Dim arr As Variant: arr = lo.DataBodyRange.Value
+ Dim rCount As Long: rCount = UBound(arr, 1)
+ Dim i As Long
+ For i = 1 To rCount
+  If CStr(arr(i, 1)) = key Then If IsNumeric(arr(i, 2)) Then ConfigGet = CDbl(arr(i, 2)) Else ConfigGet = defaultValue: Exit Function
+ Next i
+ ConfigGet = defaultValue
+ Exit Function
+ErrHandler:
+ ConfigGet = defaultValue
+ Utils.LogError4 "MonthlySheet", "ConfigGet", Err.Number, Err.Description
+End Function
+Public Sub MaakHuidigeMaandSheet()
+ On Error GoTo ErrHandler
+ Application.ScreenUpdating = False: Application.Calculation = xlCalculationManual
+ Dim mName As String: mName = Utils.MonthNameNL(Month(Date))
+ If Utils.SheetBestaat(mName) Then GoTo CleanExit
+ Dim wsV As Worksheet: Set wsV = ThisWorkbook.Worksheets("Vast")
+ Dim wsDoel As Worksheet: Set wsDoel = ThisWorkbook.Worksheets.Add: wsDoel.name = mName
+ Dim loInk As ListObject: Set loInk = Utils.TryGetListObject(wsV, "tblVastInkomsten")
+ Dim loUit As ListObject: Set loUit = Utils.TryGetListObject(wsV, "tblVastUitgaven")
+ Dim r As Long: r = 1
+ With wsDoel
+  .Cells(r, 1).Value = "Overzicht voor " & mName: .Cells(r, 1).Font.Bold = True: r = r + 2
+  ' Inkomsten
+  .Cells(r, 1).Value = "Inkomsten": .Cells(r, 1).Font.Bold = True: r = r + 1: .Cells(r, 1).Value = "Bron": .Cells(r, 2).Value = "Bedrag": r = r + 1
+  Dim startInk As Long: startInk = r
+  If Not loInk Is Nothing Then
+   Dim rw As ListRow
+   For Each rw In loInk.DataBodyRange.Rows
+    If Not IsEmpty(rw.Range.Cells(1, 3).Value) And rw.Range.Cells(1, 3).Value <> False Then
+     .Cells(r, 1).Value = rw.Range.Cells(1, 1).Value
+     .Cells(r, 2).Value = Round(Utils.ToMonthlyAmount(CStr(rw.Range.Cells(1, 2).Value), CDbl(Val(rw.Range.Cells(1, 4).Value))), 2)
+     r = r + 1
+    End If
+   Next rw
+  End If
+  .Cells(r, 1).Value = "Totaal inkomsten"
+  If r > startInk Then .Cells(r, 2).Formula = "=SUM(B" & startInk & ":B" & (r - 1) & ")" Else .Cells(r, 2).Value = 0
+  Dim inkTotalRow As Long: inkTotalRow = r: r = r + 2
+  ' Uitgaven
+  .Cells(r, 1).Value = "Uitgaven": .Cells(r, 1).Font.Bold = True: r = r + 1: .Cells(r, 1).Value = "Categorie": .Cells(r, 2).Value = "Bedrag": r = r + 1
+  Dim startUit As Long: startUit = r
+  If Not loUit Is Nothing Then
+   For Each rw In loUit.DataBodyRange.Rows
+    If Not IsEmpty(rw.Range.Cells(1, 3).Value) And rw.Range.Cells(1, 3).Value <> False Then
+     .Cells(r, 1).Value = rw.Range.Cells(1, 1).Value
+     .Cells(r, 2).Value = Round(Utils.ToMonthlyAmount(CStr(rw.Range.Cells(1, 2).Value), CDbl(Val(rw.Range.Cells(1, 4).Value))), 2)
+     r = r + 1
+    End If
+   Next rw
+  End If
+  .Cells(r, 1).Value = "Totaal uitgaven"
+  If r > startUit Then .Cells(r, 2).Formula = "=SUM(B" & startUit & ":B" & (r - 1) & ")" Else .Cells(r, 2).Value = 0
+  Dim uitTotalRow As Long: uitTotalRow = r: r = r + 2
+  ' Saldo
+  .Cells(r, 1).Value = "Saldo": .Cells(r, 2).Formula = "=B" & inkTotalRow & "-B" & uitTotalRow
+  .Columns(1).AutoFit: .Columns(2).NumberFormat = "#,##0.00"
+ End With
+CleanExit:
+ Application.ScreenUpdating = True: Application.Calculation = xlCalculationAutomatic
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "MonthlySheet", "MaakHuidigeMaandSheet", Err.Number, Err.Description
+ Resume CleanExit
+End Sub
+
+'=========================
+' MODULE: Navigation
+'=========================
+
+Option Explicit
+Public Sub OpenFrmDagelijks()
+ On Error GoTo ErrHandler
+ frmInvoer.Show
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "Navigation", "OpenFrmDagelijks", Err.Number, Err.Description
+End Sub
+Public Sub OpenFrmHuishouden()
+ On Error GoTo ErrHandler
+ frmHuishouden.Show
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "Navigation", "OpenFrmHuishouden", Err.Number, Err.Description
+End Sub
+Public Sub OpenFrmVast()
+ On Error GoTo ErrHandler
+ frmVast.Show
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "Navigation", "OpenFrmVast", Err.Number, Err.Description
+End Sub
+
+
+Public Sub OpenDebugDashboard()
+     On Error GoTo ErrHandler
+     frmDebugDashboard.Show
+     Exit Sub
+ErrHandler:
+  Utils.LogError4 "Navigation", "OpenDebugDashboard", Err.Number, Err.Description
+End Sub
+
+
+Option Explicit
+
+Public Sub NormalizeSpecsHeaders()
+  On Error GoTo ErrHandler
+
+  ' 1) Sheet 'Referenties' ophalen of melden
+  Dim ws As Worksheet
+  Set ws = GetWorksheetSafe("Referenties")
+  If ws Is Nothing Then
+    MsgBox "FOUT: Werkblad 'Referenties' niet gevonden.", vbCritical
+    Exit Sub
+  End If
+
+  ' 2) Probeer bestaande tabel op te halen
+  Dim lo As ListObject
+  Set lo = TryGetListObjectSafe(ws, "tblLayoutSpecs")
+
+  ' 3) Als tabel niet bestaat: laat gebruiker header-rij selecteren en maak de tabel
+  If lo Is Nothing Then
+    Dim hdr As Range
+    MsgBox "Selecteer nu de HEADER-RIJ van tblLayoutSpecs (exact één rij met alle kolomnamen) en klik OK in de volgende prompt.", vbInformation
+    On Error Resume Next
+    Set hdr = Application.InputBox(Prompt:="Selecteer de header-rij (bijv. K1:S1)", Type:=8) ' Type 8 = Range
+    On Error GoTo ErrHandler
+
+    If hdr Is Nothing Then
+      MsgBox "Actie geannuleerd. Geen header-rij geselecteerd.", vbExclamation
+      Exit Sub
+    End If
+    If hdr.Rows.Count <> 1 Then
+      MsgBox "Selecteer exact één rij met de kopteksten.", vbExclamation
+      Exit Sub
+    End If
+
+    ' Maak ListObject vanaf de geselecteerde header-rij + CurrentRegion
+    Set lo = ws.ListObjects.Add(xlSrcRange, hdr.CurrentRegion, , xlYes)
+    lo.name = "tblLayoutSpecs"
+  End If
+
+  ' 4) Zet de exacte headers (9 kolommen, volgorde vast)
+  Dim exactHeaders As Variant
+  exactHeaders = Array("Key", "ShapeName", "Width", "Height", "X", "Y", "DefaultColor", "HoverColor", "Notes")
+
+  Dim i As Long
+  ' Controleren of aantal kolommen voldoende is, anders breidt de header-rij uit
+  If lo.HeaderRowRange.Columns.Count < UBound(exactHeaders) - LBound(exactHeaders) + 1 Then
+    ' Vergroot de header-range door naastliggende lege cellen op te nemen
+    Dim needCols As Long
+    needCols = (UBound(exactHeaders) - LBound(exactHeaders) + 1) - lo.HeaderRowRange.Columns.Count
+    lo.HeaderRowRange.Resize(1, lo.HeaderRowRange.Columns.Count + needCols).Cells(1, 1).Select
+    ' (Excel past de ListObject range zelf meestal aan bij CurrentRegion)
+  End If
+
+  For i = LBound(exactHeaders) To UBound(exactHeaders)
+    lo.HeaderRowRange.Cells(1, i + 1).Value = exactHeaders(i)
+  Next i
+
+  ' 5) Trim spaties in DataBodyRange (als er rijen zijn)
+  If Not lo.DataBodyRange Is Nothing Then
+    Dim c As Range
+    For Each c In lo.DataBodyRange
+      If VarType(c.Value) = vbString Then c.Value = Trim$(CStr(c.Value))
+    Next c
+  End If
+
+  ' 6) Feedback
+  MsgBox "tblLayoutSpecs genormaliseerd:" & vbCrLf & _
+         " - Sheet: " & ws.name & vbCrLf & _
+         " - Tabelnaam: " & lo.name & vbCrLf & _
+         " - Headers gezet (Key, ShapeName, Width, Height, X, Y, DefaultColor, HoverColor, Notes)", vbInformation
+  Exit Sub
+
+ErrHandler:
+  MsgBox "FOUT in NormalizeSpecsHeaders: [" & Err.Number & "] " & Err.Description, vbCritical
+End Sub
+
+' ===== Helpers: veilig ophalen sheet/tabel =====
+
+Private Function GetWorksheetSafe(ByVal sheetName As String) As Worksheet
+  On Error Resume Next
+  Set GetWorksheetSafe = ThisWorkbook.Worksheets(sheetName)
+  On Error GoTo 0
+End Function
+
+Private Function TryGetListObjectSafe(ByVal ws As Worksheet, ByVal tableName As String) As ListObject
+  On Error Resume Next
+  Set TryGetListObjectSafe = ws.ListObjects(tableName)
+  On Error GoTo 0
+End Function
+'=========================
+' MODULE: Reporting
+'=========================
+
+Option Explicit
+Public Function WeekTotaalBestaat(ByVal jaar As Long, ByVal weeknr As Long) As Boolean
+ On Error GoTo ErrHandler
+ Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Database")
+ Dim lr As Long: lr = Utils.LastRow(ws, SummaryCols.colWeekSummaryStart)
+ If lr < 2 Then WeekTotaalBestaat = False: Exit Function
+ Dim rng As Range
+ Set rng = ws.Range(ws.Cells(2, SummaryCols.colWeekSummaryStart), ws.Cells(lr, SummaryCols.colWeekSummaryStart)).Find( _
+  what:=CStr(jaar) & vbLf & CStr(weeknr), LookIn:=xlValues, LookAt:=xlWhole)
+ WeekTotaalBestaat = Not rng Is Nothing
+ Exit Function
+ErrHandler:
+ Utils.LogError4 "Reporting", "WeekTotaalBestaat", Err.Number, Err.Description
+End Function
+Public Function LaatsteMaandInMaandTabel() As String
+ On Error GoTo ErrHandler
+ Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Database")
+ Dim lr As Long: lr = Utils.LastRow(ws, SummaryCols.colMonthSummaryStart)
+ If lr < 2 Then LaatsteMaandInMaandTabel = "" Else LaatsteMaandInMaandTabel = CStr(ws.Cells(lr, SummaryCols.colMonthSummaryStart).Value)
+ Exit Function
+ErrHandler:
+ Utils.LogError4 "Reporting", "LaatsteMaandInMaandTabel", Err.Number, Err.Description
+End Function
+Public Sub BerekenWeekTotaal()
+ On Error GoTo ErrHandler
+ Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Database")
+ Utils.EnsureDBHeaders
+ Dim lr As Long: lr = Utils.LastRow(ws, DBCols.dbDate)
+ If lr < 2 Then Exit Sub
+ Dim dPrev As Date: dPrev = DateAdd("d", -7, Date)
+ Dim tgtWeek As Long: tgtWeek = Utils.IsoWeek(dPrev)
+ Dim tgtYear As Long: tgtYear = Year(dPrev)
+ Dim i As Long, total As Double
+ Dim catDict As Object: Set catDict = CreateObject("Scripting.Dictionary")
+ For i = 2 To lr
+  If CLng(Val(ws.Cells(i, DBCols.dbYear).Value)) = tgtYear And _
+     CLng(Val(ws.Cells(i, DBCols.dbWeek).Value)) = tgtWeek And _
+     CStr(ws.Cells(i, DBCols.dbType).Value) = "Uitgave" Then
+     Dim amount As Double: amount = CDbl(Val(ws.Cells(i, DBCols.dbAmount).Value))
+     total = total + amount
+     Dim cat As String: cat = CStr(ws.Cells(i, DBCols.dbCategory).Value)
+     If Len(Trim$(cat)) > 0 Then Utils.DictAddOrIncrement catDict, cat, 1
+  End If
+ Next i
+ Dim mostCat As String, maxCount As Long, k As Variant
+ For Each k In catDict.keys
+  If catDict(k) > maxCount Then maxCount = catDict(k): mostCat = CStr(k)
+ Next k
+ If ws.Cells(1, SummaryCols.colWeekSummaryStart).Value = "" Then
+  ws.Cells(1, SummaryCols.colWeekSummaryStart).Resize(1, 5).Value = Array("Jaar" & vbLf & "Week", "Jaar", "Weeknr", "Totaal", "Meest gebruikte categorie")
+ End If
+ Dim outRow As Long: outRow = Utils.LastRow(ws, SummaryCols.colWeekSummaryStart) + 1
+ ws.Cells(outRow, SummaryCols.colWeekSummaryStart).Value = CStr(tgtYear) & vbLf & CStr(tgtWeek)
+ ws.Cells(outRow, SummaryCols.colWeekSummaryStart + 1).Value = tgtYear
+ ws.Cells(outRow, SummaryCols.colWeekSummaryStart + 2).Value = tgtWeek
+ ws.Cells(outRow, SummaryCols.colWeekSummaryStart + 3).Value = total
+ ws.Cells(outRow, SummaryCols.colWeekSummaryStart + 4).Value = mostCat
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "Reporting", "BerekenWeekTotaal", Err.Number, Err.Description
+End Sub
+Public Sub BerekenMaandTotaal()
+ On Error GoTo ErrHandler
+ Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Database")
+ Utils.EnsureDBHeaders
+ Dim lr As Long: lr = Utils.LastRow(ws, DBCols.dbDate)
+ If lr < 2 Then Exit Sub
+ Dim prevMonthKey As String: prevMonthKey = Format(DateAdd("m", -1, Date), "YYYY-MM")
+ Dim i As Long
+ Dim totaal As Double, dagenCount As Long
+ Dim weekDict As Object: Set weekDict = CreateObject("Scripting.Dictionary")
+ Dim catDict As Object: Set catDict = CreateObject("Scripting.Dictionary")
+ Dim catCountDict As Object: Set catCountDict = CreateObject("Scripting.Dictionary")
+ Dim duursteDag As Double, duursteWeek As Double
+ Dim maxCatValue As Double, minCatValue As Double
+ Dim maxCatName As String, minCatName As String
+ maxCatValue = 0: minCatValue = 1E+20
+ For i = 2 To lr
+  If CStr(ws.Cells(i, DBCols.dbMonthKey).Value) = prevMonthKey And CStr(ws.Cells(i, DBCols.dbType).Value) = "Uitgave" Then
+   Dim bedrag As Double: bedrag = CDbl(Val(ws.Cells(i, DBCols.dbAmount).Value))
+   totaal = totaal + bedrag
+   dagenCount = dagenCount + 1
+   If bedrag > duursteDag Then duursteDag = bedrag
+   Dim weekKey As String: weekKey = CStr(ws.Cells(i, DBCols.dbYear).Value) & "-W" & CStr(ws.Cells(i, DBCols.dbWeek).Value)
+   Utils.DictAddOrIncrement weekDict, weekKey, bedrag
+   Dim categorie As String: categorie = CStr(ws.Cells(i, DBCols.dbCategory).Value)
+   Utils.DictAddOrIncrement catDict, categorie, bedrag
+   Utils.DictAddOrIncrement catCountDict, categorie, 1
+  End If
+ Next i
+ Dim key As Variant
+ For Each key In weekDict.keys: If weekDict(key) > duursteWeek Then duursteWeek = weekDict(key)
+ Next key
+ For Each key In catDict.keys
+  If catDict(key) > maxCatValue Then maxCatValue = catDict(key): maxCatName = CStr(key)
+  If catDict(key) < minCatValue Then minCatValue = catDict(key): minCatName = CStr(key)
+ Next key
+ Dim overzichtRow As Long: overzichtRow = Utils.LastRow(ws, SummaryCols.colMonthSummaryStart) + 1
+ If ws.Cells(1, SummaryCols.colMonthSummaryStart).Value = "" Then
+  ws.Cells(1, SummaryCols.colMonthSummaryStart).Resize(1, 7).Value = Array("mnd", "ttl", "gpd", "gpw", "dudg", "duwk", "m_u_a")
+ End If
+ ws.Cells(overzichtRow, SummaryCols.colMonthSummaryStart).Value = prevMonthKey
+ ws.Cells(overzichtRow, SummaryCols.colMonthSummaryStart + 1).Value = totaal
+ ws.Cells(overzichtRow, SummaryCols.colMonthSummaryStart + 2).Value = IIf(dagenCount > 0, totaal / dagenCount, 0)
+ ws.Cells(overzichtRow, SummaryCols.colMonthSummaryStart + 3).Value = IIf(weekDict.Count > 0, totaal / weekDict.Count, 0)
+ ws.Cells(overzichtRow, SummaryCols.colMonthSummaryStart + 4).Value = duursteDag
+ ws.Cells(overzichtRow, SummaryCols.colMonthSummaryStart + 5).Value = duursteWeek
+ ws.Cells(overzichtRow, SummaryCols.colMonthSummaryStart + 6).Value = maxCatName
+ ' Categorie-overzicht append met maandkolom
+ Dim catStartCol As Long: catStartCol = SummaryCols.colMonthSummaryStart + 8 ' X
+ If ws.Cells(1, catStartCol - 1).Value = "" Then
+  ws.Cells(1, catStartCol - 1).Resize(1, 4).Value = Array("Maand", "Categorie", "Aantal", "Totaal")
+ End If
+ Dim r As Long: r = Utils.LastRow(ws, catStartCol - 1) + 1
+ For Each key In catDict.keys
+  ws.Cells(r, catStartCol - 1).Value = prevMonthKey
+  ws.Cells(r, catStartCol).Value = key
+  ws.Cells(r, catStartCol + 1).Value = catCountDict(key)
+  ws.Cells(r, catStartCol + 2).Value = catDict(key)
+  r = r + 1
+ Next key
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "Reporting", "BerekenMaandTotaal", Err.Number, Err.Description
+End Sub
+
+'=========================
+' MODULE: TableSetup
+'=========================
+
+Option Explicit
+Public Sub SetupVastEnCategorieTabellen()
+ On Error GoTo ErrHandler
+ Dim wsV As Worksheet, wsRef As Worksheet
+ Dim rngInk As Range, rngUit As Range
+ Set wsV = ThisWorkbook.Worksheets("Vast")
+ On Error Resume Next: Set rngInk = ThisWorkbook.names("rngVastInkomsten").RefersToRange: On Error GoTo ErrHandler
+ If Not rngInk Is Nothing Then Call Utils.EnsureTable(wsV, "tblVastInkomsten", rngInk)
+ On Error Resume Next: Set rngUit = ThisWorkbook.names("rngVastUitgaven").RefersToRange: On Error GoTo ErrHandler
+ If Not rngUit Is Nothing Then Call Utils.EnsureTable(wsV, "tblVastUitgaven", rngUit)
+ If Not Utils.SheetBestaat("Referenties") Then Set wsRef = ThisWorkbook.Worksheets.Add: wsRef.name = "Referenties" Else Set wsRef = ThisWorkbook.Worksheets("Referenties")
+ If wsRef.Cells(1, 1).Value = "" Then wsRef.Range("A1").Value = "Categorie"
+ Dim loCat As ListObject: Set loCat = Utils.EnsureTable(wsRef, "tblCategorieen", wsRef.Range("A1"))
+ If wsRef.Cells(1, 3).Value = "" Then wsRef.Range("C1").Value = "Categorie": wsRef.Range("D1").Value = "Subcategorie"
+ Dim loSub As ListObject: Set loSub = Utils.EnsureTable(wsRef, "tblSubcategorieen", wsRef.Range("C1:D1"))
+ SeedCategorieen loCat, loSub
+ MsgBox "Tabellen ingesteld: tblVastInkomsten/tblVastUitgaven (indien aanwezig), tblCategorieen, tblSubcategorieen.", vbInformation
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "TableSetup", "SetupVastEnCategorieTabellen", Err.Number, Err.Description
+End Sub
+Private Sub SeedCategorieen(ByVal loCat As ListObject, ByVal loSub As ListObject)
+ On Error GoTo ErrHandler
+ Dim cats As Variant: cats = Array("Eten", "Vervoer", "Hapje/Drankje", "Cadeau", "Lisa", "Kyra", "Kleding e.d", "Overig")
+ Dim i As Long
+ For i = LBound(cats) To UBound(cats)
+  If Not CategoryExists(loCat, CStr(cats(i))) Then AddCategory loCat, CStr(cats(i))
+ Next i
+ AddSub loSub, "Lisa", "Zakgeld": AddSub loSub, "Lisa", "Kleding": AddSub loSub, "Lisa", "Onzin"
+ AddSub loSub, "Kyra", "Zakgeld": AddSub loSub, "Kyra", "Kleding": AddSub loSub, "Kyra", "Onzin"
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "TableSetup", "SeedCategorieen", Err.Number, Err.Description
+End Sub
+Public Function CategoryExists(ByVal loCat As ListObject, ByVal cat As String) As Boolean
+ On Error GoTo ErrHandler
+ Dim r As Range
+ For Each r In loCat.ListColumns(1).DataBodyRange
+  If LCase$(Trim$(r.Value)) = LCase$(Trim$(cat)) Then CategoryExists = True: Exit Function
+ Next r
+ Exit Function
+ErrHandler:
+ Utils.LogError4 "TableSetup", "CategoryExists", Err.Number, Err.Description
+End Function
+Public Sub AddCategory(ByVal loCat As ListObject, ByVal cat As String)
+ On Error GoTo ErrHandler
+ Dim lr As ListRow: Set lr = loCat.ListRows.Add
+ lr.Range.Cells(1, 1).Value = cat
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "TableSetup", "AddCategory", Err.Number, Err.Description
+End Sub
+Public Sub AddSub(ByVal loSub As ListObject, ByVal cat As String, ByVal subcat As String)
+ On Error GoTo ErrHandler
+ Dim r As Range
+ If Not loSub.DataBodyRange Is Nothing Then
+  For Each r In loSub.DataBodyRange.Rows
+   If LCase$(Trim$(r.Cells(1, 1).Value)) = LCase$(Trim$(cat)) And LCase$(Trim$(r.Cells(1, 2).Value)) = LCase$(Trim$(subcat)) Then Exit Sub
+  Next r
+ End If
+ Dim lr As ListRow: Set lr = loSub.ListRows.Add
+ lr.Range.Cells(1, 1).Value = cat
+ lr.Range.Cells(1, 2).Value = subcat
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "TableSetup", "AddSub", Err.Number, Err.Description
+End Sub
+'=========================
+' MODULE: Utils
+'=========================
+
+Option Explicit
+Public Sub LogError4(ByVal moduleName As String, ByVal funcName As String, ByVal errNum As Long, ByVal errDesc As String)
+ On Error Resume Next
+ Dim ws As Worksheet
+ Set ws = ThisWorkbook.Worksheets("ErrorLog")
+ If ws Is Nothing Then
+   Set ws = ThisWorkbook.Worksheets.Add
+   ws.name = "ErrorLog"
+   ws.Range("A1:D1").Value = Array("Datum", "Module", "Functie", "Foutmelding")
+ End If
+ Dim r As Long: r = ws.Cells(ws.Rows.Count, 1).End(xlUp).Row + 1
+ ws.Cells(r, 1).Value = Now
+ ws.Cells(r, 2).Value = moduleName
+ ws.Cells(r, 3).Value = funcName
+ ws.Cells(r, 4).Value = "[" & errNum & "] " & errDesc
+End Sub
+Public Sub LogError(ByVal source As String, ByVal errDesc As String)
+ On Error Resume Next
+ Call LogError4(source, "", Err.Number, errDesc)
+End Sub
+Public Function SheetBestaat(ByVal sheetNaam As String) As Boolean
+ On Error Resume Next
+ Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets(sheetNaam)
+ SheetBestaat = Not ws Is Nothing
+ On Error GoTo 0
+End Function
+Public Function LastRow(ByVal ws As Worksheet, Optional ByVal col As Long = 1) As Long
+ With ws
+  If Application.WorksheetFunction.CountA(.Columns(col)) = 0 Then
+    LastRow = 1
+  Else
+    LastRow = .Cells(.Rows.Count, col).End(xlUp).Row
+  End If
+ End With
+End Function
+Public Function IsoWeek(ByVal d As Date) As Long
+ IsoWeek = DatePart("ww", d, vbMonday, vbFirstFourDays)
+End Function
+Public Function ParseAmount(ByVal s As String) As Double
+ Dim decSep As String: decSep = Application.International(xlDecimalSeparator)
+ s = Trim$(s)
+ If s = "" Then ParseAmount = 0: Exit Function
+ s = Replace(Replace(s, ".", decSep), ",", decSep)
+ ParseAmount = CDbl(s)
+End Function
+Public Sub EnsureDBHeaders()
+ Dim ws As Worksheet: Set ws = ThisWorkbook.Worksheets("Database")
+ If ws Is Nothing Then
+   Set ws = ThisWorkbook.Worksheets.Add
+   ws.name = "Database"
+ End If
+ If ws.Cells(1, DBCols.dbDate).Value = "" Then
+   ws.Cells(1, DBCols.dbDate).Resize(1, 11).Value = Array( _
+    "Datum", "Jaar", "MaandKey", "WeekISO", "DagNaam", "Categorie", "Subcategorie", "Omschrijving", "Bedrag", "Betaalwijze", "Soort")
+ End If
+End Sub
+Public Function DictAddOrIncrement(ByRef dict As Object, ByVal key As Variant, Optional ByVal inc As Double = 1) As Double
+ If Not dict.exists(key) Then dict(key) = inc Else dict(key) = dict(key) + inc
+ DictAddOrIncrement = dict(key)
+End Function
+Public Function ToMonthlyAmount(ByVal periode As String, ByVal bedrag As Double) As Double
+ periode = LCase$(Trim$(periode))
+ Select Case periode
+  Case "jaar", "per jaar": ToMonthlyAmount = bedrag / 12
+  Case "kwartaal", "per kwartaal": ToMonthlyAmount = bedrag / 3
+  Case "maand", "per maand": ToMonthlyAmount = bedrag
+  Case "4 weken": ToMonthlyAmount = bedrag * 13 / 12
+  Case "week", "per week": ToMonthlyAmount = bedrag * 52 / 12
+  Case "dag", "per dag": ToMonthlyAmount = bedrag * 365 / 12
+  Case Else: ToMonthlyAmount = bedrag
+ End Select
+End Function
+Public Function TryGetListObject(ByVal ws As Worksheet, ByVal tableName As String) As ListObject
+ On Error Resume Next
+ Set TryGetListObject = ws.ListObjects(tableName)
+ On Error GoTo 0
+End Function
+Public Function TryGetNamedRange(ByVal nm As String) As Range
+ On Error Resume Next
+ Set TryGetNamedRange = ThisWorkbook.names(nm).RefersToRange
+ On Error GoTo 0
+End Function
+Public Function EnsureTable(ByVal ws As Worksheet, ByVal tableName As String, ByVal headerRange As Range) As ListObject
+ Dim lo As ListObject
+ Set lo = TryGetListObject(ws, tableName)
+ If lo Is Nothing Then
+  Set lo = ws.ListObjects.Add(xlSrcRange, headerRange.CurrentRegion, , xlYes)
+  lo.name = tableName
+ End If
+ Set EnsureTable = lo
+End Function
+Public Function MonthNameNL(ByVal m As Long) As String
+ Dim arr
+ arr = Array("Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December")
+ If m >= 1 And m <= 12 Then MonthNameNL = arr(m - 1) Else MonthNameNL = "Onbekend"
+End Function
+Public Function GetTempFile(ByVal baseName As String, ByVal ext As String) As String
+ On Error GoTo ErrHandler
+ Dim tmp As String
+ tmp = Environ$("TEMP")
+ If Len(tmp) = 0 Then tmp = Environ$("TMP")
+ If Len(tmp) = 0 Then tmp = ThisWorkbook.Path
+ If Right$(tmp, 1) <> "" Then tmp = tmp & ""
+ GetTempFile = tmp & baseName & "_" & Format(Now, "yyyymmdd_hhnnss") & ext
+ Exit Function
+ErrHandler:
+ GetTempFile = ThisWorkbook.Path & "" & baseName & "_" & Format(Now, "yyyymmdd_hhnnss") & ext
+ LogError4 "Utils", "GetTempFile", Err.Number, Err.Description
+End Function
+'=========================
+' CLASS: CBtnEvents
+'=========================
+' Class module name: CBtnEvents
+Option Explicit
+Public WithEvents Btn As MSForms.CommandButton
+Public ParentForm As Object
+Private Sub Btn_Click()
+ On Error GoTo ErrHandler
+ Select Case LCase$(Btn.name)
+  Case "dyn_btnopslaan": FormEvents.HandleOpslaan_dyn ParentForm
+  Case "dyn_btnannuleren": FormEvents.HandleAnnuleren_dyn ParentForm
+ End Select
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "CBtnEvents", "Btn_Click", Err.Number, Err.Description
+End Sub
+
+'=========================
+' CLASS: CCmbEvents
+'=========================
+' Class module name: CCmbEvents
+Option Explicit
+Public WithEvents cmb As MSForms.ComboBox
+Public ParentForm As Object
+Private Sub cmb_Change()
+ On Error GoTo ErrHandler
+ Select Case LCase$(cmb.name)
+  Case "dyn_cmbcategorie": FormEvents.HandleCategorieChange_dyn ParentForm
+ End Select
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "CCmbEvents", "cmb_Change", Err.Number, Err.Description
+End Sub
+
+'=========================
+' CLASS: CImgEvents (hover + mouse)
+'=========================
+' Class module name: CImgEvents
+Option Explicit
+Public WithEvents Img As MSForms.Image
+Public ParentForm As Object
+Private Sub Img_MouseMove(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+ On Error Resume Next
+ LayoutSpecsHelpers.ApplyHoverPicture ParentForm, Img.name
+End Sub
+Private Sub Img_MouseDown(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+ On Error GoTo ErrHandler
+ ' Simuleer click op basis van control name
+ Select Case LCase$(Img.name)
+  Case "dyn_imgbtnopslaan": FormEvents.HandleOpslaan_dyn ParentForm
+  Case "dyn_imgbtnannuleren": FormEvents.HandleAnnuleren_dyn ParentForm
+  Case "dyn_imgbtnvolgende": ParentForm.Hide: frmVast.Show
+  Case "dyn_imgbtnvorige": ParentForm.Hide: frmHuishouden.Show
+ End Select
+ Exit Sub
+ErrHandler:
+ Utils.LogError4 "CImgEvents", "Img_MouseDown", Err.Number, Err.Description
+End Sub
+
+'=========================
+' CLASS: CTxtEvents
+'=========================
+' Class module name: CTxtEvents
+Option Explicit
+Public WithEvents Txt As MSForms.TextBox
+Private Sub Txt_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
+ Dim dec As String: dec = Application.International(xlDecimalSeparator)
+ Select Case KeyAscii
+  Case 48 To 57 ' 0–9
+  Case Asc(dec) ' één decimaal
+   If InStr(Txt.Text, dec) > 0 Then KeyAscii = 0
+  Case 8 ' Backspace
+  Case Else: KeyAscii = 0
+ End Select
+End Sub
+Private Sub Txt_Exit(ByVal Cancel As MSForms.ReturnBoolean)
+ On Error Resume Next
+ If Len(Txt.Text) = 0 Then Exit Sub
+ Txt.Text = Format(CDbl(Txt.Text), "0.00")
+End Sub
+

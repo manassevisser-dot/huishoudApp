@@ -4,7 +4,6 @@
 Option Explicit
 
 ' Maak alleen een sheet aan voor de HUIDIGE maand als die nog niet bestaat
-
 Public Sub MaakHuidigeMaandSheet()
     On Error GoTo ErrHandler
     Application.ScreenUpdating = False
@@ -35,8 +34,7 @@ Public Sub MaakHuidigeMaandSheet()
         If Not loInk Is Nothing Then
             Dim rw As ListRow
             For Each rw In loInk.DataBodyRange.Rows
-                 ' Vervang Nz door een directe check
-                If Not IsEmpty(rw.Range.Cells(1, 3).Value) And rw.Range.Cells(1, 3).Value <> False Then
+                If Nz(rw.Range.Cells(1, 3).Value, False) Then
                     .Cells(r, 1).Value = rw.Range.Cells(1, 1).Value
 
 .Cells(r, 2).Value = Round(Utils.ToMonthlyAmount( _
@@ -60,7 +58,7 @@ Public Sub MaakHuidigeMaandSheet()
 
         If Not loUit Is Nothing Then
             For Each rw In loUit.DataBodyRange.Rows
-               If Not IsEmpty(rw.Range.Cells(1, 3).Value) And rw.Range.Cells(1, 3).Value <> False Then
+                If Nz(rw.Range.Cells(1, 3).Value, False) Then
                     .Cells(r, 1).Value = rw.Range.Cells(1, 1).Value
                     .Cells(r, 2).Value = Round(Utils.ToMonthlyAmount(CStr(rw.Range.Cells(1, 2).Value), CDbl(Val(rw.Range.Cells(1, 4).Value))), 2)
                     r = r + 1
@@ -80,7 +78,6 @@ Public Sub MaakHuidigeMaandSheet()
         .Columns(2).NumberFormat = "#,##0.00"
     End With
 End Sub
-
 CleanExit:
     Application.Calculation = xlCalculationAutomatic
     Application.ScreenUpdating = True
@@ -90,6 +87,15 @@ ErrHandler:
     MsgBox "Fout in MaakHuidigeMaandSheet: " & Err.Description, vbCritical
     Resume CleanExit
 End Sub
+
+Private Function Nz(ByVal v As Variant, Optional ByVal defaultValue As Variant) As Variant
+    If IsError(v) Or IsEmpty(v) Or v = "" Then
+        If IsMissing(defaultValue) Then Nz = 0 Else Nz = defaultValue
+    Else
+        Nz = v
+    End If
+End Function
+
 
 '=========
 'End of code for 

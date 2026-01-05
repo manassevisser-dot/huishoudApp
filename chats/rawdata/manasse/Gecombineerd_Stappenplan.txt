@@ -1,0 +1,126 @@
+
+============================================================
+   W&I Excel UserForms Wizard – Gecombineerd Stappenplan
+============================================================
+Datum: 26-11-2025
+Auteur: AI Agent (voor Manasse Visser)
+
+Doel: Alle besproken verbeteringen toepassen (layout fixes, hover, safe-area, geen dubbele code).
+
+------------------------------------------------------------
+SECTIE 1: VOORBEREIDING
+------------------------------------------------------------
+✔ Maak BACKUPS van:
+   - frmHuishouden.frm
+   - frmVast.frm
+   - frmInvoer.frm
+
+✔ Open Referenties!tblLayoutSpecs en controleer:
+   - Kolommen: Key | ShapeName | Width | Height | X | Y | Notes
+   - Keys aanwezig: Prev | Next | Save | Cancel | RowAdd | RowDel
+
+✔ Fix Notes-kolom:
+   RowAdd → "row +"
+   RowDel → "row -"
+   (Geen formules, geen #NAAM?)
+
+------------------------------------------------------------
+SECTIE 2: CODEPATCHES
+------------------------------------------------------------
+
+✔ [PATCH A] frmHuishouden – Initialize & Resize
+--------------------------------------------
+--- BEFORE
+Private Sub UserForm_Initialize()
+    FormHelpers.EnsureBackgroundImage Me
+    frmBuilders.BuildForm_Huishouden Me
+End Sub
+
+--- AFTER
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    ' 1) Background
+    FormHelpers.EnsureBackgroundImage Me
+    ' 2) Controls bouwen
+    frmBuilders.BuildForm_Huishouden Me
+    ' 3) Safe-area
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    ' 4) Events
+    FormEvents.HookEventsDynamic Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmHuishouden", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+    On Error GoTo ErrHandler
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmHuishouden", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+
+✔[PATCH B] frmVast – Initialize & Resize
+---------------------------------------
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    FormHelpers.EnsureBackgroundImage Me
+    frmBuilders.BuildFrmVast Me
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    FormEvents.HookEventsDynamic Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmVast", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+    On Error GoTo ErrHandler
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmVast", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+
+✔[PATCH C] frmInvoer – Laat Initialize zoals het is
+--------------------------------------------------
+FormEvents.BuildDynamicFrmInvoer Me
+(Geen dubbele aanroepen toevoegen)
+
+✔[PATCH D] frmBuilders.BuildForm_Huishouden
+------------------------------------------
+--- BEFORE
+frm.Width = 800: frm.Height = 500
+--- AFTER
+FormLayout.FrmLayoutSafeAreaDyn frm
+
+✔[PATCH E] Modules
+-----------------
+LayoutSpecsHelpers.GetLayoutSpec → vervang Application.Match door handmatige headerloop.
+LayoutSpecsHelpers.GetShapePath → voeg wsRef.Activate + DoEvents vóór Copy/Paste.
+FormLayout.FrmLayoutSafeAreaDyn → voeg If inpWidth < 0 Then inpWidth = 0.
+
+------------------------------------------------------------
+SECTIE 3: TEST & VALIDATIE
+------------------------------------------------------------
+✔ Compileer: Debug → Compile VBAProject
+X!! Open elk form:
+   - frmHuishouden → knoppen correct gepositioneerd, hover werkt.
+   - frmVast → RowAdd/RowDel zichtbaar, navigatieknoppen correct.
+   - frmInvoer → hover en layout correct.
+✔ Resize forms → Safe-area herpositioneert controls.
+✔ Draai sanity-check:
+   modSanityChecks.RunAssetSanity True → verwacht OK.
+
+------------------------------------------------------------
+SECTIE 4: QA-CHECKLIST
+------------------------------------------------------------
+[ ] Geen hardcoded .Left/.Top/.Width/.Height meer.
+[ ] Alle knoppen via tblLayoutSpecs.
+[ ] Hover werkt binnen ±100ms.
+[ ] ErrorLog blijft leeg.
+[ ] Background optioneel via specs (later).
+[ ] Database-opslag frmInvoer werkt.
+
+============================================================
+EINDE STAPPENPLAN – SUCCES!
+============================================================

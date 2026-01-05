@@ -1,0 +1,57 @@
+# Structuur & Best Practices voor Bestandbeheer
+
+## 1. Mapstructuur
+- Gebruik een hoofdmap per project.
+- Binnen elk project: submappen zoals `docs`, `data`, `scripts`, `output`.
+
+**Voorbeeld:**
+```
+Project_X/
+├── docs/
+├── data/
+├── scripts/
+└── output/
+```
+
+## 2. Bestandsnamen
+- Gebruik duidelijke, beschrijvende namen.
+- Vermijd spaties; gebruik `_` of `-`.
+- Voeg datum of versie toe indien relevant.
+
+**Voorbeeld:**
+```
+rapport_2025-11-26_v1.txt
+```
+
+## 3. Markdown in Notepad++
+- Installeer Markdown-plugin voor syntax highlighting.
+- Gebruik koppen (`#`, `##`) en lijsten (`-`, `*`) voor structuur.
+
+**Voorbeeld:**
+```
+# Titel
+## Subtitel
+- Punt 1
+- Punt 2
+```
+
+## 4. Changelog bijhouden
+- Maak een bestand `CHANGELOG.md` in de hoofdmap.
+- Noteer elke wijziging met datum en korte beschrijving.
+
+**Voorbeeld:**
+```
+## [2025-11-26]
+- Toegevoegd: Structuur_Tips.txt
+```
+
+## 5. Optioneel: Versiebeheer met Git
+- Initialiseer een Git-repository: `git init`
+- Voeg bestanden toe: `git add .`
+- Commit: `git commit -m "Eerste commit"`
+- Gebruik branches voor nieuwe features.
+
+**Voorbeeld:**
+```
+git checkout -b nieuwe-feature
+```

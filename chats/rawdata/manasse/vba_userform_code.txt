@@ -1,0 +1,47 @@
+' VBA-code voor UserForm en Opslaan-functionaliteit
+' Voeg deze code toe in VBA-editor (Alt+F11)
+
+' UserForm_Initialize: vult ComboBox
+Private Sub UserForm_Initialize()
+    cmbSoort.AddItem "Bestellen"
+    cmbSoort.AddItem "Roken"
+    cmbSoort.AddItem "Uitje"
+    cmbSoort.AddItem "Hapje/Drankje"
+    cmbSoort.AddItem "Vervoer"
+    cmbSoort.AddItem "Cadeau"
+    cmbSoort.AddItem "Lisa"
+    cmbSoort.AddItem "Kyra"
+End Sub
+
+' Opslaan-knop
+Private Sub btnOpslaan_Click()
+    Dim wsDB As Worksheet
+    Dim nieuweRij As Long
+    Dim huidigeDatum As Date
+    Dim dagNaam As String
+    Dim weekNr As String
+
+    Set wsDB = ThisWorkbook.Sheets("Database")
+
+    huidigeDatum = Date
+    dagNaam = Format(huidigeDatum, "dddd")
+    weekNr = Format(huidigeDatum, "ww", vbMonday, vbFirstFourDays)
+
+    nieuweRij = wsDB.Cells(wsDB.Rows.Count, "A").End(xlUp).Row + 1
+
+    wsDB.Cells(nieuweRij, 1).Value = huidigeDatum
+    wsDB.Cells(nieuweRij, 2).Value = weekNr
+    wsDB.Cells(nieuweRij, 3).Value = dagNaam
+    wsDB.Cells(nieuweRij, 4).Value = cmbSoort.Value
+    wsDB.Cells(nieuweRij, 5).Value = txtBedrag.Value
+
+    cmbSoort.Value = ""
+    txtBedrag.Value = ""
+
+    MsgBox "Gegevens opgeslagen!", vbInformation
+End Sub
+
+' Macro om UserForm te tonen
+Sub ToonInvoerForm()
+    frmInvoer.Show
+End Sub

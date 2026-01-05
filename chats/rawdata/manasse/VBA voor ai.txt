@@ -1,0 +1,621 @@
+' ===========================
+' frmInvoer - volledige code
+' Optie B: Safe area (proportioneel layout)
+' ===========================
+Option Explicit
+
+' Kleuren & font
+Private Const FONT_NAME     As String = "Arial"
+Private Const COLOR_TEXT    As Long = &H0             ' zwart
+Private Const COLOR_ACCENT  As Long = &H9CAC51        ' #514AC9 (BGR)
+
+' Layout
+Private Const BG_MARGIN         As Long = 6
+
+' SAFE AREA binnen de achtergrond (percentages van het bg-vlak)
+' Tuned voor jouw "telefoonframe" afbeelding. Pas ze desgewenst licht aan.
+Private Const SAFE_LEFT_PCT    As Double = 0.16
+Private Const SAFE_RIGHT_PCT   As Double = 0.84
+Private Const SAFE_TOP_PCT     As Double = 0.09
+Private Const SAFE_BOTTOM_PCT  As Double = 0.91
+
+' Kolomafstand & regelhoogte (ruimer)
+Private Const LABEL_WIDTH        As Long = 120
+Private Const GAP_LABEL_TO_INPUT As Long = 12
+Private Const COL_LABEL_TO_INPUT As Long = LABEL_WIDTH + GAP_LABEL_TO_INPUT
+Private Const ROW_SPACING        As Long = 32
+Private Const BTN_SPACING        As Long = 24
+Private Const RIGHT_PADDING      As Long = 20
+
+' ===========================
+' Helpers (unieke namen)
+' ===========================
+Private Function FrmBgFileExists(ByVal p As String) As Boolean
+    On Error Resume Next
+    FrmBgFileExists = (Dir$(p) <> "")
+    On Error GoTo 0
+End Function
+
+Private Function FrmGetTempFile(ByVal baseName As String, ByVal ext As String) As String
+    Dim tmp As String
+    tmp = Environ$("TEMP")
+    If Len(tmp) = 0 Then tmp = Environ$("TMP")
+    If Len(tmp) = 0 Then tmp = ThisWorkbook.Path
+    If Right$(tmp, 1) <> "\" Then tmp = tmp & "\"
+    FrmGetTempFile = tmp & baseName & "_" & Format(Now, "yyyymmdd_hhnnss") & ext
+End Function
+
+Private Function FrmGetReferentiesSheet() As Worksheet
+    On Error Resume Next
+    Set FrmGetReferentiesSheet = ThisWorkbook.Worksheets("Referenties")
+    On Error GoTo 0
+End Function
+
+Private Function FrmExportShapeToJpg(ByVal ws As Worksheet, ByVal shapeName As String) As String
+    ' Exporteer een shape naar JPG via tijdelijke Chart
+    On Error GoTo ErrHandler
+
+    Dim shp As Shape
+    Set shp = ws.Shapes(shapeName)
+
+    Dim ch As ChartObject
+    Set ch = ws.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=shp.Width, Height:=shp.Height)
+
+    shp.Copy
+    ch.Activate
+    ch.Chart.Paste
+
+    Dim outPath As String
+    outPath = FrmGetTempFile("bg_frmInvoer", ".jpg")
+    ch.Chart.Export Filename:=outPath, FilterName:="JPG"
+
+    ch.Delete
+
+    FrmExportShapeToJpg = outPath
+    Exit Function
+
+ErrHandler:
+    FrmExportShapeToJpg = vbNullString
+End Function
+
+' ===========================
+' Achtergrond plaatsen
+' ===========================
+Private Sub FrmBuildBackground(ByVal imgPath As String)
+    On Error GoTo ErrHandler
+    ' Verwijder eerdere background
+    Dim c As Control
+    For Each c In Me.Controls
+        If c.Name = "imgBackground" Then
+            Me.Controls.Remove "imgBackground"
+            Exit For
+        End If
+    Next c
+
+    ' Plaats image
+    Dim bg As MSForms.Image
+    Set bg = Me.Controls.Add("Forms.Image.1", "imgBackground")
+    With bg
+        ' Afmeting initieel (definitief in Activate/Resize)
+        .Left = BG_MARGIN
+        .Top = BG_MARGIN
+        .Width = Me.InsideWidth - 2 * BG_MARGIN
+        .Height = Me.InsideHeight - 2 * BG_MARGIN
+        .Picture = LoadPicture(imgPath)
+        .PictureSizeMode = fmPictureSizeModeZoom   ' behoud verhouding; geen stretch
+        .ZOrder 1                                   ' naar achter
+    End With
+    Exit Sub
+
+ErrHandler:
+    MsgBox "Kon achtergrond niet laden: " & Err.Description, vbExclamation, "Background"
+End Sub
+
+' ===========================
+' Form opbouwen (runtime)
+' ===========================
+Private Sub UserForm_Initialize()
+    Me.Caption = "Dagelijkse invoer"
+    Me.Font.Name = FONT_NAME
+
+    ' --- Form init-afmetingen (ruimer, fijner werken) ---
+' --- Ruimer werken en scrollbars aan ---
+Me.Width = 840           ' breder form – pas gerust aan
+Me.Height = 1180         ' hoger form – pas gerust aan
+
+' UserForm scrollbars
+Me.ScrollBars = fmScrollBarsVertical
+Me.KeepScrollBarsVisible = fmScrollBarsVertical
+
+' ScrollHeight zetten we dynamisch in FrmLayoutSafeArea, op basis van content
+
+    ' --- Achtergrond uit shape op blad "Referenties" ---
+    Dim bgPath As String
+    Dim wsRef As Worksheet: Set wsRef = FrmGetReferentiesSheet()
+    If Not wsRef Is Nothing Then
+        bgPath = FrmExportShapeToJpg(wsRef, "bg_frmInvoer")
+    End If
+
+    If Len(bgPath) > 0 And FrmBgFileExists(bgPath) Then
+        FrmBuildBackground bgPath
+    Else
+        MsgBox "Kon achtergrond niet laden uit blad 'Referenties' (shape 'bg_frmInvoer').", vbExclamation, "Background"
+    End If
+
+    ' --- Controls runtime aanmaken ---
+    ' Type (optionbuttons)
+    Dim lbl As MSForms.Label
+    Set lbl = Me.Controls.Add("Forms.Label.1", "lblType")
+    lbl.Caption = "Type": lbl.Font.Name = FONT_NAME: lbl.ForeColor = COLOR_TEXT
+
+    Dim optUit As MSForms.OptionButton, optInc As MSForms.OptionButton
+    Set optUit = Me.Controls.Add("Forms.OptionButton.1", "optUitgave")
+    optUit.Caption = "Uitgave": optUit.Value = True
+    optUit.Font.Name = FONT_NAME: optUit.ForeColor = COLOR_TEXT
+
+    Set optInc = Me.Controls.Add("Forms.OptionButton.1", "optInkomen")
+    optInc.Caption = "Inkomen"
+    optInc.Font.Name = FONT_NAME: optInc.ForeColor = COLOR_TEXT
+
+    ' Datum
+    Set lbl = Me.Controls.Add("Forms.Label.1", "lblDatum")
+    lbl.Caption = "Datum": lbl.Font.Name = FONT_NAME: lbl.ForeColor = COLOR_TEXT
+
+    Dim txtDatum As MSForms.TextBox
+    Set txtDatum = Me.Controls.Add("Forms.TextBox.1", "txtDatum")
+    With txtDatum
+        .Width = 180
+        .Text = Format(Date, "dd-mm-yyyy")
+        .Font.Name = FONT_NAME: .ForeColor = COLOR_TEXT: .BackColor = vbWhite
+        .BorderStyle = fmBorderStyleSingle
+    End With
+
+    ' Categorie
+    Set lbl = Me.Controls.Add("Forms.Label.1", "lblCat")
+    lbl.Caption = "Categorie": lbl.Font.Name = FONT_NAME: lbl.ForeColor = COLOR_TEXT
+
+    Dim cmbCategorie As MSForms.ComboBox
+    Set cmbCategorie = Me.Controls.Add("Forms.ComboBox.1", "cmbCategorie")
+    With cmbCategorie
+        .Width = 220
+        .Font.Name = FONT_NAME: .ForeColor = COLOR_TEXT: .BackColor = vbWhite
+        .BorderStyle = fmBorderStyleSingle
+    End With
+
+    ' Subcategorie + "+"
+    Set lbl = Me.Controls.Add("Forms.Label.1", "lblSub")
+    lbl.Caption = "Subcategorie": lbl.Font.Name = FONT_NAME: lbl.ForeColor = COLOR_TEXT
+
+    Dim cmbSub As MSForms.ComboBox
+    Set cmbSub = Me.Controls.Add("Forms.ComboBox.1", "cmbSubcategorie")
+    With cmbSub
+        .Width = 220: .Enabled = False
+        .Font.Name = FONT_NAME: .ForeColor = COLOR_TEXT: .BackColor = vbWhite
+        .BorderStyle = fmBorderStyleSingle
+    End With
+
+    Dim btnNieuwSub As MSForms.CommandButton
+    Set btnNieuwSub = Me.Controls.Add("Forms.CommandButton.1", "btnNieuwSub")
+    With btnNieuwSub
+        .Caption = "+"
+        .Width = 32: .Height = 22
+        .Font.Name = FONT_NAME: .ForeColor = COLOR_TEXT: .BackColor = vbWhite
+    End With
+
+    ' Bedrag
+    Set lbl = Me.Controls.Add("Forms.Label.1", "lblBedrag")
+    lbl.Caption = "Bedrag": lbl.Font.Name = FONT_NAME: lbl.ForeColor = COLOR_TEXT
+
+    Dim txtBedrag As MSForms.TextBox
+    Set txtBedrag = Me.Controls.Add("Forms.TextBox.1", "txtBedrag")
+    With txtBedrag
+        .Width = 180
+        .Font.Name = FONT_NAME: .ForeColor = COLOR_TEXT: .BackColor = vbWhite
+        .BorderStyle = fmBorderStyleSingle
+    End With
+
+    ' Betaalwijze
+    Set lbl = Me.Controls.Add("Forms.Label.1", "lblBetaal")
+    lbl.Caption = "Betaalwijze": lbl.Font.Name = FONT_NAME: lbl.ForeColor = COLOR_TEXT
+
+    Dim cmbBetaal As MSForms.ComboBox
+    Set cmbBetaal = Me.Controls.Add("Forms.ComboBox.1", "cmbBetaalwijze")
+    With cmbBetaal
+        .Width = 220
+        .Font.Name = FONT_NAME: .ForeColor = COLOR_TEXT: .BackColor = vbWhite
+        .BorderStyle = fmBorderStyleSingle
+        .AddItem "Contant"
+        .AddItem "Pin"
+        .AddItem "Creditcard"
+        .AddItem "Tikkie"
+        .AddItem "iDEAL"
+        .AddItem "Automatische Incasso (AI)"
+        .ListIndex = 1
+    End With
+
+    ' Omschrijving (breed)
+    Set lbl = Me.Controls.Add("Forms.Label.1", "lblOms")
+    lbl.Caption = "Omschrijving": lbl.Font.Name = FONT_NAME: lbl.ForeColor = COLOR_TEXT
+
+    Dim txtOms As MSForms.TextBox
+    Set txtOms = Me.Controls.Add("Forms.TextBox.1", "txtOmschrijving")
+    With txtOms
+        .Width = 320
+        .Font.Name = FONT_NAME: .ForeColor = COLOR_TEXT: .BackColor = vbWhite
+        .BorderStyle = fmBorderStyleSingle
+    End With
+
+    ' Buttons
+    Dim btnOpslaan As MSForms.CommandButton, btnAnnuleren As MSForms.CommandButton
+    Set btnOpslaan = Me.Controls.Add("Forms.CommandButton.1", "btnOpslaan")
+    With btnOpslaan
+        .Caption = "Opslaan"
+        .Width = 120
+        .Font.Name = FONT_NAME: .ForeColor = COLOR_TEXT: .BackColor = vbWhite
+    End With
+
+    Set btnAnnuleren = Me.Controls.Add("Forms.CommandButton.1", "btnAnnuleren")
+    With btnAnnuleren
+        .Caption = "Annuleren"
+        .Width = 120
+        .Font.Name = FONT_NAME: .ForeColor = COLOR_TEXT: .BackColor = vbWhite
+    End With
+
+    ' Labels rechts uitlijnen + vaste breedte
+    Dim lblNames As Variant, i As Long
+    lblNames = Array("lblType", "lblDatum", "lblCat", "lblSub", "lblBedrag", "lblBetaal", "lblOms")
+    For i = LBound(lblNames) To UBound(lblNames)
+        With Me.Controls(CStr(lblNames(i)))
+            .Width = LABEL_WIDTH
+            .TextAlign = fmTextAlignRight
+        End With
+    Next i
+    ' Buttons onderin safe area, gecentreerd
+    Dim btnY As Single: btnY = safeTop + safeHeight - 64      ' iets meer marge
+    Me.Controls("btnOpslaan").Top = btnY
+    Me.Controls("btnAnnuleren").Top = btnY
+
+    Dim btnTotalWidth As Single
+    btnTotalWidth = Me.Controls("btnOpslaan").Width + BTN_SPACING + Me.Controls("btnAnnuleren").Width
+    Dim btnLeft As Single
+    btnLeft = safeLeft + (safeWidth - btnTotalWidth) / 2
+
+    Me.Controls("btnOpslaan").Left = btnLeft
+    Me.Controls("btnAnnuleren").Left = btnLeft + Me.Controls("btnOpslaan").Width + BTN_SPACING
+
+    ' --- ScrollHeight dynamisch op basis van content ondergrens ---
+    Dim contentBottom As Single
+    contentBottom = Me.Controls("btnOpslaan").Top + Me.Controls("btnOpslaan").Height + 24    ' 24px extra marge
+    Dim formInnerHeight As Single
+    formInnerHeight = Me.InsideHeight
+
+    ' Zet scrollhoogte als content lager ligt dan venster
+    If contentBottom > formInnerHeight Then
+        Me.ScrollHeight = contentBottom
+    Else
+        Me.ScrollHeight = formInnerHeight      ' geen scroll nodig
+    End If
+
+    On Error GoTo 0
+End Sub
+
+    ' Data laden
+    LoadCategories
+End Sub
+
+' ===========================
+' Safe area layout (Activate/Resize)
+' ===========================
+Private Sub UserForm_Activate()
+    Call FrmLayoutSafeArea
+End Sub
+
+Private Sub UserForm_Resize()
+    Call FrmLayoutSafeArea
+End Sub
+
+Private Sub FrmLayoutSafeArea()
+    On Error Resume Next
+
+    ' 1) Background formaat
+    With Me.Controls("imgBackground")
+        .Left = BG_MARGIN
+        .Top = BG_MARGIN
+        .Width = Me.InsideWidth - 2 * BG_MARGIN
+        .Height = Me.InsideHeight - 2 * BG_MARGIN
+    End With
+
+    ' 2) Safe area binnen de bg (berekend)
+    Dim bg As MSForms.Image
+    Set bg = Me.Controls("imgBackground")
+    If bg Is Nothing Then Exit Sub
+
+    Dim safeLeft As Single, safeTop As Single
+    Dim safeWidth As Single, safeHeight As Single
+
+    safeLeft = bg.Left + (SAFE_LEFT_PCT * bg.Width)
+    safeTop = bg.Top + (SAFE_TOP_PCT * bg.Height)
+    safeWidth = (SAFE_RIGHT_PCT - SAFE_LEFT_PCT) * bg.Width
+    safeHeight = (SAFE_BOTTOM_PCT - SAFE_TOP_PCT) * bg.Height
+
+    ' Kolommen binnen safe area
+    Dim colLbl As Single, colInp As Single
+    colLbl = safeLeft
+    colInp = safeLeft + COL_LABEL_TO_INPUT
+
+    ' Inputbreedte berekenen
+    Dim inpWidth As Single
+    inpWidth = safeWidth - (colInp - safeLeft) - RIGHT_PADDING
+    If inpWidth < 140 Then inpWidth = 140
+
+    ' Beginhoogte
+    Dim t As Single: t = safeTop
+
+    ' Type
+    Me.Controls("lblType").Left = colLbl
+    Me.Controls("lblType").Top = t
+
+    Me.Controls("optUitgave").Left = colInp
+    Me.Controls("optUitgave").Top = t
+
+    Me.Controls("optInkomen").Left = Me.Controls("optUitgave").Left + 160
+    Me.Controls("optInkomen").Top = t
+
+    ' Rij-voor-rij
+    t = t + ROW_SPACING
+    Me.Controls("lblDatum").Left = colLbl
+    Me.Controls("lblDatum").Top = t
+    Me.Controls("txtDatum").Left = colInp
+    Me.Controls("txtDatum").Top = t
+    Me.Controls("txtDatum").Width = inpWidth
+
+    t = t + ROW_SPACING
+    Me.Controls("lblCat").Left = colLbl
+    Me.Controls("lblCat").Top = t
+    Me.Controls("cmbCategorie").Left = colInp
+    Me.Controls("cmbCategorie").Top = t
+    Me.Controls("cmbCategorie").Width = inpWidth
+
+    t = t + ROW_SPACING
+    Me.Controls("lblSub").Left = colLbl
+    Me.Controls("lblSub").Top = t
+    Me.Controls("cmbSubcategorie").Left = colInp
+    Me.Controls("cmbSubcategorie").Top = t
+    Me.Controls("cmbSubcategorie").Width = inpWidth - (Me.Controls("btnNieuwSub").Width + 12)
+    Me.Controls("btnNieuwSub").Left = colInp + Me.Controls("cmbSubcategorie").Width + 12
+    Me.Controls("btnNieuwSub").Top = t
+
+    t = t + ROW_SPACING
+    Me.Controls("lblBedrag").Left = colLbl
+    Me.Controls("lblBedrag").Top = t
+    Me.Controls("txtBedrag").Left = colInp
+    Me.Controls("txtBedrag").Top = t
+    Me.Controls("txtBedrag").Width = inpWidth
+
+    t = t + ROW_SPACING
+    Me.Controls("lblBetaal").Left = colLbl
+    Me.Controls("lblBetaal").Top = t
+    Me.Controls("cmbBetaalwijze").Left = colInp
+    Me.Controls("cmbBetaalwijze").Top = t
+    Me.Controls("cmbBetaalwijze").Width = inpWidth
+
+    t = t + ROW_SPACING
+    Me.Controls("lblOms").Left = colLbl
+    Me.Controls("lblOms").Top = t
+    Me.Controls("txtOmschrijving").Left = colInp
+    Me.Controls("txtOmschrijving").Top = t
+    Me.Controls("txtOmschrijving").Width = inpWidth
+
+    ' Buttons onderin safe area, gecentreerd
+    Dim btnY As Single: btnY = safeTop + safeHeight - 56
+    Me.Controls("btnOpslaan").Top = btnY
+    Me.Controls("btnAnnuleren").Top = btnY
+
+    Dim btnTotalWidth As Single
+    btnTotalWidth = Me.Controls("btnOpslaan").Width + BTN_SPACING + Me.Controls("btnAnnuleren").Width
+    Dim btnLeft As Single
+    btnLeft = safeLeft + (safeWidth - btnTotalWidth) / 2
+
+    Me.Controls("btnOpslaan").Left = btnLeft
+    Me.Controls("btnAnnuleren").Left = btnLeft + Me.Controls("btnOpslaan").Width + BTN_SPACING
+
+    On Error GoTo 0
+End Sub
+
+' ===========================
+' Events & helpers
+' ===========================
+Private Sub btnAnnuleren_Click()
+    Unload Me
+End Sub
+
+Private Sub btnNieuwSub_Click()
+    Dim cat As String: cat = CStr(Me.Controls("cmbCategorie").Value)
+    If Len(Trim$(cat)) = 0 Then
+        MsgBox "Kies eerst een categorie.", vbExclamation
+        Exit Sub
+    End If
+    Dim nm As String
+    nm = InputBox("Nieuwe subcategorie voor " & cat & ":", "Subcategorie toevoegen")
+    If Len(Trim$(nm)) = 0 Then Exit Sub
+
+    Dim wsRef As Worksheet: Set wsRef = FrmGetReferentiesSheet()
+    If wsRef Is Nothing Then
+        MsgBox "Blad 'Referenties' ontbreekt.", vbCritical
+        Exit Sub
+    End If
+    Dim loSub As ListObject
+    On Error Resume Next
+    Set loSub = wsRef.ListObjects("tblSubcategorieen")
+    On Error GoTo 0
+    If loSub Is Nothing Then
+        MsgBox "Tabel 'tblSubcategorieen' ontbreekt.", vbCritical
+        Exit Sub
+    End If
+
+    ' AddSub staat in jouw TableSetup-module
+    AddSub loSub, cat, nm
+
+    ' Herladen lijst
+    cmbCategorie_Change
+    Me.Controls("cmbSubcategorie").Value = nm
+End Sub
+
+Private Sub cmbCategorie_Change()
+    Dim wsRef As Worksheet: Set wsRef = FrmGetReferentiesSheet()
+    If wsRef Is Nothing Then Exit Sub
+
+    Dim loSub As ListObject
+    On Error Resume Next
+    Set loSub = wsRef.ListObjects("tblSubcategorieen")
+    On Error GoTo 0
+
+    Dim cmbSub As MSForms.ComboBox: Set cmbSub = Me.Controls("cmbSubcategorie")
+    cmbSub.Clear
+
+    If loSub Is Nothing Or loSub.DataBodyRange Is Nothing Then
+        cmbSub.Enabled = False
+        Exit Sub
+    End If
+
+    Dim r As Range, cat As String: cat = CStr(Me.Controls("cmbCategorie").Value)
+    For Each r In loSub.DataBodyRange.Rows
+        If LCase$(Trim$(r.Cells(1, 1).Value)) = LCase$(Trim$(cat)) Then
+            cmbSub.AddItem CStr(r.Cells(1, 2).Value)
+        End If
+    Next r
+    cmbSub.Enabled = (cmbSub.ListCount > 0)
+    
+    ' Categorie
+With cmbCategorie
+    .Style = fmStyleDropDownList             ' geen directe tekstinvoer – “echte” dropdown
+    .Width = 220
+    .BackColor = vbWhite
+    .ZOrder 0
+End With
+
+' Subcategorie
+With cmbSub
+    .Style = fmStyleDropDownList
+    .Width = 220
+    .BackColor = vbWhite
+    .Enabled = False
+    .ZOrder 0
+End With
+
+' Betaalwijze
+With cmbBetaal
+    .Style = fmStyleDropDownList
+    .Width = 220
+    .BackColor = vbWhite
+    .ZOrder 0
+End With
+End Sub
+
+Private Sub txtBedrag_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
+    Dim decSep As Integer: decSep = Asc(Application.International(xlDecimalSeparator))
+    If Not (KeyAscii >= 48 And KeyAscii <= 57) And KeyAscii <> decSep And KeyAscii <> 8 Then KeyAscii = 0
+End Sub
+
+Private Sub btnOpslaan_Click()
+    On Error GoTo ErrHandler
+
+    If Len(Trim$(Me.Controls("cmbCategorie").Value)) = 0 Then MsgBox "Kies een categorie.", vbExclamation: Exit Sub
+    If Len(Trim$(Me.Controls("txtBedrag").Value)) = 0 Then MsgBox "Voer een bedrag in.", vbExclamation: Exit Sub
+
+    Dim d As Date: d = DateValue(Me.Controls("txtDatum").Value)
+    Dim bedrag As Double: bedrag = ParseAmount(CStr(Me.Controls("txtBedrag").Value)) ' uit Utils
+    If bedrag <= 0 Then MsgBox "Bedrag moet > 0 zijn.", vbExclamation: Exit Sub
+
+    Dim soort As String: soort = IIf(Me.Controls("optUitgave").Value, "Uitgave", "Inkomen")
+    Dim beta As String: beta = CStr(Me.Controls("cmbBetaalwijze").Value)
+    Dim cat As String:  cat = CStr(Me.Controls("cmbCategorie").Value)
+    Dim subcat As String: subcat = CStr(Me.Controls("cmbSubcategorie").Value)
+    Dim oms As String:   oms = CStr(Me.Controls("txtOmschrijving").Value)
+
+    Dim wsDB As Worksheet: Set wsDB = ThisWorkbook.Worksheets("Database")
+    EnsureDBHeaders   ' uit Utils
+
+    Dim lo As ListObject
+    On Error Resume Next
+    Set lo = wsDB.ListObjects("tblDagelijkseTransacties")
+    On Error GoTo 0
+
+    If lo Is Nothing Then
+        Dim r As Long: r = wsDB.Cells(wsDB.Rows.Count, 1).End(xlUp).Row + 1
+        wsDB.Cells(r, 1).Value = d
+        wsDB.Cells(r, 2).Value = Year(d)
+        wsDB.Cells(r, 3).Value = Format(d, "YYYY-MM")
+        wsDB.Cells(r, 4).Value = DatePart("ww", d, vbMonday, vbFirstFourDays)
+        wsDB.Cells(r, 5).Value = Format(d, "dddd")
+        wsDB.Cells(r, 6).Value = cat
+        wsDB.Cells(r, 7).Value = subcat
+        wsDB.Cells(r, 8).Value = oms
+        wsDB.Cells(r, 9).Value = bedrag
+        wsDB.Cells(r, 10).Value = beta
+        wsDB.Cells(r, 11).Value = soort
+    Else
+        Dim newRow As ListRow: Set newRow = lo.ListRows.Add
+        With newRow.Range
+            .Cells(1, 1).Value = d
+            .Cells(1, 2).Value = Year(d)
+            .Cells(1, 3).Value = Format(d, "YYYY-MM")
+            .Cells(1, 4).Value = DatePart("ww", d, vbMonday, vbFirstFourDays)
+            .Cells(1, 5).Value = Format(d, "dddd")
+            .Cells(1, 6).Value = cat
+            .Cells(1, 7).Value = subcat
+            .Cells(1, 8).Value = oms
+            .Cells(1, 9).Value = bedrag
+            .Cells(1, 10).Value = beta
+            .Cells(1, 11).Value = soort
+        End With
+    End If
+
+    ' Reset
+    Me.Controls("txtBedrag").Value = ""
+    Me.Controls("txtOmschrijving").Value = ""
+    Me.Controls("cmbSubcategorie").Clear
+    Me.Controls("cmbSubcategorie").Enabled = False
+    Me.Controls("cmbCategorie").ListIndex = -1
+    Me.Controls("cmbBetaalwijze").ListIndex = 1
+    Me.Controls("optUitgave").Value = True
+    Me.Controls("txtDatum").Value = Format(Date, "dd-mm-yyyy")
+
+    MsgBox "Transactie opgeslagen.", vbInformation
+    Exit Sub
+
+ErrHandler:
+    MsgBox "Fout bij opslaan: " & Err.Description, vbCritical
+End Sub
+
+' Categorieën laden uit tblCategorieen
+Private Sub LoadCategories()
+    Dim wsRef As Worksheet: Set wsRef = FrmGetReferentiesSheet()
+    If wsRef Is Nothing Then Exit Sub
+
+    Dim loCat As ListObject
+    On Error Resume Next
+    Set loCat = wsRef.ListObjects("tblCategorieen")
+    On Error GoTo 0
+    If loCat Is Nothing Then Exit Sub
+
+    Dim cmbCategorie As MSForms.ComboBox: Set cmbCategorie = Me.Controls("cmbCategorie")
+    Dim r As Range
+    cmbCategorie.Clear
+    If Not loCat.DataBodyRange Is Nothing Then
+        For Each r In loCat.ListColumns(1).DataBodyRange
+            If Len(Trim$(r.Value)) > 0 Then cmbCategorie.AddItem CStr(r.Value)
+        Next r
+    End If
+End Sub
+' --- Labels mooi: transparant en rechts uitgelijnd ---
+Dim lblNames As Variant, i As Long
+lblNames = Array("lblType", "lblDatum", "lblCat", "lblSub", "lblBedrag", "lblBetaal", "lblOms")
+For i = LBound(lblNames) To UBound(lblNames)
+    With Me.Controls(CStr(lblNames(i)))
+        .BackStyle = fmBackStyleTransparent   ' geen grijze balk
+        .Width = LABEL_WIDTH
+        .TextAlign = fmTextAlignRight
+        .ZOrder 0                             ' voor de zekerheid vóór de bg
+    End With
+Next i

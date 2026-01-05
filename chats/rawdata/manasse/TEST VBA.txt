@@ -1,0 +1,508 @@
+' ================================================
+' OBJECTEN:
+'Blad1 (Invoer) = Leeg blad;
+'Blad2 (Database) = hier wordt de frm invoer opgeslagen en verwerkt naar tabellen voor inzichten en week/maand overzichten = bron van data voor analyse
+'Blad3 (Maand) = overbodig nu we per maand een nieuwe sheet aanmaken; Ik wil hierin eigenlijk ook de maandoverzichten van de dagelijkse uitgaven in verwerken
+'Blad4 (Vast) = invoerblad huishouden, vaste inkomsten en uitgaven 
+'Blad5 (rekentool) = waar een hoop rekenwerk gedaan wordt
+'Blad6 (Januari) = testblad om te kijken of alles werkt. Hier zou het overzicht van Januari moeten komen
+
+'Formulieren
+'	frmInvoer = variabele, dagelijkse uitgaven invoeren
+
+'Modules
+'	Module1
+
+
+' ================================================
+'                GLOBALE HULPFUNCTIES
+' ================================================
+
+' --- Controle of een sheet bestaat ---
+Function SheetBestaat(sheetNaam As String) As Boolean
+    Dim ws As Worksheet
+    SheetBestaat = False
+    
+    For Each ws In ThisWorkbook.Worksheets
+        If LCase(ws.Name) = LCase(sheetNaam) Then
+            SheetBestaat = True
+            Exit Function
+        End If
+    Next ws
+End Function
+
+
+' ================================================
+'         USERFORM LATEN ZIEN
+' ================================================
+
+Sub ToonInvoerForm()
+    frmInvoer.Show
+End Sub
+
+
+' ================================================
+'      WEEK TOTALEN SAMENVATTEN IN DATABASE
+' ================================================
+
+Function WeekTotaalBestaat(weeknr As Long) As Boolean
+    Dim ws As Worksheet
+    Dim rng As Range
+    
+    Set ws = ThisWorkbook.Sheets("Database")
+    Set rng = ws.Range("H:H").Find(weeknr, LookIn:=xlValues, LookAt:=xlWhole)
+    
+    WeekTotaalBestaat = Not rng Is Nothing
+End Function
+
+
+Function LaatsteMaandInMaandTabel() As String
+    Dim ws As Worksheet
+    Dim laatsteRij As Long
+    
+    Set ws = ThisWorkbook.Sheets("Database")
+    laatsteRij = ws.Cells(ws.Rows.Count, "P").End(xlUp).Row
+    
+    If laatsteRij < 2 Then
+        LaatsteMaandInMaandTabel = ""
+    Else
+        LaatsteMaandInMaandTabel = ws.Cells(laatsteRij, "P").Value
+    End If
+End Function
+
+
+' ================================================
+'              WEEKOVERZICHT MAKEN
+' ================================================
+
+Sub BerekenWeekTotaal()
+    Dim ws As Worksheet
+    Dim laatsteRij As Long, i As Long
+    Dim vorigeWeek As Long
+    Dim totaal As Double
+    Dim catDict As Object
+    Dim meestGebruiktCat As String
+    Dim maxCount As Long
+    Dim key As Variant
+
+    Set ws = ThisWorkbook.Sheets("Database")
+    laatsteRij = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    vorigeWeek = DatePart("ww", Date, vbMonday, vbFirstFourDays) - 1
+
+    Set catDict = CreateObject("Scripting.Dictionary")
+
+    For i = 2 To laatsteRij
+        If ws.Cells(i, 3).Value = vorigeWeek Then
+            Dim bedrag As Double, categorie As String
+
+            bedrag = ws.Cells(i, 6).Value
+            categorie = ws.Cells(i, 5).Value
+            
+            totaal = totaal + bedrag
+            
+            If Not catDict.Exists(categorie) Then
+                catDict(categorie) = 1
+            Else
+                catDict(categorie) = catDict(categorie) + 1
+            End If
+        End If
+    Next i
+
+    For Each key In catDict.Keys
+        If catDict(key) > maxCount Then
+            maxCount = catDict(key)
+            meestGebruiktCat = key
+        End If
+    Next key
+    
+    Dim startCol As Long: startCol = 8
+    Dim overzichtRow As Long
+    
+    overzichtRow = ws.Cells(ws.Rows.Count, startCol).End(xlUp).Row + 1
+    
+    If ws.Cells(1, startCol).Value = "" Then
+        ws.Cells(1, startCol).Resize(1, 4).Value = Array("Weeknr", "Totaal", "Aantal categorieën", "Meest gebruikte categorie")
+    End If
+
+    ws.Cells(overzichtRow, startCol).Value = vorigeWeek
+    ws.Cells(overzichtRow, startCol + 1).Value = totaal
+    ws.Cells(overzichtRow, startCol + 2).Value = catDict.Count
+    ws.Cells(overzichtRow, startCol + 3).Value = meestGebruiktCat
+End Sub
+
+
+' ================================================
+'            MAANDOVERZICHT MAKEN
+' ================================================
+
+Sub BerekenMaandTotaal()
+    Dim ws As Worksheet
+    Dim laatsteRij As Long, i As Long
+    Dim vorigeMaand As String
+    Dim totaal As Double, dagenCount As Long
+    Dim weekDict As Object, catDict As Object, catCountDict As Object
+    Dim duursteDag As Double, duursteWeek As Double
+    Dim maxCatValue As Double, minCatValue As Double
+    Dim maxCatName As String, minCatName As String
+    
+    Set ws = ThisWorkbook.Sheets("Database")
+    laatsteRij = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    vorigeMaand = Format(ws.Cells(laatsteRij, 1).Value, "YYYY-MM")
+    
+    Set weekDict = CreateObject("Scripting.Dictionary")
+    Set catDict = CreateObject("Scripting.Dictionary")
+    Set catCountDict = CreateObject("Scripting.Dictionary")
+    
+    totaal = 0
+    dagenCount = 0
+    duursteDag = 0
+    
+    For i = 2 To laatsteRij
+        If Format(ws.Cells(i, 1).Value, "YYYY-MM") = vorigeMaand Then
+            Dim bedrag As Double, datum As Date, categorie As String
+            bedrag = ws.Cells(i, 6).Value
+            datum = ws.Cells(i, 1).Value
+            categorie = ws.Cells(i, 5).Value
+            
+            totaal = totaal + bedrag
+            dagenCount = dagenCount + 1
+            
+            If bedrag > duursteDag Then duursteDag = bedrag
+            
+            Dim weekKey As String
+            weekKey = ws.Cells(i, 3).Value
+            If Not weekDict.Exists(weekKey) Then
+                weekDict(weekKey) = bedrag
+            Else
+                weekDict(weekKey) = weekDict(weekKey) + bedrag
+            End If
+            
+            If Not catDict.Exists(categorie) Then
+                catDict(categorie) = bedrag
+                catCountDict(categorie) = 1
+            Else
+                catDict(categorie) = catDict(categorie) + bedrag
+                catCountDict(categorie) = catCountDict(categorie) + 1
+            End If
+        End If
+    Next i
+    
+    For Each key In weekDict.Keys
+        If weekDict(key) > duursteWeek Then duursteWeek = weekDict(key)
+    Next key
+    
+    maxCatValue = 0
+    minCatValue = 999999
+    For Each key In catDict.Keys
+        If catDict(key) > maxCatValue Then
+            maxCatValue = catDict(key)
+            maxCatName = key
+        End If
+        If catDict(key) < minCatValue Then
+            minCatValue = catDict(key)
+            minCatName = key
+        End If
+    Next key
+    
+    Dim overzichtStartCol As Long
+    overzichtStartCol = 16
+    Dim overzichtRow As Long
+    overzichtRow = ws.Cells(ws.Rows.Count, overzichtStartCol).End(xlUp).Row + 1
+    
+    If ws.Cells(1, overzichtStartCol).Value = "" Then
+        ws.Cells(1, overzichtStartCol).Value = "mnd"
+        ws.Cells(1, overzichtStartCol + 1).Value = "ttl"
+        ws.Cells(1, overzichtStartCol + 2).Value = "gpd"
+        ws.Cells(1, overzichtStartCol + 3).Value = "gpw"
+        ws.Cells(1, overzichtStartCol + 4).Value = "dudg"
+        ws.Cells(1, overzichtStartCol + 5).Value = "duwk"
+        ws.Cells(1, overzichtStartCol + 6).Value = "m_u_a"
+    End If
+    
+    ws.Cells(overzichtRow, overzichtStartCol).Value = vorigeMaand
+    ws.Cells(overzichtRow, overzichtStartCol + 1).Value = totaal
+    ws.Cells(overzichtRow, overzichtStartCol + 2).Value = totaal / dagenCount
+    ws.Cells(overzichtRow, overzichtStartCol + 3).Value = totaal / weekDict.Count
+    ws.Cells(overzichtRow, overzichtStartCol + 4).Value = duursteDag
+    ws.Cells(overzichtRow, overzichtStartCol + 5).Value = duursteWeek
+    ws.Cells(overzichtRow, overzichtStartCol + 6).Value = maxCatName
+    
+    Dim catStartCol As Long
+    catStartCol = overzichtStartCol + 8
+    ws.Cells(1, catStartCol).Value = "Categorie"
+    ws.Cells(1, catStartCol + 1).Value = "Aantal"
+    ws.Cells(1, catStartCol + 2).Value = "Totaal"
+    
+    Dim r As Long
+    r = 2
+    For Each key In catDict.Keys
+        ws.Cells(r, catStartCol).Value = key
+        ws.Cells(r, catStartCol + 1).Value = catCountDict(key)
+        ws.Cells(r, catStartCol + 2).Value = catDict(key)
+        r = r + 1
+    Next key
+    
+    ws.Cells(r + 1, catStartCol).Value = "Duurste categorie: " & maxCatName
+    ws.Cells(r + 2, catStartCol).Value = "Goedkoopste categorie: " & minCatName
+End Sub
+
+
+' ================================================
+'          VASTE LASTEN NAAR DATABASE
+' ================================================
+
+Sub VerwerkVasteLasten()
+    Dim wsInput As Worksheet, wsOutput As Worksheet
+    Dim outputRij As Long
+    Dim maand As String
+
+    Set wsInput = ThisWorkbook.Sheets("Vast")
+    Set wsOutput = ThisWorkbook.Sheets("Maand")
+
+    maand = Format(Date, "YYYY-MM")
+
+    outputRij = wsOutput.Cells(wsOutput.Rows.Count, "A").End(xlUp).Row + 1
+
+    wsOutput.Cells(outputRij, 1).Value = maand
+    wsOutput.Cells(outputRij, 2).Resize(1, 4).Value = wsInput.Range("B2:E2").Value
+
+    MsgBox "Vaste last verwerkt voor maand " & maand, vbInformation
+End Sub
+
+
+' ================================================
+'      MAAND SHEETS MAKEN — VERBETERDE VERSIE
+' ================================================
+
+Sub MaakMaandSheets()
+    Dim wsBron As Worksheet
+    Dim wsDoel As Worksheet
+    Dim maanden As Variant, m As Variant
+    Dim doelRij As Long
+    Dim r As Long
+    Dim rInkomen As Range, rUitgaven As Range
+    Dim bedrag As Double, periode As String
+
+    maanden = Array("Januari", "Februari", "Maart", "April", "Mei", "Juni", "Juli", "Augustus", "September", "Oktober", "November", "December")
+    
+    Set wsBron = ThisWorkbook.Sheets("Vast")
+    
+    For Each m In maanden
+        
+        ' --- SKIP als maandblad al bestaat ---
+        If SheetBestaat(m) Then
+            Debug.Print "Sheet bestaat al → " & m & " (overgeslagen)"
+            GoTo NextMonth
+        End If
+        
+        ' --- Nieuw sheet ---
+        Set wsDoel = ThisWorkbook.Sheets.Add
+        wsDoel.Name = m
+        
+        doelRij = 1
+        wsDoel.Cells(doelRij, 1).Value = "Overzicht voor " & m
+        wsDoel.Cells(doelRij, 1).Font.Bold = True
+        doelRij = doelRij + 2
+        
+        ' --- Huishouden ---
+        With wsDoel
+            .Cells(doelRij, 1).Value = "Huishouden"
+            .Cells(doelRij + 1, 1).Value = "Volwassenen": .Cells(doelRij + 1, 2).Value = 2
+            .Cells(doelRij + 2, 1).Value = "Kinderen":    .Cells(doelRij + 2, 2).Value = 0
+        End With
+        
+        doelRij = doelRij + 4
+        
+        ' --- Inkomsten ---
+        wsDoel.Cells(doelRij, 1).Value = "Inkomsten"
+        wsDoel.Cells(doelRij, 1).Font.Bold = True
+        doelRij = doelRij + 2
+        
+        wsDoel.Cells(doelRij - 1, 1).Value = "Bron"
+        wsDoel.Cells(doelRij - 1, 2).Value = "Bedrag"
+        
+        For Each rInkomen In wsBron.Range("A13:E24")
+            
+            If wsBron.Cells(rInkomen.Row, 3).Value <> "" Then
+                periode = LCase(wsBron.Cells(rInkomen.Row, 2).Value)
+                bedrag = wsBron.Cells(rInkomen.Row, 5).Value
+                
+                Select Case periode
+                    Case "jaar": bedrag = bedrag / 12
+                    Case "kwartaal": bedrag = bedrag / 3
+                    Case "maand": bedrag = bedrag
+                    Case "4 weken": bedrag = bedrag * 13 / 12
+                End Select
+                
+                wsDoel.Cells(doelRij, 1).Value = wsBron.Cells(rInkomen.Row, 1).Value
+                wsDoel.Cells(doelRij, 2).Value = Round(bedrag, 2)
+                
+                doelRij = doelRij + 1
+            End If
+        Next rInkomen
+        
+        wsDoel.Cells(doelRij, 1).Value = "Totaal inkomsten"
+        wsDoel.Cells(doelRij, 2).Formula = "=SUM(B" & (doelRij - 1) & ":B6)"
+        doelRij = doelRij + 2
+        
+        
+        ' --- Uitgaven ---
+        wsDoel.Cells(doelRij, 1).Value = "Uitgaven"
+        wsDoel.Cells(doelRij, 1).Font.Bold = True
+        doelRij = doelRij + 2
+        
+        wsDoel.Cells(doelRij - 1, 1).Value = "Categorie"
+        wsDoel.Cells(doelRij - 1, 2).Value = "Bedrag"
+        
+        For Each rUitgaven In wsBron.Range("A40:A90")
+            
+            If wsBron.Cells(rUitgaven.Row, 3).Value <> "" Then
+                periode = LCase(wsBron.Cells(rUitgaven.Row, 2).Value)
+                bedrag = wsBron.Cells(rUitgaven.Row, 3).Value
+                
+                Select Case periode
+                    Case "jaar": bedrag = bedrag / 12
+                    Case "kwartaal": bedrag = bedrag / 3
+                    Case "maand": bedrag = bedrag
+                End Select
+                
+                wsDoel.Cells(doelRij, 1).Value = wsBron.Cells(rUitgaven.Row, 1).Value
+                wsDoel.Cells(doelRij, 2).Value = Round(bedrag, 2)
+                
+                doelRij = doelRij + 1
+            End If
+        Next rUitgaven
+        
+        wsDoel.Cells(doelRij, 1).Value = "Totaal uitgaven"
+        wsDoel.Cells(doelRij, 2).Formula = "=SUM(B" & (doelRij - 1) & ":B7)"
+        doelRij = doelRij + 2
+        
+        
+        ' --- Saldo ---
+        wsDoel.Cells(doelRij, 1).Value = "Saldo"
+        wsDoel.Cells(doelRij, 2).Formula = "=B" & (doelRij - 4) & "-B" & (doelRij - 2)
+        
+        
+NextMonth:
+    Next m
+    
+    MsgBox "Maandsheets aangemaakt (bestaande overgeslagen)."
+End Sub
+
+' ================================================
+'      CODE IN WORKSHEET : nog niet verbeterd
+' ================================================
+Private Sub Workbook_Open()
+    ' Controleer of vorige week verwerkt is
+    Dim vorigeWeek As Long
+    vorigeWeek = DatePart("ww", Date, vbMonday, vbFirstFourDays) - 1
+
+    If Weekday(Date, vbMonday) = 1 Then
+        ' Maandag: automatisch berekenen als nog niet gedaan
+        If Not WeekTotaalBestaat(vorigeWeek) Then
+            Call BerekenWeekTotaal
+        End If
+    Else
+        ' Andere dag: check en vraag gebruiker
+        If Not WeekTotaalBestaat(vorigeWeek) Then
+            Dim antwoord As VbMsgBoxResult
+            antwoord = MsgBox("Weektotaal vorige week ontbreekt. Nu berekenen?", vbYesNo + vbQuestion, "Weekoverzicht")
+            If antwoord = vbYes Then Call BerekenWeekTotaal
+        End If
+    End If
+
+    ' Controleer of vorige maand verwerkt is
+    If Format(Date, "YYYY-MM") <> LaatsteMaandInMaandTabel() Then
+        Call BerekenMaandTotaal
+    End If
+End Sub
+
+'================================================
+'Formulier code voor invoeren dagelijkse uitgaven
+'================================================
+
+
+Private Sub OptionButton2_Click()
+
+End Sub
+
+Private Sub SpinButton1_Change()
+
+End Sub
+
+Private Sub Optbtn1_Click()
+
+End Sub
+
+Private Sub txtBedrag_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
+    ' Sta alleen cijfers en komma/punt toe
+    If Not (KeyAscii >= 48 And KeyAscii <= 57) And KeyAscii <> 44 And KeyAscii <> 46 And KeyAscii <> 8 Then
+        KeyAscii = 0
+    End If
+End Sub
+
+Private Sub UserForm_Initialize()
+    ' Toon dag en weeknummer
+    lblDag.Caption = "Het is vandaag " & Format(Date, "dddd")
+    lblWeek.Caption = "Het is week: " & Format(Date, "ww", vbMonday, vbFirstFourDays)
+
+    
+    ' Vul ComboBox
+    cmbSoort.Clear
+    cmbSoort.AddItem "Bestellen"
+    cmbSoort.AddItem "Roken"
+    cmbSoort.AddItem "Uitje"
+    cmbSoort.AddItem "Hapje/Drankje"
+    cmbSoort.AddItem "Vervoer"
+    cmbSoort.AddItem "Cadeau"
+    cmbSoort.AddItem "Lisa"
+    cmbSoort.AddItem "Kyra"
+    cmbSoort.AddItem "Kleding e.d"
+End Sub
+
+Private Sub btnOpslaan_Click()
+    Dim wsDB As Worksheet
+    Dim nieuweRij As Long
+    Dim huidigeDatum As Date
+    Dim maandNaam As String
+    Dim dagNaam As String
+    Dim weeknr As String
+    Dim wijze As String
+    
+    If Optbtn1.Value = True Then
+        wijze = "Contant"
+    ElseIf Optbtn2.Value = True Then
+        wijze = "Pin"
+    ElseIf Optbtn3.Value = True Then
+        wijze = "Creditcard"
+    End If
+    
+
+    Set wsDB = ThisWorkbook.Sheets("Database")
+
+    huidigeDatum = Date
+    maandNaam = Format(huidigeDatum, "mmmm")
+    dagNaam = Format(huidigeDatum, "dddd")
+    weeknr = Format(huidigeDatum, "ww", vbMonday, vbFirstFourDays)
+
+    nieuweRij = wsDB.Cells(wsDB.Rows.Count, "A").End(xlUp).Row + 1
+
+    wsDB.Cells(nieuweRij, 1).Value = huidigeDatum
+    wsDB.Cells(nieuweRij, 2).Value = maandNaam
+    wsDB.Cells(nieuweRij, 3).Value = weeknr
+    wsDB.Cells(nieuweRij, 4).Value = dagNaam
+    wsDB.Cells(nieuweRij, 5).Value = cmbSoort.Value
+    wsDB.Cells(nieuweRij, 6).Value = txtBedrag.Value
+    wsDB.Cells(nieuweRij, 7).Value = wijze
+
+    cmbSoort.Value = ""
+    txtBedrag.Value = ""
+    Optbtn1.Value = False
+    Optbtn2.Value = False
+    Optbtn3.Value = False
+
+    MsgBox "Gegevens opgeslagen!", vbInformation
+End Sub
+
+============
+Deze code genereert een fout bij MaakMaand. Ik kan niet vinden waar

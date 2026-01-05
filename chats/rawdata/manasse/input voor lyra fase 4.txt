@@ -1,0 +1,108 @@
+Lyra Prompt: Financiële Vrijheid Budget App - FASE 4: Componentontwikkeling
+ROL: U bent een senior Full-Stack/Mobile Developer en UX/UI Expert. U neemt de ontwikkeling over van een budget-applicatie die gericht is op het verminderen van stress en het bevorderen van eenvoudige, snelle financiële actie.
+CONTEXT & ACHTERGROND (Tot Fase 4.2):
+Oorsprong: De basis van de financiële logica (analyseformules, totalen, periodieke analyses) is vastgelegd en komt uit een eerdere Excel/VBA-fase. De focus ligt op het overzetten van deze logica naar een moderne, mobiele app.
+Architectuur:
+Frontend: React Native (Expo).
+Backend/Data: Supabase (Authenticatie en Database).
+Snelle Invoer: n8n Webhooks (voor de Quick Add component).
+Ontwerp Principes (CRUCIAAL): De volledige UX/UI-analyse is vastgelegd in het onderstaande document. Elke nieuwe component moet zich strikt houden aan deze principes, met name het gebruik van de gespecificeerde kleuren en het schreefloze lettertype.
+UX/UI ANALYSE ARTIFACT:
+FASE 4.1: UX/UI Analyse & Design Principes
+Het ontwerp is volledig gericht op het verlagen van stress en het bevorderen van eenvoudige, snelle actie.
+2. Dashboard (Analyse) Wireframe Concept
+Het dashboard moet actiegericht zijn, niet historisch veroordelend.
+Dashboard Elementen:
+
+3. Dagelijkse Invoer Formulier (Quick Add Expense Component)
+Het dagelijkse invoerformulier moet de minimale vereisten hanteren, zodat gebruikers het onderweg of snel kunnen invullen.
+Minimale Vereiste Velden :
+Bedrag: Numerieke invoer.
+Categorie: Een snelle selectie (via een knop of chip/tab) uit de meest gebruikte categorieën en subcategoriën
+Type transactie
+
+
+De 'Quick Add Expense' is het component dat dit implementeert. Het is de meest kritische interactie.
+HUIDIGE TAAK (FASE 4.1):
+PROMPT: Nu de backend (n8n/Supabase) is gevalideerd, starten we FASE 4: A-Tier UX/UI & Component Design. De eerste taak is het creëren van de TransactionInput component in React Native (Expo Snack). Geef mij de complete, schone TypeScript/React Native code voor dit component. Het component moet: 1) Een formulier bevatten voor alle transactions velden (date, amount, category, etc.). 2) De n8n Webhook URL aanroepen met de ingevoerde JSON-data en de user_id van de geauthenticeerde gebruiker (gebruik een placeholder USER_ID_PLACEHOLDER en de permanente Webhook URL) bij het klikken op de knop Opslaan.
+
+FASE 4: A-Tier UX/UI & Component Design (Focus op minimalisme)
+| Onderdeel | Details |
+|---|---|
+| Fase Doel | Ontwerpen van de visuele lay-out en de kritische gebruikersinteracties. De focus ligt op eenvoudige invoer, lage cognitieve belasting, en motiverende, niet-veroordelende dashboards, met behulp van React Native componenten. |
+| Aanbevolen AI Tool | Claude (Uitstekend in creatieve en design-georiënteerde taken, en het structureren van UX-principes voor specifieke doelgroepen). |
+| Geoptimaliseerde Prompt | Ik ontwikkel een mobiele app in React Native voor mensen met schulden, waarbij **eenvoud** en **duidelijke actiepunten** cruciaal zijn. Ontwerp de wireframes en geef styling-suggesties (met focus op toegankelijkheid en kalme kleuren) voor de twee meest kritieke schermen: **1) Dashboard (Analyse)** en **2) Dagelijkse Invoer Formulier**. Voor het Dashboard, geef suggesties voor het visualiseren van de 'risicomarge' (uit FASE 3) op een niet-paniekerige, actiegerichte manier. Voor het Invoer Formulier, geef de minimale vereiste velden op, en schrijf de React Native componentcode (basis JSX) voor een 'Quick Add Expense'-component die slechts 2 kliks vereist (Bedrag + Categorie). |
+| Verwacht Resultaat | Een gedetailleerde beschrijving van de UX/UI-flow, een kleurenpalet en lettertypeselectie gericht op de doelgroep, en basis React Native JSX-code voor de kritieke invoercomponent. |
+
+Changelog	SQL Beleid (POLICY)	Doel
+SELECT (Lezen)	CREATE POLICY "User can view their own transactions" ON transactions FOR SELECT USING (auth.uid() = user_id);	Gebruiker mag alleen transacties zien die hun eigen user_id bevatten.
+INSERT (Schrijven)	CREATE POLICY "User can insert their own transactions" ON transactions FOR INSERT WITH CHECK (auth.uid() = user_id);	Gebruiker mag alleen transacties toevoegen met hun eigen user_id.
+UPDATE (Bewerken)	CREATE POLICY "User can update their own transactions" ON transactions FOR UPDATE USING (auth.uid() = user_id);	Gebruiker mag alleen hun eigen bestaande transacties bewerken.
+		
+Versie	Datum	Fase
+v0.4	2025-11-28	FASE 2.1
+v0.3	2025-11-28	FASE 3
+		
+Versie	Datum	Fase
+v0.5	2025-11-28	FASE 3.1
+v0.4	2025-11-28	FASE 2.1
+		
+Onderdeel	Oorspronkelijke Status	Huidige Status
+Supabase RLS	Geblokkeerd (401 Unauthorized)	✅ Opgelost
+API Endpunt URI	404 Not Found	✅ Opgelost
+JSON Payload	400 Bad Request	✅ Opgelost
+Data Flow	Foutief/Onvolledig	✅ Stabiel & Vrijgegeven
+
+Fase	Rol van n8n	
+FASE 2	Datamodel Vertaling (Nog niet ideaal): Je zult handmatig een datamodel moeten definiëren in n8n om de VBA-structuur te vertalen.	
+FASE 3	Migratie-Engine (Zeer geschikt): n8n kan worden gebruikt om de bestaande data uit jouw Excel-database te lezen en automatisch in de nieuwe database (Firebase/Supabase) te schrijven via een workflow.	
+FASE 4+	Backend API & Webhooks (Perfect): Je kunt n8n gebruiken om 'Webhooks' op te zetten. Wanneer je mobiele app data wil opslaan of ophalen, stuurt deze een bericht naar n8n, die de logica uitvoert en met de database communiceert. Dit maakt jouw mobiele app heel eenvoudig en verplaatst de complexiteit naar de n8n workflow.	
+		
+Collectie/Tabel (Firebase/Supabase)	Doel	Essentiële Velden (Fields)
+transactions	De ruwe log van alle inkomsten en uitgaven. Dit is de kern van de data.	id (Unieke ID), date (Datum), amount (Bedrag), category (Categorie), description (Omschrijving), type ('Inkomst' of 'Uitgave').
+weekly_summaries	Overzichten per ISO-week. Deze worden door de backend (n8n) berekend.	id (Unieke ID), year (Jaar), week_iso (Weeknummer), total_spent (Totaal uitgaven), total_income (Totaal inkomsten).
+monthly_summaries	Overzichten per maand. Ook berekend door de backend.	id (Unieke ID), year_month (bijv. "2025-11"), total_spent, total_income.
+		
+Collectie/Tabel (Supabase)	Doel	Type Relatie
+transactions	De ruwe log van alle inkomsten en uitgaven.	Velen
+household_settings	Nieuw: Globale instellingen, doelen en statistische input voor de financiële planning.	Eén-op-één (Singelton)
+recurring_finances	Nieuw: Inkomen en vaste, maandelijks terugkerende lasten.	Velen
+weekly_summaries	Berekende overzichten per week (voor snelle rapportage).	Velen
+monthly_summaries	Berekende overzichten per maand.	Velen
+		
+Logica/Berekening	Vereiste Data	Workflow in n8n
+Financiële Remweg	household_settings (Target) + recurring_finances (Netto Maandlasten) + transactions (Huidige Spaartegoed/Buffer).	N8N Workflow leest alle drie de tabellen, voert de berekening uit en slaat het resultaat op in een financial_reports-tabel.
+Budget Advies	household_settings (Budget Goal) + monthly_summaries (Huidig Verbruik).	N8N Workflow vergelijkt de monthly_summaries (uitgaven) met de monthly_budget_goal om te bepalen of de gebruiker op schema ligt.
+		
+Collectie/Tabel (Tabelnaam)	Relatie	Essentiële Velden & Datatypes
+users	Eén-op-één met Auth	id (UUID, Foreign Key naar auth.users), email (Text), created_at (Timestamp).
+household_settings	Eén-op-één	id (Primary Key), user_id (UUID, Foreign Key), member_names (JSONB/Array), target_brake_distance (Integer), monthly_budget_goal (Numeric).
+recurring_finances	Velen	id (Primary Key), user_id (UUID, Foreign Key), item_name (Text), amount (Numeric), frequency (Text), type (Text: 'Income' of 'FixedCost').
+transactions	Velen	id (Primary Key), user_id (UUID, Foreign Key), date (Date), amount (Numeric), category (Text), description (Text), type (Text: 'Inkomst' of 'Uitgave').
+weekly_summaries	Velen (berekend)	id, user_id (UUID, Foreign Key), year, week_iso, total_spent, total_income.
+		
+Actie	SQL Beleid (POLICY)	Doel
+SELECT (Lezen)	CREATE POLICY "User can view their own transactions" ON transactions FOR SELECT USING (auth.uid() = user_id);	Gebruiker mag alleen transacties zien die hun eigen user_id bevatten.
+INSERT (Schrijven)	CREATE POLICY "User can insert their own transactions" ON transactions FOR INSERT WITH CHECK (auth.uid() = user_id);	Gebruiker mag alleen transacties toevoegen met hun eigen user_id.
+UPDATE (Bewerken)	CREATE POLICY "User can update their own transactions" ON transactions FOR UPDATE USING (auth.uid() = user_id);	Gebruiker mag alleen hun eigen bestaande transacties bewerken.
+		
+Collectie/Tabel (Tabelnaam)	Relatie	Essentiële Velden & Datatypes
+users	Eén-op-één met Auth	id, email, created_at.
+household_settings	Eén-op-één	id, user_id (FK), member_names, target_brake_distance (in maanden), monthly_budget_goal.
+🟢 NIEUW: financial_state	Eén-op-één	id, user_id (FK), current_buffer_balance (Numeric), last_updated (Timestamp).
+recurring_finances	Velen	id, user_id (FK), item_name, amount, frequency, type ('Income' of 'FixedCost').
+transactions	Velen	id, user_id (FK), date, amount, category, subcategory (Text, AANPASSING), description, type.
+weekly_summaries	Velen (berekend)	id, user_id (FK), year, week_iso, total_spent, total_income.
+monthly_summaries	Velen (berekend)	id, user_id (FK), year_month, total_spent, total_income.
+🟢 AANBEVOLEN: logs	Velen	id, timestamp, user_id (optioneel), level (Error/Warning), message, source (n8n/React-Native).		
+
+Veld (Column)	Datatype (Type)	Standaardwaarde (Default Value)	Vereisten (Options)	Uitleg & Keuze
+id	uuid (UUID)	gen_random_uuid()	Primary Key, Not Null, Unique	Dit is de unieke sleutel. gen_random_uuid() zorgt ervoor dat PostgreSQL automatisch een unieke ID aanmaakt.
+user_id	uuid (UUID)	Geen	Foreign Key (naar auth.users), Not Null	Linkt de transactie aan de ingelogde gebruiker. Not Null is essentieel voor RLS-beveiliging.
+created_at	timestamp with time zone	now()	Not Null	Aanbevolen: Houdt automatisch bij wanneer de transactie is ingevoerd.
+date	date	Geen	Not Null	De datum van de uitgave of inkomst.
+amount	numeric (Numeric)	Geen	Not Null	Het bedrag. Gebruik numeric (niet float of double) voor geldbedragen;
+category	text (Text)	Geen	Not Null	De hoofdgroep (e.g., 'Boodschappen', 'Vervoer').
+subcategory	text (Text)	Geen	Not Null	De gedetailleerde groep (e.g., 'Noodzakelijk', 'Optioneel').
+description	text (Text)	Geen	Not Null	De omschrijving van de uitgave.
+type	text (Text)	Geen	Not Null	Inkomst' of 'Uitgave'.

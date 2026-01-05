@@ -1,0 +1,54 @@
+[INI_01]
+Step: Backup Current Forms
+Action: Make a copy of frmHuishouden.frm, frmVast.frm, frmInvoer.frm before editing.
+Expected Result: Backup files exist in a safe folder.
+
+[INI_02]
+Step: Open Referenties Sheet
+Action: Verify tblLayoutSpecs contains Keys: Prev, Next, Save, Cancel, RowAdd, RowDel.
+Expected Result: Table has all required columns (Key, ShapeName, Width, Height, X, Y).
+
+[INI_03]
+Step: Remove Hardcoded Positions
+Action: In each UserForm code, delete any .Left/.Top/.Width/.Height assignments for buttons.
+Expected Result: No hardcoded coordinates remain.
+
+[INI_04]
+Step: Apply Initialize Sequence
+Action: For each form, ensure Initialize event calls in this order:
+1) EnsureBackgroundImage(Me)
+2) Build controls (frmBuilders or FormEvents)
+3) BuildButtonsFromSpecs or PlaceButtonFromSpec
+4) FrmLayoutSafeAreaDyn(Me)
+5) HookEventsDynamic(Me)
+Expected Result: Code matches sequence exactly.
+
+[INI_05]
+Step: Apply Resize Logic
+Action: Add UserForm_Resize event with FrmLayoutSafeAreaDyn(Me).
+Expected Result: Resizing the form repositions controls correctly.
+
+[INI_06]
+Step: Hover Setup
+Action: Confirm img.Tag includes 'base=...\nhover=...' in PlaceButtonFromSpec.
+Expected Result: Hover works within ~100ms.
+
+[INI_07]
+Step: Optional Background
+Action: Add Key=Background in tblLayoutSpecs and implement GetBackgroundShapeNameFromSpecs helper.
+Expected Result: Background loads from specs or falls back to bg_frmInvoer_landscape.
+
+[INI_08]
+Step: Run Sanity Check
+Action: Execute modSanityChecks.RunAssetSanity True.
+Expected Result: No missing hover shapes; report shows OK.
+
+[INI_09]
+Step: Visual Validation
+Action: Open each form, check button positions and hover behavior.
+Expected Result: Buttons align as per specs; hover assets visible.
+
+[INI_10]
+Step: Deliverables
+Action: Provide patched frmHuishouden.frm, frmVast.frm, frmInvoer.frm and sanity-check report.
+Expected Result: All acceptance criteria met.

@@ -1,0 +1,208 @@
+
+============================================================
+PATCH_CODE.TXT – Kritieke Patches voor W&I Excel UserForms Wizard
+============================================================
+Datum: 26-11-2025
+Auteur: AI Agent
+
+Doel: Verwijder oude code en vervang door onderstaande nieuwe procedures.
+
+------------------------------------------------------------
+INSTRUCTIES ALGEMEEN
+------------------------------------------------------------
+1. Open VBE (Alt+F11).
+2. Zoek de module:
+   - LayoutSpecsHelpers → functie GetShapePath
+   - FormLayout → sub FrmLayoutSafeAreaDyn
+   - FormLayout → sub RemoveDynamicControls
+3. Verwijder de volledige oude procedure (BEFORE-blok).
+4. Plak de nieuwe procedure (AFTER-blok) op exact dezelfde plek.
+5. Compileer (Debug → Compile VBAProject).
+
+------------------------------------------------------------
+[PATCH 1] LayoutSpecsHelpers.GetShapePath
+------------------------------------------------------------
+--- BEFORE (verwijderen)
+Public Function GetShapePath(ByVal shapeName As String, Optional ByVal suffix As String = "") As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim shp As Shape: Set shp = wsRef.Shapes(shapeName)
+    If shp Is Nothing Then Exit Function
+    Dim tmp As String: tmp = Utils.GetTempFile(shapeName & suffix, ".jpg")
+    Dim ch As ChartObject
+    Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=shp.Width, Height:=shp.Height)
+    shp.Copy: ch.Activate: ch.Chart.Paste
+    ch.Chart.Export tmp, "JPG": ch.Delete
+    If Dir(tmp) <> "" Then GetShapePath = tmp
+    Exit Function
+ErrHandler:
+    Utils.LogError4 "LayoutSpecsHelpers", "GetShapePath", Err.Number, Err.Description
+End Function
+
+--- AFTER (plakken)
+Public Function GetShapePath(ByVal shapeName As String, Optional ByVal suffix As String = "") As String
+    On Error GoTo ErrHandler
+
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    If wsRef Is Nothing Then Exit Function
+
+    If wsRef.Visible = xlSheetVeryHidden Then wsRef.Visible = xlSheetVisible
+    wsRef.Activate: DoEvents
+
+    Dim shp As Shape
+    On Error Resume Next
+    Set shp = wsRef.Shapes(shapeName)
+    On Error GoTo ErrHandler
+    If shp Is Nothing Then Exit Function
+
+    Dim tmp As String: tmp = Utils.GetTempFile(shapeName & suffix, ".jpg")
+    Dim ch As ChartObject
+    Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=Application.Max(8, shp.Width), Height:=Application.Max(8, shp.Height))
+
+    Dim i As Long, pasted As Boolean
+    For i = 1 To 3
+        On Error Resume Next
+        shp.CopyPicture Appearance:=xlScreen, Format:=xlPicture
+        ch.Activate
+        ch.Chart.Paste
+        On Error GoTo ErrHandler
+
+        If ch.Chart.Shapes.Count > 0 Then pasted = True: Exit For
+        DoEvents: Application.CutCopyMode = False
+    Next i
+
+    If Not pasted Then GoTo CleanUp
+
+    ch.Chart.Export tmp, "JPG"
+    If Dir(tmp) <> "" Then GetShapePath = tmp
+
+CleanUp:
+    On Error Resume Next
+    ch.Delete: Application.CutCopyMode = False
+    On Error GoTo 0
+    Exit Function
+
+ErrHandler:
+    Utils.LogError4 "LayoutSpecsHelpers", "GetShapePath", Err.Number, Err.Description
+    Resume CleanUp
+End Function
+
+------------------------------------------------------------
+[PATCH 2] FormLayout.FrmLayoutSafeAreaDyn
+------------------------------------------------------------
+--- BEFORE (verwijderen)
+Public Sub FrmLayoutSafeAreaDyn(frm As Object)
+    ' ... volledige oude code verwijderen ...
+End Sub
+
+--- AFTER (plakken)
+Public Sub FrmLayoutSafeAreaDyn(frm As Object)
+    On Error GoTo ErrHandler
+
+    MonthlySheet.EnsureConfigSheet
+    Dim BG_MARGIN As Double: BG_MARGIN = MonthlySheet.ConfigGet("BG_MARGIN", 6)
+    Dim ROW_SPACING As Double: ROW_SPACING = MonthlySheet.ConfigGet("ROW_SPACING", 34)
+    Dim LABEL_WIDTH As Double: LABEL_WIDTH = MonthlySheet.ConfigGet("LABEL_WIDTH", 120)
+    Dim GAP_LABEL_TO_INPUT As Double: GAP_LABEL_TO_INPUT = MonthlySheet.ConfigGet("GAP_LABEL_TO_INPUT", 12)
+    Dim RIGHT_PADDING As Double: RIGHT_PADDING = MonthlySheet.ConfigGet("RIGHT_PADDING", 20)
+    Dim INP_MAX As Double: INP_MAX = MonthlySheet.ConfigGet("INP_MAX", 360)
+    Dim SAFE_LEFT_PCT As Double: SAFE_LEFT_PCT = MonthlySheet.ConfigGet("SAFE_LEFT_PCT", 0.12)
+    Dim SAFE_RIGHT_PCT As Double: SAFE_RIGHT_PCT = MonthlySheet.ConfigGet("SAFE_RIGHT_PCT", 0.88)
+    Dim SAFE_TOP_PCT As Double: SAFE_TOP_PCT = MonthlySheet.ConfigGet("SAFE_TOP_PCT", 0.2)
+    Dim SAFE_BOTTOM_PCT As Double: SAFE_BOTTOM_PCT = MonthlySheet.ConfigGet("SAFE_BOTTOM_PCT", 0.8)
+
+    Dim bgLeft As Single, bgTop As Single, bgW As Single, bgH As Single
+    Dim bg As MSForms.Image: Set bg = TryGetImageDyn(frm, FormLayout.DYN_PREFIX & "imgBackground")
+    If bg Is Nothing Then
+        bgLeft = BG_MARGIN: bgTop = BG_MARGIN
+        bgW = frm.InsideWidth - 2 * BG_MARGIN
+        bgH = frm.InsideHeight - 2 * BG_MARGIN
+    Else
+        bgLeft = bg.Left: bgTop = bg.Top: bgW = bg.Width: bgH = bg.Height
+    End If
+    If bgW < 0 Then bgW = 0
+    If bgH < 0 Then bgH = 0
+
+    Dim safeLeft As Single, safeTop As Single, safeWidth As Single, safeHeight As Single
+    safeLeft = bgLeft + (SAFE_LEFT_PCT * bgW)
+    safeTop = bgTop + (SAFE_TOP_PCT * bgH)
+    safeWidth = (SAFE_RIGHT_PCT - SAFE_LEFT_PCT) * bgW
+    safeHeight = (SAFE_BOTTOM_PCT - SAFE_TOP_PCT) * bgH
+    If safeWidth < 0 Then safeWidth = 0
+    If safeHeight < 0 Then safeHeight = 0
+
+    Dim colLbl As Single, colInp As Single, inpWidth As Single, t As Single
+    colLbl = safeLeft
+    colInp = safeLeft + LABEL_WIDTH + GAP_LABEL_TO_INPUT
+    inpWidth = safeWidth - (colInp - safeLeft) - RIGHT_PADDING
+    If inpWidth < 0 Then inpWidth = 0
+    If inpWidth > INP_MAX Then
+        Dim extraSpace As Single
+        extraSpace = (inpWidth - INP_MAX) / 2
+        colInp = colInp + extraSpace
+        inpWidth = INP_MAX
+    End If
+
+    ' Lay-out toewijzing met guards
+    t = safeTop
+    Dim ctrl As Control
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblDatumVandaag"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblCat"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "cmbCategorie"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblSub"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Dim wSub As Single: wSub = Application.Max(0, inpWidth - 36)
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "cmbSubcategorie"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = wSub
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "btnNieuwSub"): If Not ctrl Is Nothing Then ctrl.Left = colInp + wSub + 8: ctrl.Top = t: ctrl.Width = 28: ctrl.Height = 22
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblBedrag"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "txtBedrag"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblBetaal"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "cmbBetaalwijze"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+
+    Dim btnOps As Control, btnAnn As Control
+    Set btnOps = TryGetControl(frm, FormLayout.DYN_PREFIX & "imgBtnOpslaan")
+    Set btnAnn = TryGetControl(frm, FormLayout.DYN_PREFIX & "imgBtnAnnuleren")
+    If Not btnOps Is Nothing And Not btnAnn Is Nothing Then
+        Dim btnTotalWidth As Single: btnTotalWidth = btnOps.Width + 24 + btnAnn.Width
+        Dim btnLeft As Single: btnLeft = safeLeft + Application.Max(0, (safeWidth - btnTotalWidth)) / 2
+        Dim btnY As Single: btnY = safeTop + Application.Max(0, safeHeight - 60)
+        btnOps.Left = btnLeft: btnOps.Top = btnY
+        btnAnn.Left = btnLeft + btnOps.Width + 24: btnAnn.Top = btnY
+    End If
+
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "FormLayout", "FrmLayoutSafeAreaDyn", Err.Number, Err.Description
+End Sub
+
+------------------------------------------------------------
+[PATCH 3] FormLayout.RemoveDynamicControls
+------------------------------------------------------------
+--- BEFORE (verwijderen)
+Public Sub RemoveDynamicControls(frm As Object)
+    ' ... oude code met Collection verwijderen ...
+End Sub
+
+--- AFTER (plakken)
+Public Sub RemoveDynamicControls(frm As Object)
+    On Error GoTo ErrHandler
+    Dim i As Long, nm As String
+    For i = frm.Controls.Count - 1 To 0 Step -1
+        nm = frm.Controls.Item(i).Name
+        If Left$(nm, Len(FormLayout.DYN_PREFIX)) = FormLayout.DYN_PREFIX Then
+            On Error Resume Next
+            frm.Controls.Remove nm
+            On Error GoTo ErrHandler
+        End If
+    Next i
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "FormLayout", "RemoveDynamicControls", Err.Number, Err.Description
+End Sub
+
+============================================================
+EINDE PATCH_CODE.TXT – Plak deze procedures en compileer.
+============================================================

@@ -1,0 +1,372 @@
+
+=== INSTRUCTIES (Leesbaar in Notepad++) ===
+Doel: bestaande code werkend maken zonder dubbele aanroepen en zonder nieuwe opties. Focus op layout via specs, hover, en veilige aanroepen.
+
+[PATCH 1] tblLayoutSpecs → Notes-kolom (#NAAM? oplossen)
+- Probleem: '#NAAM?' komt door formule/named range die niet bestaat of niet herkend.
+- Actie: vervang formules in Notes voor RowAdd/RowDel door platte tekst.
+  * RowAdd → Notes = "row +"
+  * RowDel → Notes = "row -"
+- Waarom: #NAAM? voorkomt betrouwbare uitlezing en is niet nodig voor functionaliteit. (Geen nieuwe optie; enkel tekst)
+
+[PATCH 2] frmBuilders.BuildForm_Huishouden → verwijder hardcoded size; safe-area aanroepen
+--- BEFORE
+    ' Layout eenvoudige plaatsing
+    frm.Width = 800: frm.Height = 500
+--- AFTER
+    ' Layout via safe-area (geen hardcoded size)
+    FormLayout.FrmLayoutSafeAreaDyn frm
+
+[PATCH 3] frmHuishouden.frm (code-behind) → correcte aanroepvolgorde + Resize
+--- BEFORE
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    FormHelpers.EnsureBackgroundImage Me
+    frmBuilders.BuildForm_Huishouden Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmHuishouden", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+--- AFTER
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    ' 1) Background
+    FormHelpers.EnsureBackgroundImage Me
+    ' 2) Controls bouwen
+    frmBuilders.BuildForm_Huishouden Me
+    ' 3) Safe-area
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    ' 4) Events
+    FormEvents.HookEventsDynamic Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmHuishouden", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+    On Error GoTo ErrHandler
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmHuishouden", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+
+[PATCH 4] frmVast.frm (code-behind) → correcte aanroepvolgorde + Resize
+--- BEFORE
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    FormHelpers.EnsureBackgroundImage Me
+    frmBuilders.BuildFrmVast Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmVast", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+--- AFTER
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    ' 1) Background
+    FormHelpers.EnsureBackgroundImage Me
+    ' 2) Controls & MultiPage bouwen
+    frmBuilders.BuildFrmVast Me
+    ' 3) Safe-area (hoofdniveau)
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    ' 4) Events
+    FormEvents.HookEventsDynamic Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmVast", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+    On Error GoTo ErrHandler
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmVast", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+
+[PATCH 5] frmInvoer.frm → geen dubbele aanroepen
+- Laat Initialize zoals in jouw laatste versie: alleen FormEvents.BuildDynamicFrmInvoer Me
+- Dit voorkomt dubbel: BuildDynamicFrmInvoer roept zelf Background, Buttons, Layout, Events aan.
+
+[PATCH 6] LayoutSpecsHelpers.GetLayoutSpec → type-veilig headermatch
+--- BEFORE
+    colIndex = Application.Match(fieldName, Application.Transpose(hdr.Value), 0)
+    If IsError(colIndex) Or colIndex <= 0 Then Exit Function
+--- AFTER
+    Dim i As Long
+    colIndex = 0
+    For i = 1 To hdr.Columns.Count
+        If StrComp(CStr(hdr.Cells(1, i).Value), fieldName, vbTextCompare) = 0 Then
+            colIndex = i
+            Exit For
+        End If
+    Next i
+    If colIndex = 0 Then Exit Function
+
+[PATCH 7] LayoutSpecsHelpers.GetShapePath → stabieler kopiëren (Copy/Paste)
+--- BEFORE
+    shp.Copy: ch.Activate: ch.Chart.Paste
+--- AFTER
+    wsRef.Activate
+    DoEvents
+    shp.Copy
+    ch.Activate
+    ch.Chart.Paste
+    DoEvents
+
+[PATCH 8] FormLayout.FrmLayoutSafeAreaDyn → negatieve widths voorkomen
+--- BEFORE
+    inpWidth = safeWidth - (colInp - safeLeft) - RIGHT_PADDING
+--- AFTER
+    inpWidth = safeWidth - (colInp - safeLeft) - RIGHT_PADDING
+    If inpWidth < 0 Then inpWidth = 0
+
+=== EINDE INSTRUCTIES ===
+
+
+
+'=========================
+' PATCHED VBA FRAGMENTS (samengebundeld)
+'=========================
+
+'--- Module: frmBuilders ---
+Public Sub BuildForm_Huishouden(frm As Object)
+    On Error GoTo ErrHandler
+    FormLayout.RemoveDynamicControls frm
+    FormHelpers.EnsureBackgroundImage frm
+    ' Titel
+    Dim lblTitle As MSForms.Label: Set lblTitle = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblTitle", True)
+    lblTitle.Caption = "Stap 1 van 4 – Huishouden"
+    ' Total persons
+    Dim lblTot As MSForms.Label: Set lblTot = frm.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblTotal", True): lblTot.Caption = "Totaal personen"
+    Dim txtTot As MSForms.TextBox: Set txtTot = frm.Controls.Add("Forms.TextBox.1", FormLayout.DYN_PREFIX & "txtTotalPersons", True): txtTot.Text = "1"
+    ' Frames
+    Dim fraAd As MSForms.Frame: Set fraAd = frm.Controls.Add("Forms.Frame.1", FormLayout.DYN_PREFIX & "fraAdults", True): fraAd.Caption = "Volwassenen"
+    Dim fraCh As MSForms.Frame: Set fraCh = frm.Controls.Add("Forms.Frame.1", FormLayout.DYN_PREFIX & "fraChildren", True): fraCh.Caption = "Kinderen"
+    ' Buttons via specs
+    LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVorige", "Prev"
+    LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVolgende", "Next"
+    LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnAnnuleren", "Cancel"
+    ' SAFE-AREA in plaats van hardcoded size
+    FormLayout.FrmLayoutSafeAreaDyn frm
+    ' Events
+    FormEvents.HookEventsDynamic frm
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmBuilders", "BuildForm_Huishouden", Err.Number, Err.Description
+End Sub
+
+Public Sub BuildFrmVast(frm As Object)
+    On Error GoTo ErrHandler
+    FormLayout.RemoveDynamicControls frm
+    FormHelpers.EnsureBackgroundImage frm
+    ' MultiPage
+    Dim mp As MSForms.MultiPage: Set mp = frm.Controls.Add("Forms.MultiPage.1", FormLayout.DYN_PREFIX & "mpVast", True)
+    mp.Pages.Add: mp.Pages(0).Caption = "Inkomsten"
+    mp.Pages.Add: mp.Pages(1).Caption = "Uitgaven"
+    ' Titles
+    Dim pg0 As MSForms.Page: Set pg0 = mp.Pages(0)
+    Dim lblB0 As MSForms.Label: Set lblB0 = pg0.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblInkTitel", True): lblB0.Caption = "Inkomsten"
+    Dim pg1 As MSForms.Page: Set pg1 = mp.Pages(1)
+    Dim lblB1 As MSForms.Label: Set lblB1 = pg1.Controls.Add("Forms.Label.1", FormLayout.DYN_PREFIX & "lblUitTitel", True): lblB1.Caption = "Uitgaven"
+    ' RowAdd/RowDel knoppen (klein)
+    LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgAddRow", "RowAdd"
+    LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgDelRow", "RowDel"
+    ' Navigatie
+    LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVorige", "Prev"
+    LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnVolgende", "Next"
+    LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnOpslaan", "Save"
+    LayoutSpecsHelpers.PlaceButtonFromSpec frm, FormLayout.DYN_PREFIX & "imgBtnAnnuleren", "Cancel"
+    ' Safe-area
+    FormLayout.FrmLayoutSafeAreaDyn frm
+    ' Events
+    FormEvents.HookEventsDynamic frm
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmBuilders", "BuildFrmVast", Err.Number, Err.Description
+End Sub
+
+'--- Module: LayoutSpecsHelpers ---
+Public Function GetLayoutSpec(ByVal keyName As String, ByVal fieldName As String) As Variant
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim lo As ListObject: Set lo = wsRef.ListObjects("tblLayoutSpecs")
+    Dim hdr As Range, data As Range, r As Range, colIndex As Long
+    Set hdr = lo.HeaderRowRange
+    Set data = lo.DataBodyRange
+    If data Is Nothing Then Exit Function
+    colIndex = 0
+    Dim i As Long
+    For i = 1 To hdr.Columns.Count
+        If StrComp(CStr(hdr.Cells(1, i).Value), fieldName, vbTextCompare) = 0 Then
+            colIndex = i
+            Exit For
+        End If
+    Next i
+    If colIndex = 0 Then Exit Function
+    For Each r In data.Rows
+        If StrComp(CStr(r.Cells(1, 1).Value), keyName, vbTextCompare) = 0 Then
+            GetLayoutSpec = r.Cells(1, colIndex).Value
+            Exit Function
+        End If
+    Next r
+    Exit Function
+ErrHandler:
+    Utils.LogError4 "LayoutSpecsHelpers", "GetLayoutSpec", Err.Number, Err.Description
+End Function
+
+Public Function GetShapePath(ByVal shapeName As String, Optional ByVal suffix As String = "") As String
+    On Error GoTo ErrHandler
+    Dim wsRef As Worksheet: Set wsRef = ThisWorkbook.Worksheets("Referenties")
+    Dim shp As Shape: Set shp = wsRef.Shapes(shapeName)
+    If shp Is Nothing Then Exit Function
+    Dim tmp As String: tmp = Utils.GetTempFile(shapeName & suffix, ".jpg")
+    Dim ch As ChartObject
+    Set ch = wsRef.ChartObjects.Add(Left:=shp.Left, Top:=shp.Top, Width:=shp.Width, Height:=shp.Height)
+    wsRef.Activate: DoEvents
+    shp.Copy
+    ch.Activate
+    ch.Chart.Paste
+    ch.Chart.Export tmp, "JPG"
+    ch.Delete
+    If Dir(tmp) <> "" Then GetShapePath = tmp
+    Exit Function
+ErrHandler:
+    Utils.LogError4 "LayoutSpecsHelpers", "GetShapePath", Err.Number, Err.Description
+End Function
+
+'--- Module: FormLayout ---
+Public Sub FrmLayoutSafeAreaDyn(frm As Object)
+    On Error GoTo ErrHandler
+    MonthlySheet.EnsureConfigSheet
+    Dim BG_MARGIN As Double: BG_MARGIN = MonthlySheet.ConfigGet("BG_MARGIN", 6)
+    Dim ROW_SPACING As Double: ROW_SPACING = MonthlySheet.ConfigGet("ROW_SPACING", 34)
+    Dim LABEL_WIDTH As Double: LABEL_WIDTH = MonthlySheet.ConfigGet("LABEL_WIDTH", 120)
+    Dim GAP_LABEL_TO_INPUT As Double: GAP_LABEL_TO_INPUT = MonthlySheet.ConfigGet("GAP_LABEL_TO_INPUT", 12)
+    Dim RIGHT_PADDING As Double: RIGHT_PADDING = MonthlySheet.ConfigGet("RIGHT_PADDING", 20)
+    Dim INP_MAX As Double: INP_MAX = MonthlySheet.ConfigGet("INP_MAX", 360)
+    Dim SAFE_LEFT_PCT As Double: SAFE_LEFT_PCT = MonthlySheet.ConfigGet("SAFE_LEFT_PCT", 0.12)
+    Dim SAFE_RIGHT_PCT As Double: SAFE_RIGHT_PCT = MonthlySheet.ConfigGet("SAFE_RIGHT_PCT", 0.88)
+    Dim SAFE_TOP_PCT As Double: SAFE_TOP_PCT = MonthlySheet.ConfigGet("SAFE_TOP_PCT", 0.2)
+    Dim SAFE_BOTTOM_PCT As Double: SAFE_BOTTOM_PCT = MonthlySheet.ConfigGet("SAFE_BOTTOM_PCT", 0.8)
+
+    Dim bgLeft As Single, bgTop As Single, bgW As Single, bgH As Single
+    Dim bg As MSForms.Image: Set bg = TryGetImageDyn(frm, FormLayout.DYN_PREFIX & "imgBackground")
+    If bg Is Nothing Then
+        bgLeft = BG_MARGIN: bgTop = BG_MARGIN
+        bgW = frm.InsideWidth - 2 * BG_MARGIN
+        bgH = frm.InsideHeight - 2 * BG_MARGIN
+    Else
+        bgLeft = bg.Left: bgTop = bg.Top: bgW = bg.Width: bgH = bg.Height
+    End If
+
+    Dim safeLeft As Single, safeTop As Single, safeWidth As Single, safeHeight As Single
+    safeLeft = bgLeft + (SAFE_LEFT_PCT * bgW)
+    safeTop = bgTop + (SAFE_TOP_PCT * bgH)
+    safeWidth = (SAFE_RIGHT_PCT - SAFE_LEFT_PCT) * bgW
+    safeHeight = (SAFE_BOTTOM_PCT - SAFE_TOP_PCT) * bgH
+    If safeWidth < 0 Then safeWidth = 0
+    If safeHeight < 0 Then safeHeight = 0
+
+    Dim colLbl As Single, colInp As Single, inpWidth As Single, t As Single
+    colLbl = safeLeft
+    colInp = safeLeft + LABEL_WIDTH + GAP_LABEL_TO_INPUT
+    inpWidth = safeWidth - (colInp - safeLeft) - RIGHT_PADDING
+    If inpWidth < 0 Then inpWidth = 0
+    If inpWidth > INP_MAX Then
+        Dim extraSpace As Single
+        extraSpace = (inpWidth - INP_MAX) / 2
+        colInp = colInp + extraSpace
+        inpWidth = INP_MAX
+    End If
+
+    t = safeTop
+    Dim ctrl As Control
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblDatumVandaag"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblCat"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "cmbCategorie"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblSub"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "cmbSubcategorie"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth - 36
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "btnNieuwSub"): If Not ctrl Is Nothing Then ctrl.Left = colInp + (inpWidth - 36) + 8: ctrl.Top = t: ctrl.Width = 28: ctrl.Height = 22
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblBedrag"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "txtBedrag"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+    t = t + ROW_SPACING
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "lblBetaal"): If Not ctrl Is Nothing Then ctrl.Left = colLbl: ctrl.Top = t
+    Set ctrl = TryGetControl(frm, FormLayout.DYN_PREFIX & "cmbBetaalwijze"): If Not ctrl Is Nothing Then ctrl.Left = colInp: ctrl.Top = t: ctrl.Width = inpWidth
+
+    Dim btnOps As Control, btnAnn As Control
+    Set btnOps = TryGetControl(frm, FormLayout.DYN_PREFIX & "imgBtnOpslaan")
+    Set btnAnn = TryGetControl(frm, FormLayout.DYN_PREFIX & "imgBtnAnnuleren")
+    If Not btnOps Is Nothing And Not btnAnn Is Nothing Then
+        Dim btnTotalWidth As Single: btnTotalWidth = btnOps.Width + 24 + btnAnn.Width
+        Dim btnLeft As Single: btnLeft = safeLeft + (safeWidth - btnTotalWidth) / 2
+        Dim btnY As Single: btnY = safeTop + safeHeight - 60
+        btnOps.Left = btnLeft: btnOps.Top = btnY
+        btnAnn.Left = btnLeft + btnOps.Width + 24: btnAnn.Top = btnY
+    End If
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "FormLayout", "FrmLayoutSafeAreaDyn", Err.Number, Err.Description
+End Sub
+
+'--- UserForms code-behind (snippets) ---
+' frmHuishouden
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    FormHelpers.EnsureBackgroundImage Me
+    frmBuilders.BuildForm_Huishouden Me
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    FormEvents.HookEventsDynamic Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmHuishouden", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+    On Error GoTo ErrHandler
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmHuishouden", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+
+' frmVast
+Private Sub UserForm_Initialize()
+    On Error GoTo ErrHandler
+    FormHelpers.EnsureBackgroundImage Me
+    frmBuilders.BuildFrmVast Me
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    FormEvents.HookEventsDynamic Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmVast", "UserForm_Initialize", Err.Number, Err.Description
+End Sub
+
+Private Sub UserForm_Resize()
+    On Error GoTo ErrHandler
+    FormLayout.FrmLayoutSafeAreaDyn Me
+    Exit Sub
+ErrHandler:
+    Utils.LogError4 "frmVast", "UserForm_Resize", Err.Number, Err.Description
+End Sub
+
+' frmInvoer (geen wijzigingen; enkel referentie)
+' Private Sub UserForm_Initialize()
+'     On Error GoTo ErrHandler
+'     FormEvents.BuildDynamicFrmInvoer Me
+'     Exit Sub
+' ErrHandler:
+'     Utils.LogError4 "frmInvoer", "UserForm_Initialize", Err.Number, Err.Description
+' End Sub
+' Private Sub UserForm_Resize()
+'     On Error GoTo ErrHandler
+'     FormLayout.FrmLayoutSafeAreaDyn Me
+'     Exit Sub
+' ErrHandler:
+'     Utils.LogError4 "frmInvoer", "UserForm_Resize", Err.Number, Err.Description
+' End Sub
+
