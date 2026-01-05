@@ -1,0 +1,88 @@
+### 🛠️ De Modulaire Structuur (📂 `src/styles/`)
+
+We splitsen de styles op basis van **Functionele Domeinen**.
+
+#### 1. `#CONSTANTS` — `src/styles/Tokens.ts`
+
+Extraheer de magic numbers en grids die nu nog bovenin V2 staan.
+
+```typescript
+// @MODE_MAX: Token-extractie
+export const SPACE = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 };
+export const TYPE  = { xs: 12, sm: 14, md: 16, lg: 17, xl: 18, h2: 28 };
+
+```
+
+#### 2. `#MODULES` — De Deelspecificaties
+
+Maak een map `src/styles/modules/` aan. Elke functie hierin moet voldoen aan de **< 20 regels** regel.
+
+* **`LayoutStyles.ts`**: Voor `container`, `pageContainer`, `scrollContent`.
+* **`FormStyles.ts`**: Voor `label`, `inputContainer`, `moneyInputWrapper`.
+* **`DashboardStyles.ts`**: Voor `dashboardKPI`, `dashboardMessage`.
+* **`SummaryStyles.ts`**: Voor `summarySection`, `summaryRow`. *Hier implementeren we ook de `@ST_HHS5` logica.*
+
+**Voorbeeld `SummaryStyles.ts`:**
+
+```typescript
+import { SPACE, TYPE } from '../Tokens';
+
+export const getSummaryStyles = (c: any) => ({
+  summarySection: { 
+    backgroundColor: c.surface, 
+    padding: SPACE.xl, 
+    borderRadius: 12, 
+    marginBottom: SPACE.xl 
+  },
+  // @ST_HHS5: Speciale status indicator
+  hhs5Highlight: {
+    borderLeftWidth: 4,
+    borderLeftColor: c.warning,
+  },
+  // ... rest < 20 regels
+});
+
+```
+
+#### 3. `#ORCHESTRATOR` — `src/styles/useAppStyles.ts`
+
+De hook zelf wordt een "Assembler" (zoals Kai). Hij importeert de modules en voegt ze samen in de cache.
+
+```typescript
+import { getLayoutStyles } from './modules/LayoutStyles';
+import { getSummaryStyles } from './modules/SummaryStyles';
+// ... overige imports
+
+export function getAppStyles(theme: Theme) {
+  if (styleCache[theme]) return styleCache[theme]!;
+  const c = Colors[theme];
+
+  const styles = StyleSheet.create({
+    ...getLayoutStyles(c),
+    ...getSummaryStyles(c),
+    ...getFormStyles(c),
+  });
+
+  styleCache[theme] = styles;
+  return styles;
+}
+
+```
+
+═══ RULES ═══
+- Each module < 20 lines per function
+- No magic numbers (use SPACE/TYPE/RADIUS)
+- Type: ColorScheme for all modules
+- One source of truth per style
+
+REFACTOR_PLAN: Colors.ts + useAppStyles.ts
+
+═══ STRUCTURE ═══
+src/styles/
+  Tokens.ts          # Constants
+  Colors.ts          # Theme colors (unchanged)
+  modules/
+    Layout.ts        # container, page, scroll
+    Form.ts          # input, label, field
+    Dashboard.ts     # KPI, cards, summary
+  useAppStyles.ts    # Assembler

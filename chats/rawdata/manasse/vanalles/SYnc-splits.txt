@@ -1,0 +1,508 @@
+scripts/sync-aliases/
+├── index.js          # De entry point (Main Logic)
+├── config.js         # Configuratie en FLAGS
+├── utils.js          # Backup, Regex en File I/O utilities
+└── handlers/         # Specifieke logica per bestandstype
+    ├── babel.js      # updateBabel functie
+    ├── jest.js       # updateJest functie
+    └── json.js       # updateJsconfig functie
+
+===================================================
+#!/usr/bin/env node
+
+/**
+ * Phoenix Alias Sync - Entry Point
+ * * Gebruik:
+ * node scripts/sync-aliases/index.js [options]
+ */
+
+const { paths, flags, reservedPrefixes } = require('./config');
+const { die, ok, info, warn } = require('./utils');
+const { parseTsConfig, extractAliases } = require('./core');
+
+// Importeer de handlers
+const { updateBabel } = require('./handlers/babel');
+const { updateJest } = require('./handlers/jest');
+const { updateJsconfig } = require('./handlers/json');
+
+function main() {
+  // 1. Voorbereiding & Help
+  if (process.argv.includes('--help') || process.argv.includes('-h')) {
+    console.log(`
+📋 Phoenix Alias Sync Tool
+
+Opties:
+  --dry-run    Laat zien wat er zou veranderen zonder te schrijven
+  --backup     Maak .bak bestanden aan voor elke wijziging
+  --verbose    Toon gedetailleerde procesinformatie
+    `);
+    process.exit(0);
+  }
+
+  info('🚀 Starten van alias synchronisatie...');
+
+  // 2. Data Extractie (Core)
+  const tsconfig = parseTsConfig(paths.tsconfig);
+  const aliases = extractAliases(tsconfig, paths.root, reservedPrefixes);
+
+  if (flags.verbose) {
+    info(`Gevonden aliassen in tsconfig: ${aliases.length}`);
+    aliases.forEach(a => console.log(`   ${a.name} -> ${a.target}`));
+  }
+
+  // 3. Uitvoeren van de Handlers
+  try {
+    // Babel
+    updateBabel(aliases, flags);
+
+    // Jest
+    updateJest(aliases, flags);
+
+    // JSConfig (JSON)
+    updateJsconfig(aliases, flags);
+
+  } catch (err) {
+    die(`Onverwachte fout tijdens synchronisatie: ${err.message}`);
+  }
+
+  // 4. Afronding
+  console.log();
+  if (flags.dryRun) {
+    ok('✨ Dry-run voltooid (geen bestanden aangepast).');
+  } else {
+    ok('✨ Phoenix Alias Sync voltooid!');
+    console.log(`
+ℹ️  Volgende stappen:
+   1. Herstart je IDE / TypeScript server.
+   2. Reset Metro cache: npx react-native start --reset-cache
+   3. Controleer de rode lijntjes; ze zouden nu moeten verdwijnen!
+    `);
+  }
+}
+
+// Start het script
+main();
+========
+/**
+ * core.js - De extractie- en validatielogica
+ */
+const fs = require('fs');
+const path = require('path');
+const ts = require('typescript');
+const { die, verbose, warn } = require('./utils');
+
+/**
+ * Stap 1: Parsen van tsconfig.json met ondersteuning voor JSONC (comments)
+ */
+function parseTsConfig(configPath) {
+  if (!fs.existsSync(configPath)) {
+    die('tsconfig.json niet gevonden in de root van het project'); 
+  }
+
+  try {
+    const rawContent = fs.readFileSync(configPath, 'utf8');
+    const result = ts.parseConfigFileTextToJson(configPath, rawContent); 
+
+    if (result.error) {
+      const message = ts.flattenDiagnosticMessageText(result.error.messageText, '\n');
+      die(`Fout bij het parsen van tsconfig.json: ${message}`); 
+    }
+
+    return result.config; 
+  } catch (err) {
+    die(`Leesfout tsconfig.json: ${err.message}`); 
+  }
+}
+
+/**
+ * Stap 2: Aliassen extraheren en valideren
+ */
+function extractAliases(tsconfig, rootDir, reservedPrefixes) {
+  const paths = tsconfig?.compilerOptions?.paths;
+  if (!paths || typeof paths !== 'object') {
+    die('Geen compilerOptions.paths gevonden in tsconfig.json'); 
+  }
+
+  const aliases = [];
+  const seenNames = new Set(); 
+
+  for (const [key, value] of Object.entries(paths)) {
+    // Overslaan van meta-keys of comments 
+    if (key.startsWith('_') || key.startsWith('//')) continue; 
+
+    // Validatie: Moet een array zijn [cite: 89]
+    if (!Array.isArray(value) || value.length === 0) {
+      warn(`Overslaan "${key}": waarde is geen array`); 
+      continue;
+    }
+
+    // Schoonmaken van paden (verwijderen van /*)
+    const name = key.replace(/\/\*$/, '');
+    const target = value[0].replace(/\/\*$/, '');
+
+    // Check op gereserveerde prefixes (npm/node) 
+    const isReserved = reservedPrefixes.some(prefix => name.startsWith(prefix));
+    if (isReserved) continue; 
+
+    // Check op duplicaten [cite: 93]
+    if (seenNames.has(name)) {
+      warn(`Dubbele alias gevonden: "${name}"`); 
+      continue;
+    }
+
+    // Validatie: Bestaat de doelmap wel? 
+    const targetPath = path.join(rootDir, target);
+    if (!fs.existsSync(targetPath)) {
+      warn(`Doelmap bestaat niet: ${target}`); 
+    }
+
+    aliases.push({ name, target }); 
+    seenNames.add(name); 
+  }
+
+  if (aliases.length === 0) {
+    die('Geen geldige aliassen gevonden om te synchroniseren'); 
+  }
+
+  return aliases;
+}
+
+module.exports = {
+  parseTsConfig,
+  extractAliases
+};
+===========
+/**
+ * utils.js - Shared utilities for Phoenix Architectural Tooling
+ */
+const fs = require('fs');
+const path = require('path');
+
+// === UI & Logging Utilities ===
+
+function die(msg, code = 1) {
+  console.error(`❌ ${msg}`);
+  process.exit(code); // 
+}
+
+function info(msg) {
+  console.log(`ℹ️  ${msg}`); // 
+}
+
+function ok(msg) {
+  console.log(`✅ ${msg}`); // 
+}
+
+function warn(msg) {
+  console.log(`⚠️  ${msg}`); // 
+}
+
+// === File & System Utilities ===
+
+/**
+ * Checkt of een directory bestaat 
+ */
+function directoryExists(dirPath) {
+  try {
+    return fs.statSync(dirPath).isDirectory();
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Maakt een backup met een timestamp 
+ */
+function createBackup(filePath, verbose = false) {
+  const backupPath = `${filePath}.bak.${Date.now()}`;
+  fs.copyFileSync(filePath, backupPath);
+  if (verbose) {
+    console.log(`🔍 Created backup: ${path.basename(backupPath)}`);
+  }
+  return backupPath;
+}
+
+// === String & Regex Utilities ===
+
+/**
+ * Ontsnapt speciale tekens voor gebruik in Regex 
+ */
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * De hartslag van je sync: vervangt content tussen markers 
+ */
+function updateBetweenMarkers(content, startMarker, endMarker, newContent, indentLevel = 4) {
+  const startPattern = escapeRegex(startMarker);
+  const endPattern = escapeRegex(endMarker); // 
+  
+  // Matcht alles tussen markers (non-greedy) 
+  const regex = new RegExp(
+    `(${startPattern})[\\s\\S]*?(${endPattern})`,
+    'g'
+  );
+  
+  if (!regex.test(content)) {
+    return null; // Markers niet gevonden 
+  }
+  
+  const indent = ' '.repeat(indentLevel); // 
+  regex.lastIndex = 0; // Reset regex na test 
+  
+  return content.replace(regex, `$1\n${newContent}\n${indent}$2`); // 
+}
+
+module.exports = {
+  die,
+  info,
+  ok,
+  warn,
+  directoryExists,
+  createBackup,
+  escapeRegex,
+  updateBetweenMarkers
+};
+========================
+/**
+ * config.js - Centrale configuratie voor de Alias Sync Tooling
+ */
+const path = require('path');
+
+const ROOT = process.cwd();
+
+module.exports = {
+  // Bestandspaden
+  paths: {
+    root: ROOT,
+    tsconfig: path.join(ROOT, 'tsconfig.json'),
+    jsconfig: path.join(ROOT, 'jsconfig.json'),
+    babel: path.join(ROOT, 'babel.config.js'),
+    jest: path.join(ROOT, 'jest.config.js'),
+  },
+
+  // CLI Vlaggen (verwerkt vanuit process.argv)
+  flags: {
+    dryRun: process.argv.includes('--dry-run'),
+    backup: process.argv.includes('--backup'),
+    verbose: process.argv.includes('--verbose'),
+    restore: process.argv.includes('--restore'),
+  },
+
+  // Gereserveerde prefixes die NOOIT overschreven mogen worden
+  reservedPrefixes: [
+    '@types', 
+    '@react', 
+    '@expo', 
+    '@jest', 
+    '@babel', 
+    '@node', 
+    '@native', 
+    '@test', 
+    '@testing-library'
+  ],
+
+  // Markers voor de verschillende configuratiebestanden
+  markers: {
+    babel: {
+      start: '/* AUTO-SYNC-START */',
+      end: '/* AUTO-SYNC-END */',
+    },
+    jest: {
+      start: '// AUTO-SYNC-START',
+      end: '// AUTO-SYNC-END',
+    }
+  }
+};
+=====================
+/**
+ * handlers/babel.js - Specifieke logica voor babel.config.js
+ */
+const fs = require('fs');
+const { paths, markers } = require('../config');
+const { ok, warn, createBackup, updateBetweenMarkers } = require('../utils');
+
+/**
+ * Update babel.config.js
+ */
+function updateBabel(aliases, flags) {
+  if (!fs.existsSync(paths.babel)) {
+    warn('babel.config.js niet gevonden (skipping)');
+    return;
+  }
+
+  let babelSrc = fs.readFileSync(paths.babel, 'utf8');
+
+  // Controleer op markers
+  if (!babelSrc.includes(markers.babel.start) || !babelSrc.includes(markers.babel.end)) {
+    warn('babel.config.js: AUTO-SYNC markers missen.');
+    warn('Zorg dat je markers in de alias-sectie staan van module-resolver:');
+    console.log("   alias: {\n     /* AUTO-SYNC-START */\n     /* AUTO-SYNC-END */\n   }");
+    return;
+  }
+
+  // Genereer de Babel aliassen
+  // Babel verwacht: '@alias': './src/alias'
+  const babelAliases = aliases
+    .map(a => `          '${a.name}': './${a.target}',`)
+    .join('\n');
+
+  // Update de content tussen de markers
+  const updated = updateBetweenMarkers(
+    babelSrc,
+    markers.babel.start,
+    markers.babel.end,
+    babelAliases,
+    10 // Specifieke indentatie voor diepe nesting in babel plugins
+  );
+
+  if (!updated) {
+    warn('babel.config.js: Update mislukt (marker issue)');
+    return;
+  }
+
+  if (flags.dryRun) {
+    ok('[DRY RUN] Babel configuratie zou worden bijgewerkt.');
+  } else {
+    if (flags.backup) createBackup(paths.babel, flags.verbose);
+    fs.writeFileSync(paths.babel, updated, 'utf8');
+    ok('babel.config.js succesvol gesynchroniseerd.');
+  }
+}
+
+module.exports = { updateBabel };
+================================
+/**
+ * handlers/json.js - Slimme afhandeling voor jsconfig.json
+ */
+const fs = require('fs');
+const { ok, warn, verbose, createBackup } = require('../utils');
+
+const JSCONFIG_PATH = './jsconfig.json';
+
+/**
+ * Update jsconfig.json met een object-gebaseerde strategie
+ */
+function updateJsconfig(aliases, flags) {
+  if (!fs.existsSync(JSCONFIG_PATH)) {
+    warn('jsconfig.json niet gevonden (skipping)');
+    return;
+  }
+
+  let jsconfig;
+  try {
+    const rawContent = fs.readFileSync(JSCONFIG_PATH, 'utf8');
+    // We gebruiken JSON.parse (of een JSONC parser indien nodig)
+    jsconfig = JSON.parse(rawContent);
+  } catch (err) {
+    warn(`jsconfig.json: Kon bestand niet parsen (${err.message})`);
+    return;
+  }
+
+  // Zorg dat de basisstructuur bestaat
+  if (!jsconfig.compilerOptions) jsconfig.compilerOptions = {};
+  
+  // Bewaar handmatige paden die NIET in onze alias-lijst staan
+  const existingPaths = jsconfig.compilerOptions.paths || {};
+  const manualPaths = {};
+  
+  Object.keys(existingPaths).forEach(key => {
+    // Behoud paden die handmatig zijn toegevoegd (bijv. beginnen met '_')
+    // of die niet voorkomen in de nieuwe alias lijst
+    const cleanKey = key.replace(/\/\*$/, '');
+    if (key.startsWith('_') || !aliases.find(a => a.name === cleanKey)) {
+      manualPaths[key] = existingPaths[key];
+    }
+  });
+
+  // Bouw het nieuwe paths object op
+  const newPaths = {
+    // Metadata voor herkenbaarheid
+    "_sync_meta": `Last sync: ${new Date().toISOString()}`,
+    ...manualPaths
+  };
+
+  // Voeg de gesyncte aliassen toe
+  aliases.forEach(a => {
+    newPaths[`${a.name}/*`] = [`${a.target}/*`];
+  });
+
+  jsconfig.compilerOptions.paths = newPaths;
+
+  if (flags.dryRun) {
+    ok('[DRY RUN] jsconfig.json zou worden bijgewerkt met nieuwe aliassen.');
+  } else {
+    if (flags.backup) createBackup(JSCONFIG_PATH, flags.verbose);
+    
+    // Schrijf terug met nette indentatie
+    fs.writeFileSync(JSCONFIG_PATH, JSON.stringify(jsconfig, null, 2), 'utf8');
+    ok('jsconfig.json succesvol gesynchroniseerd.');
+  }
+}
+
+module.exports = { updateJsconfig };
+===================/**
+ * handlers/jest.js - Specifieke logica voor jest.config.js
+ */
+const fs = require('fs');
+const { ok, warn, verbose, createBackup, updateBetweenMarkers } = require('../utils');
+
+const JEST_CONFIG_PATH = './jest.config.js';
+
+const MARKERS = {
+  start: '// AUTO-SYNC-START: Generated by sync-aliases.js - Do not edit manually',
+  end: '// AUTO-SYNC-END',
+};
+
+/**
+ * Update jest.config.js met marker-gebaseerde vervanging
+ */
+function updateJest(aliases, flags) {
+  if (!fs.existsSync(JEST_CONFIG_PATH)) {
+    warn('jest.config.js niet gevonden (skipping)');
+    return;
+  }
+
+  let jestSrc = fs.readFileSync(JEST_CONFIG_PATH, 'utf8');
+
+  // Controleer of de markers aanwezig zijn om overschrijven van handmatige config te voorkomen
+  if (!jestSrc.includes(MARKERS.start) || !jestSrc.includes(MARKERS.end)) {
+    warn('jest.config.js: AUTO-SYNC markers missen. Voeg de markers toe aan moduleNameMapper.');
+    return;
+  }
+
+  // Genereer de moduleNameMapper regels
+  // Voorbeeld: '@domain' wordt '^@domain/(.*)$': '<rootDir>/src/domain/$1'
+  const jestMappers = aliases
+    .map(a => {
+      // Ontsnap de '@' voor de Regex van Jest
+      const escapedName = a.name.replace(/[@]/g, '\\@');
+      return `    '^${escapedName}/(.*)$': '<rootDir>/${a.target}/$1',`;
+    })
+    .join('\n');
+
+  const updated = updateBetweenMarkers(
+    jestSrc,
+    MARKERS.start,
+    MARKERS.end,
+    jestMappers,
+    2 // Indentatie niveau voor Jest config object
+  );
+
+  if (!updated) {
+    warn('jest.config.js: Kon de markers niet parsen. Controleer op syntaxfouten.');
+    return;
+  }
+
+  if (flags.dryRun) {
+    ok('[DRY RUN] Jest configuratie zou worden bijgewerkt.');
+    if (flags.verbose) console.log(jestMappers);
+  } else {
+    if (flags.backup) createBackup(JEST_CONFIG_PATH, flags.verbose);
+    fs.writeFileSync(JEST_CONFIG_PATH, updated, 'utf8');
+    ok('jest.config.js succesvol gesynchroniseerd.');
+  }
+}
+
+module.exports = { updateJest };

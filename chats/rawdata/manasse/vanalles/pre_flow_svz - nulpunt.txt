@@ -1,0 +1,885 @@
+
+# Status — 2025-12-17 (Phase 0.5)
+
+## Bereikt vandaag
+- **C10 leak gedicht:** UI schrijft niet langer naar C4; chips in C10 zijn read-only.
+- **C4 woning-buttons:** verplaatst naar C4 container (WizardPage), boven label; blijvende selectie en directe feedback.
+- **Adults-only audit (C7):** veilig bevonden; profielen worden uitsluitend voor adults gezaaid.
+- **UI-decoupling bevestigd:** geen governance sync-effecten in UI, C4 blijft presentational.
+
+## Bevindingen (analyse-first)
+- Originele retry-branch had UI-sync in Repeater; nu expliciet verwijderd.
+- Design-system (`useAppStyles`) hergebruikt voor chipContainer en consistent spacing.
+
+## Volgende stappen (micro)
+1) **Swipe + Hint** in C4 (UI-only, pagingEnabled).
+2) **Naam-normalisatie** op blur (PascalCase + cleanup) in reducer-actie.
+
+## Rollback / Reversibiliteit
+- Alle wijzigingen in smalle commits; eenvoudig te revert’en (geen schema-wijzigingen).
+
+# 🧾 Vaste Step Completion Template
+
+**Stap:** C4 UI-Restoration (woning buttons in container)  
+**Fase:** Phase 0.5 (UI-Decoupling & Data Integrity)  
+**Datum:** 2025-12-17  
+**Commit(s)/PR:** 
+- refactor(c4): render woning chips in C4 container (WizardPage) and remove chips from repeater
+
+## 1. Resultaat van deze stap
+- Woningtype-selectie staat nu **boven** het label “Leden van het huishouden” (WizardPage).
+- De selectie is **blijvend**: `state.C4.woning` wordt gezet en de labeltekst wordt direct geüpdatet.
+- C10 blijft **read-only** en leest de waarde uit C4 (conditional rendering werkt).
+
+## 2. Changelog
+- Gewijzigd: `src/screens/Wizard/WizardPage.tsx` (render chips),  
+  `src/organisms/HouseholdMemberRepeater.tsx` (chips-sectie verwijderd).
+- Niet gewijzigd (relevant): reducer/helper (geen governance-writes verschoven), C10 blijft read-only.
+
+## 3. Invariant-inzicht (B1)
+- C4: leden-invariant (helper + reducer); UI is presentational.  
+- Woningtype: huishouden-breed, bron op C4; C10 consumeert read-only.
+
+## 4. Reversibiliteit (B2)
+- Eén commit voor container-render en één commit voor repeater-cleanup; beide eenvoudig te revert’en.
+
+## 5. Effect & bewijs (B3)
+- Smoketest: chip-click op C4 toont `[C4] set woning <type>`; label wijzigt.  
+- C10: `[C10] read woning from C4: <type>`; velden schakelen correct.
+
+## 6. Statusupdate
+- C4 UI-orde en persistentie: **groen**.  
+- Klaar voor Swipe + Hint (presentational) en daarna Naam-normalisatie (blur).
+
+## 7. Afwijkingen
+- Geen nieuwe; uitvoering conform ADR-0007 (governance niet naar C4 uit UI) en leak-repair beleid.
+
+## 8. Volgende stap
+
+
+Hier is jouw **handover: To-Do voor 18-12-2025**, gebaseerd op alles onder “Mooi! ✅ Je logs vertellen precies wat we nodig hadden”:
+
+***
+
+# ✅ Handover: To-Do voor 18-12-2025
+
+## 🔍 Analyse & Observaties (van 17-12)
+
+*   **Dataflow klopt**:
+    *   C4 schrijft woningtype (`SET_PAGE_DATA` → `state.C4.woning`).
+    *   C10 leest read-only uit C4 (`LOG [C10] read woning from C4: Anders`).
+*   **UI-probleem**:
+    *   Chips tonen geen blijvende visuele selectie (“groen”).
+    *   Label boven leden toont niet consequent de waarde.
+    *   Volgorde: label “Leden van het huishouden” staat nu boven chips → moet **onder** chips.
+*   **Persistentie**: State verandert correct (logs tonen dispatch), maar UI reflectie ontbreekt → waarschijnlijk ChipButton-prop mismatch.
+
+***
+
+## ✅ Taken voor 18-12 (micro, rollbackbaar)
+
+### 1) **ChipButton API inspecteren**
+
+*   Controleer implementatie van `ChipButton`:
+    *   Welke props toggelen visuele selectie? (`selected`, `active`, `isActive`, `variant`?)
+    *   Ondersteunt hij extra style-props (`styleSelected`, `textSelected`)?
+*   Commando’s:
+    ```bash
+    nl -ba src/components/ChipButton.tsx | sed -n '1,240p'
+    git grep -n "selected\|active\|isActive\|checked\|variant" -- src/components/ChipButton.tsx
+    git grep -n "styleSelected\|chipSelected" -- src/components/ChipButton.tsx
+    ```
+
+### 2) **Fix visuele selectie**
+
+*   Als ChipButton gebruikt `selected` → laat staan.
+*   Als hij `active` of `variant="selected"` verwacht → voeg toe.
+*   Alternatief fallback: geef `style` en `textStyle` arrays door met `chipSelected` en `chipTextSelected` (design-system tokens).
+
+### 3) **Labelpositie corrigeren**
+
+*   In `WizardPage.tsx`:
+    *   Zorg dat chips-sectie **boven** het leden-label staat.
+    *   Label “Type: …” blijft correct renderen op basis van `state.C4.woning`.
+
+### 4) **Persistentie testen**
+
+*   Voeg tijdelijk debuglog toe:
+    ```tsx
+    {__DEV__ && console.log('[C4] render woning=', state.C4?.woning)}
+    ```
+*   Smoketest:
+    *   Klik chip → chip blijft visueel actief.
+    *   Navigeren weg en terug → selectie blijft.
+    *   Label toont juiste waarde.
+
+### 5) **Opschonen**
+
+*   Verwijder debuglogs na bevestiging.
+*   Commit micro-fixes:
+    ```bash
+    git add src/screens/Wizard/WizardPage.tsx src/components/ChipButton.tsx
+    git commit -m "fix(ui): align ChipButton props for persistent selection; reorder label below chips"
+    ```
+
+***
+
+## ✅ Volgende stap na UI-fix
+
+*   **Swipe + hint** in C4 (UI-only):
+    *   Horizontale `ScrollView` met `pagingEnabled`.
+    *   Hint `"----> volgende"` tonen als `(index < leden.length - 1 && leden.length > 1)`.
+
+***
+
+## 🧾 Documentatie (af te ronden na fixes)
+
+*   **Step Completion**: C4 UI-restoration (chips + label fix).
+*   **Dagstatus**: Phase 0.5 voortgang, inclusief leak-fix, adults-only audit, UI-decoupling.
+
+***
+
+### 🔑 Kernprincipes blijven gelden
+
+*   **B1**: C4 = bron voor woningtype; C10 blijft read-only.
+*   **B2**: Elke wijziging in aparte commit; rollback eenvoudig.
+*   **B3**: Bewijs via smoketest + consolelogs.
+
+***
+
+MAPPENSTRUCTUUR (iets verouderd)
+📂 Complete Mappenstructuur Analyse
+________________________________________
+🎯 ROOT LEVEL (./)
+App.tsx 🚪 Main Application Controller
+Rol: Centrale orchestrator - beheert navigatie tussen alle screens
+•	State: currentScreen, currentPageIndex (wizard positie), userId
+•	Navigatie logic: Landing → Wizard → Dashboard → Subflows (CSV, Undo, Options)
+•	Providers: Wrap alles in <ThemeProvider> en <FormProvider>
+•	Lifecycle: Laadt opgeslagen state bij app start via Storage.loadState()
+// Routing pattern:
+'landing' → 'wizard' → 'dashboard'
+           ↓
+   'dailyInput' | 'undo' | 'options' | 'settings' | 'reset' | 'csvUpload'
+________________________________________
+index.tsx 🔌 Entry Point
+Rol: Registreert app bij React Native runtime
+•	Importeert App component
+•	Roept AppRegistry.registerComponent() aan
+•	Raak dit nooit aan (alleen bij app rename)
+________________________________________
+app.json ⚙️ Expo Configuration
+Rol: App metadata en build settings
+•	Package name: com.anonymous.cashflowwizard
+•	Display naam: "Cashflow Wizard"
+•	Icon/splash screen paths
+•	Platform-specific settings (iOS/Android)
+________________________________________
+package.json 📦 Dependency Manifest
+Rol: Project dependencies en scripts
+•	Key deps: react-native, expo, @react-navigation, async-storage
+•	Scripts: start, android, ios, web
+•	Versions: Lock dependencies voor reproducible builds
+________________________________________
+tsconfig.json 🔧 TypeScript Configuration
+Rol: Compiler settings
+•	Target: ES2020
+•	JSX: react-native
+•	Strict mode: enabled (type safety)
+•	Module resolution: Node
+________________________________________
+📁 src/ (Source Code Root)
+________________________________________
+🧩 src/components/ (Reusable UI Building Blocks)
+ChipButton.tsx 🏷️ Selection Chip
+Rol: Toggle button voor categorieën/opties
+•	Props: label, selected, error, onPress
+•	States: Normal, Selected, Error (visuele feedback)
+•	Gebruikt in: Alle multi-choice velden (gender, burgerlijke staat, streaming diensten)
+•	Accessibility: accessibilityRole="button", accessibilityState={{ selected }}
+// Voorbeeld gebruik:
+<ChipButton 
+  label="Gehuwd" 
+  selected={burgerlijkeStaat === 'Gehuwd'}
+  onPress={() => setBurgerlijkeStaat('Gehuwd')}
+/>
+________________________________________
+ConditionalField.tsx 👁️ Visibility Controller
+Rol: Toont/verbergt child components op basis van condities
+•	Logic: Evalueert conditionals via evaluateCondition() utility
+•	Props: conditional (field/operator/value), pageId, children
+•	Gebruikt in: WizardPage (toon 'aantalVolwassen' alleen als aantalMensen > 1)
+// Config-driven conditionals:
+<ConditionalField 
+  conditional={{ field: 'C1.aantalMensen', operator: '>', value: 1 }}
+>
+  <FormField field={aantalVolwassenConfig} />
+</ConditionalField>
+________________________________________
+DateField.tsx 📅 Native Date Picker Wrapper
+Rol: Cross-platform date input met validatie
+•	Android: Calendar modal
+•	iOS: Spinner picker (native feel)
+•	Props: valueISO (YYYY-MM-DD), minISO, maxISO, onChangeISO, errorText
+•	Timezone safe: Gebruikt UTC noon om dagverschuivingen te voorkomen
+•	Gebruikt in: Geboortedatum velden (volwassenen/kinderen)
+// Automatic age calculation:
+<DateField
+  label="Geboortedatum"
+  valueISO={member.dateOfBirth}
+  maxISO={getAdultMaxISO()} // Today - 18 years
+  onChangeISO={(iso) => {
+    const age = calculateAge(iso);
+    updateMember({ dateOfBirth: iso, leeftijd: age });
+  }}
+/>
+________________________________________
+FormField.tsx 🎨 Universal Field Renderer
+Rol: Dynamische renderer voor ALLE field types (config-driven)
+•	Supported types: text, numeric, radio-chips, toggle, counter, repeater-array, income-repeater, expense-repeater
+•	Features: 
+o	Auto-formats currency (€ prefix)
+o	Dynamic max values (aantalVolwassen afhankelijk van aantalMensen)
+o	Error display (rood border + error tekst)
+•	Gebruikt in: WizardPage (rendert alle velden via config)
+// Config → UI automatisch:
+{ id: 'aantalMensen', type: 'counter', validation: { min: 1, max: 10 } }
+  ↓
+<InputCounter value={1} min={1} max={10} onValueChange={...} />
+________________________________________
+InputCounter.tsx ➕➖ Numeric Stepper
+Rol: +/- buttons voor integers
+•	Props: value, min, max, onValueChange
+•	Safety: Disabled states wanneer min/max bereikt
+•	Gebruikt in: Aantal personen, aantal kinderen, etc.
+•	Visual: Grote cijfer met gekleurde buttons (primary color actief, secondary disabled)
+________________________________________
+ToggleSwitch.tsx 🔘 Binary Choice
+Rol: Ja/Nee toggle (niet native Switch, custom button)
+•	Props: value (boolean), onToggle, labelTrue, labelFalse
+•	Visual: Groen (actief) vs grijs (inactief)
+•	Gebruikt in: Huisdieren, auto (maar die zijn nu radio-chips geworden)
+•	Note: Weinig gebruikt in huidige versie (legacy component?)
+________________________________________
+🧠 src/context/ (Global State Management)
+FormContext.tsx 🗄️ Form State Manager
+Rol: Centrale state store voor wizard + persistence
+•	State structure: 
+•	{  C1: { aantalMensen: 2, aantalVolwassen: 1, ... },  C4: { leden: [...], woning: 'Koop', ... },  C7: { inkomsten: {...}, householdBenefits: {...} },  C10: { lasten: [...] },  userId: 'abc123'}
+•	Actions: SET_PAGE_DATA, LOAD_SAVED_STATE, SET_USER_ID, RESET_STATE
+•	Side effect: Auto-save naar AsyncStorage bij elke state change
+•	Hook: useFormContext() voor toegang in components
+________________________________________
+ThemeContext.tsx 🎨 Dark/Light Mode Manager
+Rol: Beheert theme state + persistence
+•	State: theme ('light' | 'dark')
+•	Persistence: AsyncStorage key @Theme
+•	Hook: useTheme() → gebruikt door useAppStyles()
+•	Effect: Laadt saved theme bij app start
+________________________________________
+🪝 src/hooks/ (Custom React Hooks)
+useDobInput.ts 📝 Date of Birth Input Helper
+Status: ❌ LEEG BESTAND (placeholder) Verwachte rol: Date formatting/validation logic Huidige implementatie: Logic zit direct in HouseholdMemberRepeater (zou geëxtraheerd moeten worden)
+________________________________________
+🏗️ src/organisms/ (Complex Composite Components)
+ExpenseRepeater.tsx 💸 Fixed Expenses Manager
+Rol: Dynamische velden voor ALLE vaste lasten (wonen, verzekeringen, auto, per-persoon)
+•	Secties: 
+o	Wonen: Type (Koop/Huur/Kamer) → conditionals per type (hypotheek vs huur)
+o	Nuts: Energie/Gas/Water (of bijdrage bij kamer)
+o	Verzekeringen: Collapsible (aansprakelijkheid, reis, opstal, uitvaart)
+o	Abonnementen: Collapsible (internet, streaming chips, contributie)
+o	Per Persoon: Adults horizontal swipe cards (ziektekosten, telefoon, OV)
+o	Auto Kosten: 1-2 auto's swipe cards (wegenbelasting, brandstof, APK, lease)
+•	State: C10.lasten[] array met dynamic keys per expense type
+•	P4 feature: Horizontal scroll met CARD_WIDTH snap points
+________________________________________
+HouseholdMemberRepeater.tsx 👨‍👩‍👧‍👦 Family Members Manager
+Rol: Dynamische leden array + burgerlijke staat + woning details
+•	Sync logic: Houdt C4.leden[] length gelijk aan C1.aantalMensen
+•	Auto-correction: Zet leden automatisch om naar adult/child op basis van index
+•	Secties: 
+o	Burgerlijke staat chips (alleen bij 2+ adults)
+o	Woning type (Koop/Huur/Kamer/Anders)
+o	Adult cards: Naam, DateField (max = today - 18y), Gender chips
+o	Child cards: Naam, DateField (min = today - 18y + 1d, max = today), Gender chips
+•	P4 feature: Horizontal swipe voor 2+ adults/children
+•	⚠️ Cleanup needed: Oude handleDobChange code is dead weight
+________________________________________
+IncomeRepeater.tsx 💰 Income Sources Manager
+Rol: Per-adult inkomsten + household benefits + vermogen
+•	Structure: 
+o	Household section (top): Huurtoeslag, kindgebonden budget, kinderbijslag
+o	Vermogen section: Ja/Nee toggle + waarde input
+o	Per-adult cards (swipe pattern bij 2+ adults): 
+	Category chips (geen/werk/uitkering/anders)
+	Werk section: Salaris + frequency + collapsible toeslagen (zorgtoeslag, reiskosten) + vakantiegeld
+	Uitkering section: Dynamic chips (DUO, WW, Pensioen, ...) → per enabled: amount + frequency
+	Anders section: Repeatable rows (label + amount + frequency) + add/remove buttons
+•	State: C7.inkomsten[adultId], C7.householdBenefits, C7.vermogen
+•	P4 features: Collapsible toeslagen per adult, swipe pattern
+________________________________________
+📺 src/screens/ (Full-Screen Views)
+LandingScreen.tsx 🏠 App Entry Point
+Rol: Eerste scherm - kies Aanmelden (signup) of Inloggen (signin)
+•	Buttons: "Aanmelden" → Wizard C1, "Inloggen" → Dashboard
+•	Props: onSignup, onSignin callbacks naar App.tsx
+•	User journey: Brand new users → signup flow, returning → dashboard
+________________________________________
+Wizard/WizardPage.tsx 🧙 Dynamic Form Page
+Rol: Renders ONE wizard page from config (C1/C4/C7/C10)
+•	Props: page (PageConfig), onNext, onPrev, isFirst, isLast
+•	Logic: 
+o	Iterates over page.fields, renders via FormField + ConditionalField
+o	Validates all visible fields on "Volgende" click
+o	Shows errors + scrolls to top if invalid
+o	C1 special case: Orange/red warnings bij max aantal personen
+•	Navigation: Footer buttons (Vorige / Volgende-of-Bekijk Resultaat)
+________________________________________
+Wizard/pages/*.config.ts 📋 Wizard Configuration
+C1.config.ts - Gezinssituatie:
+•	aantalMensen (counter 1-10)
+•	aantalVolwassen (counter 0-7, conditional)
+•	huisdieren (Ja/Nee chips)
+•	auto (Nee/Één/Twee chips)
+C4.config.ts - Huishouden Details:
+•	leden (repeater-array type → renders HouseholdMemberRepeater)
+C7.config.ts - Inkomsten:
+•	inkomsten (income-repeater type → renders IncomeRepeater)
+C10.config.ts - Vaste Lasten:
+•	lasten (expense-repeater type → renders ExpenseRepeater)
+________________________________________
+Dashboard/DashboardScreen.tsx 📊 Main Dashboard
+Rol: Financial overview + quick actions
+•	Data sources: 
+o	calculateFinancialSummary(C7, C10) → inkomen/vaste lasten
+o	TransactionService.fetchSummary() → variabele uitgaven
+•	Visual sections: 
+o	Top actions: "Herstel laatste uitgave" (70%) + "Options" (30%)
+o	KPI card: Resterend budget (groen/rood)
+o	Breakdown table: Inkomen, Vaste lasten, Variabele uitgaven, Totaal
+•	Footer: "Uitloggen" + "+ Nieuwe Uitgave"
+•	Refresh: Pull-to-refresh refetches transactions
+________________________________________
+DailyInput/DailyInputScreen.tsx ➕ Add Transaction
+Rol: Rapid entry voor dagelijkse uitgaven
+•	Flow: 
+1.	Datum (auto: today)
+2.	Bedrag (large input, auto-focus, € prefix)
+3.	Categorie (grid: Boodschappen, Vervoer, Horeca, ...)
+4.	Omschrijving (optional)
+5.	Betaalmethode (chips: Pin, Contant, Creditcard)
+6.	"Opslaan & Nieuwe" → reset form (rapid entry pattern)
+•	Unsaved changes: Confirm dialog als user gaat terug met data
+•	Saves to: TransactionService → n8n webhook (mock) + local storage
+________________________________________
+Daily/UndoScreen.tsx ↩️ Delete Transactions
+Rol: Multi-select delete voor laatste 5 transacties
+•	Data: TransactionService.list(5) → sorted by date DESC
+•	UI: Selectable cards (checkbox bottom-right)
+•	Actions: "Wissen (N)" button → confirm dialog → deleteMultiple(ids)
+•	Empty state: "Geen recente transacties" + "Terug naar Dashboard" button
+________________________________________
+Options/OptionsScreen.tsx ⚙️ Settings Hub
+Rol: Menu met 3 sub-actions
+•	Buttons: "Settings", "CSV upload", "Reset"
+•	Navigation: onSettings(), onCsvUpload(), onReset()
+•	Footer: "Terug naar Dashboard"
+________________________________________
+Settings/SettingsScreen.tsx 🌙 App Settings
+Rol: Theme toggle + future settings
+•	Dark mode: Switch → setTheme('dark'/'light')
+•	Notifications: Switch (placeholder, geen functionaliteit)
+•	Footer: "Terug naar Options"
+________________________________________
+CSV/CsvUploadScreen.tsx 📤 Bulk Import
+Rol: Paste CSV text → parse → validate → upload
+•	Format: date,amount,note (headers: date/datum, amount/bedrag)
+•	Validation: Max 62 dagen range
+•	Flow: 
+1.	Paste text in TextInput
+2.	"Uploaden" → parse via csvService
+3.	Confirm dialog met row count
+4.	POST to n8n + save local
+•	Error handling: Invalid format → alert
+________________________________________
+Reset/ResetScreen.tsx 🔥 Data Management
+Rol: Destructive actions
+•	WISSEN: Delete ALL data (setup + transactions + settings) → back to landing
+•	HERSTEL: Reset wizard to empty fields (keeps transactions + settings)
+•	UI: 2 separate cards met rode/blauwe buttons + destructive confirms
+________________________________________
+🔌 src/services/ (Business Logic Layer)
+storage.ts 💾 AsyncStorage Wrapper
+Rol: Persist/load FormContext state
+•	Methods: 
+o	saveState(state) → JSON.stringify → AsyncStorage @CashflowWizardState
+o	loadState() → JSON.parse
+o	clearAllState() → remove key
+•	Used by: FormContext (auto-save effect), App.tsx (load on mount)
+________________________________________
+transactionService.ts 📡 Transaction API Client
+Rol: CRUD operations voor dagelijkse uitgaven
+•	Methods: 
+o	saveTransaction(tx) → POST to n8n webhook + local fallback
+o	fetchSummary() → aggregated totals (month/week)
+o	list(limit) → last N transactions (for undo)
+o	deleteById(id), deleteMultiple(ids), clearAll()
+•	Storage: @MockTransactions key (demo implementation)
+•	Production: Would talk to real backend, local storage is fallback
+________________________________________
+csvService.ts 📄 CSV Parser + Uploader
+Rol: Parse CSV text → validate → send to n8n
+•	Methods: 
+o	parse(text) → flexible column detection (date/datum, amount/bedrag)
+o	validateRange(rows) → ensures ≤62 days span
+o	postToN8N(payload) → mock webhook POST
+•	Error handling: Throws on invalid format
+________________________________________
+🎨 src/styles/ (Design System)
+Colors.ts 🎨 Theme Definitions
+Rol: WCAG AAA compliant color palettes
+•	Light theme: 
+o	Background: #F2F2F7 (iOS gray)
+o	Card: #FFFFFF
+o	Primary: #007AFF (iOS blue)
+o	Text: #1C1C1E (13.8:1 contrast)
+•	Dark theme (Midnight Blue): 
+o	Background: #0F172A (deep slate)
+o	Card: #1E293B (lighter blue)
+o	Primary: #38BDF8 (bright cyan, visible on dark)
+o	Text: #F8FAFC (ice white, 14.2:1 contrast)
+•	Semantic tokens: textPrimary, textSecondary, border, error, warning, success
+________________________________________
+useAppStyles.ts 💅 Dynamic StyleSheet Hook
+Rol: Theme-aware styles met caching
+•	Returns: { styles, colors } tuple
+•	Caching: StyleSheets created once per theme (stored in styleCache)
+•	Performance: ~0.01ms per call (cache hit), ~5-10ms first call (cache miss)
+•	Usage: 
+•	const { styles, colors } = useAppStyles();<View style={styles.container} /><View style={{ borderColor: colors.primary }} />
+•	Styles: Container, headers, fields, buttons, chips, dashboard cards, etc.
+________________________________________
+📦 src/types/ (TypeScript Contracts)
+expenses.ts 💵
+ExpenseItem = { id: string; [key: string]: any }
+Generic expense object voor C10.lasten array
+________________________________________
+form.ts 📋
+FieldConfig // Field definitions (type, validation, conditionals)
+PageConfig  // Page structure (title, fields[])
+ConditionalConfig // Visibility rules
+Config-driven form system types
+________________________________________
+household.ts 👨‍👩‍👧
+Member // Person data (memberType, naam, leeftijd, dateOfBirth, gender)
+BurgerlijkeStaat // 'Gehuwd' | 'Fiscaal Partners' | ...
+WoningType // 'Koop' | 'Huur' | 'Kamer' | 'Anders'
+Gender // 'man' | 'vrouw' | 'anders' | 'n.v.t.'
+GENDER_OPTIONS // Constant array voor chips
+________________________________________
+income.ts 💰
+IncomeMember // Per-adult income structure
+  - categories: { geen, werk, uitkering, anders }
+  - nettoSalaris, frequentie, toeslagen, vakantiegeld
+  - uitkeringen: Record<UitkeringKey, UitkeringEntry>
+  - anders: AndersEntry[]
+
+HouseholdBenefits // Huurtoeslag, kindgebonden budget, etc.
+VermogenData // { hasVermogen: boolean; waarde?: number }
+IncomeFrequency // 'week' | '4wk' | 'month' | 'quarter' | 'year'
+________________________________________
+transaction.ts 💳
+DailyTransaction // Daily expense record
+  - date, amount, category, subcategory
+  - paymentMethod, weekNumber, id
+
+TransactionCategory // 'Boodschappen' | 'Vervoer' | ...
+PaymentMethod // 'pin' | 'contant' | 'creditcard'
+TransactionSummary // Aggregated totals
+________________________________________
+🛠️ src/utils/ (Pure Helper Functions)
+conditions.ts 🔍 Conditional Evaluation
+Rol: Evalueer visibility rules uit config
+evaluateCondition(conditional, state, pageId) → boolean
+•	Supports operators: ===, !==, >, <, >=, <=
+•	Cross-page references: C1.aantalMensen
+•	Used by: ConditionalField component
+________________________________________
+date.ts 📅 Date Utilities
+Functions:
+•	parseDDMMYYYYtoISO(input) → converts NL format to ISO
+•	formatDate(date, type) → 'dd-mm-yyyy' | 'weekday' | 'short' | 'full'
+•	calculateAge(isoDate) → returns age from birthdate
+•	getISOWeek(date) → ISO week number
+•	getCurrentDateISO() → today as YYYY-MM-DD
+•	getAdultMaxISO() → today - 18 years
+•	getChildMinISO() → today - 18 years + 1 day
+•	getChildMaxISO() → today
+•	todayUtcNoon() → UTC noon (prevents timezone shifts)
+________________________________________
+finance.ts 💹 Financial Calculations
+Rol: Calculate inkomen en lasten totals
+calculateFinancialSummary(c7, c10) → {
+  inkomenTotaalMaand,
+  lastenTotaalVast,
+  cashflowNetto
+}
+•	Frequency conversion: Week→month (52/12), 4wk→month (13), etc.
+•	Income sources: Werk (netto + toeslagen + vakantiegeld), Uitkeringen (DUO, WW, AOW, ...), Anders (custom)
+•	Household benefits: Huurtoeslag, kindgebonden, kinderopvang, kinderbijslag
+•	Expenses: All C10.lasten items summed
+________________________________________
+numbers.ts 🔢 String Manipulation
+Functions:
+•	onlyDigits(s) → strips non-digits
+•	onlyDigitsDotsComma(s) → allows 0-9.,
+•	stripEmojiAndLimit(s, max) → removes emoji, truncates
+•	formatCurrency(amount) → €1.234,56 (NL format)
+________________________________________
+validation.ts ✅ Field Validation
+Functions:
+•	validateField(field, value, state) → returns error string or null 
+o	Required check
+o	Min/max (numeric)
+o	Postcode format (4 digits)
+o	Cross-page length validation (C4.leden.length === C1.aantalMensen)
+•	validateDobNL(input) → validates DD-MM-YYYY format 
+o	Plausibility check (day 1-31, month 1-12, year 1920-2099)
+o	Calendar check (Feb 30 invalid)
+o	Returns error message or null
+________________________________________
+🔄 Data Flow Diagram
+┌─────────────────────────────────────────────────────────┐
+│                      App.tsx                            │
+│  ┌──────────────────────────────────────────────────┐  │
+│  │  <ThemeProvider> (dark/light mode)               │  │
+│  │    <FormProvider> (global wizard state)          │  │
+│  │      {currentScreen === 'wizard' ? (             │  │
+│  │        <WizardPage page={C1/C4/C7/C10} />        │  │
+│  │      ) : currentScreen === 'dashboard' ? (       │  │
+│  │        <DashboardScreen />                       │  │
+│  │      ) : ...}                                    │  │
+│  └──────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+                    ↓           ↓
+        ┌───────────────┐   ┌────────────────┐
+        │ FormContext   │   │ ThemeContext   │
+        │ ┌───────────┐ │   │ ┌────────────┐ │
+        │ │ C1: {...} │ │   │ │ theme:     │ │
+        │ │ C4: {...} │ │   │ │  'dark'    │ │
+        │ │ C7: {...} │ │   │ └────────────┘ │
+        │ │ C10: {...}│ │   └────────────────┘
+        │ └───────────┘ │            ↓
+        └───────┬───────┘     Colors.dark/light
+                ↓                    ↓
+        ┌───────────────┐    ┌─────────────┐
+        │ Storage.ts    │    │ useAppStyles│
+        │ AsyncStorage  │    │  (cached)   │
+        └───────────────┘    └─────────────┘
+                ↓
+    @CashflowWizardState
+________________________________________
+🎯 Key Architectural Decisions
+✅ Config-Driven Forms
+•	PageConfig files (C1-C10) define structure declaratively
+•	FormField interprets config → renders UI
+•	Easy to add new fields without touching components
+✅ Separation of Concerns
+•	Components: Dumb UI (ChipButton, InputCounter)
+•	Organisms: Smart containers (HouseholdMemberRepeater)
+•	Services: Business logic (TransactionService, csvService)
+•	Utils: Pure functions (date, validation, finance)
+✅ Theme System
+•	Colors.ts: Design tokens (semantic naming)
+•	useAppStyles: Dynamic StyleSheet generation
+•	Caching prevents performance hit
+•	WCAG AAA compliant (13.8:1+ contrast)
+⚠️ Single Context Anti-Pattern
+•	FormContext stores EVERYTHING (wizard + user + settings)
+•	Better: Split into WizardContext + UserContext + SettingsContext
+•	Current approach works for MVP maar schaalt niet
+⚠️ Mock Services
+•	TransactionService uses local AsyncStorage
+•	csvService has mock n8n POST
+•	Production needs real API integration
+________________________________________
+📊 Complexity Metrics
+Component LOC (Lines of Code):
+  HouseholdMemberRepeater: ~600 LOC ⚠️ (needs refactor)
+  ExpenseRepeater:         ~500 LOC ⚠️ (needs refactor)
+  IncomeRepeater:          ~450 LOC ⚠️ (needs refactor)
+  DashboardScreen:         ~150 LOC ✅
+  WizardPage:              ~120 LOC ✅
+  
+Cyclomatic Complexity (estimated):
+  HouseholdMemberRepeater: ~25 ⚠️ (high - nested conditionals)
+  ExpenseRepeater:         ~20 ⚠️ (medium-high)
+  FormField:               ~15 ⚠️ (medium - switch statement)
+  
+Reusability Score:
+  Components (ChipButton, etc):  95% ✅
+  Organisms (repeaters):         20% ⚠️ (tightly coupled)
+  Utils:                         100% ✅
+________________________________________
+🚀 Future Refactor Opportunities
+1. Extract Repeater Sub-Components
+// Current: 500 LOC monolith
+<ExpenseRepeater />
+
+// Better: Composed sub-components
+<ExpenseRepeater>
+  <WoningSection />
+  <VerzekeringenSection />
+  <AbonnementenSection />
+  <PerPersoonSection />
+  <AutoKostenSection />
+</ExpenseRepeater>
+2. Custom Hooks for Repeater Logic
+// Extract reusable patterns:
+function useExpenseItem(itemId: string) {
+  const readField = (key: string) => { ... };
+  const updateField = (key: string, value: any) => { ... };
+  return { readField, updateField };
+}
+3. Compound Component Pattern
+// Replace renderAdultCard() functions:
+<MemberCard>
+  <MemberCard.Title>{member.naam}</MemberCard.Title>
+  <MemberCard.DateField field="dateOfBirth" />
+  <MemberCard.GenderChips />
+</MemberCard>
+Hopelijk geeft dit je een compleet overzicht van wat elke file doet en hoe ze samenwerken! 🎉
+
+
+
+19/12/2025
+
+Wat goed om te horen! Graag gedaan. We hebben gisteren echt een grote slag geslagen. We zijn van een "merge-hell" met een crashende app naar een **onverwoestbare basis** gegaan.
+
+Hier is de stand van zaken van je project op dit moment:
+
+### 1. De "Golden Baseline" is een feit
+
+Je hebt een **Git-tag** (`GOLDEN_BASELINE_FINAL`) geplaatst. Dit is je reddingsboei. Wat er vanaf nu ook gebeurt, we kunnen altijd terug naar dit exact werkende punt.
+
+### 2. FormContext & State Logica
+
+De "hersenen" van je app zijn nu gezond:
+
+* **Cursor-fix:** De `meta.phase` logica (het onderscheid tussen `change` en `blur`) is geïmplementeerd. Gebruikers kunnen namen typen zonder dat de cursor wegspringt, terwijl de data toch schoon wordt opgeslagen.
+* **Data-vloei:** De logs lieten zien dat data van `C4` (zoals de woningstatus) nu vlekkeloos doorstroomt naar `C10`. Geen "leaks" meer.
+* **De Opschoner:** De `cleanName` utility is gekoppeld en verwijdert emoji's en overbodige spaties automatisch bij het verlaten van een veld.
+
+### 3. De "Speciale Status" (> 5 volwassenen)
+
+Dit was een belangrijke eis uit je 2025-statistieken:
+
+* In de `FormContext` zit nu de helper `checkSpecialStatus`.
+* Bij elke wijziging in het huishouden (C4) wordt automatisch gecontroleerd of er meer dan 5 volwassenen zijn.
+* De vlag `isSpecialStatus` wordt nu correct in je globale state opgeslagen.
+
+### 4. Project Structuur
+
+* **Gezuiverd:** De corrupte Git-markers (`<<<<<<<`) zijn verwijderd.
+* **Gevonden:** We weten waar de `StyleSheet.create` aanroepen staan en we hebben een plan om de `DateField` (picker) te valideren.
+
+
+### TOEKOMSTIGE PLANNING IN NIEUWE TEST BRANCH:
+
+
+
+# Fase 1 – De Fundering (Utility & Types)
+
+### 1. `src/types/household.ts` & `form.ts`
+
+* Dit zijn **semantische contracten**
+* Alles daarboven *veronderstelt* dat deze types kloppen
+* TypeScript errors zijn hier **early warning signals**
+
+**CTO-perspectief**
+
+> Dit is het punt waar je definieert *wat het systeem IS*, niet wat het doet.
+
+---
+
+### 2. `src/utils/date.ts`
+
+* Tijd & leeftijd zijn *business-kritisch*
+* Timezone bugs zijn **stille corrupteurs**
+* Deze util wordt in:
+
+  * validation
+  * repeaters
+  * dashboards
+  * CSV import
+    hergebruikt
+
+Dit bestand is een klassiek voorbeeld van:
+
+> **Functional Core (pure, deterministisch)**
+
+---
+
+### 3. `src/utils/validation.ts`
+
+bepaalt of gebruiker door mag
+
+Maar de **echte reden** waarom hij hier hoort is:
+
+* validation **veronderstelt correcte types**
+* validation **veronderstelt correcte datumlogica**
+
+---
+
+### 4. `src/utils/finance.ts`
+
+Waarom:
+
+* Dashboard is slechts een **projectie**
+* CSV / exports vertrouwen hierop
+* Testbaarheid is hier het hoogst
+
+> Als finance fout is, is alles fout — ook al ziet de UI er perfect uit.
+
+---
+
+# Fase 2 – De Motor (State & Services)
+
+### 5. `src/services/storage.ts`
+
+Storage is:
+
+* infrastructuur
+* zij-effecten
+* persistentie
+
+nodig:
+* stabiele state-vorm (types)
+* stabiele validatie
+
+
+---
+
+### 6. `src/context/FormContext.tsx`
+
+**expliciete waarschuwing**
+
+Dit is:
+
+> het zenuwstelsel
+
+**Maar**:
+dit is ook waar **architecturale fouten** zich het hardst manifesteren.
+
+Daarom is het juist dat:
+
+* utils
+* types
+* storage
+
+**al stabiel zijn** voordat we hier komen.
+
+---
+
+### 7. `src/services/transactionService.ts`
+
+Waarom hier:
+
+* hangt af van storage
+* hangt af van types (`transaction.ts`)
+* beïnvloedt UI, maar *wordt* niet door UI gedefinieerd
+
+---
+
+# Fase 3 – De Bouwstenen (Atomic Components)
+
+### 8. `DateField.tsx`
+
+Waarom deze vóór `FormField`:
+
+* DateField is *complexer*
+* bevat impliciete domeinlogica (leeftijd)
+* gebruikt `date.ts` intensief
+
+**Correcte dependency-richting.**
+
+---
+
+### 9. `FormField.tsx`
+
+FormField:
+
+* is een **dispatcher**
+* kent veel types
+* faalt hard als onderliggende components fout zijn
+
+---
+
+### 10. `InputCounter.tsx` & `ChipButton.tsx`
+
+Klein, stabiel, weinig logica.
+Perfect om **pas hier** te doen.
+
+---
+
+# Fase 4 – Complexe Organismen (Repeaters)
+
+### 11. `HouseholdMemberRepeater.tsx`
+
+** als eerste in deze fase **
+
+Dit is:
+
+* hoogste LOC
+* hoogste cyclomatic complexity
+* meest business-gevoelig
+
+---
+
+### 12. `IncomeRepeater.tsx` & `ExpenseRepeater.tsx`
+
+Ze:
+* vertrouwen op finance
+* vertrouwen op validation
+* vertrouwen op date
+
+---
+
+# Fase 5 – UI & Orchestratie
+
+### 13. `WizardPage.tsx`
+
+* is pure orchestratie
+* moet NIETS nieuws introduceren
+
+---
+
+### 14. `DashboardScreen.tsx`
+
+Dashboard is:
+
+* read-only projectie
+* laag risico
+* makkelijk te verifiëren
+
+---
+
+### 15. `App.tsx`
+
+App.tsx **moet altijd als laatste**.
+
+* hier verbind je alles
+* lifecycle
+* providers
+* navigatie
+
+---
+
+1. Benadruk expliciet:
+
+   * *Types → Utils → State → UI* als vast mantra
+2. Zie `FormContext.tsx` als **risicopunt**, niet “gewoon een stap”
+3. Beschouw repeaters als **refactor-zones**, niet “files”
+
+---

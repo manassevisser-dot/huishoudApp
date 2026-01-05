@@ -1,0 +1,64 @@
+Dit is het volledige toetsingskader, gerangschikt van basis tot expert-niveau, gevolgd door een specifieke prompt die je kunt gebruiken om een andere AI (of een menselijke adviseur) te laten controleren of code aan deze standaarden voldoet.
+
+## Toetsingskader: Clean Code React & TypeScript (2025)
+
+| Niveau | Toetspunt | Beschrijving & Criterium |
+| --- | --- | --- |
+| **1. Basis** | **Naamgeving** | Zijn variabelen betekenisvol (bijv. `daysUntilDeadline`) en gebruiken booleans de prefix `is`, `has` of `should`? 
+
+ |
+|  | **Type Veiligheid** | Wordt het gebruik van `any` strikt vermeden en vervangen door `unknown` waar nodig? 
+
+ |
+|  | **Component Omvang** | Zijn componenten klein en herbruikbaar (onder de 150 regels)? 
+
+ |
+| **2. Intermediate** | **Typing Props** | Wordt `interface` gebruikt voor props vanwege de uitbreidbaarheid? 
+
+ |
+|  | **Hook Typing** | Zijn complexe `useState` of `useRef` hooks expliciet getypeerd? 
+
+ |
+|  | **Logic Separation** | Is de logica uit de UI gehaald en verplaatst naar Custom Hooks? 
+
+ |
+| **3. Advanced** | **State Management** | Worden 'Discriminated Unions' gebruikt voor complexe UI-statussen in plaats van losse booleans? 
+
+ |
+|  | **Data Integriteit** | Wordt data aan de rand van het systeem 'geparsed' in plaats van alleen gevalideerd? 
+
+ |
+|  | **Immutability** | Zijn arrays en objecten waar mogelijk als `readonly` gemarkeerd? 
+
+ |
+| **4. Expert** | **Cognitieve Last** | Voldoet de code aan de "Leave No Questions"-regel: is de intentie direct duidelijk? 
+
+ |
+|  | **Architectuur** | Wordt compositie (children) verkozen boven overerving of complexe config-objecten? 
+
+ |
+|  | **Error Handling** | Worden 'Result-objects' gebruikt in plaats van het onnodig opgooien van exceptions? 
+
+ |
+
+---
+
+## De Toetsings-Prompt
+
+Kopieer en plak de onderstaande tekst in je AI-gesprek om de vorige resultaten te laten toetsen:
+
+> **Rol:** Je bent een Senior Software Quality Assurance (SQA) Adviseur gespecialiseerd in React en TypeScript (2025 best practices).
+> **Taak:** Analyseer de code of het advies uit de vorige beurt en leg deze langs het onderstaande **Toetsingskader Clean Code**.
+> **Toetsingskader:**
+> 1. **Basis:** Controleer op betekenisvolle naamgeving, booleans met prefix (`is/has`), en het absolute verbod op `any`.
+> 2. **Structureel:** Beoordeel of componenten klein genoeg zijn en of logica correct is gescheiden via Custom Hooks.
+> 3. **Type-architectuur:** Toets op het gebruik van Interfaces voor props en 'Discriminated Unions' voor complexe states (voorkom onmogelijke statussen).
+> 4. **Expert-niveau:** Beoordeel de 'Cognitieve Last' (is de code direct leesbaar?) en of er gebruik wordt gemaakt van het 'Parse, don't validate' principe.
+> 
+> 
+> **Extra Instructie:** Houd bij eventuele demografische functies rekening met de speciale status voor huishoudens met meer dan 5 volwassenen.
+> **Output:** Geef per niveau een score (Voldoet / Kan Beter / Onvoldoende) en geef concrete verbeterpunten voor de onderdelen die niet aan het kader voldoen.
+
+---
+
+Zal ik een specifiek code-voorbeeld voor je schrijven dat volgens dit kader is opgesteld, zodat je de adviseur direct kunt testen?

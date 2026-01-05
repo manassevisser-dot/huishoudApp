@@ -1,0 +1,801 @@
+// src/styles/useAppStyles.ts
+// CU-008.6: De Orchestrator (Main Factory)
+import { StyleSheet } from 'react-native';
+import { useTheme } from '@app/context/ThemeContext';
+import { Colors, Theme } from '@styles/Colors';
+import { Tokens } from '@styles/Tokens';
+import {
+  makeLayout,
+  makeHeader,
+  makeForms,
+  makeButtons,
+  makeCards,
+  makeChips,
+  makeDashboard,
+  makeSummary,
+  makeTypography,
+  makeAlerts,
+  makeToggles,      // ← NIEUW
+  makeCheckboxes,   // ← NIEUW
+  makeHelpers,      // ← NIEUW
+} from '@styles/modules';
+
+const styleCache: Partial<Record<Theme, ReturnType<typeof StyleSheet.create>>> = {};
+
+export function getAppStyles(theme: Theme) {
+  if (styleCache[theme]) return styleCache[theme]!;
+  const c = Colors[theme];
+
+  const assembled = {
+    ...makeLayout(c), // Layout
+    ...makeHeader(c), // Header
+    ...makeForms(c), // Forms
+    ...makeButtons(c), // Buttons
+    ...makeCards(c), // Cards
+    ...makeChips(c), // Chips
+    ...makeDashboard(c), // Dashboard
+    ...makeSummary(c), // Summary
+    ...makeTypography(c), // Typography
+    ...makeAlerts(c), // Alerts
+    ...makeToggles(c),      // ←Toggles NIEUW
+    ...makeCheckboxes(c),   // ← Checkboxes NIEUW
+    ...makeHelpers(c),      // ← Helpers NIEUW
+  } as const;
+
+  const styles = StyleSheet.create(assembled);
+  styleCache[theme] = styles;
+  return styles;
+}
+
+export type AppStyles = ReturnType<typeof getAppStyles>;
+
+export function useAppStyles() {
+  const { theme } = useTheme();
+  const styles = getAppStyles(theme);
+  const colors = Colors[theme];
+  return { styles, colors, Tokens };
+}
+
+// src/ui/styles/tokens.ts
+export const Space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
+export const Type  = { xs: 12, sm: 14, md: 16, lg: 17, xl: 18, h2: 28, kpi: 48 } as const;
+export const Radius = { xs: 4, sm: 6, md: 8, lg: 10, xl: 12, round: 20, circle: 999, pill: 20 } as const;
+export const Sizes  = { inputHeight: 48, checkbox: 24, toggleWidth: 80 } as const;
+
+// Definieer eerst losse shadows (sm/md/lg), maak daarna alias level1/2/3
+const shadowSm = { ios: { y: 1, radius: 2, opacity: 0.05 }, android: { elevation: 2 } };
+const shadowMd = { ios: { y: 2, radius: 4, opacity: 0.10 }, android: { elevation: 3 } };
+const shadowLg = { ios: { y: 2, radius: 8, opacity: 0.10 }, android: { elevation: 4 } };
+
+export const Shadows = {
+  // primaire naamgeving
+  sm: shadowSm,
+  md: shadowMd,
+  lg: shadowLg,
+  // aliassen voor backwards-compat
+  level1: shadowSm,
+  level2: shadowMd,
+  level3: shadowLg,
+} as const;
+
+export const Tokens = { Space, Type, Radius, Sizes, Shadows } as const;
+export type TokensType = typeof Tokens;
+// src/styles/Colors.ts
+export type Theme = 'light' | 'dark';
+
+export interface ColorScheme {
+  background: string;
+  surface: string;
+  inputBackground: string;
+  textPrimary: string;
+  textSecondary: string;
+  textTertiary: string;
+  inverseText: string;
+  border: string;
+  borderSubtle: string;
+  primary: string;
+  onPrimary: string;
+  secondary: string;
+  onSecondary: string;
+  error: string;
+  onError: string;
+  warning: string;
+  onWarning: string;
+  success: string;
+  onSuccess: string;
+  selected: string;
+  onSelected: string;
+  card: string;           // ← alias voor surface (backwards compat)
+  shadow: string;
+}
+
+export const Colors: Record<Theme, ColorScheme> = {
+  light: {
+    background: '#F2F2F7',
+    surface: '#FFFFFF',
+    inputBackground: '#FFFFFF',
+    textPrimary: '#1C1C1E',
+    textSecondary: '#6E6E73',
+    textTertiary: '#8E8E93',
+    inverseText: '#FFFFFF',
+    border: '#D1D1D6',
+    borderSubtle: '#F2F2F7',
+    primary: '#007AFF',
+    onPrimary: '#FFFFFF',
+    secondary: '#E5E5EA',
+    onSecondary: '#1C1C1E',
+    error: '#FF3B30',
+    onError: '#FFFFFF',
+    warning: '#FF9500',
+    onWarning: '#FFFFFF',
+    success: '#34C759',
+    onSuccess: '#FFFFFF',
+    selected: '#007AFF',
+    onSelected: '#FFFFFF',
+    shadow: '#000000',
+    card: '#FFFFFF',        // ← zelfde als surface
+  },
+  dark: {
+    background: '#0F172A',
+    surface: '#1E293B',
+    inputBackground: '#1E293B',
+    textPrimary: '#F8FAFC',
+    textSecondary: '#94A3B8',
+    textTertiary: '#64748B',
+    inverseText: '#0F172A',
+    border: '#334155',
+    borderSubtle: '#1E293B',
+    primary: '#38BDF8',
+    onPrimary: '#0F172A',
+    secondary: '#334155',
+    onSecondary: '#F8FAFC',
+    error: '#FF453A',
+    onError: '#FFFFFF',
+    warning: '#FF9F0A',
+    onWarning: '#0F172A',
+    success: '#30D158',
+    onSuccess: '#0F172A',
+    selected: '#38BDF8',
+    onSelected: '#0F172A',
+    shadow: '#000000',
+    card: '#1E293B',        // ← zelfde als surface
+  },
+};
+export const DATA_KEYS = {
+  SETUP: 'setup',
+  HOUSEHOLD: 'household',
+  FINANCE: 'finance',
+  META: 'meta',
+} as const;
+
+export const SUB_KEYS = {
+  MEMBERS: 'members',
+  INCOME: 'income',
+  EXPENSES: 'expenses',
+  ITEMS: 'items',
+} as const;
+
+export type DataKey = typeof DATA_KEYS[keyof typeof DATA_KEYS];
+// src/domain/constants/labels.ts
+import type { UXToken } from './registry';
+
+/**
+ * UI_LABELS zorgt voor de mapping tussen de technische tokens 
+ * en de leesbare Nederlandse tekst (i18n basis).
+ */
+export const UI_LABELS: Record<UXToken, string> = {
+  WIZARD_PAGE_SETUP_LABEL: 'Instellen',
+  WIZARD_PAGE_HOUSEHOLD_LABEL: 'Wie zijn de bewoners?',
+  WIZARD_PAGE_FINANCE_LABEL: 'Inkomsten & lasten',
+  FIELD_FULL_NAME_LABEL: 'Volledige naam',
+  FIELD_DOB_LABEL: 'Geboortedatum',
+  FIELD_GENDER_LABEL: 'Geslacht',
+  FIELD_CAR_COUNT_LABEL: "Hoeveel auto's heeft het huishouden?",
+  FIELD_PETS_LABEL: "Heeft u huisdieren?",
+};
+// src/domain/constants/registry.ts
+import { DATA_KEYS as RAW_KEYS } from './datakeys';
+
+export const DATA_KEYS = RAW_KEYS;
+
+export const UX_TOKENS = {
+  PAGES: {
+    [DATA_KEYS.SETUP]: 'WIZARD_PAGE_SETUP_LABEL',
+    [DATA_KEYS.HOUSEHOLD]: 'WIZARD_PAGE_HOUSEHOLD_LABEL',
+    [DATA_KEYS.FINANCE]: 'WIZARD_PAGE_FINANCE_LABEL',
+  },
+  FIELDS: {
+    NAME: 'FIELD_FULL_NAME_LABEL',
+    DOB: 'FIELD_DOB_LABEL',
+    GENDER: 'FIELD_GENDER_LABEL',
+    CAR_COUNT: 'FIELD_CAR_COUNT_LABEL',
+    PETS: 'FIELD_PETS_LABEL',
+  }
+} as const;
+
+// EXPORT TYPES EXPLICIET
+export type PageToken = (typeof UX_TOKENS.PAGES)[keyof typeof UX_TOKENS.PAGES];
+export type FieldToken = (typeof UX_TOKENS.FIELDS)[keyof typeof UX_TOKENS.FIELDS];
+export type UXToken = PageToken | FieldToken;
+import * as React from 'react';
+import InputCounter from '../ui/components/fields/InputCounter';
+import { useForm } from '../app/context/FormContext';
+
+export const AdultsCounter: React.FC = () => {
+  const { state, dispatch } = useForm();
+
+  // Haal de waarde op uit de nieuwe lokatie: state.data.setup
+  const currentCount = state.data.setup?.aantalVolwassen ?? 1;
+
+  const handleUpdate = (val: number) => {
+    dispatch({
+      type: 'UPDATE_DATA',
+      payload: {
+        setup: {
+          ...state.data.setup,
+          aantalVolwassen: val,
+        },
+      },
+    });
+  };
+
+  return (
+    <InputCounter
+      label="Aantal volwassenen"
+      value={currentCount}
+      onUpdate={handleUpdate}
+      min={1}
+      max={10}
+    />
+  );
+};
+
+export default AdultsCounter;
+
+// src/ui/components/InputCounter.tsx
+import * as React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+
+/** Basissubset die beide varianten delen */
+interface BaseProps {
+  label?: string;
+  value: number;
+  min?: number;
+  max?: number;
+  disabled?: boolean;
+  testIdBase?: string;
+}
+
+/** Phoenix-props: met fieldId + onChange(payload) */
+interface PhoenixChangeProps extends BaseProps {
+  fieldId: string;
+  onChange: (payload: { fieldId: string; value: number }) => void;
+  onUpdate?: never; // disambiguation
+}
+
+/** Legacy-props: alleen onUpdate(number) */
+interface LegacyUpdateProps extends BaseProps {
+  onUpdate: (val: number) => void;
+  fieldId?: never;
+  onChange?: never;
+}
+
+/** Eén publiek type dat beide toestaat */
+export type InputCounterProps = PhoenixChangeProps | LegacyUpdateProps;
+
+const InputCounter: React.FC<InputCounterProps> = ({
+  label,
+  value,
+  min = 0,
+  max = 100,
+  disabled,
+  testIdBase = 'counter',
+  ...rest
+}) => {
+  // Normaliseer callbacks:
+  const isPhoenix = 'fieldId' in rest && typeof rest.fieldId === 'string';
+
+  const emit = (next: number) => {
+    if (isPhoenix) {
+      rest.onChange?.({ fieldId: rest.fieldId, value: next });
+    } else {
+      rest.onUpdate?.(next);
+    }
+  };
+
+  const dec = () => emit(Math.max(min, value - 1));
+  const inc = () => emit(Math.min(max, value + 1));
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 10 }}>
+      {label ? <Text>{label}</Text> : null}
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <TouchableOpacity
+          testID={`${testIdBase}-decrement`}
+          accessibilityRole="button"
+          accessibilityLabel="Verlagen"
+          onPress={dec}
+          disabled={disabled || value <= min}
+        >
+          <Text style={{ fontSize: 25 }}> - </Text>
+        </TouchableOpacity>
+
+        <Text testID={`${testIdBase}-value`} accessibilityLabel={`Huidige waarde ${value}`} style={{ marginHorizontal: 15 }}>
+          {value}
+        </Text>
+
+        <TouchableOpacity
+          testID={`${testIdBase}-increment`}
+          accessibilityRole="button"
+          accessibilityLabel="Verhogen"
+          onPress={inc}
+          disabled={disabled || value >= max}
+        >
+          <Text style={{ fontSize: 25 }}> + </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default InputCounter;
+
+import * as React from 'react';
+import { TouchableOpacity, Text } from 'react-native';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+
+export type ChipButtonProps = {
+  label: string;
+  selected: boolean;
+  error?: boolean;
+  onPress: () => void;
+  accessibilityLabel?: string;
+};
+
+const ChipButton: React.FC<ChipButtonProps> = ({
+  label,
+  selected,
+  error,
+  onPress,
+  accessibilityLabel,
+}) => {
+  const { styles, colors } = useAppStyles() as any;
+
+  return (
+    <TouchableOpacity
+      style={[styles.chip, selected && styles.chipSelected, error && styles.chipError]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? label}
+      accessibilityState={{ selected }}
+    >
+      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+    </TouchableOpacity>
+  );
+};
+
+export default ChipButton;
+import * as React from 'react';
+import { View } from 'react-native';
+import { FormFieldProps } from './FormField';
+import FormField from './FormField';
+
+export const ConditionalField: React.FC<FormFieldProps> = ({ 
+  field, 
+  state, 
+  dispatch, 
+  value 
+}) => {
+  // ADR-01: Business logica uit de config halen
+  const isVisible = typeof field.condition === 'function' 
+  ? field.condition(state) 
+  : true;
+
+  if (!isVisible || !field.dependentField) {
+    return null;
+  }
+
+  return (
+    <View style={{ marginTop: 10, paddingLeft: 15, borderLeftWidth: 2, borderLeftColor: '#eee' }}>
+      <FormField
+        field={field.dependentField}
+        state={state}
+        dispatch={dispatch}
+        value={state[field.dependentField.id]}
+      />
+    </View>
+  );
+};
+
+export default ConditionalField;
+import * as React from 'react';
+import { Platform, View, Text, Pressable } from 'react-native';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+import { formatDate } from '@utils/date';
+
+type Props = {
+  label: string;
+  valueISO?: string; // canoniek: 'YYYY-MM-DD'
+  onChangeISO: (iso: string | undefined) => void;
+  minISO?: string; // default: '1920-01-01'
+  maxISO?: string; // default: vandaag
+  errorText?: string | null;
+  accessibilityLabel?: string;
+};
+
+const isoToDate = (iso?: string): Date => {
+  if (!iso) return new Date();
+  const [y, m, d] = iso.split('-').map(Number);
+  // UTC noon voorkomt dagverschuiving door tijdzones
+  return new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1, 12, 0, 0));
+};
+
+const isoToday = (): string => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const dateToISO = (dt: Date): string => {
+  // Niet toISOString(); dat geeft TZ issues. Formatteer zelf naar YYYY-MM-DD (UTC)
+  const y = dt.getUTCFullYear();
+  const m = String(dt.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(dt.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const DateField: React.FC<Props> = ({
+  label,
+  valueISO,
+  onChangeISO,
+  minISO = '1920-01-01',
+  maxISO,
+  errorText,
+  accessibilityLabel,
+}) => {
+  const { styles, colors } = useAppStyles() as any;
+  const [show, setShow] = React.useState(false);
+
+  const max = maxISO ?? isoToday();
+  const display = valueISO ? formatDate(valueISO, 'dd-mm-yyyy') : '';
+
+  return (
+    <View style={styles.fieldContainer}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+
+      <Pressable
+        onPress={() => setShow(true)}
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel ?? label}
+        style={[styles.input, { justifyContent: 'center' }, errorText && styles.inputError]}
+      >
+        <Text style={{ color: display ? colors.textPrimary : colors.textSecondary }}>
+          {display || 'DD-MM-YYYY'}
+        </Text>
+      </Pressable>
+
+      {show && (
+        <DateTimePicker
+          mode="date"
+          value={valueISO ? isoToDate(valueISO) : isoToDate(max)}
+          minimumDate={isoToDate(minISO)}
+          maximumDate={isoToDate(max)}
+          display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
+          onChange={(event: DateTimePickerEvent, date?: Date) => {
+            if (Platform.OS === 'android') setShow(false);
+            if (event.type === 'dismissed') return;
+            if (!date) return;
+            const iso = dateToISO(date);
+            onChangeISO(iso);
+          }}
+        />
+      )}
+
+      {errorText && <Text style={styles.errorTextStyle}>{errorText}</Text>}
+    </View>
+  );
+};
+
+export default DateField;
+// src/ui/components/fields/FormField.tsx
+import React from 'react';
+import { View } from 'react-native';
+import { FieldConfig, FormState, FormAction } from '../../../shared-types/form';
+import { useAppStyles } from '../../styles/useAppStyles';
+// ✅ Alles uit de barrel in dezelfde map
+import { 
+  InputCounter, 
+  DateField, 
+  ToggleSwitch, 
+  MoneyField 
+} from './index';
+
+interface FormFieldProps {
+  field: FieldConfig;
+  state: FormState;
+  dispatch: React.Dispatch<FormAction>;
+  value: any;
+}
+
+const FormField: React.FC<FormFieldProps> = ({ field, state, dispatch, value }) => {
+  const { styles } = useAppStyles();
+
+  const handleChange = (newValue: any) => {
+    dispatch({
+      type: 'SET_FIELD',
+      payload: {
+        section: 'setup', // SSOT: We gaan ervan uit dat dit in de setup sectie zit
+        field: field.fieldId, // ✅ CORRECT: 'field' property conform FormAction interface
+        value: newValue,
+      }, // Sluit payload
+    }); // Sluit dispatch
+  }; // Sluit handleChange
+
+  // Render logica op basis van field.type
+  return (
+    <View style={styles.inputContainer}>
+      {field.type === 'counter' && (
+        <CounterField
+          label={field.label || field.labelToken}
+          value={value}
+          onChange={handleChange}
+          min={field.validation?.min}
+          max={field.validation?.max}
+        />
+      )}
+      {/* Voeg hier andere veld-types toe (text, radio-chips, etc.) */}
+    </View>
+  );
+};
+
+export default FormField;
+// src/ui/components/fields/index.ts
+
+export * from './FormField';
+export * from './ConditionalField';
+
+// Input & Interactie componenten
+export { default as ChipButton } from './ChipButton';
+export { default as DateField } from './DateField';
+export { default as InputCounter } from './InputCounter';
+export { default as MoneyField } from './MoneyField';
+export { default as MoneyInput } from './MoneyInput';
+export { default as ToggleSwitch } from './ToggleSwitch';
+
+// Als je later meer velden toevoegt, hoef je alleen hier een regel toe te voegen.
+
+// src/ui/components/InputCounter.tsx
+import * as React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+
+/** Basissubset die beide varianten delen */
+interface BaseProps {
+  label?: string;
+  value: number;
+  min?: number;
+  max?: number;
+  disabled?: boolean;
+  testIdBase?: string;
+}
+
+/** Phoenix-props: met fieldId + onChange(payload) */
+interface PhoenixChangeProps extends BaseProps {
+  fieldId: string;
+  onChange: (payload: { fieldId: string; value: number }) => void;
+  onUpdate?: never; // disambiguation
+}
+
+/** Legacy-props: alleen onUpdate(number) */
+interface LegacyUpdateProps extends BaseProps {
+  onUpdate: (val: number) => void;
+  fieldId?: never;
+  onChange?: never;
+}
+
+/** Eén publiek type dat beide toestaat */
+export type InputCounterProps = PhoenixChangeProps | LegacyUpdateProps;
+
+const InputCounter: React.FC<InputCounterProps> = ({
+  label,
+  value,
+  min = 0,
+  max = 100,
+  disabled,
+  testIdBase = 'counter',
+  ...rest
+}) => {
+  // Normaliseer callbacks:
+  const isPhoenix = 'fieldId' in rest && typeof rest.fieldId === 'string';
+
+  const emit = (next: number) => {
+    if (isPhoenix) {
+      rest.onChange?.({ fieldId: rest.fieldId, value: next });
+    } else {
+      rest.onUpdate?.(next);
+    }
+  };
+
+  const dec = () => emit(Math.max(min, value - 1));
+  const inc = () => emit(Math.min(max, value + 1));
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 10 }}>
+      {label ? <Text>{label}</Text> : null}
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <TouchableOpacity
+          testID={`${testIdBase}-decrement`}
+          accessibilityRole="button"
+          accessibilityLabel="Verlagen"
+          onPress={dec}
+          disabled={disabled || value <= min}
+        >
+          <Text style={{ fontSize: 25 }}> - </Text>
+        </TouchableOpacity>
+
+        <Text testID={`${testIdBase}-value`} accessibilityLabel={`Huidige waarde ${value}`} style={{ marginHorizontal: 15 }}>
+          {value}
+        </Text>
+
+        <TouchableOpacity
+          testID={`${testIdBase}-increment`}
+          accessibilityRole="button"
+          accessibilityLabel="Verhogen"
+          onPress={inc}
+          disabled={disabled || value >= max}
+        >
+          <Text style={{ fontSize: 25 }}> + </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default InputCounter;
+import * as React from 'react';
+import { View, Text, TextInput } from 'react-native';
+
+export interface MoneyFieldProps {
+  label: string;
+  amount: number; // We gebruiken 'amount' zoals geëist door de compiler in DailyInput
+  onAmountChange: (val: number) => void;
+  error?: string;
+}
+
+export const MoneyField: React.FC<MoneyFieldProps> = ({ 
+  label, 
+  amount, 
+  onAmountChange, 
+  error 
+}) => {
+  return (
+    <View style={{ marginBottom: 15 }}>
+      <Text style={{ fontWeight: '600', marginBottom: 5 }}>{label}</Text>
+      <TextInput
+        style={{
+          borderWidth: 1,
+          borderColor: error ? 'red' : '#ccc',
+          padding: 12,
+          borderRadius: 8,
+          fontSize: 18,
+        }}
+        keyboardType="numeric"
+        value={amount.toString()}
+        onChangeText={(text) => {
+          const num = parseFloat(text.replace(',', '.'));
+          onAmountChange(isNaN(num) ? 0 : num);
+        }}
+        placeholder="0.00"
+      />
+      {error && <Text style={{ color: 'red', fontSize: 12 }}>{error}</Text>}
+    </View>
+  );
+};
+export default MoneyField;
+import * as React from 'react';
+import { View, Text, TextInput } from 'react-native';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+import { toCents, formatCentsToDutch, formatDutchValue } from '@utils/numbers';
+
+type MoneyInputProps = {
+  value: number; // Bedrag in centen (altijd >= 0)
+  onValueChange: (cents: number) => void;
+  disabled?: boolean;
+  placeholder?: string;
+  accessibilityLabel?: string;
+};
+
+const MoneyInput: React.FC<MoneyInputProps> = ({
+  value,
+  onValueChange,
+  disabled = false,
+  placeholder = '',
+  accessibilityLabel = 'Bedrag',
+}) => {
+  const { styles } = useAppStyles();
+
+  // De lokale staat houdt de string vast die de gebruiker ziet
+  const [localValue, setLocalValue] = React.useState<string>(formatCentsToDutch(value));
+
+  // Sync lokale staat als de externe waarde (centen) wijzigt
+  React.useEffect(() => {
+    setLocalValue(formatCentsToDutch(value));
+  }, [value]);
+
+  // Bij focus: verwijder duizendtal-punten voor makkelijk bewerken
+  const onFocus = () => setLocalValue(formatDutchValue(localValue));
+
+  // Tijdens typen: saniteer direct (geen letters, geen minus)
+  const onChangeText = (text: string) => setLocalValue(formatDutchValue(text));
+
+  // Bij blur: bereken centen en formatteer naar NL-standaard
+  const onBlur = () => {
+    const cents = toCents(localValue);
+    onValueChange(cents); // Emit positieve centen naar de state
+    setLocalValue(formatCentsToDutch(cents)); // "On-blur formatting"
+  };
+
+  return (
+    <View style={styles.inputMoneyRow}>
+      {/* Vast, niet-bewerkbaar prefix  */}
+      <Text style={styles.moneyPrefix} accessibilityLabel="Euro-teken">
+        €
+      </Text>
+
+      <TextInput
+        value={localValue}
+        onChangeText={onChangeText}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        editable={!disabled}
+        accessibilityLabel={accessibilityLabel}
+        keyboardType="decimal-pad" // Forceert numeriek pad op mobile
+        style={styles.moneyTextInput}
+      />
+    </View>
+  );
+};
+
+export default MoneyInput;
+
+import * as React from 'react';
+import { View, TouchableOpacity, Text } from 'react-native';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+
+export type ToggleSwitchProps = {
+  value: boolean;
+  onToggle: () => void;
+  labelTrue?: string;
+  labelFalse?: string;
+  accessibilityLabel?: string;
+};
+
+const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
+  value,
+  onToggle,
+  labelTrue = 'Ja',
+  labelFalse = 'Nee',
+  accessibilityLabel,
+}) => {
+  const { styles, colors } = useAppStyles() as any;
+
+  return (
+    <View style={styles.toggleWrapper}>
+      <TouchableOpacity
+        style={[styles.toggleButton, value ? styles.toggleActive : styles.toggleInactive]}
+        onPress={onToggle}
+        accessibilityRole="switch"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ checked: value }}
+      >
+        <Text style={styles.toggleText}>{value ? labelTrue : labelFalse}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+export default ToggleSwitch;
+

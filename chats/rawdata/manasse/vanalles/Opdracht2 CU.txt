@@ -1,0 +1,97 @@
+Dit rapport van de CU-Assembler is van hoge kwaliteit en volgt de **ADR-12** en **ADR-13** richtlijnen nauwgezet. Als **Lyra (Migration & Test Lead)** heb ik dit voorstel getoetst aan onze **A-Tier 2025 standaarden**.
+
+Het plan past uitstekend binnen de M&T-strategie, mits we een scherp onderscheid maken tussen **Integers (Aantallen)** en **Cents (Geld)**.
+
+Hieronder volgt de geformaliseerde **Migration & Test Analyse** voor de uitvoering van **WAI-002**.
+
+---
+
+# 📈 Migratie- & Teststrategie: [WAI-002] InputCounter Hardening
+
+## 0️⃣ Interne Analyse (Lyra)
+<internal_analysis>
+**Migration Type:** UI Component Migration (Refactor).
+**Complexity Score:** 2/5 - De component zelf is eenvoudig; de uitdaging zit in de strikte isolatie van domeinlogica.
+**Business Criticality:** Medium - Directe invloed op de gebruikerservaring en invoer-integriteit.
+**Downtime Tolerance:** Zero (Solo-Dev Big Bang context).
+
+**Risk Matrix:**
+| Risk | Probability | Impact | Priority | Mitigation Strategy |
+|------|------------|--------|----------|---------------------|
+| Logic Leakage (ADR-13) | Medium | High | 6 | Strikte prop-only interface; geen imports uit `@context` of `@domain`. |
+| Type Mismatch (String/Num) | Medium | Medium | 5 | InputCounter dwingt `number` af; parsing gebeurt in container/reducer. |
+| Styling Regressie | Low | Medium | 4 | Gebruik van centrale tokens; Snapshot tests verplicht. |
+
+**Recommended Strategy:** Refactor-in-Isolation. De UI wordt eerst "dom" gemaakt in de test-branch, waarna de koppeling via containers plaatsvindt.
+</internal_analysis>
+
+---
+
+## 1️⃣ Migration Doel & Scope
+
+### Wat moet er gebeuren?
+De `InputCounter` transformeren tot een puur presentatie-instrument ("Projector") conform **ADR-13**. Alle domein-kennis (zoals de 5-volwassenen grens) en state-kennis (dispatch) wordt uit de component verwijderd.
+
+### Concrete Veranderingen
+- **Verplaatst:** Inline styling naar een gecentraliseerd `StyleSheet` met tokens uit `useAppStyles`.
+- **Verwijderd:** Eventuele impliciete business rules of directe context-koppelingen (indien aanwezig).
+- **Gewaarborgd:** De `SPECIAL_LARGE` status blijft een schaduw-attribuut (ADR-12), berekend in de state-laag, onzichtbaar voor deze component.
+
+---
+
+## 2️⃣ Pre-Migration Assessment (Baseline)
+
+### Fase 0: Validatie van de Nulmeting
+- **Baseline:** De huidige `InputCounter` accepteert `value: number` en geeft `onValueChange: number` terug.
+- **Vaststelling:** In de huidige `FormContext` wordt `isSpecialStatus` berekend in de reducer. Dit is de correcte architecturale plek.
+- **Harm Prevention:** We moeten voorkomen dat de `NumericParser` (die centen verwerkt) wordt verward met deze teller (die gehele getallen verwerkt).
+
+---
+
+## 3️⃣ Phased Migratiestrategie
+
+**Fase 1: De "Domme" Refactor (WAI-002)**
+- **Scope:** Uitsluitend `src/components/InputCounter.tsx`.
+- **Actie:** Opschonen types, introduceren expliciete `canDec/canInc` guards, tokens implementeren.
+
+**Fase 2: De Container-Koppeling (WAI-003)**
+- **Scope:** Introductie van `AdultsCounter` container.
+- **Actie:** Koppelen aan `FormContext` en de domein-selector `getHouseholdStatus`.
+
+**Fase 3: De Geld-Splitsing (WAI-004)**
+- **Scope:** Introductie `MoneyInput`.
+- **Actie:** Hier wordt de **NumericParser** (centen) gekoppeld. `InputCounter` wordt **niet** meer gebruikt voor bedragen.
+
+---
+
+## 4️⃣ Comprehensive Test Strategy
+
+### Gate A: Unit Testing (De Gordel)
+- **Test 1:** `InputCounter` moet de `onValueChange` callback aanroepen met het juiste *getal* (+1/-1).
+- **Test 2:** De component mag de `min` en `max` grenzen niet overschrijden.
+- **Test 3:** Render-check: Geen visuele elementen gerelateerd aan `SPECIAL_LARGE` aanwezig.
+
+### Gate B: Integration Testing (Shadow Check)
+- **Scenario:** Verander het aantal volwassenen naar 6.
+- **Check:** Bevestig via de `FormContext` dat `isSpecialStatus` op `true` springt, terwijl de `InputCounter` visueel ongewijzigd blijft.
+
+---
+
+## 5️⃣ Rollback & Recovery
+- **Trigger:** Indien de CU-agent per ongeluk domein-imports of context-hooks toevoegt aan de component.
+- **Actie:** `git checkout HEAD src/components/InputCounter.tsx`. De UI-laag moet "steriel" blijven.
+
+---
+
+## 🏁 Akkoord & Opdracht voor CU-Agent
+
+Ik accepteer het voorstel van de CU-Assembler. De CU-agent mag starten met **WAI-002**.
+
+### 🛠️ Specifieke Instructie voor de Bouwer:
+> "Refactor `src/components/InputCounter.tsx`.
+> 1. Gebruik uitsluitend props voor data en events. 
+> 2. Importeer **geen** context of domeinregels.
+> 3. Implementeer `useAppStyles` voor tokens.
+> 4. Zorg dat de teller uitsluitend met `numbers` (integers) werkt. 
+> 5. Lever een Jest snapshot test aan die de 'pure' staat bevestigt."
+

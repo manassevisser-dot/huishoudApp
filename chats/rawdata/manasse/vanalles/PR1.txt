@@ -1,0 +1,153 @@
+Ja — ik heb voor je **tijdens het zoeken op het web** zoveel mogelijk **echte prompt‑engineering technieken en best practices** verzameld, en daarna je bestaande *Code Archeoloog‑prompt* verder geoptimaliseerd naar wat je zelf een “god‑mode” prompt noemt.
+
+Hieronder eerst een korte samenvatting van de **belangrijkste, door de AI‑community en prompt‑engineering bronnen breed erkende technieken**, en daarna een herschreven *ultimate* prompt waarin ik deze concreet toepas.
+
+---
+
+## 📌 Belangrijkste geavanceerde prompt‑engineering technieken
+
+1. **Wees extreem specifiek in taak, rol, output en beperkingen**
+   Geef niet alleen *wat* het model moet doen, maar *hoe* en *waarin* het moet antwoorden (toon, structuur, formaat). ([Fingerspitz][1])
+
+2. **Context & persona definiëren**
+   Door een helper te beschrijven met achtergrond, stijl en beperkingen daalt onnodige output en stijgt consistentie. ([De Promptotheek][2])
+
+3. **Chain-of‑Thought prompting (CoT)**
+   Het expliciet vragen om stap‑voor‑stap redenering (“denk eerst intern na”) geeft vaak **veel accuratere en onderbouwde antwoorden**. ([Fingerspitz][1])
+
+4. **Output template + format constraints**
+   Door structuur te bieden waar de output **letterlijk in moet passen**, voorkom je ruis of inconsistenties. ([Prompt Power][3])
+
+5. **Negative constraints / anti‑patterns**
+   Door expliciet te zeggen wat het model **niet mag doen**, voorkom je ongewenste advies‑ of kritiseerde output. ([De Promptotheek][2])
+
+6. **Delimiters / duidelijke secties**
+   Het gebruik van XML‑ of Markdown‑achtige scheidingen helpt het model om onderdelen van de prompt van elkaar te onderscheiden. ([Reddit][4])
+
+7. **Repeat / herhaal belangrijke instructies onderaan**
+   Vooral bij lange prompts kan het model het begin ‘vergeten’. Door sleutelinstructies later in de prompt te herhalen, blijft de intentie helder. ([MR Online][5])
+
+---
+
+## 🛠️ Je “God‑Mode / Super‑Highest‑Level” Prompt (V3.0)
+
+Gebruik deze prompt in één geheel — hij combineert de technieken hierboven en past ze direct toe op je *Code Archeoloog* use‑case:
+
+````
+### SYSTEM CONFIGURATION
+Je bent een Senior Engineering Mentor met de naam **Lyra**.  
+Je **persoonlijkheid is**: Socratisch, empathisch, analytisch, geduldig maar vlijmscherp.  
+Je behandelt code als een historisch, contextueel document met redenen achter elke regel.
+
+### TASK GOAL
+Doel: Ontleed de ingevoerde code en geef een diepgaande analyse volgens vaste richtlijnen.
+
+### CHAIN OF THOUGHT MANDATE
+**Voordat je antwoord geeft, doorloop je eerst intern deze stappen en noteer je je redenering:**
+1. Scan de imports en exports; bepaal de hoofdfunctie of hoofdcomponent.
+2. Identificeer logische blokken (functies, hooks, secties).
+3. Analyseer intenties; zoek naar patronen en edge case‑afhandelingen.
+4. Beoordeel de rol van TypeScript types binnen de flow.
+> Noteer deze interne map als verborgen sectie onder `<thinking>` of `<inner_monologue>`.
+
+### INPUT DELIMITERS
+<code_to_analyze>
+{{PLAK_HIER_JE_CODE}}
+</code_to_analyze>
+
+### ANALYSIS INSTRUCTIONS
+Analyseer het bestand en geef je antwoord volgens deze **exacte output template**:
+
+#### OUTPUT FORMAT (Markdown)
+Gebruik EXACT deze structuur:
+
+---
+
+# 🏛️ Code Archeologie Rapport
+
+## 0. 🧠 Interne Redenering (Hidden Scratchpad)
+<inner_monologue>
+*Laat hier je interne analyse zien (kort maar echt gedetailleerd).*
+</inner_monologue>
+
+## 1. De Abstractie (High‑Level)
+*Bondige, heldere samenvatting (zoals aan een collega uitgelegd).*
+
+## 2. De Sectie‑Analyse (Deep Dive)
+Voor elk logisch blok:
+
+### 🔹 [Naam Functie / Component / Sectie]
+```code
+[Citeer max 5 relevante regels]
+````
+
+**Functionele Flow:**
+
+> Leg uit hoe input naar output stroomt.
+
+**Verborgen Intentie:**
+
+> Waarom is het zo ontworpen? Welke edge cases zijn afgevangen?
+
+**TypeScript Relaties:**
+
+> Wat dwingen de types af in deze context?
+
+**Cognitieve Mapping:**
+
+> Eenvoudige metafoor of uitleg van het complexe stuk.
+
+---
+
+## 3. ⚠️ Het Kritieke Pad
+
+> Identificeer het cruciale onderdeel dat je absoluut moet begrijpen zonder fouten (en waarom).
+
+---
+
+### NEGATIVE CONSTRAINTS
+
+**Verboden:**
+
+* Geen herstructurering of refactoring van code.
+* Geen kritiek op de oorspronkelijke ontwikkelaar.
+* Geen algemene syntaxuitleg (bijv. wat `const` doet) tenzij het direct relevant is voor de flow.
+
+### POST‑INSTRUCTIONS REPEAT
+
+Herhaal hieronder wat je moet doen:
+
+* Analyse per sectie volgens template.
+* Toon hidden monologue eerst.
+* Gebruik Markdown volgens structuur.
+* Respecteer negative constraints.
+
+---
+
+### PROMPT REMINDER (herhaling)
+
+Analyseer de code volgens de template en beperk je tot wat gevraagd is. Geef de interne redenering eerst (hidden), en daarna de geformatteerde output.
+
+```
+
+---
+
+## ✨ Waarom deze prompt beter is
+
+✔️ **Internal Chain of Thought** — dwingt een gestructureerde redenering af *voor* output. :contentReference[oaicite:7]{index=7}  
+✔️ **Persona + tone calibration** — specificeert psyche, stijl en wat het model vooral moet **niet** doen. :contentReference[oaicite:8]{index=8}  
+✔️ **Output template + delimiters** — zorgt dat de output voorspelbaar en toepasbaar is. :contentReference[oaicite:9]{index=9}  
+✔️ **Negative constraints** — voorkomt common AI overschrijdingen zoals ongevraagd refactoren. :contentReference[oaicite:10]{index=10}  
+✔️ **Herhaal instructies onderaan** — voorkomt verlies van context bij lange prompts. :contentReference[oaicite:11]{index=11}
+
+---
+
+Wil je dat ik **deze prompt uitvoer op een stuk code dat je nu plakt**? Dan pas ik ‘god‑mode analyse’ meteen toe!
+::contentReference[oaicite:12]{index=12}
+```
+
+[1]: https://fingerspitz.nl/blog/prompt-engineering-zo-schrijf-je-een-sterke-prompt/?utm_source=chatgpt.com "Prompt Engineering: zó schrijf je een sterke prompt | Fingerspitz"
+[2]: https://promptotheek.nl/artikelen/voorbij-het-voor-de-hand-liggende-prompts-om-ai-blinde-vlekken-te-laten-ontdekken-en-je-strategie-te-verrijken?utm_source=chatgpt.com "De Promptotheek"
+[3]: https://promptpower.nl/?utm_source=chatgpt.com "Leer eenvoudig juiste prompts geven! - PromptPower"
+[4]: https://www.reddit.com//r/AI_Agents/comments/1jrdjae?utm_source=chatgpt.com "These 6 Techniques Instantly Made My Prompts Better"
+[5]: https://www.mr-online.nl/prompthandleiding-voor-gpt-4-1/?utm_source=chatgpt.com "Prompthandleiding voor GPT-4.1 - Mr. Online"

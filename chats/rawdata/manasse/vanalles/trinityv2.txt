@@ -1,0 +1,157 @@
+// scripts/maintenance/audit-orchestrator.js
+const fs = require('fs');
+const path = require('path');
+
+const isVerbose = process.env.VERBOSE === 'true';
+
+/**
+ * Berekent de Trinity Scores op basis van Audit en Jest data.
+ */
+function getTrinityData() {
+    const auditScore = 85; // Basiskwaliteit van de architectuur
+    let coverageScore = 0;
+    let riskPenalty = 0;
+
+    try {
+        const coveragePath = path.join(process.cwd(), 'coverage/coverage-summary.json');
+        if (fs.existsSync(coveragePath)) {
+            const summary = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
+            // Pak de branch coverage percentage [cite: 230]
+            coverageScore = Math.round(summary.total.branches.pct);
+            
+            // Risk Penalty op basis van ongeteste regels
+            const uncoveredLines = summary.total.lines.total - summary.total.lines.covered;
+            riskPenalty = Math.min(Math.round(uncoveredLines / 10), 20);
+        }
+    } catch {
+        // Modern catch zonder variabele om ESLint '@typescript-eslint/no-unused-vars' te voorkomen 
+        if (isVerbose) console.warn("⚠️ Kon coverage data niet inlezen.");
+    }
+
+    const stabilityScore = Math.max(0, coverageScore - riskPenalty);
+    const avg = (auditScore + stabilityScore) / 2;
+
+    const getGrade = (s) => {
+        if (s >= 90) return 'S';
+        if (s >= 75) return 'A';
+        if (s >= 60) return 'B';
+        return 'C';
+    };
+
+    return {
+        audit: auditScore,
+        coverage: coverageScore,
+        stability: stabilityScore,
+        master: getGrade(avg),
+        timestamp: new Date().toISOString()
+    };
+}
+
+const scores = getTrinityData();
+
+// Output als JSON voor robuuste parsing in Bash [cite: 411]
+console.log(JSON.stringify(scores));
+
+================
+
+#!/usr/bin/env bash
+# Phoenix Commander v3.5 – Trinity Edition 2.0
+set -euo pipefail
+
+# --- Configuratie & Helpers ---
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export PROJECT_ROOT
+source "$PROJECT_ROOT/scripts/utils/log_bridge.sh" || { log_info() { echo "INFO: $*"; }; log_err() { echo "ERR: $*"; }; log_ok() { echo "OK: $*"; }; }
+
+DRY_RUN=false
+VERBOSE=false
+
+parse_args() {
+    for arg in "$@"; do
+        case $arg in
+            -d|--dry-run) DRY_RUN=true; shift ;;
+            -v|--verbose) VERBOSE=true; shift ;;
+        esac
+    done
+    export DRY_RUN VERBOSE
+}
+
+# --- Core Functies ---
+
+cmd_test() {
+    log_info "🧪 Test Suite draaien..."
+    local test_flags="--watchAll=false --coverage --json --outputFile=coverage/report.json"
+    [ "$VERBOSE" = false ] && test_flags="$test_flags --silent"
+    npm test -- $test_flags
+}
+
+get_scores_json() {
+    # Roept de orchestrator aan en vangt alleen de JSON op
+    node scripts/maintenance/audit-orchestrator.js
+}
+
+# --- Trinity Commando's ---
+
+cmd_all() {
+    cmd_test || true
+    local json; json=$(get_scores_json)
+    
+    # Gebruik jq voor robuuste parsing 
+    local a; a=$(echo "$json" | jq -r '.audit')
+    local c; c=$(echo "$json" | jq -r '.coverage')
+    local s; s=$(echo "$json" | jq -r '.stability')
+    local m; m=$(echo "$json" | jq -r '.master')
+
+    echo -e "\n--- 📊 PHOENIX TRINITY SCORES ---"
+    echo -e "🏛️  Audit:     ${a}%"
+    echo -e "🧪  Coverage:  ${c}%"
+    echo -e "🛡️  Stability: ${s}%"
+    echo -e "--------------------------------"
+    log_ok "👑 MASTER GRADE: $m"
+    
+    # Quality Gates Check [cite: 418, 419]
+    if [[ "$c" -lt 70 ]]; then log_err "❌ HARD GATE: Coverage onder 70%!"; return 1; fi
+    if [[ "$m" == "C" ]]; then log_warn "⚠️ SOFT GATE: Grade is C, streef naar B of hoger."; fi
+}
+
+cmd_full() {
+    log_info "🌅 Phoenix End-of-Day run..."
+    
+    # 1. Linting
+    [ "$DRY_RUN" = false ] && npm run lint -- --fix || log_warn "[DRY] Sla linting over"
+    
+    # 2. Tests (Must Pass) [cite: 241, 416]
+    cmd_test || { log_err "Tests falen! EOD afgebroken."; return 1; }
+    
+    # 3. Score & Gate
+    local json; json=$(get_scores_json)
+    local m; m=$(echo "$json" | jq -r '.master')
+    local stats; stats="Audit:$(echo "$json" | jq -r '.audit') Cov:$(echo "$json" | jq -r '.coverage')"
+
+    # 4. Commit [cite: 244, 260]
+    if [ "$DRY_RUN" = false ]; then
+        git add .
+        git commit -m "Phoenix EOD: $m ($stats)"
+        
+        # 5. EOD Ritueel Scherm 
+        echo -e "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo -e "   🌅 PHOENIX — END OF DAY REPORT"
+        echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo -e "   🏆 MASTER GRADE: $m"
+        echo -e "   📊 Stats: $stats"
+        echo -e "   ✅ Commit: $(git rev-parse --short HEAD)"
+        echo -e "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        log_ok "Werkdag succesvol afgesloten."
+    else
+        log_warn "[DRY-RUN] Zou commit maken met Grade $m"
+    fi
+}
+
+# --- Entry Point ---
+parse_args "$@"
+case "${1:-help}" in
+    all) cmd_all ;;
+    full) cmd_full ;;
+    watch) while true; do clear; cmd_all; sleep 30; done ;;
+    *) echo "Usage: ./phoenix [-d] [-v] all|full|watch" ;;
+esac

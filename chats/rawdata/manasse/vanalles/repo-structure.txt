@@ -1,0 +1,119 @@
+.
+├── app.json
+├── App.tsx
+├── eas.json
+├── eslint.config.cjs
+├── .expo
+│   ├── devices.json
+│   └── README.md
+├── .gitignore
+├── .husky
+│   ├── _
+│   │   ├── applypatch-msg
+│   │   ├── commit-msg
+│   │   ├── .gitignore
+│   │   ├── h
+│   │   ├── husky.sh
+│   │   ├── post-applypatch
+│   │   ├── post-checkout
+│   │   ├── post-commit
+│   │   ├── post-merge
+│   │   ├── post-rewrite
+│   │   ├── pre-applypatch
+│   │   ├── pre-auto-gc
+│   │   ├── pre-commit
+│   │   ├── pre-merge-commit
+│   │   ├── prepare-commit-msg
+│   │   ├── pre-push
+│   │   └── pre-rebase
+│   └── pre-commit
+├── .idx
+│   └── dev.nix
+├── index.tsx
+├── .lintstagedrc.json
+├── package.json
+├── package-lock.json
+├── .prettierignore
+├── .prettierrc
+├── README.md
+├── repo-structure.txt
+├── safe_unused_cleanup.sh
+├── src
+│   ├── components
+│   │   ├── ChipButton.tsx
+│   │   ├── ConditionalField.tsx
+│   │   ├── DateField.tsx
+│   │   ├── DateField.tsx.bak
+│   │   ├── FormField.tsx
+│   │   ├── InputCounter.tsx
+│   │   └── ToggleSwitch.tsx
+│   ├── context
+│   │   ├── FormContext.tsx
+│   │   └── ThemeContext.tsx
+│   ├── hooks
+│   │   └── useDobInput.ts
+│   ├── organisms
+│   │   ├── ExpenseRepeater.tsx
+│   │   ├── HouseholdMemberRepeater.tsx
+│   │   ├── HouseholdMemberRepeater.tsx.bak
+│   │   └── IncomeRepeater.tsx
+│   ├── screens
+│   │   ├── CSV
+│   │   │   └── CsvUploadScreen.tsx
+│   │   ├── Daily
+│   │   │   └── UndoScreen.tsx
+│   │   ├── DailyInput
+│   │   │   └── DailyInputScreen.tsx
+│   │   ├── Dashboard
+│   │   │   └── DashboardScreen.tsx
+│   │   ├── LandingScreen.tsx
+│   │   ├── Options
+│   │   │   └── OptionsScreen.tsx
+│   │   ├── Reset
+│   │   │   └── ResetScreen.tsx
+│   │   ├── Settings
+│   │   │   └── SettingsScreen.tsx
+│   │   └── Wizard
+│   │       ├── pages
+│   │       └── WizardPage.tsx
+│   ├── services
+│   │   ├── csvService.ts
+│   │   ├── storage.ts
+│   │   └── transactionService.ts
+│   ├── styles
+│   │   ├── Colors.ts
+│   │   └── useAppStyles.ts
+│   ├── types
+│   │   ├── expenses.ts
+│   │   ├── form.ts
+│   │   ├── household.ts
+│   │   ├── income.ts
+│   │   └── transaction.ts
+│   └── utils
+│       ├── conditions.ts
+│       ├── date.ts
+│       ├── finance.ts
+│       ├── numbers.ts
+│       └── validation.ts
+├── tsconfig.json
+└── -vnpx
+    └── _
+        ├── applypatch-msg
+        ├── commit-msg
+        ├── .gitignore
+        ├── h
+        ├── husky.sh
+        ├── post-applypatch
+        ├── post-checkout
+        ├── post-commit
+        ├── post-merge
+        ├── post-rewrite
+        ├── pre-applypatch
+        ├── pre-auto-gc
+        ├── pre-commit
+        ├── pre-merge-commit
+        ├── prepare-commit-msg
+        ├── pre-push
+        └── pre-rebase
+
+26 directories, 91 files

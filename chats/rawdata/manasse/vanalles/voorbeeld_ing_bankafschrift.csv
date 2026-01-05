@@ -1,0 +1,3 @@
+Datum,Naam/Omschrijving,Rekening,Tegenrekening,Code,Af Bij,Bedrag (EUR),MutatieSoort,Mededelingen,Saldo na mutatie,Tag
+2025-01-01,Supermarkt XYZ,NL12INGB0001234567,NL98RABO0007654321,,Af,-45.32,Pinbetaling,Boodschappen,1250.68,
+2025-01-02,Werkgever BV,NL12INGB0001234567,NL33ABNA0123456789,,Bij,2500.0,Salarisbetaling,Salaris Januari,3750.68,

@@ -1,0 +1,594 @@
+
+# 1) Vind alle verwijzingen naar 'woning' op C4 (UI + state)
+git grep -n "woning" -- src 2>/dev/null || true
+
+# 2) Toon C4 config en (indien aanwezig) C4 screen/container
+sed -n '1,220p' src/screens/Wizard/pages/C4.config.ts 2>/dev/null || echo "C4.config.ts niet gevonden"
+sed -n '1,240p' src/screens/Wizard/WizardPage.tsx 2>/dev/null || echo "WizardPage.tsx niet gevonden"
+sed -n '1,240p' src/screens/Wizard/WizardController.tsx 2>/dev/null || echo "WizardController.tsx niet gevonden"
+
+# 3) Zoek of HouseholdMemberRepeater al C4-woning toont of schrijft
+git grep -n "HouseholdMemberRepeater" -- src 2>/dev/null || true
+nl -banl -ba src/organisms/HouseholdMemberRepeater.tsx | sed -n '1,220p'
+
+# 4) Zoeken naar ChipButton in C4-context <==== GEEN COMMAND; GEEF ALSNOG COMMAND
+
+
+huishoudapp-30300775:~/pre7{fix/c10-remove-cross-page-write}$ 
+# 1) Vind alle verwijzingen naar 'woning' op C4 (UI + state)
+git grep -n "woning" -- src 2>/dev/null || true
+src/organisms/ExpenseRepeater.tsx:37:  const woning: WoningType | undefined = c4?.woning;
+src/organisms/ExpenseRepeater.tsx:65:  const getWoningLabel = (woningType: WoningType | undefined) => {
+src/organisms/ExpenseRepeater.tsx:66:    switch (woningType) {
+src/organisms/ExpenseRepeater.tsx:68:        return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:70:        return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:86:          <Text style={styles.label}>{getWoningLabel(woning)}</Text>
+src/organisms/ExpenseRepeater.tsx:99:                selected={woning === w}
+src/organisms/ExpenseRepeater.tsx:109:        {woning === 'Huur' &&
+src/organisms/ExpenseRepeater.tsx:131:        {woning === 'Koop' &&
+src/organisms/ExpenseRepeater.tsx:153:        {woning === 'Kamer' && (
+src/organisms/ExpenseRepeater.tsx:166:        {woning === 'Anders' && (
+src/organisms/ExpenseRepeater.tsx:186:        {woning === 'Kamer' ? (
+src/organisms/IncomeRepeater.tsx:80:  const woningIsHuur = React.useMemo(() => c4?.woning === 'Huur', [c4]);
+src/organisms/IncomeRepeater.tsx:462:      {woningIsHuur && (
+
+# 2) Toon C4 config en (indien aanwezig)C4 screen/containersed -n '1,220p' src/screens/Wizard/pages/C4.config.ts 2>/dev/null || echo "C4.config.ts niet gevonden"sed -n '1,240p' src/screens/Wizard/WizardPage.tsx 2>/dev/null || echo "WizardPage.tsx niet gevonden"sed -n '1,240p' src/screens/Wizard/WizardController.tsx 2>/dev/null || echo "WizardController.tsx niet gevonden"
+import { PageConfig } from '../../../types/form';
+
+export const C4Config: PageConfig = {
+  id: 'C4',
+  title: 'Huishouden Details',
+  fields: [
+    {
+      id: 'leden',
+      label: 'Leden van het huishouden',
+      type: 'repeater-array',
+      required: true,
+      defaultValue: [],
+      validation: { lengthEqualsTo: 'C1.aantalMensen' },
+    },
+  ],
+};
+// src/screens/Wizard/WizardPage.tsx
+import * as React from 'react';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppStyles } from '../../styles/useAppStyles';
+import FormField from '../../components/FormField';
+import ConditionalField from '../../components/ConditionalField';
+import { useFormContext } from '../../context/FormContext';
+import { validateField } from '../../utils/validation';
+import { evaluateCondition } from '../../utils/conditions';
+import { PageConfig } from '../../types/form';
+import { showWizardProgress } from '../../config/features';
+
+type PageProps = {
+  page: PageConfig;
+  onNext: () => void;
+  onPrev: () => void;
+  isFirst: boolean;
+  isLast: boolean;
+  // Nieuw: progress-indicator props (aangeleverd door WizardController)
+  totalPages?: number;
+  currentPageIndex?: number;
+};
+
+const WizardPage: React.FC<PageProps> = ({
+  page,
+  onNext,
+  onPrev,
+  isFirst,
+  isLast,
+  totalPages,
+  currentPageIndex,
+}) => {
+  const insets = useSafeAreaInsets();
+  const { styles, colors } = useAppStyles();
+  const { state, dispatch } = useFormContext();
+  const [errors, setErrors] = React.useState<Record<string, string | null>>({});
+  const currentPageData = state[page.id] ?? {};
+  const scrollViewRef = React.useRef<ScrollView>(null);
+
+  // Ensure aantalVolwassen <= aantalMensen & max 7
+  React.useEffect(() => {
+    if (page.id !== 'C1') return;
+    const mensen = Number(state.C1?.aantalMensen ?? 0);
+    const volwassen = Number(state.C1?.aantalVolwassen ?? 0);
+
+    if (volwassen > mensen) {
+      dispatch({
+        type: 'SET_PAGE_DATA',
+        pageId: 'C1',
+        data: { aantalVolwassen: mensen },
+      });
+    } else if (volwassen > 7) {
+      dispatch({
+        type: 'SET_PAGE_DATA',
+        pageId: 'C1',
+        data: { aantalVolwassen: 7 },
+      });
+    }
+  }, [page.id, state.C1?.aantalMensen, state.C1?.aantalVolwassen, dispatch]);
+
+  const handleChange = (fieldId: string, value: any) => {
+    const newErrors = { ...errors };
+    const field = page.fields.find((f) => f.id === fieldId)!;
+    newErrors[fieldId] = validateField(field, value, state);
+    setErrors(newErrors);
+
+    dispatch({
+      type: 'SET_PAGE_DATA',
+      pageId: page.id,
+      data: { [fieldId]: value },
+    });
+  };
+
+  const handleNext = () => {
+    let hasError = false;
+    const newErrors: Record<string, string | null> = {};
+
+    page.fields.forEach((field) => {
+      if (evaluateCondition(field.conditional, state, page.id)) {
+        const value = currentPageData[field.id];
+        const error = validateField(field, value, state);
+        if (error) {
+          newErrors[field.id] = error;
+          hasError = true;
+        } else {
+          newErrors[field.id] = null;
+        }
+      }
+    });
+
+    setErrors(newErrors);
+
+    if (hasError && scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: 0, animated: true });
+    } else if (!hasError) {
+      onNext();
+    }
+  };
+
+  return (
+    <View style={styles.pageContainer}>
+      <Text style={styles.pageTitle}>{page.title}</Text>
+
+      {/*
+        TODO(feature-flag): Onderstaande indicator conditioneel maken via features.showWizardProgress
+        zodra er een features.ts bestaat. Voor nu: render indien props aanwezig zijn.
+      */}
+
+      {showWizardProgress &&
+        typeof totalPages === 'number' &&
+        typeof currentPageIndex === 'number' &&
+        totalPages > 1 && (
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 16 }}>
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <View
+                // Stabiele key op index; het is een vaste reeks punten (geen data-id)
+                key={i}
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  marginHorizontal: 4,
+                  backgroundColor: i === currentPageIndex ? colors.primary : colors.border,
+                }}
+                accessibilityLabel={`Wizard stap ${i + 1} van ${totalPages}${i === currentPageIndex ? '
+ (actief)' : ''}`}                                                                                                     accessible
+              />
+            ))}
+          </View>
+        )}
+
+      <ScrollView
+        ref={scrollViewRef}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
+      >
+        {page.fields.map((field) => (
+          <React.Fragment key={field.id}>
+            <ConditionalField conditional={field.conditional} pageId={page.id}>
+              <FormField
+                pageId={page.id}
+                field={field}
+                value={currentPageData[field.id] ?? field.defaultValue ?? ''}
+                onChange={(fieldId, value) => handleChange(fieldId, value)}
+                error={errors[field.id]}
+                state={state}
+              />
+            </ConditionalField>
+
+            {/* Waarschuwingen C1 */}
+            {page.id === 'C1' && evaluateCondition(field.conditional, state, page.id) && (
+              <>
+                {(field.id === 'aantalMensen' || field.id === 'aantalVolwassen') &&
+                  (() => {
+                    const val = Number(currentPageData[field.id] ?? 0);
+                    if (
+                      (field.id === 'aantalMensen' && val >= 10) ||
+                      (field.id === 'aantalVolwassen' && val >= 7)
+                    ) {
+                      return (
+                        <Text style={styles.warningTextRed}>maximaal aantal personen bereikt</Text>
+                      );
+                    }
+                    if (
+                      (field.id === 'aantalMensen' && val >= 7) ||
+                      (field.id === 'aantalVolwassen' && val >= 5)
+                    ) {
+                      return (
+                        <Text style={styles.warningTextOrange}>u nadert het maximaal aantal</Text>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                {/* Totaal aantal kinderen */}
+                {field.id === 'aantalVolwassen' &&
+                  (() => {
+                    const mensen = Number(currentPageData.aantalMensen ?? 0);
+                    const volwassen = Number(currentPageData.aantalVolwassen ?? 0);
+                    const kinderen = Math.max(0, mensen - volwassen);
+                    return kinderen > 0 ? (
+                      <View style={styles.fieldContainer}>
+                        <Text style={styles.summaryLabelBold}>
+                          Totaal aantal kinderen: {kinderen}
+                        </Text>
+                      </View>
+                    ) : null;
+                  })()}
+              </>
+            )}
+          </React.Fragment>
+        ))}
+      </ScrollView>
+
+      <View
+        style={[
+          styles.buttonContainer,
+          {
+            bottom: insets.bottom,
+            paddingBottom: Math.max(20, insets.bottom + 8),
+          },
+        ]}
+      >
+        {!isFirst && (
+          <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onPrev}>
+            <Text style={styles.secondaryButtonText}>Vorige</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={styles.button} onPress={handleNext}>
+          <Text style={styles.buttonText}>{isLast ? 'Bekijk Resultaat' : 'Volgende'}</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default WizardPage;
+//src/screens/Wizard/WizardController.tsx
+import * as React from 'react';
+import { View } from 'react-native';
+import WizardPage from './WizardPage';
+import { PageConfig } from '../../types/form';
+import { useFormContext } from '../../context/FormContext';
+
+// Importeer de bestaande PageConfigs (feiten uit repo)
+import { C1Config } from './pages/C1.config';
+import { C4Config } from './pages/C4.config';
+import { C7Config } from './pages/C7.config';
+import { C10Config } from './pages/C10.config';
+
+// De wizard-flow (volgorde conform handover)
+const PAGES: PageConfig[] = [C1Config, C4Config, C7Config, C10Config];
+
+type WizardControllerProps = {
+  pages?: PageConfig[];
+  pageIndex?: number;
+  onNext?: () => void;
+  onPrev?: () => void;
+};
+
+const WizardController: React.FC<WizardControllerProps> = (props) => {
+  const { state, dispatch } = useFormContext();
+  const effectivePages = props.pages ?? PAGES;
+  const totalPages = effectivePages.length;
+  const isControlled = typeof props.pageIndex === 'number' && !!props.onNext && !!props.onPrev;
+
+  // Uncontrolled fallback
+  const [uncontrolledIndex, setUncontrolledIndex] = React.useState(0);
+  const currentPageIndex = isControlled ? (props.pageIndex as number) : uncontrolledIndex;
+
+  const handleNext = React.useCallback(() => {
+    if (isControlled) return props.onNext!();
+    setUncontrolledIndex((prev) => Math.min(prev + 1, totalPages - 1));
+  }, [isControlled, props, totalPages]);
+
+  const handlePrev = React.useCallback(() => {
+    if (isControlled) return props.onPrev!();
+    setUncontrolledIndex((prev) => Math.max(prev - 1, 0));
+  }, [isControlled, props]);
+
+  const page = effectivePages[currentPageIndex];
+  const isFirst = currentPageIndex === 0;
+  const isLast = currentPageIndex === totalPages - 1;
+
+  // ============================================
+  // A2 FIX: Just-in-time ALIGN bij page-enter C4
+  // ============================================
+
+  // ============================================
+  // A2 FIX: Just-in-time ALIGN bij page-enter C4
+  // ============================================
+  React.useEffect(() => {
+    console.log('[WIZARD] enter page', {
+      id: page?.id,
+      pageIndex: currentPageIndex,
+      totalPages,
+    });
+
+    if (page?.id === 'C4') {
+      console.log('[WIZARD] entering C4 – aligning household members');
+
+      const aantalMensen = Math.max(1, Number(state.C1?.aantalMensen ?? 1));
+      const aantalVolwassen = Math.min(
+        aantalMensen,
+        Math.max(1, Number(state.C1?.aantalVolwassen ?? 1)),
+      );
+
+      dispatch({
+        type: 'ALIGN_HOUSEHOLD_MEMBERS',
+        payload: { aantalMensen, aantalVolwassen },
+      });
+    }
+  }, [page?.id]);
+
+  // ============================================
+  // RENDER
+  // ============================================
+  if (!page) {
+    return <View />;
+  }
+
+  return (
+    <WizardPage
+      page={page}
+      isFirst={isFirst}
+      isLast={isLast}
+      onNext={handleNext}
+      onPrev={handlePrev}
+      totalPages={totalPages}
+      currentPageIndex={currentPageIndex}
+    />
+  );
+};
+
+export default WizardController;
+
+# 3) Zoek of HouseholdMemberRepeater al C4-woning toont of schrijftgit grep -n "HouseholdMemberRepeater" -- src 2>/dev/null || truenl -banl -ba src/organisms/HouseholdMemberRepeater.tsx | sed -n '1,220p'
+src/components/FormField.tsx:7:import HouseholdMemberRepeater from '../organisms/HouseholdMemberRepeate
+r';                                                                                                    src/components/FormField.tsx:145:    if (field.type === 'repeater-array') return <HouseholdMemberRepeat
+er />;                                                                                                 src/organisms/HouseholdMemberRepeater.tsx:1:// src/organisms/HouseholdMemberRepeater.tsx
+src/organisms/HouseholdMemberRepeater.tsx:7:type HouseholdMemberRepeaterProps = {
+src/organisms/HouseholdMemberRepeater.tsx:11:const HouseholdMemberRepeater: React.FC<HouseholdMemberRep
+eaterProps> = () => {                                                                                  src/organisms/HouseholdMemberRepeater.tsx:280:export default HouseholdMemberRepeater;
+     1  // src/organisms/HouseholdMemberRepeater.tsx
+     2  import * as React from 'react';
+     3  import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+     4  import { useFormContext } from '../context/FormContext';
+     5  import { Member } from '../types/household';
+     6
+     7  type HouseholdMemberRepeaterProps = {
+     8    // Props indien nodig
+     9  };
+    10
+    11  const HouseholdMemberRepeater: React.FC<HouseholdMemberRepeaterProps> = () => {
+    12    const { state, dispatch } = useFormContext();
+    13
+    14    // Haal data uit state
+    15    const aantalMensen = Number(state.C1?.aantalMensen ?? 0);
+    16    const aantalVolwassen = Number(state.C1?.aantalVolwassen ?? 0);
+    17    const leden = (state.C4?.leden ?? []) as Member[];
+    18
+    19    console.log('[C4-REPEATER] intake', {
+    20      aantalMensen,
+    21      aantalVolwassen,
+    22      ledenLen: leden.length,
+    23    });
+    24
+    25    // Split in volwassenen en kinderen
+    26    const adults = leden.filter((m) => m.memberType === 'adult');
+    27    const children = leden.filter((m) => m.memberType === 'child');
+    28
+    29    console.log('[C4-REPEATER] render cards', {
+    30      adultsLen: adults.length,
+    31      childrenLen: children.length,
+    32    });
+    33
+    34    return (
+    35      <View style={styles.container}>
+    36        {/* Volwassenen sectie */}
+    37        {adults.length > 0 && (
+    38          <View style={styles.section}>
+    39            <Text style={styles.sectionTitle}>
+    40              Volwassenen ({adults.length})
+    41            </Text>
+    42            {adults.map((member, idx) => {
+    43              const index = leden.indexOf(member);
+    44              return (
+    45                <MemberCard
+    46                  key={`adult-${index}`}
+    47                  member={member}
+    48                  index={index}
+    49                />
+    50              );
+    51            })}
+    52          </View>
+    53        )}
+    54
+    55        {/* Kinderen sectie */}
+    56        {children.length > 0 && (
+    57          <View style={styles.section}>
+    58            <Text style={styles.sectionTitle}>
+    59              Kinderen ({children.length})
+    60            </Text>
+    61            {children.map((member, idx) => {
+    62              const index = leden.indexOf(member);
+    63              return (
+    64                <MemberCard
+    65                  key={`child-${index}`}
+    66                  member={member}
+    67                  index={index}
+    68                />
+    69              );
+    70            })}
+    71          </View>
+    72        )}
+    73
+    74        {/* Debug info (verwijder in productie) */}
+    75        {__DEV__ && (
+    76          <View style={styles.debugBox}>
+    77            <Text style={styles.debugText}>
+    78              Debug: {leden.length} leden totaal
+    79            </Text>
+    80          </View>
+    81        )}
+    82      </View>
+    83    );
+    84  };
+    85
+    86  // ============================================
+    87  // MEMBER CARD COMPONENT
+    88  // ============================================
+    89
+    90  type MemberCardProps = {
+    91    member: Member;
+    92    index: number;
+    93  };
+    94
+    95  const MemberCard: React.FC<MemberCardProps> = ({ member: m, index }) => {
+    96    const { dispatch } = useFormContext();
+    97
+    98    return (
+    99      <View style={styles.card}>
+   100        {/* Naam veld */}
+   101        <View style={styles.fieldContainer}>
+   102          <Text style={styles.label}>Naam</Text>
+   103          <TextInput
+   104            style={styles.input}
+   105            value={m.naam ?? ''}
+   106            placeholder="Bijv. Jan de Vries"
+   107            onChangeText={(text: string) =>
+   108              dispatch({
+   109                type: 'UPDATE_MEMBER_FIELD',
+   110                payload: {
+   111                  index,
+   112                  field: 'naam',
+   113                  value: text,
+   114                  meta: { phase: 'change' },
+   115                },
+   116              })
+   117            }
+   118            onBlur={() =>
+   119              dispatch({
+   120                type: 'UPDATE_MEMBER_FIELD',
+   121                payload: {
+   122                  index,
+   123                  field: 'naam',
+   124                  value: m.naam ?? '',
+   125                  meta: { phase: 'blur' },
+   126                },
+   127              })
+   128            }
+   129          />
+   130        </View>
+   131
+   132        {/* Geboortedatum veld */}
+   133        <View style={styles.fieldContainer}>
+   134          <Text style={styles.label}>Geboortedatum</Text>
+   135          <TextInput
+   136            style={styles.input}
+   137            value={m.dateOfBirth ?? ''}
+   138            placeholder="DD-MM-YYYY"
+   139            keyboardType="numeric"
+   140            maxLength={10}
+   141            onChangeText={(text: string) =>
+   142              dispatch({
+   143                type: 'UPDATE_MEMBER_FIELD',
+   144                payload: { index, field: 'dateOfBirth', value: text },
+   145              })
+   146            }
+   147          />
+   148          {m.leeftijd !== undefined && (
+   149            <Text style={styles.helperText}>Leeftijd: {m.leeftijd} jaar</Text>
+   150          )}
+   151        </View>
+   152
+   153        
+   154
+   155
+   156  {/* Geslacht veld */}
+   157  <View style={styles.fieldContainer}>
+   158    <Text style={styles.label}>Geslacht</Text>
+   159    <View style={styles.buttonGroup}>
+   160      {(['man', 'vrouw', 'anders', 'n.v.t.'] as const).map((g) => {
+   161        const label = g === 'n.v.t.' ? 'n.v.t.' : g.charAt(0).toUpperCase() + g.slice(1);
+   162        return (
+   163          <TouchableOpacity
+   164            key={g}
+   165            style={[styles.button, m.gender === g && styles.buttonActive]}
+   166            onPress={() =>
+   167              dispatch({
+   168                type: 'UPDATE_MEMBER_FIELD',
+   169                payload: { index, field: 'gender', value: g },
+   170              })
+   171            }
+   172          >
+   173            <Text style={[styles.buttonText, m.gender === g && styles.buttonTextActive]}>
+   174              {label}
+   175            </Text>
+   176          </TouchableOpacity>
+   177        );
+   178      })}
+   179    </View>
+   180  </View>
+   181
+   182
+   183      </View>
+   184    );
+   185  };
+   186
+   187  // ============================================
+   188  // STYLES
+   189  // ============================================
+   190
+   191  const styles = StyleSheet.create({
+   192    container: {
+   193      flex: 1,
+   194      padding: 16,
+   195    },
+   196    section: {
+   197      marginBottom: 24,
+   198    },
+   199    sectionTitle: {
+   200      fontSize: 18,
+   201      fontWeight: 'bold',
+   202      marginBottom: 12,
+   203      color: '#333',
+   204    },
+   205    card: {
+   206      backgroundColor: '#fff',
+   207      borderRadius: 12,
+   208      padding: 16,
+   209      marginBottom: 12,
+   210      shadowColor: '#000',
+   211      shadowOffset: { width: 0, height: 2 },
+   212      shadowOpacity: 0.1,
+   213      shadowRadius: 4,
+   214      elevation: 3,
+   215    },
+   216    fieldContainer: {
+   217      marginBottom: 16,
+   218    },
+   219    label: {
+   220      fontSize: 14,

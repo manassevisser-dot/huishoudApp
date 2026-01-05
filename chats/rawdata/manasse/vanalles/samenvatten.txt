@@ -1,0 +1,67 @@
+De foutmelding ontstaat omdat je interface een heel specifieke structuur voor data voorschrijft: het móét de keys setup, household en finance bevatten. In jouw migratie gebruik je [DATA_KEYS.SETUP]. Als de waarde van DATA_KEYS.SETUP in je datakeys.ts bestand iets anders is dan exact de string "setup", dan ziet TypeScript dat als een ontbrekende property.
+
+Daarnaast ontbreekt in je huidige migratie de expenses key binnen data, terwijl die wel in je object zat (maar niet in de interface staat, wat weer andere waarschuwingen kan geven).
+
+Hier is de versie die exact aansluit op jouw FormState interface:
+
+TypeScript
+
+import { DATA_KEYS } from '@domain/constants/datakeys';
+import { toCents } from '@utils/numbers';
+import { FormState, Member } from '@shared-types/form';
+
+export const migrateToPhoenix = (oldState: any): FormState => {
+  const getFirstAmount = (obj: any): number => {
+    const list = obj?.items || obj?.list || [];
+    return list.length > 0 ? toCents(list[0]?.amount ?? list[0]?.value ?? 0) : 0;
+  };
+
+  const migratedMembers: Member[] = (oldState[DATA_KEYS.HOUSEHOLD]?.leden || []).map((lid: any, i: number) => ({
+    entityId: lid.id || `m-${i}`,
+    naam: lid.naam || '',
+    memberType: lid.type || 'adult',
+    // Voeg hier andere verplichte Member velden toe indien nodig
+  }));
+
+  return {
+    schemaVersion: '1.0',
+    status: 'ONBOARDING',
+    activeStep: 'LANDING',
+    currentPageId: 'page_1',
+    isValid: true,
+    // We vullen de 'data' property exact volgens de interface
+    data: {
+      setup: oldState[DATA_KEYS.SETUP] || { 
+        aantalMensen: 1, 
+        aantalVolwassen: 1 
+      },
+      household: {
+        members: migratedMembers,
+      },
+      finance: {
+        income: { 
+          items: [], 
+          totalAmount: getFirstAmount(oldState.C7 || oldState.income)
+        },
+        expenses: {
+          items: [],
+          totalAmount: getFirstAmount(oldState.C10 || oldState.fixedExpenses)
+        }
+      }
+    },
+    // Legacy support velden (optioneel in interface)
+    setup: oldState[DATA_KEYS.SETUP],
+    household: oldState[DATA_KEYS.HOUSEHOLD]
+  };
+};
+Wat is er aangepast?
+Expliciete Keys: In plaats van [DATA_KEYS.SETUP] gebruik ik nu direct de key setup, household en finance binnen het data object. Dit matcht 1-op-1 met je interface.
+
+Member Type Casting: Door migratedMembers expliciet te typeren als Member[], controleert TypeScript of je mapping wel voldoet aan de eisen van het Member type.
+
+Data Structuur: Omdat je interface finance: any zegt, heb ik daar de income en expenses in geclusterd.
+
+Check dit nog even:
+In je interface staat activeStep: number | string. In de migratie zetten we dit op 'LANDING'. Als je Wizard-componenten verwachten dat dit een number is (bijv. index 0), pas dit dan aan naar 0.
+
+Zal ik een test-run doen voor de Member mapping om te zien of alle velden die de Member interface vereist (zoals geboortedatum of rol) ook correct overkomen?

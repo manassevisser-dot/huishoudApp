@@ -1,0 +1,569 @@
+# 🧪 Phoenix Migration Testing Guide
+
+Complete gids voor het testen van de Phoenix migration functionaliteit.
+
+---
+
+## 📋 Inhoudsopgave
+
+1. [Setup](#setup)
+2. [Test Structuur](#test-structuur)
+3. [Running Tests](#running-tests)
+4. [Test Categorieën](#test-categorieën)
+5. [Best Practices](#best-practices)
+6. [Coverage Goals](#coverage-goals)
+7. [Troubleshooting](#troubleshooting)
+
+---
+
+## 🚀 Setup
+
+### Installeer Dependencies
+
+```bash
+npm install --save-dev jest @types/jest ts-jest
+npm install --save-dev @testing-library/react-native
+npm install --save-dev jest-extended
+```
+
+### Jest Configuration
+
+```javascript
+// jest.config.js
+module.exports = {
+  preset: 'react-native',
+  moduleNameMapper: {
+    '^@services/(.*)$': '<rootDir>/src/services/$1',
+    '^@domain/(.*)$': '<rootDir>/src/domain/$1',
+    '^@test-helpers/(.*)$': '<rootDir>/__tests__/helpers/$1',
+  },
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  testMatch: [
+    '**/__tests__/**/*.test.ts',
+    '**/__tests__/**/*.test.tsx'
+  ],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/*.stories.tsx'
+  ],
+  coverageThresholds: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80
+    }
+  }
+};
+```
+
+### Jest Setup File
+
+```typescript
+// jest.setup.js
+import '@testing-library/jest-native/extend-expect';
+import 'jest-extended';
+
+// Custom matchers
+import { customMatchers } from './__tests__/helpers/migrationTestHelpers';
+expect.extend(customMatchers);
+
+// Global test timeout
+jest.setTimeout(10000);
+
+// Mock console methods in tests
+global.console = {
+  ...console,
+  error: jest.fn(),
+  warn: jest.fn(),
+};
+```
+
+---
+
+## 📁 Test Structuur
+
+```
+__tests__/
+├── helpers/
+│   └── migrationTestHelpers.ts     # Reusable test utilities
+├── services/
+│   └── transactionService.migration.test.ts  # Main test suite
+├── fixtures/
+│   ├── realWorldData.json          # Real-world test data
+│   └── edgeCases.json              # Edge case scenarios
+└── snapshots/
+    └── __snapshots__/              # Jest snapshots
+```
+
+---
+
+## 🏃 Running Tests
+
+### Basis Commands
+
+```bash
+# Run alle tests
+npm test
+
+# Run met coverage
+npm test -- --coverage
+
+# Run specifieke test file
+npm test -- transactionService.migration
+
+# Run in watch mode
+npm test -- --watch
+
+# Run met verbose output
+npm test -- --verbose
+
+# Run only changed tests
+npm test -- --onlyChanged
+```
+
+### Advanced Commands
+
+```bash
+# Update snapshots
+npm test -- -u
+
+# Run tests matching pattern
+npm test -- --testNamePattern="Edge Cases"
+
+# Run tests in specific file
+npm test -- __tests__/services/transactionService.migration.test.ts
+
+# Run with debugging
+node --inspect-brk node_modules/.bin/jest --runInBand
+
+# Run performance tests only
+npm test -- --testNamePattern="Performance"
+```
+
+---
+
+## 🎯 Test Categorieën
+
+### 1. ✅ Happy Path Tests
+**Doel:** Verifieer dat normale scenarios werken
+
+```typescript
+describe('Happy Path', () => {
+  it('moet basis migratie correct uitvoeren', async () => {
+    const result = await migrateTransactionsToPhoenix(validInput);
+    expect(result.data.household.members).toHaveLength(2);
+  });
+});
+```
+
+**Coverage:** 
+- Basis functionaliteit
+- Verwachte input formats
+- Standaard outputs
+
+---
+
+### 2. 🎯 Edge Cases
+**Doel:** Test grensgevallen en onverwachte input
+
+```typescript
+describe('Edge Cases', () => {
+  it('moet lege arrays afhandelen', async () => {
+    const result = await migrateTransactionsToPhoenix({ leden: [] });
+    expect(result.data.household.members).toEqual([]);
+  });
+});
+```
+
+**Coverage:**
+- Null/undefined waarden
+- Lege datasets
+- Extreme waarden (zeer lang, zeer veel)
+- Speciale karakters
+
+---
+
+### 3. 🚨 Error Handling
+**Doel:** Verifieer dat errors gracefully afgehandeld worden
+
+```typescript
+describe('Error Handling', () => {
+  it('moet corrupt data niet laten crashen', async () => {
+    const result = await migrateTransactionsToPhoenix(corruptData);
+    expect(result.metadata.warnings).toBeDefined();
+  });
+});
+```
+
+**Coverage:**
+- Corrupt data
+- Invalid types
+- Missing required fields
+- Circular references
+
+---
+
+### 4. 🔄 Type Conversion
+**Doel:** Test data transformaties
+
+```typescript
+describe('Type Conversion', () => {
+  it('moet types correct mappen', async () => {
+    // Test adult, child, teenager, senior
+  });
+});
+```
+
+**Coverage:**
+- Alle member types
+- Case sensitivity
+- Default fallbacks
+- Invalid types
+
+---
+
+### 5. ⏮️ Backward Compatibility
+**Doel:** Verifieer dat oude schemas werken
+
+```typescript
+describe('Backward Compatibility', () => {
+  it('moet v1 schema migreren', async () => {
+    const result = await migrateTransactionsToPhoenix(legacyV1);
+    // Assertions
+  });
+});
+```
+
+**Coverage:**
+- Legacy v1 schema
+- Legacy v2 schema
+- Mixed schemas
+- Deprecated fields
+
+---
+
+### 6. ⚡ Performance Tests
+**Doel:** Meet en optimaliseer performance
+
+```typescript
+describe('Performance', () => {
+  it('moet 1000 items in < 5s verwerken', async () => {
+    const { duration } = await measureTime(() => migrate(largeDataset));
+    expect(duration).toBeLessThan(5000);
+  });
+});
+```
+
+**Metrics:**
+- Execution time
+- Memory usage
+- Throughput (items/sec)
+- Scalability
+
+---
+
+### 7. 📋 Metadata & Audit
+**Doel:** Verifieer tracking en logging
+
+```typescript
+describe('Metadata', () => {
+  it('moet migration timestamp bijhouden', async () => {
+    const result = await migrate(data);
+    expect(result.metadata.migratedAt).toBeDefined();
+  });
+});
+```
+
+**Coverage:**
+- Timestamps
+- Schema versions
+- Warning logs
+- Item counts
+
+---
+
+### 8. 🔁 Idempotency
+**Doel:** Zelfde input = zelfde output
+
+```typescript
+describe('Idempotency', () => {
+  it('moet deterministisch zijn', async () => {
+    const r1 = await migrate(data);
+    const r2 = await migrate(data);
+    expect(r1.data).toEqual(r2.data);
+  });
+});
+```
+
+---
+
+### 9. 🌍 Real-world Scenarios
+**Doel:** Test met realistische data
+
+```typescript
+describe('Real-world', () => {
+  it('moet Familie Janssen correct verwerken', async () => {
+    const result = await migrate(familieJanssen);
+    // Realistische assertions
+  });
+});
+```
+
+---
+
+### 10. 📸 Snapshot Tests
+**Doel:** Detect onbedoelde changes
+
+```typescript
+describe('Snapshots', () => {
+  it('moet consistent output hebben', async () => {
+    const result = await migrate(data);
+    expect(result).toMatchSnapshot();
+  });
+});
+```
+
+---
+
+## 🎓 Best Practices
+
+### ✅ DO's
+
+1. **Use Descriptive Names**
+   ```typescript
+   ✅ it('moet duplicaat IDs uniek maken', ...)
+   ❌ it('test 1', ...)
+   ```
+
+2. **Test One Thing**
+   ```typescript
+   ✅ it('moet null namen afhandelen', ...)
+   ✅ it('moet lege namen afhandelen', ...)
+   ❌ it('moet alle edge cases afhandelen', ...)
+   ```
+
+3. **Arrange-Act-Assert Pattern**
+   ```typescript
+   it('must transform correctly', async () => {
+     // Arrange
+     const input = createTestData();
+     
+     // Act
+     const result = await migrate(input);
+     
+     // Assert
+     expect(result).toBeDefined();
+   });
+   ```
+
+4. **Use Test Helpers**
+   ```typescript
+   ✅ const data = testDataGenerators.createLedenBatch(10);
+   ❌ const data = { leden: [...] }; // Handmatig
+   ```
+
+5. **Assert Strongly**
+   ```typescript
+   ✅ expect(members).toHaveLength(2);
+   ✅ expect(members[0].naam).toBe('Jan');
+   ❌ expect(members.length).toBeGreaterThan(0);
+   ```
+
+---
+
+### ❌ DON'Ts
+
+1. **Don't Test Implementation Details**
+   ```typescript
+   ❌ expect(internalFunction).toHaveBeenCalled();
+   ✅ expect(result.data).toBeDefined();
+   ```
+
+2. **Don't Use Magic Numbers**
+   ```typescript
+   ❌ expect(members).toHaveLength(42);
+   ✅ const EXPECTED_COUNT = 42;
+      expect(members).toHaveLength(EXPECTED_COUNT);
+   ```
+
+3. **Don't Skip Cleanup**
+   ```typescript
+   ✅ afterEach(() => jest.clearAllMocks());
+   ```
+
+4. **Don't Make Tests Dependent**
+   ```typescript
+   ❌ // Test 2 depends on Test 1
+   ✅ // Each test is independent
+   ```
+
+5. **Don't Ignore Async**
+   ```typescript
+   ❌ it('test', () => { migrate(data); });
+   ✅ it('test', async () => { await migrate(data); });
+   ```
+
+---
+
+## 📊 Coverage Goals
+
+### Minimum Thresholds
+
+```javascript
+coverageThresholds: {
+  global: {
+    branches: 80,    // Decision paths
+    functions: 80,   // Function calls
+    lines: 80,       // Line execution
+    statements: 80   // Statement execution
+  }
+}
+```
+
+### Check Coverage
+
+```bash
+# Generate coverage report
+npm test -- --coverage
+
+# View HTML report
+open coverage/lcov-report/index.html
+
+# Coverage for specific file
+npm test -- --coverage --collectCoverageFrom="src/services/transactionService.ts"
+```
+
+### Coverage Targets per Component
+
+| Component | Lines | Functions | Branches |
+|-----------|-------|-----------|----------|
+| Core Logic | 95% | 95% | 90% |
+| Edge Cases | 85% | 85% | 80% |
+| Error Handling | 90% | 90% | 85% |
+| Utilities | 80% | 80% | 75% |
+
+---
+
+## 🐛 Troubleshooting
+
+### Test Failures
+
+**Problem:** Tests pass locally but fail in CI
+```bash
+# Solution: Check environment differences
+npm test -- --detectOpenHandles
+npm test -- --forceExit
+```
+
+**Problem:** Snapshot mismatches
+```bash
+# Update snapshots after intentional changes
+npm test -- -u
+```
+
+**Problem:** Timeout errors
+```typescript
+// Increase timeout for specific test
+it('slow test', async () => {
+  // ...
+}, 15000); // 15 second timeout
+```
+
+---
+
+### Performance Issues
+
+**Problem:** Tests are slow
+```bash
+# Run in parallel (default)
+npm test -- --maxWorkers=4
+
+# Run sequentially for debugging
+npm test -- --runInBand
+```
+
+**Problem:** Memory leaks
+```typescript
+// Force garbage collection between tests
+afterEach(() => {
+  if (global.gc) global.gc();
+});
+```
+
+---
+
+### Debugging
+
+**VS Code Launch Config:**
+```json
+{
+  "type": "node",
+  "request": "launch",
+  "name": "Jest Debug",
+  "program": "${workspaceFolder}/node_modules/.bin/jest",
+  "args": ["--runInBand", "--no-cache"],
+  "console": "integratedTerminal"
+}
+```
+
+**Chrome DevTools:**
+```bash
+node --inspect-brk node_modules/.bin/jest --runInBand
+# Open chrome://inspect
+```
+
+---
+
+## 📚 Resources
+
+### Documentation
+- [Jest Docs](https://jestjs.io/docs/getting-started)
+- [Testing Library](https://testing-library.com/)
+- [React Native Testing](https://reactnative.dev/docs/testing-overview)
+
+### Tools
+- [Wallaby.js](https://wallabyjs.com/) - Live test runner
+- [Majestic](https://github.com/Raathigesh/majestic) - Jest UI
+- [jest-extended](https://github.com/jest-community/jest-extended) - Extra matchers
+
+### Example Commands
+
+```bash
+# Watch mode met coverage
+npm test -- --watch --coverage
+
+# Only failed tests
+npm test -- --onlyFailures
+
+# Update all snapshots
+npm test -- --updateSnapshot
+
+# List all tests
+npm test -- --listTests
+
+# Show test config
+npm test -- --showConfig
+```
+
+---
+
+## ✅ Checklist voor Nieuwe Tests
+
+Voordat je een PR maakt:
+
+- [ ] Alle tests slagen lokaal
+- [ ] Coverage is > 80%
+- [ ] Geen console.log() statements
+- [ ] Descriptive test namen
+- [ ] Edge cases gedekt
+- [ ] Error handling getest
+- [ ] Performance acceptabel
+- [ ] Snapshots up-to-date
+- [ ] CI/CD tests slagen
+- [ ] Code review checklist voltooid
+
+---
+
+**Happy Testing! 🎉**

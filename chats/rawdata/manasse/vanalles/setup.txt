@@ -1,0 +1,157 @@
+jest.setup.early.js
+
+// --- Expo Winter Hard Shield ---
+// voorkomt dat Expo Winter runtime probeert globals te installeren
+global.__ExpoImportMetaRegistry = global.__ExpoImportMetaRegistry || {};
+
+if (typeof global.TextDecoder === 'undefined') {
+  global.TextDecoder = class {};
+}
+if (typeof global.TextEncoder === 'undefined') {
+  global.TextEncoder = class {};
+}
+if (typeof global.structuredClone === 'undefined') {
+  global.structuredClone = obj => JSON.parse(JSON.stringify(obj));
+}
+
+// Mock ALLE Winter entrypoints (moet vóór jest-expo preset!)
+jest.mock('expo/src/winter/installGlobal', () => ({}), { virtual: true });
+jest.mock('expo/src/winter/runtime.native', () => ({}), { virtual: true });
+// --- end shield ---
+// --- Expo Winter Hard Shield ---
+// voorkomt dat Expo Winter runtime probeert globals te installeren
+global.__ExpoImportMetaRegistry = global.__ExpoImportMetaRegistry || {};
+
+if (typeof global.TextDecoder === 'undefined') {
+  global.TextDecoder = class {};
+}
+if (typeof global.TextEncoder === 'undefined') {
+  global.TextEncoder = class {};
+}
+if (typeof global.structuredClone === 'undefined') {
+  global.structuredClone = obj => JSON.parse(JSON.stringify(obj));
+}
+
+// Mock ALLE Winter entrypoints (moet vóór jest-expo preset!)
+jest.mock('expo/src/winter/installGlobal', () => ({}), { virtual: true });
+jest.mock('expo/src/winter/runtime.native', () => ({}), { virtual: true });
+// --- end shield ---
+jest.setuo.js
+import * as React from 'react';
+import '@testing-library/jest-native/extend-expect';
+
+// Bestaande mocks...
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
+jest.mock('react-native', () => {
+  const RN = jest.requireActual('react-native');
+  RN.TouchableOpacity = ({ children, onPress, testID }) => (
+    <RN.View onPress={onPress} testID={testID} accessible={true}>
+      {children}
+    </RN.View>
+  );
+  return RN;
+});
+/** @type {import('jest').Config} */
+module.exports = {
+  // 1. Setup - De volgorde is heilig (Globals eerst, dan Framework)
+  setupFiles: [
+    "<rootDir>/jest.setup.early.js" 
+  ],
+  setupFilesAfterEnv: [
+    "<rootDir>/jest.setup.js"
+  ],
+
+  preset: 'jest-expo',
+  testEnvironment: 'jsdom',
+
+  roots: ['<rootDir>/src'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+
+  // 2. Phoenix Aliassen (ADR-01)
+  moduleNameMapper: {
+    '^@domain/(.*)$': '<rootDir>/src/domain/$1',
+    '^@state/(.*)$': '<rootDir>/src/state/$1',
+    '^@ui/(.*)$': '<rootDir>/src/ui/$1',
+    '^@styles/(.*)$': '<rootDir>/src/ui/styles/$1',
+    '^@app/(.*)$': '<rootDir>/src/app/$1',
+    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
+    '^@services/(.*)$': '<rootDir>/src/services/$1',
+    '^@assets/(.*)$': '<rootDir>/_assets/$1',
+    '^@logic/(.*)$': '<rootDir>/src/logic/$1',
+    '^@config/(.*)$': '<rootDir>/src/config/$1',
+    '^@context/(.*)$': '<rootDir>/src/app/context/$1',
+    '^@selectors/(.*)$': '<rootDir>/src/selectors/$1',
+    '^@shared-types/(.*)$': '<rootDir>/src/shared-types/$1',
+    '^@components/(.*)$': '<rootDir>/src/ui/components/$1',
+
+    // Assets & Styles
+    '\\.(png|jpg|jpeg|gif|webp|svg)$': '<rootDir>/__mocks__/fileMock.js',
+    '\\.(css|less|sass|scss)$': 'identity-obj-proxy',
+  },
+
+  // 3. Transform - Cruciaal voor Expo 50+ / Winter Runtime
+  transformIgnorePatterns: [
+    'node_modules/(?!(react-native|@react-native|expo|expo-.*|@expo|expo-modules-core|react-navigation|@react-navigation|@react-native-community)/)',
+  ],
+
+  testMatch: [
+    '<rootDir>/src/**/*.(test|spec).(js|jsx|ts|tsx)',
+  ],
+  
+  // 4. Integriteit & Performance
+  clearMocks: true,
+  resetMocks: false, // VERANDERD: 'true' breekt soms mocks die in de test-file scope staan (zoals onze Zod mock)
+  restoreMocks: true,
+
+  collectCoverageFrom: [
+    'src/**/*.{js,jsx,ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/index.{js,ts}',
+  ],
+};
+
+// babel.config.js
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: [
+      'babel-preset-expo',
+      // Preset om TS te strippen voor Jest/Babel pipeline
+      '@babel/preset-typescript',
+    ],
+    plugins: [
+      [
+        'module-resolver',
+        {
+          root: ['./'],
+          alias: {
+            '@domain': './src/domain',
+            '@state': './src/state',
+            '@ui': './src/ui',
+            '@styles': './src/ui/styles',
+            '@app': './src/app',
+            '@utils': './src/utils',
+            '@services': './src/services',
+            '@assets': './_assets',
+            '@logic': './src/logic',
+            '@config': './src/config',
+            '@context': './src/app/context',
+            '@selectors': './src/selectors',
+            '@shared-types': './src/shared-types',
+            '@components': './src/ui/components',
+          },
+          extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+        },
+      ],
+    ],
+    // Zorg dat Jest geen “extra” env nodig heeft
+    env: {
+      test: {
+        // Laat zoals boven; Expo preset + TS is genoeg
+      },
+    },
+  };
+};

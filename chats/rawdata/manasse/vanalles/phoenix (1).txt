@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# Phoenix Commander v3.2 — 2025-12-29
+set -euo pipefail
+PROJECT_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export PROJECT_ROOT
+
+# Terminal Colors & Icons
+RED='\033[0;31m'
+NC='\033[0m'
+ICON_FAIL='❌'
+
+# --- Bridge Functies naar Node Logger ---
+log_node() {
+    # Check of logger bestaat, anders fallback naar echo
+    if [ -f "${PROJECT_ROOT}/scripts/utils/logger.js" ]; then
+        node -e "const l=require('${PROJECT_ROOT}/scripts/utils/logger'); $1"
+    else
+        echo "[$1]"
+    fi
+}
+
+log_info() { log_node "l.info('$1')"; }
+log_ok()   { log_node "l.ok('$1')"; }
+log_warn() { log_node "l.warn('$1')"; }
+log_err()  { log_node "l.error('$1')"; }
+log_val()  { log_node "l.$1(l.TEXT['$2']('$3'))"; }
+
+export -f log_node log_info log_ok log_warn log_err log_val
+
+# ============ Orchestrator Dispatcher ============
+
+cmd_full() {
+    # 1. Draai de statische audit
+    node scripts/maintenance/audit-orchestrator.js "$@"
+
+    # 2. Draai de daadwerkelijke tests voor de coverage
+    log_info "🧪 Starten van de Phoenix Test Suite (Jest)..."
+    npm test -- --coverage --watchAll=false
+}
+
+cmd_all() {
+    node scripts/maintenance/audit-orchestrator.js "$@"
+}
+
+_cmd_sanity() {
+    node scripts/sync-aliases/index.js "$@"
+}
+
+_cmd_dedup() {
+    bash scripts/maintenance/phoenix_dedup.sh src
+}
+
+_cmd_audit() {
+    # Hiermee vertellen we phoenix-check: "Ik ben de baas, jij hoeft niet te loggen"
+    export PHOENIX_INTERNAL=true
+    bash scripts/maintenance/phoenix-check.sh
+}
+
+_cmd_migrate() {
+    # Default settings
+    export DRY_RUN=false
+    export VERBOSE=false
+    export BACKUP=true
+
+    # Parse argumenten specifiek voor migrate
+    for arg in "$@"; do
+        case $arg in
+            --dry-run) export DRY_RUN=true ;;
+            --verbose) export VERBOSE=true ;;
+            --no-backup) export BACKUP=false ;;
+        esac
+    done
+
+    log_info "🚀 Starten van Field ID Migratie..."
+    bash scripts/maintenance/migrate-field-id.sh src/ui
+}
+
+cmd_clean() {
+    echo "🧹 Schoonmaken..."
+    rm -rf artifacts compare_out dedup_reports
+    rm -rf .phoenix/backups
+    rm -rf /tmp/phoenix-audit-cache
+    echo "✅ Klaar."
+}
+
+cmd_help() {
+    echo "Gebruik: ./phoenix [command] [options]"
+    echo ""
+    echo "Commands:"
+    echo "  full       - Draai alles (Audit + Tests + Coverage)"
+    echo "  all        - Draai Audit Orchestrator"
+    echo "  audit      - Draai alleen de shell checks"
+    echo "  dedup      - Zoek dubbele bestanden"
+    echo "  sanity     - Fix imports en sync aliases"
+    echo "  migrate    - Migreer field.id -> field.fieldId (--dry-run supported)"
+    echo "  clean      - Verwijder tijdelijke bestanden"
+}
+
+# ============ Dispatcher ============
+case "${1:-}" in
+  full)        shift; cmd_full "$@" ;;
+  all)         shift; cmd_all "$@" ;;
+  audit)       _cmd_audit ;;
+  dedup)       _cmd_dedup ;;
+  fix|sanity)  shift; _cmd_sanity "$@" ;; 
+  migrate)     shift; _cmd_migrate "$@" ;;
+  clean)       cmd_clean ;;
+  ""|help|-h|--help) cmd_help; exit 0 ;;
+  *) 
+    echo -e "${RED}${ICON_FAIL} Onbekend commando: ${1}${NC}"
+    cmd_help
+    exit 1 
+    ;;
+esac

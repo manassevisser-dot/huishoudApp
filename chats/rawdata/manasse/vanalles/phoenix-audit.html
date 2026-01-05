@@ -1,0 +1,33 @@
+<html><body style="background:#0d1117;color:#c9d1d9;font-family:monospace;padding:20px;">
+            <h1 style="color:#58a6ff">Phoenix Audit Report</h1>
+            <pre style="background:#161b22;padding:15px;border-radius:5px;border:1px solid #30363d;">
+=== PHOENIX AUDITS ===
+✅ Node Manifest
+✅ TS Config
+✅ Type-safety (35)
+✅ Non-negative parser (3)
+✅ Currency format (2)
+❌ Deep Imports (1 violations)
+   src/ui/screens/Wizard/__tests__/WizardController.test.tsx:4:import { renderWithState } from '../../../../test-utils';
+   💡 Add path aliases (@/*) in tsconfig
+❌ Console (6 violations)
+   src/ui/screens/DailyInput/DailyInputScreen.tsx:17:          onAmountChange={(val: number) => console.log(val)} 
+   src/ui/screens/CSV/CsvUploadScreen.tsx:78:              console.log('Sending to research:', result.research);
+   src/services/dataOrchestrator.ts:86:      console.error('CSV Mapping failed in Orchestrator', e);
+   src/services/transactionService.ts:63:  console.log('Undo functionaliteit nog niet geïmplementeerd');
+   src/test-utils/render/renderers.tsx:32:  console.log('UI to render:', ui);
+   💡 Remove console.*; use Logger
+✅ Actions (28)
+✅ Geo ADR-18 (clean)
+❌ Contract (0 < 1)
+   💡 Pass 'geo_scope' in evaluateDomainRules
+❌ Telemetry (0 < 1)
+   💡 Add PHOENIX_EVENT logging
+✅ Refactor Integration (14 modules)
+
+=== RESULTS ===
+Total: 12 | Passed: 8 | Failed: 4 | Skipped: 0
+Grade: F
+ℹ️  Duur: 7s
+</pre>
+        </body></html>

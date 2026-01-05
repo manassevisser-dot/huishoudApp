@@ -1,0 +1,568 @@
+# 1) Vind mogelijke leak in ExpenseRepeater (C10 → C4)git grep -n "dispatch({[^}]*pageId:\\s*'C4'" -- src/organisms/ExpenseRepeater.tsx || truenl -ba src/organisms/ExpenseRepeater.tsx | sed -n '1,140p' | sed -n '1,140p'  # context rond regel ~1-140# 2) Check waar 'woning' nu gerenderd wordt (C4/Wizard/Repeater)git grep -n "woning" -- src/screens src/organisms src/components || true# 3) Inspecteer het type en geldige waarden van WoningTypegit grep -n "WoningType" -- src/types src || truenl -ba src/types/household.ts | sed -n '1,200p' || true# 4) Check of HouseholdMemberRepeater al een ScrollView/hint heeftgit grep -n -E "ScrollView|pagingEnabled|----> volgende" -- src/organisms/HouseholdMemberRepeater.tsx || true nl -ba src/organisms/HouseholdMemberRepeater.tsx | sed -n '1,220p' || truenl -ba src/context/FormContext.tsx | sed -n '1,260p' || truen C10 read-only is t.a.v. C4
+     1  // src/organisms/ExpenseRepeater.tsx
+     2  import * as React from 'react';
+     3  import { View, Text, TextInput, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+     4  import { useAppStyles } from '../styles/useAppStyles';
+     5  import ChipButton from '../components/ChipButton';
+     6  import { useFormContext } from '../context/FormContext';
+     7  import { Member, WoningType, AutoCount } from '../types/household';
+     8  import { ExpenseItem } from '../types/expenses';
+     9  import { onlyDigitsDotsComma } from '../utils/numbers';
+    10
+    11  const SCREEN_WIDTH = Dimensions.get('window').width;
+    12  const CARD_WIDTH = SCREEN_WIDTH * 0.85;
+    13
+    14  const STREAMING_KEYS = [
+    15    'videoland',
+    16    'hbo',
+    17    'netflix',
+    18    'npostart',
+    19    'kijk',
+    20    'disneyPlus',
+    21    'ytPremium',
+    22  ] as const;
+    23
+    24  const isChildUnder15 = (m: Member) =>
+    25    m.memberType === 'child' && typeof m.leeftijd === 'number' && m.leeftijd < 15;
+    26
+    27  const ExpenseRepeater: React.FC = () => {
+    28    const { styles, colors } = useAppStyles();
+    29    const { state, dispatch } = useFormContext();
+    30
+    31    const [abonnementenExpanded, setAbonnementenExpanded] = React.useState(false);
+    32    const [verzekeringenExpanded, setVerzekeringenExpanded] = React.useState(false);
+    33
+    34    const c4 = state.C4;
+    35    const c10 = state.C10;
+    36
+    37    const woning: WoningType | undefined = c4?.woning;
+    38    const auto: AutoCount | undefined = c4?.auto;
+    39
+    40    const leden: Member[] = React.useMemo(() => (Array.isArray(c4?.leden) ? c4.leden : []), [c4]);
+    41    const lasten: ExpenseItem[] = Array.isArray(c10?.lasten) ? c10.lasten : [];
+    42
+    43    const readField = (itemId: string, key: string): number | undefined => {
+    44      const it = lasten.find((x) => x.id === itemId);
+    45      const v = it?.[key];
+    46      return typeof v === 'number' && !isNaN(v) ? v : undefined;
+    47    };
+    48
+    49    const updateExpense = (itemId: string, key: string, raw: string | number | undefined) => {
+    50      const val =
+    51        typeof raw === 'string'
+    52          ? onlyDigitsDotsComma(raw).length
+    53            ? Number(onlyDigitsDotsComma(raw))
+    54            : undefined
+    55          : raw;
+    56      const next = [...lasten];
+    57      const idx = next.findIndex((x) => x.id === itemId);
+    58      const item = idx >= 0 ? { ...next[idx] } : ({ id: itemId } as ExpenseItem);
+    59      item[key] = val;
+    60      if (idx >= 0) next[idx] = item;
+    61      else next.push(item);
+    62      dispatch({ type: 'SET_PAGE_DATA', pageId: 'C10', data: { lasten: next } });
+    63    };
+    64
+    65    const getWoningLabel = (woningType: WoningType | undefined) => {
+    66      switch (woningType) {
+    67        case 'Koop':
+    68          return 'lasten bij een koopwoning:';
+    69        case 'Huur':
+    70          return 'lasten bij een huurwoning:';
+    71        case 'Kamer':
+    72          return 'woonlasten';
+    73        case 'Anders':
+    74          return 'Wonen';
+    75        default:
+    76          return 'Wonen';
+    77      }
+    78    };
+    79    console.log('[C10] read woning from C4:', woning);
+    80    const renderWonen = () => {
+    81      const id = 'wonen';
+    82      return (
+    83        <View style={styles.dashboardCard}>
+    84          <Text style={styles.summaryLabelBold}>Wonen</Text>
+    85          <View style={styles.fieldContainer}>
+    86            <Text style={styles.label}>{getWoningLabel(woning)}</Text>
+    87          </View>
+    88          <View style={styles.fieldContainer}>
+    89            <Text style={styles.label}>Type</Text>
+    90            <ScrollView
+    91              horizontal
+    92              contentContainerStyle={styles.chipContainer}
+    93              showsHorizontalScrollIndicator={false}
+    94            >
+    95              {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((w) => (
+    96                <ChipButton
+    97                  key={w}
+    98                  label={w}
+    99                  selected={woning === w}
+   100                  // READ-ONLY in C10 (Phase 0.5 UI-decoupling):
+   101                  // C10 mag C4 niet meer schrijven. Woningtype wordt gewijzigd op C4;
+   102                  // hier tonen we alleen de huidige waarde voor conditionele weergave.
+   103                  onPress={() => {}}
+   104                />
+   105              ))}
+   106            </ScrollView>
+   107          </View>
+   108
+   109          {woning === 'Huur' &&
+   110            ['kaleHuur', 'servicekosten', 'gemeentebelastingen', 'waterschapsbelasting'].map((k) => (
+   111              <View key={k} style={styles.fieldContainer}>
+   112                <Text style={styles.label}>
+   113                  {k === 'kaleHuur'
+   114                    ? 'Kale Huur (€/mnd)'
+   115                    : k === 'servicekosten'
+   116                      ? 'Servicekosten huurhuis (€/mnd)'
+   117                      : k === 'gemeentebelastingen'
+   118                        ? 'Gemeentebelastingen (€/mnd)'
+   119                        : 'Waterschapsbelasting (€/mnd)'}
+   120                </Text>
+   121                <TextInput
+   122                  style={styles.numericInput}
+   123                  value={readField(id, k)?.toString() ?? ''}
+   124                  keyboardType="number-pad"
+   125                  onChangeText={(t) => updateExpense(id, k, t)}
+   126                  placeholder="0.00"
+   127                />
+   128              </View>
+   129            ))}
+   130
+   131          {woning === 'Koop' &&
+   132            ['hypotheekBruto', 'ozb', 'gemeentebelastingen', 'waterschapsbelasting'].map((k) => (
+   133              <View key={k} style={styles.fieldContainer}>
+   134                <Text style={styles.label}>
+   135                  {k === 'hypotheekBruto'
+   136                    ? 'Hypotheek (bruto) (€/mnd)'
+   137                    : k === 'ozb'
+   138                      ? 'Onroerende Zaak Belasting (€/mnd)'
+   139                      : k === 'gemeentebelastingen'
+   140                        ? 'Gemeentebelastingen (€/mnd)'
+src/organisms/ExpenseRepeater.tsx:37:  const woning: WoningType | undefined = c4?.woning;
+src/organisms/ExpenseRepeater.tsx:65:  const getWoningLabel = (woningType: WoningType | undefined) => {
+src/organisms/ExpenseRepeater.tsx:66:    switch (woningType) {
+src/organisms/ExpenseRepeater.tsx:68:        return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:70:        return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:79:  console.log('[C10] read woning from C4:', woning);
+src/organisms/ExpenseRepeater.tsx:86:          <Text style={styles.label}>{getWoningLabel(woning)}</Text>
+src/organisms/ExpenseRepeater.tsx:99:                selected={woning === w}
+src/organisms/ExpenseRepeater.tsx:109:        {woning === 'Huur' &&
+src/organisms/ExpenseRepeater.tsx:131:        {woning === 'Koop' &&
+src/organisms/ExpenseRepeater.tsx:153:        {woning === 'Kamer' && (
+src/organisms/ExpenseRepeater.tsx:166:        {woning === 'Anders' && (
+src/organisms/ExpenseRepeater.tsx:186:        {woning === 'Kamer' ? (
+src/organisms/HouseholdMemberRepeater.tsx:18:  const woning = (state.C4?.woning ?? null) as WoningType | null
+;                                                                                                            src/organisms/IncomeRepeater.tsx:80:  const woningIsHuur = React.useMemo(() => c4?.woning === 'Huur', [c4]);
+src/organisms/IncomeRepeater.tsx:462:      {woningIsHuur && (
+src/screens/Wizard/WizardPage.tsx:113:              {typeof state.C4?.woning === 'string'
+src/screens/Wizard/WizardPage.tsx:114:                ? `Type: ${state.C4?.woning}`
+src/screens/Wizard/WizardPage.tsx:115:                : 'Kies woningtype'}
+src/screens/Wizard/WizardPage.tsx:123:                selected={state.C4?.woning === w}
+src/screens/Wizard/WizardPage.tsx:125:                  if (__DEV__) console.log('[C4] set woning', w);
+src/screens/Wizard/WizardPage.tsx:126:                  dispatch({ type: 'SET_PAGE_DATA', pageId: 'C4', data:
+ { woning: w } });
+src/organisms/ExpenseRepeater.tsx:7:import { Member, WoningType, AutoCount } from '../types/household';
+src/organisms/ExpenseRepeater.tsx:37:  const woning: WoningType | undefined = c4?.woning;
+src/organisms/ExpenseRepeater.tsx:65:  const getWoningLabel = (woningType: WoningType | undefined) => {
+src/organisms/ExpenseRepeater.tsx:95:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+w) => (                                                                                                      src/organisms/HouseholdMemberRepeater.tsx:6:import { Member, WoningType } from '../types/household';
+src/organisms/HouseholdMemberRepeater.tsx:18:  const woning = (state.C4?.woning ?? null) as WoningType | null
+;                                                                                                            src/screens/Wizard/WizardPage.tsx:14:import { WoningType } from '../../types/household';
+src/screens/Wizard/WizardPage.tsx:119:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map(
+(w) => (                                                                                                     src/types/household.ts:27:export type WoningType = 'Koop' | 'Huur' | 'Kamer' | 'Anders';
+src/types/household.ts:39:export const WONING_OPTIONS: WoningType[] = ['Koop', 'Huur', 'Kamer', 'Anders'];
+     1  // src/types/household.ts
+     2
+     3  // Optioneel maar beter: Creëer een type alias
+     4  export type Gender = 'man' | 'vrouw' | 'anders' | 'n.v.t.';
+     5
+     6  // Essentieel: Definieer en exporteer de constante array van WAARDEN
+     7  export const GENDER_OPTIONS: Gender[] = ['man', 'vrouw', 'anders', 'n.v.t.'];
+     8
+     9  // Pas de Member type aan om het type alias te gebruiken (houdt de structuur schoon)
+    10  export type Member = {
+    11    id: string;
+    12    memberType: 'adult' | 'child';
+    13    naam?: string;
+    14    leeftijd?: number;
+    15    dateOfBirth?: string;
+    16    gender?: Gender; // Gebruikt nu het geëxporteerde type
+    17  };
+    18
+    19  export type BurgerlijkeStaat =
+    20    | 'Gehuwd'
+    21    | 'Fiscaal Partners'
+    22    | 'Samenwonend'
+    23    | 'Bevriend'
+    24    | 'Anders'
+    25    | 'Alleenstaand';
+    26
+    27  export type WoningType = 'Koop' | 'Huur' | 'Kamer' | 'Anders';
+    28  export type HuisdierenYesNo = 'Ja' | 'Nee';
+    29  export type AutoCount = 'Nee' | 'Één' | 'Twee';
+    30
+    31  export const BURGERLIJKE_OPTIONS: Exclude<BurgerlijkeStaat, 'Alleenstaand'>[] = [
+    32    'Gehuwd',
+    33    'Fiscaal Partners',
+    34    'Samenwonend',
+    35    'Bevriend',
+    36    'Anders',
+    37  ];
+    38
+    39  export const WONING_OPTIONS: WoningType[] = ['Koop', 'Huur', 'Kamer', 'Anders'];
+src/organisms/HouseholdMemberRepeater.tsx:3:import { View, Text, TextInput, TouchableOpacity, ScrollView } fr
+om 'react-native';                                                                                                1  // src/organisms/HouseholdMemberRepeater.tsx
+     2  import * as React from 'react';
+     3  import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+     4
+     5  import { useFormContext } from '../context/FormContext';
+     6  import { Member, WoningType } from '../types/household';
+     7  import ChipButton from '../components/ChipButton';
+     8  import { useAppStyles } from '../styles/useAppStyles';
+     9
+    10  // ============================================================
+    11  // MAIN COMPONENT
+    12  // ============================================================
+    13
+    14  const HouseholdMemberRepeater: React.FC = () => {
+    15    const { state } = useFormContext();
+    16    const { styles } = useAppStyles();
+    17
+    18    const woning = (state.C4?.woning ?? null) as WoningType | null;
+    19
+    20    const leden = (state.C4?.leden ?? []) as Member[];
+    21
+    22    const adults = leden.filter((m) => m.memberType === 'adult');
+    23    const children = leden.filter((m) => m.memberType === 'child');
+    24
+    25    return (
+    26      <View style={styles.container}>
+    27        {/* ===================== VOLWASSENEN ===================== */}
+    28        {adults.length > 0 && (
+    29          <View style={styles.section}>
+    30            <Text style={styles.sectionTitle}>Volwassenen ({adults.length})</Text>
+    31
+    32            {adults.map((member) => (
+    33              <MemberCard
+    34                key={`adult-${leden.indexOf(member)}`}
+    35                member={member}
+    36                index={leden.indexOf(member)}
+    37              />
+    38            ))}
+    39          </View>
+    40        )}
+    41
+    42        {/* ===================== KINDEREN ===================== */}
+    43        {children.length > 0 && (
+    44          <View style={styles.section}>
+    45            <Text style={styles.sectionTitle}>Kinderen ({children.length})</Text>
+    46
+    47            {children.map((member) => (
+    48              <MemberCard
+    49                key={`child-${leden.indexOf(member)}`}
+    50                member={member}
+    51                index={leden.indexOf(member)}
+    52              />
+    53            ))}
+    54          </View>
+    55        )}
+    56      </View>
+    57    );
+    58  };
+    59
+    60  export default HouseholdMemberRepeater;
+    61
+    62  // ============================================================
+    63  // MEMBER CARD
+    64  // ============================================================
+    65
+    66  type MemberCardProps = {
+    67    member: Member;
+    68    index: number;
+    69  };
+    70
+    71  const MemberCard: React.FC<MemberCardProps> = ({ member: m, index }) => {
+    72    const { dispatch } = useFormContext();
+    73    const { styles } = useAppStyles();
+    74
+    75    return (
+    76      <View style={styles.card}>
+    77        {/* Naam */}
+    78        <View style={styles.fieldContainer}>
+    79          <Text style={styles.label}>Naam</Text>
+    80          <TextInput
+    81            style={styles.input}
+    82            value={m.naam ?? ''}
+    83            placeholder="Bijv. Jan de Vries"
+    84            onChangeText={(text) =>
+    85              dispatch({
+    86                type: 'UPDATE_MEMBER_FIELD',
+    87                payload: {
+    88                  index,
+    89                  field: 'naam',
+    90                  value: text,
+    91                  meta: { phase: 'change' },
+    92                },
+    93              })
+    94            }
+    95            onBlur={() =>
+    96              dispatch({
+    97                type: 'UPDATE_MEMBER_FIELD',
+    98                payload: {
+    99                  index,
+   100                  field: 'naam',
+   101                  value: m.naam ?? '',
+   102                  meta: { phase: 'blur' },
+   103                },
+   104              })
+   105            }
+   106          />
+   107        </View>
+   108
+   109        {/* Geboortedatum */}
+   110        <View style={styles.fieldContainer}>
+   111          <Text style={styles.label}>Geboortedatum</Text>
+   112          <TextInput
+   113            style={styles.input}
+   114            value={m.dateOfBirth ?? ''}
+   115            placeholder="DD-MM-YYYY"
+   116            keyboardType="numeric"
+   117            maxLength={10}
+   118            onChangeText={(text) =>
+   119              dispatch({
+   120                type: 'UPDATE_MEMBER_FIELD',
+   121                payload: { index, field: 'dateOfBirth', value: text },
+   122              })
+   123            }
+   124          />
+   125          {m.leeftijd !== undefined && (
+   126            <Text style={styles.helperText}>Leeftijd: {m.leeftijd} jaar</Text>
+   127          )}
+   128        </View>
+   129
+   130        {/* Geslacht */}
+   131        <View style={styles.fieldContainer}>
+   132          <Text style={styles.label}>Geslacht</Text>
+   133          <View style={styles.toggleWrapper}>
+   134            {(['man', 'vrouw', 'anders', 'n.v.t.'] as const).map((g) => (
+   135              <TouchableOpacity
+   136                key={g}
+   137                style={[
+   138                  styles.toggleButton,
+   139                  m.gender === g ? styles.toggleActive : styles.toggleInactive,
+   140                ]}
+   141                onPress={() =>
+   142                  dispatch({
+   143                    type: 'UPDATE_MEMBER_FIELD',
+   144                    payload: { index, field: 'gender', value: g },
+   145                  })
+   146                }
+   147              >
+   148                <Text style={styles.toggleText}>{g}</Text>
+   149              </TouchableOpacity>
+   150            ))}
+   151          </View>
+   152        </View>
+   153      </View>
+   154    );
+   155  };
+src/context/FormContext.tsx:20:  type: 'SET_PAGE_DATA';
+src/context/FormContext.tsx:79:    case 'SET_PAGE_DATA': {
+     1  // src/context/FormContext.tsx
+     2  import * as React from 'react';
+     3  import { Storage } from '../services/storage';
+     4  import { alignMembers } from '../services/householdAlign';
+     5  import { Member } from '../types/household';
+     6  import { cleanName } from '../utils/strings';
+     7  import { calculateAge } from '../utils/date';
+     8
+     9  // ============================================================================
+    10  // TYPES
+    11  // ============================================================================
+    12  type PageId = 'C1' | 'C4' | 'C7' | 'C10' | (string & {});
+    13
+    14  export type FormState = Record<string, any> & {
+    15    isSpecialStatus?: boolean; // >5 volwassenen
+    16    userId?: string | null;
+    17  };
+    18
+    19  export type SetPageDataAction = {
+    20    type: 'SET_PAGE_DATA';
+    21    pageId: PageId;
+    22    data: Record<string, any>;
+    23  };
+    24
+    25  export type LoadSavedStateAction = {
+    26    type: 'LOAD_SAVED_STATE';
+    27    data: FormState;
+    28  };
+    29
+    30  export type SetUserIdAction = {
+    31    type: 'SET_USER_ID';
+    32    userId: string | null;
+    33  };
+    34
+    35  export type ResetStateAction = { type: 'RESET_STATE' };
+    36
+    37  export type AlignHouseholdAction = {
+    38    type: 'ALIGN_HOUSEHOLD_MEMBERS';
+    39    payload: { aantalMensen: number; aantalVolwassen: number };
+    40  };
+    41
+    42  export type UpdateMemberFieldAction = {
+    43    type: 'UPDATE_MEMBER_FIELD';
+    44    payload: {
+    45      index: number;
+    46      field: keyof Member;
+    47      value: any;
+    48      meta?: { phase?: 'change' | 'blur' };
+    49    };
+    50  };
+    51
+    52  export type FormAction =
+    53    | SetPageDataAction
+    54    | LoadSavedStateAction
+    55    | SetUserIdAction
+    56    | ResetStateAction
+    57    | AlignHouseholdAction
+    58    | UpdateMemberFieldAction;
+    59
+    60  export type FormContextValue = {
+    61    state: FormState;
+    62    dispatch: React.Dispatch<FormAction>;
+    63  };
+    64
+    65  // Helper: speciale status bij >5 adults (Project Eis 2025)
+    66  const checkSpecialStatus = (leden: Member[]): boolean => {
+    67    const adultCount = leden.filter((m) => m.memberType === 'adult').length;
+    68    return adultCount > 5;
+    69  };
+    70
+    71  // ============================================================================
+    72  // REDUCER
+    73  // ============================================================================
+    74  const formReducer: React.Reducer<FormState, FormAction> = (
+    75    state: FormState,
+    76    action: FormAction,
+    77  ): FormState => {
+    78    switch (action.type) {
+    79      case 'SET_PAGE_DATA': {
+    80        const { pageId, data } = action;
+    81        return {
+    82          ...state,
+    83          [pageId]: {
+    84            ...(state[pageId] ?? {}),
+    85            ...data,
+    86          },
+    87        };
+    88      }
+    89
+    90      case 'UPDATE_MEMBER_FIELD': {
+    91        const { index, field, value, meta } = action.payload;
+    92        const current = Array.isArray(state?.C4?.leden) ? (state.C4!.leden as Member[]) : [];
+    93        if (index < 0 || index >= current.length) return state;
+    94
+    95        const isBlur = meta?.phase === 'blur';
+    96        let updatedMember: Member = { ...current[index] };
+    97
+    98        if (field === 'naam') {
+    99          // UX: onChange -> rauw (cursor stabiel), onBlur -> schoon (data integriteit)
+   100          updatedMember.naam = isBlur ? cleanName(value, 25) : String(value ?? '');
+   101        } else if (field === 'dateOfBirth') {
+   102          const val = typeof value === 'string' ? value.trim() : '';
+   103          updatedMember.dateOfBirth = val || undefined;
+   104          updatedMember.leeftijd = val ? (calculateAge(val) ?? undefined) : undefined;
+   105        } else {
+   106          (updatedMember as any)[field] = value;
+   107        }
+   108
+   109        const nextLeden = current.map((m, i) => (i === index ? updatedMember : m));
+   110
+   111        return {
+   112          ...state,
+   113          isSpecialStatus: checkSpecialStatus(nextLeden),
+   114          C4: { ...(state.C4 ?? {}), leden: nextLeden },
+   115        };
+   116      }
+   117
+   118      case 'ALIGN_HOUSEHOLD_MEMBERS': {
+   119        const { aantalMensen, aantalVolwassen } = action.payload;
+   120        const current = state?.C4?.leden;
+   121        const aligned = alignMembers(current, aantalMensen, aantalVolwassen);
+   122
+   123        return {
+   124          ...state,
+   125          isSpecialStatus: checkSpecialStatus(aligned),
+   126          C4: { ...(state.C4 ?? {}), leden: aligned },
+   127        };
+   128      }
+   129
+   130      case 'LOAD_SAVED_STATE':
+   131        return { ...state, ...action.data };
+   132
+   133      case 'SET_USER_ID':
+   134        return { ...state, userId: action.userId };
+   135
+   136      case 'RESET_STATE':
+   137        return { userId: null };
+   138
+   139      default:
+   140        return state;
+   141    }
+   142  };
+   143
+   144  // ============================================================================
+   145  // PROVIDER
+   146  // ============================================================================
+   147  const FormContext = React.createContext<FormContextValue | undefined>(undefined);
+   148
+   149  export const FormProvider = ({ children }: { children: React.ReactNode }) => {
+   150    const [state, dispatch] = React.useReducer(formReducer, {} as FormState);
+   151    const hasHydratedRef = React.useRef(false);
+   152
+   153    // 1) Hydrate
+   154    React.useEffect(() => {
+   155      let isMounted = true;
+   156      const hydrate = async () => {
+   157        try {
+   158          const persisted = await Storage.loadState();
+   159          if (persisted && isMounted) {
+   160            dispatch({ type: 'LOAD_SAVED_STATE', data: persisted });
+   161          }
+   162        } finally {
+   163          if (isMounted) hasHydratedRef.current = true;
+   164        }
+   165      };
+   166      hydrate();
+   167      return () => {
+   168        isMounted = false;
+   169      };
+   170    }, []);
+   171
+   172    // 2) Persist (debounced)
+   173    const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+   174    React.useEffect(() => {
+   175      if (!hasHydratedRef.current) return;
+   176      if (saveTimer.current) clearTimeout(saveTimer.current);
+   177      saveTimer.current = setTimeout(() => {
+   178        Promise.resolve()
+   179          .then(() => Storage.saveState(state))
+   180          .catch((e) => {
+   181            if (__DEV__) console.warn('Storage.saveState failed:', e);
+   182          });
+   183      }, 400);
+   184      return () => {
+   185        if (saveTimer.current) clearTimeout(saveTimer.current);
+   186      };
+   187    }, [state]);
+   188
+   189    const value = React.useMemo<FormContextValue>(() => ({ state, dispatch }), [state]);
+   190    return <FormContext.Provider value={value}>{children}</FormContext.Provider>;
+   191  };
+   192
+   193  export const useFormContext = (): FormContextValue => {
+   194    const context = React.useContext(FormContext);
+   195    if (!context) throw new Error('useFormContext must be used within FormProvider');
+   196    return context;
+   197  };

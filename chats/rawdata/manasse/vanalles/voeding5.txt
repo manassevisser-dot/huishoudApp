@@ -1,0 +1,265 @@
+# 1) Zoek of de styles al bestaan (breder pad zodat het bestand wél matcht):git grep -n -E "cardSwipe|cardBadge|navigationHint|hintOverlayBottomRight" -- src/styles || true# 2) Toon de bovenste ~260 regels van useAppStyles.ts (om definities echt te zien):nl -ba src/styles/useAppStyles.ts | sed -n '1,260p' || true
+src/styles/useAppStyles.ts:89:    navigationHint: {
+src/styles/useAppStyles.ts:99:    hintOverlayBottomRight: {
+src/styles/useAppStyles.ts:105:    cardBadge: {
+src/styles/useAppStyles.ts:205:    cardSwipe: { marginBottom: 12, paddingBottom: 22, position: 'relativ
+e' },                                                                                                       1  // src/styles/useAppStyles.ts
+     2
+     3  import { StyleSheet } from 'react-native';
+     4  import { useTheme } from '../context/ThemeContext';
+     5  import { Colors, Theme } from './Colors';
+     6
+     7  // StyleSheet cache - prevents recreation on every render
+     8  const styleCache: Partial<Record<Theme, ReturnType<typeof StyleSheet.create>>> = {};
+     9
+    10  /**
+    11   * Dynamic style factory - creates theme-aware StyleSheet
+    12   *
+    13   * Performance:
+    14   *   - First call per theme: Creates and caches StyleSheet (~5-10ms)
+    15   *   - Subsequent calls: Returns cached reference (~0.01ms)
+    16   *   - Memory: 2 StyleSheets total (light + dark)
+    17   *
+    18   * @param theme - 'light' or 'dark'
+    19   * @returns Cached StyleSheet for the specified theme
+    20   */
+    21  export function getAppStyles(theme: Theme) {
+    22    // Return cached styles if they exist
+    23    if (styleCache[theme]) {
+    24      return styleCache[theme]!;
+    25    }
+    26
+    27    const c = Colors[theme];
+    28
+    29    const styles = StyleSheet.create({
+    30      // === CONTAINERS ===
+    31      container: { flex: 1, backgroundColor: c.background },
+    32      pageContainer: { flex: 1, paddingTop: 10 },
+    33      scrollContent: { paddingBottom: 120, paddingHorizontal: 20 },
+    34
+    35      // === HEADERS ===
+    36      pageTitle: { fontSize: 28, fontWeight: '700', marginBottom: 24, color: c.textPrimary },
+    37      headerBar: {
+    38        flexDirection: 'row',
+    39        alignItems: 'center',
+    40        justifyContent: 'space-between',
+    41        paddingHorizontal: 16,
+    42        paddingVertical: 12,
+    43        borderBottomWidth: 1,
+    44        borderBottomColor: c.border,
+    45        backgroundColor: c.background,
+    46      },
+    47      headerTitle: { fontSize: 17, fontWeight: '600', color: c.textPrimary },
+    48      headerButton: { padding: 8 },
+    49      headerButtonText: { fontSize: 17, color: c.primary },
+    50
+    51      // === FIELDS ===
+    52      fieldContainer: { marginBottom: 20 },
+    53      label: { fontSize: 17, fontWeight: '600', color: c.textPrimary, marginBottom: 8 },
+    54      labelError: { color: c.error },
+    55      input: {
+    56        backgroundColor: c.inputBackground,
+    57        borderRadius: 10,
+    58        padding: 14,
+    59        fontSize: 17,
+    60        color: c.textPrimary,
+    61        borderWidth: 1,
+    62        borderColor: c.border,
+    63      },
+    64      numericWrapper: {
+    65        flexDirection: 'row',
+    66        alignItems: 'center',
+    67        backgroundColor: c.inputBackground,
+    68        borderRadius: 10,
+    69        borderWidth: 1,
+    70        borderColor: c.border,
+    71        paddingHorizontal: 14,
+    72      },
+    73      currencyPrefix: { fontSize: 17, color: c.textTertiary, marginRight: 4 },
+    74      numericInput: { flex: 1, paddingVertical: 14, fontSize: 17, color: c.textPrimary },
+    75      inputError: { borderColor: c.error, borderWidth: 2 },
+    76      errorTextStyle: { color: c.error, marginTop: 6, fontSize: 13 },
+    77
+    78      // === WARNINGS ===
+    79      warningTextOrange: { color: c.warning, fontSize: 14, marginTop: 4, marginLeft: 4 },
+    80      warningTextRed: {
+    81        color: c.error,
+    82        fontSize: 14,
+    83        marginTop: 4,
+    84        marginLeft: 4,
+    85        fontWeight: '600',
+    86      },
+    87
+    88      // === NAVIGATION HINT ===
+    89      navigationHint: {
+    90        fontSize: 14,
+    91        color: c.textTertiary,
+    92        textAlign: 'right',
+    93        marginTop: 12,
+    94        marginRight: 8,
+    95        fontStyle: 'italic',
+    96      },
+    97
+    98      // === HINT OVERLAY POSITIONERING (nieuw, klein en doelgericht) ===
+    99      hintOverlayBottomRight: {
+   100        position: 'absolute',
+   101        bottom: 6,
+   102        right: 12,
+   103      },
+   104      // Badge linksboven met nummering (1, 2, 3, ...)
+   105      cardBadge: {
+   106        position: 'absolute',
+   107        top: 8,
+   108        left: 12,
+   109        backgroundColor: '#00000033', // half-transparant
+   110        color: '#fff',
+   111        paddingHorizontal: 8,
+   112        paddingVertical: 2,
+   113        borderRadius: 12,
+   114        fontSize: 12,
+   115        overflow: 'hidden',
+   116      },
+   117      // === GRID FOR CATEGORIES ===
+   118      gridContainer: { flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 },
+   119      gridItem: {
+   120        width: '30%',
+   121        flexGrow: 1,
+   122        backgroundColor: c.card,
+   123        paddingVertical: 16,
+   124        paddingHorizontal: 8,
+   125        margin: 5,
+   126        borderRadius: 10,
+   127        alignItems: 'center',
+   128        justifyContent: 'center',
+   129        borderWidth: 1,
+   130        borderColor: c.border,
+   131        shadowColor: '#000',
+   132        shadowOffset: { width: 0, height: 1 },
+   133        shadowOpacity: 0.05,
+   134        shadowRadius: 2,
+   135      },
+   136      gridItemSelected: { backgroundColor: c.selected, borderColor: c.selected },
+   137      gridItemText: { fontSize: 14, fontWeight: '600', color: c.textPrimary, textAlign: 'center' 
+},                                                                                                        138      gridItemTextSelected: { color: c.selectedText },
+   139
+   140      // === BUTTONS ===
+   141      buttonContainer: {
+   142        position: 'absolute',
+   143        bottom: 0,
+   144        left: 0,
+   145        right: 0,
+   146        flexDirection: 'row',
+   147        justifyContent: 'space-between',
+   148        padding: 20,
+   149        backgroundColor: c.background,
+   150        borderTopWidth: 1,
+   151        borderTopColor: c.border,
+   152      },
+   153      button: {
+   154        flex: 1,
+   155        backgroundColor: c.primary,
+   156        padding: 16,
+   157        borderRadius: 10,
+   158        alignItems: 'center',
+   159        marginLeft: 10,
+   160      },
+   161      buttonText: { color: c.primaryText, fontSize: 17, fontWeight: '700' },
+   162      secondaryButton: { backgroundColor: c.secondary, marginLeft: 0, marginRight: 10 },
+   163      secondaryButtonText: { color: c.secondaryText, fontSize: 17, fontWeight: '600' },
+   164
+   165      // === TOGGLES & CHIPS ===
+   166      toggleWrapper: { flexDirection: 'row', justifyContent: 'flex-start' },
+   167      toggleButton: {
+   168        paddingHorizontal: 20,
+   169        paddingVertical: 10,
+   170        borderRadius: 8,
+   171        minWidth: 80,
+   172        alignItems: 'center',
+   173      },
+   174      toggleActive: { backgroundColor: c.success },
+   175      toggleInactive: { backgroundColor: c.secondary },
+   176      toggleText: { fontSize: 17, fontWeight: '600', color: c.successText },
+   177      chipContainer: { flexDirection: 'row', paddingVertical: 4 },
+   178      chip: {
+   179        backgroundColor: c.secondary,
+   180        paddingVertical: 10,
+   181        paddingHorizontal: 16,
+   182        borderRadius: 20,
+   183        marginRight: 10,
+   184        borderWidth: 1,
+   185        borderColor: c.border,
+   186      },
+   187      chipSelected: { backgroundColor: c.selected, borderColor: c.selected },
+   188      chipError: { borderColor: c.error, borderWidth: 2 },
+   189      chipText: { fontSize: 15, color: c.textPrimary, fontWeight: '500' },
+   190      chipTextSelected: { color: c.selectedText, fontWeight: '600' },
+   191
+   192      // === REPEATER / SECTIONS ===
+   193      card: {
+   194        backgroundColor: '#fff',
+   195        borderRadius: 12,
+   196        padding: 16,
+   197        marginBottom: 12,
+   198        shadowColor: '#000',
+   199        shadowOffset: { width: 0, height: 2 },
+   200        shadowOpacity: 0.1,
+   201        shadowRadius: 4,
+   202        elevation: 3,
+   203      },
+   204      // cards voor swipe
+   205      cardSwipe: { marginBottom: 12, paddingBottom: 22, position: 'relative' },
+   206
+   207      section: {
+   208        marginBottom: 24,
+   209      },
+   210
+   211      sectionTitle: {
+   212        fontSize: 18,
+   213        fontWeight: '700',
+   214        marginBottom: 12,
+   215        color: c.textPrimary,
+   216      },
+   217
+   218      // === BUTTON GROUP ===
+   219      buttonGroup: {
+   220        flexDirection: 'row',
+   221        marginTop: 12,
+   222      },
+   223
+   224      buttonActive: {
+   225        backgroundColor: c.primary,
+   226      },
+   227
+   228      buttonTextActive: {
+   229        color: c.primaryText,
+   230        fontWeight: '700',
+   231      },
+   232
+   233      // === HELP / DEBUG ===
+   234      helperText: {
+   235        fontSize: 13,
+   236        color: c.textSecondary,
+   237        marginTop: 4,
+   238      },
+   239
+   240      debugBox: {
+   241        backgroundColor: c.secondary,
+   242        padding: 8,
+   243        borderRadius: 6,
+   244        marginTop: 12,
+   245      },
+   246
+   247      debugText: {
+   248        fontSize: 12,
+   249        color: c.textSecondary,
+   250      },
+   251
+   252      // === CHECKBOXES ===
+   253      checkbox: {
+   254        width: 24,
+   255        height: 24,
+   256        borderRadius: 4,
+   257        borderWidth: 2,
+   258        borderColor: c.border,
+   259        backgroundColor: c.card,
+   260      },

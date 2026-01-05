@@ -1,0 +1,394 @@
+//transactionService.ts
+import { MemberType } from '../domain/household';
+import { Member } from '../domain/household';
+/**
+ * Helper voor UX: Splitst een naamstring in voornaam en achternaam.
+ * Deze velden worden NIET gebruikt voor het data-onderzoek naar eetpatronen.
+ */
+const splitNameForUX = (fullName: string = '') => {
+  const cleanName = fullName || 'Lid';
+  const parts = cleanName.trim().split(' ');
+  return {
+    firstName: parts[0],
+    lastName: parts.slice(1).join(' ') || ''
+  };
+};
+
+/**
+ * Kern van de migratie: Transformeert oude data naar het Phoenix schema.
+ */
+export const migrateTransactionsToPhoenix = async (oldState: any) => {
+  const oldLeden = oldState?.household?.leden || [];
+  
+  const migratedMembers = oldLeden.map((lid: any, index: number) => {
+    const { firstName, lastName } = splitNameForUX(lid.firstName);
+    
+    // Normaliseer het type voor onderzoek [cite: 52, 161]
+    const rawType = (lid.type || 'adult').toLowerCase();
+    const validTypes = ['adult', 'child', 'teenager', 'senior'];
+    const memberType = validTypes.includes(rawType) ? rawType : 'adult';
+
+    return {
+      // Data Onderzoek Velden (Anoniem)
+      entityId: lid.id || `m-${index}`, 
+      memberType: lid.memberType as MemberType,
+      
+      // UX Velden (Alleen voor weergave in de app)
+      firstName: firstName,
+      lastName: lastName,
+      naam: lid.firstName || 'Onbekend' // Fallback voor compatibiliteit [cite: 33]
+    };
+  });
+
+  return {
+    data: {
+      household: {
+        members: migratedMembers
+      },
+      transactions: oldState.transactions || []
+    },
+    metadata: {
+      migratedAt: new Date().toISOString(),
+      schemaVersion: '3.0.0', // Phoenix versie
+      itemsProcessed: migratedMembers.length
+    }
+  };
+};
+=================
+migrationService.ts
+
+import { DATA_KEYS, SUB_KEYS } from '@domain/constants/datakeys';
+// import { toCents } from '@utils/numbers'; // <-- activeer als je bedragen naar centen wilt
+import { FormState, DeepPartial } from '@shared-types/form';
+// import { Member } from '@domain/household'; // <-- ongebruikt
+import { createMockState } from '@test-utils/index';
+
+type OldDataV0 = {
+  aantalMensen?: number | null;
+  aantalVolwassen?: number | null;
+  leden?: any[]; // legacy fallback
+  metadata?: { migratedAt?: string; schemaVersion?: string; itemsProcessed?: unknown };
+  income?: { items: any[] };
+  expenses?: { items: any[] };
+  household?: { members?: any[] };
+};
+
+export async function migrateToPhoenix(old: OldDataV0 | null | undefined): Promise<FormState> {
+  // 1) Geldige baseline
+  const base = createMockState({
+    activeStep: 'LANDING',
+    currentPageId: '1setupHousehold',
+    isValid: true,
+  });
+
+  // 2) Null/undefined -> lege, valide Phoenix state met bijgewerkte meta
+  if (!old) {
+    return {
+      ...base,
+      meta: { ...base.meta, lastModified: new Date().toISOString() },
+    };
+  }
+
+  // 3) Members
+  const rawMembers = old[DATA_KEYS.HOUSEHOLD]?.members
+    ?? old.household?.members
+    ?? old.leden
+    ?? [];
+
+  const migratedMembers = (Array.isArray(rawMembers) ? rawMembers : []).map((m: any, i: number) => {
+    const fullName = String(m.naam ?? m.fullName ?? 'Bewoner').trim();
+    const parts = fullName.split(/\s+/);
+    return {
+      entityId: m.entityId ?? `mem_${i}`,
+      firstName: parts[0],
+      lastName: parts.slice(1).join(' ') || '',
+      memberType: m.memberType ?? 'adult',
+    } as Record<string, unknown>;
+  });
+
+  // 4) Setup patch
+  const setupPatch: DeepPartial<FormState['data']['setup']> = {
+    aantalMensen:
+      typeof old.aantalMensen === 'number'
+        ? old.aantalMensen
+        : (old as any)[DATA_KEYS.SETUP]?.aantalMensen ?? base.data.setup.aantalMensen,
+    aantalVolwassen:
+      typeof old.aantalVolwassen === 'number'
+        ? old.aantalVolwassen
+        : (old as any)[DATA_KEYS.SETUP]?.aantalVolwassen ?? base.data.setup.aantalVolwassen,
+    autoCount: (old as any)[DATA_KEYS.SETUP]?.autoCount ?? 'Nee',
+  };
+
+  // 5) Finance items (optioneel: naar centen mappen)
+  const incomeItems = Array.isArray(old.income?.items) ? old.income!.items : [];
+  const expenseItems = Array.isArray(old.expenses?.items) ? old.expenses!.items : [];
+  // const incomeItems = Array.isArray(old.income?.items)
+  //   ? old.income.items.map(x => ({ ...x, amountCents: toCents(x.amount ?? x.value ?? 0) }))
+  //   : [];
+  // const expenseItems = Array.isArray(old.expenses?.items)
+  //   ? old.expenses.items.map(x => ({ ...x, amountCents: toCents(x.amount ?? x.value ?? 0) }))
+  //   : [];
+
+  // 6) Meta mapping
+  const parsedVersion = Number(old.metadata?.schemaVersion);
+  const metaPatch: FormState['meta'] = {
+    lastModified: old.metadata?.migratedAt ?? new Date().toISOString(),
+    version: Number.isFinite(parsedVersion) ? parsedVersion : base.meta.version,
+  };
+
+  // 7) Eindresultaat
+  return {
+    ...base,
+    schemaVersion: '2.0', // pas aan aan je migratieversie en testverwachtingen
+    data: {
+      ...base.data,
+      [DATA_KEYS.SETUP]: { ...base.data.setup, ...setupPatch },
+      [DATA_KEYS.HOUSEHOLD]: { members: migratedMembers },
+      [DATA_KEYS.FINANCE]: {
+        [SUB_KEYS.INCOME]: { items: incomeItems },
+        [SUB_KEYS.EXPENSES]: { items: expenseItems },
+      },
+    },
+    meta: metaPatch,
+  };
+}
+====================
+memberFactory
+
+import type { Member } from '@domain/household';
+
+/**
+ * Maakt één member met defaults en optionele overrides.
+ */
+export function makeMember(
+  index = 1,
+  type: 'adult' | 'child' | 'teenager' | 'senior' = 'adult',
+  overrides?: Partial<Member>
+): Member {
+  const id = `${type}-${index}`;
+  return {
+    entityId: overrides?.entityId ?? id,
+    fieldId: overrides?.fieldId ?? `member-${id}`,
+    memberType: overrides?.memberType ?? type,
+    firstName: overrides?.firstName ?? `${type}`,
+    lastName: overrides?.lastName ?? `${index}`,
+    gender: overrides?.gender,dateOfBirth: overrides?.dateOfBirth,
+    // ✅ Voeg age toe aan de factory om TS2353 te voorkomen
+    age: overrides?.age ?? (type === 'adult' ? 35 : 10),
+  };
+}
+
+/**
+ * Maakt een lijst members van één type.
+ */
+export function makeMembers(
+  count: number,
+  type: 'adult' | 'child' | 'teenager' | 'senior' = 'adult'
+): Member[] {
+  return Array.from({ length: count }, (_, i) => makeMember(i + 1, type));
+}
+
+/**
+ * Maakt een gemengd huishouden (volwassenen + kinderen).
+ */
+export function makeMixedHousehold(adults = 2, children = 0): Member[] {
+  return [...makeMembers(adults, 'adult'), ...makeMembers(children, 'child')];
+}
+=====================
+stateFactory
+import { DATA_KEYS } from '@domain/constants/datakeys';
+import type { FormState } from '@shared-types/form';
+import { deepMerge } from '@utils/objects'; // ✅ Centrale import
+
+/** Recursieve partial type (ADR-11) */
+type DeepPartial<T> = {
+  [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K];
+};
+
+const SCHEMA_VERSION = '1.0' as const;
+const isoNow = () => new Date().toISOString();
+
+type MockOverrides = Partial<Omit<FormState, 'data'>> & {
+  data?: DeepPartial<FormState['data']>;
+  status?: string;
+};
+
+export function createMockState(overrides: MockOverrides = {}): FormState {
+  const baseState: FormState = {
+    schemaVersion: SCHEMA_VERSION,
+    activeStep: 'LANDING',
+    currentPageId: 'page_1',
+    isValid: true,
+    data: {
+      [DATA_KEYS.SETUP]: {
+        aantalMensen: 1,
+        aantalVolwassen: 1,
+        autoCount: 'Nee',
+      },
+      [DATA_KEYS.HOUSEHOLD]: { members: [] },
+      [DATA_KEYS.FINANCE]: {
+        income: { items: [] },
+        expenses: { items: [] },
+      },
+    },
+    meta: { lastModified: isoNow(), version: 1 },
+  };
+
+  const { data: dataOverride, meta: metaOverride, ...topOverrides } = overrides;
+
+  return {
+    ...baseState,
+    ...topOverrides,
+    data: dataOverride ? deepMerge(baseState.data, dataOverride) : baseState.data,
+    meta: metaOverride ? { ...baseState.meta, ...metaOverride } : baseState.meta,
+  };
+}
+
+export function makePhoenixState(overrides?: MockOverrides): FormState {
+  const base: FormState = {
+    schemaVersion: '1.0',
+    activeStep: 'LANDING',
+    currentPageId: 'setup',
+    isValid: true,
+    data: {
+      setup: { aantalMensen: 0, aantalVolwassen: 0, autoCount: 'Nee' },
+      household: { members: [] },
+      finance: { income: { items: [] }, expenses: { items: [] } },
+    },
+    meta: { lastModified: isoNow(), version: 1 }
+  };
+
+  const { data: dataOverride, ...topOverrides } = overrides || {};
+  return { 
+    ...base, 
+    ...topOverrides, 
+    data: deepMerge(base.data, dataOverride) 
+  } as FormState;
+}
+==========================
+storage.migration.test
+import { migrateTransactionsToPhoenix } from '../transactionService';
+import { makeMixedHousehold } from '@test-utils/index';
+import { FormState } from '@shared-types/form';
+
+const mockState: FormState = {
+  schemaVersion: '2025.1',
+  activeStep: '1',
+  currentPageId: 'setup',
+  isValid: true,
+  data: {
+    setup: { aantalMensen: 3, aantalVolwassen: 2, autoCount: 'Een' },
+    household: { 
+      // ✅ Gebruik de factory voor een valide members array
+      members: makeMixedHousehold(2, 1) 
+    },
+    finance: { income: { items: [] }, expenses: { items: [] } }
+  },
+  meta: { lastModified: new Date().toISOString(), version: 1 }
+};
+
+describe('Storage Migration: V0 to Phoenix', () => {
+  it('moet oude setup data migreren naar de nieuwe data.setup nesting', async () => {
+    // 1. Arrange: Oude "platte" data structuur uit V0
+    const oldDataV0 = {
+      aantalMensen: 4,
+      aantalVolwassen: 2
+    };
+
+    // 2. Act: Voer de migratie uit en cast naar FormState
+    // We gebruiken 'as FormState' om toegang te krijgen tot geneste properties
+    const result = (await migrateTransactionsToPhoenix(oldDataV0)) as unknown as FormState;
+
+    // 3. Assert: Controleer de geneste structuur conform Phoenix 2025 SSOT
+    expect(result).toBeDefined();
+    expect(result.schemaVersion).toBe('1.0');
+    expect(result.data.setup.aantalMensen).toBe(4);
+    expect(result.data.setup.aantalVolwassen).toBe(2);
+    
+    // Optioneel: Controleer of meta-data is toegevoegd tijdens migratie
+    expect(result.meta.version).toBeDefined();
+  });
+
+  it('moet fallback waarden gebruiken bij corrupte oude data', async () => {
+    // Act: Bij null verwachten we dat de migratie een valide 'empty' Phoenix state teruggeeft
+    const result = (await migrateTransactionsToPhoenix(oldDataV0)) as unknown as FormState;
+    
+    // Assert
+    expect(result.schemaVersion).toBe('1.0');
+    expect(result.data.setup.aantalMensen).toBe(0);
+    // Verifieer dat ook de andere verplichte secties aanwezig zijn
+    expect(result.data.household.members).toBeDefined();
+  });
+});
+
+=====================
+staorage.ts
+import { DATA_KEYS } from '@domain/constants/datakeys';
+import { toCents } from '@utils/numbers';
+import { FormState } from '@shared-types/form';
+import { Member } from '@domain/household';
+
+/**
+ * Migreert een oude state structuur naar de nieuwe Phoenix 2025 interface.
+ */
+export const migrateToPhoenix = (oldState: any): FormState => {
+  const o = oldState || {};
+
+  const getFirstAmountCents = (obj: any): number => {
+    const list = obj?.items || obj?.list || [];
+    return list.length > 0 ? toCents(list[0]?.amount ?? list[0]?.value ?? 0) : 0;
+  };
+
+  const migratedMembers: Member[] = (o[DATA_KEYS.HOUSEHOLD]?.leden || []).map((lid: any, i: number) => ({
+    entityId: lid.id || `m-${i}`,
+    naam: lid.naam || lid.firstName || 'Lid',
+    memberType: lid.type || 'adult',
+  }));
+
+  const migratedData: FormState['data'] = {
+    [DATA_KEYS.SETUP]: o[DATA_KEYS.SETUP] || { 
+      aantalMensen: 1, 
+      aantalVolwassen: 1,
+      autoCount: 'Nee'
+    },
+    [DATA_KEYS.HOUSEHOLD]: {
+      members: migratedMembers as any[],
+    },
+    [DATA_KEYS.FINANCE]: {
+      income: { 
+        items: [], 
+        totalAmount: getFirstAmountCents(o.C7 || o.income)
+      },
+      expenses: { 
+        items: [],
+        totalAmount: getFirstAmountCents(o.C10 || o.fixedExpenses)
+      }
+    }
+  };
+
+  return {
+    schemaVersion: '2.0',
+    activeStep: 'LANDING',
+    currentPageId: 'page_1',
+    isValid: true,
+    data: migratedData,
+    meta: {
+      lastModified: new Date().toISOString(),
+      version: 1
+    }
+  };
+};
+=========================
+storage.ts
+/**
+ * Storage service voor persistentie en migratie.
+ * Fix: Named export toegevoegd om TS2305 te verhelpen.
+ */
+export const storage = {
+  migrateToPhoenix,
+  loadState: async (): Promise<FormState | null> => {
+     // Hier kun je de feitelijke AsyncStorage of localStorage logica toevoegen
+     return null; 
+  }
+};
+============

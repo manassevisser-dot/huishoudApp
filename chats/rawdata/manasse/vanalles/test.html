@@ -1,0 +1,251 @@
+
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>C4 Prototype – Swipe Cards</title>
+<style>
+  :root{
+    /* Design tokens – houdbaar voor snelle tweaks */
+    --bg: #f2f2f7;
+    --card: #ffffff;
+    --text-primary: #1c1c1e;
+    --text-secondary: #6b7280;
+    --text-tertiary: #9aa0a6;
+    --border: #d1d5db;
+    --primary: #007aff;
+    --gap: 20px;              /* CARD_GAP analoog */
+    --card-width: 90vw;       /* ~90% van viewport breedte */
+    --card-radius: 12px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  body{
+    margin:0;
+    background:var(--bg);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color:var(--text-primary);
+  }
+
+  .page{
+    padding: 16px;
+  }
+
+  .section-title{
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  /* Horizontale slider met snapping */
+  .slider{
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: var(--gap);
+    padding-bottom: 8px;
+    padding-right: var(--gap);
+    margin: 12px 0;
+  }
+
+  .card{
+    position: relative; /* overlay items (hint/badge) */
+    flex: 0 0 auto;
+    width: var(--card-width);
+    background: var(--card);
+    border-radius: var(--card-radius);
+    box-shadow: var(--shadow);
+    padding: 16px 16px 28px;  /* iets meer onderruimte voor hint */
+    scroll-snap-align: start;
+    border: 1px solid var(--border);
+  }
+
+  /* Nummerbadge linksboven */
+  .badge{
+    position: absolute;
+    top: 8px;
+    left: 12px;
+    background: rgba(0,0,0,0.25);
+    color: #fff;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 12px;
+  }
+
+  /* Hint rechtsonder OP de card */
+  .hint{
+    position: absolute;
+    right: 12px;
+    bottom: 8px;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--text-tertiary);
+    text-align: right;
+  }
+
+  .field{
+    margin-bottom: 14px;
+  }
+  .label{
+    font-size: 15px;
+    margin-bottom: 6px;
+    color: var(--text-secondary);
+  }
+  .input{
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 15px;
+  }
+
+  .chips{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .chip{
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 14px;
+    background: #e5e7eb;
+    font-size: 14px;
+  }
+  .chip.selected{
+    background: #cde2ff;
+    border-color: #cde2ff;
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <h1 style="font-size:24px;margin:0 0 8px;">C4 – Huishouden</h1>
+    <div class="label" style="margin-top:4px;">Type: Huur</div>
+
+    <!-- Woningtype chips (read-only visueel) -->
+    <div class="chips">
+      <div class="chip">Koop</div>
+      <div class="chip selected">Huur</div>
+      <div class="chip">Kamer</div>
+      <div class="chip">Anders</div>
+    </div>
+
+    <div class="section-title">Volwassenen (2)</div>
+    <div class="slider">
+      <!-- Card 1 -->
+      <div class="card">
+        <div class="badge">1</div>
+
+        <div class="field">
+          <div class="label">Naam</div>
+          <input class="input" placeholder="Bijv. Jan de Vries" />
+        </div>
+
+        <div class="field">
+          <div class="label">Geboortedatum</div>
+          <input class="input" placeholder="DD-MM-YYYY" />
+        </div>
+
+        <div class="field">
+          <div class="label">Geslacht</div>
+          <div class="chips">
+            <div class="chip selected">man</div>
+            <div class="chip">vrouw</div>
+            <div class="chip">anders</div>
+            <div class="chip">n.v.t.</div>
+          </div>
+        </div>
+
+        <!-- Hint zichtbaar omdat er een volgende kaart is -->
+        <div class="hint">----&gt; volgende</div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="card">
+        <div class="badge">2</div>
+
+        <div class="field">
+          <div class="label">Naam</div>
+          <input class="input" placeholder="Bijv. Jan de Vries" />
+        </div>
+
+        <div class="field">
+          <div class="label">Geboortedatum</div>
+          <input class="input" placeholder="DD-MM-YYYY" />
+        </div>
+
+        <div class="field">
+          <div class="label">Geslacht</div>
+          <div class="chips">
+            <div class="chip">man</div>
+            <div class="chip selected">vrouw</div>
+            <div class="chip">anders</div>
+            <div class="chip">n.v.t.</div>
+          </div>
+        </div>
+
+        <!-- Laatste kaart binnen volwassenen: hint kan uit -->
+        <!-- <div class="hint">----&gt; volgende</div> -->
+      </div>
+    </div>
+
+    <div class="section-title">Kinderen (2)</div>
+    <div class="slider">
+      <!-- Card 1 -->
+      <div class="card">
+        <div class="badge">1</div>
+
+        <div class="field">
+          <div class="label">Naam</div>
+          <input class="input" placeholder="Bijv. Jan de Vries" />
+        </div>
+
+        <div class="field">
+          <div class="label">Geboortedatum</div>
+          <input class="input" placeholder="DD-MM-YYYY" />
+        </div>
+
+        <div class="field">
+          <div class="label">Geslacht</div>
+          <div class="chips">
+            <div class="chip">man</div>
+            <div class="chip">vrouw</div>
+            <div class="chip selected">anders</div>
+            <div class="chip">n.v.t.</div>
+          </div>
+        </div>
+
+        <div class="hint">----&gt; volgende</div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="card">
+        <div class="badge">2</div>
+
+        <div class="field">
+          <div class="label">Naam</div>
+          <input class="input" placeholder="Bijv. Jan de Vries" />
+        </div>
+
+        <div class="field">
+          <div class="label">Geboortedatum</div>
+          <input class="          <input class="input" placeholder="DD-MM-YYYY" />
+        </div>
+
+        <div class="field">
+          <div class="label">Geslacht</div>
+          <div class="chips">
+            <div class="chip">man</div>
+            <div class="chip">vrouw</div>
+            <div class="chip">anders</div>
+            <div class="chip selected">n.v.t.</div>
+          </div>
+        </div>
+
+        <!-- Laatste kaart, hint uit -->
+      </div>
+    </div>
+  </div>
+</body>

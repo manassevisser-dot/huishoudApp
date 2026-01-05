@@ -1,0 +1,303 @@
+# A) Vind een eventuele dispatch naar C4 in ExpenseRepeatergit grep -n "SET_PAGE_DATA" -- src/organisms/ExpenseRepeater.tsx || truegit grep -n "pageId: 'C4'" -- src/organisms/ExpenseRepeater.tsx || true# B) Toon de bovenste ~140 regels om context rond regel ~77 te ziengit grep -n -E "ChipButton|Koop|Huur|Kamer|Anders" -- src/organisms/ExpenseRepeater.tsx || true
+src/organisms/ExpenseRepeater.tsx:48:    dispatch({ type: 'SET_PAGE_DATA', pageId: 'C10', data: { lasten: nex
+t } });                                                                                                      src/organisms/ExpenseRepeater.tsx:77:                onPress={() => dispatch({ type: 'SET_PAGE_DATA', pageId:
+ 'C4', data: { woning: w } })}                                                                               src/organisms/ExpenseRepeater.tsx:77:                onPress={() => dispatch({ type: 'SET_PAGE_DATA', pageId:
+ 'C4', data: { woning: w } })}                                                                                    1  // src/organisms/ExpenseRepeater.tsx
+     2  import * as React from 'react';
+     3  import { View, Text, TextInput, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+     4  import { useAppStyles } from '../styles/useAppStyles';
+     5  import ChipButton from '../components/ChipButton';
+     6  import { useFormContext } from '../context/FormContext';
+     7  import { Member, WoningType, AutoCount } from '../types/household';
+     8  import { ExpenseItem } from '../types/expenses';
+     9  import { onlyDigitsDotsComma } from '../utils/numbers';
+    10
+    11  const SCREEN_WIDTH = Dimensions.get('window').width;
+    12  const CARD_WIDTH = SCREEN_WIDTH * 0.85;
+    13
+    14  const STREAMING_KEYS = ['videoland','hbo','netflix','npostart','kijk','disneyPlus','ytPremium'] as co
+nst;                                                                                                             15
+    16  const isChildUnder15 = (m: Member) =>
+    17    m.memberType === 'child' && typeof m.leeftijd === 'number' && m.leeftijd < 15;
+    18
+    19  const ExpenseRepeater: React.FC = () => {
+    20    const { styles, colors } = useAppStyles();
+    21    const { state, dispatch } = useFormContext();
+    22
+    23    const [abonnementenExpanded, setAbonnementenExpanded] = React.useState(false);
+    24    const [verzekeringenExpanded, setVerzekeringenExpanded] = React.useState(false);
+    25
+    26    const c4 = state.C4;
+    27    const c10 = state.C10;
+    28
+    29    const woning: WoningType | undefined = c4?.woning;
+    30    const auto: AutoCount | undefined = c4?.auto;
+    31
+    32    const leden: Member[] = React.useMemo(() => Array.isArray(c4?.leden) ? c4.leden : [], [c4]);
+    33    const lasten: ExpenseItem[] = Array.isArray(c10?.lasten) ? c10.lasten : [];
+    34
+    35    const readField = (itemId: string, key: string): number | undefined => {
+    36      const it = lasten.find((x) => x.id === itemId);
+    37      const v = it?.[key];
+    38      return typeof v === 'number' && !isNaN(v) ? v : undefined;
+    39    };
+    40
+    41    const updateExpense = (itemId: string, key: string, raw: string | number | undefined) => {
+    42      const val = typeof raw === 'string' ? (onlyDigitsDotsComma(raw).length ? Number(onlyDigitsDotsCom
+ma(raw)) : undefined) : raw;                                                                                     43      const next = [...lasten];
+    44      const idx = next.findIndex((x) => x.id === itemId);
+    45      const item = idx >= 0 ? { ...next[idx] } : { id: itemId } as ExpenseItem;
+    46      item[key] = val;
+    47      if (idx >= 0) next[idx] = item; else next.push(item);
+    48      dispatch({ type: 'SET_PAGE_DATA', pageId: 'C10', data: { lasten: next } });
+    49    };
+    50
+    51    const getWoningLabel = (woningType: WoningType | undefined) => {
+    52      switch (woningType) {
+    53        case 'Koop': return 'lasten bij een koopwoning:';
+    54        case 'Huur': return 'lasten bij een huurwoning:';
+    55        case 'Kamer': return 'woonlasten';
+    56        case 'Anders': return 'Wonen';
+    57        default: return 'Wonen';
+    58      }
+    59    };
+    60
+    61    const renderWonen = () => {
+    62      const id = 'wonen';
+    63      return (
+    64        <View style={styles.dashboardCard}>
+    65          <Text style={styles.summaryLabelBold}>Wonen</Text>
+    66          <View style={styles.fieldContainer}>
+    67            <Text style={styles.label}>{getWoningLabel(woning)}</Text>
+    68          </View>
+    69          <View style={styles.fieldContainer}>
+    70            <Text style={styles.label}>Type</Text>
+    71            <ScrollView horizontal contentContainerStyle={styles.chipContainer} showsHorizontalScrollIn
+dicator={false}>                                                                                                 72              {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((w) => (
+    73                <ChipButton
+    74                  key={w}
+    75                  label={w}
+    76                  selected={woning === w}
+    77                  onPress={() => dispatch({ type: 'SET_PAGE_DATA', pageId: 'C4', data: { woning: w } })
+}                                                                                                                78                  accessibilityLabel={`Woning: ${w}`}
+    79                />
+    80              ))}
+    81            </ScrollView>
+    82          </View>
+    83
+    84          {woning === 'Huur' && ['kaleHuur','servicekosten','gemeentebelastingen','waterschapsbelasting
+'].map((k) => (                                                                                                  85            <View key={k} style={styles.fieldContainer}>
+    86              <Text style={styles.label}>{k === 'kaleHuur' ? 'Kale Huur (€/mnd)' : k === 'servicekosten
+' ? 'Servicekosten huurhuis (€/mnd)' : k === 'gemeentebelastingen' ? 'Gemeentebelastingen (€/mnd)' : 'Waterschapsbelasting (€/mnd)'}</Text>                                                                                   87              <TextInput
+    88                style={styles.numericInput}
+    89                value={readField(id, k)?.toString() ?? ''}
+    90                keyboardType="number-pad"
+    91                onChangeText={(t) => updateExpense(id, k, t)}
+    92                placeholder="0.00"
+    93              />
+    94            </View>
+    95          ))}
+    96
+    97          {woning === 'Koop' && ['hypotheekBruto','ozb','gemeentebelastingen','waterschapsbelasting'].m
+ap((k) => (                                                                                                      98            <View key={k} style={styles.fieldContainer}>
+    99              <Text style={styles.label}>{k === 'hypotheekBruto' ? 'Hypotheek (bruto) (€/mnd)' : k === 
+'ozb' ? 'Onroerende Zaak Belasting (€/mnd)' : k === 'gemeentebelastingen' ? 'Gemeentebelastingen (€/mnd)' : 'Waterschapsbelasting (€/mnd)'}</Text>                                                                           100              <TextInput
+   101                style={styles.numericInput}
+   102                value={readField(id, k)?.toString() ?? ''}
+   103                keyboardType="number-pad"
+   104                onChangeText={(t) => updateExpense(id, k, t)}
+   105                placeholder="0.00"
+   106              />
+   107            </View>
+   108          ))}
+   109
+   110          {woning === 'Kamer' && (
+   111            <View style={styles.fieldContainer}>
+   112              <Text style={styles.label}>Huur kamer (€/mnd)</Text>
+   113              <TextInput
+   114                style={styles.numericInput}
+   115                value={readField(id, 'kostgeld')?.toString() ?? ''}
+   116                keyboardType="number-pad"
+   117                onChangeText={(t) => updateExpense(id, 'kostgeld', t)}
+   118                placeholder="0.00"
+   119              />
+   120            </View>
+   121          )}
+   122
+   123          {woning === 'Anders' && (
+   124            <View style={styles.fieldContainer}>
+   125              <Text style={styles.label}>Woonlasten (€/mnd)</Text>
+   126              <TextInput
+   127                style={styles.numericInput}
+   128                value={readField(id, 'woonlasten')?.toString() ?? ''}
+   129                keyboardType="number-pad"
+   130                onChangeText={(t) => updateExpense(id, 'woonlasten', t)}
+   131                placeholder="0.00"
+   132              />
+   133            </View>
+   134          )}
+   135        </View>
+   136      );
+   137    };
+   138
+   139    const renderNuts = () => {
+   140      const id = 'nuts';
+   141      return (
+   142        <View style={styles.dashboardCard}>
+   143          {woning === 'Kamer' ? (
+   144            <View style={styles.fieldContainer}>
+   145              <Text style={styles.label}>Mijn bijdrage voor Energie/Gas/Water (€/mnd)</Text>
+   146              <TextInput
+   147                style={styles.numericInput}
+   148                value={readField(id, 'bijdrageEGW')?.toString() ?? ''}
+   149                keyboardType="number-pad"
+   150                onChangeText={(t) => updateExpense(id, 'bijdrageEGW', t)}
+   151                placeholder="0.00"
+   152              />
+   153            </View>
+   154          ) : (
+   155            ['energieGas','water'].map((k) => (
+   156              <View key={k} style={styles.fieldContainer}>
+   157                <Text style={styles.label}>{k === 'energieGas' ? 'Energie/Gas (€/mnd)' : 'Water (€/mnd)
+'}</Text>                                                                                                       158                <TextInput
+   159                  style={styles.numericInput}
+   160                  value={readField(id, k)?.toString() ?? ''}
+src/organisms/ExpenseRepeater.tsx:5:import ChipButton from '../components/ChipButton';
+src/organisms/ExpenseRepeater.tsx:53:      case 'Koop': return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:54:      case 'Huur': return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:55:      case 'Kamer': return 'woonlasten';
+src/organisms/ExpenseRepeater.tsx:56:      case 'Anders': return 'Wonen';
+src/organisms/ExpenseRepeater.tsx:72:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+:...skipping...                                                                                              src/organisms/ExpenseRepeater.tsx:5:import ChipButton from '../components/ChipButton';
+src/organisms/ExpenseRepeater.tsx:53:      case 'Koop': return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:54:      case 'Huur': return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:55:      case 'Kamer': return 'woonlasten';
+src/organisms/ExpenseRepeater.tsx:56:      case 'Anders': return 'Wonen';
+src/organisms/ExpenseRepeater.tsx:72:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+w) => (                                                                                                      :...skipping...
+src/organisms/ExpenseRepeater.tsx:5:import ChipButton from '../components/ChipButton';
+src/organisms/ExpenseRepeater.tsx:53:      case 'Koop': return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:54:      case 'Huur': return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:55:      case 'Kamer': return 'woonlasten';
+src/organisms/ExpenseRepeater.tsx:56:      case 'Anders': return 'Wonen';
+src/organisms/ExpenseRepeater.tsx:72:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+w) => (                                                                                                      src/organisms/ExpenseRepeater.tsx:73:              <ChipButton
+src/organisms/ExpenseRepeater.tsx:84:        {woning === 'Huur' && ['kaleHuur','servicekosten','gemeentebelas
+:...skipping...                                                                                              src/organisms/ExpenseRepeater.tsx:5:import ChipButton from '../components/ChipButton';
+src/organisms/ExpenseRepeater.tsx:53:      case 'Koop': return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:54:      case 'Huur': return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:55:      case 'Kamer': return 'woonlasten';
+src/organisms/ExpenseRepeater.tsx:56:      case 'Anders': return 'Wonen';
+src/organisms/ExpenseRepeater.tsx:72:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+w) => (                                                                                                      src/organisms/ExpenseRepeater.tsx:73:              <ChipButton
+src/organisms/ExpenseRepeater.tsx:84:        {woning === 'Huur' && ['kaleHuur','servicekosten','gemeentebelas
+tingen','waterschapsbelasting'].map((k) => (                                                                 :...skipping...
+src/organisms/ExpenseRepeater.tsx:5:import ChipButton from '../components/ChipButton';
+src/organisms/ExpenseRepeater.tsx:53:      case 'Koop': return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:54:      case 'Huur': return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:55:      case 'Kamer': return 'woonlasten';
+src/organisms/ExpenseRepeater.tsx:56:      case 'Anders': return 'Wonen';
+src/organisms/ExpenseRepeater.tsx:72:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+w) => (                                                                                                      src/organisms/ExpenseRepeater.tsx:73:              <ChipButton
+src/organisms/ExpenseRepeater.tsx:84:        {woning === 'Huur' && ['kaleHuur','servicekosten','gemeentebelas
+tingen','waterschapsbelasting'].map((k) => (                                                                 src/organisms/ExpenseRepeater.tsx:86:            <Text style={styles.label}>{k === 'kaleHuur' ? 'Kale Huur (€
+:...skipping...                                                                                              src/organisms/ExpenseRepeater.tsx:5:import ChipButton from '../components/ChipButton';
+src/organisms/ExpenseRepeater.tsx:53:      case 'Koop': return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:54:      case 'Huur': return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:55:      case 'Kamer': return 'woonlasten';
+src/organisms/ExpenseRepeater.tsx:56:      case 'Anders': return 'Wonen';
+src/organisms/ExpenseRepeater.tsx:72:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+w) => (                                                                                                      src/organisms/ExpenseRepeater.tsx:73:              <ChipButton
+src/organisms/ExpenseRepeater.tsx:84:        {woning === 'Huur' && ['kaleHuur','servicekosten','gemeentebelas
+tingen','waterschapsbelasting'].map((k) => (                                                                 src/organisms/ExpenseRepeater.tsx:86:            <Text style={styles.label}>{k === 'kaleHuur' ? 'Kale Huur (€
+/mnd)' : k === 'servicekosten' ? 'Servicekosten huurhuis (€/mnd)' : k === 'gemeentebelastingen' ? 'Gemeentebe:...skipping...                                                                                              src/organisms/ExpenseRepeater.tsx:5:import ChipButton from '../components/ChipButton';
+src/organisms/ExpenseRepeater.tsx:53:      case 'Koop': return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:54:      case 'Huur': return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:55:      case 'Kamer': return 'woonlasten';
+src/organisms/ExpenseRepeater.tsx:56:      case 'Anders': return 'Wonen';
+src/organisms/ExpenseRepeater.tsx:72:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+w) => (                                                                                                      src/organisms/ExpenseRepeater.tsx:73:              <ChipButton
+src/organisms/ExpenseRepeater.tsx:84:        {woning === 'Huur' && ['kaleHuur','servicekosten','gemeentebelas
+tingen','waterschapsbelasting'].map((k) => (                                                                 src/organisms/ExpenseRepeater.tsx:86:            <Text style={styles.label}>{k === 'kaleHuur' ? 'Kale Huur (€
+/mnd)' : k === 'servicekosten' ? 'Servicekosten huurhuis (€/mnd)' : k === 'gemeentebelastingen' ? 'Gemeentebelastingen (€/mnd)' : 'Waterschapsbelasting (€/mnd)'}</Text>                                                  :...skipping...
+src/organisms/ExpenseRepeater.tsx:5:import ChipButton from '../components/ChipButton';
+src/organisms/ExpenseRepeater.tsx:53:      case 'Koop': return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:54:      case 'Huur': return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:55:      case 'Kamer': return 'woonlasten';
+src/organisms/ExpenseRepeater.tsx:56:      case 'Anders': return 'Wonen';
+src/organisms/ExpenseRepeater.tsx:72:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+w) => (                                                                                                      src/organisms/ExpenseRepeater.tsx:73:              <ChipButton
+src/organisms/ExpenseRepeater.tsx:84:        {woning === 'Huur' && ['kaleHuur','servicekosten','gemeentebelas
+tingen','waterschapsbelasting'].map((k) => (                                                                 src/organisms/ExpenseRepeater.tsx:86:            <Text style={styles.label}>{k === 'kaleHuur' ? 'Kale Huur (€
+/mnd)' : k === 'servicekosten' ? 'Servicekosten huurhuis (€/mnd)' : k === 'gemeentebelastingen' ? 'Gemeentebelastingen (€/mnd)' : 'Waterschapsbelasting (€/mnd)'}</Text>                                                  src/organisms/ExpenseRepeater.tsx:97:        {woning === 'Koop' && ['hypotheekBruto','ozb','gemeentebelasting
+:...skipping...                                                                                              src/organisms/ExpenseRepeater.tsx:5:import ChipButton from '../components/ChipButton';
+src/organisms/ExpenseRepeater.tsx:53:      case 'Koop': return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:54:      case 'Huur': return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:55:      case 'Kamer': return 'woonlasten';
+src/organisms/ExpenseRepeater.tsx:56:      case 'Anders': return 'Wonen';
+src/organisms/ExpenseRepeater.tsx:72:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+w) => (                                                                                                      src/organisms/ExpenseRepeater.tsx:73:              <ChipButton
+src/organisms/ExpenseRepeater.tsx:84:        {woning === 'Huur' && ['kaleHuur','servicekosten','gemeentebelas
+tingen','waterschapsbelasting'].map((k) => (                                                                 src/organisms/ExpenseRepeater.tsx:86:            <Text style={styles.label}>{k === 'kaleHuur' ? 'Kale Huur (€
+/mnd)' : k === 'servicekosten' ? 'Servicekosten huurhuis (€/mnd)' : k === 'gemeentebelastingen' ? 'Gemeentebelastingen (€/mnd)' : 'Waterschapsbelasting (€/mnd)'}</Text>                                                  src/organisms/ExpenseRepeater.tsx:97:        {woning === 'Koop' && ['hypotheekBruto','ozb','gemeentebelasting
+en','waterschapsbelasting'].map((k) => (                                                                     src/organisms/ExpenseRepeater.tsx:110:        {woning === 'Kamer' && (
+:...skipping...
+src/organisms/ExpenseRepeater.tsx:5:import ChipButton from '../components/ChipButton';
+src/organisms/ExpenseRepeater.tsx:53:      case 'Koop': return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:54:      case 'Huur': return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:55:      case 'Kamer': return 'woonlasten';
+src/organisms/ExpenseRepeater.tsx:56:      case 'Anders': return 'Wonen';
+src/organisms/ExpenseRepeater.tsx:72:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+w) => (                                                                                                      src/organisms/ExpenseRepeater.tsx:73:              <ChipButton
+src/organisms/ExpenseRepeater.tsx:84:        {woning === 'Huur' && ['kaleHuur','servicekosten','gemeentebelas
+tingen','waterschapsbelasting'].map((k) => (                                                                 src/organisms/ExpenseRepeater.tsx:86:            <Text style={styles.label}>{k === 'kaleHuur' ? 'Kale Huur (€
+/mnd)' : k === 'servicekosten' ? 'Servicekosten huurhuis (€/mnd)' : k === 'gemeentebelastingen' ? 'Gemeentebelastingen (€/mnd)' : 'Waterschapsbelasting (€/mnd)'}</Text>                                                  src/organisms/ExpenseRepeater.tsx:97:        {woning === 'Koop' && ['hypotheekBruto','ozb','gemeentebelasting
+en','waterschapsbelasting'].map((k) => (                                                                     src/organisms/ExpenseRepeater.tsx:110:        {woning === 'Kamer' && (
+src/organisms/ExpenseRepeater.tsx:112:            <Text style={styles.label}>Huur kamer (€/mnd)</Text>
+:...skipping...
+src/organisms/ExpenseRepeater.tsx:5:import ChipButton from '../components/ChipButton';
+src/organisms/ExpenseRepeater.tsx:53:      case 'Koop': return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:54:      case 'Huur': return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:55:      case 'Kamer': return 'woonlasten';
+src/organisms/ExpenseRepeater.tsx:56:      case 'Anders': return 'Wonen';
+src/organisms/ExpenseRepeater.tsx:72:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+w) => (                                                                                                      src/organisms/ExpenseRepeater.tsx:73:              <ChipButton
+src/organisms/ExpenseRepeater.tsx:84:        {woning === 'Huur' && ['kaleHuur','servicekosten','gemeentebelas
+tingen','waterschapsbelasting'].map((k) => (                                                                 src/organisms/ExpenseRepeater.tsx:86:            <Text style={styles.label}>{k === 'kaleHuur' ? 'Kale Huur (€
+/mnd)' : k === 'servicekosten' ? 'Servicekosten huurhuis (€/mnd)' : k === 'gemeentebelastingen' ? 'Gemeentebelastingen (€/mnd)' : 'Waterschapsbelasting (€/mnd)'}</Text>                                                  src/organisms/ExpenseRepeater.tsx:97:        {woning === 'Koop' && ['hypotheekBruto','ozb','gemeentebelasting
+en','waterschapsbelasting'].map((k) => (                                                                     src/organisms/ExpenseRepeater.tsx:110:        {woning === 'Kamer' && (
+src/organisms/ExpenseRepeater.tsx:112:            <Text style={styles.label}>Huur kamer (€/mnd)</Text>
+src/organisms/ExpenseRepeater.tsx:123:        {woning === 'Anders' && (
+:...skipping...
+src/organisms/ExpenseRepeater.tsx:5:import ChipButton from '../components/ChipButton';
+src/organisms/ExpenseRepeater.tsx:53:      case 'Koop': return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:54:      case 'Huur': return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:55:      case 'Kamer': return 'woonlasten';
+src/organisms/ExpenseRepeater.tsx:56:      case 'Anders': return 'Wonen';
+src/organisms/ExpenseRepeater.tsx:72:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+w) => (                                                                                                      src/organisms/ExpenseRepeater.tsx:73:              <ChipButton
+src/organisms/ExpenseRepeater.tsx:84:        {woning === 'Huur' && ['kaleHuur','servicekosten','gemeentebelas
+tingen','waterschapsbelasting'].map((k) => (                                                                 src/organisms/ExpenseRepeater.tsx:86:            <Text style={styles.label}>{k === 'kaleHuur' ? 'Kale Huur (€
+/mnd)' : k === 'servicekosten' ? 'Servicekosten huurhuis (€/mnd)' : k === 'gemeentebelastingen' ? 'Gemeentebelastingen (€/mnd)' : 'Waterschapsbelasting (€/mnd)'}</Text>                                                  src/organisms/ExpenseRepeater.tsx:97:        {woning === 'Koop' && ['hypotheekBruto','ozb','gemeentebelasting
+en','waterschapsbelasting'].map((k) => (                                                                     src/organisms/ExpenseRepeater.tsx:110:        {woning === 'Kamer' && (
+src/organisms/ExpenseRepeater.tsx:112:            <Text style={styles.label}>Huur kamer (€/mnd)</Text>
+src/organisms/ExpenseRepeater.tsx:123:        {woning === 'Anders' && (
+src/organisms/ExpenseRepeater.tsx:143:        {woning === 'Kamer' ? (
+:...skipping...
+src/organisms/ExpenseRepeater.tsx:5:import ChipButton from '../components/ChipButton';
+src/organisms/ExpenseRepeater.tsx:53:      case 'Koop': return 'lasten bij een koopwoning:';
+src/organisms/ExpenseRepeater.tsx:54:      case 'Huur': return 'lasten bij een huurwoning:';
+src/organisms/ExpenseRepeater.tsx:55:      case 'Kamer': return 'woonlasten';
+src/organisms/ExpenseRepeater.tsx:56:      case 'Anders': return 'Wonen';
+src/organisms/ExpenseRepeater.tsx:72:            {(['Koop', 'Huur', 'Kamer', 'Anders'] as WoningType[]).map((
+w) => (                                                                                                      src/organisms/ExpenseRepeater.tsx:73:              <ChipButton
+src/organisms/ExpenseRepeater.tsx:84:        {woning === 'Huur' && ['kaleHuur','servicekosten','gemeentebelas
+tingen','waterschapsbelasting'].map((k) => (                                                                 src/organisms/ExpenseRepeater.tsx:86:            <Text style={styles.label}>{k === 'kaleHuur' ? 'Kale Huur (€
+/mnd)' : k === 'servicekosten' ? 'Servicekosten huurhuis (€/mnd)' : k === 'gemeentebelastingen' ? 'Gemeentebelastingen (€/mnd)' : 'Waterschapsbelasting (€/mnd)'}</Text>                                                  src/organisms/ExpenseRepeater.tsx:97:        {woning === 'Koop' && ['hypotheekBruto','ozb','gemeentebelasting
+en','waterschapsbelasting'].map((k) => (                                                                     src/organisms/ExpenseRepeater.tsx:110:        {woning === 'Kamer' && (
+src/organisms/ExpenseRepeater.tsx:112:            <Text style={styles.label}>Huur kamer (€/mnd)</Text>
+src/organisms/ExpenseRepeater.tsx:123:        {woning === 'Anders' && (
+src/organisms/ExpenseRepeater.tsx:143:        {woning === 'Kamer' ? (
+src/organisms/ExpenseRepeater.tsx:191:              <ChipButton
+src/organisms/ExpenseRepeater.tsx:197:              <ChipButton
+src/organisms/ExpenseRepeater.tsx:250:                  <ChipButton

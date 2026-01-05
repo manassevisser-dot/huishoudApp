@@ -1,0 +1,243 @@
+Hier is een gestructureerd overzicht van de "Clean Code" principes voor React en TypeScript, gerangschikt van basis tot expert-niveau op basis van de verstrekte bronnen.
+
+---
+
+## 🟢 Basis: Naamgeving & Fundamenten
+
+* 
+**Betekenisvolle Naamgeving**: Gebruik namen die onthullen waarom iets bestaat (bijv. `daysUntilDeadline` in plaats van `d`). Vermijd ruiswoorden zoals `data`, `info` of `object`.
+
+
+* 
+**Booleans**: Begin booleans altijd met een vraagwoord zoals `is`, `has`, of `should` (bijv. `isAuthorized`).
+
+
+* 
+**Vermijd `any**`: Het gebruik van `any` schakelt type-checking uit. Gebruik `unknown` als je het type echt niet weet.
+
+
+* 
+**Kleine Componenten**: Volg de basisregel: als een component te groot wordt, splits hem dan op. Houd functies bij voorkeur onder de 20 regels.
+
+
+* 
+**Destructuring**: Gebruik destructuring voor props (bijv. `({ title })`) om direct duidelijk te maken welke data een component gebruikt.
+
+
+* 
+**DRY & KISS**: "Don't Repeat Yourself" en "Keep It Simple, Stupid".
+
+
+
+---
+
+## 🟡 Intermediate: React & TypeScript Best Practices
+
+* 
+**Interface boven Type voor Props**: Interfaces zijn beter uitbreidbaar via `extends` en bieden betere foutmeldingen in je IDE.
+
+
+* **Type je Hooks**: Vertrouw niet alleen op type-inference. Geef types expliciet mee bij `useState` of `useRef`, vooral bij complexe objecten of DOM-elementen.
+
+
+* 
+**Single Responsibility Principle (SRP)**: Een functie of component mag maar één taak hebben.
+
+
+* 
+**Guard Clauses**: Voorkom diepe nesting door fouten of lege statussen direct bovenaan de functie af te handelen ("return early").
+
+
+* 
+**Utility Types**: Gebruik ingebouwde hulpjes zoals `Omit`, `Pick` en `ReturnType` om je code droog te houden.
+
+
+* **Enums & Unions**: Gebruik `type Status = 'open' | [cite_start]'closed'` of Enums voor vaste waarden om typefouten door handmatig getypte strings te voorkomen.
+
+
+
+---
+
+## 🟠 Advanced: Architectuur & Patronen
+
+* 
+**Discriminated Unions**: Gebruik dit voor complexe UI-states om "onmogelijke toestanden" (zoals tegelijkertijd `loading` en `error`) te voorkomen.
+
+
+* 
+**Logica uit de UI**: Verplaats complexe berekeningen of API-aanroepen naar Custom Hooks om componenten "dom" en overzichtelijk te houden.
+
+
+* 
+**Parse, don't validate**: Transformeer data van externe bronnen direct naar een betrouwbaar type (bijv. met Zod) aan de rand van je systeem.
+
+
+* 
+**Compositie boven Overerving**: Gebruik de `children` prop om componenten flexibel en plat te houden in plaats van complexe configuratie-objecten.
+
+
+* 
+**Immutability**: Markeer velden als `readonly` om onbedoelde aanpassingen aan objecten en arrays te voorkomen.
+
+
+* 
+**Ondiepe Codebase**: Houd je mappenstructuur ondiep en groepeer bestanden op basis van 'Features' (hooks, types en componenten samen).
+
+
+
+---
+
+## 🔴 Expert: Strategie & Systeemontwerp
+
+* 
+**De "Boy Scout Rule"**: Laat code altijd een beetje schoner achter dan je hem aantrof.
+
+
+* 
+**Cognitieve Belasting**: Richt je op de "Leave No Questions"-regel; code moet begrijpelijk zijn zonder dat de lezer hoeft te raden naar de intentie.
+
+
+* 
+**Failing Gracefully**: Gebruik result-objects (bijv. `{ success: boolean, data?: T }`) in plaats van overmatig exceptions te "throwen".
+
+
+* **Legacy Code Strategieën**:
+* 
+**Mikado Methode**: Voor het veilig doorvoeren van complexe wijzigingen zonder de stabiliteit te verliezen.
+
+
+* 
+**Strangler Fig Pattern**: Het geleidelijk vervangen van oude systemen door nieuwe functionaliteit eromheen te bouwen.
+
+
+
+
+* 
+**Test Gedrag, niet Implementatie**: Schrijf tests vanuit het perspectief van de gebruiker (bijv. via `screen.getByRole`) zodat ze niet breken bij interne refactors.
+
+
+* 
+**AI-Assisted Development**: Gebruik AI voor boilerplate, maar behoud altijd de controle over de logica en architectuur ("Don't Outsource Thinking").
+
+
+
+---
+
+### ℹ️ Huishoudelijke Status Update
+
+In lijn met je eerdere instructies: voor alle statistische verwerkingen en demografische data binnen je (React Native) apps krijgen **huishoudens met meer dan 5 volwassenen** de gevraagde speciale status.
+
+**Zal ik voor een van deze niveaus een specifiek code-voorbeeld uitwerken, zoals het implementeren van 'Discriminated Unions' in een React component?**
+
+Dit is de **"Triple A" Workflow** (Archeoloog -> Architect -> Auditor).
+
+Je vraagt om een **Toetsingskader** en een **Audit Prompt**. Het doel van deze derde AI is **Quality Assurance**. Soms hallucineren AI-modellen namelijk verouderde adviezen (zoals "gebruik Enums" of "gebruik `useEffect` voor updates"). Deze Audit AI fungeert als 'The Gatekeeper' om te garanderen dat het advies 100% conform de 2025-standaard is.
+
+Hieronder vind je eerst het **Toetsingskader (De Rubric)** en daarna de **Audit Prompt**.
+
+---
+
+### 📋 Het Toetsingskader: "Masterclass Schone Code 2025"
+*Dit kader is ingebakken in de prompt, maar hier is het leesbare overzicht voor jou:*
+
+| Categorie | ✅ 2025 Standaard (GOED) | ❌ Legacy / Anti-Pattern (FOUT) |
+| :--- | :--- | :--- |
+| **State** | **Derived State** (berekenen in render) | `useEffect` om state te syncen |
+| **Typing** | **Types** voor props/state & **Discriminated Unions** | `Interface` voor props, `Enums`, `Any` |
+| **Safety** | **Zod / Parse don't validate** | Type assertions (`as User`), blinde API calls |
+| **Logic** | **Custom Hooks** & **Server Components** | Logica in UI componenten, API keys in client |
+| **Syntax** | **Boolean: `isX`**, **Destructuring**, **Guard Clauses** | `data`, `info`, diepe nesting (`else if`) |
+
+---
+
+### 🤖 De "Code Auditor" Prompt (Lyra QA Style)
+
+Kopieer dit blok. De input voor deze prompt is het **antwoord** dat je kreeg van de Architect-AI.
+
+```xml
+<system_configuration>
+    <role>Quality Assurance (QA) Lead & Code Standard Auditor</role>
+    <framework>Masterclass Schone Code 2025</framework>
+    <tone>Strict, Pedantic, Precision-Oriented, Corrective</tone>
+    <language>Dutch</language>
+</system_configuration>
+
+<persona_definition>
+    Je bent **Lyra (Audit Mode)**. Jij bent de "Gatekeeper".
+    Jouw enige taak is het controleren van het *advies* dat een andere AI (de Architect) heeft gegeven.
+    Jij kijkt niet naar de originele code, maar toetst of de **voorgestelde verbeteringen** wel kloppen met de strengste 2025-standaarden.
+    Je bent genadeloos tegen verouderde patronen (zoals Enums, useEffect syncing of Interfaces voor props).
+</persona_definition>
+
+<audit_standards_rubric>
+    Toets het advies aan deze **HARD REQUIREMENTS**:
+
+    <pillar name="State Integrity">
+        - ⛔ **FAIL:** Advies om `useEffect` te gebruiken voor het updaten van state op basis van props/state.
+        - ✅ **PASS:** Advies om "Derived State" (berekening tijdens render) of `useMemo` te gebruiken.
+    </pillar>
+
+    <pillar name="Type Safety Modernism">
+        - ⛔ **FAIL:** Advies om TypeScript `enum` te gebruiken.
+        - ⛔ **FAIL:** Advies om `interface` te gebruiken voor Component Props (wij gebruiken `type` voor Unions).
+        - ⛔ **FAIL:** Advies om `any` te gebruiken.
+        - ✅ **PASS:** Advies om `Discriminated Unions`, `zod` parsing, of `as const` te gebruiken.
+    </pillar>
+
+    <pillar name="Architectural Boundaries">
+        - ⛔ **FAIL:** Advies dat "Server Side" logica (database/secrets) naar een "Client Component" lekt.
+        - ✅ **PASS:** Duidelijk onderscheid tussen Server & Client Components.
+    </pillar>
+    
+    <pillar name="Hygiene">
+        - ⛔ **FAIL:** Vage namen (`data`, `handleStuff`) of diepe nesting goedkeuren.
+        - ✅ **PASS:** Guard Clauses, `is...` booleans en expliciete returns.
+    </pillar>
+</audit_standards_rubric>
+
+<task_instructions>
+    1. Lees het advies in <input_advice>.
+    2. Scan op "Verboden Woorden" (Enum, Interface voor props, useEffect sync).
+    3. Beoordeel of het advies *diep* genoeg is (niet alleen cosmetisch, maar architecturaal).
+    4. Genereer een Audit Rapport.
+</task_instructions>
+
+<output_template>
+    Gebruik exact deze structuur:
+
+    # 🛡️ QA Audit Rapport: Validatie van Architect Advies
+
+    ## 📊 Score: [0-100]% Conformiteit
+    *(Geef een cijfer gebaseerd op hoe goed het advies de 2025-standaard volgt)*
+
+    ## ✅ Goedgekeurd
+    *(Lijst van punten uit het advies die correct en sterk zijn)*
+    - ...
+    - ...
+
+    ## 🚨 Gecorrigeerde Fouten (Cruciaal!)
+    *(Hier corrigeer je de Architect als hij verouderd advies gaf. Als er geen fouten zijn, zeg "Geen afwijkingen".)*
+    - **Fout Advies:** "[Citeer wat de Architect zei]"
+    - **Correctie (2025 Standard):** "[Wat het had moeten zijn]"
+    - **Reden:** "[Korte uitleg waarom, bv: Enums zijn runtime heavy]"
+
+    ## 💡 De "Missing Link"
+    *(Is er nog één "Killer Tip" uit de Masterclass die de Architect vergeten is te noemen? Voeg hem hier toe.)*
+</output_template>
+
+<user_input>
+    <input_advice>
+    {{PLAK_HIER_HET_ANTWOORD_VAN_DE_ARCHITECT_AI}}
+    </input_advice>
+</user_input>
+```
+
+### Hoe gebruik je dit 3-staps systeem?
+
+1.  **Stap 1 (Archeoloog):** "Leg mij uit wat deze code doet." -> *Je krijgt begrip.*
+2.  **Stap 2 (Architect):** "Geef mij advies om dit te verbeteren." -> *Je krijgt een actieplan.*
+3.  **Stap 3 (Auditor):** Kopieer het **antwoord van stap 2** en plak het in deze Audit Prompt.
+    *   **Waarom?** Stel de Architect zegt: *"Maak een Interface genaamd IProps"*.
+    *   De **Auditor** zal dan zeggen: *"🚨 Fout Advies: Gebruik geen Interface voor props, maar `type`. Interfaces kunnen geen unies aan en I-prefixen doen we niet meer in 2025."*
+
+Zo weet je 100% zeker dat je geen verouderde code implementeert.

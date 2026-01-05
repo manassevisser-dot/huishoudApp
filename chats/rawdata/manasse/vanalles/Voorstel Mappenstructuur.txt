@@ -1,0 +1,818 @@
+OVERWEEG of het onderstaande advies correct is aan de hand van de huidige structuur:
+(huidig:)
+App.tsx (en andere files; package,json enzovoorts)
+src
+├── components
+│   ├── ChipButton.tsx
+│   ├── ConditionalField.tsx
+│   ├── DateField.tsx
+│   ├── FormField.tsx
+│   ├── InputCounter.tsx
+│   └── ToggleSwitch.tsx
+├── config
+│   └── features.ts
+├── context
+│   ├── FormContext.tsx
+│   ├── FormContext.tsx.bak
+│   └── ThemeContext.tsx
+├── hooks
+│   └── useDobInput.ts
+├── navigation
+│   └── Navigator.tsx
+├── organisms
+│   ├── ExpenseRepeater.tsx
+│   ├── HouseholdMemberRepeater.tsx
+│   ├── HouseholdMemberRepeater.tsx.bak
+│   └── IncomeRepeater.tsx
+├── screens
+│   ├── CSV
+│   │   └── CsvUploadScreen.tsx
+│   ├── Daily
+│   │   └── UndoScreen.tsx
+│   ├── DailyInput
+│   │   └── DailyInputScreen.tsx
+│   ├── Dashboard
+│   │   └── DashboardScreen.tsx
+│   ├── LandingScreen.tsx
+│   ├── Options
+│   │   └── OptionsScreen.tsx
+│   ├── Reset
+│   │   └── ResetScreen.tsx
+│   ├── Settings
+│   │   └── SettingsScreen.tsx
+│   └── Wizard
+│       ├── pages
+│       │   ├── C10.config.ts
+│       │   ├── C1.config.ts
+│       │   ├── C4.config.ts
+│       │   └── C7.config.ts
+│       ├── WizardController.tsx
+│       ├── WizardController.tsx.bak
+│       └── WizardPage.tsx
+├── services
+│   ├── csvService.ts
+│   ├── householdAlign.ts
+│   ├── storage.ts
+│   └── transactionService.ts
+├── styles
+│   ├── Colors.ts
+│   └── useAppStyles.ts
+├── types
+│   ├── expenses.ts
+│   ├── form.ts
+│   ├── household.ts
+│   ├── income.ts
+│   └── transaction.ts
+└── utils
+    ├── conditions.ts
+    ├── date.ts
+    ├── finance.ts
+    ├── numbers.ts
+    ├── strings.ts
+    └── validation.ts
+
+21 directories, 48 files
+
+Perfect — **dit is precies genoeg om je repo “te lezen”** 👍
+Ik ga nu:
+
+1. **je huidige structuur duiden** (wat is het nu echt?)
+2. **de knelpunten benoemen** (waar wringt het al)
+3. **een concrete doel-structuur voorstellen**
+4. **een expliciete mapping: huidig → nieuw**
+   (zonder onnodige refactors, in jouw stijl)
+
+---
+
+## 1️⃣ Wat je repo NU feitelijk is (architectonisch)
+
+Je repo is functioneel goed, maar **conceptueel gemengd**:
+
+### Wat er duidelijk is
+
+* Je hebt een **form-engine / wizard** (Wizard, FormContext, FormField, repeaters)
+* Je hebt **huishoud-/inkomen-/transactielogica**
+* Je hebt **UI-componenten** die al deels “dom” zijn
+* Je hebt **services** die eigenlijk domeinlogica bevatten
+* Styling zit al deels goed (`useAppStyles` 👍)
+
+### Maar: alles zit door elkaar
+
+Bijv:
+
+* `components/DateField.tsx` → UI + form + datumlogica
+* `organisms/*Repeater.tsx` → eigenlijk form-engine
+* `services/householdAlign.ts` → domeinlogica, geen service
+* `types/*` → domein, maar losgekoppeld van logica
+* `context/FormContext.tsx` → provider + business rules
+
+👉 **Dit is geen “slechte” code**, maar een repo die *roept* om duidelijke grenzen.
+
+---
+
+## 2️⃣ De echte knelpunten (belangrijk)
+
+### ❌ 1. “Service” is een vuilnisbak
+
+```txt
+services/
+├─ csvService.ts           ✅ service
+├─ storage.ts              ✅ infra
+├─ transactionService.ts   ❓ half domein
+├─ householdAlign.ts       ❌ pure domeinlogica
+```
+
+➡️ Dit gaat je later breken bij testen & hergebruik.
+
+---
+
+### ❌ 2. `components/` bevat drie soorten dingen
+
+* pure UI
+* form-engine componenten
+* business-aware componenten
+
+➡️ hierdoor:
+
+* lekken types
+* groeit coupling
+* wordt hergebruik lastig
+
+---
+
+### ❌ 3. Wizard = mini-app in je app
+
+`screens/Wizard` bevat:
+
+* configuratie (`C1.config.ts`)
+* controller
+* page-rendering
+* form-engine aannames
+
+➡️ dat verdient een **eigen plek**
+
+---
+
+## 3️⃣ Doel-structuur (passend bij JOUW repo)
+
+Niet “clean architecture om clean architecture”, maar **exact wat je nodig hebt**.
+
+```
+src/
+├─ app/
+│  ├─ Navigator.tsx
+│  └─ Providers.tsx
+│
+├─ screens/                # Alleen schermen
+│  ├─ Dashboard/
+│  ├─ DailyInput/
+│  ├─ Wizard/
+│  └─ Settings/
+│
+├─ components/
+│  ├─ ui/                  # Domme UI
+│  │  ├─ ChipButton.tsx
+│  │  ├─ ToggleSwitch.tsx
+│  │  └─ InputCounter.tsx
+│  │
+│  ├─ form/                # Form-engine
+│  │  ├─ FormField.tsx
+│  │  ├─ ConditionalField.tsx
+│  │  ├─ DateField.tsx
+│  │  └─ repeaters/
+│  │     ├─ HouseholdMemberRepeater.tsx
+│  │     ├─ IncomeRepeater.tsx
+│  │     └─ ExpenseRepeater.tsx
+│  │
+│  └─ layout/
+│
+├─ wizard/                 # 🧠 Wizard als subsystem
+│  ├─ WizardController.tsx
+│  ├─ WizardPage.tsx
+│  └─ configs/
+│     ├─ C1.config.ts
+│     ├─ C4.config.ts
+│     └─ C10.config.ts
+│
+├─ domain/                 # 🧠 Business logica (geen React)
+│  ├─ household/
+│  │  ├─ household.types.ts
+│  │  └─ householdAlign.ts
+│  │
+│  ├─ income/
+│  │  ├─ income.types.ts
+│  │  └─ finance.ts
+│  │
+│  └─ transaction/
+│     ├─ transaction.types.ts
+│     └─ logic.ts
+│
+├─ state/                  # Context + storage
+│  ├─ FormContext.tsx
+│  ├─ ThemeContext.tsx
+│  └─ storage.ts
+│
+├─ services/               # Echte services
+│  ├─ csvService.ts
+│  └─ transactionService.ts
+│
+├─ styles/
+│  ├─ Colors.ts
+│  └─ useAppStyles.ts
+│
+├─ utils/
+│  └─ (blijft vrijwel gelijk)
+│
+└─ config/
+   └─ features.ts
+```
+
+---
+
+## 4️⃣ Concrete mapping: huidig → nieuw
+
+### Components
+
+| Huidig                          | Nieuw                                |
+| ------------------------------- | ------------------------------------ |
+| components/ChipButton.tsx       | components/ui/ChipButton.tsx         |
+| components/ToggleSwitch.tsx     | components/ui/ToggleSwitch.tsx       |
+| components/InputCounter.tsx     | components/ui/InputCounter.tsx       |
+| components/FormField.tsx        | components/form/FormField.tsx        |
+| components/ConditionalField.tsx | components/form/ConditionalField.tsx |
+| components/DateField.tsx        | components/form/DateField.tsx        |
+
+---
+
+### Organisms → Form-engine
+
+| Huidig                                | Nieuw                                                 |
+| ------------------------------------- | ----------------------------------------------------- |
+| organisms/HouseholdMemberRepeater.tsx | components/form/repeaters/HouseholdMemberRepeater.tsx |
+| organisms/IncomeRepeater.tsx          | components/form/repeaters/IncomeRepeater.tsx          |
+| organisms/ExpenseRepeater.tsx         | components/form/repeaters/ExpenseRepeater.tsx         |
+
+---
+
+### Wizard
+
+| Huidig                              | Nieuw                       |
+| ----------------------------------- | --------------------------- |
+| screens/Wizard/WizardController.tsx | wizard/WizardController.tsx |
+| screens/Wizard/WizardPage.tsx       | wizard/WizardPage.tsx       |
+| screens/Wizard/pages/*.config.ts    | wizard/configs/*.config.ts  |
+
+---
+
+### Services / Domain
+
+| Huidig                     | Nieuw                                   |
+| -------------------------- | --------------------------------------- |
+| services/householdAlign.ts | domain/household/householdAlign.ts      |
+| utils/finance.ts           | domain/income/finance.ts                |
+| types/household.ts         | domain/household/household.types.ts     |
+| types/income.ts            | domain/income/income.types.ts           |
+| types/transaction.ts       | domain/transaction/transaction.types.ts |
+
+---
+
+## 5️⃣ Waarom dit voor jou extra goed werkt
+
+* ✔️ **Sluit aan op je form-engine & beslisbomen**
+* ✔️ **Maakt ADR-lite vanzelfsprekend**
+* ✔️ **Maakt testen van domeinlogica trivial**
+* ✔️ **Geen big-bang refactor nodig**
+* ✔️ **Past bij jouw governance / AI-flow-denken**
+
+---
+
+
+Dank je voor de context en de (sterke) voorstel-structuur. Hieronder beoordeel ik of het advies klopt voor jouw **huidige repo**, waar je moet **opletten**, en geef ik je een **veilige migratieroute met concrete stappen** (incl. `git mv`, `tsconfig`-aliasing en import-fixes) die past bij je “minimal import branch (snack‑min) → verify → add back incrementally” werkwijze.
+
+***
+
+## TL;DR — Is het advies correct?
+
+**Ja, inhoudelijk klopt het advies en past het goed bij jouw repo.**  
+De voorgestelde scheiding in **components/ui**, **components/form**, **wizard/** als subsystem, en **domain/** (i.p.v. een “catch‑all” `services/`) sluit aan op je huidige code en gaat je **testbaarheid, hergebruik en coupling** verbeteren.
+
+Er zijn wél een paar **praktische aandachtspunten**:
+
+1.  **Imports gaan breken** → vang dit op met **Path Aliases** en één‑staps `git mv`.
+2.  **RN/Expo tooling** → update `tsconfig`, **Metro** (alias), **Jest** (moduleNameMapper).
+3.  **Circular deps‑risico** → houd `domain/` puur (geen React, geen storage) en laat `components/*` niet importeren uit `screens/*`.
+4.  **Wizard** → let op de **configuratie‑imports** (conditions, types) en waar de **FormContext** exact leeft.
+5.  **.bak-bestanden** → verplaats deze niet mee; bewaar in een `archive/` of verwijder na review.
+
+Onderdeel‑voor‑onderdeel analyse hieronder, plus een **veilige migratieprocedure**.
+
+***
+
+## 1) Klopt de voorgestelde nieuwe structuur voor jouw repo?
+
+### ✅ Components splitsen (ui vs form vs repeaters)
+
+*   **Jouw repo nu:** `components/` bevat UI‑elementen (ChipButton, ToggleSwitch) én form engine stukken (FormField, DateField, ConditionalField) en de “organisms” (Repeaters) die feitelijk form‑engine zijn.
+*   **Voorstel:** verplaatsen naar:
+    *   `components/ui/*` → **pure presentational** (geen business, geen form state)
+    *   `components/form/*` → **form-engine aware** (koppeling aan FormContext/field types)
+    *   `components/form/repeaters/*` → alles wat multi‑row form logica bevat
+*   **Beoordeling:** **Correct**. Dit reduceert coupling en maakt UI‑delen herbruikbaar. Goed voor storybook/unit‑tests later.
+
+### ✅ Wizard als subsystem (`wizard/`)
+
+*   **Jouw repo nu:** `screens/Wizard` bevat mix van view/controller+config.
+*   **Voorstel:** `wizard/` top‑level met `WizardController`, `WizardPage` en `configs/`.
+*   **Beoordeling:** **Correct**. Wizard is een mini‑app (navigatieflow + configgedreven rendering). Los trekken maakt eigenaarschap en testen duidelijker. **Let op:** `screens/Landing`/`Navigator` blijven de wizard **aanroepen**, maar wizard blijft *zelfstandig*.
+
+### ✅ Domeinlogica loshalen uit `services/` en `utils/` → `domain/`
+
+*   **Jouw repo nu:** `services/householdAlign.ts` is domeinspecifiek; `utils/finance.ts` lijkt domein (“inkomen/bedragen”), en `types/*` staan los.
+*   **Voorstel:** `domain/<bounded-context>/*` met types én logica samen.
+*   **Beoordeling:** **Correct**. Dit voorkomt “service‑vuilnisbak”. Houd `domain/` **framework‑vrij** (geen React/AsyncStorage/dates met RN APIs).
+
+### ✅ `state/` voor context + storage
+
+*   **Verplaatsen:** `context/*` → `state/`, en `services/storage.ts` → `state/storage.ts` (of `infra/storage`).
+*   **Beoordeling:** **Plausibel en netjes**. Kies **óf** `state/` **óf** `infra/` voor storage; mix ze niet. Omdat je FormContext ernaast leeft, is `state/` logisch.
+
+### ✅ `screens/` slank houden (alleen UI‑schermen die andere modules consumeren)
+
+*   **Beoordeling:** **Correct**. `screens` worden dan vooral *composites* die `components/`, `wizard/`, `domain/` en `state/` gebruiken.
+
+***
+
+## 2) Aandachtspunten / valkuilen
+
+1.  **Path aliases verplicht** (anders breken imports massaal):
+    *   Stel `@components`, `@wizard`, `@domain`, `@state`, `@utils`, `@styles`, `@config`, `@screens`, `@services` in.
+    *   Voordeel: je kan **in één commit** mappen verplaatsen en daarna imports mechanisch fixen.
+
+2.  **Metro bundler + Jest config**:
+    *   Metro kent je `tsconfig` aliases niet automatisch; voeg `resolver.extraNodeModules` of `babel-plugin-module-resolver` toe.
+    *   Jest: `moduleNameMapper` voor dezelfde aliases.
+
+3.  **Geen React in `domain/`**:
+    *   Geen `useX`, geen `ReactNode`, geen RN date/time APIs.
+    *   `domain/` mag types en pure functies (met unit tests).
+    *   Als date logica nu in `utils/date.ts` zit: **oké**, zolang `utils/` framework‑vrij blijft.
+
+4.  **Wizard configs**:
+    *   Als een config `conditions.ts` (uit `utils`) gebruikt, houd die **pure** (geen contexts).
+    *   Vermijd import van `FormContext` in configs; conditions moeten **pure** beslisfuncties zijn.
+
+5.  **Context layering**:
+    *   `FormContext` in `state/` → gebruikt door `components/form/*` en `wizard/*`.
+    *   Zorg dat `Providers.tsx` (nieuw in `app/`) alle contexten verzamelt en door `Navigator` heen wrapt.
+
+6.  **Dead code en `.bak`**:
+    *   Niet meeverhuizen. Zet tijdelijk in `archive/` of verwijder.
+    *   `WizardController.tsx.bak`, `FormContext.tsx.bak`, `HouseholdMemberRepeater.tsx.bak` → **niet** in de nieuwe boom.
+
+***
+
+## 3) Concrete migratie (veilig en incrementaal)
+
+### 3.1. Path aliases (tsconfig)
+
+Maak eerst aliases zodat verplaatsen niet direct alles stukmaakt.
+
+```jsonc
+// tsconfig.json
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@app/*":        ["src/app/*"],
+      "@screens/*":    ["src/screens/*"],
+      "@components/*": ["src/components/*"],
+      "@wizard/*":     ["src/wizard/*"],
+      "@domain/*":     ["src/domain/*"],
+      "@state/*":      ["src/state/*"],
+      "@services/*":   ["src/services/*"],
+      "@styles/*":     ["src/styles/*"],
+      "@utils/*":      ["src/utils/*"],
+      "@config/*":     ["src/config/*"],
+      "@types/*":      ["src/types/*"] // tijdelijk, tot alles verhuisd is
+    }
+  }
+}
+```
+
+**Metro (Babel) aliasing** (één van de opties):
+
+```jsonc
+// babel.config.js
+module.exports = function(api) {
+  api.cache(true);
+  return {
+    presets: ['babel-preset-expo'],
+    plugins: [
+      ['module-resolver', {
+        root: ['./'],
+        alias: {
+          '@app': './src/app',
+          '@screens': './src/screens',
+          '@components': './src/components',
+          '@wizard': './src/wizard',
+          '@domain': './src/domain',
+          '@state': './src/state',
+          '@services': './src/services',
+          '@styles': './src/styles',
+          '@utils': './src/utils',
+          '@config': './src/config',
+          '@types': './src/types'
+        }
+      }]
+    ]
+  };
+};
+```
+
+**Jest** (als je tests draait):
+
+```js
+// jest.config.js
+module.exports = {
+  moduleNameMapper: {
+    '^@app/(.*)$': '<rootDir>/src/app/$1',
+    '^@screens/(.*)$': '<rootDir>/src/screens/$1',
+    '^@components/(.*)$': '<rootDir>/src/components/$1',
+    '^@wizard/(.*)$': '<rootDir>/src/wizard/$1',
+    '^@domain/(.*)$': '<rootDir>/src/domain/$1',
+    '^@state/(.*)$': '<rootDir>/src/state/$1',
+    '^@services/(.*)$': '<rootDir>/src/services/$1',
+    '^@styles/(.*)$': '<rootDir>/src/styles/$1',
+    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
+    '^@config/(.*)$': '<rootDir>/src/config/$1',
+    '^@types/(.*)$': '<rootDir>/src/types/$1'
+  }
+};
+```
+
+### 3.2. Providers + Navigator netjes scheiden
+
+Maak `src/app/Providers.tsx` die je `ThemeContext`, `FormContext` etc. wrapt.  
+Verwijs ernaar in `App.tsx`.
+
+```tsx
+// src/app/Providers.tsx
+import React from 'react';
+import { ThemeProvider } from '@state/ThemeContext';
+import { FormProvider } from '@state/FormContext';
+
+export const Providers: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <ThemeProvider>
+    <FormProvider>{children}</FormProvider>
+  </ThemeProvider>
+);
+```
+
+```tsx
+// App.tsx
+import React from 'react';
+import { Providers } from '@app/Providers';
+import Navigator from '@screens/../navigation/Navigator'; // of alias @app/Navigator als je deze ook verplaatst
+
+export default function App() {
+  return (
+    <Providers>
+      <Navigator />
+    </Providers>
+  );
+}
+```
+
+(Je kunt `Navigator.tsx` verplaatsen naar `src/app/Navigator.tsx` zoals voorgesteld.)
+
+### 3.3. Verplaatsingen (met `git mv`) — in batches
+
+**Batch A – components split:**
+
+```bash
+git mv src/components/ChipButton.tsx         src/components/ui/ChipButton.tsx
+git mv src/components/ToggleSwitch.tsx       src/components/ui/ToggleSwitch.tsx
+git mv src/components/InputCounter.tsx       src/components/ui/InputCounter.tsx
+
+git mv src/components/FormField.tsx          src/components/form/FormField.tsx
+git mv src/components/ConditionalField.tsx   src/components/form/ConditionalField.tsx
+git mv src/components/DateField.tsx          src/components/form/DateField.tsx
+```
+
+**Batch B – organisms → repeaters:**
+
+```bash
+git mv src/organisms/HouseholdMemberRepeater.tsx src/components/form/repeaters/HouseholdMemberRepeater.tsx
+git mv src/organisms/IncomeRepeater.tsx          src/components/form/repeaters/IncomeRepeater.tsx
+git mv src/organisms/ExpenseRepeater.tsx         src/components/form/repeaters/ExpenseRepeater.tsx
+```
+
+**Batch C – wizard losweken:**
+
+```bash
+mkdir -p src/wizard/configs
+git mv src/screens/Wizard/WizardController.tsx src/wizard/WizardController.tsx
+git mv src/screens/Wizard/WizardPage.tsx       src/wizard/WizardPage.tsx
+
+git mv src/screens/Wizard/pages/C1.config.ts   src/wizard/configs/C1.config.ts
+git mv src/screens/Wizard/pages/C4.config.ts   src/wizard/configs/C4.config.ts
+git mv src/screens/Wizard/pages/C7.config.ts   src/wizard/configs/C7.config.ts
+git mv src/screens/Wizard/pages/C10.config.ts  src/wizard/configs/C10.config.ts
+```
+
+**Batch D – domain samenbrengen:**
+
+```bash
+mkdir -p src/domain/household src/domain/income src/domain/transaction
+
+git mv src/services/householdAlign.ts src/domain/household/householdAlign.ts
+git mv src/utils/finance.ts           src/domain/income/finance.ts
+
+git mv src/types/household.ts         src/domain/household/household.types.ts
+git mv src/types/income.ts            src/domain/income/income.types.ts
+git mv src/types/transaction.ts       src/domain/transaction/transaction.types.ts
+```
+
+**Batch E – state bundelen:**
+
+```bash
+mkdir -p src/state
+git mv src/context/FormContext.tsx src/state/FormContext.tsx
+git mv src/context/ThemeContext.tsx src/state/ThemeContext.tsx
+git mv src/services/storage.ts      src/state/storage.ts
+```
+
+**Opschonen:**
+
+*   `.bak` niet verplaatsen. Eventueel:
+
+```bash
+mkdir -p archive
+git mv src/context/FormContext.tsx.bak archive/FormContext.tsx.bak
+git mv src/screens/Wizard/WizardController.tsx.bak archive/WizardController.tsx.bak
+git mv src/organisms/HouseholdMemberRepeater.tsx.bak archive/HouseholdMemberRepeater.tsx.bak
+```
+
+### 3.4. Imports mechanisch fixen
+
+*   In **verplaatste** files: vervang relatieve paden door aliases, bijv.:
+    *   `import { useAppStyles } from '../../styles/useAppStyles'` → `import { useAppStyles } from '@styles/useAppStyles'`
+    *   `import { isAdult } from '../../utils/conditions'` → `import { isAdult } from '@utils/conditions'`
+    *   `import { Household } from '../../types/household'` → `import { Household } from '@domain/household/household.types'`
+
+Tip: gebruik een codemod of multi‑cursor find/replace op patronen `from '../../` → `from '@`.
+
+### 3.5. RN/Expo check
+
+*   Start app (snack‑min branch) en fix één voor één de build errors.
+*   Let op typenames die je verplaatst hebt (`household.types.ts`). Eventueel **barrels** toevoegen:
+
+```ts
+// src/domain/household/index.ts
+export * from './household.types';
+export * from './householdAlign';
+```
+
+Dan kun je importeren als `@domain/household`.
+
+***
+
+## 4) Korte review van je huidige mappen met advies
+
+*   `hooks/useDobInput.ts` → blijft prima in `hooks/` of, als hij form‑specifiek is, naar `components/form/hooks/` of `state/` wanneer hij context veronderstelt. **Regel:** hooks die UI‑state doen → bij de componenten; hooks die app‑state doen → bij `state/`.
+
+*   `utils/*` → laat alleen **cross‑cutting, pure** helpers hier. `finance.ts` is domein‑specifiek → goed dat je ‘m naar `domain/income` verplaatst.
+
+*   `services/transactionService.ts` → klopt als dit **I/O of orchestratie** doet (bijv. CSV inlezen, calls, storage). Indien pure business-berekeningen binnen zitten, splitsen: logica → `domain/transaction`, I/O → `services/transactionService`.
+
+*   `navigation/Navigator.tsx` → naar `app/Navigator.tsx` verplaatsen is netjes (optioneel). Zorg wel dat import‑paden voor screens up-to-date zijn.
+
+***
+
+## 5) Teststrategie na de move
+
+1.  **Unit tests voor domain** (sneller, geen RN runtime):
+    *   `domain/*/*.spec.ts` op pure functies (householdAlign, finance).
+2.  **Light render tests** voor `components/ui/*` (presentational).
+3.  **Wizard smoke test**: minimale config render + stap wisselen + condition toggles.
+4.  **FormContext**: test init‑state en updates (zonder UI).
+
+***
+
+## 6) Incrementieel plan (past bij jouw flow)
+
+1.  **Stap 0**: voeg **aliases** + Babel/Jest config toe → commit.
+2.  **Stap 1**: verplaats **components** (ui/form/repeaters) → fix imports → run.
+3.  **Stap 2**: verplaats **wizard/** (controller/page/configs) → fix imports → run.
+4.  **Stap 3**: verplaats **domain/** (types+logica) → fix imports → run.
+5.  **Stap 4**: verplaats **state/** (contexts + storage) → fix imports → run.
+6.  **Stap 5**: verwijder `.bak` of zet in `archive/` → final cleanup.
+
+Elke stap: **kleine commit**, push, Snack check, pas daarna volgende stap.
+
+***
+
+## Conclusie
+
+*   **Advies is inhoudelijk juist en passend** voor jouw codebase.
+*   De grootste winst: **duidelijke grenzen**, **minder coupling**, **makkelijker testen**.
+*   Let vooral op **aliases/Metro/Jest**, **pure domain** en **wizard‑config isolation**.
+
+***
+
+# 🎯 Review van het advies DOOR CLAUDE = BELANGRIJK
+
+## TL;DR: **JA, het advies klopt — met 2 nuances**
+
+Het advies is **solide en praktisch**. De analist heeft je repo goed begrepen en stelt een **evolutionaire refactor** voor die past bij jouw situatie. 
+
+Maar laat me specifiek ingaan op wat **WEL** en **NIET** klopt:
+
+---
+
+## ✅ Wat absoluut klopt
+
+### 1. **De diagnose is accuraat**
+
+De 3 kernproblemen zijn echt:
+
+```
+❌ services/ = vuilnisbak
+   → householdAlign.ts is geen service, het is domeinlogica
+   
+❌ components/ bevat 3 soorten dingen
+   → UI + form-engine + business-logic gemengd
+   
+❌ Wizard verdient eigen subsystem
+   → Het ÍS een mini-app in je app
+```
+
+👉 **Dit zijn echte architectural smells die je gaat voelen bij schalen**
+
+---
+
+### 2. **De voorgestelde structuur is pragmatisch**
+
+```
+domain/          → business logica zonder React
+components/
+  ├─ ui/         → herbruikbaar
+  ├─ form/       → form-engine
+  └─ layout/     
+wizard/          → subsystem
+state/           → context providers
+```
+
+Dit is **geen over-engineering**, maar logische scheiding die:
+- Testen makkelijker maakt
+- AI-begeleide refactors veiliger maakt
+- Future features isoleerbaar houdt
+
+---
+
+### 3. **De mappings zijn praktisch uitvoerbaar**
+
+De tabel met "huidig → nieuw" is **geen theorie**, maar een **executable migration plan**. Je kunt dit letterlijk file-by-file doorlopen.
+
+---
+
+## ⚠️ Wat je moet nuanceren
+
+### Nuance 1: `utils/` vs `domain/`
+
+Het advies stelt voor:
+
+```
+utils/finance.ts → domain/income/finance.ts
+```
+
+**Dit klopt conceptueel**, maar:
+
+```typescript
+// Als finance.ts dit bevat:
+export const formatCurrency = (amount: number) => ...
+export const calculateNetIncome = (gross: number, tax: number) => ...
+```
+
+Dan is het **niet zwart-wit**:
+- `formatCurrency` = utility (kan in `utils/`)
+- `calculateNetIncome` = domain logic (moet naar `domain/`)
+
+👉 **Kijk per functie**, niet per file. Je mag ook:
+
+```
+domain/income/
+  ├─ income.types.ts
+  ├─ calculations.ts    ← domain logic
+  └─ formatting.ts      ← domain-specific utilities
+```
+
+---
+
+### Nuance 2: Niet alles hoeft meteen
+
+Het advies suggereert een **complete refactor**. Dat kan, maar je kunt ook:
+
+#### Fase 1 (low-hanging fruit):
+```
+1. Maak domain/ en verplaats householdAlign.ts
+2. Maak components/form/ en verplaats repeaters
+3. Maak wizard/ en verplaats configs
+```
+
+**Stop hier. Ship features.**
+
+#### Fase 2 (later):
+```
+4. Split components/ in ui/form/layout
+5. Herstructureer utils/ waar nodig
+```
+
+👉 **Incrementeel is veiliger** dan big-bang
+
+---
+
+## 🎯 Mijn concrete aanbeveling
+
+### Doe dit WEL (hoge ROI):
+
+```
+✅ domain/household/householdAlign.ts
+✅ wizard/configs/*.config.ts  
+✅ components/form/repeaters/*
+✅ state/FormContext.tsx (hernoeming)
+```
+
+**Waarom?** Deze moves:
+- Elimineren conceptuele verwarring
+- Maken testen triviaal
+- Kosten <1 uur werk
+
+---
+
+### Doe dit LATER (lagere prioriteit):
+
+```
+⏳ utils/ opsplitsen (pas bij volgende feature)
+⏳ components/ui/ vs components/form/ (gradueel)
+⏳ domain/*/*.types.ts (alleen bij échte duplicatie)
+```
+
+**Waarom?** Deze moves:
+- Zijn netter, maar niet urgent
+- Kosten meer tijd zonder directe winst
+- Kunnen gradueel tijdens feature-werk
+
+---
+
+## 📋 Wat ik zou doen (actieplan)
+
+```bash
+# 1. Maak de belangrijkste mappen
+mkdir -p src/{domain/household,wizard/configs,components/form/repeaters,state}
+
+# 2. Move high-impact files (15 min)
+mv src/services/householdAlign.ts src/domain/household/
+mv src/screens/Wizard/pages/*.config.ts src/wizard/configs/
+mv src/organisms/*Repeater.tsx src/components/form/repeaters/
+mv src/context/*.tsx src/state/
+
+# 3. Fix imports (gebruik je IDE's rename/move)
+# VS Code doet dit automatisch als je via UI verplaatst
+
+# 4. Update één import-pad tegelijk, test, commit
+```
+
+**Timeline:** 1-2 uur voor fase 1, dan verder met features.
+
+---
+
+## 🏁 Conclusie
+
+| Vraag | Antwoord |
+|-------|----------|
+| **Klopt het advies?** | Ja, conceptueel 100% |
+| **Moet je alles doen?** | Nee, begin met 4-5 high-impact moves |
+| **Is het te complex?** | Nee, het is juist pragmatisch |
+| **Moet je dit nu doen?** | Fase 1 nu, fase 2 gradueel |
+
+---
+
+## 💡 Mijn variant (compromis)
+
+Als je **minimaal** wilt refactoren maar **maximaal** wilt winnen:
+
+```
+src/
+├─ domain/          ← NEW: householdAlign + finance logic
+├─ wizard/          ← NEW: configs + controller  
+├─ components/
+│  ├─ form/         ← NEW: repeaters, FormField
+│  └─ [rest blijft hier]
+├─ state/           ← RENAME van context/
+└─ [rest ongewijzigd]
+```
+
+**Dit geeft je 80% van de winst met 20% van de moeite.**
+
+---

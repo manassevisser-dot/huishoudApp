@@ -1,0 +1,316 @@
+npm test src/ui/screens/Daily/__tests__/UndoScreen.test.tsx
+
+> test
+> jest src/ui/screens/Daily/__tests__/UndoScreen.test.tsx
+
+  console.log
+    ✅ Jest Early Setup: Winter neutralized & React Native mocked.
+
+      at Object.<anonymous> (jest.setup.early.js:51:9)
+
+ FAIL  src/ui/screens/Daily/__tests__/UndoScreen.test.tsx (8.511 s)
+  UndoScreen
+    ✓ moet transacties laden en de omschrijvingen tonen (445 ms)
+    ✓ moet de lege staat tekst tonen (12 ms)
+    ✕ moet alle transacties verwijderen als op de knop wordt gedrukt (6532 ms)
+
+  ● UndoScreen › moet alle transacties verwijderen als op de knop wordt gedrukt
+
+    expect(received).toBeNull()
+
+    Received: {"_fiber": {"_debugHookTypes": null, "_debugInfo": null, "_debugNeedsRemount": false, "_debugOw
+ner": [FiberNode], "_debugStack": [Error: react-stack-top-frame], "_debugTask": null, "actualDuration": 0, "actualStartTime": 1767439613997, "alternate": null, "child": [FiberNode], "childLanes": 0, "deletions": null, "dependencies": null, "elementType": "Text", "flags": 0, "index": 0, "key": null, "lanes": 0, "memoizedProps": [Object], "memoizedState": null, "mode": 3, "pendingProps": [Object], "ref": null, "refCleanup": null, "return": [FiberNode], "selfBaseDuration": 0, "sibling": null, "stateNode": [Object], "subtreeFlags": 0, "tag": 5, "treeBaseDuration": 0, "type": "Text", "updateQueue": null}}                                               
+      64 |   
+      65 |     // 5. Wacht tot de UI de "lege staat" bereikt
+    > 66 |     await waitFor(() => {
+         |                  ^
+      67 |       // Gebruik queryByText (geeft null als het weg is)
+      68 |       const deletedItem = screen.queryByText(/Boodschappen/i);
+      69 |       expect(deletedItem).toBeNull();
+
+      at Object.<anonymous> (src/ui/screens/Daily/__tests__/UndoScreen.test.tsx:66:18)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+------------------------------|---------|----------|---------|---------|-------------------
+File                          | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+------------------------------|---------|----------|---------|---------|-------------------
+All files                     |    1.24 |     0.26 |    2.13 |    1.35 |                   
+ src                          |       0 |      100 |       0 |       0 |                   
+  App.tsx                     |       0 |      100 |       0 |       0 | 9-10              
+ src/app/context              |       0 |        0 |       0 |       0 |                   
+  FormContext.tsx             |       0 |        0 |       0 |       0 | 11-33             
+  ThemeContext.tsx            |       0 |        0 |       0 |       0 | 12-50             
+  WizardContext.tsx           |       0 |        0 |       0 |       0 | 20-57             
+  formReducer.ts              |       0 |        0 |       0 |       0 | 6-68              
+ src/app/hooks                |       0 |        0 |       0 |       0 |                   
+  useAppOrchestration.ts      |       0 |        0 |       0 |       0 | 16-65             
+ src/config                   |       0 |      100 |     100 |       0 |                   
+  WizStrings.ts               |       0 |      100 |     100 |       0 | 1                 
+  features.ts                 |       0 |      100 |     100 |       0 | 8-21              
+ src/containers               |       0 |        0 |       0 |       0 |                   
+  AdultsCounter.tsx           |       0 |        0 |       0 |       0 | 5-25              
+ src/domain                   |       0 |        0 |       0 |       0 |                   
+  household.ts                |       0 |        0 |       0 |       0 |                   
+  types.ts                    |       0 |        0 |       0 |       0 |                   
+ src/domain/constants         |       0 |      100 |     100 |       0 |                   
+  datakeys.ts                 |       0 |      100 |     100 |       0 | 3-10              
+  labels.ts                   |       0 |      100 |     100 |       0 | 4-22              
+  registry.ts                 |       0 |      100 |     100 |       0 | 4-16              
+ src/domain/rules             |       0 |      100 |       0 |       0 |                   
+  evaluateDomainRules.ts      |       0 |      100 |       0 |       0 | 2-6               
+ src/logic                    |       0 |        0 |       0 |       0 |                   
+  export.ts                   |       0 |        0 |       0 |       0 | 7-21              
+  finance.ts                  |       0 |        0 |       0 |       0 | 3-39              
+  householdLogic.ts           |       0 |        0 |       0 |       0 | 7-22              
+ src/navigation               |       0 |        0 |       0 |       0 |                   
+  Navigator.tsx               |       0 |        0 |       0 |       0 | 11-20             
+ src/selectors                |       0 |        0 |       0 |       0 |                   
+  financialSelectors.ts       |       0 |      100 |       0 |       0 | 9-17              
+  householdSelectors.ts       |       0 |        0 |       0 |       0 | 8-59              
+ src/services                 |       0 |        0 |       0 |       0 |                   
+  csvService.ts               |       0 |        0 |       0 |       0 | 6-73              
+  dataOrchestrator.ts         |       0 |        0 |       0 |       0 | 47-125            
+  dataProcessor.ts            |       0 |        0 |       0 |       0 | 16-63             
+  householdAlign.ts           |       0 |        0 |       0 |       0 | 8-65              
+  logger.ts                   |       0 |      100 |       0 |       0 | 1-9               
+  migrationService.ts         |       0 |        0 |       0 |       0 | 20-86             
+  privacyHelpers.ts           |       0 |        0 |       0 |       0 | 9-120             
+  storage.ts                  |       0 |        0 |       0 |       0 | 9-65              
+  storageShim.ts              |       0 |        0 |       0 |       0 | 6-43              
+  transactionService.ts       |       0 |        0 |       0 |       0 | 6-80              
+ src/shared-types             |       0 |        0 |       0 |       0 |                   
+  core.ts                     |       0 |        0 |       0 |       0 |                   
+  expenses.ts                 |       0 |        0 |       0 |       0 |                   
+  fields.ts                   |       0 |        0 |       0 |       0 |                   
+  form.ts                     |       0 |        0 |       0 |       0 |                   
+  income.ts                   |       0 |        0 |       0 |       0 |                   
+  transaction.ts              |       0 |        0 |       0 |       0 |                   
+  wizard.ts                   |       0 |        0 |       0 |       0 |                   
+ src/state/schemas            |       0 |      100 |     100 |       0 |                   
+  FormStateSchema.ts          |       0 |      100 |     100 |       0 | 4-60              
+ src/test-utils               |       0 |        0 |       0 |       0 |                   
+  index.ts                    |       0 |        0 |       0 |       0 |                   
+ src/test-utils/assertions    |       0 |      100 |       0 |       0 |                   
+  migrationAssertions.ts      |       0 |      100 |       0 |       0 | 6-20              
+ src/test-utils/factories     |       0 |        0 |       0 |       0 |                   
+  csvFactory.ts               |       0 |      100 |       0 |       0 | 5-39              
+  memberFactory.ts            |       0 |        0 |       0 |       0 | 13-49             
+  stateFactory.ts             |       0 |        0 |       0 |       0 | 10-64             
+ src/test-utils/perf          |       0 |        0 |       0 |       0 |                   
+  measure.ts                  |       0 |        0 |       0 |       0 | 7-15              
+ src/test-utils/render        |       0 |        0 |       0 |       0 |                   
+  providers.tsx               |       0 |        0 |       0 |       0 | 7-42              
+  renderers.tsx               |       0 |        0 |       0 |       0 | 18-53             
+ src/test-utils/utils         |       0 |        0 |       0 |       0 |                   
+  name.ts                     |       0 |        0 |       0 |       0 | 7-8               
+ src/ui/components            |       0 |        0 |       0 |       0 |                   
+  FieldRenderer.tsx           |       0 |        0 |       0 |       0 | 11-31             
+  FinancialSummary.tsx        |       0 |      100 |       0 |       0 | 17-25             
+ src/ui/components/fields     |       0 |        0 |       0 |       0 |                   
+  ChipButton.tsx              |       0 |        0 |       0 |       0 | 13-22             
+  ConditionalField.tsx        |       0 |        0 |       0 |       0 | 12-37             
+  DateField.tsx               |       0 |        0 |       0 |       0 | 17-82             
+  FormField.tsx               |       0 |        0 |       0 |       0 | 13-38             
+  InputCounter.tsx            |       0 |        0 |       0 |       0 | 17-31             
+  MoneyField.tsx              |       0 |        0 |       0 |       0 | 11-32             
+  MoneyInput.tsx              |       0 |        0 |       0 |       0 | 14-44             
+  ToggleSwitch.tsx            |       0 |        0 |       0 |       0 | 13-22             
+  index.ts                    |       0 |        0 |       0 |       0 |                   
+ src/ui/navigation            |       0 |        0 |       0 |       0 |                   
+  MainNavigator.tsx           |       0 |        0 |       0 |       0 | 7-18              
+ src/ui/screens/CSV           |       0 |        0 |       0 |       0 |                   
+  CsvUploadScreen.tsx         |       0 |        0 |       0 |       0 | 25-106            
+ src/ui/screens/Daily         |     100 |      100 |     100 |     100 |                   
+  UndoScreen.tsx              |     100 |      100 |     100 |     100 |                   
+ src/ui/screens/DailyInput    |       0 |      100 |       0 |       0 |                   
+  DailyInputScreen.tsx        |       0 |      100 |       0 |       0 | 7-17              
+ src/ui/screens/Dashboard     |       0 |      100 |       0 |       0 |                   
+  DashboardScreen.tsx         |       0 |      100 |       0 |       0 | 17-26             
+ src/ui/screens/Options       |       0 |      100 |       0 |       0 |                   
+  OptionsScreen.tsx           |       0 |      100 |       0 |       0 | 15-19             
+ src/ui/screens/Reset         |       0 |      100 |       0 |       0 |                   
+  ResetScreen.tsx             |       0 |      100 |       0 |       0 | 13-39             
+ src/ui/screens/Settings      |       0 |        0 |       0 |       0 |                   
+  SettingsScreen.tsx          |       0 |        0 |       0 |       0 | 12-38             
+ src/ui/screens/Wizard        |       0 |        0 |       0 |       0 |                   
+  CriticalErrorScreen.tsx     |       0 |      100 |       0 |       0 | 7-9               
+  LandingScreen.tsx           |       0 |        0 |       0 |       0 | 12-34             
+  SplashScreen.tsx            |       0 |      100 |       0 |       0 | 5-7               
+  WelcomeWizard.tsx           |       0 |      100 |       0 |       0 | 5-7               
+  WizardController.tsx        |       0 |        0 |       0 |       0 | 10-32             
+  WizardPage.tsx              |       0 |        0 |       0 |       0 | 15-64             
+ src/ui/screens/Wizard/pages  |       0 |        0 |       0 |       0 |                   
+  1setupHousehold.config.ts   |       0 |        0 |       0 |       0 | 10-46             
+  2detailsHousehold.config.ts |       0 |      100 |     100 |       0 | 6                 
+  3incomeDetails.config.ts    |       0 |        0 |       0 |       0 | 6-39              
+  4fixedExpenses.config.ts    |       0 |        0 |       0 |       0 | 6-37              
+ src/ui/styles                |       0 |        0 |       0 |       0 |                   
+  Colors.ts                   |       0 |      100 |     100 |       0 | 30                
+  Tokens.ts                   |       0 |      100 |     100 |       0 | 3-24              
+  useAppStyles.ts             |       0 |        0 |       0 |       0 | 23-56             
+ src/ui/styles/modules        |       0 |      100 |       0 |       0 |                   
+  Alerts.ts                   |       0 |      100 |       0 |       0 | 12                
+  Buttons.ts                  |       0 |      100 |       0 |       0 | 12-23             
+  Cards.ts                    |       0 |      100 |       0 |       0 | 17-28             
+  Checkboxes.ts               |       0 |      100 |       0 |       0 | 7                 
+  Chips.ts                    |       0 |      100 |       0 |       0 | 11                
+  Dashboard.ts                |       0 |      100 |       0 |       0 | 12-23             
+  Forms.ts                    |       0 |      100 |       0 |       0 | 12                
+  Header.ts                   |       0 |      100 |       0 |       0 | 12-23             
+  Helpers.ts                  |       0 |      100 |       0 |       0 | 7                 
+  Layout.ts                   |       0 |      100 |       0 |       0 | 11                
+  Summary.ts                  |       0 |      100 |       0 |       0 | 11-44             
+  Toggles.ts                  |       0 |      100 |       0 |       0 | 7                 
+  Typography.ts               |       0 |      100 |       0 |       0 | 7                 
+  index.ts                    |       0 |        0 |       0 |       0 |                   
+ src/utils                    |       0 |        0 |       0 |       0 |                   
+  conditions.ts               |       0 |        0 |       0 |       0 | 3-23              
+  csvHelper.ts                |       0 |        0 |       0 |       0 | 5-29              
+  date.ts                     |       0 |        0 |       0 |       0 | 22-239            
+  frequency.ts                |       0 |        0 |       0 |       0 | 3-44              
+  numbers.ts                  |       0 |        0 |       0 |       0 | 9-91              
+  objects.ts                  |       0 |        0 |       0 |       0 | 8-21              
+  ping.ts                     |       0 |      100 |       0 |       0 | 5-7               
+  strings.ts                  |       0 |        0 |       0 |       0 | 9-15              
+  validation.ts               |       0 |        0 |       0 |       0 | 5-68              
+------------------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 1.24% ( 12/961 )
+Branches     : 0.26% ( 2/768 )
+Functions    : 2.13% ( 5/234 )
+Lines        : 1.35% ( 12/885 )
+================================================================================
+Jest: "global" coverage threshold for statements (70%) not met: 1.24%
+Jest: "global" coverage threshold for branches (70%) not met: 0.26%
+Jest: "global" coverage threshold for lines (70%) not met: 1.35%
+Jest: "global" coverage threshold for functions (70%) not met: 2.13%
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 2 passed, 3 total
+Snapshots:   0 total
+Time:        11.555 s
+Ran all test suites matching src/ui/screens/Daily/__tests__/UndoScreen.test.tsx.
+
+import React from 'react';
+import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react-native';
+import { UndoScreen } from '../UndoScreen';
+import { TransactionService } from '../../../../services/transactionService';
+
+// 1. Mock de hele module
+jest.mock('../../../../services/transactionService', () => ({
+  TransactionService: {
+    getAllTransactions: jest.fn(),
+    clearAll: jest.fn(),
+  },
+}));
+
+// 2. Definieer 'mockedTx' (Zorg dat deze naam overal gelijk is!)
+const mockedTx = TransactionService as jest.Mocked<typeof TransactionService>;
+
+describe('UndoScreen', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(cleanup);
+
+  it('moet transacties laden en de omschrijvingen tonen', async () => {
+    const mockData = [
+      { id: '1', amount: 12.50, description: 'Boodschappen' },
+      { id: '2', amount: 45.00, description: 'Tanken' },
+    ];
+    mockedTx.getAllTransactions.mockResolvedValue(mockData);
+
+    render(<UndoScreen />);
+
+    // findByText handelt de asynchrone update en de 'act' automatisch af
+    expect(await screen.findByText(/Boodschappen/i)).toBeTruthy();
+    expect(await screen.findByText(/Tanken/i)).toBeTruthy();
+    expect(screen.getByText(/Laatste transacties: 2/i)).toBeTruthy();
+  });
+
+  it('moet de lege staat tekst tonen', async () => {
+    mockedTx.getAllTransactions.mockResolvedValue([]);
+    render(<UndoScreen />);
+
+    expect(await screen.findByText(/Geen recente transacties/i)).toBeTruthy();
+  });
+ 
+  it('moet alle transacties verwijderen als op de knop wordt gedrukt', async () => {
+    // 1. Setup mocks
+    const mockData = [{ id: '1', description: 'Boodschappen' }];
+    mockedTx.getAllTransactions.mockResolvedValue(mockData);
+    mockedTx.clearAll.mockResolvedValue(undefined);
+  
+    render(<UndoScreen />);
+  
+    // 2. Wacht tot de data geladen is (belangrijk!)
+    const item = await screen.findByText(/Boodschappen/i);
+    expect(item).toBeTruthy();
+  
+    // 3. Actie: Druk op de knop
+    const clearButton = screen.getByText(/Verwijder alles/i);
+    fireEvent.press(clearButton);
+  
+    // 4. Assertie: Controleer of de service is aangeroepen
+    expect(mockedTx.clearAll).toHaveBeenCalled();
+  
+    // 5. Wacht tot de UI de "lege staat" bereikt
+    await waitFor(() => {
+      // Gebruik queryByText (geeft null als het weg is)
+      const deletedItem = screen.queryByText(/Boodschappen/i);
+      expect(deletedItem).toBeNull();
+      
+      // Controleer of de teller op 0 staat
+      const counter = screen.getByText(/Laatste transacties: 0/i);
+      expect(counter).toBeTruthy();
+    }, { timeout: 2000 });
+  });
+
+});
+
+import * as React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+// Verwijder de wildcard import als die voor problemen zorgt, 
+// of gebruik de named export:
+import { TransactionService } from '@services/transactionService';
+
+export const UndoScreen: React.FC = () => {
+  const [items, setItems] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const fetchTransactions = async () => {
+      const data = await TransactionService.getAllTransactions();
+      setItems(data);
+    };
+    fetchTransactions();
+  }, []);
+
+  const handleClearAll = async () => {
+    await TransactionService.clearAll();
+    setItems([]);
+  };
+
+  return (
+    <View style={{ padding: 20 }}>
+      <Text style={{ fontSize: 18 }}>Laatste transacties: {items.length}</Text>
+      
+      {/* NIEUW: Render de items zodat de test ze kan vinden */}
+      {items.length === 0 ? (
+        <Text>Geen recente transacties</Text>
+      ) : (
+        items.map((item) => (
+          <Text key={item.id}>{item.description}</Text>
+        ))
+      )}
+      
+      <TouchableOpacity 
+        onPress={handleClearAll}
+        style={{ marginTop: 20, backgroundColor: 'red', padding: 10, borderRadius: 5 }}
+      >
+        <Text style={{ color: 'white', textAlign: 'center' }}>Verwijder alles</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};

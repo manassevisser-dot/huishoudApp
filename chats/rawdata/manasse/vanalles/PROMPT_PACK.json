@@ -1,0 +1,46 @@
+{
+  "summary_prompts": [
+    {
+      "name": "Samenvat de architectuur en kernbesluiten",
+      "prompt": "Lees NO_CODE_NARRATIVE.txt en vat de beslissingen samen over de Verzamelaar (Orchestrator), UX vs Onderzoek, en de n8n JSON-export. Benoem expliciet Privacy by Design keuzes."
+    },
+    {
+      "name": "Maak een beslismatrix",
+      "prompt": "Extrapoleer uit de narrative een beslismatrix met opties, gekozen oplossing, redenen, en afwegingen (privacy, tooling, migratie)."
+    }
+  ],
+  "extraction_prompts": [
+    {
+      "name": "Genereer n8n payload schema",
+      "prompt": "Construeer een JSON schema voor de researchPayload uit de narrative: include memberType, bedrag, categorie, timestamp, researchId; exclude namen en herleidbare IDs."
+    },
+    {
+      "name": "Maak een issues backlog",
+      "prompt": "Identificeer uit de narrative alle alias/tsconfig/jest/babel-problemen en groepeer ze in tickets met concrete fix-stappen."
+    },
+    {
+      "name": "Testplan render context",
+      "prompt": "Stel een testplan op voor renderWithProviders en setupFilesAfterEnv om crashes rond useAppStyles/WizardPage te voorkomen."
+    }
+  ],
+  "analysis_prompts": [
+    {
+      "name": "Coverage roadmap",
+      "prompt": "Maak een plan om coverage drempels van ~20% tijdelijk te verhogen naar 70%: identificeer quick wins (mocks, smoke-tests), ignore-paths en kritieke suites."
+    },
+    {
+      "name": "Armoede-onderzoek variabelen",
+      "prompt": "Vat samen welke financiële en demografische variabelen nodig zijn voor het onderzoek (huishoudboek): memberType, bedrag, categorie, koopkracht-indicatoren; stel een minimal viable dataset voor."
+    }
+  ],
+  "timeline_prompts": [
+    {
+      "name": "Maak een chronologische executive summary",
+      "prompt": "Gebruik TIMELINE.md om per fase een twee-zinnen executive summary te schrijven; benadruk impact op privacy, tooling en onderzoek."
+    },
+    {
+      "name": "Lessons learned",
+      "prompt": "Destilleer uit TIMELINE.md vijf lessons learned en drie risico’s met mitigaties."
+    }
+  ]
+}

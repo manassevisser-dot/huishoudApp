@@ -1,0 +1,473 @@
+// ==UserScript==
+// @name        Gemini Conversation Exporter (MD/JSON) - Optimized v3
+// @namespace   manasse.tools.gemini
+// @version     3.0.0
+// @description Geoptimaliseerde export met perfecte tabelherkenning en -rendering
+// @author      Manasse + Claude
+// @match       https://gemini.google.com/*
+// @run-at      document-idle
+// @grant       none
+// ==/UserScript==
+
+(function () {
+  "use strict";
+
+  const DEBUG = localStorage.getItem('gemini-export-debug') === 'true';
+  const log = (...args) => DEBUG && console.log('[Gemini Export]', ...args);
+
+  /** ================ Helpers ================ **/
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const safe = (s) => (s || "export").replace(/[\\/:*?"<>|]+/g, "_").slice(0, 70);
+
+  function el(tag, css = "", text = "") {
+    const n = document.createElement(tag);
+    if (css) n.style.cssText = css;
+    if (text) n.textContent = text;
+    return n;
+  }
+
+  function findRoot() {
+    return document.querySelector("chat-app#app-root")
+        || document.querySelector("chat-app")
+        || document.querySelector("main.chat-app")
+        || document.querySelector('[role="feed"]')
+        || document.body;
+  }
+
+  function findScroller() {
+    const cands = [
+      document.scrollingElement,
+      document.querySelector("main.chat-app"),
+      document.querySelector('[role="feed"]'),
+      document.querySelector("chat-app#app-root"),
+      document.body
+    ].filter(Boolean);
+    return cands.sort((a,b)=> (b?.scrollHeight||0)-(a?.scrollHeight||0))[0] || document.body;
+  }
+
+  function countCandidates(root) {
+    const SEL = [
+      '[role="listitem"]', 'article', 'li',
+      'div[class*="message"]', 'div[class*="msg"]', 'div[class*="bubble"]',
+      'div[class*="prompt"]', 'div[class*="response"]',
+      'gemini-message', 'bard-message', 'chat-message'
+    ].join(',');
+    return root.querySelectorAll(SEL).length;
+  }
+
+  async function lazyLoadAll(statusEl, maxMs = 60_000) {
+    const scroller = findScroller();
+    const root = findRoot();
+    const start = Date.now();
+    let prev = 0, stable = 0;
+
+    // Expand collapsed berichten
+    document.querySelectorAll('[aria-label*="Expand"], [aria-label*="expand"]').forEach(btn => {
+      try { btn.click(); } catch(e) {}
+    });
+    await sleep(500);
+
+    while ((Date.now() - start) < maxMs) {
+      const before = countCandidates(root);
+      scroller.scrollTo({ top: 0, behavior: 'instant' });
+      await sleep(1000);
+      scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'instant' });
+      await sleep(1000);
+      scroller.scrollTo({ top: Math.floor(scroller.scrollHeight/2), behavior: 'instant' });
+      await sleep(700);
+
+      const after = countCandidates(root);
+      const elapsed = Math.round((Date.now() - start) / 1000);
+      if (statusEl) statusEl.textContent = `📄 Laden... ${after} berichten (${elapsed}s)`;
+
+      if (after > prev) { prev = after; stable = 0; }
+      else if (++stable >= 3) break;
+    }
+    if (statusEl) statusEl.textContent = `✅ Lazy-load klaar (${countCandidates(root)} berichten)`;
+  }
+
+  const norm = (s='') => s
+    .replace(/\r\n/g, '\n')
+    .replace(/\u00A0/g, ' ')
+    .split('\n').map(l => l.trimEnd()).join('\n')
+    .replace(/\n{3,}/g, '\n\n').trim();
+
+  function detectSpeaker(el, idx, prev='User') {
+    const val = (...xs) => xs.filter(Boolean).map(x => String(x).toLowerCase()).join(' ');
+    const cls = el?.className ? String(el.className).toLowerCase() : '';
+    const role = el?.getAttribute?.('role');
+    const who = val(
+      role,
+      el?.getAttribute?.('data-author'),
+      el?.getAttribute?.('data-actor'),
+      el?.getAttribute?.('data-sender'),
+      el?.getAttribute?.('aria-label'),
+      cls
+    );
+
+    const userHints = /(user|you|me|self|owner|author|prompt|request|from-user)/i;
+    const aiHints   = /(assistant|bot|ai|model|gemini|bard|response|reply|answer)/i;
+
+    if (userHints.test(who)) return 'User';
+    if (aiHints.test(who)) return 'AI';
+    if (role === 'user') return 'User';
+    if (role === 'assistant') return 'AI';
+    if (idx === 0) return 'User';
+
+    return prev === 'User' ? 'AI' : 'User';
+  }
+
+  /** ================ Tabel Extractie ================ **/
+  function escapeTableCell(text) {
+    return String(text)
+      .replace(/\|/g, '\\|')
+      .replace(/\n/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function extractTableFromHTML(table) {
+    log('Extracting HTML table from Gemini');
+    const rows = Array.from(table.rows).map(r =>
+      Array.from(r.cells).map(c => escapeTableCell(c.textContent))
+    );
+
+    if (!rows.length) return null;
+
+    const hasTheadTag = table.querySelector('thead') !== null;
+    const header = rows[0];
+    const body = hasTheadTag ? rows.slice(1) : rows.slice(1);
+
+    if (!body.length) body.push(header.map(() => ''));
+
+    return { header, body };
+  }
+
+  function tableToGFM(header, body) {
+    const hdr = '| ' + header.join(' | ') + ' |';
+    const sep = '| ' + header.map(() => '---').join(' | ') + ' |';
+    const rows = body.map(r => '| ' + r.join(' | ') + ' |');
+    return [hdr, sep, ...rows].join('\n');
+  }
+
+  function extractContentFromNode(el) {
+    const blocks = [];
+    const push = (t) => { if (t && t.trim()) blocks.push(t.trim()); };
+
+    // 1. TABELLEN (hoogste prioriteit)
+    const tables = el.querySelectorAll('table');
+    if (tables.length > 0) {
+      tables.forEach(table => {
+        const extracted = extractTableFromHTML(table);
+        if (extracted) {
+          push(tableToGFM(extracted.header, extracted.body));
+          table.remove(); // Verwijder om dubbele extractie te voorkomen
+          log('Table extracted and converted to GFM');
+        }
+      });
+    }
+
+    // 2. CODEBLOKKEN
+    const preBlocks = el.querySelectorAll('pre, code');
+    preBlocks.forEach(pre => {
+      const code = norm(pre.textContent || '');
+      if (code.length > 10) {
+        const langMatch = (pre.className || '').match(/language-([a-z0-9]+)/i);
+        const lang = langMatch ? langMatch[1] : '';
+        push('```' + lang + '\n' + code + '\n```');
+        pre.remove();
+      }
+    });
+
+    // 3. LIJSTEN
+    const lists = el.querySelectorAll('ul, ol');
+    lists.forEach(list => {
+      const items = Array.from(list.querySelectorAll('li'))
+        .map(li => '- ' + norm(li.textContent || ''))
+        .filter(Boolean);
+      if (items.length) {
+        push(items.join('\n'));
+        list.remove();
+      }
+    });
+
+    // 4. AFBEELDINGEN
+    const images = el.querySelectorAll('img[src]');
+    images.forEach((img, idx) => {
+      const alt = img.alt || `image-${idx}`;
+      const src = img.src;
+      push(`![${alt}](${src})`);
+      img.remove();
+    });
+
+    // 5. UPLOADS (Gemini-specifiek)
+    const uploads = el.querySelectorAll('[data-upload-id], [data-file-name]');
+    uploads.forEach(upload => {
+      const fileName = upload.dataset.fileName || upload.textContent || 'file';
+      push(`[📎 Upload: ${fileName}]`);
+      upload.remove();
+    });
+
+    // 6. Resterende tekst
+    const remainingText = norm(el.innerText || el.textContent || '');
+    if (remainingText) {
+      push(remainingText);
+    }
+
+    return blocks.join('\n\n');
+  }
+
+  /** ================ Post-Processing Tabel Detectie ================ **/
+  function restoreTablesInMarkdown(md) {
+    const blocks = md.split(/\n{2,}/);
+    const fixed = blocks.map(processBlock);
+    return fixed.join("\n\n");
+
+    function processBlock(block) {
+      if (isCodeFenced(block)) return block;
+      if (isExistingTable(block)) return block;
+
+      const lines = block.split('\n').filter(l => l.trim() !== '');
+      if (lines.length < 2) return block;
+
+      let res = detectDelimited(lines);
+      if (res) {
+        log('Detected delimited table in text');
+        return tableToGFM(...res);
+      }
+
+      res = detectFixedWidth(lines);
+      if (res) {
+        log('Detected fixed-width table in text');
+        return tableToGFM(...res);
+      }
+
+      res = detectKV(lines);
+      if (res) {
+        log('Detected key-value table in text');
+        return tableToGFM(...res);
+      }
+
+      return block;
+    }
+
+    function isCodeFenced(text) { return /^\s*```/m.test(text); }
+    function isExistingTable(text) { return /^\|.+\|$/m.test(text); }
+
+    function detectDelimited(lines) {
+      const DELIMS = ['|', '\t', ',', ';'];
+
+      for (const delim of DELIMS) {
+        if (delim === '|' && /^\|.*\|$/.test(lines[0])) continue;
+
+        const parts = lines.map(l =>
+          l.split(delim).map(c => escapeTableCell(c))
+        ).filter(p => p.length >= 2);
+
+        if (parts.length < 2) continue;
+
+        const cols = parts.map(p => p.length);
+        if (Math.min(...cols) === Math.max(...cols) && cols[0] >= 2) {
+          return [parts[0], parts.slice(1)];
+        }
+      }
+      return null;
+    }
+
+    function detectFixedWidth(lines) {
+      if (lines.length < 3) return null;
+
+      const gaps = [];
+      for (const line of lines) {
+        const matches = [...line.matchAll(/\s{2,}/g)];
+        matches.forEach(m => gaps.push(m.index));
+      }
+
+      if (gaps.length < lines.length) return null;
+
+      const buckets = {};
+      gaps.forEach(pos => {
+        const bucket = Math.floor(pos / 3) * 3;
+        buckets[bucket] = (buckets[bucket] || 0) + 1;
+      });
+
+      let breaks = Object.entries(buckets)
+        .filter(([_, count]) => count >= lines.length * 0.5)
+        .sort((a, b) => b[1] - a[1])
+        .map(([pos]) => Number(pos));
+
+      if (breaks.length < 1) return null;
+      if (breaks.length > 6) breaks = breaks.slice(0, 6);
+
+      breaks.sort((a, b) => a - b);
+      const colStarts = [0, ...breaks];
+
+      const sliceCols = (line) => {
+        const cols = [];
+        for (let i = 0; i < colStarts.length; i++) {
+          const start = colStarts[i];
+          const end = colStarts[i + 1] || line.length;
+          cols.push(escapeTableCell(line.slice(start, end)));
+        }
+        return cols.filter(c => c.length > 0);
+      };
+
+      const rows = lines.map(sliceCols);
+      const colCount = rows[0].length;
+      if (rows.some(r => r.length !== colCount)) return null;
+
+      return [rows[0], rows.slice(1)];
+    }
+
+    function detectKV(lines) {
+      const kvRe = /^\s*[-*•]?\s*([^:|\-–—]+)\s*[:|\-–—]\s*(.+)$/;
+      const rows = [];
+
+      for (const line of lines) {
+        const m = line.match(kvRe);
+        if (!m) return null;
+        rows.push([escapeTableCell(m[1]), escapeTableCell(m[2])]);
+      }
+
+      if (rows.length >= 2) return [["Key", "Value"], rows];
+      return null;
+    }
+  }
+
+  function toMarkdown(items) {
+    const header = [
+      `**Geëxporteerd:** ${new Date().toLocaleString('nl-NL')}`,
+      `**Aantal berichten:** ${items.length}`,
+      ``,
+      `---`,
+      ``
+    ].join('\n');
+
+    const body = items.map(it => {
+      const label = it.role === "User" ? "User" : "Gemini";
+      return `**${label}:**\n\n${it.text}`;
+    }).join("\n\n---\n\n");
+
+    return header + restoreTablesInMarkdown(body);
+  }
+
+  function downloadBlob(content, type, filename) {
+    if (!content || content.length === 0) {
+      throw new Error("Geen content om te exporteren");
+    }
+
+    const blob = new Blob([content], { type });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+    a.remove();
+  }
+
+  const MESSAGE_SELECTOR = [
+    '[role="listitem"]', 'article', 'li',
+    'div[class*="message"]', 'div[class*="msg"]', 'div[class*="bubble"]',
+    'div[class*="prompt"]', 'div[class*="response"]',
+    'gemini-message', 'bard-message', 'chat-message'
+  ].join(',');
+
+  async function collectConversation(statusEl) {
+    if (!/gemini\.google\.com/.test(location.hostname))
+      throw new Error("Open dit op gemini.google.com");
+
+    await lazyLoadAll(statusEl, 60_000);
+
+    const root = findRoot();
+    let candidates = Array.from(root.querySelectorAll(MESSAGE_SELECTOR))
+      .filter(el => (el.innerText || '').trim().length > 0);
+
+    // Houd alleen top-level (voorkom nested duplicaten)
+    const top = [];
+    for (const el of candidates) {
+      const inside = top.some(p => p !== el && p.contains(el));
+      if (!inside) top.push(el);
+    }
+
+    let items = [];
+    if (top.length >= 2) {
+      let prev = 'User';
+      items = top.map((el, i) => {
+        const role = detectSpeaker(el, i, prev);
+        prev = role;
+        return { index: i, role, text: extractContentFromNode(el) };
+      });
+    } else {
+      const rawAll = extractContentFromNode(root);
+      const blocks = rawAll.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
+      let prev = 'User';
+      items = blocks.map((txt, i) => {
+        const role = i === 0 ? 'User' : (prev === 'User' ? 'AI' : 'User');
+        prev = role;
+        return { index: i, role, text: txt };
+      });
+    }
+
+    if (!items.length) throw new Error("Geen berichten gevonden. Scroll eerst en probeer opnieuw.");
+    const title = document.title || "gemini";
+    return { items, title };
+  }
+
+  /** ================ UI ================ **/
+  function ensureButton() {
+    if (document.getElementById("gem-exporter-btn")) return;
+
+    const box = el("div",
+      "position:fixed;top:10px;right:10px;z-index:2147483647;display:flex;gap:8px;" +
+      "background:#0e0e0e;border:1px solid #3a3a3a;border-radius:10px;padding:8px;" +
+      "font:12px/1 system-ui;color:#eee;box-shadow:0 4px 18px rgba(0,0,0,.35)"
+    );
+    box.id = "gem-exporter-btn";
+
+    const mdBtn = el("button",
+      "background:#1e90ff;color:#fff;border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-weight:600",
+      "Export (MD)"
+    );
+    const jsonBtn = el("button",
+      "background:#2aa84a;color:#fff;border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-weight:600",
+      "Export (JSON)"
+    );
+    const status = el("div", "margin-left:4px;color:#ccc;min-width:220px;font-weight:500");
+
+    mdBtn.addEventListener("click", async () => {
+      status.textContent = "Exporteren (MD)...";
+      try {
+        const data = await collectConversation(status);
+        const md = toMarkdown(data.items);
+        downloadBlob(md, "text/markdown;charset=utf-8", `gemini_${safe(data.title)}.md`);
+        status.textContent = "✅ MD klaar";
+      } catch (e) {
+        console.error(e);
+        status.textContent = "❌ Fout: " + e.message;
+      }
+    });
+
+    jsonBtn.addEventListener("click", async () => {
+      status.textContent = "Exporteren (JSON)...";
+      try {
+        const data = await collectConversation(status);
+        downloadBlob(JSON.stringify(data.items, null, 2), "application/json;charset=utf-8",
+          `gemini_${safe(data.title)}.json`);
+        status.textContent = "✅ JSON klaar";
+      } catch (e) {
+        console.error(e);
+        status.textContent = "❌ Fout: " + e.message;
+      }
+    });
+
+    box.append(mdBtn, jsonBtn, status);
+    document.body.appendChild(box);
+  }
+
+  const observer = new MutationObserver(() => {
+    if (document.body && !document.getElementById("gem-exporter-btn")) ensureButton();
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+  ensureButton();
+})();

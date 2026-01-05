@@ -1,0 +1,310 @@
+//useAppOrchestration.ts
+
+// FIX A: Namespace import voor compatibiliteit
+import * as React from 'react';
+// FIX B: Gebruik de specifieke aliassen uit je config
+import StorageShim from '@services/storageShim';
+import { FormStateSchema } from '@state/schemas/FormStateSchema';
+import { selectIsSpecialStatus } from '@selectors/householdSelectors';
+import { useFormContext } from '@context/FormContext'; 
+
+// Types
+import type { FormStateV1 } from '@state/schemas/FormStateSchema';
+export type AppStatus = 'INITIALIZING' | 'HYDRATING' | 'UNBOARDING' | 'READY' | 'ERROR';
+
+export function useAppOrchestration() {
+  const { state, dispatch } = useFormContext();
+  const [status, setStatus] = React.useState<AppStatus>('INITIALIZING');
+
+  const resetApp = React.useCallback(async () => {
+    await StorageShim.clearAll();
+    setStatus('UNBOARDING');
+    dispatch({ type: 'RESET_STATE' });
+  }, [dispatch]);
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    async function hydrate() {
+      if (!mounted) return;
+      setStatus('HYDRATING');
+
+      try {
+        const raw = await StorageShim.loadState();
+
+        if (!raw) {
+          if (mounted) setStatus('UNBOARDING');
+          return;
+        }
+
+        const parse = FormStateSchema.safeParse(raw);
+        if (!parse.success) {
+          console.error('[Orchestrator] Validation failed', parse.error);
+          if (mounted) setStatus('ERROR');
+          return;
+        }
+
+        // Zod data is nu gegarandeerd FormStateV1
+        const validatedData = parse.data as FormStateV1;
+
+        dispatch({ type: 'LOAD_SAVED_STATE', payload: validatedData } as any);
+
+        // Shadow flag: bereken op basis van de nieuwe werkelijkheid
+        try {
+          const special = selectIsSpecialStatus({ ...state, ...validatedData });
+          dispatch({ type: 'SET_SPECIAL_STATUS', payload: special });
+        } catch (e) {
+          console.warn('[Orchestrator] Shadow flag calculation failed', e);
+        }
+
+        if (mounted) setStatus('READY');
+      } catch (err) {
+        console.error('[Orchestrator] Fatal hydration error', err);
+        if (mounted) setStatus('ERROR');
+      }
+    }
+
+    // Tick voor hydration start
+    const timer = setTimeout(hydrate, 0);
+
+    return () => {
+      mounted = false;
+      clearTimeout(timer);
+    };
+  }, [dispatch]); // Geen afhankelijkheid van 'state' conform ADR-16
+
+  return { status, resetApp };
+}
+===================================
+//useAppOrchastration.test.tsx
+import * as React from 'react';
+import { render, act } from '@testing-library/react-native';
+import { useAppOrchestration } from '../useAppOrchestration';
+
+// 1. Phoenix Mocks (Hoisted)
+const mockDispatch = jest.fn();
+const mockContextValue = {
+  state: {},
+  dispatch: mockDispatch,
+};
+
+// ADR-01: Gebruik de juiste aliassen voor mocks
+jest.mock('@services/storageShim', () => ({
+  __esModule: true,
+  default: {
+    loadState: jest.fn(async () => null),
+    saveState: jest.fn(async () => undefined),
+    clearAll: jest.fn(async () => undefined),
+  },
+}));
+
+jest.mock('@state/schemas/FormStateSchema', () => {
+  return {
+    __esModule: true,
+    // Zorg dat we een object returnen met een werkende safeParse functie
+    FormStateSchema: {
+      safeParse: jest.fn().mockReturnValue({ success: true, data: {} })
+    }
+  };
+});
+
+jest.mock('@selectors/householdSelectors', () => ({
+  __esModule: true,
+  selectIsSpecialStatus: jest.fn(() => false),
+}));
+
+// FIX: Verwijder de "Path Collapse". Gebruik de schone alias.
+jest.mock('@context/FormContext', () => ({
+  __esModule: true,
+  useFormContext: () => mockContextValue,
+}));
+
+describe('useAppOrchestration FSM', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('UNBOARDING for new user (loadState=null)', async () => {
+    const { result } = await renderOrchestrator();
+    expect(result.status).toBe('UNBOARDING');
+  });
+
+  it('READY for valid v1.0', async () => {
+    const shim = require('@services/storageShim').default;
+    shim.loadState.mockResolvedValueOnce({ schemaVersion: '1.0' });
+
+    const { result } = await renderOrchestrator();
+
+    expect(result.status).toBe('READY');
+    expect(mockDispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'LOAD_SAVED_STATE' }),
+    );
+  });
+
+  it('ERROR for corrupt payload', async () => {
+    const shim = require('@services/storageShim').default;
+    shim.loadState.mockResolvedValueOnce({ corrupt: 'data' });
+
+    const z = require('@state/schemas/FormStateSchema');
+    z.FormStateSchema.safeParse.mockReturnValueOnce({ success: false });
+
+    const { result } = await renderOrchestrator();
+    expect(result.status).toBe('ERROR');
+  });
+
+  async function renderOrchestrator() {
+    let currentStatus: any = 'INITIALIZING';
+    const TestComponent = () => {
+      const { status } = useAppOrchestration();
+      currentStatus = status;
+      return null;
+    };
+
+    render(<TestComponent />);
+
+    // ADR-16: Robuuste async wait voor FSM transities
+    await act(async () => {
+      await new Promise(resolve => setTimeout(resolve, 0)); 
+    });
+
+    return { result: { status: currentStatus } };
+  }
+});
+============================
+//babel.config.js:
+
+// babel.config.js
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: [
+      'babel-preset-expo',
+      // Preset om TS te strippen voor Jest/Babel pipeline
+      '@babel/preset-typescript',
+    ],
+    plugins: [
+      [
+        'module-resolver',
+        {
+          root: ['./'],
+          alias: {
+            '@domain': './src/domain',
+            '@state': './src/state',
+            '@ui': './src/ui',
+            '@styles': './src/ui/styles',
+            '@app': './src/app',
+            '@utils': './src/utils',
+            '@services': './src/services',
+            '@assets': './_assets',
+            '@logic': './src/logic',
+            '@config': './src/config',
+            '@context': './src/app/context',
+            '@selectors': './src/selectors',
+            '@shared-types': './src/shared-types',
+            '@components': './src/ui/components',
+          },
+          extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+        },
+      ],
+    ],
+    // Zorg dat Jest geen “extra” env nodig heeft
+    env: {
+      test: {
+        // Laat zoals boven; Expo preset + TS is genoeg
+      },
+    },
+  };
+};
+============================
+//jest.config.js:
+/** @type {import('jest').Config} */
+module.exports = {
+  // 1. Setup - De volgorde is heilig (Globals eerst, dan Framework)
+  setupFiles: [
+    "<rootDir>/jest.setup.early.js" 
+  ],
+  setupFilesAfterEnv: [
+    "<rootDir>/jest.setup.js"
+  ],
+
+  preset: 'jest-expo',
+  testEnvironment: 'jsdom',
+
+  roots: ['<rootDir>/src'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+
+  // 2. Phoenix Aliassen (ADR-01)
+  moduleNameMapper: {
+    '^@domain/(.*)$': '<rootDir>/src/domain/$1',
+    '^@state/(.*)$': '<rootDir>/src/state/$1',
+    '^@ui/(.*)$': '<rootDir>/src/ui/$1',
+    '^@styles/(.*)$': '<rootDir>/src/ui/styles/$1',
+    '^@app/(.*)$': '<rootDir>/src/app/$1',
+    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
+    '^@services/(.*)$': '<rootDir>/src/services/$1',
+    '^@assets/(.*)$': '<rootDir>/_assets/$1',
+    '^@logic/(.*)$': '<rootDir>/src/logic/$1',
+    '^@config/(.*)$': '<rootDir>/src/config/$1',
+    '^@context/(.*)$': '<rootDir>/src/app/context/$1',
+    '^@selectors/(.*)$': '<rootDir>/src/selectors/$1',
+    '^@shared-types/(.*)$': '<rootDir>/src/shared-types/$1',
+    '^@components/(.*)$': '<rootDir>/src/ui/components/$1',
+
+    // Assets & Styles
+    '\\.(png|jpg|jpeg|gif|webp|svg)$': '<rootDir>/__mocks__/fileMock.js',
+    '\\.(css|less|sass|scss)$': 'identity-obj-proxy',
+  },
+
+  // 3. Transform - Cruciaal voor Expo 50+ / Winter Runtime
+  transformIgnorePatterns: [
+    'node_modules/(?!(react-native|@react-native|expo|expo-.*|@expo|expo-modules-core|react-navigation|@react-navigation|@react-native-community)/)',
+  ],
+
+  testMatch: [
+    '<rootDir>/src/**/*.(test|spec).(js|jsx|ts|tsx)',
+  ],
+  
+  // 4. Integriteit & Performance
+  clearMocks: true,
+  resetMocks: false, // VERANDERD: 'true' breekt soms mocks die in de test-file scope staan (zoals onze Zod mock)
+  restoreMocks: true,
+
+  collectCoverageFrom: [
+    'src/**/*.{js,jsx,ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/**/index.{js,ts}',
+  ],
+};
+=====================================
+// jest.setup.js - Phoenix Certified
+import * as React from 'react';
+import '@testing-library/jest-native/extend-expect';
+
+// FIX: Voorkom de Expo "Winter" ReferenceError
+global.__ExpoImportMetaRegistry = global.__ExpoImportMetaRegistry || {};
+
+// Mock de winter runtime modules die de crash veroorzaken
+jest.mock('expo/src/winter/runtime.native', () => ({}), { virtual: true });
+
+// Bestaande mocks...
+jest.mock('@react-native-async-storage/async-storage', () =>
+  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
+);
+
+jest.mock('react-native', () => {
+  const RN = jest.requireActual('react-native');
+  RN.TouchableOpacity = ({ children, onPress, testID }) => (
+    <RN.View onPress={onPress} testID={testID} accessible={true}>{children}</RN.View>
+  );
+  return RN;
+});
+=====================
+// jest.setup.early.js
+global.__ExpoImportMetaRegistry = {};
+// Voorkom dat Expo probeert structuredClone te polyfillen
+if (typeof global.structuredClone === 'undefined') {
+    global.structuredClone = (obj) => JSON.parse(JSON.stringify(obj));
+}
+global.TextDecoderStream = class {};
+global.TextEncoderStream = class {};
+

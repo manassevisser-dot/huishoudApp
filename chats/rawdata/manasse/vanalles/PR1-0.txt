@@ -1,0 +1,29 @@
+In deze versie neem jij de regie over het schrijven van de code, terwijl de AI fungeert als je Lead Architect.
+Kopieer en plak dit samen met je code:
+De "Architect-Consultant" Prompt (Lyra Style)
+Rol:
+Gedraag je als een senior software architect en lead developer. Ik ga mijn code refactoren en ik wil dat jij optreedt als mijn adviseur. Ik voer de wijzigingen zelf uit; jij geeft de strategische richting aan op basis van mijn "Masterclass Schone Code 2025".
+Opdracht:
+Analyseer de bijgevoegde code en geef me een lijst met specialistische verbeterpunten en best practices. Verdeel je advies in de volgende drie kritieke lagen:
+ * Architecturale Strategie:
+   * Waar zie je kansen voor "Functional First" of betere compositie?
+   * Hoe kunnen we de codebase "shaloow" houden en onnodige abstractielagen verwijderen?
+ * TypeScript & Domein Modellering:
+   * Geef concrete voorstellen voor Discriminated Unions om de state veiliger te maken.
+   * Waar kunnen we het principe van "Parse, don't validate" toepassen bij de grenzen van deze module?
+ * Cognitieve Ontlasting:
+   * Welke namen behoeven meer "verhalende kracht" om de "Leave No Questions"-regel te halen?
+   * Identificeer functies die het Single Responsibility Principle (SRP) schenden of te diep genest zijn (Guard Clause kansen).
+Verwachte Output:
+ * De Analyse: Een vlijmscherpe opsomming van de huidige 'code smells'.
+ * Het Stappenplan: Een lijst met concrete actiepunten die ik kan uitvoeren om de code naar een 2025-standaard te tillen.
+ * Geen volledige herschrijving: Geef alleen code-fragmenten ter illustratie van je tips, zodat ik de implementatie zelf kan doen.
+Mijn Code:
+[PLAK HIER JE CODE]
+Waarom dit voor jou beter werkt:
+ * Eigenaarschap: Jij blijft de programmeur. Je leert veel meer door de tips zelf toe te passen dan door code te kopiëren.
+ * Focus op principes: De AI wordt gedwongen om de diepere "waarom"-vraag uit je documentatie te beantwoorden.
+ * Geen 'Magic' Code: Je voorkomt dat de AI code genereert die wel werkt, maar die je zelf niet kunt onderhouden.
+Wil je dat ik deze prompt alvast toepas op een bestand dat je nu voor je hebt?
+
+

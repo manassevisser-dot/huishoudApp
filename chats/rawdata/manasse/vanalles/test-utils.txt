@@ -1,0 +1,562 @@
+
+// src/test-utils/fixtures.ts
+// Statische JSON-achtige fixtures + scenario’s (Phoenix-proof)
+
+import type { FormState } from '@shared-types/form';
+
+// ------------------------------
+// Baseline fixtures
+// ------------------------------
+
+export const HouseholdFixture = {
+  householdId: 'h-1',
+  members: [
+    {
+      entityId: 'adult-1',
+      fieldId: 'member-adult-1',
+      memberType: 'adult'as const,
+      firstName: 'Jan', lastName: '',
+      gender: 'man',
+      dateOfBirth: '1985-06-15',
+    },
+    {
+      entityId: 'child-1',
+      fieldId: 'member-child-1',
+      memberType: 'child' as const,
+      firstName: 'Mia', lastName: '',
+      gender: 'vrouw',
+      dateOfBirth: '2015-03-20',
+    },
+  ],
+  lastUpdated: '2025-01-01T12:00:00Z',
+};
+
+export const FinanceFixture = {
+  income: {
+    items: [
+      { id: 'inc-1', amountCents: 200000, frequency: 'month' }, // €2000
+    ],
+  },
+  expenses: {
+    items: [
+      { id: 'exp-1', amountCents: 50000, frequency: 'month' },  // €500
+    ],
+  },
+};
+
+export const FormStateFixture: FormState = {
+  activeStep: 'WIZARD',
+  currentPageId: 'setupHousehold',
+  isValid: false,
+  schemaVersion: '1.0',
+  data: {
+    setup: { aantalMensen: 3, aantalVolwassen: 2 },
+    household: HouseholdFixture,
+    finance: FinanceFixture,
+  },
+};
+
+// ------------------------------
+// Scenario: WeeklyIncomeScenario
+// ------------------------------
+
+export const WeeklyIncomeScenario: FormState = {
+  activeStep: 'WIZARD',
+  currentPageId: 'setupHousehold',
+  isValid: false,
+  schemaVersion: '1.0',
+  data: {
+    setup: { aantalMensen: 3, aantalVolwassen: 2 },
+    household: HouseholdFixture,
+    finance: {
+      income: {
+        items: [
+          { id: 'inc-week-100', amountCents: 10000, frequency: 'week' },    // ~€433,33 / maand
+          { id: 'inc-quarter-300', amountCents: 30000, frequency: 'quarter' }, // €100 / maand
+          { id: 'inc-year-12000', amountCents: 1200000, frequency: 'year' },   // €1000 / maand
+        ],
+      },
+      expenses: { items: [] },
+    },
+  },
+};
+
+// ------------------------------
+// Scenario: Legacy → Phoenix migratie (leden → members)
+// ------------------------------
+
+// Legacy shape (zoals in oude state):
+export const LegacyHouseholdFixture = {
+  householdId: 'legacy-h-1',
+  leden: [
+    { id: 'm1', memberType: 'adult', firstName: 'Legacy Volw 1', lastName: '' },
+    { id: 'm2', memberType: 'child', firstName: 'Legacy Kind 1', lastName: '' },
+  ],
+};
+
+export const LegacyStateFixture = {
+  schemaVersion: '1.0',
+  setup: { aantalMensen: 2, aantalVolwassen: 1 },
+  household: LegacyHouseholdFixture,
+  finance: { income: { items: [] }, expenses: { items: [] } },
+};
+
+// Voor tests die de gemigreerde (Phoenix) vorm willen valideren:
+export const LegacyLedenPhoenixMigrationFixture: FormState = {
+  activeStep: 'LANDING',
+  currentPageId: 'setupHousehold',
+  isValid: false,
+  schemaVersion: '1.0',
+  data: {
+    setup: { aantalMensen: 2, aantalVolwassen: 1 },
+    household: {
+      householdId: 'legacy-h-1',
+      members: [
+        {
+          entityId: 'm1',
+          fieldId: 'member-1',            // gegenereerde UI key
+          memberType: 'adult',
+          firstName: 'Legacy Volw 1', lastName: '',
+        },
+        {
+          entityId: 'm2',
+          fieldId: 'member-2',
+          memberType: 'child',
+          firstName: 'Legacy Kind 1', lastName: '',
+        },
+      ],
+      lastUpdated: '2025-01-01T12:00:00Z',
+    },
+    finance: { income: { items: [] }, expenses: { items: [] } },
+  },
+};
+/**
+ * 🧪 Phoenix Migration Test Helpers
+ * Locatie: src/test-utils/migrationHelpers.ts
+ */
+/**
+ * Splitst een naamstring voor UX doeleinden.
+ * In het data-onderzoek wordt dit veld genegeerd.
+ */
+export const splitNameForUX = (fullName: string = '') => {
+    const parts = fullName.trim().split(' ');
+    return {
+      firstName: parts[0] || 'Lid',
+      lastName: parts.slice(1).join(' ') || ''
+    };
+  };
+  
+export const testDataGenerators = {
+    /**
+     * Genereert een lid in de oude structuur.
+     * Focus op 'type' voor onderzoek naar eetpatronen.
+     */
+    createOldMember: (id: string, name: string, type: string = 'adult') => ({
+      id,
+      naam: name,
+      type: type // 'adult', 'child', 'teenager', 'senior'
+    }),
+  
+    /**
+     * Maakt een representatieve dataset voor je data-onderzoek.
+     */
+    createResearchDataset: () => ({
+      household: {
+        leden: [
+          { id: 'm1', firstName: 'Volwassene', lastName: '', type: 'adult' },
+          { id: 'm2', firstName: 'Puber 1', lastName: '', type: 'teenager' },
+          { id: 'm3', firstName: 'Kind 1', lastName: '', type: 'child' },
+          { id: 'm4', firstName: 'Senior 1', lastName: '', type: 'senior' }
+        ]
+      },
+      transactions: [
+        { id: 't1', amount: 55.50, description: 'Supermarkt', lidId: 'm1' }
+      ]
+    })
+  };
+  
+  export const assertions = {
+    /**
+     * Controleert of de migratie de leeftijdscategorieën correct heeft behouden.
+     */
+    assertMemberTypePreserved: (migratedMembers: any[]) => {
+      const types = migratedMembers.map(m => m.memberType);
+      expect(types).toContain('teenager');
+      expect(types).toContain('child');
+      expect(types).toContain('senior');
+      expect(types).toContain('adult');
+    },
+  
+    /**
+     * Basis validatie voor een Phoenix Member object.
+     */
+    assertValidMember: (member: any) => {
+      expect(member).toHaveProperty('id');
+      expect(member).toHaveProperty('firstName');
+      expect(member).toHaveProperty('memberType'); // De basis voor je onderzoek
+      expect(typeof member.firstName).toBe('string');
+    }
+  };
+  
+  /**
+   * Meet hoe snel de migratie verloopt bij grote datasets.
+   */
+  export const measureMigrationSpeed = async (migrationFn: () => Promise<any>) => {
+    const start = performance.now();
+    const result = await migrationFn();
+    const end = performance.now();
+    return {
+      result,
+      duration: `${(end - start).toFixed(2)}ms`
+    };
+  };
+
+// src/test-utils/mocks.ts
+import { FormState } from '@shared-types/form';
+
+// ——— Types (houd het bij wat je project nu gebruikt) ———
+export type Frequency = 'week' | '4wk' | 'month' | 'quarter' | 'year';
+
+export interface AmountItem {
+  id: string;
+  amountCents: number;
+  frequency?: Frequency | string;
+}
+
+export interface Member {
+  entityId: string;
+  fieldId: string;
+  memberType: 'adult' | 'child';
+  naam?: string;
+  gender?: string;
+  dateOfBirth?: string; // ISO YYYY-MM-DD
+  leeftijd?: number;
+}
+
+export interface FinanceState {
+  income: { items: AmountItem[] };
+  expenses: { items: AmountItem[] };
+}
+
+// ——— Mini PRNG voor deterministische data (optioneel) ———
+let _seed = 42;
+export function setMockSeed(seed: number) { _seed = seed; }
+function rnd() {
+  // LCG: deterministisch, simpel voor tests
+  _seed = (1103515245 * _seed + 12345) % 2 ** 31;
+  return _seed / 2 ** 31;
+}
+function pick<T>(arr: T[]): T {
+  return arr[Math.max(0, Math.min(arr.length - 1, Math.floor(rnd() * arr.length)))];
+}
+
+// ——— Member factories ———
+export function makeMember(index = 1, type: 'adult' | 'child' = 'adult', overrides?: Partial<Member>): Member {
+  const id = `${type}-${index}`;
+  return {
+    entityId: overrides?.entityId ?? id,
+    fieldId: overrides?.fieldId ?? `member-${id}`,
+    memberType: overrides?.memberType ?? type,
+    naam: overrides?.firstName ?? `${type} ${index}`,
+    gender: overrides?.gender,
+    dateOfBirth: overrides?.dateOfBirth,
+    leeftijd: overrides?.leeftijd,
+  };
+}
+
+export function makeMembers(count: number, type: 'adult' | 'child' = 'adult', startIndex = 1): Member[] {
+  return Array.from({ length: count }, (_, i) => makeMember(startIndex + i, type));
+}
+
+export function makeMixedHousehold(adults = 2, children = 0): Member[] {
+  return [...makeMembers(adults, 'adult'), ...makeMembers(children, 'child')];
+}
+
+// ——— Finance item factories ———
+export function makeIncomeItem(index = 1, cents = 10000, frequency: Frequency = 'month'): AmountItem {
+  return { id: `inc-${index}`, amountCents: cents, frequency };
+}
+
+export function makeExpenseItem(index = 1, cents = 5000, frequency: Frequency = 'month'): AmountItem {
+  return { id: `exp-${index}`, amountCents: cents, frequency };
+}
+
+export function makeFinance(
+  income: AmountItem[] = [makeIncomeItem(1, 10000, 'month')],
+  expenses: AmountItem[] = [makeExpenseItem(1, 5000, 'month')]
+): FinanceState {
+  return { income: { items: income }, expenses: { items: expenses } };
+}
+
+// ——— Complete FormState fixtures ———
+export function makePhoenixStateWithHousehold(
+  { adults = 2, children = 0, activeStep = 'WIZARD', currentPageId = 'setupHousehold' }: {
+    adults?: number; children?: number; activeStep?: 'LANDING' | 'WIZARD' | 'DASHBOARD'; currentPageId?: string;
+  },
+  finance?: FinanceState
+): FormState {
+  return {
+    activeStep,
+    currentPageId,
+    isValid: false,
+    data: {
+      setup: { aantalMensen: adults + children, aantalVolwassen: adults },
+      household: { members: makeMixedHousehold(adults, children) },
+      finance: finance ?? makeFinance(),
+    },
+  };
+}
+
+// ——— Convenience: “rijk” scenario’s ———
+export function makeWeeklyIncomeScenario(): FormState {
+  const income = [
+    makeIncomeItem(1, 10000, 'week'),     // €100 / week → ≈ €433.33 / maand
+    makeIncomeItem(2, 30000, 'quarter'),  // €300 / kwartaal → €100 / maand
+    makeIncomeItem(3, 1200000, 'year'),   // €12000 / jaar → €1000 / maand
+  ];
+  return makePhoenixStateWithHousehold({ adults: 2, children: 1 }, makeFinance(income, []));
+}
+
+export function makeCarExpensesScenario(autoCount = 2): FormState {
+  const state = makePhoenixStateWithHousehold({ adults: 2, children: 0 });
+  state.data.setup = { ...state.data.setup, autoCount: autoCount === 0 ? 'Nee' : (autoCount === 1 ? 'Een' : 'Twee') };
+  state.data.finance = makeFinance(
+    [makeIncomeItem(1, 200000, 'month')], // €2000
+    [
+      makeExpenseItem(1, 50000, 'month'), // wonen
+      makeExpenseItem(2, 15000, 'month'), // verzekering/belasting
+      makeExpenseItem(3, 20000, 'month'), // brandstof
+    ],
+  );
+  return state;
+}
+import * as React from 'react';
+import { render, RenderOptions } from '@testing-library/react-native';
+import { ThemeProvider } from '@context/ThemeContext';
+import { FormContext } from '@app/context/FormContext';
+import { FormStateFixture } from './fixtures';
+import { FormState } from '@shared-types/form';
+
+// Safe-area stabiel houden
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
+
+type ProvidersProps = {
+  children: React.ReactNode;
+  state?: FormState;
+  dispatch?: React.Dispatch<any>;
+  theme?: 'light' | 'dark';
+};
+
+export function Providers({ children, state, dispatch }: ProvidersProps) {
+  const value = {
+    state: state ?? FormStateFixture,
+    dispatch: dispatch ?? jest.fn(),
+  };
+
+  return (
+    <ThemeProvider>
+      <FormContext.Provider value={value}>
+        {children}
+      </FormContext.Provider>
+    </ThemeProvider>
+  );
+}
+
+export function renderWithProviders(
+  ui: React.ReactElement,
+  options?: RenderOptions & { state?: FormState; dispatch?: React.Dispatch<any>; theme?: 'light' | 'dark' }
+) {
+  const { state, dispatch, theme = 'light', ...rest } = options ?? {};
+  return render(
+    <Providers state={state} dispatch={dispatch} theme={theme}>
+      {ui}
+    </Providers>, 
+    rest
+  );
+}
+
+
+// src/test-utils/renderHook.tsx
+import * as React from 'react';
+import { renderHook, act } from '@testing-library/react-native';
+import { ThemeProvider } from '@app/context/ThemeContext';
+import { FormContext } from '@app/context/FormContext';
+import { FormStateFixture } from '@test-utils/fixtures';
+import type { FormState } from '@shared-types/form';
+
+// Optioneel maar handig in RN-test suites:
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
+}));
+
+type HookProvidersProps = {
+  children: React.ReactNode;
+  state?: FormState;
+  dispatch?: React.Dispatch<any>;
+};
+
+export function HookProviders({ children, state, dispatch }: HookProvidersProps) {
+  const value = {
+    state: state ?? FormStateFixture,
+    dispatch: dispatch ?? jest.fn(),
+  };
+  return (
+    <ThemeProvider>
+      <FormContext.Provider value={value}>{children}</FormContext.Provider>
+    </ThemeProvider>
+  );
+}
+
+/**
+ * renderHookWithProviders:
+ * - Wrapt je hook automatisch met ThemeProvider + FormContext
+ * - Handig voor hooks die `useTheme()` of `useForm()` gebruiken
+ */
+/**
+ * renderHookWithProviders:
+ * - Wrapt je hook automatisch met ThemeProvider + FormContext
+ */
+export function renderHookWithProviders<TProps, TResult>(
+  callback: (props: TProps) => TResult, // Verwijder de optionele '?' voor betere type-safety
+  options?: {
+    initialProps?: TProps;
+    state?: FormState;
+    dispatch?: React.Dispatch<any>;
+  }
+) {
+  const { initialProps, state, dispatch } = options ?? {};
+
+  // De wrapper krijgt nu de props door van de rerender
+  const wrapper = ({ children, ...props }: { children: React.ReactNode } & TProps) => (
+    <HookProviders 
+      state={(props as any).state || state} 
+      dispatch={dispatch}
+    >
+      {children}
+    </HookProviders>
+  );
+
+  const utils = renderHook(callback, { 
+    initialProps: { ...initialProps, state } as any, 
+    wrapper 
+  });
+
+  return {
+    ...utils,
+    act,
+    // Fix voor de rerender error
+    setState(nextState: FormState) {
+      // In RN RTL geef je alleen de nieuwe props mee
+      utils.rerender({ state: nextState } as any);
+    },
+    getDispatch() {
+      return dispatch ?? jest.fn();
+    },
+  };
+}
+
+// src/test-utils/renderWithState.tsx
+import * as React from 'react';
+import { render, RenderOptions } from '@testing-library/react-native';
+import { ThemeProvider } from '/home/user/pre7/src/app/context/ThemeContext';
+import  {FormContext}  from '@context/FormContext';
+import { FormStateFixture } from '@test-utils/rtl';
+import type { FormState } from '@shared-types/form';
+
+type ProvidersProps = {
+  children: React.ReactNode;
+  state?: FormState;
+  dispatch?: React.Dispatch<any>;
+};
+
+export function Providers({ children, state, dispatch }: ProvidersProps) {
+  const value = { state: state ?? FormStateFixture, dispatch: dispatch ?? jest.fn() };
+  return (
+    <ThemeProvider>
+      <FormContext.Provider value={value}>
+        {children}
+      </FormContext.Provider>
+    </ThemeProvider>
+  );
+}
+
+/**
+ * renderWithState:
+ * - gebruik voor componenten die (indirect) FormContext + ThemeContext nodig hebben
+ * - optioneel custom state meegeven
+ */
+export function renderWithState(
+  ui: React.ReactElement,
+  options?: RenderOptions & { state?: FormState; dispatch?: React.Dispatch<any> }
+) {
+  const { state, dispatch, ...rest } = options ?? {};
+  return render(<Providers state={state} dispatch={dispatch}>{ui}</Providers>, rest);
+}
+
+// src/test-utils/rtl.ts
+import * as React from 'react';
+import {
+  render as rtlRender,
+  screen,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react-native';
+import { Providers } from './render';
+import {makePhoenixState} from './state';
+import { HouseholdFixture } from './fixtures';
+import {FormStateFixture} from './fixtures';
+
+/**
+ * Drop-in render:
+ * - Zelfde signatuur als RTL's render
+ * - Wrapt UI in Providers (ThemeProvider + FormContext)
+ * - Opties (`state`, `dispatch`) worden doorgegeven aan Providers
+ */
+export function render(ui: React.ReactElement, options?: any) {
+  return rtlRender(<Providers {...options}>{ui}</Providers>, options);
+}
+
+// Re-export helpers zodat je tests niets hoeven te veranderen
+export { screen, fireEvent, waitFor, makePhoenixState, HouseholdFixture, FormStateFixture }; // Voeg makePhoenixState hier toe
+
+// Phoenix-proof FormState helper
+import { FormState } from '@shared-types/form';
+
+/* Phoenix-proof FormState helper
+ * Staat toe om slechts een deel van de state (of data) mee te geven.
+ */
+export function makePhoenixState(
+  partial?: Partial<Omit<FormState, 'data'>> & { 
+    data?: Partial<FormState['data']> 
+  }
+): FormState {
+  // 1) Base state met alle verplichte velden volgens het Phoenix-model
+  const base: FormState = {
+    schemaVersion: '1.0', // Toegevoegd voor storage migraties
+    activeStep: 'LANDING',
+    currentPageId: 'setupHousehold',
+    isValid: false,
+    data: {
+      setup: {},
+      household: { members: [] },
+      finance: { income: { items: [] }, expenses: { items: [] } },
+    },
+  };
+
+  // 2) Merge de data-velden zorgvuldig
+  // We zorgen dat de defaults van 'base.data' behouden blijven als ze niet in 'partial.data' zitten
+  const mergedData = {
+    ...base.data,
+    ...(partial?.data ?? {}),
+  };
+
+  // 3) Retourneer het volledige object
+  return {
+    ...base,
+    ...partial,
+    data: mergedData,
+  } as FormState;
+}
+

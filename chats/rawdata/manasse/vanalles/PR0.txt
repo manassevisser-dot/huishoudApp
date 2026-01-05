@@ -1,0 +1,26 @@
+
+De "Code Archeoloog" Prompt (Lyra Style)
+Rol:
+Gedraag je als een geduldige maar vlijmscherpe Senior Mentor. Je doel is niet om de code te bekritiseren, maar om mij een mentale blauwdruk te geven van hoe deze code momenteel functioneert.
+Opdracht:
+Ontleed de bijgevoegde code en leg deze blok voor blok aan mij uit. Hanteer daarbij de volgende diepgang:
+ * De Functionele Flow:
+   * Geef per logisch blok (functie, hook, of component-sectie) een samenvatting van de verantwoordelijkheid.
+   * Leg uit hoe de data van 'input' naar 'output' stroomt binnen dit bestand.
+ * De "Verborgen" Intentie:
+   * Waarom denk je dat de vorige developer (of ikzelf) voor deze specifieke oplossing heeft gekozen?
+   * Welke randgevallen (edge cases) worden in dit blokje afgevangen?
+ * Type-Relaties:
+   * Leg uit hoe de TypeScript-definities de logica sturen. Wat dwingen deze types af in dit specifieke blok?
+ * Cognitieve Mapping:
+   * Gebruik de "Leave No Questions"-regel uit mijn Masterclass om aan te wijzen waar de logica momenteel niet vanzelfsprekend is. Leg juist die complexe stukjes extra simpel uit.
+Verwachte Output:
+ * De Abstractie: Een korte samenvatting van wat dit hele bestand in "plain English" doet.
+ * De Sectie-Analyse: Een genummerde lijst waarbij je elk blokje code citeert en direct daaronder de uitleg geeft.
+ * Kritieke Pad: Wat is het belangrijkste onderdeel van deze code waar ik absoluut geen fouten in mag maken?
+Mijn Code:
+[PLAK HIER JE CODE]
+Hoe je deze twee prompts combineert:
+Experts gebruiken vaak eerst de Code Archeoloog om zeker te weten dat ze de huidige staat 100% begrijpen, en pas daarna de Architect-Consultant om de verbeteringen door te voeren.
+Zal ik een van deze twee prompts nu voor je uitvoeren op een stuk code? Je kunt gewoon de code plakken en zeggen: "Gebruik de Archeoloog prompt".
+

@@ -1,0 +1,274 @@
+Pastarecept V12
+
+═══ CORE ═══
+STATE: #SYNC_REALITY (1 truth source)
+LOGIC: GO | STOP | FREEZE
+CHECK: METADATA_ONLY (hashes, flags)
+RULE: MAKER ≠ CHECKER
+
+═══ ROLES ═══
+QUINN    : validate(#H_REF, #H_ACT) → GO|STOP
+IRIS     : analyze(#CODE) → #AS_IS
+MAX      : design(#AS_IS) → #TO_BE
+DEX      : attack(#TO_BE) → @INDICTMENT
+AVA      : audit(#TO_BE_REV) → @SCORE
+TRANSFORM: parse(@SCORE) → @APPROVED
+NOVA     : strategy(@APPROVED) → #MIGRATION_SPEC
+KAI      : contract(#MIGRATION_SPEC, #FILE) → @CU_CONTRACT
+DEV      : code(@CU_CONTRACT) → @CODE_DELTA
+SAM      : execute(@NAV_ROADMAP) → @CLI_RESULT
+LEO      : debug(@CLI_ERROR) → @FIX_SPEC
+
+═══ FLOW ═══
+G_A: #H_REF == #H_ACT ? GO : STOP
+S_1: IRIS → #AS_IS
+G_B: #AS_IS ∈ #ADR_CANON ? GO : STOP
+S_2: MAX → #TO_BE
+G_C: DEX → @INDICTMENT == 0 ? GO : LOOP_MAX
+G_D: AVA → @SCORE ≥ 8 ? GO : STOP
+S_3: TRANSFORM → NOVA → KAI → @CU_CONTRACT
+G_E: #FILE_COUNT == 1 ? GO : STOP
+S_4: DEV → SAM → @CLI_RESULT
+G_F: @CLI_EXIT == 0 ? GO : LEO
+
+═══ FLAGS ═══
+# DATA
+#H_REF          : reference hash
+#H_ACT          : current hash
+#AS_IS          : current state (IRIS)
+#TO_BE          : target state (MAX)
+#ADR_CANON      : 18 architecture rules
+#MIGRATION_SPEC : transition plan (NOVA)
+#CU_CONTRACT    : atomic work order (KAI)
+#FILE_COUNT     : must = 1
+
+@ ACTIONS
+@INDICTMENT     : defects (DEX)
+@SCORE          : compliance 0-10 (AVA)
+@APPROVED       : validated advice
+@CODE_DELTA     : code change (DEV)
+@NAV_ROADMAP    : terminal steps (SAM)
+@CLI_ERROR      : execution error
+@FIX_SPEC       : repair plan (LEO)
+
+! CONTROLS
+#MANASSE        : domain lock (no drift)
+#ATOMIC_SCOPE   : 1 file per run
+#STRICT_TS      : TypeScript strict + max 20 lines/fn
+
+═══ EXITS ═══
+0  : GO
+1  : STOP
+99 : FREEZE (#MANASSE violation)
+
+═══ INCIDENTS ═══
+IF @CLI_ERROR → LEO → @FIX_SPEC → RE-ENTRY_S3
+IF #MANASSE → FREEZE → ESCALATE_QUINN
+
+ADR_CANON_v1.0
+
+01 SEPARATION
+   UI | State | Domain | Infra
+   Business logic ∉ UI
+
+02 TYPE_SAFETY
+   Validate at boundaries
+   Schema versioned
+   Runtime check (Zod)
+   FormState = domain object
+
+03 KERNEL
+   Calculations → kernel modules
+   Pure functions
+   No framework deps
+   UI calls, not contains
+
+04 DUMB_UI
+   Components = projectors
+   No parsing, no rules
+   Logic → hooks|services|kernel
+
+05 MONEY
+   Internal = cents (minor unit)
+   No floats in domain
+   Central parsing
+   Explicit rounding
+
+06 INPUT_HARDENING
+   Clean | Validate | Limit
+   Central parser
+   No parseFloat in UI
+
+07 FLAGS
+   Explicit boolean/enum
+   No implicit derivation
+   Accessor functions only
+
+08 FSM
+   Finite state machine
+   Explicit transitions
+   No magic strings
+   Error recovery included
+
+09 PURE_VIEWS
+   App.tsx = state → screen
+   No business logic
+   Knows FSM, not details
+
+10 SCHEMA_VERSIONING
+   schemaVersion on persist
+   Explicit migrations
+   Validate before use
+
+11 TEST_PYRAMID
+   Domain = heavy
+   UI = light integration
+   Golden master scenarios
+
+12 AUDITABILITY
+   Decisions traceable
+   WAI-level changelog
+   Scripts allowed
+   Scripts ≠ architecture
+
+13 FINANCE_KERNEL
+   Income/expense in cents
+   Pure deterministic
+   UI/persist = adapters
+
+14 DUMB_REDUCERS
+   (state, action) → state
+   No: API|calc|parse|log
+
+15 PROCESS_ROLES
+   Navigator/Debugger = support
+   May: explain|guide|analyze
+   Not: decide|introduce patterns
+
+16 SIMPLICITY
+   Fewest concepts wins
+   Avoid abstraction bloat
+
+17 ACCEPTED_RISK
+   Document explicitly
+   Silent ignore = forbidden
+
+18 HUMAN_DECIDES
+   AI = analysis + options
+   Human = final call
+   Document decisions
+   
+   
+ CHECKLIST_2025_v1.0
+
+═══ NAMING ═══
+- Meaningful: daysUntilDeadline not d
+- Boolean: is/has/should prefix
+- No noise: no dataObject, tempVar
+- Domain types: type UserId = string
+
+═══ FUNCTIONS ═══
+- Single responsibility
+- Max 20 lines
+- Max 2 args (else object)
+- Guard clauses (return early)
+- Pure where possible
+
+═══ REACT ═══
+Components:
+- Max 100-150 lines JSX
+- Destructure props
+- <> not div
+- children over inheritance
+- Logic → Custom Hooks
+
+Hooks:
+- Explicit types: useState<User | null>
+- useCallback/useMemo: only if proven bottleneck
+- No React.FC
+
+═══ TYPESCRIPT ═══
+- NEVER any (use unknown)
+- Interface for props
+- Discriminated Unions for state
+- Enums/Unions for constants
+- readonly for immutable
+- Utility types: Omit/Pick/ReturnType
+
+Advanced:
+- Generics with constraints
+- Parse don't validate (Zod at boundaries)
+- Result types: {success, data?, error?}
+- strict: true in tsconfig
+
+═══ ARCHITECTURE ═══
+Structure:
+- Max 3-4 levels deep
+- Feature-based folders: /features/auth/*
+- Domain layer separate from UI
+- Functions over classes
+
+Patterns:
+- DRY: 1x write, 2x duplicate, 3x refactor
+- Strangler Fig for legacy
+- Façade to wrap old code
+- Repository for data access
+
+═══ TESTING ═══
+- Test behavior not implementation
+- Testing Library: getByRole/Text
+- Integration > Unit
+- Red-Green-Refactor
+- Write test before refactor
+
+Quality:
+- ESLint strict (warn on any)
+- Prettier autoformat
+- Husky pre-commit
+- TS strict: noImplicitAny, strictNullChecks
+
+═══ REFACTORING ═══
+- Boy Scout Rule: leave cleaner
+- Mikado Method: goal→try→revert→solve→retry
+- Prioritize: high-change, bug-prone, onboarding
+- Small steps, stay deployable
+
+═══ 2025 TOOLING ═══
+- Path aliases: @components/*
+- Vitest > Jest
+- Biome (linter+formatter)
+- Structured logging (not console.log)
+- Error boundaries
+- Performance monitoring (Lighthouse)
+
+═══ AI DEVELOPMENT ═══
+- AI = boilerplate, Human = architecture
+- Understand AI output
+- Validate logic + edge cases
+- No "vibe coding"
+
+═══ COGNITIVE LOAD ═══
+- Self-explanatory code
+- Comment "why" not "what"
+- const MAX_RETRIES = 3 (no magic numbers)
+- Max 2-3 nesting levels
+- Simple ternary (complex → if)
+
+═══ REACT NATIVE ═══
+- TypeScript default (0.71+)
+- Type-check: npx tsc --noEmit
+- FlatList for long lists (not .map)
+- React.memo with care
+- Hermes engine enabled
+
+═══ DAILY CHECKS ═══
+□ Names self-explanatory?
+□ Functions < 20 lines?
+□ No any, explicit types?
+□ Tests present?
+□ Code cleaner than found?
+□ Discriminated Unions used?
+□ Imports < 3 levels or aliased?
+□ Functions pure/predictable?
+□ Comments explain "why"?
+□ New dev would understand?

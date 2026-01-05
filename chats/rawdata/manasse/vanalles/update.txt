@@ -1,0 +1,317 @@
+#!/bin/bash
+# upgrade_phoenix_hardened.sh
+# Upgrade Phoenix Audit Engine naar V3.1 (Hardened)
+# Inclusief backups, atomic writes en portable fixes.
+
+set -euo pipefail
+
+# --- Configuratie ---
+PHOENIX_DIR=".phoenix"
+TIMESTAMP=$(date +%s)
+BACKUP_DIR="${PHOENIX_DIR}/backups/${TIMESTAMP}"
+
+# --- Helper Functies ---
+
+log() {
+    echo -e "🔹 $1"
+}
+
+warn() {
+    echo -e "⚠️  $1"
+}
+
+success() {
+    echo -e "✅ $1"
+}
+
+# Functie om een bestand veilig te updaten (Atomic Write + Backup)
+safe_update() {
+    local target_file="$1"
+    local content_func="$2" # Naam van de functie die content echo-ed
+    
+    local temp_file
+    temp_file=$(mktemp)
+    
+    # 1. Genereer content naar temp file
+    $content_func > "$temp_file"
+    
+    # 2. Validatie (Check of bestand niet leeg is)
+    if [[ ! -s "$temp_file" ]]; then
+        warn "Gegenereerde content voor $target_file is leeg. Abort."
+        rm "$temp_file"
+        return 1
+    fi
+    
+    # 3. Maak Backup als doel bestaat
+    if [[ -f "$target_file" ]]; then
+        mkdir -p "$BACKUP_DIR/$(dirname "$target_file")"
+        cp "$target_file" "$BACKUP_DIR/$target_file"
+        log "Backup gemaakt: $BACKUP_DIR/$target_file"
+    fi
+    
+    # 4. Atomische verplaatsing
+    mkdir -p "$(dirname "$target_file")"
+    mv "$temp_file" "$target_file"
+    chmod +x "$target_file"
+    success "$target_file bijgewerkt."
+}
+
+# --- Content Generators ---
+
+content_checkers() {
+cat << 'EOF'
+#!/bin/bash
+# .phoenix/checkers.sh - Validatie Logica (V3.1 - Hardened)
+set -uo pipefail
+
+check_file_exists() {
+    local _file="$1"
+    local _desc="$2"
+    atomic_inc "total"
+    
+    if [[ -f "${_file}" ]]; then
+        echo -e "${GREEN}${ICON_OK} ${_desc} gevonden${NC}"
+        atomic_inc "passed"
+        return 0
+    else
+        echo -e "${RED}${ICON_FAIL} ${_desc} NIET gevonden (${_file})${NC}"
+        record_failure "${_desc}"
+        return 1
+    fi
+}
+
+# --- Universele Patroon Checker ---
+check_pattern() {
+    local _pat="${1:-}"
+    local _target="${2:-}"
+    local _desc="${3:-Pattern}"
+    local _min="${4:-1}"
+    local _exclude="${5:-}"
+    local _id="${6:-}"
+    
+    atomic_inc "total"
+    log_verbose "Check: ${_desc} op ${_target}"
+
+    if [[ ! -e "${_target}" ]]; then
+        echo -e "${RED}${ICON_FAIL} ${_desc} ${BOLD}(target niet gevonden: ${_target})${NC}"
+        record_failure "${_desc}"
+        return 1
+    fi
+
+    local _matches=""
+    
+    # 1. Probeer Ripgrep (Snelst, respecteert .gitignore)
+    if command -v rg >/dev/null 2>&1; then
+        # rg gebruikt standaard smart-case, maar we dwingen case-insensitive af voor consistentie met grep fallback
+        if [[ -n "${_exclude}" ]]; then
+            _matches="$(rg -n -i --type-add 'ts:*.{ts,tsx}' --type ts -e "${_pat}" "${_target}" 2>/dev/null | grep -vE "${_exclude}" || true)"
+        else
+            _matches="$(rg -n -i --type-add 'ts:*.{ts,tsx}' --type ts -e "${_pat}" "${_target}" 2>/dev/null || true)"
+        fi
+    else
+        # 2. Fallback naar Grep (Hardened)
+        # -r: recursief
+        # -n: regelnummers
+        # -I: negeer binaire bestanden (Fixes .venv garbage)
+        # -i: case insensitive (Fixes (?i) regex issue)
+        # --exclude-dir: voorkomt scannen van zware mappen
+        local _opts=(-rnIi --exclude-dir={node_modules,.venv,.phoenix,.git,__pycache__,dist,build} --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --include="*.json")
+        
+        _matches="$(grep "${_opts[@]}" -E "${_pat}" "${_target}" 2>/dev/null | { [[ -n "${_exclude}" ]] && grep -vE "${_exclude}" || cat; } || true)"
+    fi
+
+    local _count="0"
+    [[ -n "${_matches}" ]] && _count="$(printf '%s\n' "${_matches}" | grep -c '^')"
+
+    if [[ "${_count}" -ge "${_min}" ]]; then
+        echo -e "${GREEN}${ICON_OK} ${_desc} ${BOLD}(${_count})${NC}"
+        atomic_inc "passed"
+        [[ "${VERBOSE}" == "true" && -n "${_matches}" ]] && printf '%s\n' "${_matches}" | head -3 | sed 's/^/   /'
+        return 0
+    else
+        echo -e "${RED}${ICON_FAIL} ${_desc} ${BOLD}(${_count} < ${_min})${NC}"
+        record_failure "${_id}" "${_desc}"
+        [[ -n "${_id}" ]] && suggest_fix "${_id}" "print"
+        return 1
+    fi
+}
+
+# --- Anti-patroon Checker ---
+check_antipattern() {
+    local _pat="${1:-}"
+    local _target="${2:-}"
+    local _desc="${3:-Anti-pattern}"
+    local _exclude="${4:-}"
+    local _id="${5:-}"
+
+    atomic_inc "total"
+    if [[ ! -e "${_target}" ]]; then
+        echo -e "${YELLOW}${ICON_WARN} ${_desc} ${BOLD}(overslag: doel niet gevonden)${NC}"
+        atomic_inc "passed"; return 0
+    fi
+
+    local _matches=""
+    if command -v rg >/dev/null 2>&1; then
+        if [[ -n "${_exclude}" ]]; then
+            _matches="$(rg -n -i --type-add 'ts:*.{ts,tsx}' --type ts -e "${_pat}" "${_target}" 2>/dev/null | grep -vE "${_exclude}" || true)"
+        else
+            _matches="$(rg -n -i --type-add 'ts:*.{ts,tsx}' --type ts -e "${_pat}" "${_target}" 2>/dev/null || true)"
+        fi
+    else
+        # Fallback Grep (Hardened)
+        local _opts=(-rnIi --exclude-dir={node_modules,.venv,.phoenix,.git,__pycache__,dist,build} --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --include="*.json")
+        _matches="$(grep "${_opts[@]}" -E "${_pat}" "${_target}" 2>/dev/null | { [[ -n "${_exclude}" ]] && grep -vE "${_exclude}" || cat; } || true)"
+    fi
+
+    local _count="0"
+    [[ -n "${_matches}" ]] && _count="$(printf '%s\n' "${_matches}" | grep -c '^')"
+
+    if [[ "${_count}" -eq 0 ]]; then
+        echo -e "${GREEN}${ICON_OK} ${_desc} ${BOLD}(geen verboden elementen)${NC}"
+        atomic_inc "passed"
+        return 0
+    else
+        echo -e "${RED}${ICON_FAIL} ${_desc} ${BOLD}(${_count} verboden elementen gevonden!)${NC}"
+        record_failure "${_id}" "${_desc}"
+        printf '%s\n' "${_matches}" | head -3 | sed 's/^/   /'
+        [[ -n "${_id}" ]] && suggest_fix "${_id}" "print"
+        return 1
+    fi
+}
+
+run_cmd() {
+    local cmd="$1" desc="$2" allow="${3:-false}"
+    atomic_inc "total"
+    
+    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+        echo -e "${YELLOW}${ICON_WARN} $desc [DRY RUN]${NC}"
+        atomic_inc "passed" # Let op: in dry run tellen we als pass, maar voeren niets uit
+        return 0
+    fi
+
+    local out; 
+    if out=$(eval "$cmd" 2>&1); then
+        echo -e "${GREEN}${ICON_OK} $desc${NC}"
+        atomic_inc "passed"
+        return 0
+    else
+        if [[ "$allow" == "true" ]]; then
+            echo -e "${YELLOW}${ICON_WARN} $desc (toegestane fout)${NC}"
+            atomic_inc "passed"
+            return 0
+        else
+            echo -e "${RED}${ICON_FAIL} $desc${NC}"
+            record_failure "cmd_fail" "$desc"
+            if [[ "${VERBOSE:-false}" == "true" ]]; then
+                echo -e "${DIM}Foutmelding details:${NC}"
+                echo "$out" | tail -5 | sed 's/^/    /'
+            fi
+            return 1
+        fi
+    fi
+}
+EOF
+}
+
+content_audits() {
+cat << 'EOF'
+#!/bin/bash
+# .phoenix/audits.sh - Technische Audit Definities
+set -uo pipefail
+
+run_all_audits() {
+    log_section "PHOENIX TECHNICAL AUDITS"
+
+    # --- 1. CORE & INTEGRITY ---
+    check_file_exists "package.json" "Node.js Manifest"
+    check_file_exists "tsconfig.json" "TypeScript Configuration"
+
+    # --- 2. ARCHITECTUUR ---
+    check_pattern "as const" "src" "Type-safety (SSOT)" "1" "" "ssot"
+
+    # --- 3. DATA & PARSING ---
+    check_pattern "Math\.max\(0," "src" "Non-negative parser" "1" "" "legacy_parsing"
+    check_pattern "\.toFixed\(2\)" "src" "Currency formatting" "1" "" "legacy_parsing"
+
+    # --- 4. IMPORT BELEID ---
+    check_antipattern "../../../" "src" "Deep Imports" "" "deep_imports"
+
+    # --- 5. CODE HYGIËNE ---
+    # Console log regex verbeterd: zoek naar de functie aanroep
+    check_antipattern "console\.(log|debug)\(" "src" "Console Statements" "(\.test\.|dev-tools|logger\.ts)" "console_statements"
+
+    # --- 6. STATE MANAGEMENT ---
+    check_pattern "SET_|TOGGLE_|UPDATE_|RESET_" "src" "Declarative Actions" "1" "" "reducer_actions"
+
+    # --- 7. DOMAIN INTEGRITY (WAI-007) ---
+    # Regex verbeterd: woordgrenzen \b en geen (?i) meer (wordt door checker afgehandeld)
+    # Extra excludes toegevoegd in de regex string voor de zekerheid
+    check_antipattern "\b(provincie|province|district)\b" "src" "Geo-granulariteit (ADR-18)" "(node_modules|\.venv|\.phoenix|\.git|__pycache__)" "geo_terms"
+    
+    check_pattern "geo_scope" "src/domain/rules/evaluateDomainRules.ts" "Contract Naming (geo_scope)" "1" "" "contract_naming"
+    check_pattern "PHOENIX_EVENT" "src/domain/rules/evaluateDomainRules.ts" "Telemetry (PHOENIX_EVENT)" "1" "" "telemetry"
+
+    # --- 8. REFACTOR VALIDATION (WAI-008) ---
+    local temp_test_file=".temp_wai008_check.ts"
+    cat > "$temp_test_file" << 'TS_EOF'
+import { getAppStyles } from './src/ui/styles/useAppStyles';
+import { Colors } from './src/ui/styles/Colors';
+import { Space } from './src/ui/styles/Tokens';
+
+try {
+  if (Space.xl !== 20) throw new Error(`Space tokens mismatch`);
+  if (Colors.light.primary !== '#007AFF') throw new Error(`Color tokens mismatch`);
+
+  const styles = getAppStyles('light');
+  const requiredKeys = ['container', 'button', 'moneyInputWrapper'];
+  const missing = requiredKeys.filter(k => !styles?.[k]);
+
+  if (missing.length > 0) throw new Error(`Style merging failed: ${missing.join(', ')}`);
+  
+  process.exit(0);
+} catch (e) {
+  console.error(e instanceof Error ? e.message : String(e));
+  process.exit(1);
+}
+TS_EOF
+
+    # Dependency check voor tsconfig-paths om silent fail te voorkomen
+    if ! npm list tsconfig-paths &>/dev/null; then
+        echo -e "${YELLOW}⚠️  tsconfig-paths ontbreekt - installeren voor test...${NC}"
+        npm install --no-save tsconfig-paths &>/dev/null
+    fi
+
+    run_cmd "npx ts-node -r tsconfig-paths/register --transpileOnly $temp_test_file" "Refactor Integration (Styles/Tokens)" "false"
+    rm -f "$temp_test_file"
+}
+EOF
+}
+
+# --- UITVOERING ---
+
+log "🚀 Start Phoenix Hardening Process..."
+
+# 1. Update checkers.sh
+safe_update ".phoenix/checkers.sh" content_checkers
+
+# 2. Update audits.sh
+safe_update ".phoenix/audits.sh" content_audits
+
+# 3. Patch Codefile (Portable Sed)
+TARGET_TS="src/domain/rules/evaluateDomainRules.ts"
+if [[ -f "$TARGET_TS" ]]; then
+    log "Controleren van $TARGET_TS..."
+    # Gebruik een tijdelijk bestand voor sed (Portable op Linux/Mac)
+    if grep -q "GEEN PROVINCIES" "$TARGET_TS"; then
+        sed 's/GEEN PROVINCIES/GEEN SUB-NATIONALE NIVEAUS/g' "$TARGET_TS" > "${TARGET_TS}.tmp"
+        mv "${TARGET_TS}.tmp" "$TARGET_TS"
+        success "Commentaar in evaluateDomainRules.ts aangepast."
+    else
+        log "Geen aanpassing nodig in evaluateDomainRules.ts."
+    fi
+fi
+
+echo ""
+success "Upgrade voltooid!"
+echo "📂 Backups opgeslagen in: $BACKUP_DIR"
+echo "👉 Draai nu './phoenix audit' om de geharde checks te testen."

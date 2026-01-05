@@ -1,0 +1,581 @@
+#!/usr/bin/env bash
+# upgrade_phoenix_ultimate.sh
+# Upgrade COMPLETE Phoenix Audit Engine naar V3.2 (Hardened & Unified)
+# Inclusief Core, Reports, Extractors, Config, Checkers en Audits.
+
+set -euo pipefail
+
+# --- Globale Variabelen Initialisatie (voor set -u safety) ---
+DRY_RUN=${DRY_RUN:-false}
+VERBOSE=${VERBOSE:-false}
+
+# --- Configuratie ---
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$REPO_ROOT"
+
+PHOENIX_DIR=".phoenix"
+TIMESTAMP=$(date +%s)
+BACKUP_DIR="${PHOENIX_DIR}/backups/${TIMESTAMP}"
+
+# --- Helper Functies ---
+
+log() { echo -e "🔹 $1"; }
+warn() { echo -e "⚠️  $1"; }
+success() { echo -e "✅ $1"; }
+
+# Functie: Atomic Write + Backup
+safe_update() {
+  local target_file="$1"
+  local content_func="$2"
+  local temp_file
+  temp_file="$(mktemp)"
+
+  # 1) Genereer content naar tijdelijke file
+  "$content_func" > "$temp_file"
+
+  # 2) Validatie: bestand mag niet leeg zijn
+  if [[ ! -s "$temp_file" ]]; then
+    warn "Gegenereerde content voor $target_file is leeg. Abort."
+    rm -f "$temp_file"
+    return 1
+  fi
+
+  # 3) Diff tonen als doel bestaat én inhoud verandert
+  if [[ -f "$target_file" ]] && ! cmp -s "$target_file" "$temp_file"; then
+    echo
+    log "⚖️  Diff voor ${target_file}:"
+    if command -v git >/dev/null 2>&1; then
+      # Gebruik git diff voor kleuren, negeer exit code
+      git --no-pager diff --no-index --color=always "$target_file" "$temp_file" | sed -n '1,200p' || true
+    else
+      diff -u "$target_file" "$temp_file" | sed -n '1,200p' || true
+    fi
+
+    # 3a) Backup maken
+    mkdir -p "$BACKUP_DIR/$(dirname "$target_file")"
+    cp "$target_file" "$BACKUP_DIR/$target_file"
+    log "Backup opgeslagen in: $BACKUP_DIR/$target_file"
+  fi
+
+  # 4) DRY_RUN check
+  if [[ "$DRY_RUN" == "true" ]]; then
+    log "[DRY RUN] Zou $target_file bijwerken. Bestand behouden."
+    rm -f "$temp_file"
+    return 0
+  fi
+
+  # 5) Syntax Check (Alleen voor .sh bestanden)
+  if [[ "$target_file" == *.sh ]]; then
+    if ! bash -n "$temp_file"; then
+      warn "❌ Syntax fout gedetecteerd in gegenereerde code voor $target_file. Update geannuleerd."
+      rm -f "$temp_file"
+      return 1
+    fi
+  fi
+
+  # 6) Atomische plaatsing
+  mkdir -p "$(dirname "$target_file")"
+  mv "$temp_file" "$target_file"
+  chmod +x "$target_file"
+
+  success "$target_file bijgewerkt."
+}
+
+# ==============================================================================
+# 1. CORE.SH - Het hart van de engine
+# ==============================================================================
+content_core() {
+cat << 'EOF'
+#!/usr/bin/env bash
+# .phoenix/core.sh - Core Logic, Locking & Config (V3.2)
+# Hardened: Race-condition free locking, safe defaults.
+
+# --- Global Defaults ---
+VERBOSE=${VERBOSE:-false}
+PARALLEL=${PARALLEL:-false}
+DRY_RUN=${DRY_RUN:-false}
+SOFT_FAIL=${SOFT_FAIL:-false}
+GENERATE_REPORT=${GENERATE_REPORT:-false}
+
+# Cache Config
+export CACHE_DIR="/tmp/phoenix-audit-cache"
+
+# --- Styling & Icons ---
+ICON_OK="✅"
+ICON_FAIL="❌"
+ICON_WARN="⚠️"
+
+BOLD='\033[1m'
+DIM='\033[2m'
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+# --- Init ---
+init_counters() {
+    mkdir -p "$CACHE_DIR"
+    echo "0" > "$CACHE_DIR/total"
+    echo "0" > "$CACHE_DIR/passed"
+    echo "0" > "$CACHE_DIR/failed"
+    : > "$CACHE_DIR/failed_items.txt"
+}
+
+# --- Atomic Counters (File Lock Based) ---
+atomic_inc() {
+    local name="$1"
+    local file="$CACHE_DIR/$name"
+    local lock="$CACHE_DIR/$name.lock"
+    
+    # Zorg dat bestand bestaat
+    [[ ! -f "$file" ]] && echo "0" > "$file"
+    
+    # Gebruik flock op een apart lockbestand voor veiligheid
+    (
+        flock -x 200
+        local val
+        val=$(cat "$file")
+        echo $(( val + 1 )) > "$file"
+    ) 200>"$lock"
+}
+
+read_counter() {
+    cat "$CACHE_DIR/$1" 2>/dev/null || echo "0"
+}
+
+record_failure() {
+    local _id="${1:-unknown}"
+    local _desc="${2:-No description}"
+    atomic_inc "failed"
+    
+    # Atomic append met flock
+    (
+        flock -x 200
+        echo "$_id $_desc" >> "$CACHE_DIR/failed_items.txt"
+    ) 200>"$CACHE_DIR/failed_items.lock"
+}
+
+log_section() {
+    echo -e "\n${BLUE}${BOLD}=== $1 ===${NC}"
+}
+
+log_verbose() {
+    [[ "$VERBOSE" == "true" ]] && echo -e "${DIM}  [DEBUG] $1${NC}"
+}
+
+# Config Loader
+load_config() {
+    local conf_file=".phoenix-audit.conf"
+    if [[ -f "$conf_file" ]]; then
+        source "$conf_file"
+    fi
+    # Defaults als config mist
+    export max_household_size=${max_household_size:-5}
+    declare -gA THRESHOLDS
+    THRESHOLDS[max_household_size]=$max_household_size
+}
+# Direct laden bij sourcen
+load_config
+EOF
+}
+
+# ==============================================================================
+# 2. CHECKERS.SH - De validatie logica
+# ==============================================================================
+content_checkers() {
+cat << 'EOF'
+#!/usr/bin/env bash
+# .phoenix/checkers.sh - Validatie Logica (V3.2)
+# Hardened: Strict target scoping, binary exclusion, regex fixes.
+
+check_file_exists() {
+    local _file="$1"
+    local _desc="$2"
+    atomic_inc "total"
+    if [[ -f "${_file}" ]]; then
+        echo -e "${GREEN}${ICON_OK} ${_desc} gevonden${NC}"
+        atomic_inc "passed"
+        return 0
+    else
+        echo -e "${RED}${ICON_FAIL} ${_desc} NIET gevonden (${_file})${NC}"
+        record_failure "missing_file" "${_desc}"
+        return 1
+    fi
+}
+
+check_pattern() {
+    local _pat="${1:-}"
+    local _target="${2:-}"
+    local _desc="${3:-Pattern}"
+    local _min="${4:-1}"
+    local _exclude="${5:-}"
+    local _id="${6:-}"
+    
+    atomic_inc "total"
+    log_verbose "Check: ${_desc} op ${_target}"
+
+    if [[ ! -e "${_target}" ]]; then
+        echo -e "${RED}${ICON_FAIL} ${_desc} ${BOLD}(target niet gevonden)${NC}"
+        record_failure "${_id}" "${_desc}"
+        return 1
+    fi
+
+    local _matches=""
+    # 1. Probeer Ripgrep
+    if command -v rg >/dev/null 2>&1; then
+        if [[ -n "${_exclude}" ]]; then
+            _matches="$(rg -n -i --type-add 'ts:*.{ts,tsx}' --type ts -e "${_pat}" "${_target}" 2>/dev/null | grep -vE "${_exclude}" || true)"
+        else
+            _matches="$(rg -n -i --type-add 'ts:*.{ts,tsx}' --type ts -e "${_pat}" "${_target}" 2>/dev/null || true)"
+        fi
+    else
+        # 2. Fallback Grep (Hardened flags: -I ignore binary, -i case insensitive)
+        local _opts=(-rnIi --exclude-dir={node_modules,.venv,.phoenix,.git,__pycache__,dist,build} --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --include="*.json")
+        _matches="$(grep "${_opts[@]}" -E "${_pat}" "${_target}" 2>/dev/null | { [[ -n "${_exclude}" ]] && grep -vE "${_exclude}" || cat; } || true)"
+    fi
+
+    local _count="0"
+    [[ -n "${_matches}" ]] && _count="$(printf '%s\n' "${_matches}" | grep -c '^')"
+
+    if [[ "${_count}" -ge "${_min}" ]]; then
+        echo -e "${GREEN}${ICON_OK} ${_desc} ${BOLD}(${_count})${NC}"
+        atomic_inc "passed"
+        [[ "${VERBOSE}" == "true" && -n "${_matches}" ]] && printf '%s\n' "${_matches}" | head -3 | sed 's/^/   /'
+        return 0
+    else
+        echo -e "${RED}${ICON_FAIL} ${_desc} ${BOLD}(${_count} < ${_min})${NC}"
+        record_failure "${_id}" "${_desc}"
+        [[ -n "${_id}" ]] && suggest_fix "${_id}" "print"
+        return 1
+    fi
+}
+
+check_antipattern() {
+    local _pat="${1:-}"
+    local _target="${2:-}"
+    local _desc="${3:-Anti-pattern}"
+    local _exclude="${4:-}"
+    local _id="${5:-}"
+
+    atomic_inc "total"
+    if [[ ! -e "${_target}" ]]; then
+        echo -e "${YELLOW}${ICON_WARN} ${_desc} ${BOLD}(overslag: doel niet gevonden)${NC}"
+        atomic_inc "passed"; return 0
+    fi
+
+    local _matches=""
+    if command -v rg >/dev/null 2>&1; then
+        if [[ -n "${_exclude}" ]]; then
+            _matches="$(rg -n -i --type-add 'ts:*.{ts,tsx}' --type ts -e "${_pat}" "${_target}" 2>/dev/null | grep -vE "${_exclude}" || true)"
+        else
+            _matches="$(rg -n -i --type-add 'ts:*.{ts,tsx}' --type ts -e "${_pat}" "${_target}" 2>/dev/null || true)"
+        fi
+    else
+        local _opts=(-rnIi --exclude-dir={node_modules,.venv,.phoenix,.git,__pycache__,dist,build} --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" --include="*.json")
+        _matches="$(grep "${_opts[@]}" -E "${_pat}" "${_target}" 2>/dev/null | { [[ -n "${_exclude}" ]] && grep -vE "${_exclude}" || cat; } || true)"
+    fi
+
+    local _count="0"
+    [[ -n "${_matches}" ]] && _count="$(printf '%s\n' "${_matches}" | grep -c '^')"
+
+    if [[ "${_count}" -eq 0 ]]; then
+        echo -e "${GREEN}${ICON_OK} ${_desc} ${BOLD}(clean)${NC}"
+        atomic_inc "passed"
+        return 0
+    else
+        echo -e "${RED}${ICON_FAIL} ${_desc} ${BOLD}(${_count} matches!)${NC}"
+        record_failure "${_id}" "${_desc}"
+        printf '%s\n' "${_matches}" | head -3 | sed 's/^/   /'
+        [[ -n "${_id}" ]] && suggest_fix "${_id}" "print"
+        return 1
+    fi
+}
+
+run_cmd() {
+    local cmd="$1" desc="$2" allow="${3:-false}"
+    atomic_inc "total"
+    
+    if [[ "${DRY_RUN:-false}" == "true" ]]; then
+        echo -e "${YELLOW}${ICON_WARN} $desc [DRY RUN]${NC}"
+        atomic_inc "passed"
+        return 0
+    fi
+
+    local out; 
+    if out=$(eval "$cmd" 2>&1); then
+        echo -e "${GREEN}${ICON_OK} $desc${NC}"
+        atomic_inc "passed"
+        return 0
+    else
+        if [[ "$allow" == "true" ]]; then
+            echo -e "${YELLOW}${ICON_WARN} $desc (toegestane fout)${NC}"
+            atomic_inc "passed"
+            return 0
+        else
+            echo -e "${RED}${ICON_FAIL} $desc${NC}"
+            record_failure "cmd_fail" "$desc"
+            [[ "${VERBOSE:-false}" == "true" ]] && echo -e "${DIM}Fout:${NC}\n$out" | head -5 | sed 's/^/    /'
+            return 1
+        fi
+    fi
+}
+EOF
+}
+
+# ==============================================================================
+# 3. REPORTS.SH - Rapportage & Tips
+# ==============================================================================
+content_reports() {
+cat << 'EOF'
+#!/usr/bin/env bash
+# .phoenix/reports.sh - Rapportage & Tips (V3.2)
+
+suggest_fix() {
+    local id="$1"
+    local mode="${2:-"print"}" 
+    local tip=""
+
+    case "$id" in
+        ssot)               tip="Gebruik 'as const' in selectors/config voor type-safety." ;;
+        reducer_actions)    tip="Gebruik declaratie types: SET_, TOGGLE_, UPDATE_, of RESET_." ;;
+        legacy_parsing)     tip="Centraliseer nummer-parsing in src/utils/numbers.ts." ;;
+        deep_imports)       tip="Gebruik path aliases (@ui, @domain) i.p.v. ../../../." ;;
+        console_statements) tip="Gebruik de interne Logger, geen console.log." ;;
+        
+        # WAI-007
+        geo_terms)          tip="ADR-18: Verwijder provincie/district logica. Gebruik nationaal niveau." ;;
+        contract_naming)    tip="Zorg dat 'geo_scope' aanwezig is in evaluateDomainRules." ;;
+        telemetry)          tip="Zorg voor 'PHOENIX_EVENT' logging in kritieke flows." ;;
+        
+        missing_file)       tip="Dit bestand is verplicht voor de applicatie structuur." ;;
+        cmd_fail)           tip="Check de log output voor TypeScript/Test fouten." ;;
+        *)                  tip="Raadpleeg de technische documentatie." ;;
+    esac
+
+    if [[ "$mode" == "print" ]]; then
+        echo -e "   ${YELLOW}💡 Tip: ${tip}${NC}"
+    else
+        echo "${tip}"
+    fi
+}
+
+generate_report() {
+    [[ "${GENERATE_REPORT}" != "true" ]] && return
+    
+    local t p f r g gc outdir file
+    t="$(read_counter "total")" 
+    p="$(read_counter "passed")" 
+    f="$(read_counter "failed")" 
+    
+    if [[ "${t}" -gt 0 ]]; then r=$(( p * 100 / t )); else r=0; fi
+    
+    g="F"; gc="fail"
+    [[ "$r" -ge 90 ]] && { g="A"; gc="pass"; }
+    [[ "$r" -ge 80 && "$r" -lt 90 ]] && { g="B"; gc="warn"; }
+    
+    outdir="artifacts"
+    mkdir -p "${outdir}"
+    file="${outdir}/phoenix-audit-report.html"
+    
+    local fixes_html=""
+    if [[ -s "$CACHE_DIR/failed_items.txt" ]]; then
+        while read -r line; do
+            [[ -z "$line" ]] && continue
+            local id_key=$(echo "$line" | awk '{print $1}') 
+            local desc=$(echo "$line" | cut -d' ' -f2-)
+            local tip=$(suggest_fix "$id_key" "return")
+            fixes_html+="<li><strong class='fail'>$desc</strong>: $tip</li>"
+        done < "$CACHE_DIR/failed_items.txt"
+    else
+        fixes_html="<li><span class='pass'>✅ Alles schoon!</span></li>"
+    fi
+
+    # Config waarde ophalen
+    local hh_limit="${THRESHOLDS[max_household_size]:-5}"
+    local stat_msg=""
+    if [[ "$hh_limit" -ge 5 ]]; then
+        stat_msg="<div class='info'>ℹ️ Config: Huishoudens > 5 hebben speciale status.</div>"
+    fi
+
+    cat > "${file}" <<HTML
+<!DOCTYPE html>
+<html lang="nl"><head><meta charset="UTF-8"><title>Phoenix Audit</title>
+<style>
+    body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:20px;background:#f4f6f8}
+    .card{background:white;padding:30px;border-radius:12px;box-shadow:0 2px 4px rgba(0,0,0,0.1)}
+    .pass{color:#2e7d32}.fail{color:#d32f2f}.warn{color:#ed6c02}
+    .grade{font-size:4rem;text-align:center;font-weight:800;margin:20px 0}
+    h1{color:#1976d2;border-bottom:2px solid #eee;padding-bottom:10px}
+    ul{list-style:none;padding:0} 
+    li{margin-bottom:10px;padding:15px;background:#fff5f5;border-left:4px solid #d32f2f;border-radius:4px}
+    .info{margin-top:15px;padding:10px;background:#e3f2fd;color:#0d47a1;border-radius:4px}
+</style>
+</head><body><div class="card">
+    <h1>🚀 Phoenix Audit Report</h1>
+    <div class="grade ${gc}">Grade: ${g} <span style="font-size:1.5rem">(${r}%)</span></div>
+    <div style="text-align:center; margin-bottom:20px;">
+        <strong>Totaal: ${t}</strong> | <span class="pass">Geslaagd: ${p}</span> | <span class="fail">Gefaald: ${f}</span>
+    </div>
+    <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+    <h2>Bevindingen</h2>
+    <ul>${fixes_html}</ul>
+    ${stat_msg}
+    <p style="margin-top:30px; color:#999; font-size:0.8rem;">Gen: $(date)</p>
+</div></body></html>
+HTML
+    echo -e "${GREEN}${ICON_OK} HTML Rapport: ${file}${NC}" 
+}
+
+show_summary() {
+    local passed=$(read_counter "passed")
+    local failed=$(read_counter "failed")
+    echo -e "\n${BLUE}${BOLD}=== RESULTAAT ===${NC}"
+    echo -e "Geslaagd: ${GREEN}$passed${NC} | Gefaald: ${RED}$failed${NC}"
+    if [[ "$failed" -eq 0 ]]; then echo -e "Grade: ${GREEN}${BOLD}A+${NC}";
+    elif [[ "$failed" -le 2 ]]; then echo -e "Grade: ${YELLOW}B${NC}";
+    else echo -e "Grade: ${RED}${BOLD}F${NC}"; fi
+}
+EOF
+}
+
+# ==============================================================================
+# 4. EXTRACTORS.SH - Helpers
+# ==============================================================================
+content_extractors() {
+cat << 'EOF'
+#!/usr/bin/env bash
+# .phoenix/extractors.sh - Helpers (V3.2)
+
+find_reducer_file() {
+    find "${1:-src}" -type f \( -name "*Reducer*" -o -name "reducer.ts" \) 2>/dev/null | head -1
+}
+
+# Simpele helpers voor regex checks (indien nodig voor toekomstige uitbreiding)
+extract_declared_actions() {
+    grep -rhE "export const [A-Z0-9_]+" "${@}" 2>/dev/null | grep -oE "[A-Z0-9_]{4,}" | sort -u
+}
+EOF
+}
+
+# ==============================================================================
+# 5. AUDITS.SH - De Definities (WAI-007 + WAI-008 included)
+# ==============================================================================
+content_audits() {
+cat << 'EOF'
+#!/usr/bin/env bash
+# .phoenix/audits.sh - Definities (V3.2)
+set -uo pipefail
+
+run_all_audits() {
+    log_section "PHOENIX TECHNICAL AUDITS"
+
+    # 1. INTEGRITEIT
+    check_file_exists "package.json" "Node.js Manifest"
+    check_file_exists "tsconfig.json" "TypeScript Configuration"
+
+    # 2. ARCHITECTUUR
+    check_pattern "as const" "src" "Type-safety (SSOT)" "1" "" "ssot"
+
+    # 3. PARSING
+    check_pattern "Math\.max\(0," "src" "Non-negative parser" "1" "" "legacy_parsing"
+    check_pattern "\.toFixed\(2\)" "src" "Currency formatting" "1" "" "legacy_parsing"
+
+    # 4. IMPORT BELEID
+    check_antipattern "../../../" "src" "Deep Imports" "" "deep_imports"
+
+    # 5. HYGIËNE
+    check_antipattern "console\.(log|debug)\(" "src" "Console Statements" "(^|/)(.*\.test\.|dev-tools/|logger\.ts$)" "console_statements"
+
+    # 6. STATE
+    check_pattern "(SET_|TOGGLE_|UPDATE_|RESET_)" "src" "Declarative Actions" "1" "" "reducer_actions"
+
+    # 7. DOMAIN INTEGRITY (WAI-007)
+    check_antipattern "\b(provincie|province|district)\b" "src" "Geo-granulariteit (ADR-18)" "(node_modules|\.venv|\.phoenix|\.git|__pycache__)" "geo_terms"
+    
+    check_pattern "geo_scope" "src/domain/rules/evaluateDomainRules.ts" "Contract Naming (geo_scope)" "1" "" "contract_naming"
+    check_pattern "PHOENIX_EVENT" "src/domain/rules/evaluateDomainRules.ts" "Telemetry (PHOENIX_EVENT)" "1" "" "telemetry"
+
+    # 8. REFACTOR VALIDATION (WAI-008)
+    local temp_test_file=".temp_wai008_check.ts"
+    cat > "$temp_test_file" << 'TS_EOF'
+import { getAppStyles } from './src/ui/styles/useAppStyles';
+import { Colors } from './src/ui/styles/Colors';
+import { Space } from './src/ui/styles/Tokens';
+
+try {
+  if (Space.xl !== 20) throw new Error(`Space tokens mismatch`);
+  if (Colors.light.primary !== '#007AFF') throw new Error(`Color tokens mismatch`);
+
+  const styles = getAppStyles('light');
+  if (!styles.container || !styles.button || !styles.moneyInputWrapper) {
+     throw new Error('Style merging failed');
+  }
+  process.exit(0);
+} catch (e) {
+  console.error(e instanceof Error ? e.message : String(e));
+  process.exit(1);
+}
+TS_EOF
+
+    # Installeer tsconfig-paths tijdelijk als het mist (silent)
+    if ! npm list tsconfig-paths &>/dev/null; then
+        npm install --no-save tsconfig-paths &>/dev/null
+    fi
+
+    run_cmd "npx ts-node -r tsconfig-paths/register --transpileOnly $temp_test_file" "Refactor Integration (Styles/Tokens)" "false"
+    rm -f "$temp_test_file"
+}
+EOF
+}
+
+# ==============================================================================
+# 6. CONFIG - Default settings
+# ==============================================================================
+content_conf() {
+cat << 'EOF'
+# .phoenix-audit.conf
+VERBOSE=false
+PARALLEL=false
+DRY_RUN=false
+SOFT_FAIL=false
+GENERATE_REPORT=true
+
+# Domain Thresholds
+max_household_size=5
+EOF
+}
+
+# ==============================================================================
+# EXECUTION ENGINE
+# ==============================================================================
+
+log "🚀 Start Ultimate Phoenix Upgrade..."
+
+mkdir -p "$PHOENIX_DIR"
+
+# 1. Update alle onderdelen
+safe_update "$PHOENIX_DIR/core.sh" content_core
+safe_update "$PHOENIX_DIR/checkers.sh" content_checkers
+safe_update "$PHOENIX_DIR/reports.sh" content_reports
+safe_update "$PHOENIX_DIR/extractors.sh" content_extractors
+safe_update "$PHOENIX_DIR/audits.sh" content_audits
+safe_update ".phoenix-audit.conf" content_conf
+
+# 2. Patch Code (Portable Sed)
+TARGET_TS="src/domain/rules/evaluateDomainRules.ts"
+if [[ -f "$TARGET_TS" ]]; then
+    if grep -q "GEEN PROVINCIES" "$TARGET_TS"; then
+        log "Code patch nodig voor $TARGET_TS..."
+        sed 's/GEEN PROVINCIES/GEEN SUB-NATIONALE NIVEAUS/g' "$TARGET_TS" > "${TARGET_TS}.tmp"
+        mv "${TARGET_TS}.tmp" "$TARGET_TS"
+        success "Commentaar aangepast."
+    else
+        log "Code patch niet nodig."
+    fi
+fi
+
+echo ""
+success "🎉 Upgrade Voltooid! Alles is gehard en gesynchroniseerd."
+echo "📂 Backups staan in: $BACKUP_DIR"
+echo "👉 Draai nu: ./phoenix audit"

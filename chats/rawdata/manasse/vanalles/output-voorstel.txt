@@ -1,0 +1,626 @@
+<gegeven voorstel>
+1. **Een formele ADR-tekst** (geschikt voor Phoenix / 2025-standaard)
+2. **Een PR-template met Fast-Lane label**, expliciet bedoeld om langs **Flow 2 (Architect-adviseur)** en **Flow 3 (Auditeur)** te gaan
+
+Geen extra theorie, geen zijpaden.
+
+---
+
+# 📘 ADR-0XX — Fast-Lane & Kill-Switch Governance
+
+**Status:** VOORSTEL
+**Datum:** 2025-12-22
+**Context:** Project Phoenix
+**Besluitvormers:** FLOW-CTO, Back-Up-CTO, Product Owner
+**Gerelateerd aan:** WAI-workflow, Audit-script, ADR-14, ADR-16, ADR-17
+
+---
+
+## Context
+
+Project Phoenix is een cluster-gewijze herbouw van een bestaande applicatie naar een vastgestelde **2025-architectuurstandaard**.
+De workflow bevat meerdere AI-flows (Archeoloog, Architect-adviseur, Auditeur, Navigator, Debugger), ondersteund door een streng audit-script.
+
+Dit introduceert twee structurele risico’s:
+
+1. **AI drift** — beslissingen worden formeel correct maar inhoudelijk onbegrepen
+2. **Process saturation** — audit en governance vertragen voortgang zonder extra waarde
+
+Daarom zijn expliciete **Fast-Lane criteria** en **Kill-Switch criteria** noodzakelijk.
+
+---
+
+## Besluit
+
+### 1️⃣ Fast-Lane wordt ingevoerd als officieel Phoenix-mechanisme
+
+Een wijziging mag via **Fast-Lane** verlopen indien **alle onderstaande voorwaarden waar zijn**:
+
+#### Fast-Lane Toelatingscriteria (verplicht)
+
+* ❌ Geen nieuw publiek API-oppervlak
+* ❌ Geen wijziging in domeinlogica of businessregels
+* ❌ Geen nieuwe state-machine of lifecycle-overgang
+* ✅ Volledig verifieerbaar via audit-script + TypeScript
+* ✅ Omkeerbaar binnen één commit
+
+Indien **één ❌ van toepassing is**, is Fast-Lane **niet toegestaan**.
+
+---
+
+### 2️⃣ Fast-Lane Categorieën
+
+#### Type A — Mechanische Correctheid
+
+Voorbeelden:
+
+* `as const` / type-verfijning
+* strict-null fixes
+* reducer “dumb maken”
+* enum → union
+
+➡️ Geen gedragswijziging toegestaan.
+
+---
+
+#### Type B — Infrastructurele Rewrites
+
+Voorbeelden:
+
+* import-alias normalisatie
+* map-structuur opschoning
+* test-mocks centraliseren
+
+➡️ Diff mag groot zijn, gedrag niet.
+
+---
+
+#### Type C — Audit-Driven Fixes
+
+Voorbeelden:
+
+* deep imports → alias
+* legacy parsing verwijderen
+* console-statements verwijderen
+
+➡️ Audit faalt vóór, slaagt na.
+
+---
+
+### 3️⃣ Wat expliciet **geen** Fast-Lane is
+
+* Nieuwe FSM-status
+* Async-gedrag aanpassen
+* Side-effects verplaatsen
+* UX-flows wijzigen
+* Data-normalisatie wijzigen
+
+---
+
+## Kill-Switch Criteria (bindend)
+
+### 🟥 KS-A — Architectural Saturation
+
+**Trigger:**
+3 opeenvolgende WAIs vereisen ADR-wijziging of uitzondering.
+
+**Actie:**
+Phoenix pauze → ADR herijking → Flow 3 deep audit.
+
+---
+
+### 🟥 KS-B — Audit Inflation
+
+**Trigger:**
+
+> 30 % van audit-checks structureel WARNING zonder afbouwplan.
+
+**Actie:**
+Audit herclassificeren of scope Phoenix verkleinen.
+
+---
+
+### 🟥 KS-C — Velocity Collapse
+
+**Trigger:**
+2 weken meer tijd aan tooling/audit dan aan code.
+
+**Actie:**
+Fast-Lane uitbreiden of audit tijdelijk versoepelen.
+
+---
+
+### 🟥 KS-D — Human Confidence Loss (**primair**)
+
+**Trigger:**
+Beslissing kan niet meer helder worden uitgelegd door PO of CTO.
+
+**Actie:**
+Stop → terug naar laatste begrijpelijke ADR → Flow 1 + Flow 3 inzetten.
+
+---
+
+### 🟥 KS-E — Phoenix Completion
+
+**Trigger:**
+
+* ≥ 95 % audit groen
+* Geen ADR-wijzigingen in 2 clusters
+* Geen structurele bugs
+
+**Actie:**
+Phoenix afronden → nieuwe baseline → UX-fase.
+
+---
+
+## Consequenties
+
+* Fast-Lane verhoogt snelheid **zonder** architectuurverlies.
+* Kill-Switch voorkomt AI-autonomie zonder menselijk begrip.
+* Audit behoudt betekenis en gezag.
+
+---
+
+# 🧾 PR-TEMPLATE — Project Phoenix
+
+Dit template is **verplicht** voor elke PR.
+
+```md
+## 📌 Phoenix PR
+
+### Type
+- [ ] Regulier
+- [ ] **Fast-Lane**
+
+---
+
+### 🔍 Fast-Lane Check (alleen invullen indien Fast-Lane)
+
+**Categorie:**
+- [ ] Type A — Mechanische Correctheid
+- [ ] Type B — Infrastructureel
+- [ ] Type C — Audit-Driven Fix
+
+**Bevestiging (allemaal vereist):**
+- [ ] Geen nieuw API-oppervlak
+- [ ] Geen domeinlogica gewijzigd
+- [ ] Geen FSM / lifecycle aangepast
+- [ ] Audit slaagt volledig
+- [ ] Omkeerbaar in één commit
+
+---
+
+### 📐 Architectuurimpact
+- ADR geraakt? ☐ Nee ☐ Ja (welke: ___)
+- FSM geraakt? ☐ Nee ☐ Ja
+
+---
+
+### 🤖 AI-Flows geraadpleegd
+- [ ] Flow 1 — Archeoloog
+- [ ] **Flow 2 — Architect-adviseur**
+- [ ] **Flow 3 — Architect-auditeur**
+- [ ] Flow 4 — Navigator
+- [ ] Flow 5 — Debugger
+
+---
+
+### 🧪 Audit & Tests
+- Audit resultaat: ☐ Groen ☐ Warning ☐ Rood
+- Relevante checks: ____________________
+
+---
+
+### 📝 Toelichting (verplicht bij Fast-Lane)
+Waarom is dit mechanisch en risicoloos?
+```
+
+---
+
+## Wat ik bewust **niet** heb gedaan
+
+* Geen nieuwe rollen bedacht
+* Geen extra tooling toegevoegd
+* Geen workflow herschreven
+* Geen abstracte managementtaal
+
+</gegeven voorstel>
+##########################
+<architect_advice>
+# 🧭 Architect-Consultant Rapport
+
+## 🧠 Strategic Analysis (Internal)
+
+<thinking>
+**ROLE IDENTIFICATION**  
+Het document **ADR-0XX — Fast-Lane & Kill-Switch Governance** definieert *governance & releasebeleid* voor Project Phoenix. Het zit boven de code—tussen proces, audit-script en ADR-governance in. Afhankelijkheden: audit-script, AI-flows (Flow1–5), ADR-index; dependents: PR-template, review-proces, release-velocity.
+
+**SMELL DETECTION (forensisch, op tekstsecties)**
+
+1.  *Ambigue, niet-machineleesbare criteria.* De sectie **Fast-Lane Toelatingscriteria** (“Volledig verifieerbaar via audit-script + TypeScript”, “Omkeerbaar binnen één commit”) is semantisch maar niet formalisatief vastgelegd → risico op interpretatieverschillen, niet afdwingbaar door tooling.
+2.  *Menselijke checkbox-validatie zonder typegrenzen.* De **PR-TEMPLATE** gebruikt checkboxes als “validatie”. Dit is *validatie achteraf*, geen *parseerbare contracten aan de randen*.
+3.  *Kill-switch triggers niet metrisch gedefinieerd.* KS-B (“> 30% warnings”), KS-C (“2 weken meer tijd aan tooling/audit”), KS-D (“niet meer helder uit te leggen”) missen een *bron van waarheid* (telemetrie, definities, meetvensters).
+4.  *“Geen gedragswijziging” is niet falsifieerbaar.* De **Fast-Lane Categorieën A–C** spreken gedrag niet te mogen wijzigen, maar “gedrag” is niet afgebakend (publieke API vs. observables: logging, timings, serialisatie).
+5.  *Escalatie & eigenaarschap impliciet.* Besluitvormers zijn genoemd, maar *operationele eigenaars* (wie triggert KS, wie pauzeert, wie heft op) zijn niet expliciet toegewezen.
+
+**PRIORITIZATION**
+
+*   Grootste risico = **schijnzekerheid**: Fast-Lane lijkt veilig, maar zonder machineleesbare contracten & metrische bronnen is audit niet-beslisbaar → velocity of kwaliteit crasht.
+*   Hoogste ROI = **formeel contract + metrische bron**: encodeer Fast-Lane als *types/union + auditregels*, definieer KS-metriekbronnen en drempels; zo wordt “parse, don’t validate” toegepast op governance.
+    </thinking>
+
+***
+
+## 🎯 Executive Summary
+
+De ADR introduceert een sterke **snelheids-/veiligheidsklep** (Fast‑Lane + Kill‑Switch), maar de criteria zijn **taalkundig**, niet **formeel**. Daardoor is naleving lastig te automatiseren en ontstaat risico op **AI/process drift** en **false confidence**. Door de regels **type- en metriekgedreven** te maken (machineleesbare Fast‑Lane contracten en objectieve KS‑telemetrie) stijgt **velocity met behoud van integriteit** en daalt review‑frictie.
+
+***
+
+## 🔍 Code Smells Analysis (structureel, niet-cosmetisch)
+
+**1) Criteria zonder formeel contract**
+
+*   **Wat ik zie:** *Fast-Lane Toelatingscriteria* spreken over verificatie via audit-script, maar specificeren geen schema/fields voor tooling.
+*   **Waarom dit matters:** *Parse, don’t validate* & *Type Safety First*—regels moeten als types/schemas bestaan, anders blijft het subjectief.
+*   **Risk if ignored:** Inconsistente reviews, niet-reproduceerbare audituitkomsten, “policy drift”.
+
+**2) Menselijke checklists als gate**
+
+*   **Wat ik zie:** **PR-TEMPLATE** relyt op handmatige checkboxes voor beslissende gates.
+*   **Waarom dit matters:** *Make Impossible States Impossible*—handmatig aanvinken kan onware toestanden toestaan.
+*   **Risk if ignored:** Fast-Lane wordt misbruikt of te conservatief geweigerd; velocity & vertrouwen fluctueren.
+
+**3) Kill-Switch zonder meetbronnen**
+
+*   **Wat ik zie:** KS-B/KS-C/KS-D definiëren triggers zonder datamodellen (tijdvensters, metriekbronnen, ownership).
+*   **Waarom dit matters:** *Clear boundaries*—governance heeft een enkele bron van waarheid nodig.
+*   **Risk if ignored:** Te late/te vroege stops, politicisering van beslissingen, teamfrustratie.
+
+**4) Gedragswijziging niet afgebakend**
+
+*   **Wat ik zie:** “Geen gedragswijziging toegestaan” bij Type A/B/C, maar gedrag ≠ alleen API—ook side‑effects, timings, serialisatie.
+*   **Waarom dit matters:** *SRP & Boundary Safety*—zonder scope van gedrag kun je regressies missen.
+*   **Risk if ignored:** Regressies door “mechanische” commits; audit passeert terwijl gedrag wijzigt.
+
+**5) Onvolledige RACI/operationalisering**
+
+*   **Wat ik zie:** Besluitvormers genoemd, maar geen operationele eigenaar per trigger, geen herstelpad SLA.
+*   **Waarom dit matters:** *Shallow depth & composition*—governance zonder duidelijke rollen creëert escalatie‑deadlocks.
+*   **Risk if ignored:** Onnodige pauzes, verantwoordelijkheidsspagaat, vertraging.
+
+***
+
+## 📋 Strategic Recommendations
+
+### 🔴 CRITICAL (Fix This Sprint)
+
+#### 🎯 Formaliseer Fast‑Lane als type-contract + auditregel
+
+**🔍 DIAGNOSIS:** Criteria zijn tekstueel; audit kan niet deterministisch beslissen.  
+**💡 DIRECTION:** Modelleer Fast‑Lane als *discriminated union* (categorie A/B/C) met verplichte velden voor “API‑oppervlak Δ”, “Domain Rules Δ”, “FSM Δ”, “Audit status”, “Rollback‑strategie”. Laat audit-script *parsEN* dit contract i.p.v. checkboxes *validerEN*.  
+**⚖️ TRADE-OFFS:**
+
+*   Complexity: ↑ (initiële modellering)
+*   Learning curve: Medium (PR‑metadata invullen)
+*   Effort: M (dagen)
+*   Impact: Deterministische gating, minder discussie, hogere betrouwbaarheid  
+    **Type sketch (≤12 regels):**
+
+```ts
+type FastLaneCategory = 'A'|'B'|'C';
+type FastLaneContract = {
+  category: FastLaneCategory;
+  apiSurfaceDelta: 'none';
+  domainLogicDelta: 'none';
+  fsmDelta: 'none';
+  auditStatus: 'green';
+  rollback: 'single-commit';
+};
+```
+
+**🤔 Decision coaching:**
+
+*   **Right for you if:** Audit al centraal staat en PR‑metadata kan worden uitgebreid.
+*   **Consider alternatives if:** Repositories/CI niet kunnen lezen uit PR‑metadata (dan eerst infrastructuur aanpakken).
+
+***
+
+#### 🎯 Definieer meetbare Kill‑Switch bronnen en vensters
+
+**🔍 DIAGNOSIS:** KS‑B/C/D triggers missen databron, tijdvenster en eigenaarschap.  
+**💡 DIRECTION:** Kies 1 telemetriebron per trigger (bijv. audit‑report %, time tracking tag “audit vs code”, decision‑explainability log). Leg het meetvenster vast (rolling 14d/30d) en wijs een operationeel eigenaar toe per KS.  
+**⚖️ TRADE-OFFS:**
+
+*   Complexity: → (heldere definities)
+*   Learning curve: Low
+*   Effort: S–M
+*   Impact: Snellere, legitieme stops; minder discussie  
+    **Type sketch (≤12 regels):**
+
+```ts
+type TimeWindow = '7d'|'14d'|'30d';
+type KillSwitchTrigger =
+ | { kind:'KS-B'; warningsPct:number; window:TimeWindow }
+ | { kind:'KS-C'; auditHours:number; codeHours:number; window:TimeWindow }
+ | { kind:'KS-D'; explainable:boolean; evidenceRef:string };
+```
+
+**🤔 Decision coaching:**
+
+*   **Right for you if:** Jullie hebben basis‑telemetrie en kunnen tags/labels standaardiseren.
+*   **Consider alternatives if:** Metingen ontbreken → start met “manueel logboek” als tussenstap.
+
+***
+
+#### 🎯 Definieer “gedrag” operationeel (observables)
+
+**🔍 DIAGNOSIS:** “Geen gedragswijziging” is vaag; audit kan het niet toetsen.  
+**💡 DIRECTION:** Stel een korte lijst *observables* vast: publiek API, serialisatie, database‑schema, side‑effects/logging‑levels, performance‑SLO’s. Fast‑Lane = *geen Δ op observables*.  
+**⚖️ TRADE-OFFS:**
+
+*   Complexity: →
+*   Learning curve: Low
+*   Effort: S
+*   Impact: Regressierisico omlaag, audit duidelijker  
+    **Type sketch (≤12 regels):**
+
+```ts
+type Observable = 'PublicAPI'|'Serialization'|'DBSchema'|'SideEffects'|'SLO';
+type BehaviorDelta = Record<Observable,'none'|'changed'>;
+```
+
+**🤔 Decision coaching:**
+
+*   **Right for you if:** Regressietests of checks kunnen per observable worden gemapt.
+*   **Consider alternatives if:** Nog geen SLO’s → start minimaal met API/serialisatie/DB.
+
+***
+
+### 🟡 HIGH IMPACT (Plan This Month)
+
+#### 🎯 Machineleesbare PR‑header naast de checklist
+
+**DIAGNOSIS:** PR‑template is mensgericht; tooling kan er weinig mee.  
+**DIRECTION:** Voeg een klein, machineleesbaar blok toe (metadata file of PR body fenced code) dat audit kan parsen.  
+**TRADE-OFFS:** Complexity ↑, Effort S–M, Impact: audit‑automatisering ↑  
+**Type sketch (≤12 regels):**
+
+```ts
+type PRMeta = {
+  phoenix: { type:'regular'|'fast-lane'; adrTouched:string[]; fsmTouched:boolean };
+  audit: { result:'green'|'warning'|'red'; checks:string[] };
+};
+```
+
+#### 🎯 RACI & herstelpad per KS
+
+**DIAGNOSIS:** Geen toegewezen operationeel eigenaar per Kill‑Switch.  
+**DIRECTION:** Koppel elke KS aan één rol (trigger), één reviewer (confirm), één herstelscenario met SLA (un‑pause).  
+**TRADE-OFFS:** Complexity →, Effort S, Impact: reactietijd omlaag.
+
+#### 🎯 ADR‑index + traceability
+
+**DIAGNOSIS:** PR‑template vraagt “ADR geraakt?”, maar geen trace.  
+**DIRECTION:** Introduceer één ADR‑index (id→titel→scope) en verplicht referenties in PR‑metadata.  
+**TRADE-OFFS:** Complexity →, Effort S–M, Impact: audit‑nauwkeurigheid ↑, kennisdeling ↑.
+
+***
+
+### 🟢 NICE-TO-HAVE (Backlog)
+
+*   Visual dashboard: Fast‑Lane throughput, KS‑events, audit‑gezondheid.
+*   “Dry‑run” modus: Simuleer KS met historische data voordat hij blokkeert.
+*   Periodieke kalibratie (maandelijks): herijk drempels en observables.
+*   Nudge‑teksten in PR‑template die kort definiëren wat “gedrag” is.
+*   Lightweight *Decision Log* voor KS‑D (explainability snapshots).
+
+***
+
+## 🎓 The Golden Rule for This File
+
+**“Parse, don’t validate — ook voor governance.”**  
+Leg Fast‑Lane en Kill‑Switch vast als **types/contracten** die tooling *parseert*, in plaats van als menselijke checklists die reviewers *valideren*. Dit maakt **onmogelijke staten onmogelijk** en verkleint de kans op drift terwijl de snelheid behouden blijft.
+
+***
+
+## ✅ Actionable Checklist (beslissingen, geen code)
+
+*   [ ] Kies één **machineleesbaar contract** voor Fast‑Lane (type‑velden en categorie A/B/C).
+*   [ ] Bevestig **observables** die “gedrag” definiëren (minimaal: API, serialisatie, DB).
+*   [ ] Koppel **telemetriebronnen** per KS (data‑bron, venster, drempel).
+*   [ ] Wijs **operationele eigenaars** toe per KS + herstelpad/SLA.
+*   [ ] Voeg **PR‑metadata** toe die audit kan parsen; laat checkboxes staan voor menselijk sign‑off.
+*   [ ] Publiceer een **ADR‑index** en vereis referenties in PR’s.
+*   [ ] Plan een **kalibratiemoment** (30 dagen) voor drempels en uitzonderingen.
+
+***
+
+### ADR‑lite (Voorstel)
+
+**Beslissing:** Encodeer Fast‑Lane als machineleesbaar contract (discriminated union) + audit‑parse.  
+**Context:** Huidige tekstcriteria zijn niet deterministisch; audit moet beslisbaar zijn.  
+**Afweging:**  
+– Alternatief verworpen: Alleen handmatige checklists.  
+– Reden: Inconsistent, niet schaalbaar.  
+**Impact:** PR‑metadata, audit-script, reviewproces.  
+**Status:** Proposed (ter beoordeling door CTO)
+
+### ADR‑lite (Voorstel)
+
+**Beslissing:** Definieer Kill‑Switch triggers met vaste metriekbron en tijdvenster per KS.  
+**Context:** KS‑B/C/D missen bron/venster; leidt tot discussie en vertraging.  
+**Afweging:**  
+– Alternatief verworpen: Ad‑hoc beoordeling per incident.  
+– Reden: Onvoorspelbaar en politiek.  
+**Impact:** Telemetrieconfig, audit‑dashboards, roltoewijzing.  
+**Status:** Proposed (ter beoordeling door CTO)
+
+</architect_advice>
+<Audit thinking>
+**Examining the Inputs**
+
+I've been meticulously dissecting the proposed ADR and the PR template. This involved identifying key elements related to governance, particularly the "Fast-Lane & Kill-Switch" aspects, and assessing their alignment. Right now, I'm focusing on their potential impact on ARIA compliance within the project. I'm moving forward with a detailed analysis of the inputs, making sure to spot and assess every detail.
+
+
+**Evaluating the Advice**
+
+I'm now deep-diving into the Architect's advice, specifically scrutinizing it through the lens of 2025 Clean Code principles, focusing on how to prevent potential harm to our AI-driven Project Phoenix. My goal is to produce a detailed XML-structured thought process leading to the ARIA Audit Report. I'm taking the Architect's critique seriously, focusing on how we can shift from human-dependent aspects to machine-readable contracts.
+
+
+**Defining New Metrics**
+
+I'm now focusing on the recommendations and formalizing the "Fast-Lane" as a discriminated union. I'm also working to define concrete metric sources for "Kill-Switches", moving away from vague percentages. Furthermore, I'm thinking through how to define "behavior" using observables and incorporate machine-readable metadata in PRs. This will increase the automation, and help shift our focus to type safety in governance for a more structured audit process.
+
+
+**Challenging Assumptions**
+
+I'm now questioning whether rigidly defining a TypeScript type for process documents is over-engineering, as the Architect suggests "encoding" it somewhere. I'm concerned about the hidden implementation costs of this idea. I'm worried about the feasibility of GitHub/GitLab parsing a TS type from a PR, and I'm also questioning whether it would even be effective, given the risk of developers simply copy-pasting the validation criteria without actually thinking about what they are doing.
+
+
+**Weighing Trade-offs**
+
+I'm now weighing the costs and benefits of parsing PR metadata. While I agree with the Architect's core insight about machine-verifiable rules, I'm concerned about how much development time it will consume. The idea of measuring "explainability" with a boolean doesn't sit right with me either. It feels like forced rigor, as "Human Confidence Loss" is inherently subjective and difficult to quantify accurately.
+
+
+**Revising Metadata Structure**
+
+I'm now zeroing in on the PR metadata, focusing on the Architect's advice to use YAML/JSON frontmatter. This replaces the TS type definition, making it more data-exchange friendly. I'm also challenging the "explainable: boolean" suggestion as a logical fallacy that introduces false precision. The focus now is on a clear and concise XML output structure that reflects the analysis's findings, maintaining a constructive yet assertive tone. Finally, I'm working to formalize the "behavior" mapping and parse, not validate, approach.
+
+
+**Assessing the Weights**
+
+I'm evaluating the impacts of "False Precision," recognizing it primarily affects Process/Governance, with high implications for velocity and safety, but not critical runtime issues. I've re-evaluated my position on TS types in PRs, acknowledging the context of "Project Phoenix" and its strict audit requirements, leading me to accept the direction, but with concerns about the "Human Confidence" metric.
+
+1. **Advies Deconstructie**
+   - **Kern:** Architect wil de tekstuele regels van de ADR omzetten naar machine-leesbare contracten (Types/Schemas).
+   - **Motto:** "Parse, don't validate" toegepast op governance.
+   - **Acties:** Fast-Lane criteria formaliseren als Discriminated Union, Kill-Switch triggers koppelen aan harde data (telemetrie), PR-metadata machine-leesbaar maken.
+
+2. **Standards Mapping**
+   - **Parse, don't Validate:** 2025 Standard (Alexis King). Uitstekende toepassing op procesniveau.
+   - **Type Safety:** Het modelleren van processen als types is Advanced/Expert niveau.
+   - **Automatisering:** Shift-left van compliance (van menselijke review naar CI check).
+
+3. **Red Flag Scan**
+   - [ ] Verouderde patterns? Nee.
+   - [ ] Magic thinking? Enigszins. De architect suggereert dat het typen van `explainable: boolean` in een TS definitie het probleem van subjectiviteit oplost. Dit is **False Precision**.
+   - [ ] Missing trade-offs? De architect noemt "Complexity" en "Effort", maar onderschat de tooling-effort om PR-descriptions te parsen als structured data.
+   - [ ] Over-engineering? Het bouwen van een parser voor PR-teksten kan afleiden van de eigenlijke migratie (Phoenix).
+
+4. **Context Inference**
+   - **Context:** Project Phoenix is een high-stakes rewrite met zware audit-tooling.
+   - **Schaal:** Waarschijnlijk groot genoeg om governance-tooling te rechtvaardigen.
+   - **Fase:** Migratie/Rebuild. Snelheid (Fast-Lane) is cruciaal, maar veiligheid ook.
+
+5. **Devil's Advocate**
+   - **Punt:** Een boolean `explainable: true` in een JSON-object is exact even subjectief als een checkbox `[x] Explainable` in Markdown. De architect presenteert dit als "metriek", maar het blijft menselijke input. Dit is een schijnoplossing voor KS-D.
+   - **Punt:** Het vereisen van JSON/YAML metadata in PR's verhoogt de frictie voor developers.
+
+6. **ADR Trigger Check**
+   - Het advies zelf IS een input voor een ADR. ARIA moet valideren of dit advies de ADR verbetert.
+</Audit thinking>
+
+# 🛡️ ARIA Audit Report
+
+## 📊 Executive Summary
+**Conformity Score:** 90%
+**Verdict:** 🟢 Approved
+
+**One-Liner:**
+De architect past het 2025-principe "Parse, don't Validate" briljant toe op governance, waardoor papieren tijgers veranderen in softwarematige poortwachters, maar pas op voor schijnnauwkeurigheid bij menselijke metrics.
+
+---
+
+## ✅ Strengths (Ranked by Impact)
+
+1.  **Governance als Code ("Parse, don't Validate")**
+    - **Advies:** "Modelleer Fast-Lane als *discriminated union*... Laat audit-script *parsEN* dit contract i.p.v. checkboxes *validerEN*."
+    - **Waarom sterk:** Dit haalt ambiguïteit weg. Een tekstuele regel ("geen nieuwe API") is voor interpretatie vatbaar; een verplicht veld `apiSurfaceDelta: 'none'` in een config die door CI wordt gecheckt, is binair en afdwingbaar.
+    - **Weight:** 🟠 HOOG (Technische Schuld Preventie)
+
+2.  **Expliciete Observables voor "Gedrag"**
+    - **Advies:** "Stel een korte lijst observables vast: publiek API, serialisatie... Fast-Lane = geen Δ op observables."
+    - **Waarom sterk:** "Gedrag" is in software vaak een vaag begrip. Door het te reduceren tot meetbare output (API signature, DB schema, logs), wordt de discussie feitelijk.
+    - **Weight:** 🟠 HOOG
+
+---
+
+## ⚠️ Critical Issues (MUST FIX)
+
+### Issue #1: False Precision bij "Human Confidence"
+- **Advies Fragment:** "Type sketch: `{ kind:'KS-D'; explainable:boolean; evidenceRef:string }`"
+- **Probleem:** De architect probeert Kill-Switch D ("Human Confidence Loss") te vangen in een type definitie. Echter, of iemand een boolean `true` zet in een JSON-object of een checkbox aanvinkt in Markdown, maakt het **niet objectiever**. Dit suggereert een harde metriek waar er geen is (Magic Thinking).
+- **2025 Standard:** Erken menselijke subjectiviteit als zodanig, of gebruik proxy-metrics (bv. "Aantal keer ADR heropend"). Pretendeer niet dat een boolean in code subjectiviteit oplost.
+- **Impact:** 🟡 MEDIUM (Valse veiligheid)
+
+---
+
+## 🔶 Improvements (SHOULD CONSIDER)
+
+1.  **JSON Schema/Frontmatter i.p.v. TS Types in PR's**
+    - **Huidig:** Architect suggereert TS Types (`type FastLaneContract = ...`).
+    - **Beter:** Definieer dit als een **JSON Schema** en laat developers dit als YAML Frontmatter of een JSON block in de PR body zetten.
+    - **Reden:** CI-tools (zoals `jq` of GitHub Actions actions-toolkit) kunnen makkelijker JSON/YAML parsen uit een PR-body dan dat ze een TS-compiler moeten opspinnen om een type-definitie te valideren.
+    - **Trade-off:** Iets minder "native" voor TS-devs, maar veel robuuster voor tooling.
+
+2.  **Fallback voor Kill-Switch Telemetrie**
+    - **Huidig:** "Kies 1 telemetriebron per trigger".
+    - **Beter:** Voeg een "Manual Override" toe aan het model. Als de telemetrie faalt (tooling stuk), moet de Kill-Switch handmatig bediend kunnen worden zonder code-wijziging.
+    - **Trade-off:** Veiligheid vs. Operationaliteit.
+
+---
+
+## 🎯 Missing Context (Architectural Gaps)
+
+**Schaal-Awareness:**
+- De voorgestelde oplossing vereist dat het CI/CD-platform (GitHub/GitLab) de PR-beschrijving kan uitlezen en als input kan gebruiken voor de build pipeline.
+- **Vraag:** Is deze infrastructuur aanwezig in Project Phoenix? Zo nee, dan is dit advies **over-engineering** (Weight: 5x effort).
+
+**Harm Check:**
+- [x] **Risk of over-engineering:** Ja. Het bouwen van een custom parser voor PR-teksten kost tijd die niet naar de migratie gaat. Is de ROI positief? (Waarschijnlijk wel bij een groot project, niet bij een klein team).
+
+---
+
+## 🧠 Devil's Advocate
+
+**Wanneer dit advies NIET volgen:**
+1.  **Bij kleine teams (<3 devs):** De overhead van het invullen van structured metadata en het onderhouden van de parser weegt niet op tegen de snelheidswinst. Een menselijke review is dan sneller.
+2.  **Als CI/CD "Black Box" is:** Als het team geen controle heeft over de CI-pipeline om custom scripts te draaien die PR-metadata lezen.
+
+---
+
+## 🚦 Action Items (Prioritized)
+
+### MUST DO (Before Merge)
+- [ ] **Pas Kill-Switch D aan:** Erken dat KS-D (Human Confidence) een menselijk besluit blijft en geen 'harde' boolean in code kan zijn. Verwijder de schijn-metriek of vervang door "Aantal ADR-herzieningen in X dagen".
+- [ ] **Kies transport-formaat:** Besluit *hoe* de metadata in de PR komt (JSON block in body? Label-gestuurd? Los bestand in repo?). TS Types zijn conceptueel goed, maar praktisch lastig te parsen uit Markdown.
+
+### SHOULD DO (This Sprint)
+- [ ] **Implementeer "Gedrag" checks:** Configureer de linter/audit tool om diffs op `api/` en `db/` folders automatisch te flaggen als "Niet Fast-Lane".
+
+### COULD DO (Backlog)
+- [ ] **Dashboarding:** Visualiseer de status van de Kill-Switches (zoals architect voorstelt).
+
+---
+
+## 🎓 Meta-Feedback for Architect AI
+
+**Positief:**
+- Uitstekende vertaling van code-principes ("Parse, don't validate") naar proces-governance. Dit is precies het niveau van inzicht dat we zoeken.
+
+**Verbeterpunt:**
+- Pas op met "False Precision". Het formaliseren van subjectieve gevoelens ("Is dit uitlegbaar?") in een typedefinitie maakt het niet objectief. Blijf scherp op het verschil tussen data (hard) en mening (zacht).
+
+---
+
+# 🔍 FLOW 3 — TOETSING / AUDIT AI
+
+**ADR-Toetsing voor Architect Advies:**
+
+*   Consistent met eerdere ADR’s? ✔️ (Past binnen strict audit regime)
+*   In lijn met principes? ✔️ (Parse don't validate, Make impossible states impossible)
+*   Onbedoelde neveneffecten? ⚠️ (Mogelijk over-engineering van PR-tooling, zie rapport)
+
+**Advies: Accepteren**
+*(Mits KS-D "Human Confidence" niet als harde data wordt gepresenteerd, maar als expliciete menselijke gate)*

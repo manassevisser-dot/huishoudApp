@@ -1,0 +1,351 @@
+Uitstekend.
+Hieronder staat een **AI Engineering Playbook** geschreven **niet voor developers**, maar **voor een CTO / MT / kwaliteitscommissie**.
+Geen prompts, geen code, geen tooling — dit is **proces-, governance- en kwaliteitsborgingsdocumentatie**.
+
+Dit document kun je:
+
+* opnemen in je **SDLC**
+* gebruiken bij **audit / verantwoording**
+* hanteren als **vast format voor documentatie (SVZ)**
+* toepassen op **mens + AI samenwerking**
+
+---
+
+# AI ENGINEERING PLAYBOOK
+
+**Kwaliteitsborging voor Softwareontwikkeling met AI**
+
+## Doel van dit playbook
+
+Dit playbook beschrijft een **gestandaardiseerd, herhaalbaar en toetsbaar proces** voor softwareontwikkeling waarbij AI actief wordt ingezet, **zonder verlies van controle, eigenaarschap of kwaliteit**.
+
+Het primaire doel is:
+
+* voorkomen dat teams “de weg kwijtraken”
+* borging van beslissingen en context
+* expliciete status per ontwikkelfase (*SVZ – stand van zaken*)
+* scheiding van verantwoordelijkheden (begrijpen, beslissen, uitvoeren, toetsen, herstellen)
+
+---
+
+## Kernprincipes (CTO-niveau)
+
+1. **AI ondersteunt denken, vervangt het niet**
+2. **Elke fase heeft een expliciet doel en output**
+3. **Geen fase wordt overgeslagen**
+4. **Elke fase levert documentatie op**
+5. **Documentatie beschrijft altijd:**
+
+   * wat we weten
+   * wat we besluiten
+   * wat we (nog) niet weten
+   * waarom
+
+---
+
+## De 5-fasen structuur (verplicht)
+
+| Fase | Functie       | Doel                                   |
+| ---- | ------------- | -------------------------------------- |
+| 1    | Begrip        | Vaststellen wat de huidige situatie is |
+| 2    | Richting      | Bepalen wat beter moet en waarom       |
+| 3    | Toetsing      | Controleren of die richting klopt      |
+| 4    | Implementatie | Gecontroleerd uitvoeren                |
+| 5    | Debugging     | Feitelijke probleemoplossing           |
+
+👉 **Elke fase heeft een eigen document**
+👉 **Geen document = fase niet afgerond**
+
+---
+
+# FASE 1 — BEGRIP
+
+*(Code Archeologie)*
+
+### Doel
+
+Zorgen dat het team **objectief begrijpt** wat de code doet, hoe zij zich gedraagt en welke impliciete aannames erin zitten.
+
+Geen oplossingen. Geen verbeteringen. Alleen begrip.
+
+### Verantwoordelijkheid
+
+* Senior engineer / reviewer
+* AI als analyse-assistent
+
+### Outputdocument: *Analyse & Begrip (SVZ-1)*
+
+Dit document bevat minimaal:
+
+1. **Abstracte beschrijving**
+
+   * Wat doet deze module / dit systeem?
+   * In welke context functioneert het?
+
+2. **Structuuroverzicht**
+
+   * Hoofdverantwoordelijkheden
+   * Belangrijkste componenten / functies
+   * Datastromen
+
+3. **Niet-triviale logica**
+
+   * Waar moet je stoppen en nadenken?
+   * Welke stukken zijn cognitief zwaar?
+
+4. **Aannames & impliciete keuzes**
+
+   * Wat lijkt vanzelfsprekend, maar is dat niet?
+   * Welke randgevallen worden al afgevangen?
+
+### SVZ-status
+
+* ✔ Begrip bevestigd
+* ⚠ Begrip gedeeltelijk (hiaten benoemd)
+* ❌ Begrip onvoldoende → terug naar analyse
+
+---
+
+# FASE 2 — RICHTING
+
+*(Architectuur & Verbeterstrategie)*
+
+### Doel
+
+Bepalen **wat** er beter moet en **waarom**, zonder al te implementeren.
+
+Hier wordt de **visie vastgelegd**, niet de uitvoering.
+
+### Verantwoordelijkheid
+
+* Architect / Lead engineer
+* AI als sparringpartner
+
+### Outputdocument: *Architectuuradvies (SVZ-2)*
+
+Minimaal opgenomen:
+
+1. **Probleemdefinitie**
+
+   * Welke structurele problemen zien we?
+   * Waarom zijn dit problemen (principes)?
+
+2. **Architecturale richting**
+
+   * Welke principes zijn leidend?
+   * Wat willen we expliciet behouden?
+
+3. **Trade-offs**
+
+   * Wat winnen we?
+   * Wat kost dit (complexiteit, tijd, risico)?
+
+4. **Scope-afbakening**
+
+   * Wat pakken we NU aan?
+   * Wat expliciet niet?
+
+### SVZ-status
+
+* ✔ Richting vastgesteld
+* ⚠ Richting onzeker (open vragen benoemd)
+* ❌ Richting onvoldoende onderbouwd
+
+---
+
+# FASE 3 — TOETSING
+
+*(Kwaliteits- en Principetoets)*
+
+### Doel
+
+Controleren of het architectuuradvies:
+
+* proportioneel is
+* consistent is met vastgestelde principes
+* geen overreach bevat
+* leerbaar en onderhoudbaar blijft
+
+Dit is **kwaliteitsborging**, geen herontwerp.
+
+### Verantwoordelijkheid
+
+* Onafhankelijke senior reviewer
+* AI als toetsingsassistent
+
+### Outputdocument: *Toetsingsrapport (SVZ-3)*
+
+Minimaal opgenomen:
+
+1. **Samenvattend oordeel**
+
+   * Groen / Geel / Rood
+
+2. **Beoordeling per adviespunt**
+
+   * Conform principes?
+   * Context correct begrepen?
+
+3. **Risico’s**
+
+   * Overcomplexiteit
+   * Premature abstractions
+   * Onvoldoende eigenaarschap
+
+4. **Go / No-Go voor implementatie**
+
+### SVZ-status
+
+* ✔ Go voor implementatie
+* ⚠ Voorwaardelijke Go (voorwaarden vastgelegd)
+* ❌ No-Go → terug naar fase 2
+
+---
+
+# FASE 4 — IMPLEMENTATIE
+
+*(Navigatie & Uitvoering)*
+
+### Doel
+
+Zorgen dat de uitvoering:
+
+* gecontroleerd verloopt
+* omkeerbaar is
+* in kleine stappen gebeurt
+* altijd te stoppen is
+
+Dit is **procesbegeleiding**, geen architectuur en geen debugging.
+
+### Verantwoordelijkheid
+
+* Developer(s)
+* AI als navigator
+
+### Outputdocument: *Implementatieplan & Log (SVZ-4)*
+
+Bestaat uit:
+
+1. **Scope bevestiging**
+
+   * Wat implementeren we nu?
+   * Wat blijft liggen?
+
+2. **Stap-voor-stap plan**
+
+   * Kleine, concrete acties
+   * Stopmomenten
+
+3. **Risico-inschatting**
+
+   * Waar kan dit misgaan?
+   * Wat doen we als het vastloopt?
+
+4. **Implementatielog**
+
+   * Wat is uitgevoerd?
+   * Wat bleek anders dan verwacht?
+
+### SVZ-status
+
+* ✔ Implementatie voltooid
+* ⚠ Implementatie lopend
+* ❌ Implementatie gestopt (reden vastgelegd)
+
+---
+
+# FASE 5 — DEBUGGING
+
+*(Waarheidsvinding bij falen)*
+
+### Doel
+
+Bij afwijkend gedrag:
+
+* vaststellen **wat er feitelijk gebeurt**
+* hypotheses toetsen
+* oorzaken onderbouwen met bewijs
+
+Geen snelle fixes, geen aannames.
+
+### Verantwoordelijkheid
+
+* Senior engineer / incident lead
+* AI als onderzoeksassistent
+
+### Outputdocument: *Debugging Rapport (SVZ-5)*
+
+Minimaal:
+
+1. **Feiten**
+
+   * Observaties
+   * Logs
+   * Error messages
+
+2. **Hypotheses**
+
+   * Maximaal 3
+   * Gerangschikt op waarschijnlijkheid
+
+3. **Bewijs**
+
+   * Code
+   * Documentatie
+   * Externe bronnen
+
+4. **Conclusie**
+
+   * Waarschijnlijke oorzaak
+   * Zekerheidsniveau
+
+5. **Richting voor oplossing**
+
+   * Geen code, wel richting
+
+### SVZ-status
+
+* ✔ Oorzaak vastgesteld
+* ⚠ Oorzaak waarschijnlijk maar onzeker
+* ❌ Oorzaak onbekend → extra onderzoek
+
+---
+
+## Governance & Audit-waarde
+
+Met dit playbook kan een CTO:
+
+* aantonen **waarom** beslissingen zijn genomen
+* reconstrueren **hoe** een probleem is ontstaan
+* vaststellen **wie** waarvoor verantwoordelijk was
+* bewijzen dat AI **onder controle** wordt ingezet
+
+👉 Dit is **ISO-, audit- en compliance-vriendelijk**, zonder bureaucratie.
+
+---
+
+## Slot: waarom dit werkt
+
+Dit playbook voorkomt:
+
+* “we dachten dat…”
+* “AI zei dat…”
+* “het werkte eerst”
+* “niemand weet waarom”
+
+En vervangt dat door:
+
+* expliciete status
+* vastgelegde besluiten
+* gecontroleerde voortgang
+* blijvend eigenaarschap
+
+---
+
+Als je wilt, kan ik hierna:
+
+* een **one-pager voor MT/Board** maken
+* dit vertalen naar **teamrichtlijnen**
+* of een **template-set** maken voor alle SVZ-documenten
+
+Zeg maar wat de volgende stap is.

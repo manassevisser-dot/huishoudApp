@@ -1,0 +1,46 @@
+{
+  "code_summaries": [
+    {
+      "name": "Architectuur & flow overzicht",
+      "prompt": "Vat m.b.v. TIMELINE_CODE.md de end-to-end flow samen: Aliassen -> Logger Bridge -> Wizard Controller -> FormContext -> Reducer -> FieldRenderer -> Selectors."
+    },
+    {
+      "name": "Refactor checklist",
+      "prompt": "Maak een checklist van benodigde refactors uit de code (module.exports logger, toCents in reducer, UPDATE_ARRAY_ITEM, SYNC_MEMBERS, WIZARD_KEYS/DATA_KEYS mapping)."
+    }
+  ],
+  "extractions": [
+    {
+      "name": "Genereer FieldRenderer matrix",
+      "prompt": "Extraheer uit MIJN_CODE.code.txt alle veldtypes (counter, toggle, radio-chips, money, repeater) en maak een mapping naar de juiste UI-component en update-calls."
+    },
+    {
+      "name": "Reducer actie-schema",
+      "prompt": "Inventariseer alle FormAction varianten (SET_FIELD, UPDATE_ARRAY_ITEM, SYNC_MEMBERS, RESET_FORM) en geef payload-structuur + edge-cases."
+    },
+    {
+      "name": "Wizard pages playlist",
+      "prompt": "Reconstrueer de gewenste volgorde van pages (1setupHousehold, 2detailsHousehold, 3incomeDetails, 4fixedExpenses) inclusief visibleIf/maxGetter en business-triggers."
+    }
+  ],
+  "analysis": [
+    {
+      "name": "Financieel rekenschema (centen)",
+      "prompt": "Valideer de rekenketen: toCents -> reducer -> computePhoenixSummary -> selectors -> fromCents. Geef testcases met bedragen en verwachte uitkomsten."
+    },
+    {
+      "name": "Logger Bridge QA",
+      "prompt": "Controleer de brug tussen Bash en TS/Node: pad-resolutie, module.exports, PHOENIX_KEYS-teksten, en noem failure modes + fixes."
+    }
+  ],
+  "timeline_prompts": [
+    {
+      "name": "Chronologische executive summary",
+      "prompt": "Gebruik TIMELINE_CODE.md om per stap een executive summary (2 zinnen) te schrijven met impact op betrouwbaarheid, testbaarheid en UX."
+    },
+    {
+      "name": "Lessons learned (code)",
+      "prompt": "Destilleer 5 lessons learned en 3 risico’s (aliases, reducers, repeater) met mitigaties."
+    }
+  ]
+}

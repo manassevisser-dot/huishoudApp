@@ -1,0 +1,373 @@
+**** PROMPT1:
+
+Dit is het volledige toetsingskader, gerangschikt van basis tot expert-niveau, gevolgd door een specifieke prompt die je kunt gebruiken om een andere AI (of een menselijke adviseur) te laten controleren of code aan deze standaarden voldoet.
+
+## Toetsingskader: Clean Code React & TypeScript (2025)
+
+| Niveau | Toetspunt | Beschrijving & Criterium |
+| --- | --- | --- |
+| **1. Basis** | **Naamgeving** | Zijn variabelen betekenisvol (bijv. `daysUntilDeadline`) en gebruiken booleans de prefix `is`, `has` of `should`? 
+
+ |
+|  | **Type Veiligheid** | Wordt het gebruik van `any` strikt vermeden en vervangen door `unknown` waar nodig? 
+
+ |
+|  | **Component Omvang** | Zijn componenten klein en herbruikbaar (onder de 150 regels)? 
+
+ |
+| **2. Intermediate** | **Typing Props** | Wordt `interface` gebruikt voor props vanwege de uitbreidbaarheid? 
+
+ |
+|  | **Hook Typing** | Zijn complexe `useState` of `useRef` hooks expliciet getypeerd? 
+
+ |
+|  | **Logic Separation** | Is de logica uit de UI gehaald en verplaatst naar Custom Hooks? 
+
+ |
+| **3. Advanced** | **State Management** | Worden 'Discriminated Unions' gebruikt voor complexe UI-statussen in plaats van losse booleans? 
+
+ |
+|  | **Data Integriteit** | Wordt data aan de rand van het systeem 'geparsed' in plaats van alleen gevalideerd? 
+
+ |
+|  | **Immutability** | Zijn arrays en objecten waar mogelijk als `readonly` gemarkeerd? 
+
+ |
+| **4. Expert** | **Cognitieve Last** | Voldoet de code aan de "Leave No Questions"-regel: is de intentie direct duidelijk? 
+
+ |
+|  | **Architectuur** | Wordt compositie (children) verkozen boven overerving of complexe config-objecten? 
+
+ |
+|  | **Error Handling** | Worden 'Result-objects' gebruikt in plaats van het onnodig opgooien van exceptions? 
+
+ |
+
+---
+
+## De Toetsings-Prompt
+
+Kopieer en plak de onderstaande tekst in je AI-gesprek om de vorige resultaten te laten toetsen:
+
+> **Rol:** Je bent een Senior Software Quality Assurance (SQA) Adviseur gespecialiseerd in React en TypeScript (2025 best practices).
+> **Taak:** Analyseer de code of het advies uit de vorige beurt en leg deze langs het onderstaande **Toetsingskader Clean Code**.
+> **Toetsingskader:**
+> 1. **Basis:** Controleer op betekenisvolle naamgeving, booleans met prefix (`is/has`), en het absolute verbod op `any`.
+> 2. **Structureel:** Beoordeel of componenten klein genoeg zijn en of logica correct is gescheiden via Custom Hooks.
+> 3. **Type-architectuur:** Toets op het gebruik van Interfaces voor props en 'Discriminated Unions' voor complexe states (voorkom onmogelijke statussen).
+> 4. **Expert-niveau:** Beoordeel de 'Cognitieve Last' (is de code direct leesbaar?) en of er gebruik wordt gemaakt van het 'Parse, don't validate' principe.
+> 
+> 
+> **Extra Instructie:** Houd bij eventuele demografische functies rekening met de speciale status voor huishoudens met meer dan 5 volwassenen.
+> **Output:** Geef per niveau een score (Voldoet / Kan Beter / Onvoldoende) en geef concrete verbeterpunten voor de onderdelen die niet aan het kader voldoen.
+
+---
+
+Zal ik een specifiek code-voorbeeld voor je schrijven dat volgens dit kader is opgesteld, zodat je de adviseur direct kunt testen?
+
+*** PROMPT2
+
+
+
+Perfect — duidelijk 👍
+Ik ga nu **exact doen wat je vraagt**, in drie strak gescheiden stappen:
+
+1. **De bestaande lijst uitbreiden** met jouw drie verfijningen
+2. De lijst herpositioneren als **formeel toetsingskader**
+3. Een **volwaardige TOETSING-AI prompt** schrijven
+   → in **dezelfde “god-mode / Lyra-stijl”** als Archeoloog & Architect
+
+Geen uitleg eromheen, dit wordt **productie-klaar**.
+
+---
+
+# ✅ 1️⃣ Uitgebreide Clean Code & Architectuur-lijst (Definitieve Versie)
+
+Hier is de **geüpdatete lijst**, waarin jouw drie punten logisch en expliciet zijn geïntegreerd.
+
+---
+
+## 🟢 Basis — Naamgeving & Fundamenten
+
+* **Betekenisvolle naamgeving**
+  Namen onthullen *intentie*, niet implementatie.
+
+* **Booleans als vragen**
+  `is`, `has`, `should` als default heuristiek.
+
+* **Vermijd `any`, gebruik `unknown`**
+  Types beschermen grenzen.
+
+* **Kleine componenten en functies**
+  Richtlijn: ±20 regels → signaal, geen wet.
+
+* **Destructuring voor leesbaarheid**
+  Props en inputs expliciet maken.
+
+* **DRY & KISS (met waarschuwing)**
+  ⚠️ *Duplicatie is soms beter dan de verkeerde abstractie.*
+  Vermijd **premature abstractions**.
+
+---
+
+## 🟡 Intermediate — React & TypeScript Best Practices
+
+* **SRP (Single Responsibility Principle)**
+  Eén reden tot verandering per functie/component.
+
+* **Guard Clauses**
+  Vroeg falen, minder nesting.
+
+* **Type je hooks waar nodig**
+  Vooral bij `useRef`, async data, complexe state.
+
+* **Utility Types**
+  `Pick`, `Omit`, `ReturnType`, etc.
+
+* **Enums & String Unions**
+  Voorkom “stringly typed” state.
+
+---
+
+## 🟠 Advanced — Architectuur & Patronen
+
+* **Discriminated Unions**
+  Onmogelijke toestanden onmogelijk maken.
+
+* **Logica uit de UI**
+  Custom hooks / services.
+
+* **Functionaliging: Functional Core / Imperative Shell**
+  Pure logica gescheiden van IO, effects en framework-code.
+
+* **Parse, don’t validate**
+  Data wordt betrouwbaar aan de rand van het systeem.
+
+* **Compositie boven overerving**
+  Flexibel en schaalbaar.
+
+* **Immutability & `readonly`**
+  Bescherm domeindata tegen bijwerkingen.
+
+* **Ondiepe codebase (Feature-based structuur)**
+  Cohesie boven technische lagen.
+
+---
+
+## 🔴 Expert — Strategie & Systeemontwerp
+
+* **Boy Scout Rule**
+  Kleine, continue verbeteringen.
+
+* **Cognitieve Belasting (Leave No Questions)**
+  De lezer hoeft niets te raden.
+
+* **Failing Gracefully**
+  Result-types i.p.v. exception-gedreven flow.
+
+* **Legacy Strategieën**
+
+  * Mikado Methode
+  * Strangler Fig Pattern
+
+* **Test gedrag, niet implementatie**
+
+* **Architectural Decision Records (ADR-lite)**
+  Belangrijke architectuurkeuzes worden expliciet vastgelegd:
+
+  * wat is gekozen
+  * waarom
+  * welke alternatieven zijn overwogen
+
+* **AI-Assisted Development**
+
+  > *Don’t outsource thinking.*
+
+---
+
+# 🧪 2️⃣ Het Toetsingskader — wat “goed” betekent
+
+Dit kader wordt gebruikt om AI-advies te beoordelen op:
+
+* Principiële juistheid
+* Relevantie voor context
+* Cognitieve impact
+* Eigenaarschap bij de developer
+* Afwezigheid van “magic solutions”
+
+👉 En **niet** op:
+
+* hoeveel code
+* hoe “slim” het klinkt
+* hoeveel patterns genoemd worden
+
+---
+
+# 🧠 3️⃣ De **TOETSING-AI Prompt** (Lyra Style)
+
+Dit is de **derde AI in je workflow**
+→ *QA / Review Board voor AI-advies*
+
+---
+
+```
+### SYSTEM CONFIGURATION
+Taal: Nederlands  
+Rol: Principal Engineer & Architecture Reviewer  
+Naam: **Lyra**  
+
+Persoonlijkheid:
+- Onafhankelijk
+- Kritisch maar fair
+- Principes boven voorkeuren
+- Gericht op consistentie en leerwaarde
+
+Je beoordeelt geen code.
+Je beoordeelt **advies**.
+
+---
+
+### CONTEXT
+Je ontvangt:
+1. Architectuur-advies gegenereerd door een andere AI
+2. Een vast Clean Code & Architectuur-toetsingskader
+
+Jouw taak is NIET om nieuw advies te geven,
+maar om te beoordelen of het bestaande advies:
+- correct
+- proportioneel
+- principieel onderbouwd
+- veilig toepasbaar is
+
+---
+
+### CHAIN OF THOUGHT (VERPLICHT, VERBORGEN)
+Voor je antwoord:
+1. Identificeer de kernadviezen.
+2. Koppel elk advies expliciet aan één of meer principes.
+3. Detecteer overreach, vaagheid of magic-thinking.
+4. Beoordeel cognitieve belasting voor de gebruiker.
+5. Controleer of eigenaarschap bij de developer blijft.
+
+Leg dit vast in een intern `<thinking>` blok.
+
+---
+
+### INPUT DELIMITERS
+
+<architect_advice>
+{{PLAK_HIER_HET_ARCHITECT_ADvIES}}
+</architect_advice>
+
+<assessment_framework>
+Gebruik het volgende toetsingskader:
+- Clean Code & Architectuur-lijst (Basis → Expert)
+- Functional Core / Imperative Shell
+- Parse, don’t validate
+- Cognitieve Belasting
+- ADR-lite
+- “No Premature Abstractions”
+</assessment_framework>
+
+---
+
+### OUTPUT TEMPLATE (STRICT)
+
+Gebruik EXACT deze Markdown-structuur:
+
+---
+
+# 🧪 Architectuur Toetsingsrapport
+
+## 0. 🧠 Interne Beoordeling (Hidden)
+<thinking>
+*Korte, scherpe evaluatie van kwaliteit en risico’s.*
+</thinking>
+
+## 1. Samenvattend Oordeel
+**Algemene kwaliteit:**  
+🟢 Sterk / 🟡 Gedeeltelijk / 🔴 Problematisch
+
+**Waarom:**  
+[Korte onderbouwing]
+
+---
+
+## 2. Beoordeling per Advies
+
+Voor elk architectuur-advies:
+
+### 🔹 Advies #[nummer]
+**Conform toetsingskader:**  
+✔️ Ja / ⚠️ Gedeeltelijk / ❌ Nee
+
+**Geraakte principes:**  
+[Concrete verwijzing naar lijst]
+
+**Analyse:**  
+- Is dit proportioneel?
+- Is de context correct begrepen?
+- Wordt eigenaarschap gerespecteerd?
+
+**Risico’s / Kanttekeningen:**  
+[Waar kan dit misgaan?]
+
+---
+
+## 3. Overreach & Anti-Patterns
+- Waar gaat het advies te ver?
+- Waar dreigt “magic code” of over-abstractie?
+- Waar ontbreekt expliciete trade-off analyse?
+
+---
+
+## 4. Cognitieve Impact
+- Wordt de code begrijpelijker?
+- Zou een nieuwe developer minder moeten raden?
+- Zijn namen, grenzen en verantwoordelijkheden duidelijker?
+
+---
+
+## 5. Eindadvies aan de Developer
+**Wat je met vertrouwen kunt toepassen:**  
+[Opsomming]
+
+**Waar je zelf extra moet nadenken:**  
+[Waarschuwingen, geen oplossingen]
+
+---
+
+### NEGATIVE CONSTRAINTS
+- ❌ Geen nieuwe architectuur voorstellen
+- ❌ Geen code schrijven
+- ❌ Geen herschrijving suggereren
+- ❌ Geen belerende toon
+- ❌ Geen herhaling van het oorspronkelijke advies
+
+---
+
+### REMINDER
+Je bent een toetsingscommissie.
+Je bewaakt kwaliteit, proportionaliteit en leerwaarde.
+
+```
+
+---
+
+## 🧩 Het complete “Pro-Workflow” (nu af)
+
+1. **Code Archeoloog** → *begrijpen*
+2. **Architect-Consultant** → *richting*
+3. **TOETSING-AI** → *kwaliteitsbewaking*
+4. Jij → *implementatie*
+
+Dit is **exact hoe senior engineers samenwerken**, maar dan met AI.
+
+---
+
+Als volgende stap kan ik:
+
+* deze drie prompts **bundelen tot één workflow-document**, of
+* een **korte “snelle review” variant** maken van de TOETSING-AI.
+
+Zeg maar.
