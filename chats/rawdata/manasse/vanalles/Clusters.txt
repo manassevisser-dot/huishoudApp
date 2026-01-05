@@ -1,0 +1,204 @@
+---
+
+# 🧭 Architect-Consultant Rapport: Evaluatie Cluster-Architectuur
+
+## 🧠 Strategic Analysis (Internal)
+<thinking>
+De Back-up CTO stelt een gelaagde structuur voor die sterk leunt op de klassieke DDD-lagen (Domain, State, UI, App). Dit is een enorme verbetering ten opzichte van de huidige platte structuur. 
+
+**Sterke punten:**
+- **Cluster 1 (Fundering):** Het isoleren van Types en Core Utils als de "Domain Layer" is essentieel. Dit dwingt een *Functional Core* af. Door de "Speciale Status" hier te verankeren, wordt het een onwrikbaar onderdeel van het domeinmodel in plaats van een toevallige UI-vlag.
+- **Cluster 3 (Poortwachters):** De scheiding tussen Atomen en de rest van de app is cruciaal voor *Cognitieve Ontlasting*. Ontwikkelaars hoeven niet na te denken over business rules als ze aan een `ToggleSwitch` werken.
+
+**Kritieke kanttekeningen:**
+- **De Validatie-Paradox (Cluster 4):** De CTO plaatst `validation.ts` en `conditions.ts` in Cluster 4 (De Flow). Architecturaal gezien is validatie echter vaak *Domeinlogica*. Als een postcode 4 cijfers moet hebben, is dat een wet van het domein, niet van de wizard-flow. Er is een risico dat Cluster 1 "domme data" bevat en Cluster 4 de "slimme regels", terwijl die twee idealiter samen in de Fundering (Domain) zitten.
+- **De Hook-Positie:** `useDobInput.ts` staat in Cluster 2 (De Motor). Als deze hook alleen de brug is naar de Context, klopt dit. Maar als de hook zelf de parsing-logica bevat, lekt er domeinkennis naar de State-laag.
+</thinking>
+
+---
+
+## 🎯 Executive Summary
+Ik ben het **85% eens** met deze clustering. Het biedt een solide routekaart voor de transformatie naar 2025. De resterende 15% zit in de positionering van de **Business Rules**. Om de "2025-standaard" te halen, moeten we voorkomen dat Cluster 4 (De Flow) een vergaarbak wordt voor regels die eigenlijk in de Fundering (Cluster 1) thuishoren.
+
+---
+
+## 🔍 Architecturale Analyse van de Clusters
+
+### **Cluster 1: De Fundering (Domain Layer)**
+- **Oordeel:** **Excellent.** 
+- **Waarom:** Dit is de enige plek waar we "Pure" code toestaan. Geen React, geen side-effects. Door `finance.ts` en `numbers.ts` hier te plaatsen, dwingen we af dat de rekenkern onafhankelijk van de UI kan worden getest.
+- **Aandachtspunt:** Ik adviseer om de *regels* uit `validation.ts` (Cluster 4) te splitsen: de *regels zelf* (Domain) naar Cluster 1, de *uitvoering in het formulier* (App) blijft in Cluster 4.
+
+### **Cluster 2: De Motor (State Layer)**
+- **Oordeel:** **Correct.**
+- **Waarom:** Dit cluster beheert de "Single Source of Truth". De koppeling tussen `storage.ts` en de `FormContext` is de ruggengraat van de app. 
+- **Risico:** Let op `householdAlign.ts`. Dit is een service die de domein-integriteit bewaakt. Het moet een "pure" transformator zijn die door de Context wordt aangeroepen.
+
+### **Cluster 3: De Poortwachters (UI Layer)**
+- **Oordeel:** **Correct.**
+- **Waarom:** Dit reduceert de *Cognitieve Belasting*. Deze componenten weten niets van "huishoudens" of "inkomen". Ze weten alleen hoe ze een getal of een datum moeten tonen.
+
+### **Cluster 4: De Flow (App Layer - Logic)**
+- **Oordeel:** **Nuance vereist.**
+- **Waarom:** De `WizardController` en de `Configs` zijn inderdaad de "Wetboeken" van de gebruikersreis. 
+- **Architecturaal advies:** Pas op dat `conditions.ts` niet de enige plek wordt waar domeinkennis leeft. Als een pagina wordt overgeslagen omdat iemand "geen auto heeft", is dat een flow-regel. Als een berekening verandert omdat iemand "geen auto heeft", is dat een domein-regel (Cluster 1).
+
+---
+
+## 📋 Strategische Aanbevelingen
+
+### 🔴 CRITICAL (Voor de start van Fase 2)
+
+#### 🎯 De "Domain Logic" Migratie
+**🔍 DIAGNOSIS:** In de huidige clustering dreigt domeinlogica (validatie/condities) versnipperd te raken tussen Cluster 1 en Cluster 4.
+**💡 DIRECTION:** Definieer Cluster 1 niet alleen als "Types & Utils", maar als **"Types & Regels"**. 
+**⚖️ TRADE-OFFS:**
+- Complexity: ↑ (Meer initiële denkwerk over waar een regel thuishoort)
+- Impact: ↑↑ (Voorkomt dat de Wizard-flow de business rules "gijzelt")
+
+---
+
+## 🎓 De Gouden Regel voor deze Clustering
+**"Side-effects stroomafwaarts, Regels stroomopwaarts."**
+Alles in Cluster 1 moet kunnen draaien in een simpele Node.js script zonder browser of React. Alles wat React-hooks of API-calls nodig heeft, moet naar Cluster 2 of 5.
+
+---
+
+## ✅ Actionable Checklist voor de CTO
+
+- [ ] **Besluit:** Verplaats de pure validatie-logica (bijv. regexes, drempelwaarde-checks) van `validation.ts` naar een nieuwe `domain/validation` module in **Cluster 1**.
+- [ ] **Besluit:** Markeer `useDobInput.ts` als een "Bridge Hook" in **Cluster 2**, maar verplaats de parsing-logica naar `date.ts` in **Cluster 1**.
+- [ ] **Configuratie:** Definieer de Path Aliases in `tsconfig.json` direct volgens deze clusters:
+  - `@domain/*` -> Cluster 1
+  - `@state/*` -> Cluster 2
+  - `@ui/*` -> Cluster 3
+  - `@app/*` -> Cluster 4 & 5
+
+---
+
+**ADR-lite (Voorstel)**
+**Status: Proposed (ter beoordeling door CTO)**
+
+**Besluit:**
+We accepteren de 5-cluster structuur als leidraad voor de DDD-migratie, met de expliciete toevoeging dat Cluster 1 de "Single Source of Truth" voor alle business rules (inclusief validatie-regels) wordt.
+
+**Context:**
+Voorkomen van logica-lekkage waarbij de Wizard-flow bepaalt wat valide data is, in plaats van het domeinmodel zelf.
+
+**Afweging:**
+– Alternatief: Validatie volledig in de UI-laag houden.
+– Reden verworpen: Maakt de "Speciale Status" statistieken onbetrouwbaar omdat de regels niet centraal geborgd zijn.
+
+**Impact:**
+Duidelijke scheiding tussen *wat* valide is (Cluster 1) en *hoe* we dat aan de gebruiker tonen (Cluster 3/4).
+
+### 🏛️ Definitieve Cluster-indeling voor de "2025-standaard" (DDD)
+
+#### **Cluster 0: Infrastructuur & Orchestratie (Root)**
+
+*De ankers van de applicatie. Essentieel voor de technische migratie.*
+
+* `App.tsx` (Entry point wrapper)
+* `package.json` (Dependency & Alias management)
+* `tsconfig.json` (TypeScript & Path definition)
+* `app.json` (Expo/Mobile config)
+* `babel.config.js` (Module resolution)
+* `.gitignore` / `.env` (Omgeving)
+
+#### **Cluster 1: De Fundering (Domain Layer - Types & Regels)**
+
+*De "Pure" laag. Bevat de logica die de "Speciale Status" borgt en de komma-bug elimineert.*
+
+* **Bestanden:**
+* `src/types/household.ts` (Shadow-attribute: `isSpecialStatus`) DONE	
+* `src/types/income.ts` DONE
+* `src/types/expenses.ts`DONE
+* `src/types/transaction.ts`DONE
+* `src/types/form.ts`DONE
+* `src/utils/numbers.ts` (Core reken-logica) DONE
+* `src/utils/finance.ts` (Aggregatie-regels) DONE
+* `src/utils/strings.ts` (Sanitizers) DONE
+* `src/utils/date.ts` (Noon-strategie) DONE
+* `src/utils/validation.ts` (**Verplaatst uit Cluster 4:** De pure validatie-regels) DONE
+
+
+
+#### **Cluster 2: De Motor (State & Data Layer)**
+
+*Verantwoordelijk voor persistentie en de flow van data door de app.*
+
+* **Bestanden:**
+* `src/context/FormContext.tsx` (Single Source of Truth) DONE
+* `src/context/ThemeContext.tsx` DONE
+* `src/services/storage.ts` (Safe JSON handling) DONE
+* `src/services/transactionService.ts` (UUID generatie) DONE
+* `src/services/householdAlign.ts` (Orphan data cleaner) DONE
+* `src/hooks/useDobInput.ts` (Brug tussen UI en Date-domain) EMPTY FILE
+
+
+
+#### **Cluster 3: De Poortwachters (UI Layer - Atoms)**
+
+*Domme componenten zonder domeinkennis. Alleen presentatie en input.*
+
+* **Bestanden:**
+* `src/components/FormField.tsx`DONE
+* `src/components/InputCounter.tsx`DONE
+* `src/components/DateField.tsx`DONE
+* `src/components/ConditionalField.tsx`DONE
+* `src/components/ToggleSwitch.tsx`DONE
+* `src/components/ChipButton.tsx`DONE
+* `src/styles/Colors.ts`DONE
+* `src/styles/useAppStyles.ts`DONE
+
+
+
+#### **Cluster 4: De Flow (App Layer - Logic & Wizard)**
+
+*De orchestratie van de gebruikersreis en de configuratie.*
+
+* **Bestanden:**
+* `src/screens/Wizard/WizardController.tsx`
+* `src/screens/Wizard/WizardPage.tsx`
+* `src/screens/Wizard/pages/C1.config.ts`
+* `src/screens/Wizard/pages/C4.config.ts`
+* `src/screens/Wizard/pages/C7.config.ts`
+* `src/screens/Wizard/pages/C10.config.ts`
+* `src/organisms/HouseholdMemberRepeater.tsx`
+* `src/organisms/IncomeRepeater.tsx`
+* `src/organisms/ExpenseRepeater.tsx`
+* `src/utils/conditions.ts` (Flow-navigatie regels)
+
+
+
+#### **Cluster 5: De Buitenschil (App Layer - Screens & I/O)**
+
+*De schermen die de data tonen aan de eindgebruiker.*
+
+* **Bestanden:**
+* `src/screens/Dashboard/DashboardScreen.tsx` (Audit view)
+* `src/screens/DailyInput/DailyInputScreen.tsx`
+* `src/screens/Daily/UndoScreen.tsx`
+* `src/screens/CSV/CsvUploadScreen.tsx`
+* `src/screens/LandingScreen.tsx`
+* `src/screens/Options/OptionsScreen.tsx`
+* `src/screens/Reset/ResetScreen.tsx`
+* `src/screens/Settings/SettingsScreen.tsx`
+* `src/services/csvService.ts` (Externe I/O)
+* `src/navigation/Navigator.tsx` (Routing)
+
+
+
+---
+
+### ⚠️ Archief (Buiten de architectuur)
+
+De volgende bestanden worden door de Navigator (Flow 4) genegeerd of verplaatst naar een `/archive` map:
+
+* `src/context/FormContext.tsx.bak`
+* `src/organisms/HouseholdMemberRepeater.tsx.bak`
+* `src/screens/Wizard/WizardController.tsx.bak`
+
+**Dit is de complete lijst. Ik ben nu klaar om de definitieve prompt voor de generatie van het Toetsingskader op te stellen, waarin we deze clusters dwingend opleggen aan FLOW 2.**
+
+Zal ik de prompt genereren?

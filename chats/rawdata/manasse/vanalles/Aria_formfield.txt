@@ -1,0 +1,387 @@
+Helemaal goed—ik neem opnieuw de **ARIA‑rol** op me voor **Cluster 3 (UI & Styling‑laag)**. Ik toets per bestand het **Architect‑advies** uit *Flow2\_CL3* aan jouw **Clean Code 2025 Checklist** en proportionaliteits‑/harm‑checks, zónder nieuwe beslissingen of code te introduceren. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt), [\[FLow2_CL2 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL2.txt)
+
+***
+
+## 🛡️ ARIA Audit Report — `FormField.tsx`
+
+**Bronadvies (samengevat):** Het component is een “God component” met **domeinlekkage** (hardcoded regels zoals max=7 voor `aantalVolwassen`), **naïeve number parsing** met duplicatie t.o.v. `numbers.ts`, en **hiërarchie‑inversie** door Organisms/Repeaters te importeren. Richting: strip tot **domme dispatcher** (alleen atomen), business rules naar Config/Domain, parsing centraliseren. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 📊 Executive Summary
+
+**Conformity Score:** **89%**  
+**Verdict:** 🟡 **Conditional**  
+**One‑liner:** De decompositie richting een **domme dispatcher** sluit aan op SRP en UI‑layer filosofie, maar vereist **gefaseerde migratie** en expliciete **FieldFactory/Registry**‑orchestratie om scope‑creep te voorkomen. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt), [\[FLow2_CL2 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL2.txt)
+
+### ✅ Strengths (Impact)
+
+1.  **SRP‑herstel & Dumb UI** — UI kent alleen atomen; logica naar Domain/Config. **Hoog**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt), [\[FLow2_CL2 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL2.txt)
+2.  **Eliminatie parsing‑duplicatie** — centrale numeric parser, voorkomt data‑corruptie. **Hoog**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+3.  **Architecturale hiërarchie herstellen** — geen Organism‑imports in atomen. **Medium**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### ⚠️ Critical Issues (MUST FIX)
+
+1.  **Magic business rule in UI (max=7)** — verplaatsen naar Config/Domain; anders inconsistentie bij wijziging. **Hoog**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🔶 Improvements (Should Consider)
+
+*   **Orchestratie:** expliciteer **FieldFactory/Registry** in App‑laag; documenteer welk veldtype door welk component wordt gerenderd. *Trade‑off:* meer bestanden, lagere cognitieve load. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🎯 Missing Context
+
+*   **ADR‑Triggers:**
+    *   [ ] Formele **UI‑orchestratie** (Registry/Factory) documenteren. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+    *   [ ] Parser‑SSOT beleid voor numeriek invoer. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🧠 Devil’s Advocate
+
+*   Een té strikte scheiding kan **velocity** verlagen bij snelle iteraties; compenseer met **kleine, herbruikbare atomen** i.p.v. zware organismen. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🚦 Action Items
+
+**MUST**
+
+*   [ ] Verwijder business rules (max volwassenen) uit UI; naar Config/Domain.   
+    **SHOULD** [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+*   [ ] Parsing uit UI; gebruik centrale numeric util. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+**ADR‑Reviewer:** **Aanpassen** — voeg een **gefaseerde migratie + FieldFactory**‑plan toe. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+***
+
+## 🛡️ ARIA Audit Report — `InputCounter.tsx`
+
+**Bronadvies (samengevat):** Functioneel “dom”, maar **inline styles** doorbreken design‑systeem; `safeValue` wijst upstream op zwak contract. Voorstel: styles naar StyleSheet/useAppStyles; standaardiseer buttons. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 📊 Executive Summary
+
+**Conformity Score:** **91%**  
+**Verdict:** 🟢 **Approved**  
+**One‑liner:** Houd het component **dom** en verplaats layout‑logica naar het **design‑systeem**; dit verhoogt consistentie zonder functionele impact. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt), [\[FLow2_CL2 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL2.txt)
+
+### ✅ Strengths
+
+*   **SRP goed toegepast (tellen/renders)** — atomisch gedrag. **Medium**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+*   **Accessibility labels aanwezig** — baseline oké. **Laag‑Medium**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### ⚠️ Critical Issues
+
+✨ Geen kritieke tekortkomingen in advies.
+
+### 🔶 Improvements
+
+*   **Style‑extractie** naar StyleSheet/useAppStyles; uniformeer counter‑knoppen. *Trade‑off:* kleine refactor, grote consistentie. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🎯 Missing Context
+
+*   [ ] Design‑tokens voor spacing/radii i.s.m. useAppStyles. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🧠 Devil’s Advocate
+
+*   Volledige standaardisatie kan **visuele variatie** beperken; borg **override‑hooks** in styles. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🚦 Action Items
+
+**SHOULD**
+
+*   [ ] Inline styles saneren; centraliseren. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+**ADR‑Reviewer:** **Accepteren**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+***
+
+## 🛡️ ARIA Audit Report — `DateField.tsx`
+
+**Bronadvies (samengevat):** UI bevat **Noon‑strategie** en helpers (`isoToDate`, `dateToISO`) → **domeinlekkage** & duplicatie; richting: alle datumtransformatie centraliseren in `utils/date.ts` en UI alleen consumeren. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 📊 Executive Summary
+
+**Conformity Score:** **93%**  
+**Verdict:** 🟢 **Approved**  
+**One‑liner:** Centralisatie van **datumtransformaties** herstelt SSOT en voorkomt “off‑by‑one” variatie; UI blijft **dom**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt), [\[FLow2_CL2 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL2.txt)
+
+### ✅ Strengths
+
+*   **Functional Core, Imperative Shell** — berekeningen naar utils; UI = interactie. **Hoog**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+*   **DRY** — duplicate helpers weg. **Medium**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### ⚠️ Critical Issues
+
+✨ Geen.
+
+### 🔶 Improvements
+
+*   **Type‑safe ISO props** (branded type of validator upstream). *Trade‑off:* extra types, betere veiligheid. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🎯 Missing Context
+
+*   [ ] Beleid voor min/max ISO validatie bij parent. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🧠 Devil’s Advocate
+
+*   Strikte centralisatie kan **component‑specific nuances** lastiger maken; bied **utils‑API** met benodigde varianten. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🚦 Action Items
+
+**MUST**
+
+*   [ ] Verwijder lokale datumhelpers; gebruik utils. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+**ADR‑Reviewer:** **Accepteren**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+***
+
+## 🛡️ ARIA Audit Report — `ConditionalField.tsx`
+
+**Bronadvies (samengevat):** **Unmounting** wist lokale UI‑state (UX‑impact), component is te “slim” door `useFormContext`. Richting: parent bepaalt `isVisible`; component wordt **stateless wrapper**; expliciet beleid voor hide vs unmount. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 📊 Executive Summary
+
+**Conformity Score:** **90%**  
+**Verdict:** 🟢 **Approved**  
+**One‑liner:** Maak het component **dom** (visibility via prop) en **documenteer** unmount‑gevolgen om UX‑verwarring en data‑verlies te voorkomen. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt), [\[FLow2_CL2 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL2.txt)
+
+### ✅ Strengths
+
+*   **Functional Core delegatie** — evaluatie via pure functie upstream. **Medium**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### ⚠️ Critical Issues
+
+✨ Geen, mits unmount‑beleid expliciet.
+
+### 🔶 Improvements
+
+*   **Cleanup policy** voor verborgen data (state‑opschoning bij unmount) vastleggen. *Trade‑off:* extra orkestratie, hogere datakwaliteit. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🎯 Missing Context
+
+*   [ ] ADR keuze **hide vs unmount** en databeleid. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🧠 Devil’s Advocate
+
+*   `display:none` behoudt data maar kan **validatie‑complexiteit** verhogen; afwegen per flow. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🚦 Action Items
+
+**MUST**
+
+*   [ ] Verwijder context‑consumptie; `isVisible` via props. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+**ADR‑Reviewer:** **Accepteren**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+***
+
+## 🛡️ ARIA Audit Report — `ToggleSwitch.tsx`
+
+**Bronadvies (samengevat):** Semantische mismatch (naam “Switch” maar visueel **button**), **accessibilityLabel** optioneel (context‑hiaat). Richting: label verplicht; overweeg hernoemen naar ToggleButton. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 📊 Executive Summary
+
+**Conformity Score:** **86%**  
+**Verdict:** 🟡 **Conditional**  
+**One‑liner:** Accessibility‑contract versterken (verplicht label) en **narratieve consistentie** (naamgeving) voor voorspelbare UI‑semantiek. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt), [\[FLow2_CL2 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL2.txt)
+
+### ✅ Strengths
+
+*   **SRP** — eenvoudige binaire UI. **Medium**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### ⚠️ Critical Issues
+
+1.  **Toegankelijkheids‑context ontbreekt** — label verplicht stellen. **Hoog**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🔶 Improvements
+
+*   **Rename** om semantische consistentie te borgen; of reserveer “Switch” voor native switch. *Trade‑off:* kleine rename, heldere vocabulaire. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🎯 Missing Context
+
+*   [ ] WCAG contrast‑check voor actieve/inactieve kleuren. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🧠 Devil’s Advocate
+
+*   Native Switch verhoogt **perceived quality** maar ook complexiteit; doelgroep/ontwerp afwegen. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🚦 Action Items
+
+**MUST**
+
+*   [ ] Maak `accessibilityLabel` verplicht. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+**ADR‑Reviewer:** **Aanpassen** — voeg verplicht label‑contract toe; hernoem‑besluit expliciteren. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+***
+
+## 🛡️ ARIA Audit Report — `ChipButton.tsx`
+
+**Bronadvies (samengevat):** Sterk, stateless atom; aandachtspunten: **state‑prioriteit** in style array (error vs selected), **rol/semantiek** voor accessibility, **disabled/pressed** states. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 📊 Executive Summary
+
+**Conformity Score:** **92%**  
+**Verdict:** 🟢 **Approved**  
+**One‑liner:** Behoud atomische eenvoud; verfijn **interactie‑matrix** (disabled/pressed) en **semantische rollen** voor screenreaders. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt), [\[FLow2_CL2 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL2.txt)
+
+### ✅ Strengths
+
+*   **SRP & Composition‑friendly** — zeer herbruikbaar. **Medium**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### ⚠️ Critical Issues
+
+✨ Geen.
+
+### 🔶 Improvements
+
+*   **Disabled state** toevoegen en **style‑prioriteit** standaardiseren. *Trade‑off:* mini effort, duidelijke UI. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🎯 Missing Context
+
+*   [ ] Groepsrol (button vs radio/checkbox) per gebruik. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🧠 Devil’s Advocate
+
+*   Te veel states in één atom kunnen **complexiteit** verhogen; hou props minimaal, laat parent orkestreren. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🚦 Action Items
+
+**SHOULD**
+
+*   [ ] Disabled/pressed styles + prioriteiten vastleggen. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+**ADR‑Reviewer:** **Accepteren**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+***
+
+## 🛡️ ARIA Audit Report — `src/styles/Colors.ts`
+
+**Bronadvies (samengevat):** Sterk semantisch kleurenstelsel met WCAG‑notities, maar **statische documentatie** kan verouderen; **palet vs thema** vermengd; voorstel: Base **Palette** + automatiseren contrast‑checks. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 📊 Executive Summary
+
+**Conformity Score:** **90%**  
+**Verdict:** 🟢 **Approved**  
+**One‑liner:** Splits **Palette** van **Theme‑mapping** en automatiseer **toegankelijkheid** om drift te voorkomen. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt), [\[FLow2_CL2 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL2.txt)
+
+### ✅ Strengths
+
+*   **Semantic Stability** — tokens (primary, error) i.p.v. hex in UI. **Hoog**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+*   **Type‑pariteit** tussen thema’s. **Medium**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### ⚠️ Critical Issues
+
+✨ Geen.
+
+### 🔶 Improvements
+
+*   **Palette** centraal; **contrast tests** als code. *Trade‑off:* kleine tooling, grote zekerheid. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🎯 Missing Context
+
+*   [ ] readonly enforcement; tool‑link voor ratio’s. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🧠 Devil’s Advocate
+
+*   Extra utilities/test kunnen **bundel** iets vergroten; winst in compliance rechtvaardigt het. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🚦 Action Items
+
+**SHOULD**
+
+*   [ ] Palette introduceren; automation voor contrast. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+**ADR‑Reviewer:** **Accepteren**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+***
+
+## 🛡️ ARIA Audit Report — `src/styles/useAppStyles.ts`
+
+**Bronadvies (samengevat):** Performant caching, maar **God‑stylesheet** (SRP‑schending), **hardcoded kleur** (`#fff`) breekt Dark Mode, **magische getallen** zonder tokens; voorstel: kleuren via `Colors`, **design tokens** (Spacing/Radii), decompositie naar useForm/useDashboard. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 📊 Executive Summary
+
+**Conformity Score:** **88%**  
+**Verdict:** 🟡 **Conditional**  
+**One‑liner:** Herstel **thema‑integriteit** (alle kleuren via tokens) en **modulariseer** styles om cognitieve last te verlagen; voeg **design tokens** toe. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt), [\[FLow2_CL2 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL2.txt)
+
+### ✅ Strengths
+
+*   **Performance & Purity** — styleCache & pure factory. **Medium**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### ⚠️ Critical Issues (MUST FIX)
+
+1.  **Dark Mode leak (`#fff`)** — directe hex doorbreekt thema; vervang door `Colors`. **Kritisch**. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🔶 Improvements
+
+*   **Tokens** (Spacing/Radii/Typography) invoeren; splits module; verlaag monolithische scope. *Trade‑off:* meer modules, duidelijke structuur. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🎯 Missing Context
+
+*   [ ] Token‑set en adoptie‑strategie (waarom welke waarden). [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🧠 Devil’s Advocate
+
+*   Te sterke modulatie kan **overhead** geven; start met **kritieke** clusters (Form, Dashboard). [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### 🚦 Action Items
+
+**MUST**
+
+*   [ ] Vervang alle hardcoded colors door `Colors` tokens.   
+    **SHOULD** [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+*   [ ] Introduceer Spacing/Radii tokens; begin met meest gebruikte waarden. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+**ADR‑Reviewer:** **Aanpassen** — voeg token‑definitie & decompositieplan toe. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+***
+
+# 🔭 Grotere samenhang in **Cluster 3** (Cross‑File Synthesis)
+
+1.  **Dumb UI als ruggengraat**
+
+*   `FormField.tsx`, `DateField.tsx`, `ConditionalField.tsx` worden **domme** presenters/dispatchers. Berekeningen (Noon, parsers, business rules) **verhuizen** naar utils/config in de Domain/App‑laag. Dit reduceert duplicatie en “magic” in UI. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+2.  **Design‑systeem‑discipline**
+
+*   `InputCounter.tsx`, `Colors.ts`, `useAppStyles.ts` samen leggen de basis voor **token‑gebaseerde** styling en **Dark Mode‑consistentie**. Dit verlaagt onderhoudskosten en voorkomt regressies. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+3.  **Toegankelijkheid als contract**
+
+*   `ToggleSwitch.tsx` & `ChipButton.tsx` versterken **WCAG‑conformiteit** via verplichte labels, duidelijke rollen en state‑prioriteiten, met minimale DX‑impact. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+4.  **Gefaseerde migratie (blast‑radius beperken)**
+
+*   Start met **kritieke correctheden**: verwijder hardcoded colors in `useAppStyles.ts` (Dark Mode bug) en parsing‑duplicatie in `FormField.tsx`. Daarna **orchestratie** (Registry/Factory) en **tokens** invoeren. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+***
+
+# 🚦 Cluster 3 — Geprioriteerde Action Board
+
+### MUST (Sprint nu)
+
+*   [ ] **FormField:** business rules & parsing uit UI; geen Organism‑imports. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+*   [ ] **useAppStyles:** alle hardcoded colors → `Colors`; fix Dark Mode leak. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### SHOULD (2–3 weken)
+
+*   [ ] **DateField:** helpers verwijderen; utils centraal. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+*   [ ] **InputCounter:** styles centraliseren; counter‑buttons standaardiseren. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+*   [ ] **Tokens:** Spacing/Radii/Typography modules; begin in Form‑styles. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+### COULD (Backlog)
+
+*   [ ] **ConditionalField:** cleanup policy voor verborgen data; hide vs unmount documenteren. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+*   [ ] **ToggleSwitch:** rename & verplicht label; WCAG contrast audit. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+*   [ ] **ChipButton:** disabled/pressed states + rolopties. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+***
+
+## 🎓 Meta‑Feedback voor Architect AI
+
+**Positief:** Heldere smell‑detectie (domeinlekkage in UI, styling‑monolith), praktische voorstellen (dispatcher, tokens), en aandacht voor accessibility.   
+**Verbeterpunt:** Voeg standaard een **gefaseerde migratie‑paragraaf** en **teststrategie** toe voor UI‑decomposities (FieldFactory, token adoptie) om het team houvast te geven. [\[FLow2_CL3 | Txt\]](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/FLow2_CL3.txt)
+
+***
+
+Wil je dat ik nu:
+
+*   deze acties omzet naar een **sprint‑bord** met acceptatiecriteria per item, of
+*   meteen doorga met **Cluster 4 (Wizard‑flow & Business Rules)**?
