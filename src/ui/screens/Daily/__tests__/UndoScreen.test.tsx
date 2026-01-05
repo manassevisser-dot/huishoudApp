@@ -1,21 +1,24 @@
 import React from 'react';
 import { 
-  render, 
   screen, 
   cleanup, 
   fireEvent, 
-  waitFor 
+  waitFor, 
+  
 } from '@testing-library/react-native';
+import { render } from '@test-utils/index'; // Gebruik je nieuwe render met providers
 import { UndoScreen } from '../UndoScreen';
 import { TransactionService } from '@services/transactionService';
 
-// De helper die je eerder hebt aangemaakt 
+/**
+ * Helper om robuust tekst te vinden, zelfs als React Native deze opsplitst
+ * in de Virtual DOM (zoals bij "Boodschappen: € 12.5")
+ */
 async function waitForTextContaining(
   searchText: string,
   options?: { timeout?: number }
 ): Promise<void> {
   await waitFor(() => {
-    // We gebruiken de interne tree van screen om tekst te extraheren
     const allTexts = screen.toJSON();
     const stringified = JSON.stringify(allTexts);
     expect(stringified).toContain(searchText);
@@ -46,22 +49,24 @@ describe('UndoScreen Integratie Tests', () => {
     ];
     mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
 
-    const { toJSON } = render(<UndoScreen />);
+    // ✅ FIX: Verwijder de handmatige 'await act' om de render heen
+    render(<UndoScreen initialData={{ id: "test-123", amount: 1500, currency: "EUR", description: "Boodschappen", date: "2026-01-05" }} />);
 
-    // Wacht tot de tekst verschijnt met de robuuste helper [cite: 56, 60]
+    // Wacht tot de data zichtbaar is via de robuuste helper
     await waitForTextContaining('Boodschappen');
     await waitForTextContaining('Tanken');
 
-    // Snapshot pas maken als de UI 'settled' is [cite: 64, 84]
-    expect(toJSON()).toMatchSnapshot();
+    // Snapshot is nu veilig omdat de UI 'settled' is
+    expect(screen.toJSON()).toMatchSnapshot();
   });
 
   it('moet omgaan met undefined data van de service', async () => {
     mockedTx.getAllTransactions.mockResolvedValueOnce(undefined as any);
   
-    render(<UndoScreen />);
+    // ✅ FIX: Direct renderen zonder act()
+    render(<UndoScreen initialData={{ id: "test-123", amount: 1500, currency: "EUR", description: "Boodschappen", date: "2026-01-05" }} />);
   
-    // Gebruik findBy om te wachten op de useEffect afhandeling [cite: 68, 77]
+    // Gebruik de regex fix voor flexibele witruimte
     const counter = await screen.findByText(/Laatste transacties:\s*0/i);
     expect(counter).toBeTruthy();
     expect(screen.getByText(/Geen recente transacties/i)).toBeTruthy();
@@ -72,20 +77,22 @@ describe('UndoScreen Integratie Tests', () => {
     mockedTx.getAllTransactions.mockResolvedValueOnce(mockData);
     mockedTx.clearAll.mockResolvedValueOnce(undefined);
 
-    render(<UndoScreen />);
+    // ✅ FIX: Direct renderen
+    render(<UndoScreen initialData={{ id: "test-123", amount: 1500, currency: "EUR", description: "Boodschappen", date: "2026-01-05" }} />);
 
-    // Wacht tot initieel geladen [cite: 66, 77]
+    // Wacht tot de initiele data is geladen
     await screen.findByText(/Boodschappen/i);
 
-    // Actie: Verwijderen [cite: 63]
+    // Actie: Verwijderen. fireEvent triggert intern de nodige act() calls.
     fireEvent.press(screen.getByRole('button', { name: /Verwijder Alles/i }));
 
-    // Wacht tot de service is aangeroepen EN de UI is bijgewerkt naar 0 [cite: 63, 66]
+    // Wacht tot de service is aangeroepen EN de UI is bijgewerkt naar 0
     await waitFor(() => {
       expect(mockedTx.clearAll).toHaveBeenCalled();
       expect(screen.getByText(/Laatste transacties:\s*0/i)).toBeTruthy();
     });
 
+    // Controleer of de oude data echt weg is
     expect(screen.queryByText(/Boodschappen/i)).toBeNull();
   });
 });
