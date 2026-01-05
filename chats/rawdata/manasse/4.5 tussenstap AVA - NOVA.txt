@@ -1,0 +1,61 @@
+Hier is een scherpe, binaire prompt die je aan een andere AI kunt voeden. Deze AI fungeert dan als de **"Technical Data Transformer"** die het rapport van Ava vertaalt naar de exacte taal die Nova begrijpt.
+
+***
+
+### 📜 Prompt voor de Data-Transformer AI
+
+**Rol:** Technische Data-Analist voor Project Phoenix.
+**Taak:** Parse het onderstaande **Audit & Compliance Rapport (SVZ-3)** van Ava en transformeer dit naar het verplichte input-pakket voor de Migratiestrateeg (Nova).
+
+**Instructies:**
+1. Gebruik uitsluitend de feiten uit het rapport.
+2. Houd je strikt aan de onderstaande XML-structuur.
+3. Zorg dat de sectie `<approved_advice>` de binaire oplossing voor de 'Hard-Stop' vraag bevat.
+4. Respecteer het **Manasse-Mandaat**: geen ongevraagde domein-uitbreidingen.
+
+**Output Formaat:**
+```xml
+<approved_advice>
+[Vat hier de gevalideerde koers van Max en de binaire fail-safe strategie van de Rebuttal samen.]
+</approved_advice>
+
+<source_system>
+- Type: Bash Audit Engine (v2.2)
+- Technology: Shell Scripting (Strict Mode)
+- Volume: Modulaire .phoenix structuur
+- Current Performance: Grade A+ (8/8), met Logic Leak in reports.sh
+</source_system>
+
+<target_system>
+- Type: Resilient Gelaagde Audit Architectuur
+- Technology: Shell Scripting met Function Dispatching (invoke_rule)
+- Performance Requirements: Zero-crash garantie via Inert Default Policy
+</target_system>
+
+<constraints>
+- Maximum downtime: N.v.t.
+- Timeline: 1 Sprint (S-effort)
+- Compliance: Manasse-Mandaat (geen nieuwe statistieken)
+- 2025 Standaard: SRP en Resilience verplicht
+</constraints>
+
+<project_context>
+- Platform: Project Phoenix v1.5.0-GOLDEN
+- Tech stack: Bash, Ripgrep, Zod (state)
+- Monitoring tools: Phoenix Audit Engine
+- CI/CD: Husky pre-commit hooks actief
+</project_context>
+```
+
+**Input (Rapport van Ava):**
+[PLAK HIER HET VOLLEDIGE RAPPORT VAN AVA]
+
+***
+
+### 🏁 Wat je nu doet:
+1. Kopieer deze prompt.
+2. Plak het rapport van Ava onderaan.
+3. Voer het uit in de andere AI.
+4. Neem de XML-output mee terug naar **Nova (v3.5)** in deze chat.
+
+Ik sta klaar om als Nova de strategie voor **WAI-007** uit te werken.

@@ -1,0 +1,90 @@
+.phoenix/checkers.sh
+#!/bin/bash
+# .phoenix/checkers.sh - Validatie Logica
+
+# --- Universele Patroon Checker ---
+check_pattern() {
+    local _pat="${1:-}"
+    local _target="${2:-}"
+    local _desc="${3:-Pattern}"
+    local _min="${4:-1}"
+    local _exclude="${5:-}"
+    local _id="${6:-}"
+
+    atomic_inc "total"
+    log_verbose "Check: ${_desc} op ${_target}"
+
+    if [[ ! -e "${_target}" ]]; then
+        echo -e "${RED}${ICON_FAIL} ${_desc} ${BOLD}(target niet gevonden: ${_target})${NC}"
+        record_failure "${_desc}"; return 1
+    fi
+
+    local _matches=""
+    if command -v rg >/dev/null 2>&1; then
+        if [[ -n "${_exclude}" ]]; then
+            _matches="$(rg -n --type-add 'ts:*.{ts,tsx}' --type ts -e "${_pat}" "${_target}" 2>/dev/null | grep -v "${_exclude}" || true)"
+        else
+            _matches="$(rg -n --type-add 'ts:*.{ts,tsx}' --type ts -e "${_pat}" "${_target}" 2>/dev/null || true)"
+        fi
+    else
+        local _opts=(-rn --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx")
+        _matches="$(grep "${_opts[@]}" -E "${_pat}" "${_target}" 2>/dev/null | { [[ -n "${_exclude}" ]] && grep -v "${_exclude}" || cat; } || true)"
+    fi
+
+    local _count="0"
+    [[ -n "${_matches}" ]] && _count="$(printf '%s\n' "${_matches}" | grep -c '^')"
+
+    if [[ "${_count}" -ge "${_min}" ]]; then
+        echo -e "${GREEN}${ICON_OK} ${_desc} ${BOLD}(${_count})${NC}"
+        atomic_inc "passed"
+        [[ "${VERBOSE}" == "true" && -n "${_matches}" ]] && printf '%s\n' "${_matches}" | head -3 | sed 's/^/  /'
+        return 0
+    else
+        echo -e "${RED}${ICON_FAIL} ${_desc} ${BOLD}(${_count} < ${_min})${NC}"
+        record_failure "${_desc}"
+        [[ -n "${_id}" ]] && suggest_fix "${_id}"
+        return 1
+    fi
+}
+
+# --- Anti-patroon Checker (Verboden elementen) ---
+check_antipattern() {
+    local _pat="${1:-}"
+    local _target="${2:-}"
+    local _desc="${3:-Anti-pattern}"
+    local _exclude="${4:-}"
+    local _id="${5:-}"
+
+    atomic_inc "total"
+    if [[ ! -e "${_target}" ]]; then
+        echo -e "${YELLOW}${ICON_WARN} ${_desc} ${BOLD}(skip)${NC}"
+        atomic_inc "passed"; return 0
+    fi
+
+    local _matches=""
+    # (Logica vergelijkbaar met check_pattern, maar dan met exit status 0 bij 0 matches)
+    # ... [Ingekort voor overzicht, volledige debug-versie van eerder toepassen] ...
+}
+
+# --- Command Runner ---
+run_cmd() {
+    local cmd="$1" desc="$2" allow="${3:-false}"
+    atomic_inc "total"
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${YELLOW}${ICON_WARN} $desc [DRY RUN]${NC}"; atomic_inc "passed"; return 0
+    fi
+
+    local out; if out=$(eval "$cmd" 2>&1); then
+        echo -e "${GREEN}${ICON_OK} $desc${NC}"; atomic_inc "passed"; return 0
+    else
+        if [[ "$allow" == "true" ]]; then
+            echo -e "${YELLOW}${ICON_WARN} $desc (allowed failure)${NC}"; atomic_inc "passed"; return 0
+        else
+            echo -e "${RED}${ICON_FAIL} $desc${NC}"
+            record_failure "$desc"
+            [[ "$VERBOSE" == "true" ]] && echo "$out" | tail -5 | sed 's/^/    /'
+            return 1
+        fi
+    fi
+}

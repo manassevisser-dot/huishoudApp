@@ -1,0 +1,47 @@
+.phoenix/core.sh
+#!/bin/bash
+# .phoenix/core.sh - Statistieken, Logging & Configuratie
+
+# --- Atomaire Tellers (Parallel-veilig via bestandssysteem) ---
+init_counters() {
+    mkdir -p "$CACHE_DIR"
+    echo "0" > "$CACHE_DIR/total"
+    echo "0" > "$CACHE_DIR/passed"
+    echo "0" > "$CACHE_DIR/failed"
+    : > "$CACHE_DIR/failed_items.txt"
+}
+
+atomic_inc() {
+    local counter="$1"
+    local val
+    val=$(read_counter "$counter")
+    echo "$((val + 1))" > "$CACHE_DIR/$counter"
+}
+
+read_counter() {
+    cat "$CACHE_DIR/$1" 2>/dev/null || echo "0"
+}
+
+record_failure() {
+    local _desc="$1"
+    atomic_inc "failed"
+    echo "${_desc}" >> "${CACHE_DIR}/failed_items.txt"
+}
+
+# --- Logging Helpers ---
+log_section() {
+    echo -e "\n${BLUE}${BOLD}=== $1 ===${NC}"
+}
+
+log_verbose() {
+    [[ "$VERBOSE" == "true" ]] && echo -e "${DIM}  [DEBUG] $1${NC}"
+}
+
+# --- Config Loader ---
+load_config() {
+    local conf_file="${PROJECT_ROOT}/.phoenix-audit.conf"
+    if [[ -f "$conf_file" ]]; then
+        source "$conf_file"
+        log_verbose "Config geladen uit $conf_file"
+    fi
+}

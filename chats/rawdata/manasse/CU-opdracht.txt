@@ -1,0 +1,172 @@
+<internal_analysis>
+**Migration Type:** Application Orchestration Refactor (Cluster 0 / Phase WAI-006A).
+**Complexity Score:** 3/5 - De logica is conceptueel simpel, maar de impact is maximaal (de gehele app-start hangt hieraan).
+**Business Criticality:** Mission-Critical - Fouten in de state machine leiden tot een "App-lock" (wit scherm).
+**Downtime Tolerance:** Zero.
+
+**Risk Matrix:**
+| Risk | Probability | Impact | Priority | Mitigation |
+|:---|:---:|:---:|:---:|:---|
+| **Race Conditions** | Medium | High | 7 | Gebruik van een formele `AppStatus` union; verbod op meerdere effect-ticks voor hydratatie. |
+| **Zod-Rejection Lock** | Low | High | 6 | Implementeer een `ERROR` state met een "Start Fresh" (Storage.clear) optie. |
+| **Onboarding Loop** | Low | Medium | 4 | Expliciete `UNBOARDING` state wanneer `Storage.loadState()` null retourneert. |
+
+**Strategic Summary:** 
+We gaan de "Boolean Soup" (waarbij `isLoading` en `isHydrated` per ongeluk allebei true konden zijn) vervangen door een **Finite State Machine (FSM)**. Dit is de "verkeerstoren" die bepaalt of de gebruiker de Wizard ziet, het Dashboard, of een foutmelding.
+</internal_analysis>
+
+# 📈 Migratie- & Teststrategie: [WAI-006A] AppStatus Orchestrator
+
+Als **Lyra (Migration Mode)** adviseer ik om deze stap met chirurgische precisie uit te voeren. Nu de data-integriteit (v1.0) geborgd is, moet de navigatie-logica bewijzen dat ze deze data op het juiste moment aan de juiste UI-component kan presenteren.
+
+---
+
+## 1️⃣ Het State Machine Model (ADR-17)
+
+We stappen af van losse booleans. De orchestrator (`useAppOrchestration`) moet één van de volgende staten aannemen:
+
+| Status | Omschrijving | Trigger |
+|:---|:---|:---|
+| `INITIALIZING` | App start op, checkt systeem-resources. | Mount van de Provider. |
+| `HYDRATING` | De `Migration Guard` (WAI-005B) draait op AsyncStorage. | `useEffect` start. |
+| `UNBOARDING` | Geen data gevonden (nieuwe gebruiker). | `Storage.loadState` retourneert `null`. |
+| `READY` | Data geladen, gevalideerd door Zod en gecalculeerd. | `FormStateSchema.safeParse` is succesvol. |
+| `ERROR` | Kritieke fout (bijv. corrupte opslag). | Zod faalt en migratie is onmogelijk. |
+
+---
+
+## 2️⃣ De "Shadow Link" Integratie
+
+Conform de resultaten van **WAI-003**, moet de orchestrator bij de overgang naar `READY` de `isSpecialStatus` vlag (ADR-12) verifiëren. Dit gebeurt **éénmalig** bij het opstarten, waarna de `AdultsCounter` (WAI-003) het overneemt tijdens runtime.
+
+---
+
+## 3️⃣ CU-Contract [WAI-006A]
+
+### 🎯 TARGET SURFACE
+- **Edit:** `src/app/hooks/useAppOrchestration.ts` (of de plek waar de navigatie-logica leeft).
+- **Edit:** `src/App.tsx` (om de status te projecteren).
+
+### 🏗️ LOGIC CONTRACT
+- **Dumb Projection:** `App.tsx` mag geen eigen `if/else` logica meer hebben voor navigatie; het moet uitsluitend de output van de orchestrator renderen.
+- **Single Source of Truth:** De `AppStatus` wordt afgeleid van de `FormContext` state en de hydratatie-status van de `Storage`.
+
+### 🛡️ CONSTRAINTS
+- Geen navigatie-side-effects in de reducer (ADR-14).
+- De `ERROR` state moet een duidelijke UI-actie hebben (bijv. "Reset App").
+
+---
+
+## 4️⃣ Comprehensive Test Strategy
+
+### Gate A: Unit Testing (The Machine)
+Mock de `Storage.loadState` om de volgende transities te testen:
+- **Test 1:** `loadState` returns `null` -> State moet `UNBOARDING` zijn.
+- **Test 2:** `loadState` returns `v1.0 data` -> State moet `READY` zijn.
+- **Test 3:** `loadState` returns `corrupt data` -> State moet `ERROR` zijn.
+
+### Gate B: UI Projection Check
+Verifieer dat bij `INITIALIZING` een Splash-screen (of Spinner) wordt getoond en bij `READY` direct de `Dashboard` of `Wizard`.
+
+---
+
+## 5️⃣ Implementatie-Advies: De "Projector" in App.tsx
+
+```tsx
+// Voorbeeld van hoe App.tsx eruit moet zien na WAI-006A
+const { status } = useAppOrchestration();
+
+switch (status) {
+  case 'INITIALIZING':
+  case 'HYDRATING':
+    return <SplashScreen />;
+  case 'UNBOARDING':
+    return <WelcomeWizard />;
+  case 'READY':
+    return <MainNavigator />;
+  case 'ERROR':
+    return <CriticalErrorScreen onReset={handleReset} />;
+}
+```
+
+---
+
+## 🏁 Akkoord voor WAI-006A?
+
+Navigator, dit is de laatste stap in de sanering van **Cluster 0 (Infrastructuur)**. Hierna is de app niet alleen data-safe, maar ook architecturaal "voorspelbaar".
+
+**Mijn instructie voor de Navigator (CU-Agent):**
+Implementeer de `AppStatus` type en de `useAppOrchestration` hook. Zorg dat de transitie van `HYDRATING` naar `READY` pas plaatsvindt als de `Storage.loadState` zijn belofte heeft ingelost.
+Onder de vlag van **WAI-006 (Visualisatie & Orchestratie)** vallen de stappen die de "Stalen Kern" van v1.0 (centen, Zod, State Machine) eindelijk verbindt met de vingers en ogen van de gebruiker.
+
+Waar WAI-001 t/m WAI-005 gingen over **integriteit** (de achterkant), gaat WAI-006 over **projectie** (de voorkant).
+
+Hier is de strategische uitsplitsing van de resterende sub-fasen van WAI-006:
+
+---
+
+# 📈 Migratie- & Teststrategie: WAI-006 (Vervolgstappen)
+
+<internal_analysis>
+**Migration Type:** UI/UX Projection & Integration.
+**Complexity Score:** 3/5.
+**Focus:** Het vertalen van de "Minor Units" (centen) naar een "Human Readable" interface zonder de integriteit te verliezen.
+
+**Risk Matrix:**
+| Risk | Probability | Impact | Priority | Mitigation |
+|:---|:---:|:---:|:---:|:---|
+| **Display Drift** | Medium | Medium | 5 | Gebruik uitsluitend `formatCentsToDutch`; verbod op handmatige delingen door 100 in de UI. |
+| **Export Failure** | Low | High | 7 | E2E-test op de `aggregator.ts` koppeling met de Filesystem API. |
+| **UX Confusion** | Medium | Low | 3 | Duidelijke labeling van "Centen in de state" vs "Euro's op het scherm". |
+</internal_analysis>
+
+---
+
+## 🟢 WAI-006B: Dashboard & Financial Projection
+Nu de kernel (`computeSummary`) centen uitspuugt, moet het Dashboard deze transformeren naar euro's voor de gebruiker.
+
+*   **Actie:** Implementatie van de `FinancialSummary` component op het Dashboard.
+*   **Architectuur:** Gebruik van selectors die `computeSummary` aanroepen en de resultaten door de `formatCentsToDutch` utility halen.
+*   **Test-Gate:** Verifieer dat een `net` waarde van `325025` (integer) op het scherm verschijnt als `€ 3.250,25`.
+
+## 🔵 WAI-006C: Export UI & Filesystem Trigger
+De in WAI-005C gebouwde `aggregator.ts` moet nu een knop krijgen.
+
+*   **Actie:** Toevoegen van de "Exporteer Data" knop in de instellingen of op het Dashboard.
+*   **Techniek:** Koppeling van `buildExportJSON` aan de `Share` of `File-system` API van React Native.
+*   **Compliance Check:** Bevestig visueel dat de export-file de `schemaVersion: "1.0"` bevat en dat namen/geboortedata ontbreken (PII-stripping).
+
+## 🟡 WAI-006D: Global Input Hardening (The Great Swap)
+In de Wizard staan nog oude, onveilige tekstvelden. Deze moeten allemaal vervangen worden door de `MoneyInput` (WAI-004B).
+
+*   **Actie:** Vervang alle financiële invoervelden in Cluster 4 (de Wizard pagina's) door de `MoneyInput`.
+*   **Refactor:** Verwijder alle resterende lokale `parseFloat` of `replace` logica in de Wizard-pagina's.
+*   **Veiligheid:** De `NumericParser` wordt nu de enige poortwachter voor alle numerieke invoer in de hele app.
+
+## 🔴 WAI-006E: Decommissioning "OUD" Logic
+De laatste stap van de Phoenix-migratie.
+
+*   **Actie:** Het definitief verwijderen van alle bestanden met de prefix `OUD...` (zoals `OUDhousehold.ts`, `OUDnumbers.ts`).
+*   **Cleanup:** Opschonen van de `FormContext` van alle overbodige legacy-reducers en vlaggen die niet langer nodig zijn door de nieuwe `AppStatus` State Machine.
+*   **Final Audit:** Een volledige TypeScript-check (`tsc`) om te garanderen dat er geen enkele referentie naar de oude float-architectuur meer bestaat.
+
+---
+
+## 📊 Strategische Prioritering
+
+| Fase | Prioriteit | Afhankelijkheid |
+|:---|:---|:---|
+| **WAI-006A (Machine)** | **Kritiek** | Geen (v1.0 data is al aanwezig) |
+| **WAI-006D (Inputs)** | **Hoog** | WAI-004B (MoneyInput) |
+| **WAI-006B (Display)** | **Medium** | WAI-004C (Finance Kernel) |
+| **WAI-006C (Export)** | **Medium** | WAI-005C (Aggregator) |
+| **WAI-006E (Cleanup)** | **Laag** | Alle bovenstaande |
+
+---
+
+## 🏁 Advies van Lyra
+
+Mijn advies is om **WAI-006A** (de State Machine) direct te laten volgen door **WAI-006D** (de Global Input Swap). 
+
+**Waarom?** 
+Door de inputs te fixen, voorkom je dat de gebruiker in de nieuwe stabiele v1.0 omgeving per ongeluk alsnog "vervuilde" data (via de oude velden) de nieuwe Zod-bewaakte state in stuurt. De State Machine (006A) zorgt dat de app veilig opstart; de Inputs (006D) zorgen dat de data veilig blijft tijdens gebruik.

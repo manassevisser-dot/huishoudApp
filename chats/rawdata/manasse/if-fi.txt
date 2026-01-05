@@ -1,0 +1,29 @@
+# Project Phoenix - Audit Configuration
+# --------------------------------------------------
+
+# 1. Kleuren en Iconen (UI)
+ICON_OK="✅"
+ICON_FAIL="❌"
+ICON_WARN="⚠️"
+
+# 2. Drempelwaarden (Thresholds)
+declare -A THRESHOLDS
+THRESHOLDS[min_ssot]=2          # Minimaal aantal 'as const' selectors in household
+THRESHOLDS[min_reducer]=5        # Minimaal aantal acties in de reducer-map
+THRESHOLDS[min_kernel]=3         # Minimaal aantal financiële functies in de kernel
+THRESHOLDS[min_decimal_ui]=1     # Minimaal aantal toFixed(2) in de UI-laag
+THRESHOLDS[min_decimal_logic]=0  # Maximaal aantal toFixed(2) in de kernel (moet 0 zijn!)
+THRESHOLDS[fsm_states]=5         # Verplichte FSM-statussen
+THRESHOLDS[min_parsing]=1        # Centraal nummer-parsing script vereist
+THRESHOLDS[max_deep]=0           # Aantal toegestane ../../../ imports (liefst 0)
+
+# 3. Defaults
+VERBOSE=false
+PARALLEL=false
+REPORT_FORMAT="html"
+GENERATE_REPORT=true
+
+# 4. Project Structuur
+PROJECT_ROOT=$(pwd)
+CACHE_DIR="/tmp/phoenix-check-cache"
+SCRIPT_VERSION="1.2.4-stable"

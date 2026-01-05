@@ -1,0 +1,70 @@
+.phoenix/reports.sh
+#!/bin/bash
+# .phoenix/reports.sh - Rapportage & Git-integratie
+
+# --- HTML Rapportage (Mockversie) ---
+mock_generate_report() {
+    local outdir="${PROJECT_ROOT}/artifacts"
+    mkdir -p "${outdir}" || { echo -e "${RED}❌ Kon artifacts map niet aanmaken${NC}"; return 1; }
+
+    local file="${outdir}/phoenix-audit-report.html"
+    cat > "${file}" <<HTML
+<!DOCTYPE html>
+<html lang="nl">
+<head><meta charset="UTF-8"><title>Phoenix Audit Report</title>
+<style>body{font-family:sans-serif;padding:20px;} .pass{color:green;} .fail{color:red;}</style>
+</head>
+<body>
+    <h1>🚀 Phoenix Audit Report</h1>
+    <p>Gegenereerd op: $(date)</p>
+    <p>Status: De audit-engine is succesvol modulair uitgevoerd.</p>
+</body>
+</html>
+HTML
+    echo -e "${GREEN}${ICON_OK} Rapport gegenereerd: ${file}${NC}"
+}
+
+# --- Terminal Samenvatting ---
+show_summary() {
+    local t p f r g
+    t="$(read_counter "total")"
+    p="$(read_counter "passed")"
+    f="$(read_counter "failed")"
+    r="$([[ "${t}" -gt 0 ]] && echo $(( p * 100 / t )) || echo 0)"
+
+    log_section "AUDIT RESULTS"
+    echo -e "Checks uitgevoerd: ${BOLD}${t}${NC}"
+    echo -e "Geslaagd:         ${GREEN}${BOLD}${p}${NC}"
+    echo -e "Gefaald:          ${RED}${BOLD}${f}${NC}"
+    echo -e "Score:            ${BOLD}${r}%${NC}"
+
+    if [[ "${f}" -gt 0 ]]; then
+        echo -e "\n${RED}${BOLD}GEFAALDE ONDERDELEN:${NC}"
+        sort -u "${CACHE_DIR}/failed_items.txt" 2>/dev/null | sed 's/^/  • /'
+        return 1
+    fi
+    echo -e "\n${GREEN}${BOLD}🎉 PHOENIX AUDIT PASSED!${NC}"
+    return 0
+}
+
+# --- Git Hook Beheer ---
+install_git_hook() {
+    local hook_file="${PROJECT_ROOT}/.git/hooks/pre-commit"
+    if [[ ! -d "${PROJECT_ROOT}/.git" ]]; then
+        echo -e "${RED}❌ Geen .git map gevonden.${NC}"; return 1
+    fi
+
+    cat > "$hook_file" <<'HOOK'
+#!/bin/bash
+echo "🔍 Phoenix Pre-commit check..."
+bash phoenix-check.sh
+exit $?
+HOOK
+    chmod +x "$hook_file"
+    echo -e "${GREEN}${ICON_OK} Git pre-commit hook geïnstalleerd.${NC}"
+}
+
+uninstall_git_hook() {
+    rm -f "${PROJECT_ROOT}/.git/hooks/pre-commit"
+    echo -e "${YELLOW}${ICON_WARN} Git hook verwijderd.${NC}"
+}

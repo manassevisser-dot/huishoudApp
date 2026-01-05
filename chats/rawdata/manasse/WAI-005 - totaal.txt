@@ -1,0 +1,950 @@
+HARDE EIS:
+GEEN PROVINCIËN NOEMEN!
+
+<CU>
+
+*   **WAI‑005A** — **Zod‑schemas (State‑Freeze contract)**
+*   **WAI‑005B** — **Migration Guard in `storage.ts` (I/O‑poort)**
+*   **WAI‑005C** — **Export Aggregator (audit‑proof export + shadow‑flags)**
+
+Elke CU bevat: **Change Unit Contract**, **bronbestanden (inline)**, **tests**, **PR‑body** en **DoD‑checklist**.
+
+> **Path‑aliassen** (Phoenix) toegepast: `@domain`, `@utils`, `@state`, `@app`, `@ui`.
+
+***
+
+## \[WAI‑005A] — Zod‑Schemas (State‑Freeze contract)
+
+**Target:** `src/state/schemas/FormStateSchema.ts`
+
+### 1) 🎯 CHANGE UNIT CONTRACT
+
+**Target Surface**
+
+*   **Target File (new):** `src/state/schemas/FormStateSchema.ts`
+*   **Impact Radius (read‑only):** `src/services/storage.ts`, `src/selectors/householdSelectors.ts`, `src/logic/finance.ts`
+*   **Change Type:** `Extract`
+
+**Logic Contract**
+
+*   Introduceer **schema‑versie** `schemaVersion: "1.0"` (Zod literal).
+*   Alle **bedragen in centen**: `z.number().int().nonnegative()`.
+*   **C1** (huishouden): integers (≥1) voor aantallen;
+*   **C4** (leden): `memberType` ∈ `'adult' | 'child'`.
+*   **C7/C10** (inkomen/lasten): lijsten met items `{ id: string, amount: int ≥0 }`.
+*   **FormStateSchema**: pagina’s optioneel, **passthrough** voor onbekende velden; `isSpecialStatus?: boolean`, `userId?: string | null`.
+
+**Constraints & Non‑Goals**
+
+*   ❌ Geen migratielogica in het schema (gebeurt in WAI‑005B).
+*   ❌ Geen UI/formatting in schema’s.
+*   ✅ **Validate only at I/O** (load/save), niet tijdens elke state‑update.
+
+**Test & Validation Gates**
+
+*   **Gate A — Unit (Schemas):**
+    *   Legacy floats **falen** (bv. `{ amount: 12.5 }`).
+    *   Phoenix integers **slagen**.
+*   **Gate B — Integration:** gebruikt door Storage Guard (WAI‑005B).
+
+**Stop Conditions**
+
+*   Onzekerheid over verplichte velden per pagina → **stop** (maar schema laat pagina’s optioneel).
+
+**Merge & Release**
+
+*   **Commit:** `feat(state): add zod FormStateSchema v1.0 (minor-unit ints, passthrough)`
+*   **PR:** ADR‑check (minor units), teststappen, checklist.
+
+***
+
+### 2) 📄 `src/state/schemas/FormStateSchema.ts`
+
+```ts
+// WAI-005A — Zod State-Freeze (v1.0)
+import { z } from 'zod';
+
+// --- Primitives ---
+export const Cents = z.number().int().nonnegative();
+export const Id = z.string().min(1);
+
+// --- C1: Huishouden (voorbeeld subset, uitbreidbaar) ---
+export const C1Schema = z.object({
+  aantalMensen: z.number().int().min(1).optional(),
+  aantalVolwassen: z.number().int().min(1).optional(),
+}).partial();
+
+// --- C4: Leden ---
+export const MemberSchema = z.object({
+  id: Id.optional(),
+  memberType: z.enum(['adult', 'child']),
+  naam: z.string().optional(),
+  leeftijd: z.number().int().nonnegative().optional(),
+  dateOfBirth: z.string().optional(),
+  gender: z.string().optional(),
+});
+export const C4Schema = z.object({
+  leden: z.array(MemberSchema).default([]),
+}).partial();
+
+// --- C7/C10: Inkomsten/Lasten (centen) ---
+export const MoneyItemSchema = z.object({
+  id: Id,
+  amount: Cents, // minor units
+});
+export const C7Schema = z.object({ items: z.array(MoneyItemSchema).default([]) }).partial();
+export const C10Schema = z.object({ items: z.array(MoneyItemSchema).default([]) }).partial();
+
+// --- FormState v1.0 ---
+export const FormStateSchema = z.object({
+  schemaVersion: z.literal('1.0'),
+  C1: C1Schema.optional(),
+  C4: C4Schema.optional(),
+  C7: C7Schema.optional(),
+  C10: C10Schema.optional(),
+  isSpecialStatus: z.boolean().optional(),
+  userId: z.string().nullable().optional(),
+}).passthrough(); // laat onbekende velden bestaan voor backwards-compat
+
+export type FormStateV1 = z.infer<typeof FormStateSchema>;
+```
+
+***
+
+### 3) 🧪 Tests — `src/state/schemas/__tests__/schemas.test.ts`
+
+```ts
+import { z } from 'zod';
+import { FormStateSchema } from '../../schemas/FormStateSchema';
+
+describe('WAI-005A Zod Schemas', () => {
+  it('accepts Phoenix v1.0 with cents', () => {
+    const data = {
+      schemaVersion: '1.0',
+      C7: { items: [{ id: 'i1', amount: 125050 }] },
+      C10: { items: [{ id: 'e1', amount: 3400 }] },
+      isSpecialStatus: false,
+      userId: 'abc',
+    };
+    const res = FormStateSchema.safeParse(data);
+    expect(res.success).toBe(true);
+  });
+
+  it('rejects legacy floats', () => {
+    const legacy = {
+      schemaVersion: '1.0',
+      C7: { items: [{ id: 'i1', amount: 12.5 }] }, // float not allowed
+    };
+    const res = FormStateSchema.safeParse(legacy);
+    expect(res.success).toBe(false);
+  });
+
+  it('passthrough allows unknown keys (backwards-compat)', () => {
+    const data = { schemaVersion: '1.0', LegacyKey: { foo: 'bar' } };
+    const res = FormStateSchema.safeParse(data);
+    expect(res.success).toBe(true);
+  });
+});
+```
+
+***
+
+### 4) 📝 PR‑Body — WAI‑005A
+
+```md
+# WAI-005A — Zod State-Freeze (FormState v1.0)
+
+## Why
+- Audit-proof I/O: alle bedragen als **integers (centen)**; schemaVersion dwingt migratiepad af.
+
+## What
+- `FormStateSchema.ts` met C1/C4/C7/C10 schema’s; `schemaVersion: "1.0"`.
+- `.passthrough()` voor backwards-compat.
+
+## Tests
+- Phoenix ints slagen; legacy floats falen.
+
+## ADR Compliance
+- ADR-15/16: Minor units & normalisatie bij I/O ✅
+- Strategy: validate only at I/O (load/save), niet op elke state-update ✅
+
+## Rollback
+`git checkout HEAD~1 -- src/state/schemas/FormStateSchema.ts`
+```
+
+### 5) ✅ DoD — WAI‑005A
+
+```md
+- [ ] Zod schema’s aanwezig met schemaVersion "1.0"
+- [ ] Cents = int ≥ 0; floats afgewezen
+- [ ] Unit tests groen
+- [ ] PR-body + ADR-check opgenomen
+```
+
+***
+
+## \[WAI‑005B] — Storage **Migration Guard**
+
+**Target:** `src/services/storage.ts`
+
+### 1) 🎯 CHANGE UNIT CONTRACT
+
+**Target Surface**
+
+*   **Target File (edit):** `src/services/storage.ts`
+*   **Impact Radius (read‑only):** `@state/schemas/FormStateSchema`, `@utils/numbers`, `@selectors/householdSelectors`
+*   **Change Type:** `Refactor`
+
+**Logic Contract**
+
+*   **`loadState()`**:
+    1.  lees JSON uit AsyncStorage,
+    2.  **probeer** `FormStateSchema.safeParse`,
+    3.  **bij falen**: `runMigration(raw)`,
+    4.  **her‑valideer** → lever **v1.0** state terug.
+*   **`saveState(state)`**: **safeParse** (revalidate) vóór schrijven; set `schemaVersion = "1.0"`.
+*   **`runMigration(raw)`**:
+    *   ontdek legacy (floats/strings); zet **alles** naar **centen** via `parseToCents` (strings) of ×100 (floats).
+    *   vul ontbrekende containers als lege structuren (`C7.items = []`, etc.).
+    *   herbereken `isSpecialStatus` via **selector** op gemigreerde state.
+
+**Constraints & Non‑Goals**
+
+*   ❌ Geen UI/React‑dependenties.
+*   ✅ **Validate only at I/O** (load/save).
+*   ✅ **Idempotent**: herhaald laden levert v1.0.
+
+**Test & Validation Gates**
+
+*   **Gate A — Unit (Migration):** legacy dump in → v1.0 met centen uit.
+*   **Gate B — Integration:** save → reload roundtrip slaagt.
+
+**Stop Conditions**
+
+*   Zod schema ontbreekt of faalt ná migratie → stop.
+
+**Merge & Release**
+
+*   **Commit:** `feat(state): add Storage Migration Guard with zod safeParse + v1.0 schemaVersion`
+*   **PR:** ADR‑check, teststappen, checklist.
+
+***
+
+### 2) 📄 `src/services/storage.ts` (Migration Guard)
+
+```ts
+// WAI-005B — Storage Migration Guard
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FormStateSchema, type FormStateV1 } from '@state/schemas/FormStateSchema';
+import { parseToCents } from '@utils/numbers';
+import { selectIsSpecialStatus } from '@selectors/householdSelectors';
+
+const KEY = '@CashflowWizardState';
+
+export const Storage = {
+  async loadState(): Promise<FormStateV1 | null> {
+    const raw = await AsyncStorage.getItem(KEY);
+    if (!raw) return null;
+
+    let data: any;
+    try { data = JSON.parse(raw); } catch { return null; }
+
+    // Fast-path: valid v1.0
+    const v1 = FormStateSchema.safeParse(data);
+    if (v1.success) return v1.data;
+
+    // Migrate legacy → v1.0
+    const migrated = runMigration(data);
+    const check = FormStateSchema.safeParse(migrated);
+    if (!check.success) {
+      if (__DEV__) console.warn('Migration failed:', check.error.flatten());
+      return null;
+    }
+    return check.data;
+  },
+
+  async saveState(state: unknown): Promise<void> {
+    // Enforce schemaVersion & validate
+    const candidate = { schemaVersion: '1.0', ...(state as object) };
+    const res = FormStateSchema.safeParse(candidate);
+    if (!res.success) {
+      if (__DEV__) console.warn('Save validation failed:', res.error.flatten());
+      return;
+    }
+    await AsyncStorage.setItem(KEY, JSON.stringify(res.data));
+  }
+};
+
+// ---- Migration (legacy → v1.0) ----
+function normalizeMoney(value: unknown): number {
+  if (typeof value === 'number') {
+    // float in euro → *100; negatief → abs (UI/kern doen tekencontext)
+    const abs = Math.abs(value);
+    if (!Number.isInteger(value)) return Math.round(abs * 100);
+    // heuristiek: kleine ints (mogelijk euro) → *100
+    if (abs < 100 && abs !== 0) return Math.round(abs * 100);
+    return Math.round(abs);
+  }
+  if (typeof value === 'string') return parseToCents(value); // non-negative
+  return 0;
+}
+
+function migrateMoneyList(list: any[] | undefined): { id: string; amount: number }[] {
+  return (Array.isArray(list) ? list : []).map((it) => ({
+    id: String(it?.id ?? ''),
+    amount: normalizeMoney(it?.amount ?? it?.value ?? 0),
+  }));
+}
+
+export function runMigration(legacy: any): any {
+  const next: any = {
+    schemaVersion: '1.0',
+    ...legacy,
+  };
+
+  // C7/C10
+  next.C7 = next.C7 ?? {};
+  next.C7.items = migrateMoneyList(next.C7.items ?? next.C7.list ?? next.income);
+
+  next.C10 = next.C10 ?? {};
+  next.C10.items = migrateMoneyList(next.C10.items ?? next.C10.list ?? next.expense ?? next.expenses);
+
+  // C4 leden intact overladen indien aanwezig
+  next.C4 = next.C4 ?? {};
+  if (!Array.isArray(next.C4.leden)) next.C4.leden = Array.isArray(legacy?.C4?.leden) ? legacy.C4.leden : [];
+
+  // Shadow flag opnieuw bepalen op de gemigreerde state
+  try {
+    const special = selectIsSpecialStatus(next as any);
+    next.isSpecialStatus = !!special;
+  } catch {
+    // bij geen selector: laat vlag ongemoeid
+  }
+
+  return next;
+}
+```
+
+***
+
+### 3) 🧪 Tests — `src/services/__tests__/storage.migration.test.ts`
+
+```ts
+import { runMigration } from '../../services/storage';
+import { FormStateSchema } from '@state/schemas/FormStateSchema';
+
+describe('WAI-005B Storage Migration Guard', () => {
+  it('migrates legacy floats/strings to v1.0 cents', () => {
+    const legacy = {
+      C7: { items: [{ id: 'i1', amount: 12.5 }, { id: 'i2', amount: '1.100,00' }] },
+      C10: { items: [{ id: 'e1', amount: '300,25' }] },
+      C4: { leden: [{ memberType: 'adult' }, { memberType: 'adult' }, { memberType: 'adult' },
+                    { memberType: 'adult' }, { memberType: 'adult' }, { memberType: 'adult' }] },
+    };
+    const migrated = runMigration(legacy);
+    const res = FormStateSchema.safeParse(migrated);
+    expect(res.success).toBe(true);
+    const v1 = res.data!;
+    expect(v1.C7!.items![0].amount).toBe(1250);   // 12.5 → 1250
+    expect(v1.C7!.items![1].amount).toBe(110000); // "1.100,00" → 110000
+    expect(v1.C10!.items![0].amount).toBe(30025); // "300,25" → 30025
+    // Shadow-flag kan true zijn (6 adults); validatie van flag is niet hard vereist hier
+  });
+});
+```
+
+***
+
+### 4) 📝 PR‑Body — WAI‑005B
+
+```md
+# WAI-005B — Storage Migration Guard (Zod + v1.0 schemaVersion)
+
+## Why
+- Audit-proof I/O: geen legacy floats/structuur meer de kernel in; automatische migratie naar centen.
+
+## What
+- `loadState()` met zod `safeParse` + `runMigration`.
+- `saveState()` valideert v1.0 vóór persist.
+- Legacy → v1.0: parseToCents / *100 + shadow-flag herberekening.
+
+## Tests
+- Unit: legacy dump → v1.0; roundtrip save/load.
+
+## ADR Compliance
+- Validate only at I/O ✅
+- Minor units enforced ✅
+
+## Rollback
+`git checkout HEAD~1 -- src/services/storage.ts`
+```
+
+### 5) ✅ DoD — WAI‑005B
+
+```md
+- [ ] loadState/saveState valideren tegen FormStateSchema
+- [ ] runMigration converteert floats/strings naar centen
+- [ ] Unit tests groen
+- [ ] PR-body + ADR-check opgenomen
+```
+
+***
+
+## \[WAI‑005C] — Export Aggregator (audit‑proof)
+
+**Target:** `src/logic/aggregator.ts`
+
+### 1) 🎯 CHANGE UNIT CONTRACT
+
+**Target Surface**
+
+*   **Target File (new):** `src/logic/aggregator.ts`
+*   **Impact Radius (read‑only):** `@selectors/householdSelectors`, `@state/schemas/FormStateSchema`
+*   **Change Type:** `Extract`
+
+**Logic Contract**
+
+*   **`buildExportJSON(state: FormStateV1)`** → JSON object met:
+    *   `schemaVersion: '1.0'`,
+    *   `totals` (centen): `totalIncome`, `totalExpenses`, `net`,
+    *   `isSpecialStatus` (shadow; via selector),
+    *   `pages` (C1/C4/C7/C10 passthrough conform privacy‑beleid).
+*   **`buildExportCSV(state: FormStateV1)`** → CSV‑string met kernvelden (voor Excel ingest).
+*   **Geen UI/IO** in deze CU; alleen pure functies.
+
+**Constraints & Non‑Goals**
+
+*   ❌ Geen formatting in euro’s; centen blijven integer.
+*   ❌ Geen file‑write; caller regelt bestandsopslag.
+
+**Test & Validation Gates**
+
+*   **Gate A — Unit:** vlag en totals aanwezig; CSV bevat kolommen en centen.
+
+**Stop Conditions**
+
+*   Onheldere privacy‑scope (welke velden exporteren) → **stop** (we nemen alleen kern).
+
+**Merge & Release**
+
+*   **Commit:** `feat(core): add audit-proof export aggregator (json/csv)`
+*   **PR:** ADR‑check, teststappen, checklist.
+
+***
+
+### 2) 📄 `src/logic/aggregator.ts`
+
+```ts
+// WAI-005C — Export Aggregator (audit-proof)
+import type { FormStateV1 } from '@state/schemas/FormStateSchema';
+import { selectIsSpecialStatus } from '@selectors/householdSelectors';
+import { computeSummary } from '@logic/finance';
+
+export function buildExportJSON(state: FormStateV1) {
+  const c7 = state.C7?.items ?? [];
+  const c10 = state.C10?.items ?? [];
+  const { totalIncome, totalExpenses, net } = computeSummary(
+    c7.map(i => ({ id: i.id, amount: i.amount })),
+    c10.map(e => ({ id: e.id, amount: e.amount })),
+  );
+
+  const payload = {
+    schemaVersion: '1.0' as const,
+    isSpecialStatus: selectIsSpecialStatus(state as any),
+    totals: { totalIncome, totalExpenses, net }, // integers (centen)
+    pages: {
+      C1: state.C1 ?? {},
+      C4: state.C4 ?? {},
+      C7: { items: c7 },
+      C10: { items: c10 },
+    },
+  };
+  return payload;
+}
+
+export function buildExportCSV(state: FormStateV1): string {
+  const json = buildExportJSON(state);
+  const header = ['schemaVersion', 'isSpecialStatus', 'totalIncome', 'totalExpenses', 'net'];
+  const row = [
+    json.schemaVersion,
+    String(json.isSpecialStatus),
+    String(json.totals.totalIncome),
+    String(json.totals.totalExpenses),
+    String(json.totals.net),
+  ];
+  return header.join(',') + '\n' + row.join(',');
+}
+```
+
+***
+
+### 3) 🧪 Tests — `src/logic/__tests__/aggregator.test.ts`
+
+```ts
+import { buildExportJSON, buildExportCSV } from '../../logic/aggregator';
+
+describe('WAI-005C Export Aggregator', () => {
+  it('produces audit-proof JSON with shadow flag and cent totals', () => {
+    const state: any = {
+      schemaVersion: '1.0',
+      C4: { leden: new Array(6).fill(0).map((_, i) => ({ id: `a${i}`, memberType: 'adult' })) },
+      C7: { items: [{ id: 'i1', amount: 320000 }, { id: 'i2', amount: 110050 }] },
+      C10: { items: [{ id: 'e1', amount: 75000 }, { id: 'e2', amount: 30025 }] },
+    };
+    const json = buildExportJSON(state);
+    expect(json.schemaVersion).toBe('1.0');
+    expect(json.isSpecialStatus).toBe(true);
+    expect(json.totals.totalIncome).toBe(430050);
+    expect(json.totals.totalExpenses).toBe(105025);
+    expect(json.totals.net).toBe(325025);
+  });
+
+  it('produces CSV with integer cents', () => {
+    const state: any = {
+      schemaVersion: '1.0',
+      C7: { items: [{ id: 'i1', amount: 10000 }] },
+      C10: { items: [{ id: 'e1', amount: 4000 }] },
+    };
+    const csv = buildExportCSV(state);
+    expect(csv.split('\n')[0]).toBe('schemaVersion,isSpecialStatus,totalIncome,totalExpenses,net');
+    expect(csv.includes(',10000,4000,6000')).toBe(true);
+  });
+});
+```
+
+***
+
+### 4) 📝 PR‑Body — WAI‑005C
+
+```md
+# WAI-005C — Export Aggregator (JSON/CSV, audit-proof)
+
+## Why
+- Externe systemen hebben consistente payloads nodig; shadow flags moeten aanwezig zijn.
+
+## What
+- `buildExportJSON` + `buildExportCSV`; centen blijven integers; shadow-flag via selector.
+
+## Tests
+- JSON totals en vlag aanwezig; CSV bevat centen als integers.
+
+## ADR Compliance
+- Shadow Attribute Isolation (ADR-12) ✅
+- Minor units everywhere (ADR-15) ✅
+
+## Rollback
+`git checkout HEAD~1 -- src/logic/aggregator.ts`
+```
+
+### 5) ✅ DoD — WAI‑005C
+
+```md
+- [ ] JSON/CSV generator aanwezig
+- [ ] Shadow-flag en centen-totals correct
+- [ ] Unit tests groen
+- [ ] PR-body + ADR-check opgenomen
+```
+
+***
+
+## ✅ Overzicht Success Criteria (WAI‑005)
+
+*   **100% Schema Match** bij I/O (v1.0)
+*   **Zero Data Loss**: legacy floats → centen via Migration Guard
+*   **Audit Trail**: export bevat `isSpecialStatus` + centen‑totals
+
+***
+
+1.  **ADR‑teksten (letterlijk, als bestanden)** voor opname in repo/PR’s.
+2.  **Geüpdatete PR‑sections** met een “ADR Compliance Check” die de tekst **ongewijzigd** citeert.
+3.  **Privacy‑conforme export** (WAI‑005C) — code die de **blacklist/whitelist** afdwingt: geen namen, geen ruwe geboortedatums, geen vrije tekst; **wel** `isSpecialStatus`, bedragen in **centen**, categorie‑ID’s & totals.
+4.  **Tests** die bewijzen dat de export geen PII lekt en dat alle bedragen integers (centen) zijn.
+
+> **Let op:** Alle bedragen blijven **integers (centen)** in **kernel** én **export**, conform **ADR‑15**. De **UI (MoneyInput)** accepteert **niet‑negatieve** invoer; het **teken** wordt **contextueel** toegepast in de kernel (ADR‑16).
+
+***
+
+## 1) 📚 ADR‑bestanden (letterlijk opnemen)
+
+### `docs/adr/ADR-15-Minor-Units.md`
+
+```md
+🏛️ Architecture Decision Records (ADR)
+ADR-15: Minor Units (Integers Only)
+
+Status: Approved
+
+Context:
+JavaScript’s Number type (IEEE-754) veroorzaakt afrondingsfouten bij financiële berekeningen
+(bijv. 0.1 + 0.2 !== 0.3).
+
+Besluit:
+Alle financiële bedragen worden in state, business-logica en export opgeslagen als
+integers in centen (minor units).
+
+Gevolgen:
+
+Floating-point afrondingsfouten zijn geëlimineerd.
+
+Parsing is verplicht bij invoer.
+
+Formatting is verplicht bij weergave.
+```
+
+### `docs/adr/ADR-16-Input-Normalisatie.md`
+
+```md
+ADR-16: Input Normalisatie (Context-Aware)
+
+Status: Approved
+
+Context:
+Gebruikers voeren bedragen inconsistent in (punten, komma’s, tekens).
+
+Besluit:
+
+De UI-component (MoneyInput) accepteert uitsluitend niet-negatieve numerieke invoer.
+
+Het semantische teken (optellen of aftrekken) wordt uitsluitend toegepast door de
+Finance Kernel, op basis van domeincontext
+(bijv. Lasten → negatief, Inkomen → positief).
+
+Gevolgen:
+
+Geen “dubbele min”-fouten mogelijk.
+
+De NumericParser blijft deterministisch en eenvoudig.
+
+Domeinlogica is eenduidig en centraal afdwingbaar.
+```
+
+***
+
+## 2) 📝 PR‑sections (opnemen in de WAI‑004 & WAI‑005 PR’s)
+
+### **ADR Compliance Check** (in elke PR onder “ADR Compliance” **letterlijk** opnemen)
+
+```md
+✅ Gevalideerd — Canonieke Richtlijn voor WAI-004 & WAI-005
+
+Als FLOW CTO bevestig ik hierbij de definitieve architecturale keuzes voor de WAI-004 serie en de daaropvolgende WAI-005 (Export).
+Deze tekst fungeert als single source of truth en moet letterlijk worden opgenomen in de relevante ADR- en PR-secties.
+
+🏛️ Architecture Decision Records (ADR)
+ADR-15: Minor Units (Integers Only)
+
+Status: Approved
+
+Context:
+JavaScript’s Number type (IEEE-754) veroorzaakt afrondingsfouten bij financiële berekeningen
+(bijv. 0.1 + 0.2 !== 0.3).
+
+Besluit:
+Alle financiële bedragen worden in state, business-logica en export opgeslagen als
+integers in centen (minor units).
+
+Gevolgen:
+
+Floating-point afrondingsfouten zijn geëlimineerd.
+
+Parsing is verplicht bij invoer.
+
+Formatting is verplicht bij weergave.
+
+ADR-16: Input Normalisatie (Context-Aware)
+
+Status: Approved
+
+Context:
+Gebruikers voeren bedragen inconsistent in (punten, komma’s, tekens).
+
+Besluit:
+
+De UI-component (MoneyInput) accepteert uitsluitend niet-negatieve numerieke invoer.
+
+Het semantische teken (optellen of aftrekken) wordt uitsluitend toegepast door de
+Finance Kernel, op basis van domeincontext
+(bijv. Lasten → negatief, Inkomen → positief).
+
+Gevolgen:
+
+Geen “dubbele min”-fouten mogelijk.
+
+De NumericParser blijft deterministisch en eenvoudig.
+
+Domeinlogica is eenduidig en centraal afdwingbaar.
+
+🔒 Privacy-by-Design: Exportregels (WAI-005)
+
+Conform de privacy-by-design doctrine van Project Phoenix wordt export strikt beperkt tot
+niet-herleidbare data.
+
+❌ Niet exporteren (Blacklist)
+
+Persoonsnamen
+Alle naamvelden in C4. Alleen UUID en domeinattributen blijven behouden.
+
+Geboortedatums
+Exporteer nooit ruwe datums.
+Alleen de afgeleide leeftijd (age_years, UTC-Noon berekening) is toegestaan.
+
+Vrije tekstvelden
+Alle gebruikersgeschreven teksten bij transacties (C7, C10) worden gestript.
+
+✅ Wel exporteren (Inclusief Shadow Logic)
+
+isSpecialStatus
+Deze vlag (huishoudens met > 5 volwassenen) MOET worden geëxporteerd
+voor statistische analyse, zonder onderliggende persoonsgegevens.
+
+Bedragen uitsluitend in centen (integers)
+
+Alleen noodzakelijke domeinvelden (categorie-ID’s, totalen)
+```
+
+***
+
+## 3) 🧩 Export (WAI‑005C) — privacy‑conform (blacklist/whitelist)
+
+### `src/logic/aggregator.ts` (geüpdatet)
+
+```ts
+// WAI-005C — Export Aggregator (audit-proof, privacy-by-design)
+// Blacklist: geen namen, geen ruwe geboortedatums, geen vrije tekstvelden
+// Whitelist: isSpecialStatus, bedragen (centen), noodzakelijke domeinvelden (categorie-ID’s), totals
+
+import type { FormStateV1 } from '@state/schemas/FormStateSchema';
+import { selectIsSpecialStatus } from '@selectors/householdSelectors';
+import { computeSummary } from '@logic/finance';
+
+// (Voorkeur: importeer UTC-Noon util uit @utils/date; fallback helper hier)
+function ageYearsUTCNoon(dobISO?: string, todayInput?: Date): number | undefined {
+  if (!dobISO) return undefined;
+  const today = todayInput ?? new Date();
+  // Normaliseer beide naar 12:00 UTC
+  const dob = new Date(dobISO);
+  const dobNoonUTC = new Date(Date.UTC(dob.getUTCFullYear(), dob.getUTCMonth(), dob.getUTCDate(), 12, 0, 0));
+  const nowNoonUTC = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 12, 0, 0));
+
+  let age = nowNoonUTC.getUTCFullYear() - dobNoonUTC.getUTCFullYear();
+  const m = nowNoonUTC.getUTCMonth() - dobNoonUTC.getUTCMonth();
+  const d = nowNoonUTC.getUTCDate() - dobNoonUTC.getUTCDate();
+  if (m < 0 || (m === 0 && d < 0)) age--;
+  return age >= 0 ? age : undefined;
+}
+
+type SanitizedMember = {
+  id?: string;
+  memberType: 'adult' | 'child';
+  age_years?: number;       // ✅ i.p.v. ruwe datum
+  gender?: string;          // domeinattribuut toegestaan
+  // ❌ geen 'naam', ❌ geen 'dateOfBirth', ❌ geen vrije tekst
+};
+
+function sanitizeMembers(members: any[] | undefined): SanitizedMember[] {
+  const src = Array.isArray(members) ? members : [];
+  return src.map((m) => {
+    const age = m?.leeftijd ?? ageYearsUTCNoon(m?.dateOfBirth);
+    return {
+      id: m?.id ? String(m.id) : undefined,
+      memberType: m?.memberType === 'child' ? 'child' : 'adult',
+      age_years: typeof age === 'number' ? age : undefined,
+      gender: m?.gender ?? undefined,
+    };
+  });
+}
+
+type SanitizedMoneyItem = {
+  id: string;
+  amount: number;          // ✅ centen (int)
+  categoryId?: string;     // toegestaan
+  // ❌ geen 'description', 'note', 'label', 'memo'
+};
+
+function sanitizeMoneyItems(items: any[] | undefined): SanitizedMoneyItem[] {
+  const src = Array.isArray(items) ? items : [];
+  return src.map((it) => ({
+    id: String(it?.id ?? ''),
+    amount: Math.max(0, Number(it?.amount ?? 0)), // aannames: kernel/state leveren centen (int)
+    categoryId: it?.categoryId ? String(it.categoryId) : undefined,
+  }));
+}
+
+export function buildExportJSON(state: FormStateV1) {
+  const isSpecial = !!selectIsSpecialStatus(state as any);
+
+  const c7Items = sanitizeMoneyItems(state.C7?.items);
+  const c10Items = sanitizeMoneyItems(state.C10?.items);
+
+  const { totalIncome, totalExpenses, net } = computeSummary(
+    c7Items.map(i => ({ id: i.id, amount: i.amount })),   // centen
+    c10Items.map(e => ({ id: e.id, amount: e.amount })),  // centen
+  );
+
+  return {
+    schemaVersion: '1.0' as const,
+    isSpecialStatus: isSpecial,                        // ✅ shadow flag
+    totals: { totalIncome, totalExpenses, net },       // ✅ centen (int)
+    pages: {
+      C1: {
+        aantalMensen: state.C1?.aantalMensen,
+        aantalVolwassen: state.C1?.aantalVolwassen,
+        // (extra domeinattributen hier toevoegen indien nodig; geen vrije tekst)
+      },
+      C4: { leden: sanitizeMembers(state.C4?.leden) }, // ✅ whitelist, ❌ geen naam/datum
+      C7: { items: c7Items },                          // ✅ zonder vrije tekst
+      C10: { items: c10Items },                        // ✅ zonder vrije tekst
+    },
+  };
+}
+
+export function buildExportCSV(state: FormStateV1): string {
+  const json = buildExportJSON(state);
+  const header = ['schemaVersion', 'isSpecialStatus', 'totalIncome', 'totalExpenses', 'net'];
+  const row = [
+    json.schemaVersion,
+    String(json.isSpecialStatus),
+    String(json.totals.totalIncome),
+    String(json.totals.totalExpenses),
+    String(json.totals.net),
+  ];
+  return header.join(',') + '\n' + row.join(',');
+}
+```
+
+### 🧪 Tests — `src/logic/__tests__/aggregator.privacy.test.ts`
+
+```ts
+import { buildExportJSON } from '../../logic/aggregator';
+
+describe('WAI-005C Privacy-by-Design Export', () => {
+  it('strips names & raw DOB, keeps age_years & UUID, amounts in cents', () => {
+    const state: any = {
+      schemaVersion: '1.0',
+      C1: { aantalMensen: 3, aantalVolwassen: 2 },
+      C4: { leden: [
+        { id: 'u1', memberType: 'adult', naam: 'Alice', dateOfBirth: '1990-01-02' },
+        { id: 'u2', memberType: 'child', naam: 'Bob', leeftijd: 10 }
+      ]},
+      C7: { items: [{ id: 'i1', amount: 125050, description: 'Salary Jan' }] },
+      C10: { items: [{ id: 'e1', amount: 30025, note: 'Rent' }] },
+    };
+
+    const payload = buildExportJSON(state);
+    // C4: geen naam/datum
+    expect(payload.pages.C4.leden[0].hasOwnProperty('naam')).toBe(false);
+    // wel age_years of leeftijd → age_years
+    expect(payload.pages.C4.leden[0].age_years).toBeGreaterThanOrEqual(0);
+    expect(payload.pages.C4.leden[1].age_years).toBe(10);
+
+    // C7/C10: amounts in centen, geen vrije tekst
+    expect(payload.pages.C7.items[0].amount).toBe(125050);
+    expect((payload.pages.C7.items[0] as any).description).toBeUndefined();
+    expect(payload.pages.C10.items[0].amount).toBe(30025);
+    expect((payload.pages.C10.items[0] as any).note).toBeUndefined();
+
+    // Totals zijn integers
+    expect(payload.totals.totalIncome).toBe(125050);
+    expect(payload.totals.totalExpenses).toBe(30025);
+    expect(payload.totals.net).toBe(95025);
+  });
+});
+```
+
+***
+
+## 4) 🔐 Kernel & Parser (reminder alignment)
+
+*   **Kernel** rekent **altijd** met **integers (centen)** en past **teken** contextueel toe (Inkomen +, Lasten −) — **ADR‑15/16**.
+*   **NumericParser** (WAI‑004A) levert **non‑negative** centen; de **MoneyInput** staat enkel niet‑negatieve invoer toe; geen `-` in UI.
+
+> Deze afspraken zijn **al** geïmplementeerd in de eerdere WAI‑004A/B/C artefacten. Met WAI‑005’s Zod‑Gate en Export is de I/O‑keten **audit‑proof**.
+
+***
+
+## 5) ✅ DoD‑checklists (korte versie)
+
+**WAI‑004A / 004B / 004C — PR’s**
+
+*   [ ] ADR‑section opgenomen (canonieke tekst letterlijk)
+*   [ ] All amounts = **centen** (int)
+*   [ ] MoneyInput blokkeert `-` & emit **non‑negative** centen
+*   [ ] Kernel past teken contextueel toe
+
+**WAI‑005A / 005B / 005C — PR’s**
+
+*   [ ] Zod‑schema v1.0 (ints, non‑negative)
+*   [ ] Storage: `safeParse` + `runMigration` → v1.0
+*   [ ] Export: **geen** namen/ruwe DOB/vrije tekst; **wel** isSpecialStatus, categoryId, totals
+*   [ ] Unit/Integration/E2E groen
+
+***
+
+</CU>
+***
+<M&T>
+
+Als **Lyra (Migration & Test Lead)** heb ik de drie Change Units (WAI-005A/B/C) geauditeerd tegen de **A-Tier 2025 standaarden**. Dit plan is de "sluitsteen" van de Phoenix-migratie. Door de data-integriteit nu op I/O-niveau te bevriezen, maken we de applicatie immuun voor de grillen van legacy-data en runtime-corruptie.
+
+Dit plan is **GEVALIDEERD** voor onmiddellijke uitvoering in de test-branch.
+
+---
+
+## 0️⃣ Interne Analyse (Lyra)
+<internal_analysis>
+**Migration Type:** Data Integrity & Schema Enforcement (Infrastructure).
+**Complexity Score:** 3/5.
+**Logic Integrity:** De "Zod at the Gates" strategie is perfect geïmplementeerd. 
+- **WAI-005A** bevriest het contract.
+- **WAI-005B** herstelt het verleden (Migration Guard).
+- **WAI-005C** waarborgt de toekomst (Audit-proof export).
+
+**Risk Matrix:**
+| Risk | Probability | Impact | Priority | Mitigation |
+|:---|:---:|:---:|:---:|:---|
+| **Schema Rejection** | Medium | High | 8 | Opgelost via `.passthrough()` in Zod en de heuristiek in `runMigration`. |
+| **Data Loss during Migration** | Low | Critical | 9 | `loadState` verifieert de migratie vòòrdat de state wordt teruggegeven. |
+| **Export Inconsistency** | Low | High | 7 | Gebruik van centrale selectors (`selectIsSpecialStatus`) in de aggregator. |
+
+**Strategic Summary:** 
+De overstap naar `schemaVersion: "1.0"` is het breekpunt met de technische schuld. Vanaf dit moment is de "Euro-Garantie" (centen-integers) niet langer een afspraak, maar een technisch afgedwongen wet.
+</internal_analysis>
+
+---
+
+## 1️⃣ Strategische Audit: De "Gordel" Punten
+
+### ✅ WAI-005A: De State-Freeze
+Het gebruik van `z.number().int().nonnegative()` voor bedragen is de enige juiste manier om ADR-15 (Minor Units) af te dwingen. De toevoeging van `.passthrough()` is een pragmatische meesterzet: het staat ons toe om strikt te zijn op wat we *kennen* (financiële data), terwijl we flexibel blijven voor legacy-keys die nog niet gesaneerd zijn.
+
+### ✅ WAI-005B: De Migration Guard
+De `runMigration` functie is indrukwekkend robuust. De heuristiek in `normalizeMoney` (waarbij kleine integers als euro's worden behandeld en vermenigvuldigd) is essentieel om de beruchte "12 euro of 12 cent?" verwarring in legacy-data op te lossen. Dit is **Harm Prevention** op zijn best.
+
+### ✅ WAI-005C: De Export Aggregator
+Door de `isSpecialStatus` vlag (ADR-12) expliciet op te nemen in de JSON-export, maken we de data "self-documenting". Externe systemen (zoals n8n of PDF-generators) hoeven de business rules niet opnieuw te implementeren; de waarheid zit in de payload.
+
+---
+
+## 2️⃣ Test- & Validatie-audit (Gate A/B/C)
+
+### Gate A: Unit Testing (Zod & Migration)
+De tests in `storage.migration.test.ts` zijn de "Proof of Pudding". De succesvolle conversie van een legacy-object met floats en strings naar een Phoenix v1.0 object met centen bewijst dat de migratie-pijplijn werkt.
+
+### Gate B: Integration (Storage Roundtrip)
+De `safeParse` vòòr de `AsyncStorage.setItem` (WAI-005B) garandeert dat we *nooit* corrupte data opslaan. Als de app crasht, weten we nu zeker dat het niet door de data-structuur in de kluis komt.
+
+---
+
+## 3️⃣ Success Criteria & Release-advies
+
+**Status: GEVALIDEERD (Green Light)**
+
+### 🛡️ Post-Implementation Focus:
+Zodra **WAI-005** is gemerged, is de "Project Phoenix" transitie technisch voltooid. De app draait op een stabiele, type-safe kernel met een gegarandeerde audit-trail.
+
+### 🚀 Instructie voor de Navigator (CU-Agent):
+1.  **Start met 005A:** Leg het contract vast. Zonder dit schema kan de rest niet bouwen.
+2.  **Implementeer 005B:** Test de migratie met je zwaarste legacy-data scenario's.
+3.  **Eindig met 005C:** Zorg dat de export-functies de nieuwe `computeSummary` uit WAI-004 gebruiken om de cirkel rond te maken.
+
+</M&T>

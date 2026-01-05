@@ -1,0 +1,60 @@
+.phoenix/audits.sh
+#!/bin/bash
+# .phoenix/audits.sh - WAI Audit Definities
+
+audit_wai_001_003() {
+    log_section "1. CORE & HOUSEHOLD (WAI-001-003)"
+    run_cmd "npm run typecheck" "TypeScript Validation"
+    check_file_exists "golden_master_scenarios.json" "Golden Master Data" 50
+    check_pattern "as const" "src/selectors/householdSelectors.ts" "SSOT Pattern" "${THRESHOLDS[min_ssot]}" "" "ssot"
+    
+    # --- Actions Analyse ---
+    atomic_inc "total"
+    local _root="src"
+    local _decl_file="${CACHE_DIR}/declared.actions"
+    local _case_file="${CACHE_DIR}/cases.actions"
+    local _used_file="${CACHE_DIR}/used.actions"
+
+    # Extractie naar cache
+    extract_declared_actions "src/state/types.ts" > "$_decl_file" || true
+    extract_case_actions "$(find_reducer_file "$_root")" > "$_case_file" || true
+    extract_dispatch_actions "$_root" > "$_used_file" || true
+
+    # Vergelijk met comm (Set Difference)
+    local _missing_cases="${CACHE_DIR}/missing.cases"
+    comm -23 "$_decl_file" "$_case_file" > "$_missing_cases" || true
+    
+    local _cnt; _cnt=$(count_lines "$(cat "$_missing_cases")")
+    if [[ "$_cnt" -eq 0 ]]; then
+        echo -e "${GREEN}${ICON_OK} Reducer Coverage (clean)${NC}"
+        atomic_inc "passed"
+    else
+        echo -e "${RED}${ICON_FAIL} Reducer Coverage (missing $_cnt cases)${NC}"
+        record_failure "WAI-001: Missing Reducer Cases"
+    fi
+}
+
+audit_wai_004() {
+    log_section "2. EURO-GARANTIE (WAI-004)"
+    check_pattern "Math\\.max\\(0," "src/utils/numbers.ts" "Non-negative parser" 1 "" "parser"
+    check_antipattern "\\.toFixed\\(2\\)" "src/logic" "No UI-logic in Kernel" "" "decimal_logic"
+}
+
+audit_wai_006a() {
+    log_section "3. APP STATUS FSM (WAI-006A)"
+    local fsm="src/app/hooks/useAppOrchestration.ts"
+    if [[ -f "$fsm" ]]; then
+        local found=0
+        for s in "INITIALIZING" "HYDRATING" "READY"; do
+            grep -qE "['\"]$s['\"]" "$fsm" && found=$((found + 1))
+        done
+        [[ "$found" -ge 3 ]] && { echo -e "${GREEN}${ICON_OK} FSM States found ($found)${NC}"; atomic_inc "passed"; } \
+                             || { echo -e "${RED}${ICON_FAIL} FSM Incomplete${NC}"; record_failure "WAI-006A: FSM"; }
+    fi
+}
+
+audit_wai_006e() {
+    log_section "4. CLEANUP (WAI-006E)"
+    check_antipattern "\\.\\./\\.\\./\\.\\." "src" "No deep imports" "" "deep_imports"
+    check_antipattern "console\\.(log|debug)" "src" "No console logs" "(\\.test\\.|dev-tools)" "console_statements"
+}

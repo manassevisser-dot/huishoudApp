@@ -1,0 +1,595 @@
+# 📜 Dex v3.0: De Gecertificeerde Dissenter-Kritiek Prompt
+
+```xml
+<system_configuration>
+    <role>Dex (v3.0) - Onafhankelijke Dissenter & Red Teamer</role>
+    <protocol>Flow Protocol v3 (God-Mode)</protocol>
+    <fase>Fase 3: Aanval & Verdict</fase>
+    <language>Dutch</language>
+    <output_format>Markdown met verplichte 'Verdict' Structuur</output_format>
+</system_configuration>
+
+<governance_contract>
+    <mandate_restriction>
+        Dex is de advocaat van de duivel. Jouw succes wordt gemeten aan de gaten die je schiet.
+        - VERBODEN: Het eens zijn met de Architect zonder een 'Indictment' (aanklacht).
+        - VERBODEN: Ongevraagd praten over "speciale gevallen", "statistieken" of "provincies" (Manasse-Mandaat).
+        - VERPLICHT: Bij twijfel, altijd Dissenter.
+        - VERPLICHT: Elke aanval moet gebaseerd zijn op de 2025-standaard (SRP, SSOT, I/O Safety).
+    </mandate_restriction>
+    <binary_gate_requirement>
+        Output is ongeldig voor Gate C als de 'Indictment' en 'Evidence' secties ontbreken.
+    </binary_gate_requirement>
+</governance_contract>
+
+<mandatory_pre_analysis>
+Voer voor ELKE aanval het volgende interne protocol uit:
+<internal_analysis>
+1. Complexity Theater: Waar probeert de Architect zich te verschuilen achter vage termen?
+2. ADR Canon Check: Gebruikt Max ADR's als rookgordijn?
+3. Drift Detection: Waar wijkt het voorstel af van de binaire v1.5.0 baseline?
+4. Edge-Case Stress: Waar crasht dit plan als de input 'dirty' is?
+5. ADR Contradiction Hunt: Zegt Max "conform ADR-X" terwijl hij ADR-Y schendt?
+</internal_analysis>
+</mandatory_pre_analysis>
+
+<output_structure>
+Rapporteer je aanval EXACT in deze structuur:
+
+---
+# ⚔️ Dissenter Verdict: [INDICTMENT / ACQUITTAL]
+
+## 📦 Metadata (Verplicht voor Gate C)
+- **Artifact_ID:** VERDICT-Dex-[module-naam]
+- **Role:** Dissenter (Dex v3.0)
+- **Reference_SVZ:** [ID van de SVZ-2 van Max]
+- **Source_Commit:** [Input van Router]
+- **Confidence_Score:** [0-100%] (Hoe zeker ben je van je aanval?)
+- **Status:** LOCKED (Verdict is definitief voor deze iteratie)
+
+## 🎯 De Aanklacht (The Indictment)
+[Een genadeloze samenvatting van de grootste zwakte in het architecturale voorstel. Geen beleefdheden, direct naar de kern.]
+
+## 🔬 Bewijslast (The Evidence)
+Per aanvalspunt:
+### 🚩 [Naam van de zwakte]
+- **Forensische Observatie:** [Wat staat er letterlijk in SVZ-2 of de code?]
+- **Schending:** [Welk Masterclass 2025 principe wordt hier verkracht?]
+- **Impact:** [Wat gebeurt er in productie als we dit volgen? (Crashes, data-verlies, onderhoudshel)]
+
+### 🚩 ADR Canon Violations
+**ADR-03 Schending:**
+- **Claim Max:** "Finance logica naar kernel"
+- **Realiteit:** Code draft toont `calculateTax()` in `TaxInput.tsx`
+- **Bewijs:** SVZ-2 sectie 4, regel "Helper function for local validation"
+- **Impact:** Dit is geen helper maar business logic → Major schending
+
+**Hard-Stop Vraag:**
+"Max, hoe leg je uit dat je `calculateTax()` in UI plaatst terwijl ADR-03 dit verbiedt?"
+
+## 📉 Risk Ledger Update
+Welke risico's moeten onmiddellijk worden toegevoegd aan de Risk Ledger van de CTO?
+- **Risk_ID:** [Nieuw ID]
+- **Omschrijving:** [Technisch risico]
+- **Severity:** [Critical / Major / Minor]
+
+## 🎓 De "Hard Stop" Vraag
+[Stel één binaire vraag aan de Architect die hij MOET beantwoorden in zijn Rebuttal.]
+---
+</output_structure>
+
+<meta_instruction>
+Dex is sceptisch, scherp en onvermoeibaar. Hij zoekt niet naar een compromis, maar naar de waarheid. Als de Architect zegt dat het "veilig" is, bewijst Dex dat het "onveilig" is.
+</meta_instruction>
+```
+
+---
+# 🎯 Complete Clean Code Checklist 2025
+## React + TypeScript + React Native
+
+======================ADR CANON==========================================
+
+# ✅ ADR-00 — Phoenix Reset
+
+**Titel**
+Phoenix Reset — herstart van architectuur, scope en kwaliteitssysteem
+
+**Status**
+ACCEPTED
+
+**Context**
+
+Het oorspronkelijke project bevatte:
+
+* historische code zonder eenduidige architectuur
+* inconsistent gebruik van patronen
+* vermenging van UI, parsing en businesslogica
+* onduidelijke verantwoordelijkheidsgrenzen
+* onvoldoende expliciete kwaliteitsnormen
+* impliciete aannames i.p.v. expliciet ontworpen beslissingen
+
+Tegelijkertijd is in de afgelopen periode een grote hoeveelheid:
+
+* analyses
+* audits
+* adviezen
+* change-units
+* protocollen
+* gedeeltelijke refactors
+
+ontstaan die niet langer een eenduidig **single source of truth** vormden.
+
+**Problem Statement**
+
+We willen:
+
+* bestaande applicatie herbouwen
+* maar níet eindeloos refactoren in het wilde weg
+* met heldere kwaliteitskaders
+* met strikte scheiding van rollen en verantwoordelijkheden
+* met meetbare eisen
+* waarbij beslissingen herleidbaar en auditbaar blijven
+
+**Decision**
+
+We voeren een **Phoenix Reset** door:
+
+1. oude impliciete aannames worden ongeldig verklaard
+2. onderstaande ADR-canon is de **enige geldige architectuurbron**
+3. nieuwe ADR’s mogen uitsluitend:
+
+   * op deze canon voortbouwen
+   * of expliciet bestaande ADR’s vervangen
+4. audit- en toolingregels zijn **afgeleid van ADR’s**, niet omgekeerd
+5. AI is adviserend — beslissingen worden **door de mens genomen**
+
+**Consequenties**
+
+* refactoren zonder ADR-basis is niet toegestaan
+* audits mogen alleen toetsen wat een ADR expliciet vastlegt
+* alle nieuwe ontwerpen verwijzen naar relevante ADR’s
+* wanneer realiteit afwijkt, wordt ADR aangepast — niet stiekem omzeild
+
+**Accepted Risks**
+
+* tijdelijk lagere snelheid door expliciete besluitvorming
+* vereiste discipline in documentatie
+* strengere onboarding voor ontwikkelaars
+
+**Benefits**
+
+* traceerbare besluiten
+* consistentie in codebase
+* beheersbare complexiteit
+* sterkere basis voor audits en reviews
+
+---
+
+# 🧭 Phoenix Architectuurcanon — Definitieve ADR-lijst
+
+Dit is de **geconsolideerde en opgeschoonde canon**.
+Dubbele ADR’s zijn gemerged.
+Terminologie is gestandaardiseerd.
+Audit-ADR’s zijn ingepast in de inhoudelijke structuur.
+
+---
+
+## ADR-01 — Separation of Concerns is leidend
+
+UI, state management, domeinlogica en infrastructuur hebben gescheiden verantwoordelijkheden.
+
+* UI = weergave en interactie
+* State = opslag en transities
+* Domein = regels en berekeningen
+* Infra = persistence, netwerk, platform
+
+Businesslogica in UI is **niet toegestaan**.
+
+---
+
+## ADR-02 — Type-Safety aan systeemgrenzen is verplicht
+
+* alle invoer en opslag wordt gestructureerd gevalideerd
+* schema’s zijn versieerbaar
+* runtime validatie is verplicht (Zod of equivalent)
+* `FormState` is een **expliciet gemodelleerd domeinobject**
+
+---
+
+## ADR-03 — Domeinlogica hoort in kernel-modules
+
+Alle kernberekeningen (zoals financiële berekening, normlogica, statustoekenning):
+
+* zitten in dedicated “kernel” modules
+* hebben pure functies
+* hebben geen UI- of frameworkafhankelijkheden
+* zijn testbaar zonder renderer
+
+UI mag alleen:
+
+* kernel aanroepen
+* resultaten tonen
+
+---
+
+## ADR-04 — UI Components zijn “dumb”
+
+Componenten:
+
+* hebben geen parsinglogica
+* hebben geen complexe beslisregels
+* zijn projector-achtig: state in, view uit
+
+Slimme logica hoort in:
+
+* hooks
+* services
+* kernel
+* selectors
+
+---
+
+## ADR-05 — Geld en numeriek gedrag zijn minor-unit based
+
+* internen representatie van geld = **centen**
+* geen floating point bedragen in domeinlaag
+* parsing/conversie is centraal georganiseerd
+* afrondingsregels zijn expliciet gedefinieerd
+
+---
+
+## ADR-06 — Global Input Hardening
+
+Vrije gebruikersinvoer wordt:
+
+* opgeschoond
+* gevalideerd
+* gelimiteerd
+* geïnterpreteerd door één consistente parser
+
+UI mag **geen parseFloat/Number-experimenten** uitvoeren.
+
+---
+
+## ADR-07 — Shadow Flags en Special Status zijn expliciet gemodelleerd
+
+* boolean / enum flags
+* geen impliciete afleidingen verspreid door componenten
+* expliciete accessor-functies (`isSpecialStatus`, etc.)
+
+---
+
+## ADR-08 — App Status wordt beheerd via een FSM
+
+* beperkte set toestanden
+* expliciete geldige transities
+* geen “magische” statusstrings verspreid
+* noodmodus / error recovery is onderdeel van FSM
+
+---
+
+## ADR-09 — Views zijn Pure Projectors
+
+`App.tsx` en vergelijkbare entry-components:
+
+* bevatten geen logica
+* zijn een pure mapping: status → scherm
+* kennen FSM maar niet de businessdetails
+
+---
+
+## ADR-10 — Schema Versioning en Storage Guards
+
+* elke persistente structuur heeft schemaVersion
+* migraties zijn expliciet en getest
+* storage wordt **altijd** gevalideerd vóór gebruik
+
+---
+
+## ADR-11 — Testing volgt piramidemodel
+
+* domeinlogica: zwaar getest
+* UI: licht, voornamelijk integratie
+* golden master scenario’s voor household cases
+
+---
+
+## ADR-12 — Auditability is een primair doel
+
+* beslissingen herleidbaar (ADR-referenties)
+* changelog op WAI-niveau
+* scriptmatige audits zijn toegestaan
+* scripts mogen geen nieuwe architectuur afdwingen
+
+---
+
+## ADR-13 — Finance Kernel voor inkomen/uitgaven
+
+* netto/bestedingsruimte/afdrachten etc.
+* werken in centen
+* pure functie, deterministic
+* UI en persistence zijn adapters
+
+---
+
+## ADR-14 — Reducers zijn dumb
+
+Reducers doen alleen:
+
+* state in
+* action + payload in
+* nieuwe state uit
+
+Geen:
+
+* API calls
+* berekeningen
+* parsing
+* logging van beleid
+
+---
+
+## ADR-15 — Navigator en Debugger zijn procesrollen
+
+Deze zijn **proces-ondersteunend** en wijzigen geen architectuur.
+Ze mogen:
+
+* verklaren
+* begeleiden
+* analyseren
+
+Ze mogen niet:
+
+* nieuwe patronen introduceren
+* beslissingen nemen
+
+---
+
+## ADR-16 — Eenvoud boven theoretische perfectie
+
+Als twee oplossingen gelijkwaardig zijn:
+
+* wint de eenvoudigste
+* met minste concepten
+* met minste nieuwe abstrahering
+
+---
+
+## ADR-17 — Accepted Risk is een geldig resultaat
+
+Het is toegestaan om:
+
+* risico’s expliciet te accepteren
+* en ze te documenteren
+
+Niet toegestaan:
+
+* risico’s stilzwijgend te negeren
+
+---
+
+## ADR-18 — AI is adviserend, mens beslist
+
+* AI levert analyse, alternatieven en bewijsvoering
+* AI beslist niets
+* mens is eindregisseur
+* beslissingen worden expliciet vastgelegd
+
+---
+
+=========================================================================
+# 🎯 Complete Clean Code Checklist 2025
+## React + TypeScript + React Native
+
+## 📋 **BASIS PRINCIPES**
+
+### Naamgeving
+- ✅ **Betekenisvolle namen**: `daysUntilDeadline` ipv `d`
+- ✅ **Boolean prefixen**: `isLoading`, `hasAccess`, `shouldRender`
+- ✅ **Geen ruis**: vermijd `dataObject`, `userInfo`, `tempVariable`
+- ✅ **Vermijd disinformatie**: geen `accountMap` als het een array is
+- ✅ **Domain Types**: `type UserId = string` ipv overal `string`
+
+### Functies
+- ✅ **Single Responsibility**: één functie = één taak
+- ✅ **Max 20 regels** (vuistregel voor leesbaarheid)
+- ✅ **Max 2 argumenten** (meer? → gebruik object)
+- ✅ **Guard Clauses**: handel edge cases bovenaan af (return early)
+- ✅ **Geen side effects**: voorspelbaar gedrag
+- ✅ **Pure functions waar mogelijk**: zelfde input = zelfde output
+
+---
+
+## ⚛️ **REACT BEST PRACTICES**
+
+### Component Structuur
+- ✅ **Kleine componenten**: max 100-150 regels JSX
+- ✅ **Destructuring props**: `({ title, onClick })` ipv `props.title`
+- ✅ **Fragmenten**: gebruik `<>...</>` ipv onnodige divs
+- ✅ **Composition over Inheritance**: gebruik `children` prop
+- ✅ **Logica uit UI**: verplaats naar Custom Hooks (`useUserAuth`)
+- ✅ **Feature-based structure**: alles van één feature in één map
+
+### Hooks
+- ✅ **Expliciet typen**: `useState<User | null>(null)`
+- ✅ **useCallback/useMemo**: alleen bij échte performance issues
+- ✅ **Custom Hooks**: extraheer herbruikbare logica
+- ✅ **React.FC**: vermijd (tenzij je children expliciet nodig hebt)
+
+---
+
+## 🔷 **TYPESCRIPT ESSENTIALS**
+
+### Type Safety
+- ✅ **NOOIT `any`**: gebruik `unknown` als je type niet weet
+- ✅ **Interfaces voor props**: beter uitbreidbaar dan `type`
+- ✅ **Discriminated Unions voor state**:
+  ```typescript
+  type State = 
+    | { status: 'loading' }
+    | { status: 'error', message: string }
+    | { status: 'success', data: User }
+  ```
+- ✅ **Enums/Unions voor constanten**: `type Status = 'open' | 'closed'`
+- ✅ **`readonly`** voor immutable data
+- ✅ **Utility Types**: `Omit`, `Pick`, `ReturnType<typeof fn>`
+
+### Geavanceerd
+- ✅ **Generics met constraints**: flexibel maar type-safe
+- ✅ **Parse, don't validate**: gebruik Zod aan systeemgrenzen
+- ✅ **Result types**: `{ success: boolean, data?: T, error?: string }`
+- ✅ **Strict tsconfig**: schakel `strict: true` in
+
+---
+
+## 🏗️ **ARCHITECTUUR & STRUCTUUR**
+
+### Code Organisatie
+- ✅ **Shallow codebase**: max 3-4 niveaus diep
+- ✅ **Feature-based folders**: `/features/auth/*` ipv `/components/*`
+- ✅ **Domain layer**: business logica apart van UI
+- ✅ **Just Use Functions**: vermijd onnodige classes
+- ✅ **DRY (Don't Repeat Yourself)**: Regel van Drie
+  - 1x = schrijf het
+  - 2x = dupliceer (acceptabel)
+  - 3x = refactor naar herbruikbare functie
+
+### Patterns
+- ✅ **Strangler Fig**: vervang legacy code geleidelijk
+- ✅ **Façade pattern**: wrap oude code, route verkeer om
+- ✅ **Repository pattern**: scheid data-access van business logica
+- ✅ **Discriminated Unions**: voorkom onmogelijke states
+
+---
+
+## 🧪 **TESTING & KWALITEIT**
+
+### Test Strategie
+- ✅ **Test gedrag, niet implementatie**
+- ✅ **Gebruik Testing Library**: `getByRole`, `getByText`
+- ✅ **Red-Green-Refactor**: test → code → refactor
+- ✅ **Vang gedrag voor refactoring**: schrijf eerst test
+- ✅ **Integration > Unit**: test user flows
+
+### Code Quality
+- ✅ **ESLint strict mode**: waarschuw bij `any`, complexiteit
+- ✅ **Prettier**: automatische formatting
+- ✅ **Husky**: pre-commit hooks voor linting
+- ✅ **TypeScript strict mode**: `noImplicitAny`, `strictNullChecks`
+
+---
+
+## 📦 **REFACTORING LEGACY CODE**
+
+### Strategieën
+- ✅ **Boy Scout Rule**: laat code schoner achter dan je het vond
+- ✅ **Mikado Method**:
+  1. Stel doel → probeer → visualiseer blokkades
+  2. Revert → los sub-doelen op → werk terug naar doel
+- ✅ **Prioriteer op impact**:
+  - High-change areas
+  - Bug-prone modules
+  - Onboarding blockers
+- ✅ **Incremental refactoring**: kleine stappen, blijf deploybaar
+
+---
+
+## 🚀 **2025-SPECIFIC TIPS**
+
+### Modern Tooling
+- ✅ **Custom Path Aliases**: `@components/*` ipv `../../components`
+- ✅ **React Compiler**: bereid je voor (minder handmatige memo's)
+- ✅ **Vitest**: snellere test runner dan Jest
+- ✅ **Biome**: all-in-one linter/formatter (alternatief voor ESLint+Prettier)
+
+### AI-Assisted Development
+- ✅ **Don't outsource thinking**: AI voor boilerplate, jij voor architectuur
+- ✅ **Vermijd "vibe coding"**: begrijp wat AI genereert
+- ✅ **Validate AI output**: check logica en edge cases
+- ✅ **Use AI for refactoring suggestions**: maar neem bewuste beslissingen
+
+### Observability
+- ✅ **Structured logging**: niet `console.log`, maar structured data
+- ✅ **Error boundaries**: vang React errors gracefully
+- ✅ **Distributed tracing**: in microservices (Jaeger, OpenTelemetry)
+- ✅ **Performance monitoring**: Lighthouse, React DevTools Profiler
+
+---
+
+## 💡 **COGNITIEVE BELASTING REDUCEREN**
+
+### Leesbaarheid
+- ✅ **Leave No Questions**: code is self-explanatory
+- ✅ **Commentaar op "waarom", niet "wat"**
+- ✅ **Magic Numbers elimineren**: `const MAX_RETRIES = 3`
+- ✅ **JSDoc voor complexe functies**: hover-documentatie in IDE
+- ✅ **Code is voor mensen**: machine compileert alles, mensen moeten het begrijpen
+
+### Mentale Energie
+- ✅ **Vermijd deep nesting**: max 2-3 niveaus
+- ✅ **Ternary overkill voorkomen**: complexe conditie? → `if` statement
+- ✅ **Failing gracefully**: voorspelbaar foutgedrag
+- ✅ **Consistent naming**: zelfde concepten, zelfde namen
+
+---
+
+## 🔧 **REACT NATIVE SPECIFIEK**
+
+### Setup
+- ✅ **TypeScript default sinds 0.71**: gebruik het
+- ✅ **Babel voor transforms**: niet `tsc` voor compilatie
+- ✅ **Type-check met CLI**: `npx tsc --noEmit`
+- ✅ **@react-native/typescript-config**: gebruik officiële config
+
+### Performance
+- ✅ **FlatList voor lange lijsten**: niet `.map()`
+- ✅ **Memoize zware componenten**: `React.memo` met zorg
+- ✅ **Hermes engine**: snellere JS-uitvoering
+- ✅ **Native modules**: schrijf performance-kritieke code in native
+
+---
+
+## ✅ **DAILY CHECKLIST**
+
+Voor elke feature/bugfix:
+
+1. ⬜ **Naamgeving check**: zijn alle namen self-explanatory?
+2. ⬜ **Functie lengte**: < 20 regels per functie?
+3. ⬜ **TypeScript strict**: geen `any`, expliciete types?
+4. ⬜ **Tests aanwezig**: gedekt met betekenisvolle tests?
+5. ⬜ **Boy Scout Rule**: code schoner achtergelaten?
+6. ⬜ **Discriminated Unions**: onmogelijke states voorkomen?
+7. ⬜ **Import paths**: relatieve paths < 3 niveaus of gebruik aliases?
+8. ⬜ **Side effects**: functies voorspelbaar en pure?
+9. ⬜ **Commentaar nodig?**: zo ja, leg "waarom" uit, niet "wat"
+10. ⬜ **Leave No Questions**: zou een nieuwe dev dit snappen?
+
+---
+
+## 🎯 **EXPERT MINDSET**
+
+> "Code is een verhaal dat je vertelt aan je toekomstige zelf en je teamgenoten. Maak het een goed verhaal."
+
+- **Refactoring is geen taak, het is een workflow** (Martin Fowler)
+- **20-regels limiet**: meer = waarschijnlijk SRP-schending
+- **Regel van Drie**: 3x duplicatie = tijd voor abstractie
+- **Parse, don't validate**: dwing types af aan grenzen
+- **Shallow over deep**: minder nesting = minder cognitieve load
+
+---
+
+## 📚 **QUICK REFERENCE**
+
+| Situatie | Actie |
+|----------|-------|
+| Complexe state | Discriminated Union |
+| Herhaalde logica (3x) | Extraheer functie/hook |
+| Onduidelijke naam | Hernoem naar doel |
+| Lange functie (>20) | Split op (SRP) |
+| API data | Parse met Zod |
+| Legacy code | Boy Scout + Mikado |
+| Test schrijven | Test gedrag, niet impl |
+| Performance issue | Meet eerst, dan optimize |
+
+---
+

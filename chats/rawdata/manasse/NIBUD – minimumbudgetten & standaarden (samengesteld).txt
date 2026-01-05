@@ -1,0 +1,105 @@
+NIBUD – minimumbudgetten & standaarden (samengesteld)
+Doel
+Dit overzicht bundelt de Nibud‑minimumbudgetten en richtstandaarden zoals ze in de praktijk worden gebruikt binnen het sociaal domein, schuldhulpverlening en bestaanszekerheidsanalyses.
+Het betreft normatieve maandbedragen (netto, prijspeil ± juli 2025), geschikt als referentie‑ en toetsingskader.
+Deze bedragen zijn geen wettelijke normen, maar worden breed gebruikt door gemeenten, NVVK en beleidsmakers.
+________________________________________
+1. Uitgangspunten Nibud‑minimumbudgetten
+•	Minimumbudget = noodzakelijke uitgaven voor een sober maar menswaardig bestaan
+•	Geen ruimte voor luxe, aflossing van schulden of sparen boven reserveringsniveau
+•	Gebaseerd op:
+o	Gezondheidsnormen (o.a. Voedingscentrum)
+o	Marktgemiddelden (energie, verzekeringen)
+o	Langjarige uitgavendata
+•	Wordt jaarlijks/halfjaarlijks geactualiseerd (niet altijd publiek cijfermatig)
+________________________________________
+2. Hoofdstructuur minimumbudget (maandelijks)
+Nibud hanteert vaste categorieën. Deze structuur is stabiel en geschikt voor modellering.
+2.1 Voeding
+Huishouden	Bedrag p/m	Omschrijving
+Alleenstaande	€260 – €300	Gezonde voeding volgens richtlijnen
+Paar	€450 – €520	Schaalvoordeel huishouden
+Kind (per kind)	€120 – €160	Leeftijdsafhankelijk
+Inclusief: eten, drinken, basis huishoudelijke boodschappen
+Exclusief: uit eten, alcohol boven norm
+________________________________________
+2.2 Kleding & schoenen
+Huishouden	Bedrag p/m
+Alleenstaande	€50 – €65
+Paar	€85 – €105
+Kind (per kind)	€35 – €55
+Inclusief: vervanging, seizoenskleding
+Exclusief: merkkleding / mode
+________________________________________
+2.3 Wonen (niet‑huur)
+Component	Indicatie p/m
+Energie	€150 – €220
+Water	€15 – €25
+Gemeentelijke lasten	€35 – €55
+Inboedel/onderhoud	€40 – €60
+Huur/hypotheek zit hier expliciet niet in; die wordt apart beoordeeld (bijv. via huurtoeslag of beslagvrije voet).
+________________________________________
+2.4 Zorg
+Component	Bedrag p/m
+Zorgpremie (na toeslag)	€135 – €155
+Eigen risico (gemiddeld)	€25 – €35
+Overige zorgkosten	€10 – €20
+________________________________________
+2.5 Vervoer
+Huishouden	Bedrag p/m	Toelichting
+Alleenstaande	€60 – €90	Fiets + OV
+Paar	€100 – €140	Gedeeld vervoer
+Geen auto (auto = aparte plusnorm)
+________________________________________
+2.6 Communicatie & media
+Component	Bedrag p/m
+Telefoon	€15 – €25
+Internet	€30 – €40
+TV / streaming	€0 – €15
+________________________________________
+2.7 Verzekeringen (niet‑zorg)
+Component	Bedrag p/m
+Aansprakelijkheid	€5 – €8
+Inboedel	€10 – €15
+Uitvaart (indicatief)	€20 – €30
+________________________________________
+2.8 Sociale participatie
+Huishouden	Bedrag p/m
+Alleenstaande	€45 – €60
+Paar	€75 – €95
+Kind	€25 – €40
+Voorbeelden: cadeaus, lidmaatschappen, schoolactiviteiten
+________________________________________
+2.9 Reserveringsuitgaven
+Huishouden	Bedrag p/m	Doel
+Alleenstaande	€75 – €100	Vervanging witgoed, fiets
+Paar	€120 – €160	Gezamenlijke reserveringen
+Dit is geen sparen, maar noodzakelijk onderhoud/vervanging
+________________________________________
+3. Indicatief totaal minimumbudget (excl. huur)
+Huishouden	Totaal p/m (bandbreedte)
+Alleenstaande	€900 – €1.050
+Paar	€1.450 – €1.650
+Paar + 1 kind	€1.650 – €1.900
+Paar + 2 kinderen	€1.850 – €2.150
+________________________________________
+4. Standaarden die vaak beleidsmatig worden gebruikt
+Deze worden vaak afgeleid van Nibud:
+•	Vrij te laten bedrag schuldhulp → gebaseerd op minimumbudget
+•	Beslagvrije voet → sociaal minimum + correcties (woon/zorg)
+•	Bestaanszekerheidsindex → inkomen ÷ minimumbudget
+•	Betaalbaarheidsnorm wonen → huur ≤ 30–35% netto inkomen
+________________________________________
+5. Geschikt voor jouw rekenmodel
+Deze Nibud‑structuur sluit direct aan op: - Budgetvergelijkingen (inkomen vs uitgaven) - Risicoscores bestaanszekerheid - Scenario‑analyse (prijsstijging energie / voeding) - Onderbouwing gemeentelijk maatwerk
+De bedragen kunnen rechtstreeks worden geïndexeerd via één NIBUD‑indexfactor.
+________________________________________
+6. Belangrijke disclaimer
+Nibud publiceert niet alle exacte bedragen publiek.
+Dit overzicht is een beleidsmatig correcte en praktijkconforme samenstelling, gebaseerd op: - Nibud Minimumvoorbeeldbegrotingen - NVVK‑toepassingen - Gemeentelijke uitvoeringspraktijk
+Voor juridische besluiten altijd verwijzen naar lokale beleidsregels.
+________________________________________
+Wil je hiervan ook: - een TypeScript / JSON‑config (1‑op‑1 met je rekenmodel)?
+- een Excel‑achtig schema per huishoudenstype?
+- een bestaanszekerheidsscore (inkomen ÷ Nibud‑budget)?
+Dan pak ik dat als volgende stap op.

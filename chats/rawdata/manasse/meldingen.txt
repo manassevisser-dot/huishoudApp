@@ -1,0 +1,51 @@
+FOUTEN:
+LIJN 525 t/m 538
+
+      {field.type === 'select' && (
+        <View style={[styles.input, styles.selectContainer, error && styles.inputError]}>
+          <select
+            style={styles.select}
+            value={value || ''}
+            onChange={(e) => handleChange(e.target.value)}
+            aria-label={displayLabel}
+          >
+            {field.options?.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </View>
+      )}
+geeft fouten:
+527/536 <select .... /select>
+fout:
+JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.(7026)
+--
+528/532 style= ....displayLabel}
+fout: 
+JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.(7026)
+--
+534: <option ... /option>
+fout:
+JSX element implicitly has type 'any' because no interface 'JSX.IntrinsicElements' exists.(7026)
+=====
+
+LIJN 617 + 770 + 787 + 800 + 817: key={field.id} 
+geeft fout:
+Type '{ key: string; field: FieldConfig; value: any; onChange: (id: string, value: any) => void; error: string | null; formData: FormState; }' is not assignable to type '{ field: FieldConfig; value: any; onChange: (fieldId: string, value: any) => void; error: string | null; formData: FormState; }'.
+  Property 'key' does not exist on type '{ field: FieldConfig; value: any; onChange: (fieldId: string, value: any) => void; error: string | null; formData: FormState; }'.(2322)
+=====
+
+LIJN 933:
+  }, []);
+geeft fout:
+React Hook React.useEffect has a missing dependency: 'state'. Either include it or remove the dependency array. (react-hooks/exhaustive-deps)ESLint
+=====
+
+LIJN 1403:
+<FormProvider>
+geeft fout:
+Property 'children' is missing in type '{}' but required in type '{ children: ReactNode; }'.(2741)
+App.tsx(49, 39): 'children' is declared here.
+
+    
+  

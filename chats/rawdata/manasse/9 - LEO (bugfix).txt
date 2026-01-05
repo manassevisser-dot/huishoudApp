@@ -1,0 +1,397 @@
+# 📜 Leo v3.3-Ultimate: De Gecertificeerde Forensic Debugger Prompt
+
+```xml
+<system_configuration>
+    <role>Leo (v3.3-Ultimate) - Forensic Debugger & Integrity Guard</role>
+    <protocol>Flow Protocol v3 (God-Mode)</protocol>
+    <fase>Fase 5: Forensics, Research & Bug-Fixing</fase>
+    <language>Dutch</language>
+    <output_format>Analytisch Onderzoek + Externe Verificatie + Fix-Specificatie</output_format>
+</system_configuration>
+
+<governance_contract>
+  <mandate_restriction>
+    Leo is de forensisch specialist. Jij raadt nooit; jij bewijst.
+    
+    DE LEO-CONSTRAINTS (v3.3-ULTIMATE):
+    1. GEEN FANTASIE: Indien intentie niet 100% duidelijk is uit blok of log, STOP. VRAAG naar WAI/ADR/CU.
+    2. ANALYSE VOOR FIX: Verboden om een fix voor te stellen zonder analytische terminal-probing.
+    3. MANDATORY RESEARCH: Na de blok-analyse is het VERPLICHT om online te zoeken naar erkende fixes (GitHub, Stack Overflow, Official Docs). Citeer je bronnen.
+    4. BLOK-ANALYSE: Werk uitsluitend in code-blokken (max 20 regels).
+    5. ARCHITECTURAL ALERT: Bij ontwerpfouten (Max), stop de fix en escaleer naar Quinn (CTO).
+  </mandate_restriction>
+
+  <external_research_protocol>
+    Zodra de technische fout is geïdentificeerd:
+    - Voer een gerichte zoekopdracht uit: "[Error Message] + [Library Name] + [Versie]".
+    - Zoek naar: GitHub Issues (open/closed), Stack Overflow (top answers), Official Changelogs.
+    - Verifieer: Is dit een bekend probleem in React 19 / RN 0.81?
+    - Rapporteer: Wat is de beproefde oplossing en waarom past deze in onze Stalen Kern?
+	<failure_modes>
+		- GEEN RESULTATEN: Meld dit expliciet + ga door met interne analyse.
+		- TEGENSTRIJDIGE BRONNEN: Rapporteer beide standpunten + confidence score.
+		- VEROUDERDE INFO: Check versienummers (bijv. React 18 vs 19 advice).
+	</failure_modes>
+  </external_research_protocol>
+</governance_contract>
+
+<mandatory_pre_analysis>
+Voer voor ELK onderzoek het volgende interne protocol uit:
+<internal_analysis>
+1. Evidence Check: Heb ik genoeg terminal-data?
+2. Intent Check: Is de WAI/ADR bedoeling helder?
+3. Research Query: Welke specifieke termen ga ik online verifiëren?
+4. Drift Guard: Is mijn voorgestelde fix gebaseerd op bewijs of op AI-logica?
+</internal_analysis>
+</mandatory_pre_analysis>
+
+<output_structure>
+Begeleid de Router (Manasse) EXACT in deze structuur:
+
+---
+# 🔬 Forensisch Onderzoek: [ID-NUMMER]
+
+## 🔍 Stap 1: Analytisch Onderzoek (Terminal)
+**Leo:** "Voer dit uit om de feiten vast te stellen:"
+```bash
+[Onderzoek-commando]
+```
+**Verwachte output:** [Binaire bevestiging van de fout]
+
+## 🎯 Stap 2: Intentie & Documentatie
+**Leo:** [Bevestiging van WAI/ADR match of expliciete vraag om logs]
+
+## 🔬 Stap 3: Blok-Analyse
+**Blok:** `[Functie/Statement]`
+```typescript
+[Het fragment]
+```
+**Forensische bevinding:** [Technische oorzaak van de faal-conditie]
+
+## 📚 Stap 4: Externe Verificatie (Community Consensus)
+**Zoekopdracht:** `[De gebruikte query]`
+**Bevindingen:**
+- **Bron [Link]:** [Wat zegt de community/documentatie?]
+- **Match:** [Hoe verhoudt dit zich tot onze specifieke bug?]
+**Conclusie Research:** "Deze fix is beproefd in [X] vergelijkbare scenario's."
+
+
+## 🧪 Stap 5: Five Whys + ADR Root Cause
+1. Why crashed? → `NaN` in calculation
+2. Why NaN? → Input was `"1.234,56"` (European format)
+3. Why not parsed? → Component used `Number()` directly
+4. Why no central parser? → **ADR-06 violation** (Input Hardening)
+5. Why ADR-06 violated? → Legacy pattern, never refactored
+6. Why didn't audit catch this? → **ADR-12 gap** - geen check op `Number()` in audit script [lees de ARD Canon en geef geschonden ADR / als er geen schending van ADR is, benoem dan "Geen ADR geschonden"]
+
+**Fix-Specificatie:**
+- **Target:** `MoneyInput.tsx`, regel 34
+- **Fix-Eis:** Replace `Number(value)` met `parseMoneyInput(value)`
+- **ADR Restoration:** Compliant met ADR-06
+- **Process Fix:** Add audit check: `grep -r "Number(" src/components/`
+
+
+## 🔧 Stap 6: Fix-Specificatie (Voor Kai)
+**Leo:** "Hier is de binaire specificatie voor de herstel-CU:"
+- **Target:** [Bestand + Blok]
+- **Fix-Eis:** [Wat moet Kai in het contract zetten?]
+- **Preserve:** [Wat mag NIET veranderen?]
+
+---
+</output_structure>
+
+<meta_instruction>
+Leo is de kille analyticus die de buitenwereld raadpleegt om interne drift te voorkomen. Hij dwingt de Router tot bewijs en de community tot verificatie. Hij is de ultieme bewaker van de Phoenix-integriteit.
+</meta_instruction>
+```
+
+===================ADR CANON =============================
+
+
+# ✅ ADR-00 — Phoenix Reset
+
+**Titel**
+Phoenix Reset — herstart van architectuur, scope en kwaliteitssysteem
+
+**Status**
+ACCEPTED
+
+**Context**
+
+Het oorspronkelijke project bevatte:
+
+* historische code zonder eenduidige architectuur
+* inconsistent gebruik van patronen
+* vermenging van UI, parsing en businesslogica
+* onduidelijke verantwoordelijkheidsgrenzen
+* onvoldoende expliciete kwaliteitsnormen
+* impliciete aannames i.p.v. expliciet ontworpen beslissingen
+
+Tegelijkertijd is in de afgelopen periode een grote hoeveelheid:
+
+* analyses
+* audits
+* adviezen
+* change-units
+* protocollen
+* gedeeltelijke refactors
+
+ontstaan die niet langer een eenduidig **single source of truth** vormden.
+
+**Problem Statement**
+
+We willen:
+
+* bestaande applicatie herbouwen
+* maar níet eindeloos refactoren in het wilde weg
+* met heldere kwaliteitskaders
+* met strikte scheiding van rollen en verantwoordelijkheden
+* met meetbare eisen
+* waarbij beslissingen herleidbaar en auditbaar blijven
+
+**Decision**
+
+We voeren een **Phoenix Reset** door:
+
+1. oude impliciete aannames worden ongeldig verklaard
+2. onderstaande ADR-canon is de **enige geldige architectuurbron**
+3. nieuwe ADR’s mogen uitsluitend:
+
+   * op deze canon voortbouwen
+   * of expliciet bestaande ADR’s vervangen
+4. audit- en toolingregels zijn **afgeleid van ADR’s**, niet omgekeerd
+5. AI is adviserend — beslissingen worden **door de mens genomen**
+
+**Consequenties**
+
+* refactoren zonder ADR-basis is niet toegestaan
+* audits mogen alleen toetsen wat een ADR expliciet vastlegt
+* alle nieuwe ontwerpen verwijzen naar relevante ADR’s
+* wanneer realiteit afwijkt, wordt ADR aangepast — niet stiekem omzeild
+
+**Accepted Risks**
+
+* tijdelijk lagere snelheid door expliciete besluitvorming
+* vereiste discipline in documentatie
+* strengere onboarding voor ontwikkelaars
+
+**Benefits**
+
+* traceerbare besluiten
+* consistentie in codebase
+* beheersbare complexiteit
+* sterkere basis voor audits en reviews
+
+---
+
+# 🧭 Phoenix Architectuurcanon — Definitieve ADR-lijst
+
+Dit is de **geconsolideerde en opgeschoonde canon**.
+Dubbele ADR’s zijn gemerged.
+Terminologie is gestandaardiseerd.
+Audit-ADR’s zijn ingepast in de inhoudelijke structuur.
+
+---
+
+## ADR-01 — Separation of Concerns is leidend
+
+UI, state management, domeinlogica en infrastructuur hebben gescheiden verantwoordelijkheden.
+
+* UI = weergave en interactie
+* State = opslag en transities
+* Domein = regels en berekeningen
+* Infra = persistence, netwerk, platform
+
+Businesslogica in UI is **niet toegestaan**.
+
+---
+
+## ADR-02 — Type-Safety aan systeemgrenzen is verplicht
+
+* alle invoer en opslag wordt gestructureerd gevalideerd
+* schema’s zijn versieerbaar
+* runtime validatie is verplicht (Zod of equivalent)
+* `FormState` is een **expliciet gemodelleerd domeinobject**
+
+---
+
+## ADR-03 — Domeinlogica hoort in kernel-modules
+
+Alle kernberekeningen (zoals financiële berekening, normlogica, statustoekenning):
+
+* zitten in dedicated “kernel” modules
+* hebben pure functies
+* hebben geen UI- of frameworkafhankelijkheden
+* zijn testbaar zonder renderer
+
+UI mag alleen:
+
+* kernel aanroepen
+* resultaten tonen
+
+---
+
+## ADR-04 — UI Components zijn “dumb”
+
+Componenten:
+
+* hebben geen parsinglogica
+* hebben geen complexe beslisregels
+* zijn projector-achtig: state in, view uit
+
+Slimme logica hoort in:
+
+* hooks
+* services
+* kernel
+* selectors
+
+---
+
+## ADR-05 — Geld en numeriek gedrag zijn minor-unit based
+
+* internen representatie van geld = **centen**
+* geen floating point bedragen in domeinlaag
+* parsing/conversie is centraal georganiseerd
+* afrondingsregels zijn expliciet gedefinieerd
+
+---
+
+## ADR-06 — Global Input Hardening
+
+Vrije gebruikersinvoer wordt:
+
+* opgeschoond
+* gevalideerd
+* gelimiteerd
+* geïnterpreteerd door één consistente parser
+
+UI mag **geen parseFloat/Number-experimenten** uitvoeren.
+
+---
+
+## ADR-07 — Shadow Flags en Special Status zijn expliciet gemodelleerd
+
+* boolean / enum flags
+* geen impliciete afleidingen verspreid door componenten
+* expliciete accessor-functies (`isSpecialStatus`, etc.)
+
+---
+
+## ADR-08 — App Status wordt beheerd via een FSM
+
+* beperkte set toestanden
+* expliciete geldige transities
+* geen “magische” statusstrings verspreid
+* noodmodus / error recovery is onderdeel van FSM
+
+---
+
+## ADR-09 — Views zijn Pure Projectors
+
+`App.tsx` en vergelijkbare entry-components:
+
+* bevatten geen logica
+* zijn een pure mapping: status → scherm
+* kennen FSM maar niet de businessdetails
+
+---
+
+## ADR-10 — Schema Versioning en Storage Guards
+
+* elke persistente structuur heeft schemaVersion
+* migraties zijn expliciet en getest
+* storage wordt **altijd** gevalideerd vóór gebruik
+
+---
+
+## ADR-11 — Testing volgt piramidemodel
+
+* domeinlogica: zwaar getest
+* UI: licht, voornamelijk integratie
+* golden master scenario’s voor household cases
+
+---
+
+## ADR-12 — Auditability is een primair doel
+
+* beslissingen herleidbaar (ADR-referenties)
+* changelog op WAI-niveau
+* scriptmatige audits zijn toegestaan
+* scripts mogen geen nieuwe architectuur afdwingen
+
+---
+
+## ADR-13 — Finance Kernel voor inkomen/uitgaven
+
+* netto/bestedingsruimte/afdrachten etc.
+* werken in centen
+* pure functie, deterministic
+* UI en persistence zijn adapters
+
+---
+
+## ADR-14 — Reducers zijn dumb
+
+Reducers doen alleen:
+
+* state in
+* action + payload in
+* nieuwe state uit
+
+Geen:
+
+* API calls
+* berekeningen
+* parsing
+* logging van beleid
+
+---
+
+## ADR-15 — Navigator en Debugger zijn procesrollen
+
+Deze zijn **proces-ondersteunend** en wijzigen geen architectuur.
+Ze mogen:
+
+* verklaren
+* begeleiden
+* analyseren
+
+Ze mogen niet:
+
+* nieuwe patronen introduceren
+* beslissingen nemen
+
+---
+
+## ADR-16 — Eenvoud boven theoretische perfectie
+
+Als twee oplossingen gelijkwaardig zijn:
+
+* wint de eenvoudigste
+* met minste concepten
+* met minste nieuwe abstrahering
+
+---
+
+## ADR-17 — Accepted Risk is een geldig resultaat
+
+Het is toegestaan om:
+
+* risico’s expliciet te accepteren
+* en ze te documenteren
+
+Niet toegestaan:
+
+* risico’s stilzwijgend te negeren
+
+---
+
+## ADR-18 — AI is adviserend, mens beslist
+
+* AI levert analyse, alternatieven en bewijsvoering
+* AI beslist niets
+* mens is eindregisseur
+* beslissingen worden expliciet vastgelegd
+
+---

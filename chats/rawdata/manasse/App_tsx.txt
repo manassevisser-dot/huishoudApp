@@ -1,0 +1,52 @@
+import { useState } from 'react';
+import { TransactionInput } from './components/TransactionInput';
+import { Dashboard } from './components/Dashboard';
+import { BottomNavigation } from './components/BottomNavigation';
+
+type Screen = 'input' | 'dashboard' | 'settings';
+
+export default function App() {
+  const [activeScreen, setActiveScreen] = useState<Screen>('dashboard');
+
+  return (
+    <AppContainer>
+      <MainContent activeScreen={activeScreen} />
+      <BottomNavigation activeScreen={activeScreen} onNavigate={setActiveScreen} />
+    </AppContainer>
+  );
+}
+
+interface AppContainerProps {
+  children: React.ReactNode;
+}
+
+function AppContainer({ children }: AppContainerProps) {
+  return (
+    <div className="flex flex-col h-screen bg-gray-50">
+      {children}
+    </div>
+  );
+}
+
+interface MainContentProps {
+  activeScreen: Screen;
+}
+
+function MainContent({ activeScreen }: MainContentProps) {
+  return (
+    <div className="flex-1 overflow-y-auto pb-20">
+      {activeScreen === 'input' && <TransactionInput />}
+      {activeScreen === 'dashboard' && <Dashboard />}
+      {activeScreen === 'settings' && <SettingsPlaceholder />}
+    </div>
+  );
+}
+
+function SettingsPlaceholder() {
+  return (
+    <div className="p-6">
+      <h1 className="mb-4">Instellingen</h1>
+      <p className="text-gray-600">Instellingen worden binnenkort toegevoegd.</p>
+    </div>
+  );
+}

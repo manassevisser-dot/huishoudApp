@@ -1,0 +1,432 @@
+Ja — en dit is precies het juiste moment om dat te doen.
+Hieronder staat **één samengevoegde, opgeschoonde en gezaghebbende opdracht**: **best of both**, zonder tegenstrijdigheden, zonder meta-ruis, en **direct uitvoerbaar** voor een CU-agent.
+
+---
+
+# 📘 WAI-006A — AppStatus Orchestrator (FSM)
+
+**Merged Definitive Implementation Brief (Phoenix-Confirmed)**
+
+**Rol:** Architect / Migration Lead
+**Status:** Approved – build-ready
+**Bron:** Geconsolideerd uit CTO-mandaat (1) + Dossier WAI-006 (2)
+
+---
+
+## 1. Doel & Scope
+
+WAI-006A introduceert een **deterministische AppStatus Orchestrator** op basis van een **Finite State Machine (FSM)**.
+Doel is het **elimineren van Boolean Soup**, race-conditions tijdens hydratatie, en UI-rendering vóórdat data valide is.
+
+Deze orchestrator vormt de **verkeerstoren** tussen:
+
+* Storage & migratie (WAI-005)
+* App-projectie (`App.tsx`)
+* Context-initialisatie
+* Herstel bij corruptie
+
+---
+
+## 2. ADR-17 — AppStatus Orchestrator (FSM)
+
+### Besluit
+
+De app gebruikt exact **één AppStatus FSM** met **vijf expliciete statussen**:
+
+```ts
+type AppStatus =
+  | 'INITIALIZING'   // Native mount / splash fase
+  | 'HYDRATING'      // storage.loadState() + Zod-validatie + migratie
+  | 'UNBOARDING'     // Geen state gevonden → nieuwe gebruiker
+  | 'READY'          // Valide v1.0 state geladen in context
+  | 'ERROR';         // Onherstelbare validatie-/storagefout
+```
+
+### Semantiek
+
+* `INITIALIZING` is **kortstondig** (1 render)
+* `HYDRATING` is **blokkerend** (geen UI buiten splash)
+* `READY` is het **enige** moment waarop selectors mogen draaien
+* `ERROR` is **terminaal** → gebruiker moet resetten
+
+---
+
+## 3. Architectuur & Verantwoordelijkheden
+
+### Orchestrator (single source of truth)
+
+**Pad:**
+
+```
+src/app/hooks/useAppOrchestration.ts
+```
+
+**Verantwoordelijkheden:**
+
+* Roept `Storage.loadState()`
+* Handelt migratie & Zod-validatie af
+* Zet `AppStatus`
+* Dispatcht gevalideerde state naar context
+* Berekent *shadow flags* (zoals `isSpecialStatus`) **alleen bij READY**
+
+❌ Geen UI
+❌ Geen navigatie
+❌ Geen conditionals buiten de FSM
+
+---
+
+### Projector
+
+**Pad:**
+
+```
+src/App.tsx
+```
+
+**Regel:**
+`App.tsx` bevat **uitsluitend**:
+
+```tsx
+switch (status) {
+  case 'INITIALIZING':
+  case 'HYDRATING':
+    return <SplashScreen />;
+
+  case 'UNBOARDING':
+    return <WelcomeWizard />;
+
+  case 'READY':
+    return <MainNavigator />;
+
+  case 'ERROR':
+    return <CriticalErrorScreen />;
+
+  default:
+    return null;
+}
+```
+
+---
+
+## 4. Storage & Validatie (WAI-005 afhankelijkheid)
+
+**Pad:**
+
+```
+src/services/storage.ts
+```
+
+**API-contract:**
+
+```ts
+loadState(): Promise<FormStateV1 | null>;
+saveState(state: FormStateV1): Promise<void>;
+clearAll(): Promise<void>;
+```
+
+**Garanties:**
+
+* `loadState()` retourneert **alleen**:
+
+  * `null` (nieuwe gebruiker)
+  * valide `FormStateV1`
+* Zod-validatie gebeurt **vóór** `READY`
+* Falen = `ERROR`
+
+---
+
+## 5. Zod & Types
+
+```ts
+import { FormStateSchema, type FormStateV1 } from '@state/schemas/FormStateSchema';
+```
+
+* `schemaVersion: "1.0"` is verplicht
+* Bedragen zijn **centen (integers)**
+* Legacy velden mogen bestaan (`.passthrough()`)
+
+---
+
+## 6. Selector (Shadow-link)
+
+**Pad:**
+
+```
+src/selectors/householdSelectors.ts
+```
+
+**Functie:**
+
+```ts
+selectIsSpecialStatus(state: FormStateV1): boolean;
+```
+
+**Gebruik:**
+
+* Alleen in de orchestrator
+* Alleen bij overgang naar `READY`
+* Niet rechtstreeks in UI
+
+---
+
+## 7. UI-Projectie (Minimale Placeholders)
+
+Indien nog niet aanwezig, lever **minimale functionele componenten**:
+
+```
+src/ui/screens/SplashScreen.tsx
+src/ui/screens/WelcomeWizard.tsx
+src/ui/navigation/MainNavigator.tsx
+src/ui/screens/CriticalErrorScreen.tsx
+```
+
+**CriticalErrorScreen vereist:**
+
+* UX-copy:
+
+  > “Er is een probleem met de gegevensopslag. Kies ‘Reset App’ om met een schone lei te beginnen.”
+* Actie: `Storage.clearAll()`
+
+---
+
+## 8. Teststrategie (Gate A)
+
+**Framework:**
+`@testing-library/react-native`
+
+**AsyncStorage:**
+Mock via `@react-native-async-storage/async-storage/jest/setup`
+
+### Verplichte fixtures
+
+| Scenario | Input                                                 | Verwachte status |
+| -------- | ----------------------------------------------------- | ---------------- |
+| New user | `null`                                                | `UNBOARDING`     |
+| Valid    | `{ schemaVersion: "1.0", ... }`                       | `READY`          |
+| Corrupt  | `{ schemaVersion: "0.9", C7: [{ amount: "12.50" }] }` | `ERROR`          |
+
+---
+
+## 9. Definitie van Klaar (DoD)
+
+* [ ] `AppStatus` union type bestaat
+* [ ] `useAppOrchestration` implementeert alle 5 statussen
+* [ ] `App.tsx` is pure projector (`switch`)
+* [ ] Storage-fouten leiden altijd tot `ERROR`
+* [ ] `clearAll()` herstelt app volledig
+* [ ] Tests voor Gate A zijn groen
+
+---
+
+## 10. Roadmap (bevestigd)
+
+1. **WAI-006B:** Dashboard & financiële selectors
+2. **WAI-006C:** Export via React-Native-Share
+3. **WAI-006D:** MoneyInput swap (C7/C10)
+4. **WAI-006E:** Verwijderen van alle `OUD_*` bestanden
+
+
+---
+
+## 11. Design Tokens & UX-Governance (Verplicht)
+
+### 11.1 Bron van waarheid
+
+Alle visuele styling in WAI-006A **MOET** verlopen via:
+
+```ts
+import { useAppStyles } from '@app/styles/useAppStyles';
+```
+
+❌ Geen inline kleuren
+❌ Geen hard-coded spacing
+❌ Geen lokale thema-afleidingen
+
+`useAppStyles()` is de **enige toegestane ingang** tot design-tokens.
+
+---
+
+### 11.2 Verplichte tokens per AppStatus
+
+Elke AppStatus projecteert een **functionele, semantische toestand**.
+Daarbij horen vaste tokens.
+
+#### 🔵 `INITIALIZING` / `HYDRATING`
+
+**Gebruik:**
+
+* `SplashScreen`
+
+**Verplichte tokens:**
+
+```ts
+colors.background
+colors.primary
+spacing.lg
+typography.title
+```
+
+**UX-richtlijn:**
+
+* Geen foutkleuren
+* Geen status-tekst
+* Neutraal en geruststellend
+
+---
+
+#### 🟡 `UNBOARDING`
+
+**Gebruik:**
+
+* `WelcomeWizard`
+
+**Verplichte tokens:**
+
+```ts
+colors.background
+colors.accent
+colors.textPrimary
+spacing.md
+typography.body
+```
+
+**UX-richtlijn:**
+
+* Positieve onboarding-energie
+* Geen technische copy
+* Geen waarschuwingen
+
+---
+
+#### 🟢 `READY`
+
+**Gebruik:**
+
+* `MainNavigator`
+* Dashboard / Wizard routes
+
+**Verplichte tokens:**
+
+```ts
+colors.background
+colors.surface
+colors.textPrimary
+colors.textSecondary
+spacing.md
+typography.body
+```
+
+**UX-richtlijn:**
+
+* Consistentie > expressie
+* Geen status-afhankelijke kleurwissels
+* `isSpecialStatus` mag **nooit** visueel lekken
+
+---
+
+#### 🔴 `ERROR`
+
+**Gebruik:**
+
+* `CriticalErrorScreen`
+
+**Verplichte tokens:**
+
+```ts
+colors.error
+colors.onError
+colors.background
+spacing.lg
+typography.body
+```
+
+**UX-richtlijn:**
+
+* Rood uitsluitend hier
+* Eén duidelijke CTA
+* Geen details over stacktraces of validatie
+
+---
+
+### 11.3 Verboden patronen (Hard rules)
+
+De volgende patronen zijn **niet toegestaan** in WAI-006A:
+
+```tsx
+style={{ backgroundColor: 'red' }}
+style={{ padding: 16 }}
+<Text style={{ color: '#fff' }}>
+```
+
+```ts
+import { Colors } from 'react-native-paper';
+```
+
+```ts
+const theme = useTheme(); // buiten useAppStyles
+```
+
+➡️ **Reden:** dit breekt light/dark mode, thematische consistentie en auditability.
+
+---
+
+### 11.4 Minimal UI ≠ Minimal Tokens
+
+Ook **placeholders** moeten token-compliant zijn.
+
+Toegestaan:
+
+```tsx
+const styles = useAppStyles();
+
+<View style={styles.screen}>
+  <Text style={styles.textBody}>Laden…</Text>
+</View>
+```
+
+Niet toegestaan:
+
+```tsx
+<View>
+  <Text>Laden…</Text>
+</View>
+```
+
+---
+
+### 11.5 Design Tokens & Testbaarheid
+
+**Waarom dit onderdeel is van WAI-006A:**
+
+* Tokens maken snapshots stabiel
+* Tokens voorkomen regressie bij dark-mode
+* Tokens zorgen dat FSM-states visueel **onderscheidbaar maar consistent** zijn
+* Tokens zijn **audit-relevant** (UX ≠ smaak)
+
+---
+
+### 11.6 Definitie van Klaar (uitbreiding)
+
+WAI-006A is **NIET** klaar tenzij:
+
+* [ ] Alle schermen `useAppStyles()` gebruiken
+* [ ] Geen inline styles of hex-kleuren bestaan
+* [ ] `CriticalErrorScreen` gebruikt `colors.error`
+* [ ] Splash/Loading schermen gebruiken **geen** error-tokens
+* [ ] Dark/Light mode werkt zonder aanpassing
+
+---
+
+### 🧭 Samenvatting
+
+Design-tokens zijn **geen stylingdetail**, maar onderdeel van:
+
+* deterministische UX
+* FSM-governance
+* audit-trail
+* toegankelijkheid
+* schaalbaarheid
+
+Je opdracht is nu **architectonisch volledig**.
+
+Als je wilt, kan ik dit hoofdstuk ook **formuleren als ADR-18 (Design Token Governance)** voor opname in je PR-template.

@@ -1,0 +1,379 @@
+
+### [CU-ID: WAI-002] – InputCounter “Dom” hardening & isolation
+
+#### 1. 🎯 TARGET SURFACE
+- **Target File (edit):** `src/components/InputCounter.tsx`
+- **Impact Radius (read-only):** `src/styles/useAppStyles.ts`, `src/context/FormContext.tsx`
+- **Change Type:** `Refactor`
+
+#### 2. 🏗️ LOGIC CONTRACT
+- **Remove:** inline style objects; implicit guards without naming.
+- **Replace with:** local `StyleSheet` + `useAppStyles` tokens; explicit `canDec/canInc`.
+- **Preserve:** props contract and a11y labels; no context/domain imports.
+
+#### 3. 🛡️ CONSTRAINTS & NON-GOALS
+- No domain logic (no `getHouseholdStatus`).
+- No money parsing; integers only.
+- No new dependencies.
+
+#### 4. 🧪 TEST & VALIDATION GATES
+- **Gate A — Unit:** increment/decrement; bounds; defensive guard.
+- **Gate B — Integration:** containers remain responsible for context/dispatch (out-of-scope).
+- **Gate C — E2E:** snapshots stable on wizard pages using the atom.
+- **Risk Matrix:** styling regression; a11y label regression; container contract confusion.
+
+#### 5. ⚠️ STOP CONDITIONS
+- Need to change props contract → stop.
+- Any domain/context import in the atom → stop.
+
+#### 6. 🧳 CONTEXT PACKAGE (UPLOAD)
+1) CU Contract (this doc)  
+2) Target file `src/components/InputCounter.tsx`  
+3) Unit+Snapshot tests `src/components/__tests__/InputCounter.test.tsx`  
+4) PR body `docs/wai-002/WAI-002_PR_BODY.md`
+
+#### 7. 🔐 MERGE & RELEASE
+- **Commit:** `refactor(ui): harden InputCounter atom with StyleSheet and guards`
+- **PR:** attach contract; link to ADR-12/13; test steps; checklist.
+
+*****
+# Navigator Package — WAI-002 (InputCounter)
+
+## Files included
+- `src/components/InputCounter.tsx` — refactored atom
+- `src/components/__tests__/InputCounter.test.tsx` — unit + snapshot
+- `docs/wai-002/WAI-002_CU_CONTRACT.md` — CU contract
+- `docs/wai-002/WAI-002_PR_BODY.md` — PR body
+- `docs/wai-002/WAI-002_DoD_Checklist.md` — DoD checklist
+
+## Apply steps
+1. Copy `src/components/InputCounter.tsx` over existing file.
+2. Add unit test to repo and run:
+   ```bash
+   npm test -- src/components/__tests__/InputCounter.test.tsx
+
+
+// WAI-002: Refactor (dom atom + StyleSheet + guards)
+// Target: src/components/InputCounter.tsx
+import * as React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useAppStyles } from '../styles/useAppStyles';
+
+export type InputCounterProps = {
+  value: number;
+  min?: number;
+  max?: number;
+  onValueChange: (value: number) => void;
+  accessibilityLabel?: string;
+};
+
+const InputCounter: React.FC<InputCounterProps> = ({
+  value,
+  min = 0,
+  max,
+  onValueChange,
+  accessibilityLabel,
+}) => {
+  const { colors } = useAppStyles();
+
+  // Defensieve guard: UI blijft stabiel zelfs als parent contract breekt
+  const safeValue = typeof value === 'number' && !Number.isNaN(value) ? value : min;
+
+  const canDec = safeValue > min;
+  const canInc = max === undefined || safeValue < max;
+
+  const dec = () => {
+    const next = safeValue - 1;
+    if (next >= min) onValueChange(next);
+  };
+  const inc = () => {
+    const next = safeValue + 1;
+    if (max === undefined || next <= max) onValueChange(next);
+  };
+
+  return (
+    <View style={styles.row}>
+      <TouchableOpacity
+        onPress={dec}
+        disabled={!canDec}
+        style={[styles.btn, { backgroundColor: canDec ? colors.primary : colors.secondary }, !canDec && styles.disabled]}
+        accessibilityRole="button"
+        accessibilityLabel={`${accessibilityLabel ?? 'Waarde'} verlagen`}
+      >
+        <Text style={[styles.sign, { color: canDec ? colors.primaryText : colors.textSecondary }]}>−</Text>
+      </TouchableOpacity>
+
+      <Text style={[styles.value, { color: colors.textPrimary }]} accessibilityLabel={accessibilityLabel}>
+        {safeValue}
+      </Text>
+
+      <TouchableOpacity
+        onPress={inc}
+        disabled={!canInc}
+        style={[styles.btn, { backgroundColor: canInc ? colors.primary : colors.secondary }, !canInc && styles.disabled]}
+        accessibilityRole="button"
+        accessibilityLabel={`${accessibilityLabel ?? 'Waarde'} verhogen`}
+      >
+        <Text style={[styles.sign, { color: canInc ? colors.primaryText : colors.textSecondary }]}>+</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center' },
+  btn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+  sign: { fontSize: 20, fontWeight: 'bold' },
+  value: { marginHorizontal: 20, fontSize: 24, fontWeight: 'bold', minWidth: 40, textAlign: 'center' },
+  disabled: { opacity: 0.5 },
+});
+
+export default InputCounter;
+
+/**
+ * WAI-002: Unit + Snapshot tests for InputCounter
+ */
+import * as React from 'react';
+import renderer from 'react-test-renderer';
+import { TouchableOpacity } from 'react-native';
+import InputCounter from '../InputCounter';
+
+// Mock styling hook to avoid theme coupling in tests
+jest.mock('../../styles/useAppStyles', () => ({
+  useAppStyles: () => ({
+    colors: {
+      primary: '#0070f3',
+      secondary: '#eaeaea',
+      primaryText: '#ffffff',
+      textSecondary: '#999999',
+      textPrimary: '#111111',
+    },
+  }),
+}));
+
+describe('InputCounter', () => {
+  it('renders stable (snapshot)', () => {
+    const tree = renderer.create(
+      <InputCounter value={3} min={1} max={5} onValueChange={() => {}} accessibilityLabel="Aantal" />
+    ).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
+
+  it('increments and decrements within bounds', () => {
+    const onChange = jest.fn();
+    const testRenderer = renderer.create(
+      <InputCounter value={2} min={1} max={3} onValueChange={onChange} accessibilityLabel="Adults" />
+    );
+    const root = testRenderer.root;
+    const buttons = root.findAllByType(TouchableOpacity);
+    const decBtn = buttons[0];
+    const incBtn = buttons[1];
+
+    // Decrement to 1
+    decBtn.props.onPress();
+    expect(onChange).toHaveBeenLastCalledWith(1);
+
+    // Decrement again (blocked at min)
+    onChange.mockClear();
+    decBtn.props.onPress();
+    expect(onChange).not.toHaveBeenCalled();
+
+    // Increment to 2 and then 3
+    incBtn.props.onPress();
+    expect(onChange).toHaveBeenLastCalledWith(2);
+    incBtn.props.onPress();
+    expect(onChange).toHaveBeenLastCalledWith(3);
+
+    // Increment again (blocked at max)
+    onChange.mockClear();
+    incBtn.props.onPress();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('guards against invalid value by falling back to min', () => {
+    const onChange = jest.fn();
+    const testRenderer = renderer.create(
+      // @ts-expect-error: testing defensive guard
+      <InputCounter value={NaN as unknown as number} min={4} max={10} onValueChange={onChange} />
+    );
+    const root = testRenderer.root;
+    const buttons = root.findAllByType(TouchableOpacity);
+    const decBtn = buttons[0];
+
+    // Since safeValue becomes min (4), decrement is blocked
+    decBtn.props.onPress();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});
+``
+***
+
+# WAI-002 — InputCounter “Dom” hardening & StyleSheet guards
+
+## Why
+- Align with ADR-13 (UI is dumb): atom has no domain/state logic.
+- Reduce coupling: no imports from context/domain.
+- Visual integrity: consolidate inline styles into StyleSheet + tokens.
+
+## What
+- Refactor `src/components/InputCounter.tsx` to a pure atom with guards (`canDec/canInc`).
+- Extract inline styles to a local `StyleSheet`; consume `useAppStyles()` tokens.
+- No behavior changes; props contract preserved (`value/min/max/onValueChange`).
+
+## Tests
+- Unit: increment/decrement within bounds; defensive guard for invalid values.
+- Snapshot: verifies stable render and token usage does not regress visuals.
+
+## Scope & Non-goals
+- No domain logic, no parsing, no FormContext usage.
+- Money parsing deferred to WAI-004 (MoneyInput + NumericParser).
+
+## How to test locally
+```bash
+# assuming jest is configured for RN project
+npm test -- src/components/__tests__/InputCounter.test.tsx
+
+***
+## 5) `docs/wai-002/WAI-002_DoD_Checklist.md`
+
+```md
+# DoD — WAI-002 InputCounter
+- [ ] Unit tests green (bounds, guard)
+- [ ] Snapshot updated intentionally (visual parity)
+- [ ] No imports from context or domain in the atom
+- [ ] Props contract unchanged; no behavior change
+- [ ] a11y labels present and descriptive
+- [ ] PR body filled; reviewer checklist completed
+
+***
+UPDATE VAN CTO:
+Hier is de analyse en de volledige implementatie voor **WAI-002: InputCounter "Dom" hardening & isolation**. Dit pakket volgt strikt de ADR-13 richtlijn (UI is dom) en bereidt de component voor op integratie met de nieuwe domeinregels.
+
+### 1. 🔍 Analyse van de Refactor
+
+Op basis van de documentatie en de broncode zijn de volgende verbeteringen doorgevoerd om de component "Phoenix-ready" te maken:
+
+* 
+**Isolatie:** Alle imports vanuit de context of het domein zijn verwijderd; de component is nu een pure "atom".
+
+
+* 
+**Defensieve Logica:** Er is een `safeValue` guard toegevoegd die terugvalt op de minimumwaarde als de parent een ongeldige waarde (zoals `NaN`) meestuurt.
+
+
+* 
+**StyleSheet Consolidatie:** Inline styles zijn vervangen door een lokale `StyleSheet` gecombineerd met design tokens uit `useAppStyles`.
+
+
+* 
+**Expliciete Guards:** De knop-logica gebruikt nu expliciete `canDec` en `canInc` checks voor betere leesbaarheid en betrouwbaarheid.
+
+
+
+### 2. 🛠️ Implementatie: `src/components/InputCounter.tsx`
+
+Dit is de herziene, "geharde" versie van de component:
+
+```typescript
+[cite_start]// WAI-002: Refactor (dom atom + StyleSheet + guards) [cite: 11]
+import * as React from 'react';
+[cite_start]import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'; [cite: 12]
+[cite_start]import { useAppStyles } from '../styles/useAppStyles'; [cite: 12]
+
+export type InputCounterProps = {
+  value: number;
+  min?: number;
+  max?: number;
+  onValueChange: (value: number) => void;
+  accessibilityLabel?: string;
+[cite_start]}; [cite: 13]
+
+const InputCounter: React.FC<InputCounterProps> = ({
+  value,
+  min = 0,
+  max,
+  onValueChange,
+  accessibilityLabel,
+}) => {
+  [cite_start]const { colors } = useAppStyles(); [cite: 14]
+
+  [cite_start]// Defensieve guard: UI blijft stabiel zelfs als parent contract breekt [cite: 15]
+  [cite_start]const safeValue = typeof value === 'number' && !Number.isNaN(value) ? value : min; [cite: 16]
+
+  [cite_start]const canDec = safeValue > min; [cite: 17]
+  [cite_start]const canInc = max === undefined || safeValue < max; [cite: 17]
+
+  const dec = () => {
+    const next = safeValue - 1;
+    if (next >= min) onValueChange(next);
+  [cite_start]}; [cite: 18]
+
+  const inc = () => {
+    const next = safeValue + 1;
+    if (max === undefined || next <= max) onValueChange(next);
+  [cite_start]}; [cite: 19]
+
+  return (
+    <View style={styles.row}>
+      <TouchableOpacity
+        onPress={dec}
+        disabled={!canDec}
+        style={[
+          styles.btn, 
+          { backgroundColor: canDec ? colors.primary : colors.secondary }, 
+          !canDec && styles.disabled
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={`${accessibilityLabel ?? 'Waarde'} verlagen`}
+      >
+        <Text style={[styles.sign, { color: canDec ? colors.primaryText : colors.textSecondary }]}>−</Text>
+      </TouchableOpacity>
+
+      <Text style={[styles.value, { color: colors.textPrimary }]} accessibilityLabel={accessibilityLabel}>
+        {safeValue}
+      </Text>
+
+      <TouchableOpacity
+        onPress={inc}
+        disabled={!canInc}
+        style={[
+          styles.btn, 
+          { backgroundColor: canInc ? colors.primary : colors.secondary }, 
+          !canInc && styles.disabled
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={`${accessibilityLabel ?? 'Waarde'} verhogen`}
+      >
+        <Text style={[styles.sign, { color: canInc ? colors.primaryText : colors.textSecondary }]}>+</Text>
+      </TouchableOpacity>
+    </View>
+  );
+[cite_start]}; [cite: 20, 21, 22]
+
+const styles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center' },
+  btn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+  sign: { fontSize: 20, fontWeight: 'bold' },
+  value: { marginHorizontal: 20, fontSize: 24, fontWeight: 'bold', minWidth: 40, textAlign: 'center' },
+  disabled: { opacity: 0.5 },
+[cite_start]}); [cite: 23]
+
+[cite_start]export default InputCounter; [cite: 24]
+
+```
+
+### 3. 🧪 Validatie: Unit Tests
+
+Voeg de volgende tests toe in `src/components/__tests__/InputCounter.test.tsx` om de werking te garanderen:
+
+* 
+**Snapshot stabiliteit:** Controleert of de render-output consistent blijft met de tokens.
+
+
+* 
+**Grensbewaking:** Verifieert dat de `onValueChange` niet wordt aangeroepen buiten de `min/max` grenzen.
+
+
+* 
+**Guard validatie:** Test of de component correct terugvalt op de minimumwaarde bij ongeldige invoer.
+

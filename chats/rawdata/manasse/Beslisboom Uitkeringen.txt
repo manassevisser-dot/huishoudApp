@@ -1,0 +1,216 @@
+// ================================================
+// Beslisboom Uitkeringen NL
+// Formaat: JSON + TypeScript types in één bestand
+// Doel: machine-leesbare beslislogica voor apps/tools
+// Startpunt: leeftijd
+// ================================================
+
+// ---------- TypeScript types ----------
+
+export type Uitvoerder =
+  | 'UWV'
+  | 'SVB'
+  | 'Gemeente'
+  | 'DUO'
+  | 'Belastingdienst'
+  | 'Onbekend';
+
+export type Regeling =
+  | 'WW'
+  | 'ZW'
+  | 'WIA'
+  | 'WGA'
+  | 'IVA'
+  | 'WAO'
+  | 'WAJONG'
+  | 'AOW'
+  | 'ANW'
+  | 'IOW'
+  | 'IOAW'
+  | 'IOAZ'
+  | 'Participatiewet'
+  | 'BBZ'
+  | 'DUO_Studiefinanciering'
+  | 'GeenUitkering';
+
+export type ConditionOperator =
+  | '=='
+  | '!='
+  | '<'
+  | '<='
+  | '>'
+  | '>='
+  | 'in';
+
+export interface Condition {
+  field: string;
+  operator: ConditionOperator;
+  value: unknown;
+}
+
+export interface DecisionNode {
+  id: string;
+  question?: string;
+  conditions?: Condition[];
+  yes?: string;
+  no?: string;
+  result?: Regeling;
+  uitvoerder?: Uitvoerder;
+  notes?: string;
+}
+
+export interface DecisionTree {
+  startNodeId: string;
+  nodes: Record<string, DecisionNode>;
+}
+
+// ---------- JSON beslisboom ----------
+
+export const BESLISBOOM_UITKERINGEN: DecisionTree = {
+  startNodeId: 'leeftijd_check',
+  nodes: {
+    leeftijd_check: {
+      id: 'leeftijd_check',
+      question: 'Is de persoon jonger dan 18 jaar?',
+      conditions: [
+        { field: 'leeftijd', operator: '<', value: 18 }
+      ],
+      yes: 'minderjarig_beperking',
+      no: 'aow_check'
+    },
+
+    minderjarig_beperking: {
+      id: 'minderjarig_beperking',
+      question: 'Is er sprake van een duurzame arbeidsbeperking?',
+      conditions: [
+        { field: 'arbeidsbeperking', operator: '==', value: true }
+      ],
+      yes: 'wajong',
+      no: 'geen_uitkering'
+    },
+
+    aow_check: {
+      id: 'aow_check',
+      question: 'Heeft de persoon de AOW-leeftijd bereikt?',
+      conditions: [
+        { field: 'aowGerechtigd', operator: '==', value: true }
+      ],
+      yes: 'aow',
+      no: 'werk_check'
+    },
+
+    werk_check: {
+      id: 'werk_check',
+      question: 'Heeft de persoon momenteel werk?',
+      conditions: [
+        { field: 'heeftWerk', operator: '==', value: true }
+      ],
+      yes: 'inkomen_verlies',
+      no: 'arbeidsvermogen_check'
+    },
+
+    inkomen_verlies: {
+      id: 'inkomen_verlies',
+      question: 'Is het inkomen weggevallen door werkloosheid of ziekte?',
+      conditions: [
+        { field: 'inkomenWeggevallen', operator: '==', value: true }
+      ],
+      yes: 'inkomen_verlies_type',
+      no: 'geen_uitkering'
+    },
+
+    inkomen_verlies_type: {
+      id: 'inkomen_verlies_type',
+      question: 'Wat is de oorzaak van inkomensverlies?',
+      conditions: [
+        {
+          field: 'redenInkomenVerlies',
+          operator: 'in',
+          value: ['werkloos', 'ziek']
+        }
+      ],
+      yes: 'ww_zw_wia',
+      no: 'geen_uitkering'
+    },
+
+    ww_zw_wia: {
+      id: 'ww_zw_wia',
+      question: 'Is de persoon langer dan 2 jaar ziek?',
+      conditions: [
+        { field: 'ziekLangerDan2Jaar', operator: '==', value: true }
+      ],
+      yes: 'wia',
+      no: 'zw'
+    },
+
+    arbeidsvermogen_check: {
+      id: 'arbeidsvermogen_check',
+      question: 'Heeft de persoon arbeidsvermogen?',
+      conditions: [
+        { field: 'arbeidsvermogen', operator: '==', value: false }
+      ],
+      yes: 'wajong',
+      no: 'inkomen_vermogen_check'
+    },
+
+    inkomen_vermogen_check: {
+      id: 'inkomen_vermogen_check',
+      question: 'Is het inkomen of vermogen onvoldoende?',
+      conditions: [
+        { field: 'voldoendeMiddelen', operator: '==', value: false }
+      ],
+      yes: 'bijstand',
+      no: 'geen_uitkering'
+    },
+
+    // ---------- Resultaten ----------
+
+    wajong: {
+      id: 'wajong',
+      result: 'WAJONG',
+      uitvoerder: 'UWV',
+      notes:
+        'Voor mensen met een arbeidsbeperking vanaf jonge leeftijd.'
+    },
+
+    aow: {
+      id: 'aow',
+      result: 'AOW',
+      uitvoerder: 'SVB',
+      notes:
+        'Basispensioen vanaf de AOW-leeftijd.'
+    },
+
+    wia: {
+      id: 'wia',
+      result: 'WIA',
+      uitvoerder: 'UWV',
+      notes:
+        'Na 2 jaar ziekte volgt WIA-beoordeling (WGA of IVA).'
+    },
+
+    zw: {
+      id: 'zw',
+      result: 'ZW',
+      uitvoerder: 'UWV',
+      notes:
+        'Ziektewet bij ziekte zonder loondoorbetaling door werkgever.'
+    },
+
+    bijstand: {
+      id: 'bijstand',
+      result: 'Participatiewet',
+      uitvoerder: 'Gemeente',
+      notes:
+        'Laatste vangnet bij onvoldoende inkomen en vermogen.'
+    },
+
+    geen_uitkering: {
+      id: 'geen_uitkering',
+      result: 'GeenUitkering',
+      uitvoerder: 'Onbekend',
+      notes:
+        'Geen recht op een reguliere uitkering; mogelijk toeslagen of andere voorzieningen.'
+    }
+  }
+};

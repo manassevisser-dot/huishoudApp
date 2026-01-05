@@ -1,0 +1,280 @@
+Natuurlijk. Hier is de uitwerking in drie delen, gebaseerd op de door jou aangeleverde bestanden.
+
+Ik heb de structuur van jouw bestaande code aangehouden (`Money`, `Household`, `Income`) zodat dit naadloos integreert.
+
+### 1. `nibudBudgets.ts` (Configuratiebestand)
+Dit bestand vertaalt de tekstuele input (file 3) naar een strikt getypeerd object. Ik heb de gemiddelden van de bandbreedtes genomen als 'standaard' minimum, maar je kunt dit finetunen. Dit bestand vervangt of breidt het stukje `NIBUD_MINIMUM_2026` uit jouw eerste bestand uit.
+
+```typescript
+/* 
+  nibudBudgets.ts
+  Configuratie gebaseerd op: NIBUD – minimumbudgetten & standaarden (samengesteld)
+  Prijzen: Netto maandbedragen, indicatie juli 2025 (te indexeren)
+*/
+
+export interface NibudCategoryParams {
+  single: number;
+  couple: number;
+  child: number; // Gemiddeld bedrag per kind
+}
+
+export interface NibudLivingCosts {
+  food: NibudCategoryParams;
+  clothing: NibudCategoryParams;
+  housingUtilities: { // Energie, water, gem. lasten, inboedel (excl. huur!)
+    single: number;
+    couple: number; 
+    // Kinderen hebben marginale impact op vastrecht, maar wel op verbruik. 
+    // Hier simpel gehouden of verwerkt in single/couple opslag.
+    childFactor: number; 
+  };
+  care: {
+    // Zorgpremie - zorgtoeslag wordt vaak elders berekend, 
+    // maar dit is de netto last + eigen risico reservering + overig
+    netCostPerAdult: number; 
+  };
+  transport: NibudCategoryParams;
+  communication: NibudCategoryParams;
+  insurances: NibudCategoryParams; // AVP, Inboedel, Uitvaart
+  participation: NibudCategoryParams;
+  reserves: NibudCategoryParams; // Vervanging inventaris/witgoed
+}
+
+export const NIBUD_CONFIG_2026: NibudLivingCosts = {
+  food: {
+    single: 280,
+    couple: 485,
+    child: 140
+  },
+  clothing: {
+    single: 58,
+    couple: 95,
+    child: 45
+  },
+  housingUtilities: {
+    // Som van Energie (185) + Water (20) + Gem. lasten (45) + Onderhoud (50)
+    single: 300, 
+    couple: 350, // Iets hoger energieverbruik
+    childFactor: 40 // Extra energie/water per kind
+  },
+  care: {
+    // Premie (145) + ER reservering (30) + Overig (15) = 190
+    // Let op: Dit is BRUTO kostenpost voor de huishoudportemonnee. 
+    // In de balansberekening moet Zorgtoeslag bij het inkomen staan.
+    netCostPerAdult: 190 
+  },
+  transport: {
+    single: 75,
+    couple: 120,
+    child: 0 // Kinderen vaak gratis/schoolgaand
+  },
+  communication: {
+    // Tel + Internet + TV
+    single: 60,
+    couple: 70, // Delen internet/TV
+    child: 10 // Extra mobiel abbo
+  },
+  insurances: {
+    single: 35,
+    couple: 50,
+    child: 5 // Meeverzekerd, soms kleine uitvaartpolis
+  },
+  participation: {
+    single: 55,
+    couple: 85,
+    child: 35
+  },
+  reserves: {
+    single: 90,
+    couple: 140,
+    child: 20 // Vervanging kinderbed/fiets
+  }
+};
+```
+
+---
+
+### 2. Koppeling aan Rekenmodel & Bestaanszekerheidsindex
+Hieronder volgt de uitbreiding op `sociaal_domein_rekenmodel.ts`. Ik heb een nieuwe module toegevoegd die de totale noodzakelijke uitgaven berekent en deze afzet tegen het inkomen.
+
+Dit script bevat:
+1.  **`calculateNibudNeeds`**: Berekent de uitgavenkant.
+2.  **`calculateFinancialHealth`**: Berekent het saldo en de index.
+3.  **`LivelihoodIndex`**: De gevraagde 0-100 score.
+
+```typescript
+/*
+  UITBREIDING: sociaal_domein_rekenmodel.ts
+  Module: Bestaanszekerheid & Nibud-toetsing
+*/
+
+import { Household, Income, Money, clamp } from './sociaal_domein_rekenmodel'; // Importeer types uit je basisbestand
+import { NIBUD_CONFIG_2026, NibudLivingCosts } from './nibudBudgets';
+
+// Extra input nodig voor volledige plaatje (woonlasten)
+export interface HousingCosts {
+  rentOrMortgage: Money; // De kale huur of hypotheeklast
+}
+
+export interface NibudResult {
+  totalNeeds: Money;           // Totaal benodigd budget (incl. huur)
+  basicLivingNeeds: Money;     // Levensonderhoud (eten, kleding, energie, etc.)
+  housingNeeds: Money;         // Woonlasten
+}
+
+export interface FinancialHealthScore {
+  balance: Money;              // Inkomen - Uitgaven
+  coverageRatio: number;       // Inkomen / Uitgaven (bijv 1.05 = 105%)
+  livelihoodIndex: number;     // 0-100 score
+  status: 'CRITICAL' | 'RISK' | 'STABLE' | 'HEALTHY';
+}
+
+/**
+ * Stap 1: Bereken wat dit huishouden volgens Nibud MINIMAAL nodig heeft.
+ */
+export function calculateNibudNeeds(
+  household: Household,
+  housing: HousingCosts,
+  config: NibudLivingCosts = NIBUD_CONFIG_2026
+): NibudResult {
+  
+  // Hulpfunctie om categoriebedrag op te halen
+  const getCatSum = (cat: { single: number, couple: number, child: number }): number => {
+    let sum = household.partners ? cat.couple : cat.single;
+    sum += household.childrenUnder18 * cat.child;
+    return sum;
+  };
+
+  // 1. Bereken basis levensonderhoud (flexibele deel + vaste lasten excl huur)
+  let basicNeeds = 0;
+  basicNeeds += getCatSum(config.food);
+  basicNeeds += getCatSum(config.clothing);
+  basicNeeds += getCatSum(config.transport);
+  basicNeeds += getCatSum(config.communication);
+  basicNeeds += getCatSum(config.insurances);
+  basicNeeds += getCatSum(config.participation);
+  basicNeeds += getCatSum(config.reserves);
+
+  // Woonlasten (Energie/Water/etc) - specifiek logica
+  basicNeeds += household.partners ? config.housingUtilities.couple : config.housingUtilities.single;
+  basicNeeds += household.childrenUnder18 * config.housingUtilities.childFactor;
+
+  // Zorgkosten (per volwassene)
+  basicNeeds += household.adultsTotal * config.care.netCostPerAdult;
+
+  // 2. Totale woonlasten (Huur + Energie/Water is al deels in basicNeeds, maar hier tellen we de kale huur)
+  // Nibud zegt: Je moet je werkelijke huur betalen.
+  const totalNeeds = basicNeeds + housing.rentOrMortgage;
+
+  return {
+    totalNeeds: totalNeeds,
+    basicLivingNeeds: basicNeeds,
+    housingNeeds: housing.rentOrMortgage
+  };
+}
+
+/**
+ * Stap 2 & 3: Bereken saldo en Bestaanszekerheidsindex (0-100)
+ */
+export function calculateFinancialHealth(
+  income: Income, // Let op: dit moet Netto besteedbaar zijn (incl. toeslagen!)
+  needs: NibudResult
+): FinancialHealthScore {
+  
+  const balance = income.householdIncome - needs.totalNeeds;
+  
+  // Coverage Ratio: 1.0 betekent precies quitte.
+  const coverageRatio = needs.totalNeeds > 0 
+    ? income.householdIncome / needs.totalNeeds 
+    : 0;
+
+  /* 
+     Bestaanszekerheidsindex (0-100)
+     Logica:
+     - < 80% dekking = Score 0-40 (Zware schulden/tekort)
+     - 90% dekking   = Score 50   (Kritiek)
+     - 100% dekking  = Score 70   (Basis op orde, maar geen buffer voor grote tegenvallers boven Nibud)
+     - 110% dekking  = Score 85   (Gezond)
+     - 120%+ dekking = Score 100  (Zeer gezond)
+     
+     Formule (lineaire interpolatie met knikpunt):
+  */
+  let index = 0;
+  if (coverageRatio < 0.8) {
+    index = (coverageRatio / 0.8) * 40; 
+  } else if (coverageRatio < 1.0) {
+    // Tussen 80% (40pt) en 100% (70pt)
+    const factor = (coverageRatio - 0.8) / 0.2; 
+    index = 40 + (factor * 30);
+  } else if (coverageRatio < 1.2) {
+    // Tussen 100% (70pt) en 120% (100pt)
+    const factor = (coverageRatio - 1.0) / 0.2;
+    index = 70 + (factor * 30);
+  } else {
+    index = 100;
+  }
+
+  // Bepaal status label
+  let status: FinancialHealthScore['status'] = 'HEALTHY';
+  if (coverageRatio < 0.9) status = 'CRITICAL';
+  else if (coverageRatio < 1.0) status = 'RISK';
+  else if (coverageRatio < 1.1) status = 'STABLE';
+
+  return {
+    balance: parseFloat(balance.toFixed(2)),
+    coverageRatio: parseFloat(coverageRatio.toFixed(2)),
+    livelihoodIndex: Math.round(index),
+    status
+  };
+}
+```
+
+### 3. Hoe je dit gebruikt in je applicatie
+
+Hier is een voorbeeld van hoe je deze nieuwe functies aanroept in combinatie met de data uit je eerdere bestanden.
+
+```typescript
+/* voorbeeld_gebruik.ts */
+
+import { calculateNibudNeeds, calculateFinancialHealth } from './sociaal_domein_rekenmodel_ext';
+import { Household, Income } from './sociaal_domein_rekenmodel';
+
+// 1. Definieer de situatie
+const myHousehold: Household = {
+  adultsTotal: 1,
+  adults27Plus: 1,
+  partners: false,
+  childrenUnder18: 0
+};
+
+// 2. Netto inkomen (Stel: Bijstand + Toeslagen)
+// Let op: Nibud rekent met NETTO. Je eerdere PW-model rekent vaak BRUTO. 
+// Zorg dat je hier het netto bedrag stopt (incl. vakantiegeld reservering).
+const myIncome: Income = {
+  householdIncome: 1350 + 123 + 400, // Bijv: Uitkering + Zorgtoeslag + Huurtoeslag
+  individualIncome: 1350,
+  assetsTotal: 0,
+  assetLimit: 7605
+};
+
+// 3. Woonlasten
+const myHousing = {
+  rentOrMortgage: 650
+};
+
+// 4. Voer berekening uit
+const nibudNeeds = calculateNibudNeeds(myHousehold, myHousing);
+const health = calculateFinancialHealth(myIncome, nibudNeeds);
+
+console.log("Benodigd volgens Nibud:", nibudNeeds.totalNeeds);
+console.log("Beschikbaar inkomen:", myIncome.householdIncome);
+console.log("Maandelijks saldo:", health.balance);
+console.log("Bestaanszekerheid Index:", health.livelihoodIndex, "/ 100");
+console.log("Status:", health.status);
+```
+
+### Samenvatting van de logica
+
+1.  **Indexering:** Ik heb de Nibud-bandbreedtes omgezet naar vaste bedragen (`nibudBudgets.ts`) die passen bij een "verantwoord minimum".
+2.  **Berekening:** De `calculateNibudNeeds` telt alle categorieën op basis van gezinssamenstelling. Woonlasten zijn hierin cruciaal; Nibud stelt normbedragen voor energie, maar de *huur* is variabel en moet als parameter meegegeven worden.
+3.  **Score:** De index is niet simpelweg `inkomen / uitgaven`, maar een gewogen schaal. Iemand die precies quitte speelt (ratio 1.0) krijgt een 70/100, omdat er geen ruimte is voor tegenvallers. Pas bij een overschot (bufferruimte) gaat de score richting de 100.

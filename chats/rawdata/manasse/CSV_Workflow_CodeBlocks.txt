@@ -1,0 +1,274 @@
+
+# Project Minimal Cashflow — CSV Handling Code (n8n workflow snippets)
+# Consolidated TXT containing detection, parsing, mapping, validation, dedupe, and date-range filtering.
+
+============================================================
+SECTION 1 — Bank Detection (Function Node)
+============================================================
+```javascript
+// Node: Detect Bank Type
+const csvHeaders = $input.item.json.headers; // First line (array) of CSV column names
+
+// Detection patterns
+const bankPatterns = {
+  "ING": ["Datum", "Naam / Omschrijving", "Saldo na mutatie", "Tag"],
+  "Rabobank": ["IBAN/BBAN", "Munt", "BIC", "Volgnr", "Mutatiesoort"],
+  "ABN_AMRO": ["Datum", "Bedrag", "Tegenrekening"], // Minimal set
+  "Bunq": ["Date", "Description", "Amount", "Currency"],
+  "Knab": ["Datum", "Omschrijving", "Rekening"],
+  "SNS": ["IBAN", "Naam", "Tegenrekening"],
+};
+
+function detectBank(headers) {
+  for (const [bank, pattern] of Object.entries(bankPatterns)) {
+    const matches = pattern.filter(col => headers.includes(col));
+    if (matches.length >= pattern.length * 0.7) { // 70% match threshold
+      return bank;
+    }
+  }
+  return "GENERIC"; // Fallback to generic parser
+}
+
+const detectedBank = detectBank(csvHeaders);
+return {
+  json: {
+    bank: detectedBank,
+    filename: $input.item.json.filename,
+    rawData: $input.item.json.data,
+  },
+};
+```
+
+============================================================
+SECTION 2 — Bank-Specific Parsers (Switch → Function Nodes)
+============================================================
+
+### 2.1 ING Parser (Function Node)
+```javascript
+// Node: ING CSV Parser
+const Papa = require('papaparse'); // Available in n8n
+const csvData = $input.item.json.rawData;
+const parsed = Papa.parse(csvData, {
+  header: true,
+  delimiter: ';', // ING uses semicolon
+  skipEmptyLines: true,
+  dynamicTyping: false, // Keep strings for date handling
+});
+
+const transactions = parsed.data.map((row, index) => ({
+  id: `ing_${Date.now()}_${index}`,
+  date: row["Datum"], // YYYYMMDD format
+  description: row["Naam / Omschrijving"],
+  account: row["Rekening"],
+  counterparty_account: row["Tegenrekening"],
+  transaction_type: row["Code"], // Af/Bij
+  amount: parseFloat(row["Bedrag (EUR)"].replace(',', '.')),
+  mutation_type: row["Mutatiesoort"],
+  notes: row["Mededelingen"],
+  balance_after: row["Saldo na mutatie"] ? parseFloat(row["Saldo na mutatie"].replace(',', '.')) : null,
+  tag: row["Tag"] || "",
+  bank: "ING",
+  raw: row, // Keep original for debugging
+}));
+
+return transactions.map(t => ({ json: t }));
+```
+
+### 2.2 Rabobank Parser (Function Node)
+```javascript
+// Node: Rabobank CSV Parser
+const Papa = require('papaparse');
+const parsed = Papa.parse($input.item.json.rawData, {
+  header: true,
+  delimiter: ',',
+  skipEmptyLines: true,
+});
+
+const transactions = parsed.data.map((row, index) => ({
+  id: `rabo_${Date.now()}_${index}`,
+  date: row["Datum"], // DD-MM-YYYY
+  account: row["IBAN/BBAN"],
+  counterparty_account: row["Tegenrekening IBAN/BBAN"],
+  counterparty_name: row["Naam tegenpartij"],
+  amount: parseFloat(row["Bedrag"].replace(',', '.')),
+  balance_after: parseFloat(row["Saldo na trn"].replace(',', '.')),
+  mutation_type: row["Mutatiesoort"],
+  description: `${row["Omschrijving-1"] || ''} ${row["Omschrijving-2"] || ''} ${row["Omschrijving-3"] || ''}`.trim(),
+  reference: row["Kenmerk"],
+  tag: row["Tag"] || "",
+  bank: "Rabobank",
+  raw: row,
+}));
+
+return transactions.map(t => ({ json: t }));
+```
+
+### 2.3 ABN AMRO Parser (Function Node)
+```javascript
+// Node: ABN AMRO TXT/CSV Parser
+const Papa = require('papaparse');
+const parsed = Papa.parse($input.item.json.rawData, {
+  header: true,
+  delimiter: "	", // Tab-delimited TXT format (fallback to comma if needed)
+  skipEmptyLines: true,
+});
+
+const transactions = parsed.data.map((row, index) => ({
+  id: `abn_${Date.now()}_${index}`,
+  date: row["Datum"],
+  amount: parseFloat(row["Bedrag"].replace(',', '.')),
+  counterparty_account: row["Tegenrekening"],
+  counterparty_name: row["Naam tegenpartij"],
+  description: row["Omschrijving"],
+  bank: "ABN_AMRO",
+  raw: row,
+}));
+
+return transactions.map(t => ({ json: t }));
+```
+
+============================================================
+SECTION 3 — Map to Unified Data Model (Function Node)
+============================================================
+```javascript
+// Node: Map to Unified Schema
+const transaction = $input.item.json;
+
+// Normalize date formats to ISO 8601
+function parseDate(dateStr, format) {
+  if (format === "YYYYMMDD") {
+    return new Date(
+      dateStr.substring(0,4),
+      dateStr.substring(4,6) - 1,
+      dateStr.substring(6,8)
+    ).toISOString();
+  } else if (format === "DD-MM-YYYY") {
+    const parts = dateStr.split("-");
+    return new Date(parts[2], parts[1] - 1, parts[0]).toISOString();
+  }
+  return new Date(dateStr).toISOString(); // Fallback
+}
+
+const bank = transaction.bank;
+const isoDate = parseDate(
+  transaction.date,
+  bank === "ING" ? "YYYYMMDD" : (bank === "Rabobank" ? "DD-MM-YYYY" : undefined)
+);
+
+return {
+  json: {
+    // Core fields
+    transaction_id: transaction.id,
+    date: isoDate,
+    amount: transaction.amount,
+    description: transaction.description,
+    bank_source: bank,
+
+    // Optional fields
+    account_iban: transaction.account || null,
+    counterparty_iban: transaction.counterparty_account || null,
+    counterparty_name: transaction.counterparty_name || null,
+    mutation_type: transaction.mutation_type || null,
+    balance_after: transaction.balance_after || null,
+    notes: transaction.notes || null,
+    tags: transaction.tag ? [transaction.tag] : [],
+
+    // Metadata
+    imported_at: new Date().toISOString(),
+    raw_data: transaction.raw,
+  },
+};
+```
+
+============================================================
+SECTION 4 — Validation & Duplicate Detection (Function Node)
+============================================================
+```javascript
+// Node: Duplicate Detection & Validation
+const transactions = $input.all().map(item => item.json);
+
+function validateTransaction(tx) {
+  const errors = [];
+  if (!tx.date || isNaN(Date.parse(tx.date))) errors.push("Invalid date");
+  if (tx.amount === 0 || isNaN(tx.amount)) errors.push("Invalid amount");
+  if (!tx.description || tx.description.trim() === "") errors.push("Missing description");
+  return {
+    ...tx,
+    validation_errors: errors,
+    is_valid: errors.length === 0,
+  };
+}
+
+function generateFingerprint(tx) {
+  return `${tx.date.split('T')[0]}_${tx.amount}_${tx.counterparty_iban || 'none'}`;
+}
+
+const validated = transactions.map(validateTransaction);
+const seen = new Set();
+const deduplicated = [];
+
+for (const tx of validated) {
+  const fingerprint = generateFingerprint(tx);
+  if (!seen.has(fingerprint)) {
+    seen.add(fingerprint);
+    deduplicated.push(tx);
+  } else {
+    console.log(`Duplicate detected: ${fingerprint}`);
+  }
+}
+
+return deduplicated.map(tx => ({ json: tx }));
+```
+
+============================================================
+SECTION 5 — Date Range Filter (3 Months) (Function Node)
+============================================================
+```javascript
+// Node: Date Range Validator (90 days back)
+const MAX_DAYS_BACK = 90; // 3 months
+
+function filterByDateRange(transactions) {
+  const today = new Date();
+  const cutoffDate = new Date();
+  cutoffDate.setDate(today.getDate() - MAX_DAYS_BACK);
+
+  const accepted = transactions.filter(tx => {
+    const txDate = new Date(tx.date);
+    return txDate >= cutoffDate;
+  });
+
+  const rejected = transactions.length - accepted.length;
+  return {
+    accepted,
+    rejected_count: rejected,
+    message: rejected > 0
+      ? `${rejected} transacties ouder dan 3 maanden zijn niet geïmporteerd.`
+      : "Alle transacties geaccepteerd.",
+  };
+}
+
+const items = $input.all().map(item => item.json);
+const result = filterByDateRange(items);
+
+// Return only accepted transactions
+return result.accepted.map(tx => ({ json: tx }));
+```
+
+============================================================
+SECTION 6 — Output Formatting (HTTP Response / DB Insert)
+============================================================
+```javascript
+// Node: Format Response
+return {
+  json: {
+    success: true,
+    imported_count: $input.all().length,
+    bank_detected: $input.first().json.bank_source,
+    transactions: $input.all().map(item => item.json),
+    metadata: {
+      processed_at: new Date().toISOString(),
+      workflow_version: "1.0",
+    },
+  },
+};
+```

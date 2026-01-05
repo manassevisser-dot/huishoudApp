@@ -1,0 +1,369 @@
+echo "--- 1. RESTANTEN CHECK (Moet leeg zijn) ---" && \find src -iname "*OUD*" && \echo "--- 2. PARSING CHECK (Mag niet voorkomen in UI/Organisms) ---" && \grep -rE "parseFloat|replace\(',', '.'\)" src/ui src/organisms src/components/fields --exclude="MoneyField.tsx" && \echo "--- 3. REPLACEMENTS CHECK (Aantal MoneyFields vs TextInputs voor geld) ---" && \echo "MoneyFields found: $(grep -r "MoneyField" src | wc -l)" && \echo "Potentiële gemiste TextInputs (Geld): $(grep -rE "euro|bedrag|price|amount" src --include="*.tsx" | grep "TextInput" | wc -l)"
+--- 1. RESTANTEN CHECK (Moet leeg zijn) ---
+--- 2. PARSING CHECK (Mag niet voorkomen in UI/Organisms) ---
+src/ui/components/fields/FormField.tsx:              const cleanText = text.replace(/[^0-9.,]/g
+, '').replace(',', '.');                                                                       src/ui/components/fields/FormField.tsx:              const numberValue = parseFloat(cleanText) 
+|| (cleanText === '' ? '' : 0);                                                                src/ui/screens/DailyInput/DailyInputScreen.tsx:    if (!amount || parseFloat(amount.replace(','
+, '.')) <= 0) {                                                                                src/ui/screens/DailyInput/DailyInputScreen.tsx:    const numAmount = parseFloat(amount.replace(
+',', '.'));                                                                                    grep: src/organisms: No such file or directory
+echo "--- CHECK: Berekeningen in UI (Verboden volgens ADR-13) ---" && \grep -rE "\+|-|\*|\/" src/ui src/components --exclude-dir="__tests__" | grep -v "styles"
+--- CHECK: Berekeningen in UI (Verboden volgens ADR-13) ---
+grep: warning: stray \ before /
+src/ui/navigation/MainNavigator.tsx:import * as React from 'react';
+src/ui/navigation/MainNavigator.tsx:import { View, Text } from 'react-native';
+src/ui/navigation/MainNavigator.tsx:    </View>
+src/ui/organisms/IncomeRepeater.tsx:import * as React from 'react';
+src/ui/organisms/IncomeRepeater.tsx:import { View, Text, ScrollView, TouchableOpacity, Dimensio
+ns } from 'react-native';                                                                      src/ui/organisms/IncomeRepeater.tsx:import ChipButton from '@components/ChipButton';
+src/ui/organisms/IncomeRepeater.tsx:import MoneyField from '@components/fields/MoneyField'; // 
+De nieuwe dispatcher                                                                           src/ui/organisms/IncomeRepeater.tsx:import { useFormContext } from '@context/FormContext';
+src/ui/organisms/IncomeRepeater.tsx:} from '../../types/income';
+src/ui/organisms/IncomeRepeater.tsx:import { Member } from '@shared-types/form';
+src/ui/organisms/IncomeRepeater.tsx:const CARD_WIDTH = SCREEN_WIDTH * 0.85;
+src/ui/organisms/IncomeRepeater.tsx:  // Render sectie voor Werk
+src/ui/organisms/IncomeRepeater.tsx:          />
+src/ui/organisms/IncomeRepeater.tsx:        </View>
+src/ui/organisms/IncomeRepeater.tsx:        {/* Toeslagen sectie (Collapsible) */}
+src/ui/organisms/IncomeRepeater.tsx:        </TouchableOpacity>
+src/ui/organisms/IncomeRepeater.tsx:            <MoneyField pageId="C7" fieldId={`inkomsten.${i
+d}.toeslagen.zorgtoeslag`} placeholder="Zorgtoeslag" />                                        src/ui/organisms/IncomeRepeater.tsx:            <MoneyField pageId="C7" fieldId={`inkomsten.${i
+d}.toeslagen.reiskosten`} placeholder="Reiskosten" />                                          src/ui/organisms/IncomeRepeater.tsx:          </View>
+src/ui/organisms/IncomeRepeater.tsx:      </View>
+src/ui/organisms/IncomeRepeater.tsx:      <MoneyField pageId="C7" fieldId="householdBenefits.hu
+urtoeslag" placeholder="Huurtoeslag" />                                                        src/ui/organisms/IncomeRepeater.tsx:          {renderWerk(m.id, inkomsten[m.id] || {}, m.naam |
+| `Volwassene ${idx + 1}`)}                                                                    src/ui/organisms/IncomeRepeater.tsx:        </View>
+src/ui/organisms/IncomeRepeater.tsx:    </ScrollView>
+src/ui/organisms/HouseholdMemberRepeater.tsx:// src/organisms/HouseholdMemberRepeater.tsx
+src/ui/organisms/HouseholdMemberRepeater.tsx:import * as React from 'react';
+src/ui/organisms/HouseholdMemberRepeater.tsx:import { View, Text, TextInput, TouchableOpacity, 
+ScrollView, Dimensions } from 'react-native';                                                  src/ui/organisms/HouseholdMemberRepeater.tsx:import { useFormContext } from '@context/FormConte
+xt';                                                                                           src/ui/organisms/HouseholdMemberRepeater.tsx:import { Member, WoningType, AutoCount } from '@sh
+ared-types/form';                                                                              src/ui/organisms/HouseholdMemberRepeater.tsx:import ChipButton from '../../components/ChipButto
+n';                                                                                            src/ui/organisms/HouseholdMemberRepeater.tsx:// ===============================================
+=============                                                                                  src/ui/organisms/HouseholdMemberRepeater.tsx:// MAIN COMPONENT
+src/ui/organisms/HouseholdMemberRepeater.tsx:// ===============================================
+=============                                                                                  src/ui/organisms/HouseholdMemberRepeater.tsx:  // Reuse the established swipe pattern from Expe
+nse/Income:                                                                                    src/ui/organisms/HouseholdMemberRepeater.tsx:  // CARD_WIDTH = SCREEN_WIDTH * 0.85; snapToInter
+val = CARD_WIDTH + 20; paddingRight: 20                                                        src/ui/organisms/HouseholdMemberRepeater.tsx:  // Iets groter: ~90% van schermbreedte
+src/ui/organisms/HouseholdMemberRepeater.tsx:  const CARD_WIDTH = SCREEN_WIDTH * 0.9;
+src/ui/organisms/HouseholdMemberRepeater.tsx:  const CARD_GAP = 20; // tussenruimte zoals in Ex
+pense/Income                                                                                   src/ui/organisms/HouseholdMemberRepeater.tsx:      {/* ===================== VOLWASSENEN ======
+=============== */}                                                                            src/ui/organisms/HouseholdMemberRepeater.tsx:              snapToInterval={CARD_WIDTH + CARD_GA
+P}                                                                                             src/ui/organisms/HouseholdMemberRepeater.tsx:                    key={`adult-${idx}`}
+src/ui/organisms/HouseholdMemberRepeater.tsx:                    {/* Nummerbadge linksboven */}
+src/ui/organisms/HouseholdMemberRepeater.tsx:                    <MemberCard member={member} in
+dex={idx} />                                                                                   src/ui/organisms/HouseholdMemberRepeater.tsx:                    {idx < total - 1 && total > 1 
+&& (                                                                                           src/ui/organisms/HouseholdMemberRepeater.tsx:                        ----&gt; volgende
+src/ui/organisms/HouseholdMemberRepeater.tsx:                      </Text>
+src/ui/organisms/HouseholdMemberRepeater.tsx:                  </View>
+src/ui/organisms/HouseholdMemberRepeater.tsx:            </ScrollView>
+src/ui/organisms/HouseholdMemberRepeater.tsx:                key={`adult-${leden.indexOf(member
+)}`}                                                                                           src/ui/organisms/HouseholdMemberRepeater.tsx:              />
+src/ui/organisms/HouseholdMemberRepeater.tsx:        </View>
+src/ui/organisms/HouseholdMemberRepeater.tsx:      {/* ===================== KINDEREN =========
+============ */}                                                                               src/ui/organisms/HouseholdMemberRepeater.tsx:              snapToInterval={CARD_WIDTH + CARD_GA
+P}                                                                                             src/ui/organisms/HouseholdMemberRepeater.tsx:                    key={`child-${idx}`}
+src/ui/organisms/HouseholdMemberRepeater.tsx:                    {/* Nummerbadge linksboven */}
+src/ui/organisms/HouseholdMemberRepeater.tsx:                    <MemberCard member={member} in
+dex={idx} />                                                                                   src/ui/organisms/HouseholdMemberRepeater.tsx:                    {idx < total - 1 && total > 1 
+&& (                                                                                           src/ui/organisms/HouseholdMemberRepeater.tsx:                        ----&gt; volgende
+src/ui/organisms/HouseholdMemberRepeater.tsx:                      </Text>
+src/ui/organisms/HouseholdMemberRepeater.tsx:                  </View>
+src/ui/organisms/HouseholdMemberRepeater.tsx:            </ScrollView>
+src/ui/organisms/HouseholdMemberRepeater.tsx:                key={`child-${leden.indexOf(member
+)}`}                                                                                           src/ui/organisms/HouseholdMemberRepeater.tsx:              />
+src/ui/organisms/HouseholdMemberRepeater.tsx:        </View>
+src/ui/organisms/HouseholdMemberRepeater.tsx:    </View>
+src/ui/organisms/HouseholdMemberRepeater.tsx:// ===============================================
+=============                                                                                  src/ui/organisms/HouseholdMemberRepeater.tsx:// MEMBER CARD
+src/ui/organisms/HouseholdMemberRepeater.tsx:// ===============================================
+=============                                                                                  src/ui/organisms/HouseholdMemberRepeater.tsx:      {/* Naam */}
+src/ui/organisms/HouseholdMemberRepeater.tsx:        />
+src/ui/organisms/HouseholdMemberRepeater.tsx:      </View>
+src/ui/organisms/HouseholdMemberRepeater.tsx:      {/* Geboortedatum */}
+src/ui/organisms/HouseholdMemberRepeater.tsx:          placeholder="DD-MM-YYYY"
+src/ui/organisms/HouseholdMemberRepeater.tsx:        />
+src/ui/organisms/HouseholdMemberRepeater.tsx:      </View>
+src/ui/organisms/HouseholdMemberRepeater.tsx:      {/* Geslacht */}
+src/ui/organisms/HouseholdMemberRepeater.tsx:            </TouchableOpacity>
+src/ui/organisms/HouseholdMemberRepeater.tsx:        </View>
+src/ui/organisms/HouseholdMemberRepeater.tsx:      </View>
+src/ui/organisms/HouseholdMemberRepeater.tsx:    </View>
+src/ui/organisms/ExpenseRepeater.tsx:import * as React from 'react';
+src/ui/organisms/ExpenseRepeater.tsx:import { View, Text, ScrollView, TouchableOpacity, Dimensi
+ons } from 'react-native';                                                                     src/ui/organisms/ExpenseRepeater.tsx:import MoneyField from '@components/fields/MoneyField';
+src/ui/organisms/ExpenseRepeater.tsx:import { useFormContext } from '@context/FormContext';
+src/ui/organisms/ExpenseRepeater.tsx:import { AutoCount } from '@shared-types/form';
+src/ui/organisms/ExpenseRepeater.tsx:const CARD_WIDTH = SCREEN_WIDTH * 0.85;
+src/ui/organisms/ExpenseRepeater.tsx:  // Hulpmiddel om te bepalen of er auto's zijn
+src/ui/organisms/ExpenseRepeater.tsx:  // Forceer het type even met 'as AutoCount' om de mismat
+ch op te lossen                                                                                src/ui/organisms/ExpenseRepeater.tsx:  // Helper voor sectie headers (zoals in baseline)
+src/ui/organisms/ExpenseRepeater.tsx:      </Text>
+src/ui/organisms/ExpenseRepeater.tsx:    </TouchableOpacity>
+src/ui/organisms/ExpenseRepeater.tsx:      {/* SECTIE: WONEN (C10.wonen) */}
+src/ui/organisms/ExpenseRepeater.tsx:          <MoneyField pageId="C10" fieldId="wonen.bedrag" 
+placeholder="0,00" />                                                                          src/ui/organisms/ExpenseRepeater.tsx:        </View>
+src/ui/organisms/ExpenseRepeater.tsx:      </View>
+src/ui/organisms/ExpenseRepeater.tsx:      {/* SECTIE: VERZEKERINGEN (Collapsible) */}
+src/ui/organisms/ExpenseRepeater.tsx:            <MoneyField pageId="C10" fieldId="verzekeringe
+n.zorg" placeholder="0,00" />                                                                  src/ui/organisms/ExpenseRepeater.tsx:            <MoneyField pageId="C10" fieldId="verzekeringe
+n.wonen" placeholder="0,00" />                                                                 src/ui/organisms/ExpenseRepeater.tsx:          </View>
+src/ui/organisms/ExpenseRepeater.tsx:      </View>
+src/ui/organisms/ExpenseRepeater.tsx:      {/* SECTIE: AUTO'S (Indien van toepassing) */}
+src/ui/organisms/ExpenseRepeater.tsx:            <View key={`auto-${i}`} style={{ marginBottom:
+ 16 }}>                                                                                        src/ui/organisms/ExpenseRepeater.tsx:              <MoneyField pageId="C10" fieldId={`vervoer.a
+uto_${i}.vast`} placeholder="0,00" />                                                          src/ui/organisms/ExpenseRepeater.tsx:              <MoneyField pageId="C10" fieldId={`vervoer.a
+uto_${i}.brandstof`} placeholder="0,00" />                                                     src/ui/organisms/ExpenseRepeater.tsx:            </View>
+src/ui/organisms/ExpenseRepeater.tsx:        </View>
+src/ui/organisms/ExpenseRepeater.tsx:      {/* SECTIE: STREAMING & ABONNEMENTEN */}
+src/ui/organisms/ExpenseRepeater.tsx:                <MoneyField pageId="C10" fieldId={`abonnem
+enten.${key}`} placeholder="0,00" />                                                           src/ui/organisms/ExpenseRepeater.tsx:              </View>
+src/ui/organisms/ExpenseRepeater.tsx:          </View>
+src/ui/organisms/ExpenseRepeater.tsx:      </View>
+src/ui/organisms/ExpenseRepeater.tsx:    </ScrollView>
+src/ui/components/FinancialSummary.tsx:import { View, Text } from 'react-native';
+src/ui/components/FinancialSummary.tsx:import { FinancialSummaryVM } from '../../selectors/fina
+ncialSelectors';                                                                               src/ui/components/FinancialSummary.tsx:      <View style={{ flexDirection: 'row', justifyConten
+t: 'space-between', marginVertical: 4 }}>                                                      src/ui/components/FinancialSummary.tsx:        <Text style={{ fontSize: 16 }}>Totaal Inkomsten:
+</Text>                                                                                        src/ui/components/FinancialSummary.tsx:        <Text style={{ fontSize: 16, color: 'green', fon
+tWeight: 'bold' }}>{totals.totalIncomeEUR}</Text>                                              src/ui/components/FinancialSummary.tsx:      </View>
+src/ui/components/FinancialSummary.tsx:      <View style={{ flexDirection: 'row', justifyConten
+t: 'space-between', marginVertical: 4 }}>                                                      src/ui/components/FinancialSummary.tsx:        <Text style={{ fontSize: 16 }}>Totaal Uitgaven:<
+/Text>                                                                                         src/ui/components/FinancialSummary.tsx:        <Text style={{ fontSize: 16, color: 'red', fontW
+eight: 'bold' }}>{totals.totalExpensesEUR}</Text>                                              src/ui/components/FinancialSummary.tsx:      </View>
+src/ui/components/FinancialSummary.tsx:        justifyContent: 'space-between', 
+src/ui/components/FinancialSummary.tsx:        <Text style={{ fontSize: 16, fontWeight: 'bold' 
+}}>Netto resultaat:</Text>                                                                     src/ui/components/FinancialSummary.tsx:        <Text style={{ fontSize: 16, fontWeight: 'bold' 
+}}>{totals.netEUR}</Text>                                                                      src/ui/components/FinancialSummary.tsx:      </View>
+src/ui/components/FinancialSummary.tsx:    </View>
+src/ui/components/MoneyInput.tsx:import * as React from 'react';
+src/ui/components/MoneyInput.tsx:import { View, Text, TextInput } from 'react-native';
+src/ui/components/MoneyInput.tsx:import { parseToCents, formatCentsToDutch, formatDutchValue } 
+from '@utils/numbers';                                                                         src/ui/components/MoneyInput.tsx:  value: number; // Bedrag in centen (altijd >= 0)
+src/ui/components/MoneyInput.tsx:  // De lokale staat houdt de string vast die de gebruiker zie
+t                                                                                              src/ui/components/MoneyInput.tsx:  // Sync lokale staat als de externe waarde (centen) wijzigt
+src/ui/components/MoneyInput.tsx:  // Bij focus: verwijder duizendtal-punten voor makkelijk bew
+erken                                                                                          src/ui/components/MoneyInput.tsx:  // Tijdens typen: saniteer direct (geen letters, geen minus)
+src/ui/components/MoneyInput.tsx:  // Bij blur: bereken centen en formatteer naar NL-standaard
+src/ui/components/MoneyInput.tsx:    onValueChange(cents); // Emit positieve centen naar de sta
+te                                                                                             src/ui/components/MoneyInput.tsx:    setLocalValue(formatCentsToDutch(cents)); // "On-blur form
+atting"                                                                                        src/ui/components/MoneyInput.tsx:      {/* Vast, niet-bewerkbaar prefix  */}
+src/ui/components/MoneyInput.tsx:      </Text>
+src/ui/components/MoneyInput.tsx:        keyboardType="decimal-pad" // Forceert numeriek pad op
+ mobile                                                                                        src/ui/components/MoneyInput.tsx:      />
+src/ui/components/MoneyInput.tsx:    </View>
+src/ui/components/fields/FormField.tsx:import * as React from 'react';
+src/ui/components/fields/FormField.tsx:import { View, Text, TextInput, ScrollView, TouchableOpa
+city } from 'react-native'; // Toegevoegd: TextInput, ScrollView, TouchableOpacity             src/ui/components/fields/FormField.tsx:import ChipButton from '@components/ChipButton';
+src/ui/components/fields/FormField.tsx:import ToggleSwitch from '@components/ToggleSwitch';
+src/ui/components/fields/FormField.tsx:import InputCounter from '@components/InputCounter'; 
+src/ui/components/fields/FormField.tsx:import IncomeRepeater from '@ui/organisms/IncomeRepeater
+';                                                                                             src/ui/components/fields/FormField.tsx:import ExpenseRepeater from '@ui/organisms/ExpenseRepeat
+er';                                                                                           src/ui/components/fields/FormField.tsx:import HouseholdMemberRepeater from '@ui/organisms/House
+holdMemberRepeater';                                                                           src/ui/components/fields/FormField.tsx:import { FieldConfig, FieldOption } from '@shared-types/
+form';                                                                                         src/ui/components/fields/FormField.tsx:import { validateField } from '../../../utils/validation
+';                                                                                             src/ui/components/fields/FormField.tsx:    // 1. Text
+src/ui/components/fields/FormField.tsx:        />
+src/ui/components/fields/FormField.tsx:    // 2. Numeric
+src/ui/components/fields/FormField.tsx:              const cleanText = text.replace(/[^0-9.,]/g
+, '').replace(',', '.');                                                                       src/ui/components/fields/FormField.tsx:          />
+src/ui/components/fields/FormField.tsx:        </View>
+src/ui/components/fields/FormField.tsx:    // 3. Radio chips
+src/ui/components/fields/FormField.tsx:    if (field.type === 'radio-chips' && field.options) {
+src/ui/components/fields/FormField.tsx:            />
+src/ui/components/fields/FormField.tsx:        </ScrollView>
+src/ui/components/fields/FormField.tsx:    // 4. Toggle
+src/ui/components/fields/FormField.tsx:        />
+src/ui/components/fields/FormField.tsx:    // 5. Counter
+src/ui/components/fields/FormField.tsx:      // Ensure value is always a valid number (never Na
+N or undefined)                                                                                src/ui/components/fields/FormField.tsx:        />
+src/ui/components/fields/FormField.tsx:    // 6. Repeater-array (C4 members)
+src/ui/components/fields/FormField.tsx:    if (field.type === 'repeater-array') return <Househo
+ldMemberRepeater />;                                                                           src/ui/components/fields/FormField.tsx:    // 7. Income repeater (C7)
+src/ui/components/fields/FormField.tsx:    if (field.type === 'income-repeater') return <Income
+Repeater />;                                                                                   src/ui/components/fields/FormField.tsx:    // 8. Expense repeater (C10)
+src/ui/components/fields/FormField.tsx:    if (field.type === 'expense-repeater') return <Expen
+seRepeater />;                                                                                 src/ui/components/fields/FormField.tsx:      </Text>
+src/ui/components/fields/FormField.tsx:        </Text>
+src/ui/components/fields/FormField.tsx:    </View>
+src/ui/screens/CriticalErrorScreen.tsx:import * as React from 'react';
+src/ui/screens/CriticalErrorScreen.tsx:import { View, Text, Button } from 'react-native';
+src/ui/screens/CriticalErrorScreen.tsx:        Er is een kritieke fout opgetreden in de data-in
+tegriteit.                                                                                     src/ui/screens/CriticalErrorScreen.tsx:      </Text>
+src/ui/screens/CriticalErrorScreen.tsx:      <Button title="Reset Applicatie" onPress={onReset}
+ color="red" />                                                                                src/ui/screens/CriticalErrorScreen.tsx:    </View>
+src/ui/screens/WelcomeWizard.tsx:import * as React from 'react';
+src/ui/screens/WelcomeWizard.tsx:import { View, Text } from 'react-native';
+src/ui/screens/WelcomeWizard.tsx:    </View>
+src/ui/screens/SplashScreen.tsx:import * as React from 'react';
+src/ui/screens/SplashScreen.tsx:import { View, Text, ActivityIndicator } from 'react-native';
+src/ui/screens/SplashScreen.tsx:      <ActivityIndicator color={colors.primary} />
+src/ui/screens/SplashScreen.tsx:    </View>
+src/ui/screens/DailyInput/DailyInputScreen.tsx://====
+src/ui/screens/DailyInput/DailyInputScreen.tsx:// ./src/screens/DailyInput/DailyInputScreen.tsx
+src/ui/screens/DailyInput/DailyInputScreen.tsx:import * as React from 'react';
+src/ui/screens/DailyInput/DailyInputScreen.tsx:} from 'react-native';
+src/ui/screens/DailyInput/DailyInputScreen.tsx:import { useSafeAreaInsets } from 'react-native-
+safe-area-context';                                                                            src/ui/screens/DailyInput/DailyInputScreen.tsx:import ChipButton from '../../../components/Chip
+Button';                                                                                       src/ui/screens/DailyInput/DailyInputScreen.tsx:import { TransactionService } from '../../../ser
+vices/transactionService';                                                                     src/ui/screens/DailyInput/DailyInputScreen.tsx:import { DailyTransaction, PaymentMethod, Transa
+ctionCategory } from '../../../types/transaction';                                             src/ui/screens/DailyInput/DailyInputScreen.tsx:import { getCurrentDateISO, getISOWeek } from '.
+./../../utils/date';                                                                           src/ui/screens/DailyInput/DailyInputScreen.tsx:import { formatDutchValue } from '../../../utils
+/numbers';                                                                                     src/ui/screens/DailyInput/DailyInputScreen.tsx:import MoneyField from '../../../components/fiel
+ds/MoneyField';                                                                                src/ui/screens/DailyInput/DailyInputScreen.tsx:  // Form State
+src/ui/screens/DailyInput/DailyInputScreen.tsx:  // Derived State
+src/ui/screens/DailyInput/DailyInputScreen.tsx:    // Basic Validation
+src/ui/screens/DailyInput/DailyInputScreen.tsx:      // Reset form for next entry (Rapid Entry 
+pattern)                                                                                       src/ui/screens/DailyInput/DailyInputScreen.tsx:      // Keep date as is, user might be logging 
+multiple for same day                                                                          src/ui/screens/DailyInput/DailyInputScreen.tsx:      // Optional: Toast or simple visual cue co
+uld go here.                                                                                   src/ui/screens/DailyInput/DailyInputScreen.tsx:      // For now, we just rely on the form clear
+ing as feedback.                                                                               src/ui/screens/DailyInput/DailyInputScreen.tsx:        </TouchableOpacity>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:        <View style={{ width: 60 }} />
+src/ui/screens/DailyInput/DailyInputScreen.tsx:      </View>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:        {/* Date Field */}
+src/ui/screens/DailyInput/DailyInputScreen.tsx:            placeholder="YYYY-MM-DD"
+src/ui/screens/DailyInput/DailyInputScreen.tsx:            keyboardType="numbers-and-punctuatio
+n"                                                                                             src/ui/screens/DailyInput/DailyInputScreen.tsx:          />
+src/ui/screens/DailyInput/DailyInputScreen.tsx:        </View>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:          {/* Amount */}
+src/ui/screens/DailyInput/DailyInputScreen.tsx:      // Alleen cijfers, komma's en punten toest
+aan tijdens het typen                                                                          src/ui/screens/DailyInput/DailyInputScreen.tsx:      const sanitized = text.replace(/[^0-9.,]/g
+, '');                                                                                         src/ui/screens/DailyInput/DailyInputScreen.tsx:      // Zodra de gebruiker het veld verlaat, fo
+rmatteren we het netjes (bijv. 10,5 -> 10,50)                                                  src/ui/screens/DailyInput/DailyInputScreen.tsx:      // Hiervoor gebruiken we de nieuwe, getest
+e utils                                                                                        src/ui/screens/DailyInput/DailyInputScreen.tsx:      const { parseToCents, formatCentsToDutch }
+ = require('@utils/numbers');                                                                  src/ui/screens/DailyInput/DailyInputScreen.tsx:  />
+src/ui/screens/DailyInput/DailyInputScreen.tsx:</View>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:        {/* Category Grid */}
+src/ui/screens/DailyInput/DailyInputScreen.tsx:                </Text>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:              </TouchableOpacity>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:          </View>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:        </View>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:        {/* Subcategory (Optional) */}
+src/ui/screens/DailyInput/DailyInputScreen.tsx:          />
+src/ui/screens/DailyInput/DailyInputScreen.tsx:        </View>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:        {/* Payment Method */}
+src/ui/screens/DailyInput/DailyInputScreen.tsx:                label={m.charAt(0).toUpperCase()
+ + m.slice(1)}                                                                                 src/ui/screens/DailyInput/DailyInputScreen.tsx:              />
+src/ui/screens/DailyInput/DailyInputScreen.tsx:          </ScrollView>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:        </View>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:      </ScrollView>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:      {/* Footer Action */}
+src/ui/screens/DailyInput/DailyInputScreen.tsx:            <ActivityIndicator color="#FFF" />
+src/ui/screens/DailyInput/DailyInputScreen.tsx:        </TouchableOpacity>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:      </View>
+src/ui/screens/DailyInput/DailyInputScreen.tsx:    </View>
+src/components/InputCounter.tsx:import * as React from 'react';
+src/components/InputCounter.tsx:import { View, Text, TouchableOpacity, StyleSheet } from 'react
+-native';                                                                                      src/components/InputCounter.tsx:  onValueChange: (value: number) => void; // Zorg dat dit onVal
+ueChange is                                                                                    src/components/InputCounter.tsx:  const inc = () => canInc && onValueChange(value + 1);
+src/components/InputCounter.tsx:  const dec = () => canDec && onValueChange(value - 1);
+src/components/InputCounter.tsx:  // Gebruik een safeValue voor display om NaN te voorkomen
+src/components/InputCounter.tsx:          -
+src/components/InputCounter.tsx:        </Text>
+src/components/InputCounter.tsx:      </TouchableOpacity>
+src/components/InputCounter.tsx:          +
+src/components/InputCounter.tsx:        </Text>
+src/components/InputCounter.tsx:      </TouchableOpacity>
+src/components/InputCounter.tsx:    </View>
+src/components/InputCounter.tsx:    justifyContent: 'space-between',
+src/components/DateField.tsx:import * as React from 'react';
+src/components/DateField.tsx:import { Platform, View, Text, Pressable } from 'react-native';
+src/components/DateField.tsx:import DateTimePicker, { DateTimePickerEvent } from '@react-native
+-community/datetimepicker';                                                                    src/components/DateField.tsx:import { formatDate } from '@utils/date';
+src/components/DateField.tsx:  valueISO?: string; // canoniek: 'YYYY-MM-DD'
+src/components/DateField.tsx:  minISO?: string; // default: '1920-01-01'
+src/components/DateField.tsx:  maxISO?: string; // default: vandaag
+src/components/DateField.tsx:  const [y, m, d] = iso.split('-').map(Number);
+src/components/DateField.tsx:  // UTC noon voorkomt dagverschuiving door tijdzones
+src/components/DateField.tsx:  return new Date(Date.UTC(y, (m ?? 1) - 1, d ?? 1, 12, 0, 0));
+src/components/DateField.tsx:  const m = String(now.getMonth() + 1).padStart(2, '0');
+src/components/DateField.tsx:  return `${y}-${m}-${d}`;
+src/components/DateField.tsx:  // Niet toISOString(); dat geeft TZ issues. Formatteer zelf naar
+ YYYY-MM-DD (UTC)                                                                              src/components/DateField.tsx:  const m = String(dt.getUTCMonth() + 1).padStart(2, '0');
+src/components/DateField.tsx:  return `${y}-${m}-${d}`;
+src/components/DateField.tsx:  minISO = '1920-01-01',
+src/components/DateField.tsx:  const display = valueISO ? formatDate(valueISO, 'dd-mm-yyyy') : 
+'';                                                                                            src/components/DateField.tsx:          {display || 'DD-MM-YYYY'}
+src/components/DateField.tsx:        </Text>
+src/components/DateField.tsx:      </Pressable>
+src/components/DateField.tsx:        />
+src/components/DateField.tsx:    </View>
+src/components/ToggleSwitch.tsx:import { View, TouchableOpacity, Text } from 'react-native';
+src/components/ToggleSwitch.tsx:      </TouchableOpacity>
+src/components/ToggleSwitch.tsx:    </View>
+src/components/ChipButton.tsx:import { TouchableOpacity, Text } from 'react-native';
+src/components/ChipButton.tsx:    </TouchableOpacity>
+src/components/fields/MoneyField.tsx:import { TextInput, View, Text } from 'react-native';
+src/components/fields/MoneyField.tsx:import { useFormContext } from '@context/FormContext';
+src/components/fields/MoneyField.tsx:import { formatCurrency } from '@utils/numbers';
+src/components/fields/MoneyField.tsx:  // Phoenix-standaard: we halen de waarde op uit de speci
+fieke sectie (C7/C10)                                                                          src/components/fields/MoneyField.tsx:  // De state slaat dit op als integers (centen)
+src/components/fields/MoneyField.tsx:  // Lokale staat voor wat de gebruiker typt (bijv. "10,50
+")                                                                                             src/components/fields/MoneyField.tsx:  // Synchroniseer lokale input met de globale state (bij 
+initialisatie)                                                                                 src/components/fields/MoneyField.tsx:      // Formatteer centen naar leesbare euro's zonder het
+ symbool                                                                                       src/components/fields/MoneyField.tsx:    // 1. Schoon de input op (sta alleen cijfers en één ko
+mma/punt toe)                                                                                  src/components/fields/MoneyField.tsx:    const sanitized = text.replace(/[^0-9,.-]/g, '');
+src/components/fields/MoneyField.tsx:    // 2. Converteer naar centen-integer
+src/components/fields/MoneyField.tsx:    // We vervangen de komma door een punt voor parseFloat
+ en vermenigvuldigen met 100                                                                   src/components/fields/MoneyField.tsx:    const cents = Math.round(floatValue * 100);
+src/components/fields/MoneyField.tsx:    // 3. Update de globale state via Phoenix updateField
+src/components/fields/MoneyField.tsx:            // Optioneel: Formatteer de input netjes bij h
+et verlaten van het veld                                                                       src/components/fields/MoneyField.tsx:        />
+src/components/fields/MoneyField.tsx:      </View>
+src/components/fields/MoneyField.tsx:    </View>
+src/components/ConditionalField.tsx:import { useFormContext } from '@context/FormContext';
+src/components/ConditionalField.tsx:import { ConditionalConfig } from '../types/form';
+src/components/ConditionalField.tsx:import { evaluateCondition } from '@utils/conditions';
+src/components/ConditionalField.tsx:  return <>{children}</>;
+echo "--- CHECK: FSM Statussen in useAppOrchestration ---" && \grep -E "INITIALIZING|HYDRATING|UNBOARDING|READY|ERROR" src/app/hooks/useAppOrchestration.ts
+--- CHECK: FSM Statussen in useAppOrchestration ---
+export type AppStatus = 'INITIALIZING' | 'HYDRATING' | 'UNBOARDING' | 'READY' | 'ERROR';
+  const [status, setStatus] = React.useState<AppStatus>('INITIALIZING');
+  // Eén publieke actie voor ERROR-scherm
+    setStatus('UNBOARDING');
+      setStatus('HYDRATING');
+        setStatus('UNBOARDING');
+      // 3) Validatie vóór READY (Zod gate)
+        setStatus('ERROR');
+      // 5) Shadow flag precies éénmaal bij overgang naar READY
+        // selector niet kritisch; READY blijft leidend
+      setStatus('READY');
+    // INITIALIZING duurt één render-tick
+echo "--- CHECK: Relatieve imports (Verboden volgens WAI-006E) ---" && \grep -r "\.\./\.\./" src --include="*.tsx" --include="*.ts"
+--- CHECK: Relatieve imports (Verboden volgens WAI-006E) ---
+src/ui/organisms/IncomeRepeater.tsx:} from '../../types/income';
+src/ui/organisms/HouseholdMemberRepeater.tsx:import ChipButton from '../../components/ChipButto
+n';                                                                                            src/ui/components/FinancialSummary.tsx:import { FinancialSummaryVM } from '../../selectors/fina
+ncialSelectors';                                                                               src/ui/components/fields/FormField.tsx:import { validateField } from '../../../utils/validation
+';                                                                                             src/ui/screens/DailyInput/DailyInputScreen.tsx:import ChipButton from '../../../components/Chip
+Button';                                                                                       src/ui/screens/DailyInput/DailyInputScreen.tsx:import { TransactionService } from '../../../ser
+vices/transactionService';                                                                     src/ui/screens/DailyInput/DailyInputScreen.tsx:import { DailyTransaction, PaymentMethod, Transa
+ctionCategory } from '../../../types/transaction';                                             src/ui/screens/DailyInput/DailyInputScreen.tsx:import { getCurrentDateISO, getISOWeek } from '.
+./../../utils/date';                                                                           src/ui/screens/DailyInput/DailyInputScreen.tsx:import { formatDutchValue } from '../../../utils
+/numbers';                                                                                     src/ui/screens/DailyInput/DailyInputScreen.tsx:import MoneyField from '../../../components/fiel
+ds/MoneyField';                                                                                src/app/hooks/__tests__/useAppOrchestration.test.tsx:jest.mock('../../../selectors/householdSel
+ectors', () => ({                                                                              src/app/hooks/__tests__/useAppOrchestration.test.tsx:jest.mock('../../../context/FormContext', 
+() => ({                                                                                       src/app/hooks/useAppOrchestration.ts:import { selectIsSpecialStatus } from '../../selectors/hou
+seholdSelectors';                                                                              src/components/__tests__/InputCounter.test.tsx:jest.mock('../../styles/useAppStyles', () => ({
+src/components/fields/__tests__/MoneyField.test.tsx:jest.mock('../../../context/FormContext', (
+) => ({                                                                                        src/screens/Wizard/pages/C7.config.ts:import { PageConfig } from '../../../types/form';
+src/screens/Wizard/pages/C1.config.ts:import { PageConfig } from '../../../types/form';
+src/screens/Wizard/pages/C4.config.ts:import { PageConfig } from '../../../types/form';
+src/screens/Wizard/pages/C10.config.ts:import { PageConfig } from '../../../types/form';
+src/screens/Wizard/WizardController.tsx:import { PageConfig } from '../../types/form';
+src/screens/Wizard/WizardPage.tsx:import ConditionalField from '../../components/ConditionalFie
+ld';                                                                                           src/screens/Wizard/WizardPage.tsx:import { PageConfig } from '../../types/form';
+src/screens/Wizard/WizardPage.tsx:import { showWizardProgress } from '../../config/features';
+src/screens/Wizard/WizardPage.tsx:import ChipButton from '../../components/ChipButton';
+src/screens/Daily/UndoScreen.tsx:import { DailyTransaction } from '../../types/transaction';
+src/screens/Settings/SettingsScreen.tsx:import { useTheme } from '../../app/context/ThemeContex
+t';                                                                 
+echo "=== PHOENIX ARCHITECTURE AUDIT ==="echo "1. Legacy 'OUD' Files: $(find src -iname "*OUD*" | wc -l) (Moet 0 zijn)"echo "2. UI Money Parsing: $(grep -rE "parseFloat|Math.round" src/ui src/organisms --exclude="MoneyField.tsx" | wc -l) (Moet 0 zijn)"echo "3. Relative Imports: $(grep -r "\.\./\.\./" src | wc -l) (Moet 0 zijn)"echo "4. FSM Implementation: $(grep -E "INITIALIZING|HYDRATING|UNBOARDING|READY|ERROR" src/app/hooks/useAppOrchestration.ts | wc -l)/5 statussen"echo "5. Special Status Logic: $(grep -r "isSpecialStatus" src/app/hooks/useAppOrchestration.ts | wc -l) (Moet aanwezig zijn voor WAI-006A)"
+=== PHOENIX ARCHITECTURE AUDIT ===
+1. Legacy 'OUD' Files: 0 (Moet 0 zijn)
+grep: src/organisms: No such file or directory
+2. UI Money Parsing: 3 (Moet 0 zijn)
+3. Relative Imports: 26 (Moet 0 zijn)
+4. FSM Implementation: 12/5 statussen
+5. Special Status Logic: 0 (Moet aanwezig zijn voor WAI-006A)
+                           

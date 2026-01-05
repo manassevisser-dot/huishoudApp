@@ -1,0 +1,359 @@
+/* 
+  SOCIAAL DOMEIN CALCULATOR - IMPLEMENTATIE VOORBEELD
+  Gecombineerde module die alle drie bestanden integreert
+*/
+
+// ============================================
+// IMPORTS (vanuit jouw bestaande modules)
+// ============================================
+import {
+  Household,
+  Income,
+  Assets,
+  Money,
+  calculateSocialAssistance,
+  calculateHealthCareAllowance,
+  calculateRentAllowance,
+  calculateChildBudget,
+  SocialAssistanceParams,
+  HealthCareAllowanceParams,
+  RentAllowanceParams,
+  ChildBudgetParams,
+  CostSharingParams
+} from './sociaal_domein_rekenmodel';
+
+import {
+  PARTICIPATION_ACT_2026,
+  PW_PARAMS_2026,
+  COST_SHARING_PARAMS_2026,
+  INDEX_2026
+} from './sociaal_domein_normen_en_budgetten';
+
+import {
+  calculateNibudNeeds,
+  calculateFinancialHealth,
+  HousingCosts,
+  FinancialHealthScore
+} from './sociaal_domein_rekenmodel_ext';
+
+// ============================================
+// ENHANCED TYPES voor gebruikersinvoer
+// ============================================
+
+export interface UserProfile {
+  household: Household;
+  currentIncome: {
+    gross: Money;
+    net: Money;
+    source: 'employment' | 'benefit' | 'pension' | 'mixed';
+  };
+  housing: {
+    monthlyRent: Money;
+    housingType: 'social' | 'private' | 'owned';
+    energyIncluded: boolean; // Belangrijk voor dubbeltelling!
+  };
+  assets: {
+    savings: Money;
+    property: Money;
+    other: Money;
+  };
+}
+
+export interface CalculationResult {
+  // Inkomensdeel
+  benefits: {
+    socialAssistance: Money;
+    healthCareAllowance: Money;
+    rentAllowance: Money;
+    childBudget: Money;
+    total: Money;
+  };
+  totalNetIncome: Money;
+  
+  // Uitgavendeel
+  nibudNeeds: {
+    basicLiving: Money;
+    housing: Money;
+    total: Money;
+    breakdown: NibudBreakdown;
+  };
+  
+  // Financiële gezondheid
+  health: FinancialHealthScore;
+  
+  // Metadata
+  calculationDate: string;
+  warnings: string[];
+}
+
+export interface NibudBreakdown {
+  food: Money;
+  clothing: Money;
+  transport: Money;
+  communication: Money;
+  insurance: Money;
+  participation: Money;
+  reserves: Money;
+  utilities: Money;
+  care: Money;
+}
+
+// ============================================
+// VALIDATION LAYER
+// ============================================
+
+export class ValidationError extends Error {
+  constructor(public field: string, message: string) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
+export function validateUserProfile(profile: UserProfile): string[] {
+  const warnings: string[] = [];
+  
+  // Basale checks
+  if (profile.household.adultsTotal < 1) {
+    throw new ValidationError('household', 'Minimaal 1 volwassene vereist');
+  }
+  
+  if (profile.currentIncome.gross < 0) {
+    throw new ValidationError('income', 'Inkomen kan niet negatief zijn');
+  }
+  
+  if (profile.housing.monthlyRent < 0) {
+    throw new ValidationError('housing', 'Huur kan niet negatief zijn');
+  }
+  
+  // Waarschuwingen (niet blokkerend)
+  if (profile.currentIncome.net > profile.currentIncome.gross) {
+    warnings.push('Netto inkomen hoger dan bruto - controleer invoer');
+  }
+  
+  const totalAssets = profile.assets.savings + profile.assets.property + profile.assets.other;
+  const assetLimit = profile.household.partners ? 15210 : 7605; // 2026 grenzen
+  
+  if (totalAssets > assetLimit * 1.5) {
+    warnings.push('Vermogen mogelijk boven toeslaggrens - check actuele situatie');
+  }
+  
+  return warnings;
+}
+
+// ============================================
+// HOOFD CALCULATOR
+// ============================================
+
+export function calculateSocialDomain(profile: UserProfile): CalculationResult {
+  // 1. Valideer input
+  const warnings = validateUserProfile(profile);
+  
+  // 2. Bereid data voor
+  const household = profile.household;
+  const totalAssets = profile.assets.savings + profile.assets.property + profile.assets.other;
+  const assetLimit = household.partners ? 15210 : 7605;
+  
+  const assets: Assets = {
+    assetsTotal: totalAssets,
+    assetLimit: assetLimit
+  };
+  
+  // 3. Bereken regelingen (BRUTO)
+  const income: Income = {
+    individualIncome: profile.currentIncome.gross,
+    householdIncome: profile.currentIncome.gross,
+    partnerIncome: 0
+  };
+  
+  // Participatiewet
+  const socialAssistance = calculateSocialAssistance(
+    PW_PARAMS_2026,
+    household,
+    income,
+    assets,
+    COST_SHARING_PARAMS_2026
+  );
+  
+  // Zorgtoeslag (voorbeeld parameters - pas aan o.b.v. actuele regels)
+  const healthCareAllowance = calculateHealthCareAllowance(
+    {
+      maxAllowance: 146, // 2026 schatting
+      incomeThreshold: 23000 / 12,
+      taperRate: 0.0135
+    },
+    income,
+    assets
+  );
+  
+  // Huurtoeslag
+  const rentAllowance = calculateRentAllowance(
+    {
+      rent: profile.housing.monthlyRent,
+      maxRent: household.partners ? 932.93 : 932.93,
+      baseContribution: 250,
+      incomeFactor: 0.0017
+    },
+    income
+  );
+  
+  // Kindgebonden budget (als kinderen aanwezig)
+  const childBudget = household.childrenUnder18 > 0 
+    ? calculateChildBudget(
+        {
+          baseAmount: 300,
+          perChildAmount: 150,
+          ageSupplements: 0,
+          incomeThreshold: 25000 / 12,
+          taperRate: 0.08
+        },
+        household,
+        income
+      )
+    : 0;
+  
+  // 4. Totaal netto inkomen
+  const totalBenefits = socialAssistance + healthCareAllowance + rentAllowance + childBudget;
+  const totalNetIncome = profile.currentIncome.net + totalBenefits;
+  
+  // 5. NIBUD berekening
+  const housingCosts: HousingCosts = {
+    rentOrMortgage: profile.housing.energyIncluded 
+      ? profile.housing.monthlyRent - 185 // Trek energie af als deze al in huur zit
+      : profile.housing.monthlyRent
+  };
+  
+  const nibudNeeds = calculateNibudNeeds(household, housingCosts);
+  
+  // 6. Financiële gezondheid
+  const netIncomeForHealth: Income = {
+    individualIncome: totalNetIncome,
+    householdIncome: totalNetIncome
+  };
+  
+  const health = calculateFinancialHealth(netIncomeForHealth, nibudNeeds);
+  
+  // 7. Breakdown NIBUD (voor visualisatie)
+  const breakdown = buildNibudBreakdown(household, housingCosts);
+  
+  // 8. Voeg waarschuwing toe bij kritieke situaties
+  if (health.status === 'CRITICAL') {
+    warnings.push('URGENT: Inkomen dekt niet de minimale levensbehoeften volgens NIBUD');
+  }
+  
+  if (health.livelihoodIndex < 50) {
+    warnings.push('Bestaanszekerheid onder minimum - overweeg schuldhulpverlening');
+  }
+  
+  return {
+    benefits: {
+      socialAssistance: Math.round(socialAssistance * 100) / 100,
+      healthCareAllowance: Math.round(healthCareAllowance * 100) / 100,
+      rentAllowance: Math.round(rentAllowance * 100) / 100,
+      childBudget: Math.round(childBudget * 100) / 100,
+      total: Math.round(totalBenefits * 100) / 100
+    },
+    totalNetIncome: Math.round(totalNetIncome * 100) / 100,
+    nibudNeeds: {
+      basicLiving: Math.round(nibudNeeds.basicLivingNeeds * 100) / 100,
+      housing: Math.round(nibudNeeds.housingNeeds * 100) / 100,
+      total: Math.round(nibudNeeds.totalNeeds * 100) / 100,
+      breakdown
+    },
+    health,
+    calculationDate: new Date().toISOString(),
+    warnings
+  };
+}
+
+// ============================================
+// HELPER: NIBUD BREAKDOWN
+// ============================================
+
+function buildNibudBreakdown(household: Household, housing: HousingCosts): NibudBreakdown {
+  // Importeer NIBUD_CONFIG_2026 uit jouw module
+  const config = {
+    food: { single: 280, couple: 485, child: 140 },
+    clothing: { single: 58, couple: 95, child: 45 },
+    transport: { single: 75, couple: 120, child: 0 },
+    communication: { single: 60, couple: 70, child: 10 },
+    insurances: { single: 35, couple: 50, child: 5 },
+    participation: { single: 55, couple: 85, child: 35 },
+    reserves: { single: 90, couple: 140, child: 20 },
+    housingUtilities: { single: 300, couple: 350, childFactor: 40 },
+    care: { netCostPerAdult: 190 }
+  };
+  
+  const getCat = (cat: any) => {
+    let sum = household.partners ? cat.couple : cat.single;
+    sum += household.childrenUnder18 * (cat.child || 0);
+    return Math.round(sum * 100) / 100;
+  };
+  
+  return {
+    food: getCat(config.food),
+    clothing: getCat(config.clothing),
+    transport: getCat(config.transport),
+    communication: getCat(config.communication),
+    insurance: getCat(config.insurances),
+    participation: getCat(config.participation),
+    reserves: getCat(config.reserves),
+    utilities: household.partners 
+      ? config.housingUtilities.couple + household.childrenUnder18 * config.housingUtilities.childFactor
+      : config.housingUtilities.single + household.childrenUnder18 * config.housingUtilities.childFactor,
+    care: household.adultsTotal * config.care.netCostPerAdult
+  };
+}
+
+// ============================================
+// VOORBEELD GEBRUIK
+// ============================================
+
+export function exampleUsage() {
+  const testProfile: UserProfile = {
+    household: {
+      adultsTotal: 1,
+      adults27Plus: 1,
+      partners: false,
+      childrenUnder18: 0
+    },
+    currentIncome: {
+      gross: 0, // Geen inkomen
+      net: 0,
+      source: 'benefit'
+    },
+    housing: {
+      monthlyRent: 650,
+      housingType: 'social',
+      energyIncluded: false
+    },
+    assets: {
+      savings: 2000,
+      property: 0,
+      other: 0
+    }
+  };
+  
+  const result = calculateSocialDomain(testProfile);
+  
+  console.log('=== BEREKENING SOCIAAL DOMEIN ===');
+  console.log(`Bijstand: €${result.benefits.socialAssistance}`);
+  console.log(`Zorgtoeslag: €${result.benefits.healthCareAllowance}`);
+  console.log(`Huurtoeslag: €${result.benefits.rentAllowance}`);
+  console.log(`TOTAAL INKOMEN: €${result.totalNetIncome}`);
+  console.log('');
+  console.log('=== NIBUD BUDGET ===');
+  console.log(`Noodzakelijke uitgaven: €${result.nibudNeeds.total}`);
+  console.log(`Maandelijks saldo: €${result.health.balance}`);
+  console.log(`Bestaanszekerheid: ${result.health.livelihoodIndex}/100 (${result.health.status})`);
+  console.log('');
+  
+  if (result.warnings.length > 0) {
+    console.log('⚠️ WAARSCHUWINGEN:');
+    result.warnings.forEach(w => console.log(`  - ${w}`));
+  }
+  
+  return result;
+}
+
+// Run example
+// exampleUsage();

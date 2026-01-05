@@ -1,0 +1,77 @@
+
+/**
+ * WAI-002: Unit + Snapshot tests for InputCounter
+ */
+import * as React from 'react';
+import renderer from 'react-test-renderer';
+import { TouchableOpacity } from 'react-native';
+import InputCounter from '../InputCounter';
+
+// Mock styling hook to avoid theme coupling in tests
+jest.mock('../../styles/useAppStyles', () => ({
+  useAppStyles: () => ({
+    colors: {
+      primary: '#0070f3',
+      secondary: '#eaeaea',
+      primaryText: '#ffffff',
+      textSecondary: '#999999',
+      textPrimary: '#111111',
+    },
+  }),
+}));
+
+describe('InputCounter', () => {
+  it('renders stable (snapshot)', () => {
+    const tree = renderer.create(
+      <InputCounter value={3} min={1} max={5} onValueChange={() => {}} accessibilityLabel="Aantal" />
+    ).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
+
+  it('increments and decrements within bounds', () => {
+    const onChange = jest.fn();
+    const testRenderer = renderer.create(
+      <InputCounter value={2} min={1} max={3} onValueChange={onChange} accessibilityLabel="Adults" />
+    );
+    const root = testRenderer.root;
+    const buttons = root.findAllByType(TouchableOpacity);
+    const decBtn = buttons[0];
+    const incBtn = buttons[1];
+
+    // Decrement to 1
+    decBtn.props.onPress();
+    expect(onChange).toHaveBeenLastCalledWith(1);
+
+    // Decrement again (blocked at min)
+    onChange.mockClear();
+    decBtn.props.onPress();
+    expect(onChange).not.toHaveBeenCalled();
+
+    // Increment to 2 and then 3
+    incBtn.props.onPress();
+    expect(onChange).toHaveBeenLastCalledWith(2);
+    incBtn.props.onPress();
+    expect(onChange).toHaveBeenLastCalledWith(3);
+
+    // Increment again (blocked at max)
+    onChange.mockClear();
+    incBtn.props.onPress();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('guards against invalid value by falling back to min', () => {
+    const onChange = jest.fn();
+    const testRenderer = renderer.create(
+      // @ts-expect-error: testing defensive guard
+      <InputCounter value={NaN as unknown as number} min={4} max={10} onValueChange={onChange} />
+    );
+    const root = testRenderer.root;
+    const buttons = root.findAllByType(TouchableOpacity);
+    const decBtn = buttons[0];
+
+    // Since safeValue becomes min (4), decrement is blocked
+    decBtn.props.onPress();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});
+``

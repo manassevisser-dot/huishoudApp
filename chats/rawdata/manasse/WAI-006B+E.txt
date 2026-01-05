@@ -1,0 +1,563 @@
+<CU>
+
+Helemaal volgens plan, **Back‑up CTO**. Ik lever hieronder het **volledige CU‑pakket** voor de **combinatie WAI‑006B & WAI‑006E**:
+
+*   **WAI‑006B** — *Dashboard Projection*: nieuwe **FinancialSummary selector** + **FinancialSummary component** (centen → euro via util; shadow‑safe).
+*   **WAI‑006E** — *Decommission OUD* + **alias‑sanering** (tsconfig/babel) zodat we voorgoed van `../../../` ontsnappen.
+
+Alles is **atomic** opgesplitst per target file, **token‑compliant**, en sluit aan op ADR‑15/16 (integers in centen; UI niet‑negatief; teken in kernel) en ADR‑17 (FSM projectie al in WAI‑006A).
+
+***
+
+# 🔷 WAI‑006B — Dashboard Projection
+
+We leveren twee atomische CUs:
+
+*   **WAI‑006B‑S** — **FinancialSummary selector** (centen → compute → format → view‑model)
+*   **WAI‑006B‑C** — **FinancialSummary component** (dumme projector; tokens via `useAppStyles`)
+
+***
+
+## \[CU‑ID: **WAI‑006B‑S**] — FinancialSummary Selector
+
+### 🎯 CHANGE UNIT CONTRACT
+
+*   **Target File (new):** `src/selectors/financialSelectors.ts`
+*   **Impact Radius (read‑only):** `@logic/finance` (computeSummary), `@utils/numbers` (formatCentsToDutch), `@state/schemas/FormStateSchema` (types)
+*   **Change Type:** `Extract`
+*   **Logic Contract:**
+    *   **Input:** `FormStateV1` (centen in C7/C10).
+    *   **Process:** `computeSummary` → totals in centen → **formatCentsToDutch** voor presentatie.
+    *   **Output:** `FinancialSummaryVM` — bevat **zowel** centen (ints) als geformatteerde euro‑strings.
+*   **Constraints:**
+    *   ❌ Geen UI/React; pure selectors.
+    *   ❌ Geen parsing; totals komen uit kernel (WAI‑004C).
+    *   ✅ Shadow‑safe: geen `isSpecialStatus`‑styling, alleen beschikbaar in state/export.
+
+### 📄 Bestand: `src/selectors/financialSelectors.ts`
+
+```ts
+// WAI-006B-S — FinancialSummary selector (pure)
+import type { FormStateV1 } from '@state/schemas/FormStateSchema';
+import { computeSummary } from '@logic/finance';
+import { formatCentsToDutch } from '@utils/numbers';
+
+export interface FinancialSummaryVM {
+  totals: {
+    totalIncomeCents: number;
+    totalExpensesCents: number;
+    netCents: number;
+    totalIncomeEUR: string;   // "€ 1.250,50" equivalent zonder prefix hier, afhankelijk van render
+    totalExpensesEUR: string;
+    netEUR: string;
+  };
+}
+
+export function selectFinancialSummaryVM(state: FormStateV1): FinancialSummaryVM {
+  const income = state?.C7?.items ?? [];
+  const expenses = state?.C10?.items ?? [];
+
+  const { totalIncome, totalExpenses, net } = computeSummary(income, expenses);
+
+  return {
+    totals: {
+      totalIncomeCents: totalIncome,
+      totalExpensesCents: totalExpenses,
+      netCents: net,
+      totalIncomeEUR: formatCentsToDutch(totalIncome),
+      totalExpensesEUR: formatCentsToDutch(totalExpenses),
+      netEUR: formatCentsToDutch(net),
+    },
+  };
+}
+```
+
+### 🧪 Tests: `src/selectors/__tests__/financialSelectors.test.ts`
+
+```ts
+import { selectFinancialSummaryVM } from '../../selectors/financialSelectors';
+
+describe('WAI-006B-S FinancialSummary selector', () => {
+  it('formats cent totals to Dutch EUR strings', () => {
+    const state: any = {
+      schemaVersion: '1.0',
+      C7: { items: [{ id: 'i1', amount: 320000 }, { id: 'i2', amount: 110050 }] },
+      C10: { items: [{ id: 'e1', amount: 75000 }, { id: 'e2', amount: 30025 }] },
+    };
+    const vm = selectFinancialSummaryVM(state);
+    expect(vm.totals.totalIncomeCents).toBe(430050);
+    expect(vm.totals.totalExpensesCents).toBe(105025);
+    expect(vm.totals.netCents).toBe(325025);
+    expect(vm.totals.totalIncomeEUR).toBe('4.300,50');
+    expect(vm.totals.totalExpensesEUR).toBe('1.050,25');
+    expect(vm.totals.netEUR).toBe('3.250,25');
+  });
+});
+```
+
+### 📝 PR‑Body — WAI‑006B‑S
+
+```md
+# WAI-006B-S — FinancialSummary selector (centen → euro)
+
+## Why
+Dashboard moet de centen-kernel projecteren als euro's; pure selector houdt UI dom (ADR-13).
+
+## What
+Nieuwe `selectFinancialSummaryVM(state)` produceert centen + geformatteerde strings via `formatCentsToDutch`.
+
+## ADR Compliance
+- ADR-15 Minor Units (int) ✅
+- ADR-16 Input Normalisatie ✅ (geen parsing in selector)
+- ADR-17 FSM projectie-ready ✅
+
+## Tests
+- Unit: bedragen worden correct gecompute en geformatteerd.
+
+## Rollback
+`git checkout HEAD~1 -- src/selectors/financialSelectors.ts`
+```
+
+### ✅ DoD — WAI‑006B‑S
+
+```md
+- [ ] Pure selector zonder React/UI
+- [ ] Centen + geformatteerde euro strings aanwezig
+- [ ] Unit test groen
+- [ ] PR-body met ADR-15/16/17 sectie
+```
+
+***
+
+## \[CU‑ID: **WAI‑006B‑C**] — FinancialSummary Component
+
+### 🎯 CHANGE UNIT CONTRACT
+
+*   **Target File (new):** `src/ui/components/FinancialSummary.tsx`
+*   **Impact Radius (read‑only):** `@ui/styles/useAppStyles`, `selectFinancialSummaryVM`, `FormContext`
+*   **Change Type:** `Extract`
+*   **Logic Contract:**
+    *   **Dumme projector:** haalt **vm** uit selector (via `useFormContext`) en rendert **alleen** via tokens.
+    *   Geen berekeningen in de component; geen inline styles/hex.
+*   **Constraints:**
+    *   ✅ `useAppStyles()` **verplicht** (design tokens).
+    *   ❌ Geen conditionele kleur op `isSpecialStatus`; flag mag niet visueel lekken (privacy/ADR‑12).
+
+### 📄 Bestand: `src/ui/components/FinancialSummary.tsx`
+
+```tsx
+import * as React from 'react';
+import { View, Text } from 'react-native';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+import { useFormContext } from '../../context/FormContext';
+import { selectFinancialSummaryVM } from '../../selectors/financialSelectors';
+
+const FinancialSummary: React.FC = () => {
+  const { styles } = useAppStyles();
+  const { state } = useFormContext();
+  const vm = selectFinancialSummaryVM(state as any);
+
+  return (
+    <View style={styles.card /* tokens: surface/background/padding */}>
+      <Text style={styles.title}>Samenvatting</Text>
+      <View style={styles.row}>
+        <Text style={styles.textPrimary}>Inkomen:</Text>
+        <Text style={styles.textPrimary}>{vm.totals.totalIncomeEUR}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.textPrimary}>Vaste lasten:</Text>
+        <Text style={styles.textPrimary}>{vm.totals.totalExpensesEUR}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={styles.textPrimary}>Netto:</Text>
+        <Text style={styles.textPrimary}>{vm.totals.netEUR}</Text>
+      </View>
+    </View>
+  );
+};
+
+export default FinancialSummary;
+```
+
+### 🧪 Tests: `src/ui/components/__tests__/FinancialSummary.test.tsx`
+
+```tsx
+import * as React from 'react';
+import { render } from '@testing-library/react-native';
+import FinancialSummary from '../../components/FinancialSummary';
+
+jest.mock('@ui/styles/useAppStyles', () => ({
+  useAppStyles: () => ({ styles: { card: {}, title: {}, row: {}, textPrimary: {} } }),
+}));
+
+jest.mock('../../../selectors/financialSelectors', () => ({
+  __esModule: true,
+  selectFinancialSummaryVM: () => ({
+    totals: {
+      totalIncomeEUR: '4.300,50',
+      totalExpensesEUR: '1.050,25',
+      netEUR: '3.250,25',
+      totalIncomeCents: 430050,
+      totalExpensesCents: 105025,
+      netCents: 325025,
+    },
+  }),
+}));
+
+const Ctx = React.createContext<any>(null);
+function Wrapper({ children }: any) {
+  const [state] = React.useState({ schemaVersion: '1.0' });
+  return <Ctx.Provider value={{ state, dispatch: () => {} }}>{children}</Ctx.Provider>;
+}
+jest.mock('../../../context/FormContext', () => ({
+  __esModule: true,
+  useFormContext: () => React.useContext(Ctx),
+}));
+
+describe('WAI-006B-C FinancialSummary component', () => {
+  it('renders euro strings without inline styles', () => {
+    const { toJSON, getByText } = render(
+      <Wrapper>
+        <FinancialSummary />
+      </Wrapper>
+    );
+    expect(getByText('Samenvatting')).toBeTruthy();
+    expect(getByText('4.300,50')).toBeTruthy();
+    expect(toJSON()).toMatchSnapshot();
+  });
+});
+```
+
+### 📝 PR‑Body — WAI‑006B‑C
+
+```md
+# WAI-006B-C — FinancialSummary component (token-compliant projector)
+
+## Why
+UI moet de centen-samenvatting tonen zonder logica in de component; selectors leveren data, tokens leveren stijl.
+
+## What
+Nieuwe `FinancialSummary.tsx` die `selectFinancialSummaryVM` rendert met `useAppStyles()`.
+
+## ADR Compliance
+- ADR-13 Domme UI ✅
+- ADR-15/16 Minor Units & Normalisatie ✅
+- Design Token Governance ✅
+
+## Tests
+- Snapshot: euro-strings zichtbaar; token-usage; geen inline hex.
+
+## Rollback
+`git checkout HEAD~1 -- src/ui/components/FinancialSummary.tsx`
+```
+
+### ✅ DoD — WAI‑006B‑C
+
+```md
+- [ ] Dumme component zonder berekeningen
+- [ ] Tokens via useAppStyles; geen inline styles
+- [ ] Snapshot test groen
+- [ ] PR-body met ADR-secties
+```
+
+***
+
+# 🔴 WAI‑006E — Decommission OUD + Alias‑sanering
+
+We leveren drie atomische CUs:
+
+*   **WAI‑006E‑TS** — `tsconfig.json` paths fix (Phoenix aliases).
+*   **WAI‑006E‑B** — `babel.config.js` module‑resolver fix.
+*   **WAI‑006E‑DEL‑PLAN** — cleanup plan & checklist (document) + *per‑file* delete commits (één target per commit).
+
+***
+
+## \[CU‑ID: **WAI‑006E‑TS**] — tsconfig paths
+
+### 🎯 CHANGE UNIT CONTRACT
+
+*   **Target File (edit):** `tsconfig.json`
+*   **Change Type:** `Refactor`
+*   **Logic Contract:** voeg/normaliseer Phoenix paths:
+    ```json
+    {
+      "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+          "@state/*": ["src/state/*"],
+          "@utils/*": ["src/utils/*"],
+          "@domain/*": ["src/domain/*"],
+          "@ui/*": ["src/ui/*"],
+          "@services/*": ["src/services/*"]
+        }
+      }
+    }
+    ```
+*   **Constraints:** ❌ Geen verwijzing buiten `src/*`; ✅ compatible met RN/Metro.
+
+### 📝 PR‑Body — WAI‑006E‑TS
+
+```md
+# WAI-006E-TS — tsconfig alias mapping (Phoenix)
+
+## Why
+Voorkomt `../../../` imports; standaardiseert path-aliassen voor UI/logic/state/services.
+
+## What
+Paths @state/@utils/@domain/@ui/@services ingesteld op `src/*`.
+
+## ADR Compliance
+- ADR-17 (FSM + projector) support; Design Token Governance (clean imports) ✅
+
+## Rollback
+`git checkout HEAD~1 -- tsconfig.json`
+```
+
+***
+
+## \[CU‑ID: **WAI‑006E‑B**] — babel.config
+
+### 🎯 CHANGE UNIT CONTRACT
+
+*   **Target File (edit):** `babel.config.js`
+*   **Change Type:** `Refactor`
+*   **Logic Contract:** voeg `module-resolver` met aliassen:
+    ```js
+    plugins: [
+      ['module-resolver', {
+        root: ['./'],
+        alias: {
+          '@state': './src/state',
+          '@utils': './src/utils',
+          '@domain': './src/domain',
+          '@ui': './src/ui',
+          '@services': './src/services'
+        },
+        extensions: ['.ts', '.tsx', '.js', '.json']
+      }]
+    ]
+    ```
+*   **Constraints:** compatible met Metro/Jest; geen runtime break.
+
+### 📝 PR‑Body — WAI‑006E‑B
+
+```md
+# WAI-006E-B — Babel module-resolver aliases
+
+## Why
+Zorgt dat runtime bundling/transform dezelfde alias mapping volgt als TypeScript.
+
+## What
+`module-resolver` plugin geconfigureerd voor @state/@utils/@domain/@ui/@services.
+
+## ADR Compliance
+- Design Token Governance & clean imports ✅
+
+## Rollback
+`git checkout HEAD~1 -- babel.config.js`
+```
+
+***
+
+## \[CU‑ID: **WAI‑006E‑DEL‑PLAN**] — Cleanup plan (document)
+
+### 🎯 CHANGE UNIT CONTRACT
+
+*   **Target File (new):** `docs/cleanup/WAI-006E_PLAN.md`
+*   **Change Type:** `Extract`
+*   **Logic Contract:** lever audit‑klare **verwijderingslijst & procedure**; elke **OUD\_\*.ts** krijgt een **eigen** delete‑commit (atomic rule).
+
+### 📄 Bestand: `docs/cleanup/WAI-006E_PLAN.md`
+
+````md
+# WAI-006E — Decommission OUD (cleanup plan)
+
+## Doel
+Verwijder alle legacy-bestanden met prefix `OUD_` en herstel imports naar Phoenix alias-paden.
+
+## Procedure (atomic)
+1. Zoeklijst genereren:
+   ```bash
+   git ls-files | grep -E '^src/.*/OUD_.*\.ts$'
+````
+
+2.  Voor elk bestand in de lijst:
+    *   `git rm <pad>`
+    *   `git commit -m "chore(cleanup): remove OUD_<naam> (decommission legacy)"`
+3.  Imports controleren:
+    *   `rg -n "(\.\./|\.\./\.\./)" src/` en vervangen door aliassen:
+        *   `@state/*`, `@utils/*`, `@domain/*`, `@ui/*`, `@services/*`
+4.  TypeScript & Jest controleren:
+    ```bash
+    npm run typecheck && npm test -- --passWithNoTests
+    ```
+
+## Bekende voorbeelden (ter illustratie)
+
+*   `src/types/OUDhousehold.ts`
+*   `src/utils/OUDnumbers.ts`
+
+> Let op: elk verwijderd bestand is **één commit** (Atomic Scope).
+
+````
+
+### 📝 PR‑Body — WAI‑006E‑DEL‑PLAN
+```md
+# WAI-006E-DEL-PLAN — Decommission OUD files (audit plan)
+
+## Why
+Legacy logica mag niet in v1.0 bestaan; atomic deletion + import hygiene voorkomt regressies.
+
+## What
+Cleanup plan document; voer per OUD_* bestand een afzonderlijke `git rm` + commit uit.
+
+## ADR Compliance
+- ADR-15/16/17 support door imports/structuur schoon te houden.
+
+## Rollback
+N.v.t. (document).
+````
+
+***
+
+# 🧪 Gate‑plan (WAI‑006B/E)
+
+*   **Gate A — Unit:**
+    *   Selector format cases (centen → euro).
+    *   Component snapshot (tokens, geen inline styles).
+*   **Gate B — Integration:**
+    *   App.tsx (READY) projecteert FinancialSummary op Dashboard route.
+*   **Gate C — E2E:**
+    *   Simuleer state met centen; UI toont correcte euro‑waarden; geen shadow‑lekkage.
+
+***
+
+# 🧭 Git‑stappen (per CU)
+
+### WAI‑006B‑S
+
+```bash
+git add src/selectors/financialSelectors.ts \
+        src/selectors/__tests__/financialSelectors.test.ts
+git commit -m "feat(core): add FinancialSummary selector (cents→EUR VM) for dashboard"
+# git push origin workflow/nieuwe-start
+```
+
+### WAI‑006B‑C
+
+```bash
+git add src/ui/components/FinancialSummary.tsx \
+        src/ui/components/__tests__/FinancialSummary.test.tsx
+git commit -m "feat(ui): add FinancialSummary projector (token-compliant, dom UI)"
+# git push origin workflow/nieuwe-start
+```
+
+### WAI‑006E‑TS
+
+```bash
+git add tsconfig.json
+git commit -m "refactor(build): set Phoenix path aliases in tsconfig"
+# git push origin workflow/nieuwe-start
+```
+
+### WAI‑006E‑B
+
+```bash
+git add babel.config.js
+git commit -m "refactor(build): add module-resolver aliases (babel)"
+# git push origin workflow/nieuwe-start
+```
+
+### WAI‑006E‑DEL‑PLAN
+
+```bash
+git add docs/cleanup/WAI-006E_PLAN.md
+git commit -m "docs(cleanup): add OUD decommission plan (atomic deletes + import hygiene)"
+# git push origin workflow/nieuwe-start
+```
+
+***
+
+## ✅ Klaar voor uitvoering
+
+Met **WAI‑006B** ziet de gebruiker nu de **centen‑logica** als euro’s op het Dashboard.  
+Met **WAI‑006E** voorkomen we dat oude paden en `OUD_*` bestanden blijven **vastkoeken** in Phoenix.
+</CU>
+
+<M&T>
+<internal_analysis>
+**Migration Type:** UI Projection & Infrastructure Cleanup (Cluster 3 & 0).
+**Complexity Score:** 3/5.
+**Logic Integrity:** De overgang van "Minor Units" (centen) naar "Human Readable" (euro's) wordt hier architecturaal geborgd via het ViewModel-patroon.
+- **WAI-006B** is de visuele bewijsvoering van de Phoenix-kernel.
+- **WAI-006E** is de "scorched earth" operatie om legacy-vervuiling te stoppen.
+
+**Risk Matrix:**
+| Risk | Probability | Impact | Priority | Mitigation |
+|:---|:---:|:---:|:---:|:---|
+| **Display Drift** | Low | Medium | 4 | Gebruik van `selectFinancialSummaryVM` garandeert dat UI en Kernel synchroon lopen. |
+| **Alias Runtime Crash** | Medium | High | 7 | Synchronisatie tussen `tsconfig` en `babel.config` is verplicht vòòr de eerste import-wijziging. |
+| **Shadow Leak (ADR-12)** | Low | High | 6 | Audit bevestigt: `FinancialSummary` bevat geen conditionele styling op basis van `isSpecialStatus`. |
+
+**Strategic Summary:** 
+Dit pakket markeert de overgang van de "Bouwfase" naar de "Onderhoudsfase". We maken de resultaten van de centen-rekenkern zichtbaar (006B) en we slopen de steigers (006E). De "Dumb UI" (ADR-13) wordt hier tot in de puntjes doorgevoerd.
+</internal_analysis>
+
+# 📈 Audit-Rapport: WAI-006B & WAI-006E Validatie
+
+Als **Lyra (Migration & Test Lead)** heb ik de Change Units voor de Dashboard Projectie en de Decommissioning geauditeerd. Dit plan is de definitieve bezegeling van de **v1.0-phoenix-confirmed** standaard.
+
+---
+
+## 1️⃣ Strategische Audit per Change Unit
+
+### ✅ WAI-006B-S: De FinancialSummary Selector
+Dit is een schoolvoorbeeld van gelaagde architectuur.
+- **Kracht:** De selector fungeert als een **View Model (VM) generator**. Hij ontkoppelt de ruwe centen-data van de geformatteerde weergave.
+- **ADR-15/16:** De selector respecteert de "Minor Units" door de berekening in centen te doen en pas op het allerlaatste moment de `formatCentsToDutch` utility aan te roepen.
+
+### ✅ WAI-006B-C: De FinancialSummary Component
+Conform **ADR-13** is deze component volledig passief.
+- **Audit-bevinding:** De component gebruikt uitsluitend tokens via `useAppStyles`. Er is geen spoor van business logica of handmatige delingen door 100.
+- **Shadow Isolation (ADR-12):** Ik heb gecontroleerd dat de `isSpecialStatus` vlag niet wordt gebruikt voor visuele cues (zoals een rode rand of waarschuwingsteken) in deze component. Dit is essentieel voor de "Silent Audit" eis.
+
+### ✅ WAI-006E: Decommission & Aliassen
+Dit is de noodzakelijke "hygiëne-stap".
+- **TS/Babel Sync:** De gelijktijdige update van `tsconfig.json` en `babel.config.js` is cruciaal om de beruchte "Module not found" errors in Metro te voorkomen.
+- **Atomic Deletion:** Het plan om elk `OUD_` bestand met een aparte commit te verwijderen is uitstekend voor de audit-trail. Het stelt ons in staat om bij een onverhoopte regressie exact te zien welk legacy-fragment nog stiekem werd aangeroepen.
+
+---
+
+## 2️⃣ Test- & Validatie-audit (Gate A/B/C)
+
+### Gate A: Unit Testing (Selectors & Snapshots)
+De testsuite voor `financialSelectors.test.ts` is de "Euro-Garantie" in actie. Het bewijst dat `325025` centen onfeilbaar worden geprojecteerd als `3.250,25`. De snapshot test voor de component borgt de visuele stabiliteit.
+
+### Gate B: Integration (The READY State)
+De orchestrator (WAI-006A) moet nu bewijzen dat hij de `READY` status pas afgeeft als de `FormContext` gevuld is, zodat de `FinancialSummary` niet op `undefined` crasht.
+
+### Gate C: E2E (The Final Result)
+**Scenario:** 
+1. Voer data in via de nieuwe `MoneyField` (WAI-006D).
+2. Navigeer naar het Dashboard.
+3. **Check:** Het netto-bedrag moet exact overeenkomen met de som van de invoer, gepresenteerd in het juiste Nederlandse formaat.
+
+---
+
+## 3️⃣ Success Criteria & Release-advies
+
+**Status: GEVALIDEERD (Green Light)**
+
+Dit pakket is de "finishing touch" van de Phoenix-migratie. De CU-agent heeft mijn volledige mandaat om de legacy-bestanden te verwijderen en de nieuwe projectie-laag te activeren.
+
+### 🛡️ Post-Implementation Focus:
+Na de merge van WAI-006E moet een volledige `npx tsc` (TypeScript check) zonder fouten passeren. Elke resterende relatieve import (`../../`) in de core-logica moet worden gemarkeerd als technische schuld.
+
+### 🚀 Instructie voor de Navigator (CU-Agent):
+1. **Implementeer WAI-006E-TS & B:** Fix de aliassen eerst, zodat de nieuwe componenten direct de `@ui` en `@utils` paden kunnen gebruiken.
+2. **Bouw WAI-006B-S & C:** Activeer de financiële projectie op het Dashboard.
+3. **Voer het Decommission Plan uit:** Verwijder de `OUD_` bestanden één voor één met de voorgeschreven commit-messages.
+4. **Final Check:** Draai `npm test` en verifieer de "Euro-Garantie" op het scherm.
+
+**Navigator, de steigers kunnen weg. Het gebouw is klaar voor gebruik. Voer WAI-006B/E uit.**
+</M&T>

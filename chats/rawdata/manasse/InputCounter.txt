@@ -1,0 +1,77 @@
+
+// WAI-002: Refactor (dom atom + StyleSheet + guards)
+// Target: src/components/InputCounter.tsx
+import * as React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useAppStyles } from '../styles/useAppStyles';
+
+export type InputCounterProps = {
+  value: number;
+  min?: number;
+  max?: number;
+  onValueChange: (value: number) => void;
+  accessibilityLabel?: string;
+};
+
+const InputCounter: React.FC<InputCounterProps> = ({
+  value,
+  min = 0,
+  max,
+  onValueChange,
+  accessibilityLabel,
+}) => {
+  const { colors } = useAppStyles();
+
+  // Defensieve guard: UI blijft stabiel zelfs als parent contract breekt
+  const safeValue = typeof value === 'number' && !Number.isNaN(value) ? value : min;
+
+  const canDec = safeValue > min;
+  const canInc = max === undefined || safeValue < max;
+
+  const dec = () => {
+    const next = safeValue - 1;
+    if (next >= min) onValueChange(next);
+  };
+  const inc = () => {
+    const next = safeValue + 1;
+    if (max === undefined || next <= max) onValueChange(next);
+  };
+
+  return (
+    <View style={styles.row}>
+      <TouchableOpacity
+        onPress={dec}
+        disabled={!canDec}
+        style={[styles.btn, { backgroundColor: canDec ? colors.primary : colors.secondary }, !canDec && styles.disabled]}
+        accessibilityRole="button"
+        accessibilityLabel={`${accessibilityLabel ?? 'Waarde'} verlagen`}
+      >
+        <Text style={[styles.sign, { color: canDec ? colors.primaryText : colors.textSecondary }]}>−</Text>
+      </TouchableOpacity>
+
+      <Text style={[styles.value, { color: colors.textPrimary }]} accessibilityLabel={accessibilityLabel}>
+        {safeValue}
+      </Text>
+
+      <TouchableOpacity
+        onPress={inc}
+        disabled={!canInc}
+        style={[styles.btn, { backgroundColor: canInc ? colors.primary : colors.secondary }, !canInc && styles.disabled]}
+        accessibilityRole="button"
+        accessibilityLabel={`${accessibilityLabel ?? 'Waarde'} verhogen`}
+      >
+        <Text style={[styles.sign, { color: canInc ? colors.primaryText : colors.textSecondary }]}>+</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center' },
+  btn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 },
+  sign: { fontSize: 20, fontWeight: 'bold' },
+  value: { marginHorizontal: 20, fontSize: 24, fontWeight: 'bold', minWidth: 40, textAlign: 'center' },
+  disabled: { opacity: 0.5 },
+});
+
+export default InputCounter;

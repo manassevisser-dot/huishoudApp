@@ -1,0 +1,183 @@
+/*
+  financialModels.ts
+  --------------------------------------------------
+  Centrale verzameling van financiële formules +
+  - Huishoud Excel-logica (1-op-1 formules)
+  - Beslisboomformules (uitkering / beleid)
+  - Score-model bestaanszekerheid & risicoprofiel
+
+  Doel:
+  - Direct bruikbaar in frontend (React / RN)
+  - Herbruikbaar in backend / decision engines
+  - Volledig deterministisch (geen side-effects)
+*/
+
+/* ==================================================
+   1. BASIS FINANCIËLE FUNCTIES
+================================================== */
+
+export const sum = (values: number[]): number =>
+  values.reduce((a, b) => a + b, 0);
+
+export const average = (values: number[]): number =>
+  values.length === 0 ? 0 : sum(values) / values.length;
+
+export const weightedAverage = (values: number[], weights: number[]): number => {
+  const totalWeight = sum(weights);
+  if (totalWeight === 0) return 0;
+  return values.reduce((acc, v, i) => acc + v * (weights[i] ?? 0), 0) / totalWeight;
+};
+
+export const percentage = (part: number, total: number): number =>
+  total === 0 ? 0 : part / total;
+
+export const indexValue = (current: number, base: number): number =>
+  base === 0 ? 0 : (current / base) * 100;
+
+/* ==================================================
+   2. INKOMEN, UITGAVEN & SALDO (HUISHOUD)
+================================================== */
+
+export interface HouseholdFinance {
+  brutoInkomen: number;
+  belastingen: number;
+  premies: number;
+  toeslagen: number;
+  vasteLasten: number;
+  variabeleLasten: number;
+}
+
+export const nettoInkomen = (h: HouseholdFinance): number =>
+  h.brutoInkomen - h.belastingen - h.premies;
+
+export const beschikbaarInkomen = (h: HouseholdFinance): number =>
+  nettoInkomen(h) + h.toeslagen - h.vasteLasten;
+
+export const maandSaldo = (h: HouseholdFinance): number =>
+  beschikbaarInkomen(h) - h.variabeleLasten;
+
+export const spaarQuote = (sparen: number, netto: number): number =>
+  netto === 0 ? 0 : sparen / netto;
+
+/* ==================================================
+   3. GROEI & TREND
+================================================== */
+
+export const absoluteGrowth = (oldValue: number, newValue: number): number =>
+  newValue - oldValue;
+
+export const relativeGrowth = (oldValue: number, newValue: number): number =>
+  oldValue === 0 ? 0 : (newValue - oldValue) / oldValue;
+
+export const cagr = (begin: number, end: number, years: number): number =>
+  begin <= 0 || years <= 0 ? 0 : Math.pow(end / begin, 1 / years) - 1;
+
+/* ==================================================
+   4. TIJDSWAARDE VAN GELD
+================================================== */
+
+export const futureValue = (pv: number, rate: number, years: number): number =>
+  pv * Math.pow(1 + rate, years);
+
+export const presentValue = (fv: number, rate: number, years: number): number =>
+  fv / Math.pow(1 + rate, years);
+
+export const netPresentValue = (cashflows: number[], rate: number): number =>
+  cashflows.reduce((acc, cf, t) => acc + cf / Math.pow(1 + rate, t + 1), 0);
+
+/* ==================================================
+   5. SCHULDEN & DRAAGKRACHT
+================================================== */
+
+export const debtRatio = (totalDebt: number, annualIncome: number): number =>
+  annualIncome === 0 ? 0 : totalDebt / annualIncome;
+
+export const repaymentRatio = (monthlyRepayment: number, netMonthlyIncome: number): number =>
+  netMonthlyIncome === 0 ? 0 : monthlyRepayment / netMonthlyIncome;
+
+export const interestBurdenRatio = (interest: number, netIncome: number): number =>
+  netIncome === 0 ? 0 : interest / netIncome;
+
+/* ==================================================
+   6. BESLISBOOM – UITKERING / BELEID
+================================================== */
+
+export interface BenefitContext {
+  nettoInkomen: number;
+  vermogen: number;
+  huishoudenGrootte: number;
+  bijstandsnorm: number;
+  vermogensgrens: number;
+}
+
+export const heeftRechtOpBijstand = (c: BenefitContext): boolean =>
+  c.nettoInkomen < c.bijstandsnorm && c.vermogen <= c.vermogensgrens;
+
+export const aanvullendeUitkering = (c: BenefitContext): number =>
+  Math.max(0, c.bijstandsnorm - c.nettoInkomen);
+
+/* ==================================================
+   7. BREAK-EVEN & SCENARIO
+================================================== */
+
+export const breakEvenPoint = (
+  vasteKosten: number,
+  prijsPerEenheid: number,
+  variabeleKostenPerEenheid: number
+): number => {
+  const marge = prijsPerEenheid - variabeleKostenPerEenheid;
+  return marge <= 0 ? Infinity : vasteKosten / marge;
+};
+
+/* ==================================================
+   8. RISICO & VARIATIE
+================================================== */
+
+export const variance = (values: number[]): number => {
+  const avg = average(values);
+  return average(values.map(v => Math.pow(v - avg, 2)));
+};
+
+export const standardDeviation = (values: number[]): number =>
+  Math.sqrt(variance(values));
+
+/* ==================================================
+   9. SCORE-MODEL BESTAANSZEKERHEID
+================================================== */
+
+export interface SecurityScoreInput {
+  nettoInkomen: number;
+  vasteLasten: number;
+  schulden: number;
+  buffer: number; // vrij beschikbaar vermogen
+}
+
+export const bestaanszekerheidScore = (i: SecurityScoreInput): number => {
+  const lastendruk = i.vasteLasten / Math.max(i.nettoInkomen, 1);
+  const schuldendruk = i.schulden / Math.max(i.nettoInkomen * 12, 1);
+  const bufferMaanden = i.buffer / Math.max(i.vasteLasten, 1);
+
+  // normaliseren (0–1)
+  const score =
+    (1 - Math.min(lastendruk, 1)) * 0.4 +
+    (1 - Math.min(schuldendruk, 1)) * 0.3 +
+    Math.min(bufferMaanden / 6, 1) * 0.3;
+
+  return Math.round(score * 100);
+};
+
+/* ==================================================
+   10. RISICOPROFIEL
+================================================== */
+
+export type RiskLevel = 'LAAG' | 'MIDDEL' | 'HOOG';
+
+export const riskProfile = (score: number): RiskLevel => {
+  if (score >= 70) return 'LAAG';
+  if (score >= 40) return 'MIDDEL';
+  return 'HOOG';
+};
+
+/* ==================================================
+   EINDE BESTAND
+================================================== */

@@ -1,0 +1,183 @@
+
+# DEV-TASKS_v28.md
+
+> Scope: Concreet, versie-kloppend actieplan voor **Minimal Cashflow Setup Wizard (v28)** op basis van feitelijke code in `v28.txt` + architecturale doelen. Geen codewijzigingen hier; dit is de takenlijst met DoD, testideeën en effort.
+
+---
+
+## 1) Type/Renderer Consistentie – `radio-chips` vs. `select`
+**Context:** `FieldConfig.type` bevat `'radio-chips'`, maar `FormField` rendert (web-only) `<select>/<option>`. Chip-styles bestaan wel, maar worden niet gebruikt. [1](https://se-prod.asyncgw.teams.microsoft.com/v1/objects/0-csea-d14-bf2221dda604fb98751181f6ebefb3a5/views/original/v28.txt)
+
+### Taken
+- **T1.1**: Implementeer **`radio-chips` renderer** in `FormField` voor velden met `type: 'radio-chips'`. [1](https://se-prod.asyncgw.teams.microsoft.com/v1/objects/0-csea-d14-bf2221dda604fb98751181f6ebefb3a5/views/original/v28.txt)
+- **T1.2**: Verwijder de verouderde **`select`-branch** uit `FormField` (web-only), tenzij expliciet web-target nodig. [1](https://se-prod.asyncgw.teams.microsoft.com/v1/objects/0-csea-d14-bf2221dda604fb98751181f6ebefb3a5/views/original/v28.txt)
+- **T1.3**: Koppel bestaande chip-styles (`chipContainer`, `chip`, `chipSelected`, `chipTextSelected`, etc.) aan de nieuwe chips-renderer. [1](https://se-prod.asyncgw.teams.microsoft.com/v1/objects/0-csea-d14-bf2221dda604fb98751181f6ebefb3a5/views/original/v28.txt)
+- **T1.4** (optioneel): Als `select` nodig blijft op web, encapsuleer het in een **Web-only component** (`<WebSelect/>`) en **guard** via `Platform.OS === 'web'`.
+
+### Definition of Done (DoD)
+- Velden met `type: 'radio-chips'` renderen als horizontale selectiegroepen, met selected-state en onPress → `onChange(field.id, option.value)`.
+- Geen `<select>` in RN-path; op web mag `<WebSelect/>` bestaan, maar niet in native builds.
+- ESLint heeft **geen** `no-unused-styles` warnings meer voor chip-styles. [1](https://se-prod.asyncgw.teams.microsoft.com/v1/objects/0-csea-d14-bf2221dda604fb98751181f6ebefb3a5/views/original/v28.txt)
+
+### Testideeën
+- **RTL/Unit:** render `FormField` met `type: 'radio-chips'` → klik op optie → `onChange` ontvangt juiste `value`.
+- **E2E:** doorloop C1/C4 met chips-keuzes; controleer dat conditional labels (C10: Huur/Hypotheek) correct werken. [1](https://se-prod.asyncgw.teams.microsoft.com/v1/objects/0-csea-d14-bf2221dda604fb98751181f6ebefb3a5/views/original/v28.txt)
+- **A11y:** `accessibilityRole="button"` en `accessibilityState={{ selected: true/false }}` per chip; navigatie met screen reader.
+
+### Effort
+- **M** (implementatie + styling + tests)
+
+---
+
+## 2) Native-compatibele Picker (Fase 2 Productie)
+**Context:** Voor native UX is een modale picker of lib (bijv. `@react-native-picker/picker`) beter dan alerts of web-selects.
+
+### Taken
+- **T2.1**: Introduceer **ModalPicker** component met lijst van opties, zoek/scroll, en duidelijke “Kies/Sluit”.
+- **T2.2**: Integreer ModalPicker op plekken waar een single-select nodig is.
+
+### DoD
+- Uniforme UX op iOS/Android/Web, met consistente value/label contracten.
+- A11y labels aanwezig; focus/escape gedrag correct.
+
+### Tests
+- **RTL:** open/close modal, selecteer optie, assert `onChange`.
+- **E2E:** end-to-end run op Expo iOS/Android.
+
+### Effort
+- **L** (design + implementatie + e2e)
+
+---
+
+## 3) Reducer-contract & stale-data mitigatie
+**Context:** Shallow merge kan oude waarden behouden wanneer UI velden wist zonder expliciete leegte. [1](https://se-prod.asyncgw.teams.microsoft.com/v1/objects/0-csea-d14-bf2221dda604fb98751181f6ebefb3a5/views/original/v28.txt)
+
+### Taken
+- **T3.1**: Documenteer ontwikkelaars-contract in handover: UI dispatcht **volledige page-state** + expliciet `''`/`null` bij wissen.
+- **T3.2**: Voeg E2E tests toe voor “wissen overschrijft oud”.
+- **T3.3** (optioneel, fase 2): Overweeg `SET_PAGE_DATA` → **full replace** of extra actie `CLEAR_PAGE_FIELDS`.
+
+### DoD
+- Contract staat in README/Handover; QA tests bewijzen correct gedrag.
+
+### Tests
+- **E2E:** invullen → terug → wissen veld → opslaan → assert dat oude waarde niet terugkomt.
+
+### Effort
+- **S** (documentatie + tests), **M** als reducer-variant wordt geïntroduceerd.
+
+---
+
+## 4) Validatie & Numeric UX-fijnslijpen
+**Context:** `parseFloat(text) || 0` kan bij niet-numeriek kort `0` laten zien vóór invalidatie. [1](https://se-prod.asyncgw.teams.microsoft.com/v1/objects/0-csea-d14-bf2221dda604fb98751181f6ebefb3a5/views/original/v28.txt)
+
+### Taken
+- **T4.1**: Beslis UX: direct invalid (rode rand) bij non-numeric, of pas na blur.
+- **T4.2**: Indien direct-invalid: zet `error` bij `onChangeText` en voorkom `0` fallback bij letters.
+
+### DoD
+- Consistente UX voor numeric velden, zonder verrassing (geen “spring naar 0” bij ongeldige input).
+
+### Tests
+- **RTL:** typ `abc` → ziet user direct foutmelding; typ `123` → geen fout.
+
+### Effort
+- **S/M** (afhankelijk van gewenste timing logic)
+
+---
+
+## 5) Dashboard berekening – architecturale scheiding (fase 2)
+**Context:** v28 rekent samenvatting via `useMemo([state.C7, state.C10])` in `DashboardScreen`. [1](https://se-prod.asyncgw.teams.microsoft.com/v1/objects/0-csea-d14-bf2221dda604fb98751181f6ebefb3a5/views/original/v28.txt)
+
+### Taken
+- **T5.1**: Extraheer berekening naar **service** (`calculateSummary(state)`) of **reducer-actie**.
+- **T5.2**: Zorg voor hergebruik (rapportages, export, andere schermen).
+
+### DoD
+- Component bevat geen rekenlogica; unit-tests voor `calculateSummary`.
+
+### Tests
+- **Unit:** diverse cases (negatieve/positieve cashflow, null/undefined waarden) → output correct.
+
+### Effort
+- **M**
+
+---
+
+## 6) Persistentie: naamgeving & traceerbaarheid
+**Context:** Storage werkt, maar namen verschillen van eerdere analyse (geen `loadSavedState/saveState`). [1](https://se-prod.asyncgw.teams.microsoft.com/v1/objects/0-csea-d14-bf2221dda604fb98751181f6ebefb3a5/views/original/v28.txt)
+
+### Taken
+- **T6.1**: Align naamgeving in docs met feitelijke API (`savePageData`, `loadPageData`, `loadAllFormData`, `getUserId`, `saveUserId`).
+- **T6.2**: Voeg logging-tags toe (bijv. `[Storage]`) voor traceerbare debug output.
+
+### DoD
+- Handover/README reflecteert de echte API; logs uniform en filterbaar.
+
+### Effort
+- **S**
+
+---
+
+## 7) Conditional operator type (kwaliteitsverbetering)
+**Context:** `operator` is nu `string`; een unie-type verbetert IDE/TS hulp. [1](https://se-prod.asyncgw.teams.microsoft.com/v1/objects/0-csea-d14-bf2221dda604fb98751181f6ebefb3a5/views/original/v28.txt)
+
+### Taken
+- **T7.1**: Definieer `operator: '>' | '<' | '>=' | '<=' | '===' | '!=='` in `ConditionalFieldProps`.
+
+### DoD
+- TS dwingt geldige operators af; foutieve strings geven compile‑time errors.
+
+### Effort
+- **S**
+
+---
+
+## 8) A11y & WCAG checks (uitbreiding)
+**Context:** labels zijn aanwezig; chips/toggles kunnen extra a11y‑states krijgen. [1](https://se-prod.asyncgw.teams.microsoft.com/v1/objects/0-csea-d14-bf2221dda604fb98751181f6ebefb3a5/views/original/v28.txt)
+
+### Taken
+- **T8.1**: Voeg `accessibilityRole`/`accessibilityState` toe aan chips/toggles.
+- **T8.2**: Screen reader check: focus‑volgorde, labels, hints.
+
+### DoD
+- Basis a11y‑checklist doorlopen; geen blockers.
+
+### Effort
+- **S**
+
+---
+
+## 9) Lint & CI
+**Context:** voorkomen van regressies. [1](https://se-prod.asyncgw.teams.microsoft.com/v1/objects/0-csea-d14-bf2221dda604fb98751181f6ebefb3a5/views/original/v28.txt)
+
+### Taken
+- **T9.1**: Activeer `react-native/no-unused-styles` als gate in CI.
+- **T9.2**: Voeg lint‑script toe (`npm run lint`) in pipeline.
+
+### DoD
+- CI faalt bij nieuwe unused styles; rapport zichtbaar.
+
+### Effort
+- **S**
+
+---
+
+## Overzicht Effort (ruw)
+- **S**: documentatie/kleine type‑aanpassing/a11y/lint (≤0.5–1d)
+- **M**: chips‑renderer, reducer‑contract tests, summary naar service (1–3d)
+- **L**: ModalPicker & e2e op Expo (3–5d)
+
+---
+
+## Dependencies & Volgorde (aanbevolen)
+1. **T1 (chips renderer + select verwijderen/isoleren)** → ontgrendelt T3 (styles/gebruikt), T8 (a11y op chips)
+2. **T3 (contract + E2E)**
+3. **T4 (numeric UX)**
+4. **T5 (architectuur service)**
+5. **T2 (ModalPicker, fase 2)**
+6. **T6/T7/T9 (documentatie/kwaliteit/CI)**
+
+---
+
+## Notities

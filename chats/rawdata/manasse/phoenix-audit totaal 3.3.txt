@@ -1,0 +1,264 @@
+#!/bin/bash
+# ===================================================================
+# PROJECT PHOENIX: ULTIMATE HYBRID AUDIT & COMPLIANCE SCRIPT v2.2
+# ===================================================================
+# Role: Lyra (Senior Migration & Test Lead)
+# Standards: A-Tier 2025, ADR-12 t/m ADR-17
+# ===================================================================
+
+set -euo pipefail
+IFS=$'\n\t'
+
+# ==================== CONFIGURATIE ====================
+
+readonly SCRIPT_VERSION="2.2.0"
+readonly PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")}"
+readonly CACHE_DIR="/tmp/phoenix-audit-$(id -u)"
+
+# Kleuren & Iconen
+if [[ "${NO_COLOR:-}" == "1" ]] || [[ ! -t 1 ]]; then
+    readonly RED='' GREEN='' BLUE='' YELLOW='' BOLD='' NC=''
+    readonly ICON_OK="[OK]" ICON_FAIL="[FAIL]" ICON_WARN="[WARN]"
+else
+    readonly RED='\033[0;31m' GREEN='\033[0;32m' BLUE='\033[0;34m'
+    readonly YELLOW='\033[1;33m' BOLD='\033[1m' NC='\033[0m'
+    readonly ICON_OK="✅" ICON_FAIL="❌" ICON_WARN="⚠️"
+fi
+
+# Variabelen
+VERBOSE="${VERBOSE:-false}"
+PARALLEL="${PARALLEL:-false}"
+
+# ==================== UTILS & ENGINE ====================
+
+init_audit() {
+    rm -rf "$CACHE_DIR"
+    mkdir -p "$CACHE_DIR/locks"
+    echo 0 > "$CACHE_DIR/total"
+    echo 0 > "$CACHE_DIR/passed"
+    echo 0 > "$CACHE_DIR/failed"
+    : > "$CACHE_DIR/failed_items.txt"
+}
+
+atomic_inc() {
+    local file="$CACHE_DIR/$1"
+    local lockfile="${file}.lock"
+    
+    [[ ! -f "$file" ]] && echo "0" > "$file"
+
+    # Helper om data te cleansen vòòr berekening (voorkomt "0 0" error)
+    clean_inc() {
+        local val=$(cat "$file" 2>/dev/null | tr -dc '0-9')
+        echo $(( ${val:-0} + 1 )) > "$file"
+    }
+
+    if command -v flock >/dev/null 2>&1; then
+        ( flock -x 200; clean_inc ) 200>"$lockfile"
+    else
+        clean_inc
+    fi
+}
+
+sync_counters() {
+    # Haal waarden op en dwing ze naar zuivere integers
+    TOTAL_CHECKS=$(( $(cat "$CACHE_DIR/total" 2>/dev/null | tr -dc '0-9' || echo 0) ))
+    PASSED_CHECKS=$(( $(cat "$CACHE_DIR/passed" 2>/dev/null | tr -dc '0-9' || echo 0) ))
+    FAILED_CHECKS=$(( $(cat "$CACHE_DIR/failed" 2>/dev/null | tr -dc '0-9' || echo 0) ))
+}
+
+log_section() { echo -e "\n${BOLD}${BLUE}━━━━━━━━━━ $* ━━━━━━━━━━${NC}"; }
+
+# De verbeterde Safe Grep Engine
+safe_grep() {
+    local pattern="$1"
+    local target="$2"
+    local mode="${3:-include}"   # include of exclude
+    local include="${4:-*}"      # glob filter voor bestanden
+
+    local cmd
+
+    if command -v rg &>/dev/null; then
+        # Ripgrep gebruikt
+        if [[ "$mode" == "exclude" ]]; then
+            cmd=(rg -Pn -v --glob "$include" -e "$pattern" "$target")
+        else
+            cmd=(rg -Pn --glob "$include" -e "$pattern" "$target")
+        fi
+    elif echo "test" | grep -P "t" >/dev/null 2>&1; then
+        # Grep met Perl regex
+        if [[ "$mode" == "exclude" ]]; then
+            cmd=(grep -rnP -v --include="$include" "$pattern" "$target")
+        else
+            cmd=(grep -rnP --include="$include" "$pattern" "$target")
+        fi
+    else
+        # Grep fallback met extended regex
+        if [[ "$mode" == "exclude" ]]; then
+            cmd=(grep -rnE -v --include="$include" "$pattern" "$target")
+        else
+            cmd=(grep -rnE --include="$include" "$pattern" "$target")
+        fi
+    fi
+
+    "${cmd[@]}" 2>/dev/null || true
+}
+
+
+check_pattern() {
+    local pattern="$1"
+    local target="$2"
+    local desc="$3"
+    local min="${4:-1}"
+    
+    atomic_inc "total"
+    local matches=$(safe_grep "$pattern" "$target")
+    local count=$(echo "$matches" | grep -c . || echo 0)
+    
+    if [[ "$count" -ge "$min" ]]; then
+        echo -e "${GREEN}${ICON_OK} $desc ($count)${NC}"
+        atomic_inc "passed"
+        [[ "$VERBOSE" == "true" ]] && echo "$matches" | head -3 | sed 's/^/  /'
+    else
+        echo -e "${RED}${ICON_FAIL} $desc (vond $count, verwacht $min)${NC}"
+        atomic_inc "failed"
+        echo "$desc" >> "$CACHE_DIR/failed_items.txt"
+    fi
+}
+
+check_antipattern() {
+    local pattern="$1"
+    local target="$2"
+    local desc="$3"
+    
+    atomic_inc "total"
+    local matches=$(safe_grep "$pattern" "$target")
+    local count=$(echo "$matches" | grep -c . || echo 0)
+    
+    if [[ "$count" -eq 0 ]]; then
+        echo -e "${GREEN}${ICON_OK} $desc (Clean)${NC}"
+        atomic_inc "passed"
+    else
+        echo -e "${RED}${ICON_FAIL} $desc ($count violations!)${NC}"
+        atomic_inc "failed"
+        echo "$matches" | head -5 | sed 's/^/  /'
+        echo "$desc" >> "$CACHE_DIR/failed_items.txt"
+    fi
+}
+
+run_cmd() {
+    local cmd="$1"
+    local desc="$2"
+    atomic_inc "total"
+    if eval "$cmd" >/dev/null 2>&1; then
+        echo -e "${GREEN}${ICON_OK} $desc${NC}"
+        atomic_inc "passed"
+    else
+        echo -e "${RED}${ICON_FAIL} $desc (Gefaald)${NC}"
+        atomic_inc "failed"
+        echo "$desc" >> "$CACHE_DIR/failed_items.txt"
+    fi
+}
+
+# ==================== AUDIT SECTIES ====================
+
+audit_wai_001_003() {
+    log_section "1. CORE & HOUSEHOLD (WAI-001-003)"
+    run_cmd "npm run typecheck" "TypeScript Strict Mode"
+    check_pattern "as const" "src/selectors/householdSelectors.ts" "SSOT Immutability"
+    check_pattern "SET_SPECIAL_STATUS" "src/context/FormContext.tsx" "Dumb Reducer Actions"
+    check_antipattern "(Math\.|calculate|compute|derive)" "src/state/formReducer.ts" "No logic in Reducer (ADR-14)"
+}
+
+audit_wai_004() {
+    log_section "2. EURO-GARANTIE (WAI-004)"
+    check_pattern "Math\.max\(0," "src/utils/numbers.ts" "Non-negative Parser (ADR-16)"
+    check_pattern "computeNetCents" "src/logic/finance.ts" "Minor Units Kernel (ADR-15)"
+    check_antipattern "parseFloat|parseInt" "src/logic/finance.ts" "No unsafe parsing in Kernel"
+}
+
+audit_wai_006a() {
+    log_section "3. APP STATUS FSM (WAI-006A)"
+    check_pattern "'INITIALIZING'|'HYDRATING'|'READY'|'ERROR'" "src/app/hooks/useAppOrchestration.ts" "FSM States"
+    check_pattern "switch.*status" "src/App.tsx" "Pure Projector (ADR-17)"
+}
+
+audit_wai_006d() {
+    log_section "4. SCORCHED EARTH (WAI-006D)"
+    check_antipattern "parseFloat\(|Number\(|replace\(',', '.'\)" "src/ui" "No legacy parsing in UI"
+    check_pattern "MoneyField" "src/organisms" "MoneyField Integration"
+}
+
+audit_wai_006e() {
+    log_section "5. CLEANUP & ALIASES (WAI-006E)"
+    local deep_imports=$(grep -r "\.\./\.\./\.\./" src --include="*.ts*" 2>/dev/null | wc -l || echo 0)
+    atomic_inc "total"
+    if [[ "$deep_imports" -eq 0 ]]; then
+        echo -e "${GREEN}${ICON_OK} No deep relative imports${NC}"
+        atomic_inc "passed"
+    else
+        echo -e "${RED}${ICON_FAIL} Found $deep_imports deep imports${NC}"
+        atomic_inc "failed"
+    fi
+    check_antipattern "console\.(log|debug|info)(?!\.)" "src" "No console leaks"
+}
+
+report() {
+    # Schakel de trap uit om loops te voorkomen
+    trap - EXIT
+
+    # Haal de tellers op en dwing ze naar zuivere getallen (de "0 0" fix)
+    local total=$(cat "$CACHE_DIR/total" 2>/dev/null | tr -dc '0-9' || echo 0)
+    local passed=$(cat "$CACHE_DIR/passed" 2>/dev/null | tr -dc '0-9' || echo 0)
+    local failed=$(cat "$CACHE_DIR/failed" 2>/dev/null | tr -dc '0-9' || echo 0)
+    
+    # Voorkom lege variabelen
+    total=${total:-0}
+    passed=${passed:-0}
+    failed=${failed:-0}
+
+    local rate=$(( total > 0 ? passed * 100 / total : 0 ))
+
+    log_section "AUDIT RESULTAAT"
+    echo -e "Checks:  $total"
+    echo -e "Passed:  ${GREEN}$passed${NC}"
+    echo -e "Failed:  ${RED}$failed${NC}"
+    echo -e "Rate:    ${BOLD}$rate%${NC}"
+
+    if [[ "$failed" -gt 0 ]]; then
+        echo -e "\n${RED}${BOLD}HERSTEL DE VOLGENDE PUNTEN:${NC}"
+        # Toon unieke fouten uit het logbestand
+        [[ -f "$CACHE_DIR/failed_items.txt" ]] && sort -u "$CACHE_DIR/failed_items.txt" | sed 's/^/  - /'
+        exit 1
+    else
+        echo -e "\n${GREEN}${BOLD}🎉 PROJECT PHOENIX STATUS: V1.0-CONFIRMED${NC}"
+        exit 0
+    fi
+}
+
+# ==================== MAIN ====================
+
+main() {
+    init_audit
+    
+    # Zorg dat de report functie ALTIJD wordt uitgevoerd bij het afsluiten
+    trap report EXIT
+    
+    echo -e "${BLUE}${BOLD}Phoenix Audit v$SCRIPT_VERSION gestart op $(date)${NC}"
+    cd "$PROJECT_ROOT"
+
+    if [[ "$PARALLEL" == "true" ]]; then
+        # Start secties in de achtergrond
+        audit_wai_001_003 & audit_wai_004 & audit_wai_006a & audit_wai_006d & audit_wai_006e & 
+        wait 
+    else
+        audit_wai_001_003
+        audit_wai_004
+        audit_wai_006a
+        audit_wai_006d
+        audit_wai_006e
+    fi
+    
+    # De handmatige rapportage-regels die hier stonden zijn nu verplaatst naar de report() functie.
+}
+
+main "$@"

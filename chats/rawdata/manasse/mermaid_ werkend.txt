@@ -1,0 +1,175 @@
+graph TD
+    classDef page fill:#F9F,stroke:#333,stroke-width:2px,font-weight:bold
+    classDef userButton fill:#CCF,stroke:#333
+    classDef phoneProcess fill:#E6F0F8,stroke:#0A6EDC
+    classDef backendProcess fill:#CCFFCC,stroke:#00AA00,stroke-dasharray: 5 5
+
+    %% ------------------------------------------------------------------------------------------------------
+    %% Subgraph 1: App Navigatie Flow
+    %% ------------------------------------------------------------------------------------------------------
+    subgraph A. App Navigatie Flow
+        direction LR
+
+        A1[Landingpage]:::page
+        B1{Inloggen}:::phoneProcess
+        B2[[Aanmelden]]:::userButton
+        B3{Validatie Inlogproces}:::phoneProcess
+        D1[Dashboard]:::page
+
+        A1 -- Inloggen --> B1
+        B1 --> B3
+        B3 -- Na validatie --> D1
+        A1 -- Druk op --> B2
+
+        %% DASHBOARD FLOWS
+        subgraph D. Dashboard
+            direction TD
+            D1 --> D2[[Dagelijkse kosten]]:::userButton
+            D1 --> D3[[Upload]]:::userButton
+            D1 --> D4[[Settings]]:::userButton
+
+            D2 --> DK1[Dagelijkse Kosten]:::page
+            DK1 --> DK2[[Opslaan]]:::userButton
+            DK1 --> DK3[[Terug]]:::userButton
+            DK2 --> P1_0((Client-side: Veldvalidatie OK))
+            P1_0 --> P1(Procedure 1)
+            P1 --> DK4((Update dashboard & maak velden leeg))
+            DK4 --> D1
+            DK3 --> DK5((Terug naar Dashboard))
+            DK5 --> D1
+
+            D3 --> U1[Upload]:::page
+            U1 --> U2[[CVS upload]]:::userButton
+            U1 --> U3[[Terug]]:::userButton
+            U2 --> P2_0((select lokaal bestand))
+            P2_0 --> P2(Procedure 2)
+            P2 --> U4((Update dashboard))
+            U4 --> D1
+            U3 --> U5((Terug naar Dashboard))
+            U5 --> D1
+
+            D4 --> S1[Settings]:::page
+            S1 --> S2[[Reset]]:::userButton
+            S1 --> S3[[Verwijder]]:::userButton
+            S1 --> S4[[Overig]]:::userButton
+            S1 --> S5[[Terug]]:::userButton
+
+            %% RESET FLOW
+            S2 --> S2_P{"Bevestiging Popup Reset"}
+            S2_P --> S2_JA[[JA]]
+            S2_P --> S2_NEE[[NEE]]
+            S2_JA --> S2_A1((verzoek DB data setup wissen))
+            S2_A1 --> S2_A2((herstart Setup))
+            S2_A2 --> C1[Huishouden_NRS]:::page 
+            %% Naar Setup start
+            S2_NEE --> S2_N1((sluit popup))
+            S2_N1 --> S1
+
+            %% VERWIJDER FLOW
+            S3 --> S3_P{"Bevestiging Popup Verwijder"}
+            S3_P --> S3_JA[[JA]]
+            S3_P --> S3_NEE[[NEE]]
+            S3_JA --> S3_A1((verzoek DB userdata wissen))
+            S3_A1 --> S3_A2[/wissen userdata/]:::backendProcess
+            S3_A2 --> A1
+            S3_NEE --> S3_N1((sluit popup))
+            S3_N1 --> S1
+            
+            S4 --> S4_O((keuze uitvoeren))
+            S4_O --> S1
+            S5 --> D1
+        end
+
+        %% AANMELDEN (SETUP) FLOW
+        subgraph C. AanmeldenSetup
+            direction LR
+
+            B2 --> C1
+            C1 --> C2[[Terug]]
+            C1 --> C3[[Verder]]
+            C2 --> P4(Procedure 4)
+            P4 -- Terug naar --> A1 
+            %% Naar Landingpage/Inloggen
+            C3 --> C3_V((validatie velden gevuld))
+            C3_V --> C3_CR{Client-side: Conditional Rendering UI}
+            C3_CR --> P3(Procedure 3)
+
+            P3 --> C4[Huishouden_DTL]:::page
+            C4 --> C5[[Terug]]
+            C4 --> C6[[Verder]]
+            C5 --> P4_2(Procedure 4)
+            P4_2 -- Terug naar --> C1
+
+            C6 --> C6_V((validatie velden gevuld))
+            C6_V --> C6_CR{Client-side: Conditional Rendering UI}
+            C6_CR --> P5(Procedure 5)
+
+            P5 --> C7[Inkomsten]:::page
+            C7 --> C8[[Terug]]
+            C7 --> C9[[Verder]]
+            C8 --> P4_3(Procedure 4)
+            P4_3 -- Terug naar --> C4
+
+            C9 --> C9_V((validatie velden gevuld))
+            C9_V --> C9_CR{Client-side: Conditional Rendering UI}
+            C9_CR --> P6(Procedure 6) 
+            %% P6_1 in oude opzet
+
+            P6 --> C10[Lasten]:::page
+            C10 --> C11[[Terug]]
+            C10 --> C12[[Verder]]
+            C11 --> P4_4(Procedure 4)
+            P4_4 -- Terug naar --> C7
+
+            C12 --> C12_V((validatie velden gevuld))
+            C12_V --> C12_CR{Client-side: Conditional Rendering UI}
+            C12_CR --> P6_2(Procedure 6) 
+            %% P6_2 in oude opzet
+
+            P6_2 --> C12_S[/stuur dataset USERID terug/]:::backendProcess
+            C12_S --> C12_I((dashboard instellen))
+            C12_I --> D1
+
+        end
+    end
+
+    %% ------------------------------------------------------------------------------------------------------
+    %% Subgraph 2: Procedures (Backend & Processing)
+    %% ------------------------------------------------------------------------------------------------------
+    subgraph B. Procedures_Gedefinieerde_Functies
+        direction TD
+        
+        P1(Procedure 1) --> P1_J("Bevestig opslaan en stuur data naar n8n")
+        P1_J --> P1_A[/Verwerk data, berekeningen, stuur dataset terug/]:::backendProcess
+        P1_A --> P1_E(Einde P1)
+
+        P2(Procedure 2) --> P2_C("Bevestig opload")
+        P2_C --> P2_N("CVS naar n8n")
+        P2_N --> P2_W[/Verwerk data, analyseer, vat samen, maak datasets, stuur dataset terug/]:::backendProcess
+        P2_W --> P2_E(Einde P2)
+
+        P3(Procedure 3) --> P3_J("Bevestig 'new user' naar n8n")
+        P3_J --> P3_A[/Aanmaken USERID & Berekening Setup Condities/Benchmark/]:::backendProcess
+        P3_A --> P3_E(Einde P3)
+
+        P4(Procedure 4) --> P4_I{Detecteer Veldwijziging: Verzamel Huidige Input Data als Nieuwe Dataset}
+        P4_I --> P4_W[/Wis oude dataset, bewaar nieuwe dataset/]:::backendProcess
+        P4_W --> P4_E(Einde P4)
+        
+        P5(Procedure 5) --> P5_S("stuur condities en inputdata als dataset naar n8n")
+        P5_S --> P5_A[/Aanvullen Database & Berekening Normatieve Condities/Benchmark & Anonimiseer voor Statistiek/]:::backendProcess
+        P5_A --> P5_E(Einde P5)
+
+        P6_2(Procedure 6) --> P6_S("stuur condities en inputdata als dataset naar n8n")
+        P6_S --> P6_A[/Aanvullen Database, Financiële Kernanalyse "Ink-Last", en Data Voorbereiden voor Statistiek/AI Experimenten/]:::backendProcess
+        P6_A --> P6_E(Einde P6)
+
+        %% Styling (nodig om de nodes de class te geven)
+        class P1_J,P2_C,P2_N,P3_J,P4_I,P5_S,P6_S phoneProcess
+
+        %% Apply common classes
+        class A1,D1,DK1,U1,S1,C1,C4,C7,C10 page
+        class B2,D2,D3,D4,DK2,DK3,U2,U3,S2,S3,S4,S5,C2,C3,C5,C6,C8,C9,C11,C12 userButton
+        class B1,B3,P1_0,DK5,U5,S2_A1,S2_A2,S2_N1,S3_A1,S3_N1,S4_O,C3_V,C6_V,C9_V,C12_V,C3_CR,C6_CR,C9_CR,C12_CR,C12_I phoneProcess
+        class S3_A2,C12_S backendProcess
+        end

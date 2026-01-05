@@ -1,0 +1,1361 @@
+import React, { createContext, useContext, useReducer, useEffect, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+
+// ============================================================================
+// CONTEXT & STATE MANAGEMENT
+// ============================================================================
+
+const FormContext = createContext();
+
+const formReducer = (state, action) => {
+  switch (action.type) {
+    case 'SET_PAGE_DATA':
+      return {
+        ...state,
+        [action.pageId]: { ...state[action.pageId], ...action.data }
+      };
+    case 'LOAD_SAVED_STATE':
+      return { ...state, ...action.data };
+    case 'SET_USER_ID':
+      return { ...state, userId: action.userId };
+    case 'RESET_STATE':
+      return { userId: null };
+    default:
+      return state;
+  }
+};
+
+const FormProvider = ({ children }) => {
+  const [state, dispatch] = useReducer(formReducer, {});
+  
+  return (
+    <FormContext.Provider value={{ state, dispatch }}>
+      {children}
+    </FormContext.Provider>
+  );
+};
+
+const useFormContext = () => {
+  const context = useContext(FormContext);
+  if (!context) throw new Error('useFormContext must be used within FormProvider');
+  return context;
+};
+
+// ============================================================================
+// STORAGE UTILITIES (Mock AsyncStorage for web)
+// ============================================================================
+
+const Storage = {
+  store: {},
+  
+  async getItem(key) {
+    return this.store[key] || null;
+  },
+  
+  async setItem(key, value) {
+    this.store[key] = value;
+  },
+  
+  async removeItem(key) {
+    delete this.store[key];
+  },
+  
+  async clear() {
+    this.store = {};
+  }
+};
+
+const savePageData = async (pageId, data) => {
+  try {
+    await Storage.setItem(`setupData_${pageId}`, JSON.stringify(data));
+    console.log(`✓ Saved ${pageId} data:`, data);
+  } catch (error) {
+    console.error(`✗ Error saving ${pageId}:`, error);
+  }
+};
+
+const loadPageData = async (pageId) => {
+  try {
+    const data = await Storage.getItem(`setupData_${pageId}`);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    console.error(`✗ Error loading ${pageId}:`, error);
+    return null;
+  }
+};
+
+const saveUserId = async (userId) => {
+  await Storage.setItem('userId', userId);
+  console.log('✓ User ID saved:', userId);
+};
+
+const getUserId = async () => {
+  return await Storage.getItem('userId');
+};
+
+const loadAllFormData = async () => {
+  const pages = ['C1', 'C4', 'C7', 'C10'];
+  const allData = {};
+  
+  for (const pageId of pages) {
+    const data = await loadPageData(pageId);
+    if (data) allData[pageId] = data;
+  }
+  
+  const userId = await getUserId();
+  if (userId) allData.userId = userId;
+  
+  return allData;
+};
+
+// ============================================================================
+// VALIDATION ENGINE
+// ============================================================================
+
+const validation = {
+  required: (value, fieldLabel) => {
+    if (value === null || value === undefined || value === '') {
+      return { valid: false, error: `${fieldLabel} is verplicht` };
+    }
+    return { valid: true, error: null };
+  },
+  
+  min: (value, min, fieldLabel) => {
+    if (value < min) {
+      return { valid: false, error: `${fieldLabel} moet minimaal ${min} zijn` };
+    }
+    return { valid: true, error: null };
+  },
+  
+  max: (value, max, fieldLabel) => {
+    if (value > max) {
+      return { valid: false, error: `${fieldLabel} mag maximaal ${max} zijn` };
+    }
+    return { valid: true, error: null };
+  },
+  
+  postcode: (value, fieldLabel) => {
+    if (!/^\d{4}$/.test(value)) {
+      return { valid: false, error: `${fieldLabel} moet 4 cijfers zijn` };
+    }
+    return { valid: true, error: null };
+  },
+  
+  numeric: (value, fieldLabel) => {
+    if (isNaN(value)) {
+      return { valid: false, error: `${fieldLabel} moet een getal zijn` };
+    }
+    return { valid: true, error: null };
+  }
+};
+
+const validateField = (field, value) => {
+  // Required check
+  if (field.required) {
+    const result = validation.required(value, field.label);
+    if (!result.valid) return result;
+  }
+  
+  // Skip other validations if empty and not required
+  if (value === null || value === undefined || value === '') {
+    return { valid: true, error: null };
+  }
+  
+  // Type-specific validation
+  if (field.type === 'numeric') {
+    const result = validation.numeric(value, field.label);
+    if (!result.valid) return result;
+  }
+  
+  // Validation rules
+  if (field.validation) {
+    if (field.validation.min !== undefined) {
+      const result = validation.min(value, field.validation.min, field.label);
+      if (!result.valid) return result;
+    }
+    if (field.validation.max !== undefined) {
+      const result = validation.max(value, field.validation.max, field.label);
+      if (!result.valid) return result;
+    }
+    if (field.validation.postcode) {
+      const result = validation.postcode(value, field.label);
+      if (!result.valid) return result;
+    }
+  }
+  
+  return { valid: true, error: null };
+};
+
+// ============================================================================
+// CONFIGURATION: FORM FIELDS
+// ============================================================================
+
+const formConfig = {
+  C1: {
+    title: 'Huishouden (Basis)',
+    subtitle: 'Vertel ons over uw huishouden',
+    step: 1,
+    totalSteps: 4,
+    fields: [
+      {
+        id: 'aantalVolwassenen',
+        label: 'Aantal volwassenen in huis',
+        type: 'numeric',
+        required: true,
+        validation: { min: 1, max: 10 },
+        defaultValue: 1
+      },
+      {
+        id: 'aantalKinderen',
+        label: 'Aantal kinderen (0-17 jaar)',
+        type: 'numeric',
+        required: true,
+        validation: { min: 0, max: 10 },
+        defaultValue: 0
+      },
+      {
+        id: 'woonsituatie',
+        label: 'Woonsituatie',
+        type: 'select',
+        required: true,
+        options: [
+          { label: 'Selecteer...', value: '' },
+          { label: 'Huurder', value: 'Huurder' },
+          { label: 'Koper', value: 'Koper' },
+          { label: 'Inwonend', value: 'Inwonend' },
+          { label: 'Anders', value: 'Anders' }
+        ]
+      }
+    ],
+    conditionals: [
+      {
+        id: 'kinderenDisplay',
+        condition: { field: 'aantalKinderen', operator: '>', value: 0 },
+        type: 'text',
+        template: 'U heeft {aantalKinderen} {plural} in uw huishouden'
+      }
+    ]
+  },
+  
+  C4: {
+    title: 'Huishouden (Details)',
+    subtitle: 'Aanvullende informatie over uw huishouden',
+    step: 2,
+    totalSteps: 4,
+    fields: [
+      {
+        id: 'postcode',
+        label: 'Postcode (4 cijfers)',
+        type: 'text',
+        required: true,
+        validation: { postcode: true },
+        placeholder: '1234'
+      },
+      {
+        id: 'burgerlijkeStaat',
+        label: 'Burgerlijke staat',
+        type: 'select',
+        required: true,
+        options: [
+          { label: 'Selecteer...', value: '' },
+          { label: 'Alleenstaand', value: 'Alleenstaand' },
+          { label: 'Gehuwd/Samenwonend', value: 'Gehuwd' }
+        ]
+      },
+      {
+        id: 'geboortejaarKind1',
+        label: 'Geboortejaar kind 1',
+        type: 'numeric',
+        required: false,
+        validation: { min: 2007, max: 2024 },
+        conditional: { field: 'C1.aantalKinderen', operator: '>', value: 0 }
+      }
+    ],
+    sections: [
+      {
+        id: 'volwassene1',
+        title: 'Volwassene 1',
+        fields: [
+          {
+            id: 'naamVolwassene1',
+            label: 'Voornaam',
+            type: 'text',
+            required: false,
+            placeholder: 'Optioneel'
+          }
+        ]
+      }
+    ]
+  },
+  
+  C7: {
+    title: 'Inkomsten',
+    subtitle: 'Uw maandelijkse inkomsten',
+    step: 3,
+    totalSteps: 4,
+    fields: [
+      {
+        id: 'nettoMaandsalaris',
+        label: 'Netto maandsalaris (€)',
+        type: 'numeric',
+        required: true,
+        validation: { min: 0 },
+        placeholder: '0'
+      },
+      {
+        id: 'heeftToeslagen',
+        label: 'Heeft u toeslagen?',
+        type: 'toggle',
+        required: true,
+        defaultValue: false
+      },
+      {
+        id: 'huurtoeslag',
+        label: 'Huurtoeslag (€ per maand)',
+        type: 'numeric',
+        required: false,
+        validation: { min: 0 },
+        placeholder: '0',
+        conditional: { field: 'C7.heeftToeslagen', operator: '===', value: true }
+      }
+    ]
+  },
+  
+  C10: {
+    title: 'Vaste Lasten',
+    subtitle: 'Uw maandelijkse vaste uitgaven',
+    step: 4,
+    totalSteps: 4,
+    fields: [
+      {
+        id: 'wonen',
+        label: 'Woonlasten (€)',
+        labelDynamic: true, // Will be calculated based on woonsituatie
+        type: 'numeric',
+        required: true,
+        validation: { min: 0 },
+        placeholder: '0'
+      },
+      {
+        id: 'energie',
+        label: 'Energie & Water (€)',
+        type: 'numeric',
+        required: true,
+        validation: { min: 0 },
+        placeholder: '0'
+      },
+      {
+        id: 'verzekeringen',
+        label: 'Verzekeringen (€)',
+        type: 'numeric',
+        required: true,
+        validation: { min: 0 },
+        placeholder: '0'
+      },
+      {
+        id: 'abonnementen',
+        label: 'Abonnementen (€)',
+        type: 'numeric',
+        required: true,
+        validation: { min: 0 },
+        placeholder: '0'
+      },
+      {
+        id: 'overig',
+        label: 'Overig (€)',
+        type: 'numeric',
+        required: false,
+        validation: { min: 0 },
+        placeholder: '0'
+      }
+    ]
+  }
+};
+
+// ============================================================================
+// MOCK N8N SERVICE
+// ============================================================================
+
+const mockN8n = {
+  async callP3(formData) {
+    console.log('📡 Mock P3: Processing household data...');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const userId = `anon_${Math.floor(10000 + Math.random() * 90000)}`;
+    
+    return {
+      userId,
+      status: 'Household_Data_Complete',
+      household: {
+        adults: formData.C1.aantalVolwassenen,
+        children: formData.C1.aantalKinderen,
+        housingType: formData.C1.woonsituatie,
+        postcode: formData.C4.postcode
+      },
+      benchmark: {
+        similarHouseholds: 127,
+        averageIncome: 2400
+      }
+    };
+  },
+  
+  async callP5(formData) {
+    console.log('📡 Mock P5: Processing income data...');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    return {
+      userId: formData.userId,
+      status: 'Income_Data_Complete',
+      incomeSummary: {
+        salary: formData.C7.nettoMaandsalaris,
+        benefits: formData.C7.huurtoeslag || 0
+      }
+    };
+  },
+  
+  async callP6(formData) {
+    console.log('📡 Mock P6: Calculating financial summary...');
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    const inkomenTotaalMaand = 
+      (formData.C7.nettoMaandsalaris || 0) + 
+      (formData.C7.huurtoeslag || 0);
+    
+    const lastenTotaalVast = 
+      (formData.C10.wonen || 0) +
+      (formData.C10.energie || 0) +
+      (formData.C10.verzekeringen || 0) +
+      (formData.C10.abonnementen || 0) +
+      (formData.C10.overig || 0);
+    
+    const cashflowNetto = inkomenTotaalMaand - lastenTotaalVast;
+    
+    return {
+      userId: formData.userId,
+      status: 'Financial_Setup_Complete',
+      financialSummary: {
+        inkomenTotaalMaand,
+        lastenTotaalVast,
+        cashflowNetto
+      },
+      lastenDetail: [
+        { category: 'Wonen', amount: formData.C10.wonen || 0 },
+        { category: 'Energie & Water', amount: formData.C10.energie || 0 },
+        { category: 'Verzekeringen', amount: formData.C10.verzekeringen || 0 },
+        { category: 'Abonnementen', amount: formData.C10.abonnementen || 0 },
+        { category: 'Overig', amount: formData.C10.overig || 0 }
+      ]
+    };
+  }
+};
+
+// ============================================================================
+// REUSABLE COMPONENTS
+// ============================================================================
+
+// FormField: Universal field renderer
+const FormField = ({ field, value, onChange, error, formData }) => {
+  // Dynamic label for C10 wonen field
+  let displayLabel = field.label;
+  if (field.labelDynamic && field.id === 'wonen' && formData.C1?.woonsituatie) {
+    const woonsituatie = formData.C1.woonsituatie;
+    if (woonsituatie === 'Huurder') displayLabel = 'Huur (€)';
+    else if (woonsituatie === 'Koper') displayLabel = 'Hypotheek (€)';
+  }
+  
+  const handleChange = (newValue) => {
+    onChange(field.id, newValue);
+  };
+  
+  return (
+    <View style={styles.fieldContainer}>
+      <Text style={styles.fieldLabel}>{displayLabel}</Text>
+      
+      {field.type === 'text' && (
+        <TextInput
+          style={[styles.input, error && styles.inputError]}
+          value={value || ''}
+          onChangeText={handleChange}
+          placeholder={field.placeholder}
+          accessibilityLabel={displayLabel}
+        />
+      )}
+      
+      {field.type === 'numeric' && (
+        <TextInput
+          style={[styles.input, error && styles.inputError]}
+          value={value?.toString() || ''}
+          onChangeText={(text) => {
+            const numValue = text === '' ? '' : parseFloat(text) || 0;
+            handleChange(numValue);
+          }}
+          keyboardType="numeric"
+          placeholder={field.placeholder}
+          accessibilityLabel={displayLabel}
+        />
+      )}
+      
+      {field.type === 'select' && (
+        <View style={[styles.input, styles.selectContainer, error && styles.inputError]}>
+          <select
+            style={styles.select}
+            value={value || ''}
+            onChange={(e) => handleChange(e.target.value)}
+            aria-label={displayLabel}
+          >
+            {field.options.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </View>
+      )}
+      
+      {field.type === 'toggle' && (
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity
+            style={[styles.toggleButton, value === true && styles.toggleButtonActive]}
+            onPress={() => handleChange(true)}
+            accessibilityLabel={`${displayLabel} - Ja`}
+          >
+            <Text style={[styles.toggleText, value === true && styles.toggleTextActive]}>Ja</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.toggleButton, value === false && styles.toggleButtonActive]}
+            onPress={() => handleChange(false)}
+            accessibilityLabel={`${displayLabel} - Nee`}
+          >
+            <Text style={[styles.toggleText, value === false && styles.toggleTextActive]}>Nee</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
+      {error && <Text style={styles.errorText}>{error}</Text>}
+    </View>
+  );
+};
+
+// ConditionalField: Smart conditional renderer
+const ConditionalField = ({ condition, formData, children }) => {
+  const evaluateCondition = () => {
+    // Parse field path (e.g., "C1.aantalKinderen")
+    const fieldPath = condition.field.split('.');
+    let value = formData;
+    
+    for (const key of fieldPath) {
+      value = value?.[key];
+      if (value === undefined) return false;
+    }
+    
+    // Evaluate operator
+    switch (condition.operator) {
+      case '>':
+        return value > condition.value;
+      case '<':
+        return value < condition.value;
+      case '>=':
+        return value >= condition.value;
+      case '<=':
+        return value <= condition.value;
+      case '===':
+        return value === condition.value;
+      case '!==':
+        return value !== condition.value;
+      default:
+        return false;
+    }
+  };
+  
+  const shouldRender = evaluateCondition();
+  
+  return shouldRender ? <>{children}</> : null;
+};
+
+// DynamicSection: Section repeater (example for future use)
+const DynamicSection = ({ section, formData, pageData, onFieldChange, errors }) => {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{section.title}</Text>
+      {section.fields.map(field => (
+        <FormField
+          key={field.id}
+          field={field}
+          value={pageData[field.id]}
+          onChange={onFieldChange}
+          error={errors[field.id]}
+          formData={formData}
+        />
+      ))}
+    </View>
+  );
+};
+
+// WizardPage: Page wrapper with navigation logic
+const WizardPage = ({ pageId, onNext, onBack, loading }) => {
+  const { state, dispatch } = useFormContext();
+  const config = formConfig[pageId];
+  const [pageData, setPageData] = useState({});
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  
+  // Load saved data on mount
+  useEffect(() => {
+    const loadData = async () => {
+      const saved = await loadPageData(pageId);
+      if (saved) {
+        setPageData(saved);
+        dispatch({ type: 'SET_PAGE_DATA', pageId, data: saved });
+      } else {
+        // Set default values
+        const defaults = {};
+        config.fields.forEach(field => {
+          if (field.defaultValue !== undefined) {
+            defaults[field.id] = field.defaultValue;
+          }
+        });
+        setPageData(defaults);
+      }
+    };
+    loadData();
+  }, [pageId]);
+  
+  const handleFieldChange = (fieldId, value) => {
+    const newData = { ...pageData, [fieldId]: value };
+    setPageData(newData);
+    dispatch({ type: 'SET_PAGE_DATA', pageId, data: newData });
+    
+    // Clear error on change
+    if (errors[fieldId]) {
+      setErrors({ ...errors, [fieldId]: null });
+    }
+  };
+  
+  const validatePage = () => {
+    const newErrors = {};
+    let isValid = true;
+    
+    config.fields.forEach(field => {
+      // Check if field should be rendered (conditional logic)
+      if (field.conditional) {
+        const shouldRender = evaluateCondition(field.conditional, state);
+        if (!shouldRender) return; // Skip validation if not rendered
+      }
+      
+      const result = validateField(field, pageData[field.id]);
+      if (!result.valid) {
+        newErrors[field.id] = result.error;
+        isValid = false;
+      }
+    });
+    
+    setErrors(newErrors);
+    setTouched(config.fields.reduce((acc, f) => ({ ...acc, [f.id]: true }), {}));
+    return isValid;
+  };
+  
+  const evaluateCondition = (condition, formData) => {
+    const fieldPath = condition.field.split('.');
+    let value = formData;
+    
+    for (const key of fieldPath) {
+      value = value?.[key];
+      if (value === undefined) return false;
+    }
+    
+    switch (condition.operator) {
+      case '>': return value > condition.value;
+      case '<': return value < condition.value;
+      case '>=': return value >= condition.value;
+      case '<=': return value <= condition.value;
+      case '===': return value === condition.value;
+      case '!==': return value !== condition.value;
+      default: return false;
+    }
+  };
+  
+  const handleNext = async () => {
+    if (validatePage()) {
+      await savePageData(pageId, pageData);
+      onNext();
+    }
+  };
+  
+  const handleBack = async () => {
+    await savePageData(pageId, pageData);
+    onBack();
+  };
+  
+  const isFormValid = () => {
+    return config.fields.every(field => {
+      // Check conditional
+      if (field.conditional) {
+        const shouldRender = evaluateCondition(field.conditional, state);
+        if (!shouldRender) return true;
+      }
+      
+      const result = validateField(field, pageData[field.id]);
+      return result.valid;
+    });
+  };
+  
+  return (
+    <ScrollView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.stepIndicator}>
+          Stap {config.step} van {config.totalSteps}
+        </Text>
+        <Text style={styles.title}>{config.title}</Text>
+        <Text style={styles.subtitle}>{config.subtitle}</Text>
+        
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+            <Text style={styles.loadingText}>Gegevens worden verwerkt...</Text>
+          </View>
+        )}
+        
+        {!loading && (
+          <>
+            {/* Regular fields */}
+            {config.fields.map(field => {
+              // Check if field has conditional rendering
+              if (field.conditional) {
+                return (
+                  <ConditionalField
+                    key={field.id}
+                    condition={field.conditional}
+                    formData={state}
+                  >
+                    <FormField
+                      field={field}
+                      value={pageData[field.id]}
+                      onChange={handleFieldChange}
+                      error={touched[field.id] ? errors[field.id] : null}
+                      formData={state}
+                    />
+                  </ConditionalField>
+                );
+              }
+              
+              return (
+                <FormField
+                  key={field.id}
+                  field={field}
+                  value={pageData[field.id]}
+                  onChange={handleFieldChange}
+                  error={touched[field.id] ? errors[field.id] : null}
+                  formData={state}
+                />
+              );
+            })}
+            
+            {/* Conditional displays */}
+            {config.conditionals?.map(conditional => (
+              <ConditionalField
+                key={conditional.id}
+                condition={conditional.condition}
+                formData={state}
+              >
+                <View style={styles.conditionalDisplay}>
+                  <Text style={styles.conditionalText}>
+                    {conditional.template
+                      .replace('{aantalKinderen}', state.C1?.aantalKinderen || 0)
+                      .replace('{plural}', (state.C1?.aantalKinderen || 0) === 1 ? 'kind' : 'kinderen')}
+                  </Text>
+                </View>
+              </ConditionalField>
+            ))}
+            
+            {/* Dynamic sections */}
+            {config.sections?.map(section => (
+              <DynamicSection
+                key={section.id}
+                section={section}
+                formData={state}
+                pageData={pageData}
+                onFieldChange={handleFieldChange}
+                errors={errors}
+              />
+            ))}
+          </>
+        )}
+        
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.buttonSecondary}
+            onPress={handleBack}
+            disabled={loading}
+            accessibilityLabel="Ga terug"
+          >
+            <Text style={styles.buttonSecondaryText}>Terug</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.buttonPrimary, (!isFormValid() || loading) && styles.buttonDisabled]}
+            onPress={handleNext}
+            disabled={!isFormValid() || loading}
+            accessibilityLabel="Ga verder"
+          >
+            <Text style={styles.buttonPrimaryText}>Verder</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
+  );
+};
+
+// ============================================================================
+// SCREENS
+// ============================================================================
+
+const LandingScreen = ({ onStart }) => {
+  const { dispatch } = useFormContext();
+  const [checking, setChecking] = useState(true);
+  
+  useEffect(() => {
+    const checkReturningUser = async () => {
+      const userId = await getUserId();
+      const allData = await loadAllFormData();
+      
+      if (userId && allData.C10) {
+        // Returning user with complete data
+        console.log('✓ Returning user detected, loading data...');
+        dispatch({ type: 'LOAD_SAVED_STATE', data: allData });
+        onStart('Dashboard');
+      } else {
+        setChecking(false);
+      }
+    };
+    
+    checkReturningUser();
+  }, []);
+  
+  if (checking) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Laden...</Text>
+        </View>
+      </View>
+    );
+  }
+  
+  return (
+    <View style={styles.container}>
+      <View style={styles.centerContent}>
+        <Text style={styles.landingTitle}>Welkom bij Financieel Overzicht</Text>
+        <Text style={styles.landingSubtitle}>
+          Krijg inzicht in uw financiële situatie met onze eenvoudige stap-voor-stap wizard
+        </Text>
+        
+        <TouchableOpacity
+          style={styles.buttonPrimary}
+          onPress={() => onStart('C1')}
+          accessibilityLabel="Begin met aanmelden"
+        >
+          <Text style={styles.buttonPrimaryText}>Aanmelden</Text>
+        </TouchableOpacity>
+        
+        <View style={styles.privacyNote}>
+          <Text style={styles.privacyText}>
+            🔒 Uw gegevens blijven privé en worden alleen op dit apparaat opgeslagen
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const DashboardScreen = ({ onBack }) => {
+  const { state } = useFormContext();
+  const [summary, setSummary] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const loadSummary = async () => {
+      try {
+        const result = await mockN8n.callP6(state);
+        setSummary(result.financialSummary);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading summary:', error);
+        setLoading(false);
+      }
+    };
+    
+    loadSummary();
+  }, []);
+  
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Dashboard wordt geladen...</Text>
+        </View>
+      </View>
+    );
+  }
+  
+  const cashflow = summary?.cashflowNetto || 0;
+  const getMessage = () => {
+    if (cashflow > 0) {
+      return `Gefeliciteerd! U heeft maandelijks nog €${cashflow.toFixed(2)} beschikbaar.`;
+    } else if (cashflow < 0) {
+      return `Uw overzicht is klaar. U heeft maandelijks een tekort van €${Math.abs(cashflow).toFixed(2)}. Laten we samen kijken waar u kunt besparen.`;
+    } else {
+      return 'Uw inkomsten en vaste lasten zijn in balans. Laten we uw flexibele budget nu bepalen.';
+    }
+  };
+  
+  const getColor = () => {
+    if (cashflow > 0) return '#34C759';
+    if (cashflow < -100) return '#FF3B30';
+    return '#FF9500';
+  };
+  
+  return (
+    <ScrollView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Uw Financieel Overzicht</Text>
+        
+        <View style={[styles.dashboardCard, { borderLeftColor: getColor() }]}>
+          <Text style={styles.dashboardLabel}>Maandelijkse Cashflow</Text>
+          <Text style={[styles.dashboardKPI, { color: getColor() }]}>
+            €{cashflow.toFixed(2)}
+          </Text>
+          <Text style={styles.dashboardMessage}>{getMessage()}</Text>
+        </View>
+        
+        <View style={styles.summarySection}>
+          <Text style={styles.sectionTitle}>Samenvatting</Text>
+          
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Totaal Inkomen:</Text>
+            <Text style={styles.summaryValue}>€{summary?.inkomenTotaalMaand?.toFixed(2)}</Text>
+          </View>
+          
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Vaste Lasten:</Text>
+            <Text style={styles.summaryValue}>€{summary?.lastenTotaalVast?.toFixed(2)}</Text>
+          </View>
+          
+          <View style={[styles.summaryRow, styles.summaryRowTotal]}>
+            <Text style={[styles.summaryLabel, styles.summaryLabelBold]}>Cashflow:</Text>
+            <Text style={[styles.summaryValue, styles.summaryValueBold, { color: getColor() }]}>
+              €{cashflow.toFixed(2)}
+            </Text>
+          </View>
+        </View>
+        
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.buttonSecondary}
+            onPress={onBack}
+            accessibilityLabel="Terug naar instellingen"
+          >
+            <Text style={styles.buttonSecondaryText}>Terug naar instellingen</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
+  );
+};
+
+// ============================================================================
+// MAIN APP & NAVIGATION
+// ============================================================================
+
+const App = () => {
+  const [currentScreen, setCurrentScreen] = useState('Landing');
+  const [loading, setLoading] = useState(false);
+  const { state, dispatch } = useFormContext();
+  
+  const handleNavigation = async (nextScreen, mockCall = null) => {
+    if (mockCall) {
+      setLoading(true);
+      try {
+        let result;
+        if (mockCall === 'P3') {
+          result = await mockN8n.callP3(state);
+          await saveUserId(result.userId);
+          dispatch({ type: 'SET_USER_ID', userId: result.userId });
+        } else if (mockCall === 'P5') {
+          result = await mockN8n.callP5(state);
+        } else if (mockCall === 'P6') {
+          result = await mockN8n.callP6(state);
+        }
+        console.log(`✓ ${mockCall} completed:`, result);
+      } catch (error) {
+        console.error(`✗ Error in ${mockCall}:`, error);
+      }
+      setLoading(false);
+    }
+    
+    setCurrentScreen(nextScreen);
+  };
+  
+  const renderScreen = () => {
+    switch (currentScreen) {
+      case 'Landing':
+        return <LandingScreen onStart={(screen) => setCurrentScreen(screen)} />;
+      
+      case 'C1':
+        return (
+          <WizardPage
+            pageId="C1"
+            onNext={() => setCurrentScreen('C4')}
+            onBack={() => setCurrentScreen('Landing')}
+            loading={loading}
+          />
+        );
+      
+      case 'C4':
+        return (
+          <WizardPage
+            pageId="C4"
+            onNext={() => handleNavigation('C7', 'P3')}
+            onBack={() => setCurrentScreen('C1')}
+            loading={loading}
+          />
+        );
+      
+      case 'C7':
+        return (
+          <WizardPage
+            pageId="C7"
+            onNext={() => handleNavigation('C10', 'P5')}
+            onBack={() => setCurrentScreen('C4')}
+            loading={loading}
+          />
+        );
+      
+      case 'C10':
+        return (
+          <WizardPage
+            pageId="C10"
+            onNext={() => handleNavigation('Dashboard', 'P6')}
+            onBack={() => setCurrentScreen('C7')}
+            loading={loading}
+          />
+        );
+      
+      case 'Dashboard':
+        return <DashboardScreen onBack={() => setCurrentScreen('C1')} />;
+      
+      default:
+        return <LandingScreen onStart={(screen) => setCurrentScreen(screen)} />;
+    }
+  };
+  
+  return (
+    <View style={styles.app}>
+      {renderScreen()}
+    </View>
+  );
+};
+
+// ============================================================================
+// STYLES (WCAG 2.1 AA Compliant)
+// ============================================================================
+
+const styles = StyleSheet.create({
+  app: {
+    flex: 1,
+    backgroundColor: '#F5F5F7'
+  },
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F7'
+  },
+  content: {
+    padding: 24,
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center'
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    maxWidth: 600,
+    width: '100%',
+    alignSelf: 'center'
+  },
+  
+  // Typography
+  stepIndicator: {
+    fontSize: 14,
+    color: '#8E8E93',
+    marginBottom: 8
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1C1C1E',
+    marginBottom: 8
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#6E6E73',
+    marginBottom: 32
+  },
+  landingTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#1C1C1E',
+    marginBottom: 16,
+    textAlign: 'center'
+  },
+  landingSubtitle: {
+    fontSize: 18,
+    color: '#6E6E73',
+    marginBottom: 48,
+    textAlign: 'center',
+    lineHeight: 26
+  },
+  
+  // Fields
+  fieldContainer: {
+    marginBottom: 24
+  },
+  fieldLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1C1C1E',
+    marginBottom: 8
+  },
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D1D1D6',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: '#1C1C1E',
+    minHeight: 48 // WCAG touch target
+  },
+  inputError: {
+    borderColor: '#FF3B30',
+    borderWidth: 2
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#FF3B30',
+    marginTop: 4
+  },
+  selectContainer: {
+    padding: 0,
+    overflow: 'hidden'
+  },
+  select: {
+    width: '100%',
+    height: 48,
+    border: 'none',
+    backgroundColor: 'transparent',
+    fontSize: 16,
+    color: '#1C1C1E',
+    padding: 12
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    gap: 12
+  },
+  toggleButton: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D1D1D6',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    minHeight: 48 // WCAG touch target
+  },
+  toggleButtonActive: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF'
+  },
+  toggleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1C1C1E'
+  },
+  toggleTextActive: {
+    color: '#FFFFFF'
+  },
+  
+  // Conditional displays
+  conditionalDisplay: {
+    backgroundColor: '#E3F2FD',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 24,
+    borderLeftWidth: 4,
+    borderLeftColor: '#007AFF'
+  },
+  conditionalText: {
+    fontSize: 16,
+    color: '#1565C0',
+    fontWeight: '500'
+  },
+  
+  // Sections
+  section: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#E5E5EA'
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1C1C1E',
+    marginBottom: 16
+  },
+  
+  // Buttons
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 32
+  },
+  buttonPrimary: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 16, // WCAG: 48dp touch target
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+    flex: 1,
+    minHeight: 48
+  },
+  buttonPrimaryText: {
+    color: '#FFFFFF',
+    fontSize: 17,
+    fontWeight: '600'
+  },
+  buttonSecondary: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+    flex: 1,
+    minHeight: 48
+  },
+  buttonSecondaryText: {
+    color: '#007AFF',
+    fontSize: 17,
+    fontWeight: '600'
+  },
+  buttonDisabled: {
+    backgroundColor: '#D1D1D6',
+    opacity: 0.5
+  },
+  
+  // Loading
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: 48
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6E6E73',
+    marginTop: 16
+  },
+  
+  // Dashboard
+  dashboardCard: {
+    backgroundColor: '#FFFFFF',
+    padding: 24,
+    borderRadius: 16,
+    marginBottom: 24,
+    borderLeftWidth: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8
+  },
+  dashboardLabel: {
+    fontSize: 16,
+    color: '#6E6E73',
+    marginBottom: 8
+  },
+  dashboardKPI: {
+    fontSize: 48, // ≥28pt WCAG requirement
+    fontWeight: '700',
+    marginBottom: 16
+  },
+  dashboardMessage: {
+    fontSize: 16,
+    color: '#1C1C1E',
+    lineHeight: 24
+  },
+  summarySection: {
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 24
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F7'
+  },
+  summaryRowTotal: {
+    borderBottomWidth: 0,
+    paddingTop: 16,
+    marginTop: 8,
+    borderTopWidth: 2,
+    borderTopColor: '#D1D1D6'
+  },
+  summaryLabel: {
+    fontSize: 16,
+    color: '#6E6E73'
+  },
+  summaryLabelBold: {
+    fontWeight: '700',
+    color: '#1C1C1E'
+  },
+  summaryValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1C1C1E'
+  },
+  summaryValueBold: {
+    fontSize: 18,
+    fontWeight: '700'
+  },
+  
+  // Privacy note
+  privacyNote: {
+    marginTop: 32,
+    padding: 16,
+    backgroundColor: '#F2F2F7',
+    borderRadius: 8
+  },
+  privacyText: {
+    fontSize: 14,
+    color: '#6E6E73',
+    textAlign: 'center',
+    lineHeight: 20
+  }
+});
+
+// ============================================================================
+// ROOT
+// ============================================================================
+
+export default function Root() {
+  return (
+    <FormProvider>
+      <App />
+    </FormProvider>
+  );
+}

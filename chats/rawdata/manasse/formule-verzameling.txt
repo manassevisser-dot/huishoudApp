@@ -1,0 +1,376 @@
+Hier is een **uitgebreide, praktisch geordende formule-verzameling** voor **financiële analyses**. Ik heb ze gegroepeerd zodat je ze direct kunt toepassen in **Excel / Sheets / BI-tools / code** en ook kunt gebruiken in **beleids-, uitkerings- of huishoudanalyses** (sluit aan bij jouw werk rond bestaanszekerheid en besluitlogica).
+
+---
+
+## 1. Basis financiële rekenkunde
+
+**Totale waarde**
+
+```
+Totaal = Σ (waarde_i)
+```
+
+**Gemiddelde**
+
+```
+Gemiddelde = Σ x / n
+```
+
+**Gewogen gemiddelde**
+
+```
+Σ (x × gewicht) / Σ gewicht
+```
+
+**Percentage**
+
+```
+Deel / Geheel × 100%
+```
+
+**Index (basisjaar = 100)**
+
+```
+Index = (Huidige waarde / Basiswaarde) × 100
+```
+
+---
+
+## 2. Inkomsten, uitgaven & saldo
+
+**Netto inkomen**
+
+```
+Bruto inkomen − Belastingen − Premies
+```
+
+**Beschikbaar inkomen**
+
+```
+Netto inkomen + Toeslagen − Vaste lasten
+```
+
+**Maandelijks saldo**
+
+```
+Inkomsten − Uitgaven
+```
+
+**Structureel tekort**
+
+```
+Structurele uitgaven − Structurele inkomsten
+```
+
+**Spaarquote**
+
+```
+Sparen / Netto inkomen
+```
+
+---
+
+## 3. Groei, trend & verandering
+
+**Absolute groei**
+
+```
+Nieuw − Oud
+```
+
+**Relatieve groei**
+
+```
+(Nieuw − Oud) / Oud
+```
+
+**Groei in %**
+
+```
+((Nieuw − Oud) / Oud) × 100
+```
+
+**Samengestelde groei (CAGR)**
+
+```
+( Eind / Begin )^(1/n) − 1
+```
+
+**Trend (lineair)**
+
+```
+y = a + bt
+```
+
+---
+
+## 4. Kasstromen & tijdswaarde van geld
+
+**Toekomstige waarde (FV)**
+
+```
+FV = PV × (1 + r)^n
+```
+
+**Contante waarde (PV)**
+
+```
+PV = FV / (1 + r)^n
+```
+
+**Netto Contante Waarde (NCW / NPV)**
+
+```
+Σ (Kasstroom_t / (1 + r)^t) − Initiële investering
+```
+
+**Interne opbrengstvoet (IRR)**
+
+```
+NCW = 0
+```
+
+**Payback-periode**
+
+```
+Investering / Jaarlijkse kasstroom
+```
+
+---
+
+## 5. Schulden & draagkracht
+
+**Schuldquote**
+
+```
+Totale schuld / Jaarinkomen
+```
+
+**Aflossingsratio**
+
+```
+Maandelijkse aflossing / Netto maandinkomen
+```
+
+**Rente-lastenratio**
+
+```
+Rentelasten / Netto inkomen
+```
+
+**Beslagvrije ruimte (vereenvoudigd)**
+
+```
+Netto inkomen − beslagvrije voet
+```
+
+**Leencapaciteit**
+
+```
+Max maandlast / (Rente + Aflossingsfactor)
+```
+
+---
+
+## 6. Liquiditeit & buffers
+
+**Liquiditeitsratio**
+
+```
+Vlottende activa / Kortlopende verplichtingen
+```
+
+**Buffermaanden**
+
+```
+Vrij beschikbaar vermogen / Maanduitgaven
+```
+
+**Noodbuffer**
+
+```
+3–6 × maandelijkse vaste lasten
+```
+
+---
+
+## 7. Kosten- en efficiëntieanalyse
+
+**Kostprijs per eenheid**
+
+```
+Totale kosten / Aantal eenheden
+```
+
+**Marginale kosten**
+
+```
+Δ Totale kosten / Δ Output
+```
+
+**Kostenratio**
+
+```
+Kosten / Opbrengsten
+```
+
+**Efficiency**
+
+```
+Output / Input
+```
+
+---
+
+## 8. Break-even & scenarioanalyse
+
+**Break-even punt**
+
+```
+Vaste kosten / (Prijs − Variabele kosten)
+```
+
+**Scenario-impact**
+
+```
+Nieuw saldo − Huidig saldo
+```
+
+**Gevoeligheidsanalyse**
+
+```
+Δ Resultaat / Δ Parameter
+```
+
+---
+
+## 9. Ongelijkheid & verdeling
+
+**Gini-coëfficiënt**
+
+```
+1 − Σ (Yi + Yi−1)(Xi − Xi−1)
+```
+
+**Mediaan**
+
+```
+Middenwaarde gesorteerde data
+```
+
+**P90 / P10 ratio**
+
+```
+90e percentiel / 10e percentiel
+```
+
+---
+
+## 10. Beleids- en uitkeringsanalyse (NL-gericht)
+
+**Vervangingsratio**
+
+```
+Uitkering / Laatstverdiend loon
+```
+
+**Armoede-gap**
+
+```
+Armoedegrens − Beschikbaar inkomen
+```
+
+**Marginale druk**
+
+```
+1 − (Δ Netto inkomen / Δ Bruto inkomen)
+```
+
+**Toeslag-afbouw**
+
+```
+Afbouwpercentage × Extra inkomen
+```
+
+**Werk-loont**
+
+```
+Netto inkomen werk − Netto inkomen uitkering
+```
+
+---
+
+## 11. Risico & onzekerheid
+
+**Variantie**
+
+```
+Σ (x − μ)² / n
+```
+
+**Standaarddeviatie**
+
+```
+√ Variantie
+```
+
+**Value at Risk (VaR)**
+
+```
+Max verwacht verlies bij α%
+```
+
+**Worst-case scenario**
+
+```
+Minimum uitkomstenverdeling
+```
+
+---
+
+## 12. Samengestelde huishoudformules (praktisch)
+
+**Financiële stress-indicator**
+
+```
+(Vaste lasten / Netto inkomen) > 0,6
+```
+
+**Betaalbaarheid wonen**
+
+```
+Woonlasten / Netto inkomen
+```
+
+**Kwetsbaarheidsindex**
+
+```
+( Schuldenratio + Kostenratio + Inkomensonzekerheid ) / 3
+```
+
+---
+
+## 13. Excel-/Sheets-equivalenten
+
+```
+=NPV()
+=IRR()
+=CAGR()
+=AVERAGE()
+=SUM()
+=PERCENTILE()
+=STDEV()
+```
+
+---
+
+### Wil je vervolgstappen?
+
+Ik kan dit verder **omzetten naar**:
+
+* 📊 **Excel-template** (huishouden / beleid / dashboard)
+* 🧮 **Beslisboomformules** (zoals bij jouw uitkeringentool)
+* 🧠 **Score-model / index** (bestaanszekerheid, risicoprofiel)
+* ⚙️ **TypeScript / Python formules** (voor je app)
+
+Zeg maar **waar je het voor gebruikt**, dan maak ik het **operationeel i.p.v. theoretisch**.

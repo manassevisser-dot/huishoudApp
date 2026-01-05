@@ -1,0 +1,49 @@
+## 📦 Metadata (Verplicht voor Gate F)
+- **Artifact_ID:** CU-Contract-WAI-007-02
+- **Role:** CU-Assembler (Kai v3.5)
+- **Reference_WAI:** WAI-007-Resilient-Decoupling
+- **Source_Commit:** f936630
+- **Target_Files:** `.phoenix/rules.sh` (Nieuw), `.phoenix/reports.sh` (Edit)
+- **Status:** READY (Vrijgave voor Developer & Navigator)
+
+## 1️⃣ 🎯 Target Surface
+- **Target File 1 (create):** `.phoenix/rules.sh`
+- **Target File 2 (edit):** `.phoenix/reports.sh`
+- **Impact Radius (read-only):** `.phoenix/core.sh` (voor de dispatcher)
+- **Change Type:** Extract
+
+## 2️⃣ 🏗️ Logic Contract
+- **Remove:** De berekening van `hh_limit` en de `if [[ "$hh_limit" -ge 5 ]]` check uit `.phoenix/reports.sh`.
+- **Replace with:** 
+    1. In `.phoenix/rules.sh`: De functie `check_special_household_status()`. Deze voert de drempel-check uit en verhoogt de `passed` of `failed` tellers indien nodig (of zet een vlag).
+    2. In `.phoenix/reports.sh`: Een aanroep via de dispatcher: `invoke_rule "check_special_household_status"`.
+- **Preserve:** De HTML-structuur en de CSS-definities in de rapportage.
+- **ADR Enforcement:**
+    * ✅ **ADR-03 (Domain in Kernel):** De drempelwaarde "5" verhuist naar de domeinlaag.
+    * ✅ **ADR-04 (Dumb UI):** De rapportage-module wordt een passieve projector.
+    * ✅ **ADR-14 (Dumb Reducer/Logic):** Geen berekeningen meer in de presentatie-scripts.
+
+## 3️⃣ 🛡️ Constraints & Non-Goals
+- ❌ Geen wijziging aan de drempelwaarde zelf (blijft 5).
+- ❌ Geen nieuwe CSS-styling in deze stap.
+- ❌ Verboden: Directe toegang tot de `THRESHOLDS` array vanuit `reports.sh`.
+
+## 4️⃣ 🧪 Test & Validation Gates
+- **Gate A — Unit:** De nieuwe functie in `rules.sh` moet binaire `0` (pass) of `1` (fail) retourneren op basis van de input.
+- **Gate B — Integration:** `reports.sh` moet de status tonen zonder de variabele `hh_limit` zelf te kennen.
+- **Gate C — E2E:** De `phoenix-check.sh` run moet Grade A+ behouden en de "Speciale Status" correct vermelden.
+
+## 5️⃣ ⚠️ Stop Conditions
+- Stop als de dispatcher `invoke_rule` de nieuwe functie niet kan vinden (check `source` volgorde).
+- Stop als de `passed/failed` tellers dubbel worden opgehoogd door de nieuwe structuur.
+
+## 6️⃣ 🔐 Merge & Release Governance
+- **Commit Message:** `feat(audit): extract special status logic to domain rules`
+- **PR-Body:** Voltooiing van de ontkoppeling conform ADR-019. De rapportage-module is nu 100% vrij van business rules.
+
+## 7️⃣ 🗺️ Implementation Roadmap (For Navigator)
+**Dit is de dwingende instructie voor Sam (Navigator):**
+1. **Creatie:** Maak het nieuwe bestand `.phoenix/rules.sh` aan met de domein-functie.
+2. **Schoonmaak:** Verwijder de regels 67 t/m 75 (de `hh_limit` sectie) uit `.phoenix/reports.sh`.
+3. **Koppeling:** Injecteer de aanroep `invoke_rule "check_special_household_status"` op de vrijgekomen plek in `reports.sh`.
+4. **Verificatie:** Run `bash phoenix-check.sh` en bevestig dat de "STATISTIEK" melding nog steeds verschijnt bij huishoudens > 5.

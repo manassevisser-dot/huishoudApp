@@ -1,0 +1,109 @@
+tsconfig:
+
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "es2020",
+    "moduleResolution": "bundler",
+    "jsx": "react-native",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    /* Phoenix Aliassen */
+    "baseUrl": ".",
+    "paths": {
+      "@domain/*": ["src/domain/*"],
+      "@state/*": ["src/state/*"],
+      "@ui/*": ["src/ui/*"],
+      "@app/*": ["src/app/*"],
+      "@utils/*": ["src/utils/*"],
+      "@services/*": ["src/services/*"],
+      "@assets/*": ["assets/*"],
+      "@logic/*": ["src/logic/*"],
+      "@context/*": ["src/context/*"],
+      "@selectors/*": ["src/selectors/*"],
+      "@types/*": ["src/types/*"],
+      "@components/*": ["src/components/*"]
+     }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}
+***
+jsconfig:
+{
+    "compilerOptions": {
+      "baseUrl": ".",
+      "paths": {
+        "@domain/*": ["src/domain/*"],
+        "@state/*": ["src/state/*"],
+        "@ui/*": ["src/ui/*"],
+        "@app/*": ["src/app/*"],
+        "@utils/*": ["src/utils/*"],
+        "@services/*": ["src/services/*"],
+        "@assets/*": ["assets/*"],
+        "@logic/*": ["src/logic/*"],
+        "@context/*": ["src/context/*"],
+        "@selectors/*": ["src/selectors/*"],
+        "@types/*": ["src/types/*"],
+        "@components/*": ["src/components/*"]
+      }
+    },
+    "exclude": ["node_modules"]
+  }
+***
+babel.config:
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: ['babel-preset-expo'],
+    plugins: [
+      // 👇 EERST module-resolver
+      [
+        'module-resolver',
+        {
+          root: ['./src'],
+          extensions: ['.ios.js', '.android.js', '.js', '.jsx', '.ts', '.tsx', '.json'],
+          alias: {
+            '@domain': './src/domain',
+            '@state': './src/state',
+            '@ui': './src/ui',
+            '@app': './src/app',
+            '@utils': './src/utils',
+            '@services': './src/services',
+            '@assets': './assets',
+            '@logic': './src/logic',
+            '@selectors': './src/selectors',
+            '@context': './src/context',
+            '@types': './src/types',
+            '@components': './src/components'
+          },
+        },
+      ],
+      // 👇 LAATSTE reanimated
+      'react-native-reanimated/plugin',
+    ],
+  };
+};
+***
+jest.config
+module.exports = {
+  preset: 'react-native', // Gebruik de basis RN preset ipv Expo om 'Winter' te omzeilen
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  moduleNameMapper: {
+    '^@domain/(.*)$': '<rootDir>/src/domain/$1',
+    '^@state/(.*)$': '<rootDir>/src/state/$1',
+    '^@ui/(.*)$': '<rootDir>/src/ui/$1',
+    '^@app/(.*)$': '<rootDir>/src/app/$1',
+    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
+    '^@services/(.*)$': '<rootDir>/src/services/$1',
+    '^@assets/(.*)$': '<rootDir>/assets/$1',
+  },
+  transformIgnorePatterns: [
+    'node_modules/(?!(react-native|@react-native|expo|@expo|@react-navigation)/)',
+  ],
+};

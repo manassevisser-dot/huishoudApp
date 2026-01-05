@@ -1,0 +1,68 @@
+<internal_analysis>
+1. **Context Lock:** Ik beschik over de locked SVZ-3 (Ava) en de gevalideerde WAI-007 strategie (Nova).
+2. **Atomic Scope Check:** De eerste stap in de ontkoppeling is het leggen van de infrastructurele fundering. Target: `.phoenix/core.sh`.
+3. **Logic Mapping:** 
+    - *Remove:* Eventuele directe, onbeveiligde functie-aanroepen in de core-loop.
+    - *Replace with:* De `invoke_rule` dispatcher functie die gebruikmaakt van `type -t` voor binaire veiligheid.
+    - *Preserve:* De bestaande Strict Mode instellingen (`set -euo pipefail`) en de atomaire teller-logica.
+4. **Risk Matrix:** 
+    - R1: Syntaxfout in dispatcher (Impact: High x Prob: Low = 4).
+    - R2: Verlies van exit-code integriteit (Impact: High x Prob: Low = 4).
+    - R3: Onjuiste afhandeling van 'UNKNOWN' status (Impact: Med x Prob: Med = 6).
+5. **Governance Check:** De focus ligt op Resilience en SRP conform de 2025-standaard. Geen domein-uitbreidingen.
+</internal_analysis>
+
+---
+
+# 📦 Change Unit Contract: PHOENIX-WAI-007-01 – Dispatcher Core
+
+## 📦 Metadata (Verplicht voor Gate F)
+- **Artifact_ID:** CU-Contract-WAI-007-01
+- **Role:** CU-Assembler (Kai v3.0)
+- **Reference_WAI:** WAI-007-Resilient-Decoupling
+- **Source_Commit:** f936630
+- **Target_File:** `.phoenix/core.sh`
+- **Status:** READY (Vrijgave voor Developer)
+
+## 1️⃣ 🎯 Target Surface
+- **Target File (edit):** `.phoenix/core.sh`
+- **Impact Radius (read-only):** `.phoenix/checkers.sh`, `phoenix-audit.sh`
+- **Change Type:** Refactor
+
+## 2️⃣ 🏗️ Logic Contract
+- **Remove:** Directe executie van regels zonder validatie van het bestaan van de functie.
+- **Replace with:** De `invoke_rule()` functie. Deze moet:
+    1. Een functienaam als argument accepteren.
+    2. Controleren of de functie bestaat via `type -t "$1"`.
+    3. Indien aanwezig: De functie uitvoeren en de exit-code behouden.
+    4. Indien afwezig: Een waarschuwing loggen naar stderr en exit-code `2` (UNKNOWN) retourneren.
+- **Preserve:** De `atomic_inc` logica en de globale variabele-definities.
+
+## 3️⃣ 🛡️ Constraints & Non-Goals
+- ❌ Geen wijzigingen aan de feitelijke audit-regels in deze stap.
+- ❌ Geen wijzigingen aan de rapportage-logica (`reports.sh`).
+- ❌ Verboden: Gebruik van `eval` voor functie-aanroepen (onveilig). Gebruik directe aanroep.
+
+## 4️⃣ 🧪 Test & Validation Gates
+- **Gate A — Unit:** Handmatige aanroep van `invoke_rule "non_existent_fn"` moet resulteren in een `2` status zonder het script te beëindigen.
+- **Gate B — Integration:** De `main` loop in `phoenix-audit.sh` moet de dispatcher kunnen laden zonder syntax-errors.
+- **Gate C — E2E:** De `audit_wai_007` check (Sectie 16 van Nova) moet de aanwezigheid van `invoke_rule` in `core.sh` binaire bevestigen.
+- **Risk Matrix:**
+    1. **Dispatcher Crash:** Foutieve `type -t` syntax breekt de audit (Prio 1).
+    2. **Exit Code Drift:** De dispatcher maskeert per ongeluk een 'FAIL' (Prio 2).
+    3. **Stderr Vervuiling:** Te veel waarschuwingen maken de output onleesbaar (Prio 3).
+
+## 5️⃣ ⚠️ Stop Conditions
+- Stop als de `type -t` check niet werkt op de doelomgeving (bijv. afwijkende Bash-versie).
+- Stop als de `set -e` vlag de dispatcher voortijdig afbreekt bij een 'UNKNOWN' status.
+
+## 6️⃣ 🔐 Merge & Release Governance
+- **Commit Message:** `refactor(core): implement resilient invoke_rule dispatcher`
+- **PR-Body:** Introductie van de `invoke_rule` wrapper in de core-module om binaire veiligheid en ontkoppeling van domeinregels mogelijk te maken conform WAI-007.
+
+---
+
+**Kai Sign-off:** Dit contract is binaire gedefinieerd en beperkt tot de infrastructuur van de core. De Developer kan nu de dispatcher bouwen zonder de domeinregels aan te raken.
+
+**Manasse, het contract voor de eerste stap van WAI-007 is gereed.** 
+Wil je dit contract nu voeden aan de **Chirurgische Code-Agent (Developer)** samen met de huidige code van `.phoenix/core.sh`?

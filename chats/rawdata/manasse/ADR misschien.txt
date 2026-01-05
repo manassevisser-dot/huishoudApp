@@ -1,0 +1,529 @@
+Mooi, dit is een nuttig moment om systematisch te vergelijken. Hieronder krijg je:
+
+1. **korte karakterisering per lijst**
+2. **overlap / consistentie**
+3. **verschillen en evolutie**
+4. **mogelijke spanningen / (bijna) tegenstrijdigheden**
+5. **gaten (wat ontbreekt er nog)**
+6. **samenvattende mapping-tabel (welk item zit waar)**
+7. **advies: hoe hier één canon van te maken**
+
+Ik ga uit van de drie lijsten in je bestand (ADR-lijst 1, 2 en 3).
+
+---
+
+## 🧭 1) Wat is het karakter van elke lijst?
+
+### ✅ **ADR-lijst 1 – Fundamentele principes**
+
+* hoog abstractieniveau
+* architectuur- en ontwerpprincipes
+* globaal geformuleerd
+* bijna “schoolboek architectuur 2025”
+
+**Voorbeelden van thema’s**
+
+* separation of concerns
+* typed boundaries
+* pure components
+* business logic uit UI
+* immutability
+* global input hardening
+
+👉 Dit is je **grondwet**.
+
+---
+
+### ✅ **ADR-lijst 2 – Phoenix-specifieke vertaling**
+
+* zelfde geest, maar concreter
+* expliciete verwijzingen naar jouw domein
+* bevat al project-specifieke woorden (MoneyInput, FSM, Finance Kernel)
+
+👉 Dit is je **uitvoeringsrichtlijn**.
+
+---
+
+### ✅ **ADR-lijst 3 – Audit-gerichte condensatie**
+
+* zeer concreet
+* genummerde ADR-items (ADR-12 t/m ADR-18)
+* direct toetsbaar met auditscripts
+* meetbaar en binaire checks (ja/nee)
+
+👉 Dit is je **controlelijst / auditcanon**.
+
+---
+
+## 🔁 2) Overlap — waar zijn ze feitelijk eens?
+
+De drie lijsten zijn inhoudelijk opvallend consistent. De volgende thema’s keren **in alle drie** terug:
+
+* UI mag geen parsing/financiële logica hebben
+* centrale “Finance Kernel” voor geldberekening
+* shadow flags / special status expliciet modelleren
+* input hardening (no free text → structured)
+* FSM voor applicatiestatus
+* pure projector view / slimme logica niet in view
+* schema-versies vastgelegd en gevalideerd
+
+👉 Dit bevestigt: je systeem heeft een **stabiele kern van architectuurwaarden**.
+
+---
+
+## 🧭 3) Evolutie (wat is er veranderd van 1 → 2 → 3)
+
+Je ziet een heel natuurlijke evolutie:
+
+| Fase    | Wat er gebeurt                                      |
+| ------- | --------------------------------------------------- |
+| Lijst 1 | Principes worden vastgelegd                         |
+| Lijst 2 | Principes worden **toegepast op Phoenix**           |
+| Lijst 3 | Principes worden **operationeel toetsbaar gemaakt** |
+
+Met andere woorden:
+
+* lijst 1 = **denken**
+* lijst 2 = **ontwerpen**
+* lijst 3 = **meten**
+
+👉 Dit is precies hoe volwassen architectuur ontstaat.
+
+---
+
+## ⚠️ 4) Spanningen / bijna-tegenstrijdigheden
+
+Er zijn geen harde contradicties, maar wel **potentiële fricties**:
+
+### 1) Strikte “dumb MoneyInput” vs “isolated numeric parser”
+
+* lijst zegt: MoneyInput moet dumb zijn
+* audit zegt: parsing mag maar alleen via specifieke module
+
+➡ interpretatieverschil mogelijk:
+
+* “dumb” = geen business rules
+* “geïsoleerd parsergebruik” = wél helper, geen logica
+
+👉 Oplossing: definieer **wat ‘dom component’ betekent in Phoenix**.
+
+---
+
+### 2) FSM eenvoud vs groeiende statuslijst
+
+* lijst 1: eenvoud, minimal surface
+* lijst 3: noemt vaste lijst (INIT/HYDRATE/READY/ERROR/UNBOARDING)
+
+Risico:
+
+* audit verankert specifieke statusnamen
+* architectuur zegt: minimal nodig aantal
+
+👉 Hier sluipt mogelijk **rigiditeit** in.
+
+---
+
+### 3) “Avoid complexity” vs “veel ADR’s en labels”
+
+* meer regels
+* meer ADR-codes
+* meer tooling
+
+Kan botsen met:
+
+> simplicity-first principle
+
+---
+
+## 🕳 5) Wat ontbreekt (in alle drie lijsten)
+
+Je ADR-stelsel richt zich sterk op:
+
+* correctness
+* money semantics
+* input security
+* architecture boundaries
+
+Wat nauwelijks is uitgewerkt:
+
+* accessibility (WCAG, RN-a11y)
+* performance budgets
+* offline behaviour
+* error reporting/observability
+* testing strategy as first-class citizen
+* release/rollback strategy
+* CI quality gates
+* security model (buiten input validation)
+* UX debt vs tech debt balans
+
+👉 Dat is níet fout — Phoenix-scope is nu rebuild —
+maar dit zijn logische volgende ADR-clusters.
+
+---
+
+## 🧭 6) Mapping-tabel per thema
+
+| Thema             | Lijst 1       | Lijst 2                    | Lijst 3                |
+| ----------------- | ------------- | -------------------------- | ---------------------- |
+| Finance Kernel    | ✔ concept     | ✔ concretisering           | ✔ toetsbaar ADR        |
+| Shadow Flags      | ✔ conceptueel | ✔ expliciet benoemd        | ✔ ADR-12               |
+| Input Hardening   | ✔ principe    | ✔ MoneyField isolatie      | ✔ auditregel           |
+| FSM App Status    | ✔ algemeen    | ✔ Phoenix-FSM              | ✔ ADR-17/18            |
+| UI must be dumb   | ✔ principe    | ✔ uitgewerkt per component | ✔ Pure Projector check |
+| Schema Versioning | ✔ noodzaak    | ✔ storage guard concept    | ✔ ADR-15               |
+
+Kort gezegd:
+👉 lijst 3 is **de audit-extractie van 1+2**
+
+---
+
+## 🧠 7) Conclusie — wat bewijst dit over je AI-workflow?
+
+Dit geheel laat zien dat:
+
+* AI niet willekeurig is “gedreven”
+* ideeën werden consistenter naarmate je iteraties deed
+* je systeem beweegt van vaag → concreet → meetbaar
+* je menselijk filter werkt zoals bedoeld
+
+Dit ondersteunt de stelling:
+
+> AI werkt goed wanneer rollen gescheiden zijn
+> én er menselijke regie en normenkader is
+
+---
+
+## ✅ Advies: zo maak je hier één canon van
+
+1️⃣ **Kies lijst 1 als “Architectuurprincipes” (permanent)**
+2️⃣ **Gebruik lijst 2 als “Phoenix-interpretatie van principes”**
+3️⃣ **Gebruik lijst 3 als “Audit set – alleen dingen die meetbaar zijn”**
+
+En voeg toe:
+
+* elke ADR in lijst 3 moet mappen naar principe in lijst 1
+* als dat niet kan → schrappen of herformuleren
+* audit mag nooit bron van nieuwe architectuur zijn
+
+---
+
+### 📌 Volgende stap (voorstel)
+
+Als je wilt, maak ik:
+
+* één **geharmoniseerde ADR-set**
+* met:
+
+  * rationale
+  * beslisboom (wanneer van toepassing)
+  * checks voor je audit-script
+  * mapping 1→2→3 ernaast zichtbaar
+
+Fantastische stap. Hieronder krijg je precies wat je vroeg:
+
+1. **ADR-00 – Phoenix Reset (nieuw startpunt, rationale, scope, beslissingen)**
+2. **Geconsolideerde, definitieve ADR-canon**
+
+   * samengevoegd uit lijst 1, 2 en 3
+   * dubbele items geharmoniseerd
+   * nummering strak en logisch
+   * audit-toetsbaar waar mogelijk
+   * zonder drift, zonder herhalingen
+
+Ik heb het zo geschreven dat je het direct kunt opnemen in je repo als:
+
+```
+/docs/adr/ADR-00-phoenix-reset.md
+/docs/adr/ADR-01-...
+```
+
+---
+
+
+# ✅ ADR-00 — Phoenix Reset
+
+**Titel**
+Phoenix Reset — herstart van architectuur, scope en kwaliteitssysteem
+
+**Status**
+ACCEPTED
+
+**Context**
+
+Het oorspronkelijke project bevatte:
+
+* historische code zonder eenduidige architectuur
+* inconsistent gebruik van patronen
+* vermenging van UI, parsing en businesslogica
+* onduidelijke verantwoordelijkheidsgrenzen
+* onvoldoende expliciete kwaliteitsnormen
+* impliciete aannames i.p.v. expliciet ontworpen beslissingen
+
+Tegelijkertijd is in de afgelopen periode een grote hoeveelheid:
+
+* analyses
+* audits
+* adviezen
+* change-units
+* protocollen
+* gedeeltelijke refactors
+
+ontstaan die niet langer een eenduidig **single source of truth** vormden.
+
+**Problem Statement**
+
+We willen:
+
+* bestaande applicatie herbouwen
+* maar níet eindeloos refactoren in het wilde weg
+* met heldere kwaliteitskaders
+* met strikte scheiding van rollen en verantwoordelijkheden
+* met meetbare eisen
+* waarbij beslissingen herleidbaar en auditbaar blijven
+
+**Decision**
+
+We voeren een **Phoenix Reset** door:
+
+1. oude impliciete aannames worden ongeldig verklaard
+2. onderstaande ADR-canon is de **enige geldige architectuurbron**
+3. nieuwe ADR’s mogen uitsluitend:
+
+   * op deze canon voortbouwen
+   * of expliciet bestaande ADR’s vervangen
+4. audit- en toolingregels zijn **afgeleid van ADR’s**, niet omgekeerd
+5. AI is adviserend — beslissingen worden **door de mens genomen**
+
+**Consequenties**
+
+* refactoren zonder ADR-basis is niet toegestaan
+* audits mogen alleen toetsen wat een ADR expliciet vastlegt
+* alle nieuwe ontwerpen verwijzen naar relevante ADR’s
+* wanneer realiteit afwijkt, wordt ADR aangepast — niet stiekem omzeild
+
+**Accepted Risks**
+
+* tijdelijk lagere snelheid door expliciete besluitvorming
+* vereiste discipline in documentatie
+* strengere onboarding voor ontwikkelaars
+
+**Benefits**
+
+* traceerbare besluiten
+* consistentie in codebase
+* beheersbare complexiteit
+* sterkere basis voor audits en reviews
+
+---
+
+# 🧭 Phoenix Architectuurcanon — Definitieve ADR-lijst
+
+Dit is de **geconsolideerde en opgeschoonde canon**.
+Dubbele ADR’s zijn gemerged.
+Terminologie is gestandaardiseerd.
+Audit-ADR’s zijn ingepast in de inhoudelijke structuur.
+
+---
+
+## ADR-01 — Separation of Concerns is leidend
+
+UI, state management, domeinlogica en infrastructuur hebben gescheiden verantwoordelijkheden.
+
+* UI = weergave en interactie
+* State = opslag en transities
+* Domein = regels en berekeningen
+* Infra = persistence, netwerk, platform
+
+Businesslogica in UI is **niet toegestaan**.
+
+---
+
+## ADR-02 — Type-Safety aan systeemgrenzen is verplicht
+
+* alle invoer en opslag wordt gestructureerd gevalideerd
+* schema’s zijn versieerbaar
+* runtime validatie is verplicht (Zod of equivalent)
+* `FormState` is een **expliciet gemodelleerd domeinobject**
+
+---
+
+## ADR-03 — Domeinlogica hoort in kernel-modules
+
+Alle kernberekeningen (zoals financiële berekening, normlogica, statustoekenning):
+
+* zitten in dedicated “kernel” modules
+* hebben pure functies
+* hebben geen UI- of frameworkafhankelijkheden
+* zijn testbaar zonder renderer
+
+UI mag alleen:
+
+* kernel aanroepen
+* resultaten tonen
+
+---
+
+## ADR-04 — UI Components zijn “dumb”
+
+Componenten:
+
+* hebben geen parsinglogica
+* hebben geen complexe beslisregels
+* zijn projector-achtig: state in, view uit
+
+Slimme logica hoort in:
+
+* hooks
+* services
+* kernel
+* selectors
+
+---
+
+## ADR-05 — Geld en numeriek gedrag zijn minor-unit based
+
+* internen representatie van geld = **centen**
+* geen floating point bedragen in domeinlaag
+* parsing/conversie is centraal georganiseerd
+* afrondingsregels zijn expliciet gedefinieerd
+
+---
+
+## ADR-06 — Global Input Hardening
+
+Vrije gebruikersinvoer wordt:
+
+* opgeschoond
+* gevalideerd
+* gelimiteerd
+* geïnterpreteerd door één consistente parser
+
+UI mag **geen parseFloat/Number-experimenten** uitvoeren.
+
+---
+
+## ADR-07 — Shadow Flags en Special Status zijn expliciet gemodelleerd
+
+* boolean / enum flags
+* geen impliciete afleidingen verspreid door componenten
+* expliciete accessor-functies (`isSpecialStatus`, etc.)
+
+---
+
+## ADR-08 — App Status wordt beheerd via een FSM
+
+* beperkte set toestanden
+* expliciete geldige transities
+* geen “magische” statusstrings verspreid
+* noodmodus / error recovery is onderdeel van FSM
+
+---
+
+## ADR-09 — Views zijn Pure Projectors
+
+`App.tsx` en vergelijkbare entry-components:
+
+* bevatten geen logica
+* zijn een pure mapping: status → scherm
+* kennen FSM maar niet de businessdetails
+
+---
+
+## ADR-10 — Schema Versioning en Storage Guards
+
+* elke persistente structuur heeft schemaVersion
+* migraties zijn expliciet en getest
+* storage wordt **altijd** gevalideerd vóór gebruik
+
+---
+
+## ADR-11 — Testing volgt piramidemodel
+
+* domeinlogica: zwaar getest
+* UI: licht, voornamelijk integratie
+* golden master scenario’s voor household cases
+
+---
+
+## ADR-12 — Auditability is een primair doel
+
+* beslissingen herleidbaar (ADR-referenties)
+* changelog op WAI-niveau
+* scriptmatige audits zijn toegestaan
+* scripts mogen geen nieuwe architectuur afdwingen
+
+---
+
+## ADR-13 — Finance Kernel voor inkomen/uitgaven
+
+* netto/bestedingsruimte/afdrachten etc.
+* werken in centen
+* pure functie, deterministic
+* UI en persistence zijn adapters
+
+---
+
+## ADR-14 — Reducers zijn dumb
+
+Reducers doen alleen:
+
+* state in
+* action + payload in
+* nieuwe state uit
+
+Geen:
+
+* API calls
+* berekeningen
+* parsing
+* logging van beleid
+
+---
+
+## ADR-15 — Navigator en Debugger zijn procesrollen
+
+Deze zijn **proces-ondersteunend** en wijzigen geen architectuur.
+Ze mogen:
+
+* verklaren
+* begeleiden
+* analyseren
+
+Ze mogen niet:
+
+* nieuwe patronen introduceren
+* beslissingen nemen
+
+---
+
+## ADR-16 — Eenvoud boven theoretische perfectie
+
+Als twee oplossingen gelijkwaardig zijn:
+
+* wint de eenvoudigste
+* met minste concepten
+* met minste nieuwe abstrahering
+
+---
+
+## ADR-17 — Accepted Risk is een geldig resultaat
+
+Het is toegestaan om:
+
+* risico’s expliciet te accepteren
+* en ze te documenteren
+
+Niet toegestaan:
+
+* risico’s stilzwijgend te negeren
+
+---
+
+## ADR-18 — AI is adviserend, mens beslist
+
+* AI levert analyse, alternatieven en bewijsvoering
+* AI beslist niets
+* mens is eindregisseur
+* beslissingen worden expliciet vastgelegd
+
+---
