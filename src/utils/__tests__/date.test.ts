@@ -1,19 +1,18 @@
 // src/utils/__tests__/date.test.ts
-import { 
-  calculateAge, 
-  getAdultMaxISO, 
+import {
+  calculateAge,
+  getAdultMaxISO,
   getChildMinISO,
   getChildMaxISO,
-  parseDDMMYYYYtoISO, 
+  parseDDMMYYYYtoISO,
   formatDate,
   isDigitsDatePlausible,
   formatDateISO,
   getCurrentDateISO,
-  getISOWeek
+  getISOWeek,
 } from '../date';
 
 describe('Date Utils — Integrale Testsuite', () => {
-  
   // --- Setup voor tijdsafhankelijke tests ---
   beforeEach(() => {
     jest.useFakeTimers();
@@ -43,7 +42,7 @@ describe('Date Utils — Integrale Testsuite', () => {
 
   describe('Leeftijdsberekening & Business Logic (Age Gates)', () => {
     it('moet exact de 18-jaar grens bewaken', () => {
-      const fakeToday = new Date('2025-01-01T12:00:00'); 
+      const fakeToday = new Date('2025-01-01T12:00:00');
       jest.setSystemTime(fakeToday);
 
       expect(calculateAge('2007-01-01')).toBe(18);
@@ -71,17 +70,17 @@ describe('Date Utils — Integrale Testsuite', () => {
       expect(formatDate(testDate, 'short')).toContain('mrt');
       expect(formatDate(testDate, 'full')).toContain('vrijdag');
     });
-    
+
     it('FORCEER DEKKING REGEL 101: formatDate met ongeldige ISO-like string', () => {
       // Stap 1: De input moet een string zijn
       // Stap 2: isIsoDateOnly('2024-02-30') geeft TRUE (want het matcht YYYY-MM-DD)
       // Stap 3: isoDateOnlyToLocalNoon('2024-02-30') geeft NULL (want 30 feb bestaat niet)
       // Stap 4: De code zou NU regel 101 moeten raken: if (!local) return '';
-      
+
       const result = formatDate('2024-02-30');
       expect(result).toBe('');
     });
-    
+
     it('EXTRA DEKKING: formatDate met totaal corrupte string', () => {
       // Dit raakt de 'else if (typeof input === "string")' tak
       const result = formatDate('geen-datum-hier');
@@ -120,7 +119,7 @@ describe('Date Utils — Integrale Testsuite', () => {
     });
 
     it('moet ISO weeknummers correct berekenen', () => {
-      const d = new Date('2024-01-04'); 
+      const d = new Date('2024-01-04');
       expect(getISOWeek(d)).toBe(1);
     });
 
@@ -131,4 +130,4 @@ describe('Date Utils — Integrale Testsuite', () => {
       expect(formatDateISO(fakeToday)).toBe('2024-03-15');
     });
   });
-})
+});

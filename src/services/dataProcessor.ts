@@ -1,12 +1,12 @@
 import { toCents } from '@utils/numbers';
 
 export type SetupData = {
-  maandelijksInkomen?: number;      // in euro (wordt naar centen geconverteerd)
+  maandelijksInkomen?: number; // in euro (wordt naar centen geconverteerd)
   housingIncluded?: boolean;
 };
 
 export type CsvItem = {
-  amount: number;                   // in CENTEN (van csvService)
+  amount: number; // in CENTEN (van csvService)
   description: string;
   date: string;
   original: Record<string, unknown>;
@@ -27,10 +27,20 @@ export const dataProcessor = {
     if (desc.includes('huur') || desc.includes('hypotheek') || desc.includes('woon'))
       return 'Wonen';
 
-    if (desc.includes('zorg') || desc.includes('zilveren') || desc.includes('vgz') || desc.includes('cz'))
+    if (
+      desc.includes('zorg') ||
+      desc.includes('zilveren') ||
+      desc.includes('vgz') ||
+      desc.includes('cz')
+    )
       return 'Zorgverzekering';
 
-    if (desc.includes('supermarkt') || desc.includes('ah ') || desc.includes('jumbo') || desc.includes('lidl'))
+    if (
+      desc.includes('supermarkt') ||
+      desc.includes('ah ') ||
+      desc.includes('jumbo') ||
+      desc.includes('lidl')
+    )
       return 'Boodschappen';
 
     if (desc.includes('salaris') || desc.includes('loon') || desc.includes('stipendium'))
@@ -44,11 +54,8 @@ export const dataProcessor = {
     const THRESHOLD_CENTS = 5000; // €50
 
     const csvIncome = csvData
-      .filter(d => dataProcessor.categorize(d.description) === 'Inkomen')
-      .reduce(
-        (acc, curr) => acc + (Number.isFinite(curr.amount) ? curr.amount : 0),
-        0
-      );
+      .filter((d) => dataProcessor.categorize(d.description) === 'Inkomen')
+      .reduce((acc, curr) => acc + (Number.isFinite(curr.amount) ? curr.amount : 0), 0);
 
     const setupIncomeCents = toCents(setupData.maandelijksInkomen ?? 0);
 
@@ -57,8 +64,7 @@ export const dataProcessor = {
 
     const diff = csvIncome - setupIncomeCents;
 
-    const isDiscrepancy =
-      csvIncome > 0 && Math.abs(diff) > THRESHOLD_CENTS;
+    const isDiscrepancy = csvIncome > 0 && Math.abs(diff) > THRESHOLD_CENTS;
 
     return { finalIncome, source, isDiscrepancy, diff };
   },

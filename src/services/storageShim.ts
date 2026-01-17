@@ -3,7 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LegacyNamespace from '@services/storage';
 import type { FormState } from '@shared-types/form';
 
-
 const KEY = '@CashflowWizardState';
 
 export const StorageShim = {

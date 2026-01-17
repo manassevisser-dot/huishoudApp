@@ -13,7 +13,7 @@ interface WizardContextType {
 // Props voor de provider, inclusief injectie-opties voor tests
 interface WizardProviderProps {
   children: ReactNode;
-  initialState?: FormState;     // Voor test-injectie
+  initialState?: FormState; // Voor test-injectie
   mockDispatch?: React.Dispatch<any>; // Voor test-injectie (jest.fn())
 }
 
@@ -22,16 +22,13 @@ const FormContext = createContext<WizardContextType | undefined>(undefined);
 // De standaard initiële staat van de applicatie via de factory
 const defaultInitialState = makePhoenixState();
 
-export const WizardProvider: React.FC<WizardProviderProps> = ({ 
-  children, 
-  initialState, 
-  mockDispatch 
+export const WizardProvider: React.FC<WizardProviderProps> = ({
+  children,
+  initialState,
+  mockDispatch,
 }) => {
   // 1. Initialiseer de reducer met ofwel de geïnjecteerde staat, of de standaard
-  const [state, dispatch] = useReducer(
-    formReducer, 
-    initialState || defaultInitialState
-  );
+  const [state, dispatch] = useReducer(formReducer, initialState || defaultInitialState);
 
   // 2. Bepaal welke dispatch we gebruiken (echt of mock)
   // Dit zorgt ervoor dat we in tests acties kunnen onderscheppen

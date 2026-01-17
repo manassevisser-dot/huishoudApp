@@ -23,4 +23,3 @@ export function makeToggles(c: ColorScheme) {
 }
 
 export type ToggleStyles = ReturnType<typeof makeToggles>;
-

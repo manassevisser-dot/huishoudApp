@@ -10,8 +10,8 @@ interface FormContextType {
 
 export const FormContext = createContext<FormContextType | undefined>(undefined);
 
-export const FormProvider: React.FC<{ 
-  children: ReactNode; 
+export const FormProvider: React.FC<{
+  children: ReactNode;
   initialState: FormState;
   mockDispatch?: Dispatch<any>; // ✅ Voeg dit toe voor tests
 }> = ({ children, initialState, mockDispatch }) => {

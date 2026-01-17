@@ -1,4 +1,3 @@
-
 // frequency.ts (refined)
 export const WEEKS_PER_YEAR = 52 as const;
 export const MONTHS_PER_YEAR = 12 as const;
@@ -18,11 +17,16 @@ export type Frequency = 'week' | '4wk' | 'month' | 'quarter' | 'year';
 export const getMonthlyFactor = (freq?: Frequency | string): number => {
   // Probeer te narrowen naar de union en behandel overige strings als unknown
   switch (freq as Frequency) {
-    case 'week':    return WEEKS_PER_YEAR / MONTHS_PER_YEAR; // ≈ 4.3333
-    case '4wk':     return 13 / 12;                          // ≈ 1.08333
-    case 'month':   return 1;
-    case 'quarter': return 1 / 3;
-    case 'year':    return 1 / MONTHS_PER_YEAR;
+    case 'week':
+      return WEEKS_PER_YEAR / MONTHS_PER_YEAR; // ≈ 4.3333
+    case '4wk':
+      return 13 / 12; // ≈ 1.08333
+    case 'month':
+      return 1;
+    case 'quarter':
+      return 1 / 3;
+    case 'year':
+      return 1 / MONTHS_PER_YEAR;
     default:
       // Voor onbekende strings (niet in union): factor 1
       return 1;

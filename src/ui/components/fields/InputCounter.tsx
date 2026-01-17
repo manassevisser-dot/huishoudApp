@@ -1,4 +1,3 @@
-
 import * as React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 
@@ -29,7 +28,14 @@ const InputCounter: React.FC<InputCounterProps> = ({
   const inc = () => emit(Math.min(max, value + 1));
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 10 }}>
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 10,
+      }}
+    >
       {label ? <Text>{label}</Text> : null}
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <TouchableOpacity

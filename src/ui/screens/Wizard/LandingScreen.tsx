@@ -45,10 +45,7 @@ const LandingScreen: React.FC<Props> = ({ onSignup, onSignin }) => {
           <Text style={styles.buttonText}>Aanmelden</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[styles.button, styles.secondaryButton]} 
-          onPress={handleLogin}
-        >
+        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={handleLogin}>
           <Text style={styles.secondaryButtonText}>Inloggen</Text>
         </TouchableOpacity>
       </View>

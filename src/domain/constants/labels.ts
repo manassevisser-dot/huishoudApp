@@ -13,7 +13,7 @@ export const UI_LABELS = {
   [UX_TOKENS.PAGES.finance]: 'Inkomsten & Lasten',
 
   // Field Labels
-  [UX_TOKENS.FIELDS.CAR_COUNT]: 'Aantal Auto\'s',
+  [UX_TOKENS.FIELDS.CAR_COUNT]: "Aantal Auto's",
   [UX_TOKENS.FIELDS.NAME]: 'Naam',
 };
 

@@ -4,12 +4,12 @@ describe('evaluateConditions', () => {
   const mockState = {
     SETUP: {
       hasPartner: 'yes',
-      age: 30
+      age: 30,
     },
     household: {
-      children: 2
+      children: 2,
     },
-    directField: 'hello'
+    directField: 'hello',
   } as any;
 
   test('should return true if no condition or state is provided', () => {
@@ -18,13 +18,21 @@ describe('evaluateConditions', () => {
   });
 
   test('should find values in different buckets (root, SETUP, household)', () => {
-    expect(evaluateConditions({ fieldId: 'directField', operator: 'eq', value: 'hello' }, mockState)).toBe(true);
-    expect(evaluateConditions({ fieldId: 'hasPartner', operator: 'eq', value: 'yes' }, mockState)).toBe(true);
-    expect(evaluateConditions({ fieldId: 'children', operator: 'eq', value: 2 }, mockState)).toBe(true);
+    expect(
+      evaluateConditions({ fieldId: 'directField', operator: 'eq', value: 'hello' }, mockState),
+    ).toBe(true);
+    expect(
+      evaluateConditions({ fieldId: 'hasPartner', operator: 'eq', value: 'yes' }, mockState),
+    ).toBe(true);
+    expect(evaluateConditions({ fieldId: 'children', operator: 'eq', value: 2 }, mockState)).toBe(
+      true,
+    );
   });
 
   test('should return false if value is not found in any bucket', () => {
-    expect(evaluateConditions({ fieldId: 'nonExistent', operator: 'eq', value: 'test' }, mockState)).toBe(false);
+    expect(
+      evaluateConditions({ fieldId: 'nonExistent', operator: 'eq', value: 'test' }, mockState),
+    ).toBe(false);
   });
 
   test('should evaluate "eq" (equal) operator', () => {

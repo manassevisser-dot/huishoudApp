@@ -2,7 +2,6 @@ import { migrateToPhoenix } from '../migrationService';
 import { DATA_KEYS, SUB_KEYS } from '@domain/constants/datakeys';
 
 describe('migrationService - migrateToPhoenix', () => {
-  
   test('should return base state when input is null or undefined', async () => {
     const resultNull = await migrateToPhoenix(null);
     const resultUndef = await migrateToPhoenix(undefined);
@@ -16,8 +15,8 @@ describe('migrationService - migrateToPhoenix', () => {
     const oldData = {
       leden: [
         { naam: 'Jan Jansen', memberType: 'adult' },
-        { naam: 'Kleine Piet', memberType: 'child', age: 8 }
-      ]
+        { naam: 'Kleine Piet', memberType: 'child', age: 8 },
+      ],
     };
 
     const result = await migrateToPhoenix(oldData);
@@ -36,9 +35,9 @@ describe('migrationService - migrateToPhoenix', () => {
       household: {
         members: [
           { fullName: 'Volwassene', memberType: 'adult' },
-          { fullName: 'Kind', memberType: 'child' }
-        ]
-      }
+          { fullName: 'Kind', memberType: 'child' },
+        ],
+      },
     };
 
     const result = await migrateToPhoenix(oldData);
@@ -54,7 +53,7 @@ describe('migrationService - migrateToPhoenix', () => {
       aantalVolwassen: 2,
       income: { items: [{ label: 'Salaris', amount: 3000 }] },
       expenses: { items: [{ label: 'Huur', amount: 1000 }] },
-      metadata: { schemaVersion: '0.9', migratedAt: '2023-01-01T00:00:00Z' }
+      metadata: { schemaVersion: '0.9', migratedAt: '2023-01-01T00:00:00Z' },
     };
 
     const result = await migrateToPhoenix(oldData);

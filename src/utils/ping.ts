@@ -1,4 +1,3 @@
-
 // src/utils/ping.ts
 type MinimalPhoenixState = { data?: { setup?: Record<string, unknown> } };
 

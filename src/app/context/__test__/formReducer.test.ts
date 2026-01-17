@@ -1,5 +1,5 @@
 import { formReducer } from '../formReducer';
-import { createMockState } from '@test-utils/index'; 
+import { createMockState } from '@test-utils/index';
 import { DATA_KEYS } from '@domain/constants/datakeys';
 
 describe('formReducer — Onderzoeks-integriteit', () => {
@@ -9,9 +9,9 @@ describe('formReducer — Onderzoeks-integriteit', () => {
   it('moet UPDATE_DATA verwerken met Deep Merge (ADR-12)', () => {
     const action = {
       type: 'UPDATE_DATA' as const,
-      payload: { 
-        [DATA_KEYS.SETUP]: { aantalVolwassen: 5 } 
-      }
+      payload: {
+        [DATA_KEYS.SETUP]: { aantalVolwassen: 5 },
+      },
     };
     const newState = formReducer(initialState, action as any);
     expect(newState.data[DATA_KEYS.SETUP].aantalVolwassen).toBe(5);
@@ -19,21 +19,21 @@ describe('formReducer — Onderzoeks-integriteit', () => {
   });
 
   it('moet bij RESET_APP de state terugzetten naar default', () => {
-    const dirtyState = { 
-      ...initialState, 
-      data: { ...initialState.data, [DATA_KEYS.SETUP]: { aantalMensen: 99 } }
+    const dirtyState = {
+      ...initialState,
+      data: { ...initialState.data, [DATA_KEYS.SETUP]: { aantalMensen: 99 } },
     };
     const action = { type: 'RESET_APP' as const };
     const newState = formReducer(dirtyState as any, action as any);
-    
+
     expect(newState.data[DATA_KEYS.SETUP].aantalMensen).toBe(1);
   });
 
   it('moet SYNC_MEMBERS verwerken (Regel 33)', () => {
     // Branch 1: Geldige payload
-    const actionWithData = { 
-      type: 'SYNC_MEMBERS' as const, 
-      payload: [{ id: 'm1', name: 'Nieuw Lid' }] 
+    const actionWithData = {
+      type: 'SYNC_MEMBERS' as const,
+      payload: [{ id: 'm1', name: 'Nieuw Lid' }],
     };
     const stateWithData = formReducer(initialState, actionWithData as any);
     expect(stateWithData).toBeDefined();
@@ -50,16 +50,16 @@ describe('formReducer — Onderzoeks-integriteit', () => {
     expect(state).toBe(initialState);
   });
   it('moet SET_STEP verwerken en de meta-klok laten tikken (Regel 33)', () => {
-    const action = { 
-      type: 'SET_STEP' as const, 
-      payload: 2 
+    const action = {
+      type: 'SET_STEP' as const,
+      payload: 2,
     };
 
     const newState = formReducer(initialState, action as any);
 
     // Assert: Stap moet aangepast zijn
     expect(newState.activeStep).toBe(2);
-    
+
     // Assert: Hier wordt meta wél bijgewerkt!
     expect(newState.meta.lastModified).not.toBe(initialState.meta.lastModified);
   });
@@ -69,8 +69,8 @@ describe('formReducer — Onderzoeks-integriteit', () => {
       payload: {
         section: DATA_KEYS.SETUP,
         field: 'autoCount',
-        value: 'Twee'
-      }
+        value: 'Twee',
+      },
     };
     const newState = formReducer(initialState, action as any);
     expect(newState.data[DATA_KEYS.SETUP].autoCount).toBe('Twee');

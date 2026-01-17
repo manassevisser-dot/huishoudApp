@@ -1,14 +1,13 @@
 import { validateField, validateDobNL } from '../validation';
 
 describe('validation.ts logic', () => {
-  
   describe('validateField', () => {
-    // We gebruiken 'as any' om TypeScript waarschuwingen te negeren 
+    // We gebruiken 'as any' om TypeScript waarschuwingen te negeren
     // en de logica van de functie te testen.
     const mockField = {
       type: 'number',
       required: true,
-      validation: { min: 5, max: 10 }
+      validation: { min: 5, max: 10 },
     } as any;
 
     test('should return error if required value is missing', () => {
@@ -28,20 +27,24 @@ describe('validation.ts logic', () => {
     test('should validate postcode correctly', () => {
       const postcodeField = {
         type: 'text',
-        validation: { postcode: true }
+        validation: { postcode: true },
       } as any;
       expect(validateField(postcodeField, '1234', {})).toBeNull();
-      expect(validateField(postcodeField, '123', {})).toBe('Ongeldige postcode (formaat: 4 cijfers, bijv. 1234).');
+      expect(validateField(postcodeField, '123', {})).toBe(
+        'Ongeldige postcode (formaat: 4 cijfers, bijv. 1234).',
+      );
     });
 
     test('should validate lengthEqualsTo for arrays', () => {
       const arrayField = {
         type: 'array',
-        validation: { lengthEqualsTo: 'setup.total' }
+        validation: { lengthEqualsTo: 'setup.total' },
       } as any;
       const state = { setup: { total: 2 } };
-      
-      expect(validateField(arrayField, [{ name: 'Jan' }], state)).toContain('gelijk zijn aan totaal aantal personen');
+
+      expect(validateField(arrayField, [{ name: 'Jan' }], state)).toContain(
+        'gelijk zijn aan totaal aantal personen',
+      );
       expect(validateField(arrayField, [{ name: 'Jan' }, { name: 'Piet' }], state)).toBeNull();
     });
 

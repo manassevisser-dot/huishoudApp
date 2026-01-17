@@ -6,7 +6,7 @@ export function formReducer(state: FormState, action: FormAction): FormState {
   const metaUpdate = { ...state.meta, lastModified: new Date().toISOString() };
 
   switch (action.type) {
-    case 'UPDATE_DATA': { 
+    case 'UPDATE_DATA': {
       return {
         ...state,
         data: deepMerge(state.data, action.payload),
@@ -14,7 +14,7 @@ export function formReducer(state: FormState, action: FormAction): FormState {
       };
     }
 
-    case 'SET_FIELD': { 
+    case 'SET_FIELD': {
       const { section, field, value } = action.payload;
       return {
         ...state,
@@ -32,35 +32,35 @@ export function formReducer(state: FormState, action: FormAction): FormState {
     case 'SET_STEP':
       return { ...state, activeStep: action.payload, meta: metaUpdate };
 
-      case 'RESET_APP':
+    case 'RESET_APP':
       return {
         ...state,
         data: {
           // SETUP Sectie (Fix Error 2418)
-          [DATA_KEYS.SETUP]: { 
+          [DATA_KEYS.SETUP]: {
             aantalMensen: 1,
             aantalVolwassen: 1,
-            autoCount: "Nee",
+            autoCount: 'Nee',
             heeftHuisdieren: false,
           },
           // HOUSEHOLD Sectie
-          household: { 
-            members: [] 
+          household: {
+            members: [],
           },
           // FINANCE Sectie (Fix Error 2741)
           finance: {
             income: {
-              items: [],      // ✅ 'items' is verplicht volgens je shared-types
-              totalAmount: 0
+              items: [], // ✅ 'items' is verplicht volgens je shared-types
+              totalAmount: 0,
             },
             expenses: {
-              items: [],      // ✅ Idem voor uitgaven
-              totalAmount: 0
-            }
-          }
+              items: [], // ✅ Idem voor uitgaven
+              totalAmount: 0,
+            },
+          },
         },
-        isValid: true,        // ✅ Fixt de falende test
-        activeStep: "0",      // ✅ Fixt de string/number mismatch
+        isValid: true, // ✅ Fixt de falende test
+        activeStep: '0', // ✅ Fixt de string/number mismatch
         meta: metaUpdate,
       };
 

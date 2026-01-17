@@ -1,4 +1,3 @@
-
 // src/utils/date.ts
 
 /**
@@ -26,11 +25,7 @@ function isIsoDateOnly(input: string): boolean {
 function isValidYMD(y: number, m: number, d: number): boolean {
   if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) return false;
   const test = new Date(y, m - 1, d, 12, 0, 0, 0); // lokale noon
-  return (
-    test.getFullYear() === y &&
-    test.getMonth() === m - 1 &&
-    test.getDate() === d
-  );
+  return test.getFullYear() === y && test.getMonth() === m - 1 && test.getDate() === d;
 }
 
 /**
@@ -153,7 +148,7 @@ export function calculateAge(iso: string): number | null {
   const today = new Date();
   let age = today.getFullYear() - y;
 
-  const mDiff = (today.getMonth() + 1) - m;
+  const mDiff = today.getMonth() + 1 - m;
   if (mDiff < 0 || (mDiff === 0 && today.getDate() < day)) age--;
 
   return age;

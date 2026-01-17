@@ -8,7 +8,7 @@ import type { Member } from '@domain/household';
 export function makeMember(
   index = 1,
   type: 'adult' | 'child' | 'teenager' | 'senior' = 'adult',
-  overrides?: Partial<Member>
+  overrides?: Partial<Member>,
 ): Member {
   const id = `${type}-${index}`;
   return {
@@ -29,7 +29,7 @@ export function makeMember(
  */
 export function makeMembers(
   count: number,
-  type: 'adult' | 'child' | 'teenager' | 'senior' = 'adult'
+  type: 'adult' | 'child' | 'teenager' | 'senior' = 'adult',
 ): Member[] {
   return Array.from({ length: count }, (_, i) => makeMember(i + 1, type));
 }
@@ -49,7 +49,7 @@ export function makeLegacyMember(): any {
   return {
     id: 'old-001',
     naam: 'Jan Janssen', // Wordt door privacyHelper gesplitst
-    type: 'puber',       // Wordt door privacyHelper 'teenager'
-    leeftijd: 16         // Wordt door privacyHelper 'age'
+    type: 'puber', // Wordt door privacyHelper 'teenager'
+    leeftijd: 16, // Wordt door privacyHelper 'age'
   };
 }

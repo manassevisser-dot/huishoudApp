@@ -1,23 +1,23 @@
 import { FormState } from '@shared-types/form';
-import { WizardPageConfig} from '@shared-types/wizard';
+import { WizardPageConfig } from '@shared-types/wizard';
 import { DATA_KEYS, SUB_KEYS } from '@domain/constants/registry';
 import { UX_TOKENS } from '@domain/constants/registry';
 
-export const fixedExpensesConfig: WizardPageConfig  = {
+export const fixedExpensesConfig: WizardPageConfig = {
   pageId: '4fixedExpenses',
   titleToken: UX_TOKENS.PAGES[DATA_KEYS.FINANCE], // Gebruikt de 'Inkomsten & lasten' token
   componentName: 'WizardPage',
   fields: [
     {
       // We nesten dit onder EXPENSES voor de orchestrator
-      fieldId: SUB_KEYS.EXPENSES, 
+      fieldId: SUB_KEYS.EXPENSES,
       label: 'Wonen',
       type: 'section',
       fields: [
-        { 
-          fieldId: 'living_costs', 
-          label: 'Huur / Hypotheek (€/mnd)', 
-          type: 'money' 
+        {
+          fieldId: 'living_costs',
+          label: 'Huur / Hypotheek (€/mnd)',
+          type: 'money',
         },
       ],
     },
@@ -26,9 +26,8 @@ export const fixedExpensesConfig: WizardPageConfig  = {
       label: 'Vervoer (Auto)',
       type: 'repeater',
       // ADR-01: View-logic gebaseerd op de SETUP state
-      visibleIf: (state: FormState) => 
-        state.data[DATA_KEYS.SETUP]?.autoCount !== 'Nee',
-      
+      visibleIf: (state: FormState) => state.data[DATA_KEYS.SETUP]?.autoCount !== 'Nee',
+
       // ADR-03: De repeater lengte wordt bepaald door de eerdere keuze
       countGetter: (state: FormState) => {
         const val = state.data[DATA_KEYS.SETUP]?.autoCount;

@@ -38,9 +38,9 @@ export function alignMembers(
   const currentAdults = base.filter((m) => m.memberType === 'adult');
   for (let i = 0; i < targetAdults; i++) {
     if (currentAdults[i]) {
-      next.push({ 
-        ...currentAdults[i], 
-        fieldId: currentAdults[i].fieldId || makeFieldId(i) 
+      next.push({
+        ...currentAdults[i],
+        fieldId: currentAdults[i].fieldId || makeFieldId(i),
       });
     } else {
       next.push(createEmptyMember('adult', i));
@@ -53,9 +53,9 @@ export function alignMembers(
   for (let i = 0; i < targetChildren; i++) {
     const globalIdx = targetAdults + i;
     if (currentChildren[i]) {
-      next.push({ 
-        ...currentChildren[i], 
-        fieldId: currentChildren[i].fieldId || makeFieldId(globalIdx) 
+      next.push({
+        ...currentChildren[i],
+        fieldId: currentChildren[i].fieldId || makeFieldId(globalIdx),
       });
     } else {
       next.push(createEmptyMember('child', globalIdx));

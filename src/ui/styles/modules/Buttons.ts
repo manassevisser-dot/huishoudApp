@@ -21,8 +21,8 @@ export function makeButtons(c: ColorScheme) {
     default: {},
   });
   return {
-     // === FIXED FOOTER (OUDE buttonContainer) ===
-     buttonContainer: {
+    // === FIXED FOOTER (OUDE buttonContainer) ===
+    buttonContainer: {
       position: 'absolute',
       bottom: 0,
       left: 0,
@@ -34,7 +34,7 @@ export function makeButtons(c: ColorScheme) {
       borderTopWidth: 1,
       borderTopColor: c.border,
     },
-    
+
     button: {
       flex: 1,
       backgroundColor: c.primary,
@@ -49,7 +49,7 @@ export function makeButtons(c: ColorScheme) {
       fontSize: Type.lg,
       fontWeight: '700',
     },
-    
+
     secondaryButton: {
       backgroundColor: c.secondary,
       marginLeft: 0,
@@ -60,7 +60,7 @@ export function makeButtons(c: ColorScheme) {
       fontSize: Type.lg,
       fontWeight: '600',
     },
-    
+
     buttonRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
@@ -91,7 +91,7 @@ export function makeButtons(c: ColorScheme) {
     },
     deleteButton: {
       backgroundColor: c.error,
-    secondaryText: { color: c.onSecondary, fontSize: Type.lg, fontWeight: '600' },
+      secondaryText: { color: c.onSecondary, fontSize: Type.lg, fontWeight: '600' },
     },
     // buttonGroup (chips/segmented variant kan elders)
     buttonGroup: { flexDirection: 'row', marginTop: Space.sm },

@@ -8,11 +8,11 @@ describe('Storage Migration: V0 to Phoenix', () => {
       setup: {
         aantalMensen: 4,
         aantalVolwassen: 2,
-        autoCount: 'Een'
+        autoCount: 'Een',
       },
       household: {
-        leden: []
-      }
+        leden: [],
+      },
     };
 
     // 2. Act: Geef de 'oldData' mee (niet null!)
@@ -29,7 +29,7 @@ describe('Storage Migration: V0 to Phoenix', () => {
   it('moet fallback waarden gebruiken bij corrupte oude data', async () => {
     // Act: Hier is 'null' juist WEL de bedoeling om de fallback te testen
     const result = (await migrateTransactionsToPhoenix(null)) as unknown as FormState;
-    
+
     // Assert
     expect(result.schemaVersion).toBe('1.0');
     expect(result.data.setup.aantalMensen).toBe(0); // Verwacht 0 bij null input

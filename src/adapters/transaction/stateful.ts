@@ -3,7 +3,7 @@ import { AuditLogger } from '@/utils/audit/logger'; // Check of dit pad klopt me
 const allocateRemainder = (total: number, parts: number): number[] => {
   const base = Math.floor(total / parts);
   const remainder = total % parts;
-  return Array.from({ length: parts }, (_, i) => i < remainder ? base + 1 : base);
+  return Array.from({ length: parts }, (_, i) => (i < remainder ? base + 1 : base));
 };
 
 type TransactionState = Record<string, any>;
@@ -21,15 +21,15 @@ export class StatefulTransactionAdapter {
     if (this.pointer < this.history.length - 1) {
       this.history = this.history.slice(0, this.pointer + 1);
     }
-    
+
     this.history.push(newState);
     this.pointer++;
-    
+
     // Fix: level + msg toegevoegd voor TS2555
-    AuditLogger.log('INFO', 'transaction_push', { 
-      type: actionType, 
+    AuditLogger.log('INFO', 'transaction_push', {
+      type: actionType,
       pointer: this.pointer,
-      adr: 'ADR-12' 
+      adr: 'ADR-12',
     });
   }
 
@@ -54,8 +54,8 @@ export class StatefulTransactionAdapter {
   public calculateDistribution(totalAmount: number, parts: number): number[] {
     return allocateRemainder(Math.floor(totalAmount), parts);
   }
-  
+
   public getCurrentState(): TransactionState {
-      return this.history[this.pointer];
+    return this.history[this.pointer];
   }
 }

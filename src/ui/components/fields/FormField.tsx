@@ -1,8 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
 import { FormState, FormAction } from '@shared-types/form';
-import { InputCounter, ToggleSwitch, } from './index';
-import {FieldConfig,} from "@shared-types/fields";
+import { InputCounter, ToggleSwitch } from './index';
+import { FieldConfig } from '@shared-types/fields';
 
 interface FormFieldProps {
   field: FieldConfig;
@@ -34,10 +34,7 @@ const FormField: React.FC<FormFieldProps> = ({ field, dispatch, value }) => {
         />
       )}
       {field.type === 'toggle' && (
-        <ToggleSwitch
-          value={!!value}
-          onToggle={() => handleChange(!value)}
-        />
+        <ToggleSwitch value={!!value} onToggle={() => handleChange(!value)} />
       )}
       {/* Voeg hier DateField en MoneyInput toe op dezelfde wijze */}
     </View>

@@ -14,31 +14,33 @@ export const migrateToPhoenix = (oldState: any): FormState => {
     return list.length > 0 ? toCents(list[0]?.amount ?? list[0]?.value ?? 0) : 0;
   };
 
-  const migratedMembers: Member[] = (o[DATA_KEYS.HOUSEHOLD]?.leden || []).map((lid: any, i: number) => ({
-    entityId: lid.id || `m-${i}`,
-    naam: lid.naam || lid.firstName || 'Lid',
-    memberType: lid.type || 'adult',
-  }));
+  const migratedMembers: Member[] = (o[DATA_KEYS.HOUSEHOLD]?.leden || []).map(
+    (lid: any, i: number) => ({
+      entityId: lid.id || `m-${i}`,
+      naam: lid.naam || lid.firstName || 'Lid',
+      memberType: lid.type || 'adult',
+    }),
+  );
 
   const migratedData: FormState['data'] = {
-    [DATA_KEYS.SETUP]: o[DATA_KEYS.SETUP] || { 
-      aantalMensen: 1, 
+    [DATA_KEYS.SETUP]: o[DATA_KEYS.SETUP] || {
+      aantalMensen: 1,
       aantalVolwassen: 1,
-      autoCount: 'Nee'
+      autoCount: 'Nee',
     },
     [DATA_KEYS.HOUSEHOLD]: {
       members: migratedMembers as any[],
     },
     [DATA_KEYS.FINANCE]: {
-      income: { 
-        items: [], 
-        totalAmount: getFirstAmountCents(o.C7 || o.income)
-      },
-      expenses: { 
+      income: {
         items: [],
-        totalAmount: getFirstAmountCents(o.C10 || o.fixedExpenses)
-      }
-    }
+        totalAmount: getFirstAmountCents(o.C7 || o.income),
+      },
+      expenses: {
+        items: [],
+        totalAmount: getFirstAmountCents(o.C10 || o.fixedExpenses),
+      },
+    },
   };
 
   return {
@@ -49,8 +51,8 @@ export const migrateToPhoenix = (oldState: any): FormState => {
     data: migratedData,
     meta: {
       lastModified: new Date().toISOString(),
-      version: 1
-    }
+      version: 1,
+    },
   };
 };
 
@@ -61,7 +63,7 @@ export const migrateToPhoenix = (oldState: any): FormState => {
 export const storage = {
   migrateToPhoenix,
   loadState: async (): Promise<FormState | null> => {
-     // Hier kun je de feitelijke AsyncStorage of localStorage logica toevoegen
-     return null; 
-  }
+    // Hier kun je de feitelijke AsyncStorage of localStorage logica toevoegen
+    return null;
+  },
 };

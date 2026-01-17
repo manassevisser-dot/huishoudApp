@@ -1,4 +1,3 @@
-
 // src/services/__tests__/storageShim.test.ts
 import { makePhoenixState } from '@test-utils/index'; // barrel van je test-utils
 
@@ -41,8 +40,8 @@ describe('CU-001-SHIM StorageShim', () => {
     expect(key).toBe('@CashflowWizardState');
 
     const payload = JSON.parse(rawValue);
-    expect(payload.version).toBe(2);                    // envelop versie
-    expect(payload.state.schemaVersion).toBe('1.0');   // Phoenix schema versie
+    expect(payload.version).toBe(2); // envelop versie
+    expect(payload.state.schemaVersion).toBe('1.0'); // Phoenix schema versie
     expect(payload.state.data.setup.aantalMensen).toBe(2); // geneste waarde
   });
 });

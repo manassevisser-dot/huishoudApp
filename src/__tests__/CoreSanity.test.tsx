@@ -15,7 +15,7 @@ test('Core Sanity Check', () => {
   const { getByText } = render(
     <View>
       <Text>Hello World</Text>
-    </View>
+    </View>,
   );
   expect(getByText('Hello World')).toBeTruthy();
 });

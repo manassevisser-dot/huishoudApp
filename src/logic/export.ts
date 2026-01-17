@@ -9,11 +9,11 @@ export const aggregateExportData = (state: FormState) => {
 
   // Fix 2: Gebruik veilige accessors
   const totalAdults = setup.aantalVolwassen || 0;
-  
+
   // Fix 3: Map leden correct met type safety
   const members = (household.members || []).map((m: Member) => ({
     type: m.memberType,
-    leeftijd: m.age || 0
+    leeftijd: m.age || 0,
   }));
 
   // Fix 4: Check op items bestaan
@@ -27,11 +27,11 @@ export const aggregateExportData = (state: FormState) => {
     exportDate: new Date().toISOString().split('T')[0],
     household: {
       totalAdults,
-      members
+      members,
     },
     finances: {
       income: incomeItems,
-      expenses: expenseItems
-    }
+      expenses: expenseItems,
+    },
   };
 };

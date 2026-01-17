@@ -17,17 +17,17 @@ export const UX_TOKENS = {
   WIZARD: 'WIZARD',
   LANDING: 'LANDING',
   DASHBOARD: 'DASHBOARD',
-  
+
   PAGES: {
     [DATA_KEYS.SETUP]: 'setup_page_title',
     [DATA_KEYS.HOUSEHOLD]: 'household_page_title',
     [DATA_KEYS.FINANCE]: 'finance_page_title',
   },
-  
+
   FIELDS: {
     CAR_COUNT: 'car_count_label',
     NAME: 'name_label',
-  }
+  },
 } as const;
 
 export type PageToken = keyof typeof UX_TOKENS;

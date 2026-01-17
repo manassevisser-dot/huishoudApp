@@ -4,13 +4,11 @@ import { csvFactory } from '@test-utils/index';
 
 describe('DataOrchestrator Unit Tests', () => {
   const mockSetup = { maandelijksInkomen: 2000, housingIncluded: false };
-  const mockMembers = [
-    { id: '1', name: 'Test Gebruiker', role: 'Hoofdgebruiker' }
-  ];
+  const mockMembers = [{ id: '1', name: 'Test Gebruiker', role: 'Hoofdgebruiker' }];
 
   it('zou data moeten splitsen in een local en research laag', () => {
     const { content } = csvFactory.createIng();
-    
+
     const result = dataOrchestrator.processAllData(mockMembers, content, mockSetup);
 
     // Controleer of de hoofdstructuur aanwezig is

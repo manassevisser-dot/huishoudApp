@@ -16,21 +16,19 @@ import WelcomeWizard from '@ui/screens/Wizard/WelcomeWizard';
 
 // Mock navigatie props
 const mockNavigation = { navigate: jest.fn(), goBack: jest.fn(), setOptions: jest.fn() };
- 
 
 describe('Screen Sanity Smoke Tests', () => {
-  
   const screens = [
     { name: 'CsvUploadScreen', Component: CsvUploadScreen, props: {} },
     { name: 'UndoScreen', Component: UndoScreen, props: {} },
-    { 
-      name: 'DailyInputScreen', 
-      Component: DailyInputScreen, 
-      props: { 
-        onClose: jest.fn(), 
-        members: [], 
-        setupData: {} 
-      } 
+    {
+      name: 'DailyInputScreen',
+      Component: DailyInputScreen,
+      props: {
+        onClose: jest.fn(),
+        members: [],
+        setupData: {},
+      },
     },
     { name: 'DashboardScreen', Component: DashboardScreen, props: { navigation: mockNavigation } },
     { name: 'OptionsScreen', Component: OptionsScreen, props: { navigation: mockNavigation } },
@@ -45,7 +43,7 @@ describe('Screen Sanity Smoke Tests', () => {
     test(`${name} renders without crashing`, () => {
       // We verspreiden de props over de component
       render(<Component {...(props as any)} />);
-      
+
       expect(screen.toJSON()).not.toBeNull();
     });
   });

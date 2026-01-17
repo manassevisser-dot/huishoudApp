@@ -9,11 +9,11 @@ describe('evaluateRules', () => {
     expect(result).toHaveProperty('entityId');
     expect(result).toHaveProperty('timestamp');
     expect(result).toHaveProperty('isValid', true);
-    
+
     // Check of entityId een string is (gezien de random generatie)
     expect(typeof result.entityId).toBe('string');
     expect(result.entityId.length).toBeGreaterThan(0);
-    
+
     // Check of timestamp recent is
     expect(result.timestamp).toBeLessThanOrEqual(Date.now());
   });

@@ -8,12 +8,7 @@ export interface MoneyFieldProps {
   error?: string;
 }
 
-export const MoneyField: React.FC<MoneyFieldProps> = ({ 
-  label, 
-  amount, 
-  onAmountChange, 
-  error 
-}) => {
+export const MoneyField: React.FC<MoneyFieldProps> = ({ label, amount, onAmountChange, error }) => {
   return (
     <View style={{ marginBottom: 15 }}>
       <Text style={{ fontWeight: '600', marginBottom: 5 }}>{label}</Text>

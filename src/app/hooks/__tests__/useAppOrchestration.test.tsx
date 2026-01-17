@@ -13,7 +13,6 @@ jest.mock('@services/storage', () => ({
 }));
 
 describe('useAppOrchestration (Phoenix/Legacy)', () => {
-  
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -21,17 +20,13 @@ describe('useAppOrchestration (Phoenix/Legacy)', () => {
   // ✅ Helper functie binnen de describe scope
   const renderOrchestrator = (state: any, envelope?: any) => {
     return renderHook(() => useAppOrchestration(envelope), {
-      wrapper: ({ children }) => (
-        <FormProvider initialState={state}>
-          {children}
-        </FormProvider>
-      ),
+      wrapper: ({ children }) => <FormProvider initialState={state}>{children}</FormProvider>,
     });
   };
 
   it('moet status HYDRATING teruggeven als schemaVersion ontbreekt', () => {
     const mockState = createMockState();
-    mockState.schemaVersion = undefined as any; 
+    mockState.schemaVersion = undefined as any;
 
     const { result } = renderOrchestrator(mockState);
 
@@ -41,14 +36,14 @@ describe('useAppOrchestration (Phoenix/Legacy)', () => {
   it('moet data laden uit storage (Branch coverage lines 28-29)', async () => {
     const savedData = { data: { some: 'saved-data' } };
     (storage.loadState as jest.Mock).mockResolvedValue(savedData);
-    
+
     const { result } = renderOrchestrator(createMockState());
 
     // waitFor handelt de 'act' waarschuwing intern af
     await waitFor(() => {
       expect(storage.loadState).toHaveBeenCalled();
     });
-    
+
     expect(result.current.status).toBeDefined();
   });
 
@@ -56,12 +51,12 @@ describe('useAppOrchestration (Phoenix/Legacy)', () => {
     const mockEnvelope = {
       version: '2.0',
       timestamp: new Date().toISOString(),
-      payload: { some: 'data' }
+      payload: { some: 'data' },
     };
 
     const mockState = createMockState({
       schemaVersion: '1.0',
-      isValid: true
+      isValid: true,
     });
 
     const { result } = renderOrchestrator(mockState, mockEnvelope);
@@ -76,10 +71,10 @@ describe('useAppOrchestration (Phoenix/Legacy)', () => {
       activeStep: 'dashboard',
       isValid: true,
       data: {
-        household: { 
-          members: [{ id: '1' }] as any 
-        }
-      }
+        household: {
+          members: [{ id: '1' }] as any,
+        },
+      },
     });
 
     const { result } = renderOrchestrator(mockState);
@@ -92,10 +87,10 @@ describe('useAppOrchestration (Phoenix/Legacy)', () => {
       activeStep: 'completed',
       isValid: false,
       data: {
-        household: { 
-          members: [{ id: '1' }] as any 
-        }
-      }
+        household: {
+          members: [{ id: '1' }] as any,
+        },
+      },
     });
 
     const { result } = renderOrchestrator(mockState);
@@ -106,7 +101,7 @@ describe('useAppOrchestration (Phoenix/Legacy)', () => {
   it('moet status ONBOARDING teruggeven als er geen members zijn', () => {
     const mockState = createMockState({
       activeStep: 'dashboard',
-      data: { household: { members: [] } }
+      data: { household: { members: [] } },
     });
 
     const { result } = renderOrchestrator(mockState);

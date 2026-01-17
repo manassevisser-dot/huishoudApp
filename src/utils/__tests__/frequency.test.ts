@@ -1,4 +1,3 @@
-
 // src/utils/__tests__/frequency.test.ts
 import { convertToMonthlyCents, getMonthlyFactor } from '../frequency';
 
@@ -64,10 +63,11 @@ describe('WAI-004-D: Frequency & Normalisatie Tests', () => {
   });
 });
 describe('WAI-004-E: Frequency Error Handling & Guards', () => {
-  
   test('moet crashen bij niet-eindige getallen (Guard check)', () => {
     // Dekt de !Number.isFinite(cents) check
-    expect(() => convertToMonthlyCents(Infinity, 'month')).toThrow('Invalid cents: not a finite number');
+    expect(() => convertToMonthlyCents(Infinity, 'month')).toThrow(
+      'Invalid cents: not a finite number',
+    );
     expect(() => convertToMonthlyCents(NaN, 'month')).toThrow('Invalid cents: not a finite number');
   });
 
@@ -89,13 +89,13 @@ describe('WAI-004-S: Frequency Snapshots', () => {
   test('moet alle standaardfrequenties consistent omrekenen', () => {
     const testValues = [1000, 50000, 120000];
     const frequencies = ['week', '4wk', 'month', 'quarter', 'year'];
-    
-    const results = frequencies.map(f => ({
+
+    const results = frequencies.map((f) => ({
       frequency: f,
-      results: testValues.map(v => ({
+      results: testValues.map((v) => ({
         input: v,
-        monthly: convertToMonthlyCents(v, f)
-      }))
+        monthly: convertToMonthlyCents(v, f),
+      })),
     }));
 
     expect(results).toMatchSnapshot();

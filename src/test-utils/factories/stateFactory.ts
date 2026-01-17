@@ -57,13 +57,13 @@ export function makePhoenixState(overrides?: MockOverrides): FormState {
       household: { members: [] },
       finance: { income: { items: [] }, expenses: { items: [] } },
     },
-    meta: { lastModified: isoNow(), version: 1 }
+    meta: { lastModified: isoNow(), version: 1 },
   };
 
   const { data: dataOverride, ...topOverrides } = overrides || {};
-  return { 
-    ...base, 
-    ...topOverrides, 
-    data: deepMerge(base.data, dataOverride) 
+  return {
+    ...base,
+    ...topOverrides,
+    data: deepMerge(base.data, dataOverride),
   } as FormState;
 }

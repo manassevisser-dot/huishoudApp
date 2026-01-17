@@ -90,12 +90,7 @@ describe('audit logger', () => {
     test('logs with level, message and args', () => {
       const spy = jest.spyOn(console, 'log');
       logger.log('UPDATE', 'User updated', { userId: 123 }, 'ADR-5');
-      expect(spy).toHaveBeenCalledWith(
-        '[AUDIT-UPDATE]', 
-        'User updated', 
-        { userId: 123 }, 
-        'ADR-5'
-      );
+      expect(spy).toHaveBeenCalledWith('[AUDIT-UPDATE]', 'User updated', { userId: 123 }, 'ADR-5');
     });
 
     test('logs with level only (msg defaults to empty string)', () => {
@@ -107,27 +102,23 @@ describe('audit logger', () => {
     test('logs with multiple args', () => {
       const spy = jest.spyOn(console, 'log');
       logger.log('TRANSACTION', 'Payment', 100, 'USD', { method: 'card' });
-      expect(spy).toHaveBeenCalledWith(
-        '[AUDIT-TRANSACTION]',
-        'Payment',
-        100,
-        'USD',
-        { method: 'card' }
-      );
+      expect(spy).toHaveBeenCalledWith('[AUDIT-TRANSACTION]', 'Payment', 100, 'USD', {
+        method: 'card',
+      });
     });
 
     test('logs different audit levels', () => {
       const spy = jest.spyOn(console, 'log');
-      
+
       logger.log('CREATE', 'Created ADR');
       expect(spy).toHaveBeenCalledWith('[AUDIT-CREATE]', 'Created ADR');
-      
+
       logger.log('DELETE', 'Deleted ADR');
       expect(spy).toHaveBeenCalledWith('[AUDIT-DELETE]', 'Deleted ADR');
-      
+
       logger.log('RESTORE', 'Restored ADR');
       expect(spy).toHaveBeenCalledWith('[AUDIT-RESTORE]', 'Restored ADR');
-      
+
       logger.log('VALIDATION', 'Validation failed');
       expect(spy).toHaveBeenCalledWith('[AUDIT-VALIDATION]', 'Validation failed');
     });
@@ -182,7 +173,7 @@ describe('audit logger', () => {
       const complexObj = {
         nested: { deep: { value: 123 } },
         array: [1, 2, 3],
-        fn: () => 'test'
+        fn: () => 'test',
       };
       logger.info('Complex', complexObj);
       expect(spy).toHaveBeenCalledWith('Complex', complexObj);

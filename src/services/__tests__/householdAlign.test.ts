@@ -2,7 +2,6 @@ import { alignMembers } from '../householdAlign';
 import { Member } from '@domain/household';
 
 describe('householdAlign - alignMembers', () => {
-  
   test('should create a fresh list of members when current is undefined', () => {
     const result = alignMembers(undefined, 2, 1);
 
@@ -14,13 +13,13 @@ describe('householdAlign - alignMembers', () => {
 
   test('should keep existing data and add new empty members if target is higher', () => {
     const current: Member[] = [
-      { 
-        entityId: 'old-1', 
-        fieldId: 'f1', 
-        memberType: 'adult', 
-        firstName: 'Jan', 
-        lastName: 'Jansen' // Verplicht veld
-      }
+      {
+        entityId: 'old-1',
+        fieldId: 'f1',
+        memberType: 'adult',
+        firstName: 'Jan',
+        lastName: 'Jansen', // Verplicht veld
+      },
     ];
 
     const result = alignMembers(current, 3, 2);
@@ -36,7 +35,7 @@ describe('householdAlign - alignMembers', () => {
     const current: Member[] = [
       { entityId: 'm1', fieldId: 'f1', memberType: 'adult', firstName: 'A', lastName: 'X' },
       { entityId: 'm2', fieldId: 'f2', memberType: 'adult', firstName: 'B', lastName: 'Y' },
-      { entityId: 'c1', fieldId: 'f3', memberType: 'child', firstName: 'C', lastName: 'Z' }
+      { entityId: 'c1', fieldId: 'f3', memberType: 'child', firstName: 'C', lastName: 'Z' },
     ];
 
     const result = alignMembers(current, 1, 1);
@@ -48,7 +47,7 @@ describe('householdAlign - alignMembers', () => {
   test('should handle edge cases like negative numbers or missing fieldIds', () => {
     // Gebruik 'as Member' om TypeScript te vertellen dat we weten wat we doen voor deze edge-case test
     const current = [
-      { entityId: 'm1', memberType: 'adult', firstName: '', lastName: '' } 
+      { entityId: 'm1', memberType: 'adult', firstName: '', lastName: '' },
     ] as Member[];
 
     const resultEmpty = alignMembers(current, -1, 0);
@@ -60,13 +59,13 @@ describe('householdAlign - alignMembers', () => {
 
   test('should correctly transition adults to children if counts change', () => {
     const current: Member[] = [
-      { entityId: 'm1', fieldId: 'f1', memberType: 'adult', firstName: 'Jan', lastName: 'Jansen' }
+      { entityId: 'm1', fieldId: 'f1', memberType: 'adult', firstName: 'Jan', lastName: 'Jansen' },
     ];
 
     const result = alignMembers(current, 1, 0);
 
     expect(result).toHaveLength(1);
     expect(result[0].memberType).toBe('child');
-    expect(result[0].firstName).toBe(''); 
+    expect(result[0].firstName).toBe('');
   });
 });

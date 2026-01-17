@@ -1,4 +1,3 @@
-
 import { DATA_KEYS, SUB_KEYS } from '@domain/constants/datakeys';
 // import { toCents } from '@utils/numbers'; // <-- activeer als je bedragen naar centen wilt
 import { FormState, DeepPartial } from '@shared-types/form';
@@ -32,36 +31,33 @@ export async function migrateToPhoenix(old: OldDataV0 | null | undefined): Promi
   }
 
   // 3) Members
-  const rawMembers = old[DATA_KEYS.HOUSEHOLD]?.members
-    ?? old.household?.members
-    ?? old.leden
-    ?? [];
+  const rawMembers = old[DATA_KEYS.HOUSEHOLD]?.members ?? old.household?.members ?? old.leden ?? [];
 
-    const migratedMembers = (Array.isArray(rawMembers) ? rawMembers : []).map((m: any, i: number) => {
-      const fullName = String(m.naam ?? m.fullName ?? 'Bewoner').trim();
-      const parts = fullName.split(/\s+/);
-      
-      // Retourneer een object dat voldoet aan de Member interface
-      return {
-        entityId: m.entityId ?? `mem_${i}`,
-        fieldId: m.fieldId ?? `field_${i}`, // [cite: 37]
-        firstName: parts[0],
-        lastName: parts.slice(1).join(' ') || '',
-        memberType: m.memberType ?? 'adult', // [cite: 38]
-        age: m.age ?? (m.memberType === 'child' ? 10 : 35), // Voorkom missende age error [cite: 39, 40]
-      }; // Verwijder de cast 'as Record<string, unknown>'
-    });
+  const migratedMembers = (Array.isArray(rawMembers) ? rawMembers : []).map((m: any, i: number) => {
+    const fullName = String(m.naam ?? m.fullName ?? 'Bewoner').trim();
+    const parts = fullName.split(/\s+/);
+
+    // Retourneer een object dat voldoet aan de Member interface
+    return {
+      entityId: m.entityId ?? `mem_${i}`,
+      fieldId: m.fieldId ?? `field_${i}`, // [cite: 37]
+      firstName: parts[0],
+      lastName: parts.slice(1).join(' ') || '',
+      memberType: m.memberType ?? 'adult', // [cite: 38]
+      age: m.age ?? (m.memberType === 'child' ? 10 : 35), // Voorkom missende age error [cite: 39, 40]
+    }; // Verwijder de cast 'as Record<string, unknown>'
+  });
 
   // 4) Setup patch
   const setupPatch: DeepPartial<FormState['data']['setup']> = {
     aantalMensen:
       typeof old.aantalMensen === 'number'
         ? old.aantalMensen
-        : (old as any)[DATA_KEYS.SETUP]?.aantalMensen ?? base.data.setup.aantalMensen,
+        : ((old as any)[DATA_KEYS.SETUP]?.aantalMensen ?? base.data.setup.aantalMensen),
     aantalVolwassen:
       typeof old.aantalVolwassen === 'number'
         ? old.aantalVolwassen
-        : (old as any)[DATA_KEYS.SETUP]?.aantalVolwassen ?? base.data.setup.aantalVolwassen,
+        : ((old as any)[DATA_KEYS.SETUP]?.aantalVolwassen ?? base.data.setup.aantalVolwassen),
     autoCount: (old as any)[DATA_KEYS.SETUP]?.autoCount ?? 'Nee',
   };
 

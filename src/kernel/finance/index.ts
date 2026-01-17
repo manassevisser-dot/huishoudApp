@@ -17,13 +17,13 @@ export const computePhoenixSummary = (data: any): FinancialTotals => {
 
   // Scenario A: Input is een array van UndoResults
   if (isArray(data)) {
-    data.forEach(item => {
+    data.forEach((item) => {
       // Pas dit aan op basis van hoe jouw UndoResult er echt uitziet
       // Aanname: positief is inkomen, negatief is uitgave (of type veld)
       if (item.amount > 0) incomeTotal += item.amount;
       else expenseTotal += Math.abs(item.amount);
     });
-  } 
+  }
   // Scenario B: Input is het { income, expenses } object uit de state
   else if (data && typeof data === 'object') {
     // Check income bucket
@@ -45,6 +45,6 @@ export const computePhoenixSummary = (data: any): FinancialTotals => {
   return {
     totalIncomeCents: Math.round(incomeTotal),
     totalExpensesCents: Math.round(expenseTotal),
-    netCents: Math.round(incomeTotal - expenseTotal)
+    netCents: Math.round(incomeTotal - expenseTotal),
   };
 };

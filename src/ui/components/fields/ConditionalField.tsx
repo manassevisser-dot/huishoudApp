@@ -9,11 +9,7 @@ interface ConditionalFieldProps {
   dispatch: React.Dispatch<FormAction>;
 }
 
-export const ConditionalField: React.FC<ConditionalFieldProps> = ({ 
-  field, 
-  state, 
-  dispatch 
-}) => {
+export const ConditionalField: React.FC<ConditionalFieldProps> = ({ field, state, dispatch }) => {
   // 1. Logica bepalen op basis van de nieuwe 'visibleIf' property [cite: 142]
   let isVisible = true;
 
@@ -36,12 +32,7 @@ export const ConditionalField: React.FC<ConditionalFieldProps> = ({
 
   return (
     <View style={{ marginTop: 10, paddingLeft: 15, borderLeftWidth: 2, borderLeftColor: '#eee' }}>
-      <FormField
-        field={dependentField}
-        state={state}
-        dispatch={dispatch}
-        value={fieldValue}
-      />
+      <FormField field={dependentField} state={state} dispatch={dispatch} value={fieldValue} />
     </View>
   );
 };

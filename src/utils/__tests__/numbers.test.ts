@@ -1,9 +1,4 @@
-import { 
-  toCents, 
-  formatCentsToDutch, 
-  formatCurrency, 
-  formatDutchValue 
-} from '../numbers';
+import { toCents, formatCentsToDutch, formatCurrency, formatDutchValue } from '../numbers';
 
 describe('GM-001: Euro NumericParser Baseline', () => {
   const scenarios = [
@@ -63,8 +58,8 @@ describe('GM-004: De Laatste Loodjes naar 100%', () => {
   });
 
   it('moet negatieve getallen correct omzetten naar centen met behoud van teken', () => {
-    expect(toCents(-10.50)).toBe(-1050); // Voorheen verwachtte dit 1050
-    expect(toCents("-25,00")).toBe(-2500); // Voorheen verwachtte dit 2500
+    expect(toCents(-10.5)).toBe(-1050); // Voorheen verwachtte dit 1050
+    expect(toCents('-25,00')).toBe(-2500); // Voorheen verwachtte dit 2500
   });
 
   it('Numbers direct (afronden naar centen)', () => {
@@ -78,7 +73,6 @@ describe('GM-004: De Laatste Loodjes naar 100%', () => {
 });
 
 describe('GM-005: Volledige Functie Dekking (Regel 9 & 91)', () => {
-  
   it('moet formatDutchValue correct opschonen (Regel 9)', () => {
     // Arrange & Act
     const result = formatDutchValue(' € -1.250,50 abc ');
@@ -105,17 +99,17 @@ describe('GM-006: Snapshot Stabiliteit', () => {
   it('moet een consistente output genereren voor diverse bedragen', () => {
     // Arrange
     const testBedragen = [
-      125050, 
-      1000, 
-      0, 
-      -5000 // Test ook de absolute conversie in de snapshot
+      125050,
+      1000,
+      0,
+      -5000, // Test ook de absolute conversie in de snapshot
     ];
 
     // Act
-    const resultaten = testBedragen.map(cents => ({
+    const resultaten = testBedragen.map((cents) => ({
       input: cents,
       dutch: formatCentsToDutch(cents),
-      currency: formatCurrency(cents)
+      currency: formatCurrency(cents),
     }));
 
     // Assert [cite: 16, 18]

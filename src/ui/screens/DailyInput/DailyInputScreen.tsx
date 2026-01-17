@@ -10,11 +10,13 @@ export const DailyInputScreen: React.FC = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={{ padding: 20 }}>
-        <MoneyField 
-          label="Bedrag" 
+        <MoneyField
+          label="Bedrag"
           // MoneyField verwacht 'amount' ipv 'value' op basis van je error
-          amount={0} 
-          onAmountChange={(_val) => { /* logged via orchestrator */ }} 
+          amount={0}
+          onAmountChange={(_val) => {
+            /* logged via orchestrator */
+          }}
         />
       </View>
     </ScrollView>

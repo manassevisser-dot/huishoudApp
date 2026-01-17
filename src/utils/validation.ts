@@ -26,20 +26,18 @@ export const validateField = (field: FieldConfig, value: any, state: any): strin
     }
   }
 
-
   if (Array.isArray(value) && field.validation?.lengthEqualsTo) {
     // We halen de path-string uit lengthEqualsTo (indien het een string is)
     const path = String(field.validation.lengthEqualsTo);
     const [tPage, tField] = path.split('.');
-  
+
     // Veilig de state uitlezen
     const expected = Number(state?.[tPage]?.[tField] ?? 0);
-    
+
     if (value.length !== expected) {
       return `Aantal leden (${value.length}) moet gelijk zijn aan totaal aantal personen (${expected}).`;
     }
   }
-
 
   return null;
 };

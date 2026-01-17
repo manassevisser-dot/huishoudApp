@@ -6,14 +6,12 @@ describe('Migration Fixture', () => {
     // 1. Arrange: Zorg dat er minimaal één lid in de oude data zit
     const oldData = {
       household: {
-        leden: [
-          { firstName: 'Test Gebruiker', type: 'adult' }
-        ]
+        leden: [{ firstName: 'Test Gebruiker', type: 'adult' }],
       },
       setup: {
         aantalMensen: 1,
-        aantalVolwassen: 1
-      }
+        aantalVolwassen: 1,
+      },
     };
 
     // 2. Act
@@ -21,10 +19,10 @@ describe('Migration Fixture', () => {
 
     // 3. Assert
     expect(result.schemaVersion).toBe('1.0');
-    
+
     // Deze faalde eerst (was 0), nu zijn er leden dus wordt het 1
-    expect(result.meta.itemsProcessed).toBe(1); 
-    
+    expect(result.meta.itemsProcessed).toBe(1);
+
     // Check of het lid ook echt is gemigreerd
     expect(result.data.household.members.length).toBe(1);
     expect(result.data.household.members[0].firstName).toBe('Test');

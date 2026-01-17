@@ -6,7 +6,7 @@ export const TransactionService = {
   // Zorg dat de namen exact matchen met de echte service
   migrate: jest.fn(async () => ({ success: true })),
   undo: jest.fn(async () => undefined),
-  
+
   clearAll: jest.fn(async () => {
     _store = [];
   }),
@@ -18,5 +18,5 @@ export const TransactionService = {
   // Helper voor in je tests om data te 'faken'
   _setMockData: (data: any[]) => {
     _store = data;
-  }
+  },
 };

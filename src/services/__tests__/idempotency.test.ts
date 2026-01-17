@@ -7,13 +7,12 @@ const _path = require('path');
 jest.mock('fs');
 
 describe('Trinity State Machine', () => {
-  
   describe('Grade Calculation', () => {
     it('moet S grade geven bij 90%+ gemiddelde', () => {
       const state = new TrinityState();
       state.audit = 95;
       state.stability = 90;
-      
+
       const grade = state.computeMaster();
       expect(grade).toBe('S');
     });
@@ -22,7 +21,7 @@ describe('Trinity State Machine', () => {
       const state = new TrinityState();
       state.audit = 85;
       state.stability = 80;
-      
+
       const grade = state.computeMaster();
       expect(grade).toBe('A');
     });
@@ -31,7 +30,7 @@ describe('Trinity State Machine', () => {
       const state = new TrinityState();
       state.audit = 70;
       state.stability = 65;
-      
+
       const grade = state.computeMaster();
       expect(grade).toBe('B');
     });
@@ -40,7 +39,7 @@ describe('Trinity State Machine', () => {
       const state = new TrinityState();
       state.audit = 50;
       state.stability = 40;
-      
+
       const grade = state.computeMaster();
       expect(grade).toBe('C');
     });
@@ -56,8 +55,8 @@ describe('Trinity State Machine', () => {
         total: {
           branches: { pct: 85.5 },
           lines: { total: 1000, covered: 850, pct: 85 },
-          functions: { total: 100, covered: 90, pct: 90 }
-        }
+          functions: { total: 100, covered: 90, pct: 90 },
+        },
       };
 
       fs.existsSync.mockReturnValue(true);
@@ -101,7 +100,7 @@ describe('Trinity State Machine', () => {
       state.coverage = 80;
       state.meta.lines = {
         total: 1000,
-        covered: 800
+        covered: 800,
       };
 
       state.computeStability();
@@ -116,7 +115,7 @@ describe('Trinity State Machine', () => {
       state.coverage = 50;
       state.meta.lines = {
         total: 10000,
-        covered: 5000
+        covered: 5000,
       };
 
       state.computeStability();
@@ -131,7 +130,7 @@ describe('Trinity State Machine', () => {
       state.coverage = 10;
       state.meta.lines = {
         total: 1000,
-        covered: 100
+        covered: 100,
       };
 
       state.computeStability();
@@ -199,7 +198,7 @@ describe('Trinity State Machine', () => {
       state.master = 'S';
 
       const legacy = state.toLegacyString();
-      
+
       // Simuleer bash parsing
       const parts = legacy.split('|');
       expect(parts[0]).toBe('TRINITY_DATA');
@@ -215,8 +214,8 @@ describe('Trinity State Machine', () => {
         total: {
           branches: { pct: 85 },
           lines: { total: 1000, covered: 850, pct: 85 },
-          functions: { total: 100, covered: 90, pct: 90 }
-        }
+          functions: { total: 100, covered: 90, pct: 90 },
+        },
       };
 
       fs.existsSync.mockReturnValue(true);
@@ -246,8 +245,8 @@ describe('Trinity State Machine', () => {
         total: {
           branches: { pct: 88 },
           lines: { total: 1000, covered: 880, pct: 88 },
-          functions: { total: 100, covered: 95, pct: 95 }
-        }
+          functions: { total: 100, covered: 95, pct: 95 },
+        },
       };
 
       fs.existsSync.mockReturnValue(true);
@@ -269,7 +268,7 @@ describe('Trinity State Machine', () => {
 
       const state = new TrinityState();
       expect(() => state.compute()).not.toThrow();
-      
+
       expect(state.warnings.length).toBeGreaterThan(0);
     });
 
@@ -294,8 +293,8 @@ describe('Trinity State Machine', () => {
         total: {
           branches: { pct: 100 },
           lines: { total: 1000, covered: 1000, pct: 100 },
-          functions: { total: 100, covered: 100, pct: 100 }
-        }
+          functions: { total: 100, covered: 100, pct: 100 },
+        },
       };
 
       fs.existsSync.mockReturnValue(true);
@@ -313,8 +312,8 @@ describe('Trinity State Machine', () => {
         total: {
           branches: { pct: 0 },
           lines: { total: 1000, covered: 0, pct: 0 },
-          functions: { total: 100, covered: 0, pct: 0 }
-        }
+          functions: { total: 100, covered: 0, pct: 0 },
+        },
       };
 
       fs.existsSync.mockReturnValue(true);

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useForm } from '@app/context/FormContext';
 import FormField from '@components/fields/FormField';
-import { WizardPageConfig, DataSection } from '@shared-types/form'; 
+import { WizardPageConfig, DataSection } from '@shared-types/form';
 
 interface WizardPageProps {
   config: WizardPageConfig;
@@ -20,7 +20,7 @@ export const WizardPage: React.FC<WizardPageProps> = ({ config }) => {
       {/* Header op basis van WizardPageConfig [cite: 31] */}
       {config.titleToken && <Text style={styles.title}>{config.titleToken}</Text>}
       {config.title && <Text style={styles.title}>{config.title}</Text>}
-      
+
       <ScrollView style={styles.scrollContainer}>
         {config.fields.map((field) => {
           // ✅ 1. Bepaal de sectie (Data Lade)
@@ -50,7 +50,7 @@ export const WizardPage: React.FC<WizardPageProps> = ({ config }) => {
               field={field}
               state={state}
               dispatch={dispatch}
-              value={value} 
+              value={value}
             />
           );
         })}

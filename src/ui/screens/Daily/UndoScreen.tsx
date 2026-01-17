@@ -13,15 +13,8 @@ import { useAppStyles } from '@ui/styles/useAppStyles';
  */
 export const UndoScreen: React.FC = () => {
   const { styles } = useAppStyles();
-  const {
-    transactions,
-    undo,
-    redo,
-    clearAll,
-    updateTransaction,
-    error,
-    _debugAdapterState,
-  } = useTransactionHistory();
+  const { transactions, undo, redo, clearAll, updateTransaction, error, _debugAdapterState } =
+    useTransactionHistory();
 
   const safeTransactions = Array.isArray(transactions) ? transactions : [];
 
@@ -31,13 +24,13 @@ export const UndoScreen: React.FC = () => {
         <Text style={styles.title}>Transaction Undo/Redo</Text>
         {!!error && <Text style={styles.error}>{error}</Text>}
         <View style={styles.section}>
-          <Text style={styles.subtitle}>
-            Laatste transacties: {safeTransactions.length}
-          </Text>
+          <Text style={styles.subtitle}>Laatste transacties: {safeTransactions.length}</Text>
           {safeTransactions.length === 0 ? (
             <Text style={styles.emptyText}>Geen recente transacties</Text>
           ) : (
-            <View style={styles.dashboardCard}> {/* Gebruik bestaande card als container */}
+            <View style={styles.dashboardCard}>
+              {' '}
+              {/* Gebruik bestaande card als container */}
               {safeTransactions.map((tx) => (
                 <View key={tx.id} style={{ paddingVertical: 8 }}>
                   <Text style={styles.description}>{tx.description}</Text>
@@ -82,9 +75,7 @@ export const UndoScreen: React.FC = () => {
           {process.env.NODE_ENV !== 'test' && _debugAdapterState && (
             <View style={styles.dashboardCard}>
               <Text style={styles.subtitle}>Debug Info</Text>
-              <Text style={styles.details}>
-                {JSON.stringify(_debugAdapterState, null, 2)}
-              </Text>
+              <Text style={styles.details}>{JSON.stringify(_debugAdapterState, null, 2)}</Text>
               <TouchableOpacity
                 onPress={() => updateTransaction && updateTransaction(100.5, 2)}
                 style={{ marginTop: 12 }}

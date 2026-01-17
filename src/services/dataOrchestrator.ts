@@ -1,18 +1,9 @@
 import { DATA_KEYS } from '@domain/constants/datakeys';
 import { csvService } from './csvService';
 import { dataProcessor } from './dataProcessor';
-import {
-  Member,
-  RawUIData,
-  ResearchPayload,
-  CsvItem,
-  FinancialIncomeSummary
-} from '@domain/types';
-import {
-  collectAndDistributeData,
-  assertNoPIILeak
-} from '@services/privacyHelpers';
-import {Logger} from '@services/logger'
+import { Member, RawUIData, ResearchPayload, CsvItem, FinancialIncomeSummary } from '@domain/types';
+import { collectAndDistributeData, assertNoPIILeak } from '@services/privacyHelpers';
+import { Logger } from '@services/logger';
 /* ============================================================
  * TYPES & INTERFACES
  * ============================================================ */
@@ -52,61 +43,60 @@ export const dataOrchestrator = {
   processAllData: (
     rawMembers: RawUIData[],
     rawCsv: string,
-    currentSetup: any
+    currentSetup: any,
   ): MasterProcessResult => {
-
     // --- 1. VERWERK LEDEN (Privacy Sluis) ---
-    const processedMembers = (rawMembers || []).map((m, i) =>
-      collectAndDistributeData(m, i)
-    );
+    const processedMembers = (rawMembers || []).map((m, i) => collectAndDistributeData(m, i));
 
     // --- 2. VERWERK CSV (Met Kwaliteitsfilter & PII Strip) ---
     // --- 2. VERWERK CSV (Met Kwaliteitsfilter & PII Strip) ---
-let csvTransactions: CsvItem[] = [];
+    let csvTransactions: CsvItem[] = [];
 
-try {
-  const mapped = (csvService.mapToInternalModel(rawCsv) || []) as CsvItem[];
+    try {
+      const mapped = (csvService.mapToInternalModel(rawCsv) || []) as CsvItem[];
 
-  csvTransactions = mapped
-    .map((item: CsvItem) => ({
-      ...item,
-      date: item.date || new Date().toISOString(),
-      description: dataProcessor.stripPII(item.description || 'Geen omschrijving'),
-      category: dataProcessor.categorize(item.description || '')
-    }))
-    .filter(tx => tx.amount !== 0); // Alleen checken op financiële waarde
-
-} catch (e) {
-  Logger.error('CSV Mapping failed in Orchestrator', e);
-  csvTransactions = [];
-}
+      csvTransactions = mapped
+        .map((item: CsvItem) => ({
+          ...item,
+          date: item.date || new Date().toISOString(),
+          description: dataProcessor.stripPII(item.description || 'Geen omschrijving'),
+          category: dataProcessor.categorize(item.description || ''),
+        }))
+        .filter((tx) => tx.amount !== 0); // Alleen checken op financiële waarde
+    } catch (e) {
+      Logger.error('CSV Mapping failed in Orchestrator', e);
+      csvTransactions = [];
+    }
 
     // --- 3. RECONCILIATIE & ANALYSE ---
     // Cast naar FinancialIncomeSummary om TS 'string vs "CSV"|"Setup"' error te fixen
     const incomeSummary = dataProcessor.reconcileWithSetup(
       csvTransactions,
-      currentSetup
+      currentSetup,
     ) as FinancialIncomeSummary;
 
     // Check op gemiste vaste lasten
     const hasMissingCosts = csvTransactions.some(
-      t => t.category === 'Wonen' && !currentSetup?.housingIncluded
+      (t) => t.category === 'Wonen' && !currentSetup?.housingIncluded,
     );
 
     // --- 4. RESEARCH PAYLOAD (Anoniem) ---
-    const categoryTotals = csvTransactions.reduce((acc, curr) => {
-      const key = curr.category || 'Overig';
-      acc[key] = (acc[key] || 0) + (curr.amount || 0);
-      return acc;
-    }, {} as Record<string, number>);
+    const categoryTotals = csvTransactions.reduce(
+      (acc, curr) => {
+        const key = curr.category || 'Overig';
+        acc[key] = (acc[key] || 0) + (curr.amount || 0);
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     const researchData: MasterProcessResult['research'] = {
-      memberPayloads: processedMembers.map(p => p.researchPayload),
+      memberPayloads: processedMembers.map((p) => p.researchPayload),
       financialAnalytics: {
         totalIncomeCents: incomeSummary.finalIncome || 0,
         categoryTotals,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     };
 
     // De ultieme check: mag deze data naar de cloud?
@@ -116,17 +106,17 @@ try {
     return {
       local: {
         [DATA_KEYS.HOUSEHOLD]: {
-          members: processedMembers.map(p => p.localMember)
+          members: processedMembers.map((p) => p.localMember),
         },
         [DATA_KEYS.FINANCE]: {
           transactions: csvTransactions,
           summary: incomeSummary,
-          hasMissingCosts
-        }
+          hasMissingCosts,
+        },
       },
-      research: researchData
+      research: researchData,
     };
-  }
+  },
 };
 
 export default dataOrchestrator;

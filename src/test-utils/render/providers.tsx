@@ -19,7 +19,7 @@ const DEFAULT_TEST_STATE: FormState = {
     household: { members: [] },
     finance: { income: { items: [] }, expenses: { items: [] } },
   },
-  meta: { lastModified: '', version: 1 }
+  meta: { lastModified: '', version: 1 },
 };
 
 type ProvidersProps = {
@@ -41,9 +41,7 @@ export function Providers({ children, state, dispatch }: ProvidersProps) {
 
   return (
     <ThemeProvider>
-      <FormContext.Provider value={value}>
-        {children}
-      </FormContext.Provider>
+      <FormContext.Provider value={value}>{children}</FormContext.Provider>
     </ThemeProvider>
   );
 }

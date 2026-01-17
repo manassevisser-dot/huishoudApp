@@ -15,7 +15,7 @@ jest.mock('../WizardPage', () => ({
     mockOnNext.mockImplementation(() => props.onNext());
     mockOnBack.mockImplementation(() => props.onBack());
     return null;
-  }
+  },
 }));
 
 describe('WizardController Branch & Function Coverage', () => {
@@ -24,7 +24,7 @@ describe('WizardController Branch & Function Coverage', () => {
     'WIZARD_DETAILS',
     'WIZARD_INCOME',
     'WIZARD_EXPENSES',
-    'UNKNOWN_STEP'
+    'UNKNOWN_STEP',
   ] as const;
 
   steps.forEach((step) => {
@@ -33,7 +33,7 @@ describe('WizardController Branch & Function Coverage', () => {
       const { toJSON } = render(
         <FormProvider initialState={mockState} mockDispatch={jest.fn()}>
           <WizardController />
-        </FormProvider>
+        </FormProvider>,
       );
       expect(toJSON()).toBeDefined();
     });
@@ -47,7 +47,7 @@ describe('WizardController Branch & Function Coverage', () => {
     render(
       <FormProvider initialState={mockState} mockDispatch={mockDispatch}>
         <WizardController />
-      </FormProvider>
+      </FormProvider>,
     );
 
     // Trigger de callbacks die de WizardController aan de WizardPage geeft

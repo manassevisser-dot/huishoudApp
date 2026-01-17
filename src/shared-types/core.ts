@@ -4,8 +4,8 @@ export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends (infer U)[]
     ? DeepPartial<U>[]
     : T[P] extends object
-    ? DeepPartial<T[P]>
-    : T[P];
+      ? DeepPartial<T[P]>
+      : T[P];
 };
 
 export type DataSection = 'setup' | 'household' | 'finance';
@@ -23,7 +23,7 @@ export interface FormState {
       heeftHuisdieren?: boolean;
       [key: string]: unknown;
     };
-    household: { members: Member[] }; 
+    household: { members: Member[] };
     finance: {
       income: { items: Array<Record<string, unknown>>; totalAmount?: number };
       expenses: { items: Array<Record<string, unknown>>; totalAmount?: number };

@@ -15,9 +15,9 @@ import {
   makeSummary,
   makeTypography,
   makeAlerts,
-  makeToggles,      // ← NIEUW
-  makeCheckboxes,   // ← NIEUW
-  makeHelpers,      // ← NIEUW
+  makeToggles, // ← NIEUW
+  makeCheckboxes, // ← NIEUW
+  makeHelpers, // ← NIEUW
 } from '@styles/modules';
 
 const styleCache: Partial<Record<Theme, ReturnType<typeof StyleSheet.create>>> = {};
@@ -37,9 +37,9 @@ export function getAppStyles(theme: Theme) {
     ...makeSummary(c), // Summary
     ...makeTypography(c), // Typography
     ...makeAlerts(c), // Alerts
-    ...makeToggles(c),      // ←Toggles NIEUW
-    ...makeCheckboxes(c),   // ← Checkboxes NIEUW
-    ...makeHelpers(c),      // ← Helpers NIEUW
+    ...makeToggles(c), // ←Toggles NIEUW
+    ...makeCheckboxes(c), // ← Checkboxes NIEUW
+    ...makeHelpers(c), // ← Helpers NIEUW
   } as const;
 
   const styles = StyleSheet.create(assembled);

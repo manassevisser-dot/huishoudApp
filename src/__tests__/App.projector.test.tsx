@@ -4,10 +4,9 @@ import { renderWithState } from '@test-utils/index';
 import App from '../App';
 
 describe('App Projector Flow', () => {
-  
   it('WAI Check: LandingScreen heeft toegankelijke knoppen', async () => {
     const { getByText } = renderWithState(<App />);
-    
+
     // Check of we op de landing staan
     expect(getByText(/Aanmelden/i)).toBeTruthy();
   });
@@ -21,9 +20,12 @@ describe('App Projector Flow', () => {
 
     // 2. Wacht tot de Wizard UI verschijnt
     // We zoeken nu op "bewoners", want dat staat in jouw log!
-    await waitFor(() => {
-      expect(getByText(/bewoners/i)).toBeTruthy();
-    }, { timeout: 2000 });
+    await waitFor(
+      () => {
+        expect(getByText(/bewoners/i)).toBeTruthy();
+      },
+      { timeout: 2000 },
+    );
 
     // 3. Extra check op de andere tekst uit je log
     expect(getByText(/volwassenen/i)).toBeTruthy();
@@ -31,5 +33,4 @@ describe('App Projector Flow', () => {
     // 4. Check dat de landing tekst weg is
     expect(queryByText(/Welkom/i)).toBeNull();
   });
-
 });

@@ -22,13 +22,13 @@ describe('WAI-009 - LandingScreen Integration', () => {
     // 1. Initialiseer de staat via onze factory
     const initialState = makePhoenixState({
       activeStep: 'LANDING',
-      currentPageId: 'setup'
+      currentPageId: 'setup',
     });
 
     // 2. Render met de echte provider via onze custom render util
-    render(<LandingScreen />, { 
-      state: initialState, 
-      dispatch: mockDispatch 
+    render(<LandingScreen />, {
+      state: initialState,
+      dispatch: mockDispatch,
     });
 
     // 3. Controleer of de UI elementen zichtbaar zijn
@@ -37,9 +37,9 @@ describe('WAI-009 - LandingScreen Integration', () => {
   });
 
   it('moet de juiste SET_STEP actie verzenden bij klikken op "Aanmelden"', () => {
-    render(<LandingScreen />, { 
-      state: makePhoenixState({ activeStep: 'LANDING' }), 
-      dispatch: mockDispatch 
+    render(<LandingScreen />, {
+      state: makePhoenixState({ activeStep: 'LANDING' }),
+      dispatch: mockDispatch,
     });
 
     // Zoek de knop op de tekst (RTL best-practice)
@@ -49,14 +49,14 @@ describe('WAI-009 - LandingScreen Integration', () => {
     // Controleer of de Phoenix-dispatch de juiste payload bevat
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'SET_STEP',
-      payload: 'WIZARD'
+      payload: 'WIZARD',
     });
   });
 
   it('moet de juiste SET_STEP actie verzenden bij klikken op "Inloggen"', () => {
-    render(<LandingScreen />, { 
-      state: makePhoenixState({ activeStep: 'LANDING' }), 
-      dispatch: mockDispatch 
+    render(<LandingScreen />, {
+      state: makePhoenixState({ activeStep: 'LANDING' }),
+      dispatch: mockDispatch,
     });
 
     const loginButton = screen.getByText('Inloggen');
@@ -65,15 +65,15 @@ describe('WAI-009 - LandingScreen Integration', () => {
     // Controleer of we direct naar het DASHBOARD gaan
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'SET_STEP',
-      payload: 'DASHBOARD'
+      payload: 'DASHBOARD',
     });
   });
 
   it('moet eventuele externe callbacks (onSignup) correct aanroepen', () => {
     const onSignupSpy = jest.fn();
-    
-    render(<LandingScreen onSignup={onSignupSpy} />, { 
-      dispatch: mockDispatch 
+
+    render(<LandingScreen onSignup={onSignupSpy} />, {
+      dispatch: mockDispatch,
     });
 
     fireEvent.press(screen.getByText('Aanmelden'));

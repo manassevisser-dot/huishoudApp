@@ -1,9 +1,4 @@
-import { 
-  collectAndDistributeData, 
-  assertNoPIILeak, 
-  parseName, 
-  toNumber 
-} from '../privacyHelpers';
+import { collectAndDistributeData, assertNoPIILeak, parseName, toNumber } from '../privacyHelpers';
 import { migrateTransactionsToPhoenix } from '../transactionService';
 import { makeLegacyMember } from '../../test-utils/factories/memberFactory';
 import { TransactionService, undoLastTransaction } from '../transactionService';
@@ -17,7 +12,6 @@ jest.mock('@services/storageShim', () => ({
   },
 }));
 describe('Migration Member Mapping', () => {
-  
   it('moet oude leden correct transformeren naar Phoenix Member objecten', async () => {
     // Gebruik de legacy data structuur die we in de factory hebben gedefinieerd
     const oldState = {
@@ -37,7 +31,7 @@ describe('Migration Member Mapping', () => {
       expect.objectContaining({
         entityId: 'old-1',
         memberType: 'adult',
-        firstName: 'Jan' // Gecheckt: wordt nu gesplitst door de helper
+        firstName: 'Jan', // Gecheckt: wordt nu gesplitst door de helper
       }),
     );
   });
@@ -45,7 +39,7 @@ describe('Migration Member Mapping', () => {
   it('moet fallback IDs genereren bij ontbrekende id', async () => {
     const stateWithNoIds = {
       household: {
-        leden: [{ naam: 'Anoniem', type: 'adult' }], 
+        leden: [{ naam: 'Anoniem', type: 'adult' }],
       },
     };
 
@@ -86,34 +80,33 @@ describe('Migration Member Mapping', () => {
   // Test voor de orchestrator/privacy helper logica
   it('moet voor n8n een anonieme payload genereren via collectAndDistributeData', () => {
     // We gebruiken hier de factory die 'naam', 'type' en 'leeftijd' bevat
-    const legacyInput = makeLegacyMember(); 
-    
+    const legacyInput = makeLegacyMember();
+
     const { localMember, researchPayload } = collectAndDistributeData(legacyInput, 0);
 
     // UX Check (Local)
     expect(localMember.firstName).toBe('Jan');
     expect(localMember.lastName).toBe('Janssen');
-    
+
     // Privacy Check (Research)
     expect(researchPayload).not.toHaveProperty('firstName');
     expect(researchPayload).not.toHaveProperty('lastName');
     expect(researchPayload).not.toHaveProperty('naam');
-    
+
     // Data Check (Research)
     expect(researchPayload.memberType).toBe('teenager'); // 'puber' -> 'teenager'
     expect(researchPayload.researchId).toBeDefined();
   });
 });
 describe('Privacy Helpers - Deep Coverage', () => {
-
   it('moet een error gooien als er PII in de research payload lekt (Security Check)', () => {
     // Gebruik een hoofdletter-variant om de toLowerCase() te testen
     const leakyPayload = {
       metadata: {
-        FIRSTNAME: 'Jan' 
-      }
+        FIRSTNAME: 'Jan',
+      },
     };
-    
+
     // Assert: we checken alleen op de aanwezigheid van 'SECURITY ALERT'
     expect(() => assertNoPIILeak(leakyPayload)).toThrow(/SECURITY ALERT/);
   });
@@ -121,7 +114,7 @@ describe('Privacy Helpers - Deep Coverage', () => {
   it('moet PII detecteren in waarden (E-mail check)', () => {
     const leakyValue = {
       researchId: 'res_123',
-      note: 'Contact me op jan@gmail.com'
+      note: 'Contact me op jan@gmail.com',
     };
     expect(() => assertNoPIILeak(leakyValue)).toThrow('PII gedetecteerd');
   });
@@ -138,20 +131,19 @@ describe('Privacy Helpers - Deep Coverage', () => {
   });
 });
 describe('TransactionService: Deep Migration Scenarios', () => {
-
   it('moet setup data vinden in diep geneste oude structuren (SetupSource branches)', async () => {
     // Scenario: Data zit niet in .setup, maar direct in .data.household
     const messyState = {
       data: {
         household: {
           aantalMensen: 4,
-          heeftHuisdieren: true
-        }
-      }
+          heeftHuisdieren: true,
+        },
+      },
     };
 
     const result = await migrateTransactionsToPhoenix(messyState);
-    
+
     expect(result.data.setup.aantalMensen).toBe(4);
     expect(result.data.setup.heeftHuisdieren).toBe(true);
   });
@@ -159,7 +151,7 @@ describe('TransactionService: Deep Migration Scenarios', () => {
   it('moet omgaan met een volledig lege state (Default branches)', async () => {
     // Test safeState = oldState || {}; en de fallback naar lege arrays
     const result = await migrateTransactionsToPhoenix(null);
-    
+
     expect(result.data.household.members).toEqual([]);
     expect(result.data.transactions).toEqual([]);
     expect(result.data.setup.aantalMensen).toBe(0);
@@ -179,14 +171,14 @@ describe('TransactionService: Service Methods', () => {
           income: { items: [] },
           expenses: {
             items: [
-              { id: '1', description: 'Test', amountCents: 10000 } // €100,00
+              { id: '1', description: 'Test', amountCents: 10000 }, // €100,00
             ],
           },
         },
       },
     };
     (StorageShim.loadState as jest.Mock).mockResolvedValue(mockState);
-  
+
     const txs = await TransactionService.getAllTransactions();
     expect(txs).toHaveLength(1);
     expect(txs[0].id).toBe('1');
@@ -210,21 +202,20 @@ describe('GM-009: Migration Output Snapshot', () => {
         leden: [
           { id: '1', naam: 'Hendrik van de Berg', type: 'senior', leeftijd: '70' },
           { id: '2', naam: 'Kleine Puk', type: 'baby', leeftijd: 1 },
-          { id: '3', naam: 'Studentje', type: 'student' }
-        ]
+          { id: '3', naam: 'Studentje', type: 'student' },
+        ],
       },
-      transactions: [{ id: 't1', amount: 100 }]
+      transactions: [{ id: 't1', amount: 100 }],
     };
 
     const migrated = await migrateTransactionsToPhoenix(complexLegacyState);
-    
+
     // We filteren de lastModified/timestamp eruit voor de snapshot omdat deze altijd verandert
     const stableOutput = {
       ...migrated,
-      meta: { ...migrated.meta, lastModified: '2024-01-01T00:00:00.000Z' }
+      meta: { ...migrated.meta, lastModified: '2024-01-01T00:00:00.000Z' },
     };
 
     expect(stableOutput).toMatchSnapshot();
   });
 });
-

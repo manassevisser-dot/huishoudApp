@@ -8,15 +8,11 @@ describe('FinancialFlow Selectors', () => {
         finance: {
           income: { items: [{ amountCents: 200000, frequency: 'month' }] },
           expenses: { items: [{ amountCents: 50000, frequency: 'month' }] },
-        }
-      }
+        },
+      },
     });
-    
 
     const summary = selectFinancialSummaryVM(state);
-    
-console.log('DEBUG STATE:', JSON.stringify(state, null, 2));
-console.log('TOTALS:', summary.totals);
 
     expect(summary.totals.totalIncomeEUR).toMatch(/€[\s\u00A0]?2\.000,00/);
     expect(summary.totals.totalExpensesEUR).toMatch(/€[\s\u00A0]?500,00/);

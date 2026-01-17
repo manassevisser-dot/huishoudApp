@@ -26,9 +26,16 @@ export function parseName(fullName: string = ''): { firstName: string; lastName:
 export function toMemberType(input?: string): MemberType {
   const t = (input ?? '').trim().toLowerCase();
   const mapping: Record<string, MemberType> = {
-    'puber': 'teenager', 'teenager': 'teenager', 'student': 'teenager',
-    'senior': 'senior', '65+': 'senior', 'pensionado': 'senior',
-    'kind': 'child', 'child': 'child', 'baby': 'child', 'junior': 'child',
+    puber: 'teenager',
+    teenager: 'teenager',
+    student: 'teenager',
+    senior: 'senior',
+    '65+': 'senior',
+    pensionado: 'senior',
+    kind: 'child',
+    child: 'child',
+    baby: 'child',
+    junior: 'child',
   };
   return mapping[t] || 'adult';
 }
@@ -43,7 +50,9 @@ function toBase64(input: string): string {
 }
 
 export function makeResearchId(localId: string): string {
-  const hash = toBase64(localId).replace(/[^a-zA-Z0-9]/g, '').substring(0, 12);
+  const hash = toBase64(localId)
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .substring(0, 12);
   return `res_${hash.toLowerCase()}`;
 }
 
@@ -62,9 +71,14 @@ export function assertNoPIILeak(obj: any): void {
   const checkDeep = (current: any) => {
     if (!current || typeof current !== 'object') return;
     for (const [key, val] of Object.entries(current)) {
-      if (forbiddenKeys.some(k => key.toLowerCase() === k.toLowerCase() || key.toLowerCase().includes(k.toLowerCase()))) {
+      if (
+        forbiddenKeys.some(
+          (k) =>
+            key.toLowerCase() === k.toLowerCase() || key.toLowerCase().includes(k.toLowerCase()),
+        )
+      ) {
         throw new Error(`SECURITY ALERT: Verboden veld "${key}" in Research Payload.`);
-     }
+      }
       if (typeof val === 'string' && containsPII(val)) {
         throw new Error(`SECURITY ALERT: PII gedetecteerd in waarde van "${key}".`);
       }
@@ -80,20 +94,18 @@ export function assertNoPIILeak(obj: any): void {
 
 export function collectAndDistributeData(
   raw: RawUIData,
-  index: number
+  index: number,
 ): { localMember: Member; researchPayload: ResearchPayload } {
-// 1. Maak de legacy cast hier aan
-const legacyRaw = raw as any; 
+  // 1. Maak de legacy cast hier aan
+  const legacyRaw = raw as any;
 
-// 2. Gebruik legacyRaw.naam als fallback voor de parser
-const parsed = parseName(raw.fullName || legacyRaw.naam || '');
+  // 2. Gebruik legacyRaw.naam als fallback voor de parser
+  const parsed = parseName(raw.fullName || legacyRaw.naam || '');
 
-// 3. Bepaal het type (ook hier met legacy fallback)
-const memberType = toMemberType(raw.memberType || raw.type || legacyRaw.type);
+  // 3. Bepaal het type (ook hier met legacy fallback)
+  const memberType = toMemberType(raw.memberType || raw.type || legacyRaw.type);
 
- 
   const localId = raw.id || `local-${index}`;
-  
 
   const localMember: Member = {
     entityId: localId,
@@ -104,7 +116,6 @@ const memberType = toMemberType(raw.memberType || raw.type || legacyRaw.type);
     age: toNumber(raw.age || raw.leeftijd),
     finance: raw.finance || {},
   };
-  
 
   const researchPayload: ResearchPayload = {
     researchId: makeResearchId(localId),

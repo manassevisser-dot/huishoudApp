@@ -50,7 +50,7 @@ describe('MoneyInput', () => {
   describe('initial rendering', () => {
     test('renders with initial cents value formatted', () => {
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={12345} onValueChange={mockOnValueChange} />
+        <MoneyInput value={12345} onValueChange={mockOnValueChange} />,
       );
 
       expect(formatCentsToDutch).toHaveBeenCalledWith(12345);
@@ -59,7 +59,7 @@ describe('MoneyInput', () => {
 
     test('renders with zero value', () => {
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={0} onValueChange={mockOnValueChange} />
+        <MoneyInput value={0} onValueChange={mockOnValueChange} />,
       );
 
       expect(formatCentsToDutch).toHaveBeenCalledWith(0);
@@ -68,7 +68,7 @@ describe('MoneyInput', () => {
 
     test('renders euro prefix', () => {
       const { getByText } = renderWithTheme(
-        <MoneyInput value={5000} onValueChange={mockOnValueChange} />
+        <MoneyInput value={5000} onValueChange={mockOnValueChange} />,
       );
 
       expect(getByText('€')).toBeTruthy();
@@ -76,11 +76,7 @@ describe('MoneyInput', () => {
 
     test('renders with placeholder', () => {
       const { getByPlaceholderText } = renderWithTheme(
-        <MoneyInput 
-          value={0} 
-          onValueChange={mockOnValueChange} 
-          placeholder="Voer bedrag in"
-        />
+        <MoneyInput value={0} onValueChange={mockOnValueChange} placeholder="Voer bedrag in" />,
       );
 
       expect(getByPlaceholderText('Voer bedrag in')).toBeTruthy();
@@ -90,7 +86,7 @@ describe('MoneyInput', () => {
   describe('value synchronization', () => {
     test('updates local value when external value changes', () => {
       const { rerender, getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={10000} onValueChange={mockOnValueChange} />
+        <MoneyInput value={10000} onValueChange={mockOnValueChange} />,
       );
 
       expect(getByDisplayValue('100,00')).toBeTruthy();
@@ -98,7 +94,7 @@ describe('MoneyInput', () => {
       rerender(
         <TestWrapper>
           <MoneyInput value={25000} onValueChange={mockOnValueChange} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       expect(formatCentsToDutch).toHaveBeenCalledWith(25000);
@@ -107,7 +103,7 @@ describe('MoneyInput', () => {
 
     test('useEffect runs when value prop changes', () => {
       const { rerender } = renderWithTheme(
-        <MoneyInput value={10000} onValueChange={mockOnValueChange} />
+        <MoneyInput value={10000} onValueChange={mockOnValueChange} />,
       );
 
       // Clear mock calls after initial render
@@ -117,7 +113,7 @@ describe('MoneyInput', () => {
       rerender(
         <TestWrapper>
           <MoneyInput value={10000} onValueChange={mockOnValueChange} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       // useEffect will run on rerender even with same value (React behavior)
@@ -128,7 +124,7 @@ describe('MoneyInput', () => {
   describe('focus behavior', () => {
     test('removes thousand separators on focus', () => {
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={123456} onValueChange={mockOnValueChange} />
+        <MoneyInput value={123456} onValueChange={mockOnValueChange} />,
       );
 
       const input = getByDisplayValue('1234,56');
@@ -139,13 +135,13 @@ describe('MoneyInput', () => {
 
     test('onFocus is called', () => {
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={5000} onValueChange={mockOnValueChange} />
+        <MoneyInput value={5000} onValueChange={mockOnValueChange} />,
       );
 
       const input = getByDisplayValue('50,00');
-      
+
       fireEvent(input, 'focus');
-      
+
       expect(formatDutchValue).toHaveBeenCalled();
     });
   });
@@ -153,11 +149,11 @@ describe('MoneyInput', () => {
   describe('text input changes', () => {
     test('sanitizes input during typing', () => {
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={0} onValueChange={mockOnValueChange} />
+        <MoneyInput value={0} onValueChange={mockOnValueChange} />,
       );
 
       const input = getByDisplayValue('0,00');
-      
+
       fireEvent.changeText(input, '123,45');
 
       expect(formatDutchValue).toHaveBeenCalledWith('123,45');
@@ -165,11 +161,11 @@ describe('MoneyInput', () => {
 
     test('blocks invalid characters during typing', () => {
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={0} onValueChange={mockOnValueChange} />
+        <MoneyInput value={0} onValueChange={mockOnValueChange} />,
       );
 
       const input = getByDisplayValue('0,00');
-      
+
       fireEvent.changeText(input, 'abc123');
 
       expect(formatDutchValue).toHaveBeenCalledWith('abc123');
@@ -177,11 +173,11 @@ describe('MoneyInput', () => {
 
     test('allows decimal comma', () => {
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={0} onValueChange={mockOnValueChange} />
+        <MoneyInput value={0} onValueChange={mockOnValueChange} />,
       );
 
       const input = getByDisplayValue('0,00');
-      
+
       fireEvent.changeText(input, '99,99');
 
       expect(formatDutchValue).toHaveBeenCalledWith('99,99');
@@ -191,11 +187,11 @@ describe('MoneyInput', () => {
   describe('blur behavior', () => {
     test('converts to cents and emits on blur', () => {
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={0} onValueChange={mockOnValueChange} />
+        <MoneyInput value={0} onValueChange={mockOnValueChange} />,
       );
 
       const input = getByDisplayValue('0,00');
-      
+
       fireEvent.changeText(input, '50,00');
       fireEvent(input, 'blur');
 
@@ -205,13 +201,13 @@ describe('MoneyInput', () => {
 
     test('formats to Dutch standard on blur', () => {
       (toCents as jest.Mock).mockReturnValueOnce(12345);
-      
+
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={0} onValueChange={mockOnValueChange} />
+        <MoneyInput value={0} onValueChange={mockOnValueChange} />,
       );
 
       const input = getByDisplayValue('0,00');
-      
+
       fireEvent.changeText(input, '123,45');
       fireEvent(input, 'blur');
 
@@ -220,13 +216,13 @@ describe('MoneyInput', () => {
 
     test('handles empty input on blur', () => {
       (toCents as jest.Mock).mockReturnValueOnce(0);
-      
+
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={5000} onValueChange={mockOnValueChange} />
+        <MoneyInput value={5000} onValueChange={mockOnValueChange} />,
       );
 
       const input = getByDisplayValue('50,00');
-      
+
       fireEvent.changeText(input, '');
       fireEvent(input, 'blur');
 
@@ -235,13 +231,13 @@ describe('MoneyInput', () => {
 
     test('handles invalid input on blur', () => {
       (toCents as jest.Mock).mockReturnValueOnce(0);
-      
+
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={0} onValueChange={mockOnValueChange} />
+        <MoneyInput value={0} onValueChange={mockOnValueChange} />,
       );
 
       const input = getByDisplayValue('0,00');
-      
+
       fireEvent.changeText(input, 'invalid');
       fireEvent(input, 'blur');
 
@@ -252,39 +248,31 @@ describe('MoneyInput', () => {
   describe('disabled state', () => {
     test('input is disabled when disabled prop is true', () => {
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput 
-          value={10000} 
-          onValueChange={mockOnValueChange} 
-          disabled={true}
-        />
+        <MoneyInput value={10000} onValueChange={mockOnValueChange} disabled={true} />,
       );
 
       const input = getByDisplayValue('100,00');
-      
+
       expect(input.props.editable).toBe(false);
     });
 
     test('input is enabled when disabled prop is false', () => {
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput 
-          value={10000} 
-          onValueChange={mockOnValueChange} 
-          disabled={false}
-        />
+        <MoneyInput value={10000} onValueChange={mockOnValueChange} disabled={false} />,
       );
 
       const input = getByDisplayValue('100,00');
-      
+
       expect(input.props.editable).toBe(true);
     });
 
     test('input is enabled by default', () => {
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={10000} onValueChange={mockOnValueChange} />
+        <MoneyInput value={10000} onValueChange={mockOnValueChange} />,
       );
 
       const input = getByDisplayValue('100,00');
-      
+
       expect(input.props.editable).toBe(true);
     });
   });
@@ -292,7 +280,7 @@ describe('MoneyInput', () => {
   describe('accessibility', () => {
     test('uses default accessibility label', () => {
       const { getByLabelText } = renderWithTheme(
-        <MoneyInput value={10000} onValueChange={mockOnValueChange} />
+        <MoneyInput value={10000} onValueChange={mockOnValueChange} />,
       );
 
       expect(getByLabelText('Bedrag')).toBeTruthy();
@@ -300,11 +288,11 @@ describe('MoneyInput', () => {
 
     test('uses custom accessibility label', () => {
       const { getByLabelText } = renderWithTheme(
-        <MoneyInput 
-          value={10000} 
-          onValueChange={mockOnValueChange} 
+        <MoneyInput
+          value={10000}
+          onValueChange={mockOnValueChange}
           accessibilityLabel="Salaris bedrag"
-        />
+        />,
       );
 
       expect(getByLabelText('Salaris bedrag')).toBeTruthy();
@@ -312,7 +300,7 @@ describe('MoneyInput', () => {
 
     test('euro prefix has accessibility label', () => {
       const { getByLabelText } = renderWithTheme(
-        <MoneyInput value={10000} onValueChange={mockOnValueChange} />
+        <MoneyInput value={10000} onValueChange={mockOnValueChange} />,
       );
 
       expect(getByLabelText('Euro-teken')).toBeTruthy();
@@ -322,11 +310,11 @@ describe('MoneyInput', () => {
   describe('keyboard type', () => {
     test('uses decimal-pad keyboard type', () => {
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={10000} onValueChange={mockOnValueChange} />
+        <MoneyInput value={10000} onValueChange={mockOnValueChange} />,
       );
 
       const input = getByDisplayValue('100,00');
-      
+
       expect(input.props.keyboardType).toBe('decimal-pad');
     });
   });
@@ -334,7 +322,7 @@ describe('MoneyInput', () => {
   describe('edge cases', () => {
     test('handles very large cent values', () => {
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={99999999} onValueChange={mockOnValueChange} />
+        <MoneyInput value={99999999} onValueChange={mockOnValueChange} />,
       );
 
       expect(formatCentsToDutch).toHaveBeenCalledWith(99999999);
@@ -343,25 +331,37 @@ describe('MoneyInput', () => {
 
     test('handles rapid value changes', () => {
       const { rerender } = renderWithTheme(
-        <MoneyInput value={1000} onValueChange={mockOnValueChange} />
+        <MoneyInput value={1000} onValueChange={mockOnValueChange} />,
       );
 
-      rerender(<TestWrapper><MoneyInput value={2000} onValueChange={mockOnValueChange} /></TestWrapper>);
-      rerender(<TestWrapper><MoneyInput value={3000} onValueChange={mockOnValueChange} /></TestWrapper>);
-      rerender(<TestWrapper><MoneyInput value={4000} onValueChange={mockOnValueChange} /></TestWrapper>);
+      rerender(
+        <TestWrapper>
+          <MoneyInput value={2000} onValueChange={mockOnValueChange} />
+        </TestWrapper>,
+      );
+      rerender(
+        <TestWrapper>
+          <MoneyInput value={3000} onValueChange={mockOnValueChange} />
+        </TestWrapper>,
+      );
+      rerender(
+        <TestWrapper>
+          <MoneyInput value={4000} onValueChange={mockOnValueChange} />
+        </TestWrapper>,
+      );
 
       expect(formatCentsToDutch).toHaveBeenCalledWith(4000);
     });
 
     test('handles focus -> change -> blur cycle', () => {
       (toCents as jest.Mock).mockReturnValue(5000);
-      
+
       const { getByDisplayValue } = renderWithTheme(
-        <MoneyInput value={0} onValueChange={mockOnValueChange} />
+        <MoneyInput value={0} onValueChange={mockOnValueChange} />,
       );
 
       const input = getByDisplayValue('0,00');
-      
+
       fireEvent(input, 'focus');
       fireEvent.changeText(input, '50,00');
       fireEvent(input, 'blur');

@@ -1,6 +1,6 @@
 // src/app/hooks/useAppOrchestration.ts
 import { useEffect, useMemo } from 'react'; // Voeg useMemo toe
-import {useForm} from '@context/FormContext'; 
+import { useForm } from '@context/FormContext';
 import { storage } from '@services/storage';
 
 export interface PhoenixEnvelopeV2 {
@@ -31,7 +31,7 @@ export const useAppOrchestration = (envelope?: PhoenixEnvelopeV2) => {
     };
 
     initApp();
-  }, [dispatch, envelope?.payload]); 
+  }, [dispatch, envelope?.payload]);
 
   /**
    * Verbeterde Status Logica
@@ -50,8 +50,9 @@ export const useAppOrchestration = (envelope?: PhoenixEnvelopeV2) => {
     const isExternalData = !!envelope?.payload;
 
     // C. Check of de interne setup voltooid is
-    const isInternalSetupDone = state.data?.household?.members?.length > 0 && 
-                                (state.activeStep === 'dashboard' || state.activeStep === 'completed');
+    const isInternalSetupDone =
+      state.data?.household?.members?.length > 0 &&
+      (state.activeStep === 'dashboard' || state.activeStep === 'completed');
 
     // Als geen van beide waar is -> ONBOARDING
     if (!isExternalData && !isInternalSetupDone) {
@@ -60,11 +61,17 @@ export const useAppOrchestration = (envelope?: PhoenixEnvelopeV2) => {
 
     // D. Is de data bruikbaar?
     return state.isValid ? 'READY' : 'INCOMPLETE';
-  }, [state.schemaVersion, state.data?.household?.members, state.activeStep, state.isValid, envelope?.payload]);
+  }, [
+    state.schemaVersion,
+    state.data?.household?.members,
+    state.activeStep,
+    state.isValid,
+    envelope?.payload,
+  ]);
 
-  return { 
-    state, 
-    dispatch, 
-    status 
+  return {
+    state,
+    dispatch,
+    status,
   };
 };

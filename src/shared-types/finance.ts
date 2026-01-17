@@ -1,24 +1,24 @@
 import { z } from 'zod';
 
 export interface FinanceItem {
-    id: string;
-    amountCents: number; // integer
-    description?: string;
-  }
-  
-  export const CONTRACT_VERSION = '1.0.0';
+  id: string;
+  amountCents: number; // integer
+  description?: string;
+}
 
-  export interface FinanceBucket {
-    items: FinanceItem[];
-    totalAmountCents?: number;
-  }
-  
-  export interface FinanceState {
-    income: FinanceBucket;
-    expenses: FinanceBucket;
-  }
-  
-  // src/shared-types/finance.ts
+export const CONTRACT_VERSION = '1.0.0';
+
+export interface FinanceBucket {
+  items: FinanceItem[];
+  totalAmountCents?: number;
+}
+
+export interface FinanceState {
+  income: FinanceBucket;
+  expenses: FinanceBucket;
+}
+
+// src/shared-types/finance.ts
 export interface UndoResult {
   id: string;
   amount: number; // in cents
@@ -31,5 +31,5 @@ export interface UndoResult {
 
 export const MoneySchema = z.object({
   amount: z.number().int(),
-  currency: z.literal('EUR')
+  currency: z.literal('EUR'),
 });

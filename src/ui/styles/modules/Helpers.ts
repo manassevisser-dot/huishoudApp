@@ -14,14 +14,14 @@ export function makeHelpers(c: ColorScheme) {
       marginRight: Space.sm,
       fontStyle: 'italic',
     },
-    
+
     // Overlay positioning
     hintOverlayBottomRight: {
       position: 'absolute',
       bottom: 6,
       right: 12,
     },
-    
+
     // Card badge (linksboven met nummering)
     cardBadge: {
       position: 'absolute',
@@ -35,14 +35,14 @@ export function makeHelpers(c: ColorScheme) {
       fontSize: Type.xs,
       overflow: 'hidden',
     },
-    
+
     // Helper text
     helperText: {
       fontSize: Type.xs,
       color: c.textSecondary,
       marginTop: Space.xs,
     },
-    
+
     // Debug
     debugBox: {
       backgroundColor: c.secondary,

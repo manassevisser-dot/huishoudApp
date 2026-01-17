@@ -1,8 +1,17 @@
 import type { FormState, DataSection } from './core';
 
 export type FieldType =
-  | 'counter' | 'text' | 'radio-chips' | 'toggle' | 'repeater'
-  | 'date' | 'select' | 'money' | 'section' | 'collapsible-section' | 'derived-label';
+  | 'counter'
+  | 'text'
+  | 'radio-chips'
+  | 'toggle'
+  | 'repeater'
+  | 'date'
+  | 'select'
+  | 'money'
+  | 'section'
+  | 'collapsible-section'
+  | 'derived-label';
 
 export interface FieldConfig {
   fieldId: string;
@@ -12,11 +21,11 @@ export interface FieldConfig {
   label?: string;
   options?: Array<{ label: string; value: unknown }>;
   fields?: FieldConfig[]; // Recursief (verwijst naar zichzelf, dat mag)
-  
+
   min?: number;
   max?: number;
   required?: boolean;
-  
+
   validation?: {
     min?: number;
     max?: number;

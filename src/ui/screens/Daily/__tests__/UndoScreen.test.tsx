@@ -1,11 +1,10 @@
 // src/ui/screens/Daily/__tests__/UndoScreen.test.tsx
 import React from 'react';
-import { screen, cleanup, } from '@testing-library/react-native';
+import { screen, cleanup } from '@testing-library/react-native';
 import { render } from '@test-utils/index';
 import { UndoScreen } from '../UndoScreen';
 import { createMockState } from 'src/test-utils/factories/stateFactory';
 import { DATA_KEYS } from '@domain/constants/datakeys';
-
 
 // Mock de hook
 const mockUseTransactionHistory = jest.fn();
@@ -35,14 +34,14 @@ describe('UndoScreen Integratie Tests', () => {
     });
 
     // Transformeer naar Transaction[]
-// Gebruik geen cast — gebruik directe destructuring
-const transactions = testState.data[DATA_KEYS.FINANCE].expenses.items.map(item => ({
-  id: item.id as string,               // forceer type (je weet dat het er is)
-  description: item.description as string,
-  amount: item.amountCents as number,
-  currency: 'EUR' as const,
-  date: '2026-01-05',
-}));
+    // Gebruik geen cast — gebruik directe destructuring
+    const transactions = testState.data[DATA_KEYS.FINANCE].expenses.items.map((item) => ({
+      id: item.id as string, // forceer type (je weet dat het er is)
+      description: item.description as string,
+      amount: item.amountCents as number,
+      currency: 'EUR' as const,
+      date: '2026-01-05',
+    }));
 
     mockUseTransactionHistory.mockReturnValue({
       transactions,

@@ -18,14 +18,14 @@ export interface Transaction {
 
 /**
  * Custom Hook: useTransactionHistory
- * 
+ *
  * @architecture
  * - ADR-01 (SoC): Scheiding tussen UI en Business Logic
  * - ADR-03: Adapter patroon voor state management
  * - ADR-04: "Dumb UI" - Hook bevat alle orchestratie
  * - ADR-06: Defensive programming met type guards
  * - ADR-16: Lazy initialization voor performance
- * 
+ *
  * @responsibilities
  * - Transaction state management
  * - Error handling en validation
@@ -35,7 +35,7 @@ export interface Transaction {
 export const useTransactionHistory = (initialData: Transaction[] = []) => {
   // ADR-16: Lazy initialization - adapter wordt slechts 1x aangemaakt
   const [adapter] = useState(() => new StatefulTransactionAdapter(initialData));
-  
+
   // Local state management
   const [transactions, setTransactions] = useState<Transaction[]>(initialData);
   const [error, setError] = useState<string | null>(null);
@@ -60,25 +60,25 @@ export const useTransactionHistory = (initialData: Transaction[] = []) => {
       // ADR-03: Adapter bevat de domain logic
       const distribution = adapter.calculateDistribution(inputValue, parts);
       const currentView = adapter.getCurrentState();
-      
-      const newState = { 
-        ...currentView, 
-        distribution, 
-        lastUpdated: new Date().toISOString() 
+
+      const newState = {
+        ...currentView,
+        distribution,
+        lastUpdated: new Date().toISOString(),
       };
-      
+
       // ADR-12: Audit trail via adapter
       adapter.push(newState, 'USER_UPDATE');
-      
+
       // In productie zou dit via een subscription/observer pattern gaan
       // Voor nu: direct state sync (optioneel)
       // setTransactions(adapter.getCurrentState());
     } catch (err) {
       // ADR-05: Type-safe error handling
       if (err instanceof ZodError) {
-        setError("Input violation: Integers only (ADR-05)");
+        setError('Input violation: Integers only (ADR-05)');
       } else {
-        setError("An unexpected error occurred");
+        setError('An unexpected error occurred');
       }
     }
   };
@@ -117,21 +117,21 @@ export const useTransactionHistory = (initialData: Transaction[] = []) => {
   /**
    * Interface Segregation Principle (ISP)
    * Exposeer alleen wat de UI echt nodig heeft
-   * 
+   *
    * @returns Clean API voor consumer components
    */
   return {
     // Data
     transactions: safeTransactions,
     error,
-    
+
     // Actions
     updateTransaction,
     undo,
     redo,
     clearAll,
-    
+
     // Debug (ADR-17: Accepted Risk voor development tools)
-    _debugAdapterState: adapter.getCurrentState()
+    _debugAdapterState: adapter.getCurrentState(),
   };
 };

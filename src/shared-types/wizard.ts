@@ -1,7 +1,6 @@
 import type { FormState, DataSection, DeepPartial } from './core';
 import { FieldConfig } from '@shared-types/form';
 
-
 export interface WizardPageConfig {
   pageId: string;
   titleToken?: string;

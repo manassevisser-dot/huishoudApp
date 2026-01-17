@@ -14,12 +14,12 @@ import * as TransactionService from '@services/transactionService';
 import { getISOWeek } from '@utils/date';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 import { DATA_KEYS } from '@domain/constants/datakeys'; // Toegevoegd voor de juiste mapping
-import {Logger} from '@services/logger';
+import { Logger } from '@services/logger';
 
 type Props = {
   onClose: () => void;
   // We verwachten nu de volledige household members en de setup
-  members: any[]; 
+  members: any[];
   setupData: any;
 };
 
@@ -39,7 +39,7 @@ const CsvUploadScreen: React.FC<Props> = ({ onClose, members, setupData }) => {
       const result = dataOrchestrator.processAllData(members || [], csvText, setupData || {});
 
       // Gebruik de DATA_KEYS om de gefilterde lokale data op te halen
-    
+
       const financeData = result.local[DATA_KEYS.FINANCE];
 
       if (financeData.transactions.length === 0) {
@@ -66,38 +66,34 @@ const CsvUploadScreen: React.FC<Props> = ({ onClose, members, setupData }) => {
         message += `🏠 We vonden woonlasten in de CSV die niet in je setup stonden.\n\n`;
       }
 
-      Alert.alert(
-        'Bevestig Upload',
-        message + 'Wil je deze data opslaan?',
-        [
-          { text: 'Annuleren', style: 'cancel', onPress: () => setIsUploading(false) },
-          {
-            text: 'Opslaan',
-            onPress: async () => {
-              // --- 3. (ANONIEM) RESEARCH PAYLOAD NAAR ANALYTICS ---
-              // Je kunt result.research direct doorsturen naar een API/n8n
-              Logger.info('Sending to research:', result.research);
+      Alert.alert('Bevestig Upload', message + 'Wil je deze data opslaan?', [
+        { text: 'Annuleren', style: 'cancel', onPress: () => setIsUploading(false) },
+        {
+          text: 'Opslaan',
+          onPress: async () => {
+            // --- 3. (ANONIEM) RESEARCH PAYLOAD NAAR ANALYTICS ---
+            // Je kunt result.research direct doorsturen naar een API/n8n
+            Logger.info('Sending to research:', result.research);
 
-              // --- 4. OPSLAAN NAAR LOKALE STORAGE ---
-              for (const tx of financeData.transactions) {
-                await (TransactionService as any)._mockLocalSave({
-                  date: tx.date,
-                  amount: tx.amount,
-                  description: tx.description, // Al geanonimiseerd door orchestrator
-                  category: tx.category,
-                  paymentMethod: 'pin',
-                  weekNumber: getISOWeek(new Date(tx.date)),
-                });
-              }
+            // --- 4. OPSLAAN NAAR LOKALE STORAGE ---
+            for (const tx of financeData.transactions) {
+              await (TransactionService as any)._mockLocalSave({
+                date: tx.date,
+                amount: tx.amount,
+                description: tx.description, // Al geanonimiseerd door orchestrator
+                category: tx.category,
+                paymentMethod: 'pin',
+                weekNumber: getISOWeek(new Date(tx.date)),
+              });
+            }
 
-              setIsUploading(false);
-              Alert.alert('Succes', 'Je dashboard is bijgewerkt!', [
-                { text: 'OK', onPress: onClose },
-              ]);
-            },
+            setIsUploading(false);
+            Alert.alert('Succes', 'Je dashboard is bijgewerkt!', [
+              { text: 'OK', onPress: onClose },
+            ]);
           },
-        ],
-      );
+        },
+      ]);
     } catch (e: any) {
       setIsUploading(false);
       Alert.alert('Fout', e?.message ?? 'Onbekende fout bij verwerken van CSV');
@@ -108,10 +104,7 @@ const CsvUploadScreen: React.FC<Props> = ({ onClose, members, setupData }) => {
     <View style={styles.container}>
       <View style={styles.pageContainer}>
         <ScrollView
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: 120 + insets.bottom },
-          ]}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
         >
           <Text style={styles.pageTitle}>Bankafschrift Importeren</Text>
 
@@ -120,10 +113,7 @@ const CsvUploadScreen: React.FC<Props> = ({ onClose, members, setupData }) => {
           </Text>
 
           <TextInput
-            style={[
-              styles.input,
-              { height: 240, textAlignVertical: 'top', fontFamily: 'Courier' },
-            ]}
+            style={[styles.input, { height: 240, textAlignVertical: 'top', fontFamily: 'Courier' }]}
             multiline
             placeholder="Plak hier uw CSV regels..."
             value={csvText}

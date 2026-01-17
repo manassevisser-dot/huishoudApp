@@ -2,10 +2,10 @@
 export const evaluateRules = (_data: any) => {
   // Simpele fallback voor UUID/ID generatie
   const mockId = Math.random().toString(36).substring(7);
-  
+
   return {
-  entityId: mockId,
+    entityId: mockId,
     timestamp: Date.now(),
-    isValid: true
+    isValid: true,
   };
 };

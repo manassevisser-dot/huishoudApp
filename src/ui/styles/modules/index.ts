@@ -9,6 +9,6 @@ export * from './Dashboard';
 export * from './Summary';
 export * from './Typography';
 export * from './Alerts';
-export * from './Toggles';      // ← NIEUW
-export * from './Checkboxes';   // ← NIEUW
-export * from './Helpers';      // ← NIEUW
+export * from './Toggles'; // ← NIEUW
+export * from './Checkboxes'; // ← NIEUW
+export * from './Helpers'; // ← NIEUW

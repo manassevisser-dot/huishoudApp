@@ -6,12 +6,12 @@ export type MemberType = 'adult' | 'child' | 'teenager' | 'senior';
 
 export interface Member {
   // --- Identifiers ---
-  entityId: string;    // Unieke database sleutel (UUID)
-  fieldId: string;     // Unieke UI sleutel (voor Phoenix Forms state)
+  entityId: string; // Unieke database sleutel (UUID)
+  fieldId: string; // Unieke UI sleutel (voor Phoenix Forms state)
 
   // --- Core Data ---
   memberType: MemberType;
-  
+
   // ✅ NIEUWE STANDAARD (Split Name)
   firstName: string;
   lastName: string;
@@ -19,7 +19,7 @@ export interface Member {
   // --- Optionele Data ---
   dateOfBirth?: string; // ISO string (YYYY-MM-DD)
   gender?: string;
-  
+
   // --- Derived / Computed (mag optioneel zijn) ---
   age?: number;
 

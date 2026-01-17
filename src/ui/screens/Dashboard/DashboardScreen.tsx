@@ -27,25 +27,21 @@ export const DashboardScreen: React.FC<DashboardProps> = () => {
     <ScrollView
       style={styles.container}
       refreshControl={
-        <RefreshControl 
-          refreshing={isRefreshing} 
-          onRefresh={refreshData} 
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={refreshData}
           accessibilityLabel="Vernieuw financiële gegevens"
         />
       }
     >
       <View style={styles.pageContainer}>
         {/* WAI-009: Pagina titel met de juiste rollen */}
-        <Text 
-          style={styles.pageTitle}
-          accessibilityRole="header"
-          accessibilityLiveRegion="polite"
-        >
+        <Text style={styles.pageTitle} accessibilityRole="header" accessibilityLiveRegion="polite">
           Dashboard
         </Text>
 
         <FinancialSummary data={financialData} />
-        
+
         {/* Ruimte voor extra widgets */}
       </View>
     </ScrollView>

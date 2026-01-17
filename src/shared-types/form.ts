@@ -3,5 +3,4 @@ export * from './core';
 export * from './fields';
 export * from './wizard';
 export * from './finance';
-export * from './extendedFormState'
-    
+export * from './extendedFormState';

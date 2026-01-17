@@ -4,7 +4,7 @@ import { DATA_KEYS } from '@domain/constants/registry';
 import { UX_TOKENS } from '@domain/constants/registry';
 
 /**
- * ADR-04: UI Components zijn “dumb”. 
+ * ADR-04: UI Components zijn “dumb”.
  * De projector (WizardPage) haalt de teksten op via de tokens.
  */
 export const setupHouseholdConfig: WizardPageConfig = {
@@ -53,7 +53,7 @@ export const setupHouseholdConfig: WizardPageConfig = {
       options: [
         { label: 'Geen', value: 'Nee' }, // Tip: gebruik 'Nee' ipv '0' als je visibleIf daarop checkt
         { label: '1 auto', value: 'Een' },
-        { label: '2+ auto\'s', value: 'Twee' },
+        { label: "2+ auto's", value: 'Twee' },
       ],
       defaultValue: 'Nee',
     },
@@ -65,4 +65,3 @@ export const setupHouseholdConfig: WizardPageConfig = {
     },
   ],
 };
-
