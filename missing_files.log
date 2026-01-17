@@ -1,0 +1,19 @@
+src/adapters/transaction/stateful.ts:  public undo(): TransactionState | null {
+src/adapters/transaction/stateful.ts:      AuditLogger.log('ACTION', 'undo', { pointer: this.pointer });
+src/services/__tests__/migration.members.test.ts:import { TransactionService, undoLastTransaction } from '../transactionService';
+src/services/__tests__/migration.members.test.ts:  it('moet een waarschuwing loggen bij undo (Regel 64)', async () => {
+src/services/__tests__/migration.members.test.ts:    const result = await undoLastTransaction();
+src/services/__mocks__/transactionService.ts:  undo: jest.fn(async () => undefined),
+src/services/transactionService.ts:export const undoLastTransaction = async () => {
+src/services/transactionService.ts:  undo: undoLastTransaction,
+src/ui/screens/Daily/UndoScreen.tsx:  const { transactions, undo, redo, clearAll, updateTransaction, error, _debugAdapterState } =
+src/ui/screens/Daily/UndoScreen.tsx:              onPress={undo}
+src/ui/screens/Daily/UndoScreen.tsx:              testID="undo-button"
+src/ui/screens/Daily/UndoScreen.tsx:              disabled={!undo}
+src/ui/screens/Daily/__tests__/__snapshots__/UndoScreen.test.tsx.snap:            testID="undo-button"
+src/ui/screens/Daily/__tests__/UndoScreen.test.tsx:      undo: jest.fn(),
+src/app/hooks/useTransactionHistory.ts:  const undo = () => {
+src/app/hooks/useTransactionHistory.ts:    const prevState = adapter.undo();
+src/app/hooks/useTransactionHistory.ts:    undo,
+src/app/hooks/__tests__/useTransactionHistory.test.ts:    it('moet undo aanroepen zonder te crashen', () => {
+src/app/hooks/__tests__/useTransactionHistory.test.ts:          result.current.undo();

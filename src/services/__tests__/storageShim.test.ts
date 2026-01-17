@@ -11,7 +11,7 @@ describe('CU-001-SHIM StorageShim', () => {
     const mockSetItem = jest.fn();
 
     // Geen legacy → shim moet envelop via AsyncStorage schrijven
-    jest.doMock('@services/storage', () => ({ __esModule: true })); // legacy afwezig
+    jest.doMock('@adapters/storage/storage', () => ({ __esModule: true }));
     jest.doMock('@react-native-async-storage/async-storage', () => ({
       __esModule: true,
       default: { setItem: mockSetItem },

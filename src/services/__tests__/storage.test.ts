@@ -1,4 +1,4 @@
-import { migrateToPhoenix } from '../storage';
+import { migrateToPhoenix } from '@adapters/storage/storage';
 import { DATA_KEYS } from '@domain/constants/datakeys';
 
 describe('storage.ts: migrateToPhoenix', () => {
@@ -41,7 +41,7 @@ describe('storage.ts: migrateToPhoenix', () => {
     expect(result.data[DATA_KEYS.FINANCE].income.totalAmount).toBeGreaterThan(0);
   });
   it('moet loadState aanroepen en null teruggeven (Lijn 65 coverage)', async () => {
-    const { storage } = require('../storage');
+    const { storage } = require('@adapters/storage/storage');
     const result = await storage.loadState();
     expect(result).toBeNull();
   });

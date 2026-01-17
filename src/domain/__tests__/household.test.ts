@@ -1,5 +1,5 @@
 import { Member } from '../household';
-import { getHouseholdStatus } from '@logic/householdLogic';
+import { getHouseholdStatus } from '@domain/rules/householdRules';
 // Helper om Phoenix-compliant members te maken
 
 const createMembers = (count: number, type: 'adult' | 'child'): Member[] =>

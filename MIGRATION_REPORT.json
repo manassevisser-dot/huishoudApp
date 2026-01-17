@@ -1,0 +1,130 @@
+[
+  {
+    "file": "evaluateDomainRules.ts",
+    "source": "src/domain/rules/",
+    "destination": "src/domain/rules/ (Splitsen)/",
+    "invariant_hash": "260e5650be633c6b11715825418effd4cdb64a636e980df7339ac0426d4bf842",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "frequency.ts",
+    "source": "src/utils/",
+    "destination": "src/domain/helpers/",
+    "invariant_hash": "0a7b95c229cd819df4fdcdeefe80db07602346cb7c96afd6fde5d9ce6d70115c",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "numbers.ts",
+    "source": "src/utils/",
+    "destination": "src/domain/helpers/",
+    "invariant_hash": "812733e57ff8f07238b03484bc50bc9fbb8c8d5585a3619b59c4c9c8c31b9848",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "validation.ts",
+    "source": "src/utils/",
+    "destination": "src/domain/validation/",
+    "invariant_hash": "e2aa3e340f662f8c0f87f912dbfdaf20d29b141dbf58935fbe49bba419cdcd13",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "core.ts",
+    "source": "src/shared-types/",
+    "destination": "src/domain/types/",
+    "invariant_hash": "f934c626b54650874dbb69c019a5cd07ba3c5b2a4ee0daf481e42bdaef9a641e",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "expenses.ts",
+    "source": "src/shared-types/",
+    "destination": "src/domain/types/",
+    "invariant_hash": "d2ae69202c6999cd2d25ba4ab8c17b9e981269b78a8030b8ad54307dd93b7504",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "extendedFormState.ts",
+    "source": "src/shared-types/",
+    "destination": "src/domain/types/",
+    "invariant_hash": "97ec7b0d65ed06b12241c42755bb81fe7dd151d61eb483b776e116cab77dcc9e",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "fields.ts",
+    "source": "src/shared-types/",
+    "destination": "src/domain/types/",
+    "invariant_hash": "f391f610d65ae8613df0de02b5bbac4c5c50d9df57da24b6ff2a89cf2db27a7c",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "finance.ts",
+    "source": "src/shared-types/",
+    "destination": "src/domain/types/",
+    "invariant_hash": "f29b8b8e4ced9c81b975e658b32c3caddd43fc178d58c82a79572172faa49edc",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "form.ts",
+    "source": "src/shared-types/",
+    "destination": "src/domain/types/",
+    "invariant_hash": "1aad9e3f36dbe924a91419f96aa594abc49443010cf9ec21c6e0184e8c304bf5",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "income.ts",
+    "source": "src/shared-types/",
+    "destination": "src/domain/types/",
+    "invariant_hash": "936cb8e43913709b0cddc6f801a8fdc042c3fda544a59de4cca5e80921b1d056",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "transaction.ts",
+    "source": "src/shared-types/",
+    "destination": "src/domain/types/",
+    "invariant_hash": "a0a043ba5f78ab9ef443f16c1fd1f3e196e721f476915e98dc77eea588c17849",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "wizard.ts",
+    "source": "src/shared-types/",
+    "destination": "src/domain/types/",
+    "invariant_hash": "b32646fc929f18023274368696f329cdcc85179e1758214cd62bf8159d37ddb3",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "export.ts",
+    "source": "src/logic/",
+    "destination": "src/app/orchestrators/",
+    "invariant_hash": "23bbcb5e86a2415d535fb2ede2f8f1ab68d109729dd083d85bab7ee3a6062313",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "storage.ts",
+    "source": "src/services/",
+    "destination": "src/adapters/storage/",
+    "invariant_hash": "c17201fa46798f6a01c07ed5f890e2632278b209a7bced24bba96ec9c274a3ec",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  },
+  {
+    "file": "csvService.ts",
+    "source": "src/services/",
+    "destination": "src/adapters/csv/",
+    "invariant_hash": "49b3bd5ca150cf778de9d5eec31a09e85703d7c2d7f9cefeac7126ffd1033f0b",
+    "integrity_check": "PASS",
+    "sentinel_status": "false"
+  }
+]

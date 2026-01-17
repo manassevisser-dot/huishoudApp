@@ -1,4 +1,4 @@
-import { toCents, formatCentsToDutch, formatCurrency, formatDutchValue } from '../numbers';
+import { toCents, formatCentsToDutch, formatCurrency, formatDutchValue } from '@domain/helpers/numbers';
 
 describe('GM-001: Euro NumericParser Baseline', () => {
   const scenarios = [

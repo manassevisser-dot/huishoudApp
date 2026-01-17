@@ -1,4 +1,4 @@
-import { validateField, validateDobNL } from '../validation';
+import { validateField, validateDobNL } from '@domain/validation/fieldValidator';
 
 describe('validation.ts logic', () => {
   describe('validateField', () => {
@@ -9,7 +9,23 @@ describe('validation.ts logic', () => {
       required: true,
       validation: { min: 5, max: 10 },
     } as any;
+// Voeg deze toe aan de describe('validateField') block
+it('should fallback to 0 when state path is missing for lengthEqualsTo', () => {
+  const field = { 
+    validation: { lengthEqualsTo: 'page.missingField' } 
+  };
+  // value.length is 1, expected wordt 0 door de fallback
+  const result = validateField(field as any, [{}], {}); 
+  expect(result).toContain('moet gelijk zijn aan totaal aantal personen (0)');
+});
 
+// Voeg deze toe aan de describe('validateDobNL') block
+it('should return error for non-existent calendar dates', () => {
+  // 31-04-2023 (April heeft maar 30 dagen)
+  // Dit passeert isDigitsDatePlausible vaak wel, maar parseDDMMYYYYtoISO niet.
+  const result = validateDobNL('31042023');
+  expect(result).toBe('Ongeldige datum (bestaat niet in kalender).');
+});
     test('should return error if required value is missing', () => {
       expect(validateField(mockField, '', {})).toBe('Dit veld is verplicht.');
       expect(validateField(mockField, null, {})).toBe('Dit veld is verplicht.');

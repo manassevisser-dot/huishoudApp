@@ -1,4 +1,4 @@
-import { toCents } from '@utils/numbers';
+import { toCents } from '@domain/helpers/numbers';
 
 export type SetupData = {
   maandelijksInkomen?: number; // in euro (wordt naar centen geconverteerd)

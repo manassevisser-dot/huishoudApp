@@ -1,17 +1,14 @@
-// src/utils/index.ts
+// Bridge: Verwijst nu naar de nieuwe domein-locaties
+export * from '@domain/helpers/frequency';
+export * from '@domain/helpers/numbers';
+export * from '@domain/validation/fieldValidator';
 
-// Pure helpers (safe barrel)
+// Blijft lokaal (bestaat nog in src/utils)
 export * from './conditions';
 export * from './csvHelper';
 export * from './date';
 export * from './fieldVisibility';
-export * from './frequency';
-export * from './numbers';
 export * from './objects';
 export * from './ping';
 export * from './strings';
-export * from './validation';
-
-// ⚠️ bewust NIET:
-// export * from './AuditLogger';
-// export * from './audit/logger';
+// export * from './AuditLogger'; // Optioneel, check of deze bestaat

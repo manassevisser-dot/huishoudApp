@@ -1,0 +1,232 @@
+src
+├── adapters
+│   ├── transaction
+│   │   └── stateful.ts
+│   └── undo
+│       ├── stateful.ts
+│       └── __tests__
+├── app
+│   ├── context
+│   │   ├── FormContext.tsx
+│   │   ├── formReducer.ts
+│   │   ├── __test__
+│   │   │   └── formReducer.test.ts
+│   │   ├── ThemeContext.tsx
+│   │   └── WizardContext.tsx
+│   ├── hooks
+│   │   ├── __tests__
+│   │   │   ├── useAppOrchestration.test.tsx
+│   │   │   └── useTransactionHistory.test.ts
+│   │   ├── useAppOrchestration.ts
+│   │   └── useTransactionHistory.ts
+│   └── orchestrators
+│       ├── __tests__
+│       └── transactionOrchestrator.ts
+├── App.tsx
+├── config
+│   ├── features.ts
+│   └── WizStrings.ts
+├── containers
+│   └── AdultsCounter.tsx
+├── domain
+│   ├── constants
+│   │   ├── datakeys.ts
+│   │   ├── labels.ts
+│   │   └── registry.ts
+│   ├── household.ts
+│   ├── rules
+│   │   └── evaluateDomainRules.ts
+│   ├── __tests__
+│   │   ├── evaluateDomainRules.test.ts
+│   │   └── household.test.ts
+│   └── types.ts
+├── kernel
+│   └── finance
+│       ├── index.ts
+│       ├── mappers.ts
+│       └── __tests__
+├── logic
+│   ├── export.ts
+│   ├── finance.ts
+│   ├── householdLogic.ts
+│   └── __tests__
+│       ├── export.test.ts
+│       └── finance.test.ts
+├── navigation
+│   └── Navigator.tsx
+├── selectors
+│   ├── financialSelectors.ts
+│   ├── householdSelectors.ts
+│   └── __tests__
+│       ├── financialFlow.test.ts
+│       ├── householdSelectors.test.ts
+│       └── __snapshots__
+│           └── householdSelectors.test.ts.snap
+├── services
+│   ├── csvService.ts
+│   ├── dataOrchestrator.ts
+│   ├── dataProcessor.ts
+│   ├── householdAlign.ts
+│   ├── logger.ts
+│   ├── migrationService.ts
+│   ├── __mocks__
+│   │   └── transactionService.ts
+│   ├── privacyHelpers.ts
+│   ├── storageShim.ts
+│   ├── storage.ts
+│   ├── __tests__
+│   │   ├── csvService.integration.test.ts
+│   │   ├── csvService.test.tsx
+│   │   ├── dataOrchestrator.test.tsx
+│   │   ├── householdAlign.test.ts
+│   │   ├── idempotency.test.ts
+│   │   ├── migration.fixture.test.ts
+│   │   ├── migration.members.test.ts
+│   │   ├── migrationService.test.ts
+│   │   ├── privacyHelpers.test.ts
+│   │   ├── __snapshots__
+│   │   │   └── migration.members.test.ts.snap
+│   │   ├── storage.migration.test.ts
+│   │   ├── storageShim.test.ts
+│   │   └── storage.test.ts
+│   └── transactionService.ts
+├── shared-types
+│   ├── core.ts
+│   ├── expenses.ts
+│   ├── extendedFormState.ts
+│   ├── fields.ts
+│   ├── finance.ts
+│   ├── form.ts
+│   ├── income.ts
+│   ├── transaction.ts
+│   └── wizard.ts
+├── state
+│   └── schemas
+│       ├── FormStateSchema.ts
+│       └── __tests__
+│           └── schemas.test.ts
+├── __tests__
+│   ├── App.projector.test.tsx
+│   ├── CoreSanity.test.tsx
+│   ├── LandingScreen_Isolation.test.tsx
+│   ├── ScreenSanity.test.tsx
+│   └── WAI009_FocusManagement.test.tsx
+├── test-utils
+│   ├── assertions
+│   │   └── migrationAssertions.ts
+│   ├── factories
+│   │   ├── csvFactory.ts
+│   │   ├── memberFactory.ts
+│   │   └── stateFactory.ts
+│   ├── index.ts
+│   ├── jest.setup.tsx
+│   ├── perf
+│   │   └── measure.ts
+│   ├── render
+│   │   ├── providers.tsx
+│   │   └── renderers.tsx
+│   └── utils
+│       └── name.ts
+├── ui
+│   ├── components
+│   │   ├── FieldRenderer.tsx
+│   │   ├── fields
+│   │   │   ├── ChipButton.tsx
+│   │   │   ├── ConditionalField.tsx
+│   │   │   ├── DateField.tsx
+│   │   │   ├── FormField.tsx
+│   │   │   ├── index.ts
+│   │   │   ├── InputCounter.tsx
+│   │   │   ├── MoneyField.tsx
+│   │   │   ├── MoneyInput.tsx
+│   │   │   └── ToggleSwitch.tsx
+│   │   ├── FinancialSummary.tsx
+│   │   └── __tests__
+│   │       ├── InputCounter.test.tsx
+│   │       └── MoneyInput.test.tsx
+│   ├── navigation
+│   │   └── MainNavigator.tsx
+│   ├── screens
+│   │   ├── CSV
+│   │   │   └── CsvUploadScreen.tsx
+│   │   ├── Daily
+│   │   │   ├── __tests__
+│   │   │   │   ├── __snapshots__
+│   │   │   │   │   └── UndoScreen.test.tsx.snap
+│   │   │   │   └── UndoScreen.test.tsx
+│   │   │   └── UndoScreen.tsx
+│   │   ├── DailyInput
+│   │   │   └── DailyInputScreen.tsx
+│   │   ├── Dashboard
+│   │   │   └── DashboardScreen.tsx
+│   │   ├── Options
+│   │   │   └── OptionsScreen.tsx
+│   │   ├── Reset
+│   │   │   └── ResetScreen.tsx
+│   │   ├── Settings
+│   │   │   └── SettingsScreen.tsx
+│   │   └── Wizard
+│   │       ├── CriticalErrorScreen.tsx
+│   │       ├── LandingScreen.tsx
+│   │       ├── pages
+│   │       │   ├── 1setupHousehold.config.ts
+│   │       │   ├── 2detailsHousehold.config.ts
+│   │       │   ├── 3incomeDetails.config.ts
+│   │       │   ├── 4fixedExpenses.config.ts
+│   │       │   └── __tests__
+│   │       │       └── wizardConfigs.test.ts
+│   │       ├── SplashScreen.tsx
+│   │       ├── __tests__
+│   │       │   └── WizardController.test.tsx
+│   │       ├── WelcomeWizard.tsx
+│   │       ├── WizardController.tsx
+│   │       └── WizardPage.tsx
+│   └── styles
+│       ├── Colors.ts
+│       ├── modules
+│       │   ├── Alerts.ts
+│       │   ├── Buttons.ts
+│       │   ├── Cards.ts
+│       │   ├── Checkboxes.ts
+│       │   ├── Chips.ts
+│       │   ├── Dashboard.ts
+│       │   ├── Forms.ts
+│       │   ├── Header.ts
+│       │   ├── Helpers.ts
+│       │   ├── index.ts
+│       │   ├── Layout.ts
+│       │   ├── Summary.ts
+│       │   ├── Toggles.ts
+│       │   └── Typography.ts
+│       ├── __tests__
+│       │   └── useAppStyles.test.ts
+│       ├── Tokens.ts
+│       └── useAppStyles.ts
+└── utils
+    ├── audit
+    │   └── logger.ts
+    ├── AuditLogger.ts
+    ├── conditions.ts
+    ├── csvHelper.ts
+    ├── date.ts
+    ├── fieldVisibility.ts
+    ├── frequency.ts
+    ├── index.ts
+    ├── numbers.ts
+    ├── objects.ts
+    ├── ping.ts
+    ├── strings.ts
+    ├── __tests__
+    │   ├── conditions.test.ts
+    │   ├── date.test.ts
+    │   ├── frequency.test.ts
+    │   ├── logger.test.ts
+    │   ├── numbers.test.ts
+    │   ├── ping.test.ts
+    │   ├── __snapshots__
+    │   │   ├── frequency.test.ts.snap
+    │   │   └── numbers.test.ts.snap
+    │   └── validation.test.ts
+    └── validation.ts
+
+68 directories, 162 files

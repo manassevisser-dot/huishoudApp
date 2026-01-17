@@ -1,5 +1,5 @@
 import { DATA_KEYS } from '@domain/constants/datakeys';
-import { csvService } from './csvService';
+import { csvService } from '@adapters/csv/csvService';
 import { dataProcessor } from './dataProcessor';
 import { Member, RawUIData, ResearchPayload, CsvItem, FinancialIncomeSummary } from '@domain/types';
 import { collectAndDistributeData, assertNoPIILeak } from '@services/privacyHelpers';

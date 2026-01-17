@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { View, Text, TextInput } from 'react-native';
 import { useAppStyles } from '@ui/styles/useAppStyles';
-import { toCents, formatCentsToDutch, formatDutchValue } from '@utils/numbers';
+import { toCents, formatCentsToDutch, formatDutchValue } from '@domain/helpers/numbers';
 
 type MoneyInputProps = {
   value: number; // Bedrag in centen (altijd >= 0)

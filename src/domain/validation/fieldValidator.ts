@@ -1,5 +1,5 @@
 import { FieldConfig } from '@shared-types/form';
-import { formatDutchValue } from '@utils/numbers';
+import { formatDutchValue } from '@domain/helpers/numbers';
 import { isDigitsDatePlausible, parseDDMMYYYYtoISO } from '@utils/date';
 
 export const validateField = (field: FieldConfig, value: any, state: any): string | null => {

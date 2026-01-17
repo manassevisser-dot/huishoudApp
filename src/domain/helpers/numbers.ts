@@ -1,4 +1,4 @@
-import { cleanName } from './strings';
+import { cleanName } from '@utils/strings';
 
 /**
  * Tijdens typen: sta alleen cijfers, komma en punt toe.

@@ -2,11 +2,11 @@ import { renderHook, waitFor } from '@testing-library/react-native';
 import { useAppOrchestration } from '../useAppOrchestration';
 import { createMockState } from '@test-utils/index';
 import { FormProvider } from '@app/context/FormContext';
-import { storage } from '@services/storage';
+import { storage } from '@adapters/storage/storage';
 import React from 'react';
 
 // Mock storage
-jest.mock('@services/storage', () => ({
+jest.mock('@adapters/storage/storage', () => ({
   storage: {
     loadState: jest.fn(),
   },

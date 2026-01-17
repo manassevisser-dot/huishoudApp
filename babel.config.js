@@ -1,22 +1,31 @@
+
+// babel.config.js
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: [
-      'babel-preset-expo',
-      '@babel/preset-typescript',
-    ],
+    presets: ['babel-preset-expo', '@babel/preset-typescript'],
     plugins: [
       [
         'module-resolver',
         {
           root: ['./'],
           alias: {
-// @alias-start
+            '@': './src',
             '@app': './src/app',
+
             '@domain': './src/domain',
             '@services': './src/services',
-            '@shared-types': './src/shared-types',
+
+            '@shared-types': './src/domain/types',
+
+            // Kies primaire utils-map hier net als in Jest:
             '@utils': './src/utils',
+            // Optioneel: aparte legacy aliassen tijdens migratie:
+            '@utils-legacy-helpers': './src/domain/helpers',
+            '@utils-legacy-validation': './src/domain/validation',
+
+            '@shared': './src/shared',
+            '@core': './src/core',
             '@config': './src/config',
             '@logic': './src/logic',
             '@ui': './src/ui',
@@ -28,9 +37,18 @@ module.exports = function (api) {
             '@context': './src/app/context',
             '@selectors': './src/selectors',
             '@assets': './assets',
-            '@test-utils': './src/test-utils/index.ts',
-            "@test-utils/*": ["src/test-utils/*"],
-// @alias-end
+            '@test-utils': './src/test-utils', // index.ts wordt door resolvers gevonden
+            '@kernel': './src/kernel',
+
+            // Single files
+            '@shared-types/form': './src/core/types/form.ts',
+            '@shared-types/finance': './src/core/types/finance.ts',
+            '@shared-types/fields': './src/core/types/form.ts',
+            '@shared-types/wizard': './src/core/types/wizard.ts',
+
+            '@domain/types': './src/core/types',
+            '@adapters': './src/adapters',
+            '@domain/rules': './src/domain/rules',
           },
           extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
         },
@@ -38,7 +56,7 @@ module.exports = function (api) {
     ],
     env: {
       test: {
-        // Test configuratie
+        // Test-specifieke babel-opties (indien nodig)
       },
     },
   };

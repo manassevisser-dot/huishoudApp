@@ -1,3 +1,4 @@
+
 {
   "compilerOptions": {
     "target": "ESNext",
@@ -13,10 +14,20 @@
     "paths": {
       "@/*": ["src/*"],
       "@app/*": ["src/app/*"],
+
       "@domain/*": ["src/domain/*"],
       "@services/*": ["src/services/*"],
-      "@shared-types/*": ["src/shared-types/*"],
-      "@utils/*": ["src/utils/*"],
+
+      "@shared-types/*": ["src/domain/types/*"],
+
+      "@utils/*": [
+        "src/utils/*",
+        "src/domain/helpers/*",
+        "src/domain/validation/*"
+      ],
+
+      "@shared/*": ["src/shared/*"],
+      "@core/*": ["src/core/*"],
       "@config/*": ["src/config/*"],
       "@logic/*": ["src/logic/*"],
       "@ui/*": ["src/ui/*"],
@@ -31,7 +42,14 @@
       "@test-utils": ["src/test-utils/index.ts"],
       "@test-utils/*": ["src/test-utils/*"],
       "@kernel/*": ["src/kernel/*"],
-      "@adapters/*": ["src/adapters/*"]
+
+      "@shared-types/form": ["src/core/types/form.ts"],
+      "@shared-types/finance": ["src/core/types/finance.ts"],
+      "@shared-types/fields": ["src/core/types/form.ts"],
+      "@domain/types/*": ["src/core/types/*"],
+      "@adapters/*": ["src/adapters/*"],
+      "@shared-types/wizard": ["src/core/types/wizard.ts"],
+      "@domain/rules/*": ["src/domain/rules/*"]
     }
   },
   "include": ["src/**/*", "src/__tests__", "index.tsx", "jest.config.ts"]

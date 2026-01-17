@@ -1,5 +1,5 @@
 // src/utils/__tests__/frequency.test.ts
-import { convertToMonthlyCents, getMonthlyFactor } from '../frequency';
+import { convertToMonthlyCents, getMonthlyFactor } from '@domain/helpers/frequency';
 
 describe('WAI-004-D: Frequency & Normalisatie Tests', () => {
   test('getMonthlyFactor ratio’s', () => {

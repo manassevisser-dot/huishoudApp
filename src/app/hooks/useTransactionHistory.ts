@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StatefulTransactionAdapter } from '@adapters/transaction/stateful';
 import { ZodError } from 'zod';
-import { MoneySchema } from '@shared-types/finance';
+import { MoneySchema } from '@core/types/finance';
 
 /**
  * ADR-02: Domain Types

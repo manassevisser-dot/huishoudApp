@@ -1,6 +1,6 @@
 import { createSelector } from 'reselect';
 import { FormState } from '@shared-types/form';
-import { getHouseholdStatus } from '@logic/householdLogic';
+import { getHouseholdStatus } from '@domain/rules/householdRules';
 
 /**
  * CONSTANTEN

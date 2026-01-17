@@ -1,6 +1,6 @@
-import { toCents, formatCurrency, formatCentsToDutch, formatDutchValue } from '@utils/numbers';
+import { toCents, formatCurrency, formatCentsToDutch, formatDutchValue } from '@domain/helpers/numbers';
 import { parseRawCsv } from '@utils/csvHelper';
-import { csvService } from '@services/csvService';
+import { csvService } from '@adapters/csv/csvService';
 
 describe('Phoenix Financial Suite - Final Snapshot', () => {
   describe('Module: numbers.ts (Core Logic)', () => {
