@@ -1,13 +1,14 @@
 import { aggregateExportData } from '../export';
 import { TransactionService } from '@services/transactionService';
 import { FormState } from '@state/schemas/FormStateSchema';
+import { makePhoenixState, makeMixedHousehold } from '@test-utils/index';
 
 // 1. Mock de TransactionService
 jest.mock('@services/transactionService');
 const mockedTxService = TransactionService as jest.Mocked<typeof TransactionService>;
 
 describe('Export Logic & Aggregator', () => {
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -25,33 +26,34 @@ describe('Export Logic & Aggregator', () => {
   describe('aggregateExportData', () => {
     
     it('moet een volledige state correct transformeren en anonymiseren', () => {
-      const mockState = {
-        schemaVersion: 2,
-        C1: { aantalVolwassen: 6 }, // Trigger: isSpecialStatus = true (> 5)
-        C4: {
-          leden: [
-            { memberType: 'adult', leeftijd: 35, firstName: 'Geheim', lastName: 'Persoon' },
-            { memberType: 'child', leeftijd: 12, firstName: 'Kind', lastName: 'Anoniem' }
-          ]
-        },
-        C7: { items: [{ label: 'Salaris', value: 250000 }] }, // Cents
-        C10: { items: [{ label: 'Huur', value: 80000 }] }
-      } as unknown as FormState;
+      const mockState = makePhoenixState({
+        data: {
+          setup: { aantalVolwassen: 6 }, // trigger isSpecialStatus = true (>5)
+          household: {
+            members: makeMixedHousehold(2, 1) // 2 adults, 1 child
+          },
+          finance: {
+            income: { items: [{ label: 'Salaris', value: 250000 }] }, // cents
+            expenses: { items: [{ label: 'Huur', value: 80000 }] }
+          }
+        }
+      }) as FormState;
 
       const result = aggregateExportData(mockState);
+      console.log('DEBUG STATE:', JSON.stringify(mockState, null, 2));
+      console.log('RESULT:', result);
 
       // Controleer de Phoenix-export structuur
       expect(result.version).toBe('1.0-phoenix-export');
-      expect(result.schemaVersion).toBe(2);
+      expect(result.schemaVersion).toBe("1.0");
       expect(result.isSpecialStatus).toBe(true);
-      
+
       // Controleer of PII (namen) zijn weggefilterd (mapping check)
-      expect(result.household.members).toHaveLength(2);
+      expect(result.household.members).toHaveLength(3);
       expect(result.household.members[0]).toEqual({
         type: 'adult',
         leeftijd: 35
       });
-      // firstName/lastName mogen niet aanwezig zijn in het resultaat
       expect((result.household.members[0] as any).firstName).toBeUndefined();
 
       // Financiën check
@@ -61,13 +63,13 @@ describe('Export Logic & Aggregator', () => {
     });
 
     it('moet correct omgaan met lege of ontbrekende velden (edge cases)', () => {
-      // Scenario waarbij optionele secties ontbreken (test de ?? en || operators)
-      const emptyState = {
-        schemaVersion: 1,
-        C1: undefined,
-        C4: null,
-        C7: { items: [] }
-      } as unknown as FormState;
+      const emptyState = makePhoenixState({
+        data: {
+          setup: {},
+          household: { members: [] },
+          finance: { income: { items: [] }, expenses: { items: [] } }
+        }
+      }) as FormState;
 
       const result = aggregateExportData(emptyState);
 

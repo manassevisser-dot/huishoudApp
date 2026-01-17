@@ -1,4 +1,3 @@
-import { MoneySchema } from '@kernel/finance'; 
 import { AuditLogger } from '@/utils/audit/logger'; // Check of dit pad klopt met je find-resultaat
 
 const allocateRemainder = (total: number, parts: number): number[] => {
@@ -53,9 +52,7 @@ export class StatefulTransactionAdapter {
   }
 
   public calculateDistribution(totalAmount: number, parts: number): number[] {
-    // Fix: We mappen de input naar het schema dat een object verwacht
-    const validMoney = MoneySchema.parse({ amount: totalAmount, currency: 'EUR' }); 
-    return allocateRemainder(validMoney.amount, parts);
+    return allocateRemainder(Math.floor(totalAmount), parts);
   }
   
   public getCurrentState(): TransactionState {

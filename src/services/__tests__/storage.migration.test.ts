@@ -1,5 +1,4 @@
 import { migrateTransactionsToPhoenix } from '../transactionService';
-import { makeMixedHousehold } from '@test-utils/index';
 import { FormState } from '@shared-types/form';
 
 describe('Storage Migration: V0 to Phoenix', () => {

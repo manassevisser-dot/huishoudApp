@@ -1,12 +1,13 @@
 // CU-001-SHIM — Storage API shim (Phoenix v1.0)
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LegacyNamespace from '@services/storage';
-import { type FormStateV1 } from '@state/schemas/FormStateSchema';
+import type { FormState } from '@shared-types/form';
+
 
 const KEY = '@CashflowWizardState';
 
 export const StorageShim = {
-  async loadState(): Promise<FormStateV1 | null> {
+  async loadState(): Promise<FormState | null> {
     const L = (LegacyNamespace as any).Storage || LegacyNamespace;
 
     // Phoenix-integriteit: Delegeer ALTIJD naar de migratie-engine van legacy.
@@ -18,7 +19,7 @@ export const StorageShim = {
     return null; // Geen legacy? Dan start de app 'schoon' via de orchestrator.
   },
 
-  async saveState(state: FormStateV1): Promise<void> {
+  async saveState(state: FormState): Promise<void> {
     const L = (LegacyNamespace as any).Storage || LegacyNamespace;
     // Forceer Phoenix Contract
     const candidate = { ...state, schemaVersion: '1.0' };

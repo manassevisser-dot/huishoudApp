@@ -1,0 +1,11 @@
+{
+  "Producing_Role": "CEO Manasse",
+  "Artifact_ID": "SVZ-0-Daily-Input-001",
+  "Status": "PENDING",
+  "Token_ID": "TOKEN-ID-MANASSE-SVZ0-44202E5E",
+  "SHA256_Hash": "44202e5efb045c8245dd8961bf57a4f2791fd755b46e93cd81a7753e19104c5b",
+  "Source_Commit": "MANUAL_CLI_INPUT",
+  "PII_Attestation": "NEE - CLEAN",
+  "File_Name": "DailyInputScreen.tsx",
+  "Raw_Content": "import * as React from 'react';\nimport { View, ScrollView } from 'react-native';\nimport { MoneyField } from '@components/fields/MoneyField';\nimport { useAppStyles } from '@styles/useAppStyles';\n\n// We gebruiken relatieve paden om alias-conflicten te vermijden\nexport const DailyInputScreen: React.FC = () => {\n  const { styles } = useAppStyles();\n\n  return (\n    <ScrollView style={styles.container}>\n      <View style={{ padding: 20 }}>\n        <MoneyField \n          label=\"Bedrag\" \n          // MoneyField verwacht 'amount' ipv 'value' op basis van je error\n          amount={0} \n          onAmountChange={(val) => { /* logged via orchestrator */ }} \n        />\n      </View>\n    </ScrollView>\n  );\n};\n\nexport default DailyInputScreen;"
+}

@@ -1,6 +1,6 @@
 // src/logic/__tests__/finance.test.ts
-import { computePhoenixSummary } from '../finance';
-import { UndoResult } from '../../kernel/finance';
+import { computePhoenixSummary } from '@kernel/finance';
+import { UndoResult } from '@shared-types/finance';
 
 describe('Finance Logic — Phoenix Integriteit', () => {
   it('moet het totaal van transacties correct berekenen', () => {
@@ -26,6 +26,6 @@ describe('Finance Logic — Phoenix Integriteit', () => {
     ];
 
     const result = computePhoenixSummary(mockData);
-    expect(result).toBe(500);
+    expect(result.netCents).toBe(500);
   });
 });

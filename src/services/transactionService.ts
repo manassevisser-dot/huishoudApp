@@ -73,7 +73,13 @@ export const TransactionService = {
   getAllTransactions: async (): Promise<any[]> => {
     const state = await StorageShim.loadState();
     // We graven in de Phoenix 1.0 structuur: data -> transactions
-    return state?.data?.transactions || [];
+    const finance = state?.data?.finance;
+
+    return [
+      ...(finance?.income?.items ?? []),
+      ...(finance?.expenses?.items ?? []),
+    ];
+        
   },
 
   // Wis alle data via de shim

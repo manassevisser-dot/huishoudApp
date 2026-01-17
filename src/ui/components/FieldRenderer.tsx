@@ -25,8 +25,9 @@ export const FieldRenderer: React.FC<FieldRendererProps> = ({ fields, state, dis
         if (!isVisible) return null;
 
         // Phoenix SSOT: Haal de waarde op uit de juiste sectie
-        const section = field.section ?? 'setup';
-        const value = (state.data[section] as any)[field.fieldId];
+        const section = (field.section ?? 'setup') as keyof FormState['data'];
+        const value = (state.data[section] as Record<string, any>)[field.fieldId];
+        
 
         return (
           <FormField

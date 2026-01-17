@@ -1,30 +1,25 @@
+import { FinanceState, FinanceItem, UndoResult, CONTRACT_VERSION } from '@shared-types/finance';
+
+
 /**
- * FinanceKernel (Phoenix v1.0)
- * ADR-05: Strict Integer Mapping (Minor Units)
- * ADR-10: Versioned Contracts
+ * Zet één FinanceItem om naar een UndoResult
  */
+const mapItemToUndoResult = (
+  item: FinanceItem,
+  kind: 'income' | 'expense'
+): UndoResult => ({
+  id: item.id,
+  amount: kind === 'expense' ? -item.amountCents : item.amountCents,
+  currency: 'EUR',
+  reason: kind,
+  timestamp: new Date().toISOString(),
+  schemaVersion: CONTRACT_VERSION,
+});
 
-
-export interface UndoPayload {
-  id: string;
-  amount: number; // Must be integer (minor units)
-  currency: string;
-  reason?: string;
-}
-
-export interface UndoResult {
-  id: string;
-  amount: number;
-  currency: string;
-  reason: string;
-  timestamp: string;
-  schemaVersion: string;
-}
-
-export const computePhoenixSummary = (items: UndoResult[]) => {
-  // ADR-05: Safety check + Integer math
-  if (!Array.isArray(items)) return 0; 
-  return items.reduce((acc, item) => acc + (item?.amount || 0), 0);
-};
-
-export const CONTRACT_VERSION = '2025-01-A';
+/**
+ * Map de volledige FinanceState naar een array voor de kernel
+ */
+export const mapFinanceToUndoResults = (finance: FinanceState): UndoResult[] => [
+  ...finance.income.items.map(i => mapItemToUndoResult(i, 'income')),
+  ...finance.expenses.items.map(i => mapItemToUndoResult(i, 'expense')),
+];

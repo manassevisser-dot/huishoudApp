@@ -13,6 +13,8 @@ export function makeLayout(c: ColorScheme) {
     pageContainer: { flex: 1, paddingTop: Space.sm },
     scrollContent: { paddingBottom: 120, paddingHorizontal: Space.xl },
     inputContainer: { marginBottom: Space.md, width: '100%' },
+    content: { padding: Space.lg },
+    section: { marginTop: Space.xl },
   } as const;
 }
 

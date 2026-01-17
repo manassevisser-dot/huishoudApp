@@ -173,12 +173,23 @@ describe('TransactionService: Service Methods', () => {
   });
 
   it('moet alle transacties ophalen via de service (Regel 74)', async () => {
-    const mockState = { data: { transactions: [{ id: 1, amount: 100 }] } };
+    const mockState = {
+      data: {
+        finance: {
+          income: { items: [] },
+          expenses: {
+            items: [
+              { id: '1', description: 'Test', amountCents: 10000 } // €100,00
+            ],
+          },
+        },
+      },
+    };
     (StorageShim.loadState as jest.Mock).mockResolvedValue(mockState);
-
+  
     const txs = await TransactionService.getAllTransactions();
     expect(txs).toHaveLength(1);
-    expect(txs[0].id).toBe(1);
+    expect(txs[0].id).toBe('1');
   });
 
   it('moet een lege lijst geven als er geen state is', async () => {
@@ -216,3 +227,4 @@ describe('GM-009: Migration Output Snapshot', () => {
     expect(stableOutput).toMatchSnapshot();
   });
 });
+

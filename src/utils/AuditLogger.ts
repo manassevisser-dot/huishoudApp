@@ -1,4 +1,4 @@
-/* eslint-env node, browser */
+
 const isDev = true; 
 const isTest = false;
 

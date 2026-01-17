@@ -1,7 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
-import { FieldConfig, FormState, FormAction } from '@shared-types/form';
-import { InputCounter, DateField, ToggleSwitch, MoneyInput } from './index';
+import { FormState, FormAction } from '@shared-types/form';
+import { InputCounter, ToggleSwitch, } from './index';
+import {FieldConfig,} from "@shared-types/fields";
 
 interface FormFieldProps {
   field: FieldConfig;
@@ -10,7 +11,7 @@ interface FormFieldProps {
   value: any;
 }
 
-const FormField: React.FC<FormFieldProps> = ({ field, state, dispatch, value }) => {
+const FormField: React.FC<FormFieldProps> = ({ field, dispatch, value }) => {
   const targetSection = field.section ?? 'setup';
 
   const handleChange = (newValue: any) => {

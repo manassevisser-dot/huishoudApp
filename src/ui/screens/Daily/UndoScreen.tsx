@@ -1,70 +1,102 @@
-import React, { useState } from 'react';
-// Verander tijdelijk de import naar een relatief pad als de alias faalt
-// import { transactionService } from '../../services/transactionService'; 
-import {StatefulTransactionAdapter} from '@adapters/transaction/stateful'
-interface UndoScreenProps {
-  initialData: any; // Tijdelijke expliciete any om TS7031 te sussen
-}
-import { ZodError } from 'zod';
+// src/ui/screens/Daily/UndoScreen.tsx
+import React from 'react';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { useTransactionHistory } from '@app/hooks/useTransactionHistory';
+import { useAppStyles } from '@ui/styles/useAppStyles';
 
-export const UndoScreen: React.FC<UndoScreenProps> = ({ initialData }) => {
-  // ADR-03: Adapter bewaart de staat, UI projecteert alleen de 'currentView'
-  const [adapter] = useState(() => new StatefulTransactionAdapter(initialData));
-  const [currentView, setCurrentView] = useState(adapter.getCurrentState());
-  const [uiError, setUiError] = useState<string | null>(null);
+/**
+ * UndoScreen - Transaction Management UI
+ *
+ * @architecture
+ * - ADR-01 (SoC): Alleen presentatie logica, geen business rules
+ * - ADR-04 (Dumb UI): Pure projector component (State in → View uit)
+ */
+export const UndoScreen: React.FC = () => {
+  const { styles } = useAppStyles();
+  const {
+    transactions,
+    undo,
+    redo,
+    clearAll,
+    updateTransaction,
+    error,
+    _debugAdapterState,
+  } = useTransactionHistory();
 
-  const handleUpdate = (inputValue: number, parts: number) => {
-    setUiError(null);
-    try {
-      // ADR-05: Berekening wordt gedelegeerd, ZodError wordt gegooid bij floats
-      const distribution = adapter.calculateDistribution(inputValue, parts);
-      
-      const newState = { ...currentView, distribution, lastUpdated: new Date().toISOString() };
-      adapter.push(newState, 'USER_UPDATE');
-      
-      setCurrentView(adapter.getCurrentState());
-    } catch (error) {
-      if (error instanceof ZodError) {
-        setUiError("Input violation: Integers only (ADR-05)");
-      } else {
-        setUiError("An unexpected error occurred");
-      }
-    }
-  };
-
-  const handleUndo = () => {
-    const prevState = adapter.undo();
-    if (prevState) setCurrentView(prevState);
-  };
-
-  const handleRedo = () => {
-    const nextState = adapter.redo();
-    if (nextState) setCurrentView(nextState);
-  };
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
 
   return (
-    <div className="p-4">
-      <h1 className="text-xl font-bold">Transaction Undo/Redo</h1>
-      {uiError && <div className="text-red-500 mb-2">{uiError}</div>}
-      
-      <div className="mt-4 space-y-2">
-        <pre className="bg-gray-100 p-2 rounded">
-          {JSON.stringify(currentView, null, 2)}
-        </pre>
-        
-        <div className="flex space-x-2">
-          <button onClick={handleUndo} className="px-4 py-2 bg-blue-500 text-white rounded">Undo</button>
-          <button onClick={handleRedo} className="px-4 py-2 bg-blue-500 text-white rounded">Redo</button>
-        </div>
-
-        {/* Simulatie van invoer voor testdoeleinden */}
-        <button 
-          onClick={() => handleUpdate(100.5, 2)} 
-          className="block mt-4 text-xs text-gray-400"
-        >
-          Test Float Violation (100.5)
-        </button>
-      </div>
-    </div>
+    <ScrollView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Transaction Undo/Redo</Text>
+        {!!error && <Text style={styles.error}>{error}</Text>}
+        <View style={styles.section}>
+          <Text style={styles.subtitle}>
+            Laatste transacties: {safeTransactions.length}
+          </Text>
+          {safeTransactions.length === 0 ? (
+            <Text style={styles.emptyText}>Geen recente transacties</Text>
+          ) : (
+            <View style={styles.dashboardCard}> {/* Gebruik bestaande card als container */}
+              {safeTransactions.map((tx) => (
+                <View key={tx.id} style={{ paddingVertical: 8 }}>
+                  <Text style={styles.description}>{tx.description}</Text>
+                  <Text style={styles.details}>
+                    {tx.currency} {(tx.amount / 100).toFixed(2)} • {tx.date}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+            <TouchableOpacity
+              onPress={undo}
+              style={styles.button}
+              testID="undo-button"
+              disabled={!undo}
+            >
+              <Text style={styles.buttonText}>Undo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={redo}
+              style={styles.button}
+              testID="redo-button"
+              disabled={!redo}
+            >
+              <Text style={styles.buttonText}>Redo</Text>
+            </TouchableOpacity>
+            {safeTransactions.length > 0 && (
+              <TouchableOpacity
+                onPress={clearAll}
+                accessibilityRole="button"
+                accessibilityLabel="Verwijder Alles"
+                testID="delete-all-button"
+                style={[styles.button, styles.deleteButton]}
+                disabled={!clearAll}
+              >
+                <Text style={styles.buttonText}>Verwijder Alles</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          {/* Debug Section — alleen buiten tests */}
+          {process.env.NODE_ENV !== 'test' && _debugAdapterState && (
+            <View style={styles.dashboardCard}>
+              <Text style={styles.subtitle}>Debug Info</Text>
+              <Text style={styles.details}>
+                {JSON.stringify(_debugAdapterState, null, 2)}
+              </Text>
+              <TouchableOpacity
+                onPress={() => updateTransaction && updateTransaction(100.5, 2)}
+                style={{ marginTop: 12 }}
+                testID="float-test-button"
+                disabled={!updateTransaction}
+              >
+                <Text style={styles.navigationHint}>Test Float Violation (100.5)</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </View>
+    </ScrollView>
   );
 };

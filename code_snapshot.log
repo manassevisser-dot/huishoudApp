@@ -1,0 +1,318 @@
+import { createSelector } from 'reselect';
+import { FormState } from '@shared-types/form';
+import { computePhoenixSummary } from '@kernel/finance';
+
+// Veilige selector die nooit crasht
+const selectFinanceData = (state: FormState) => state?.data?.finance || { income: { items: [] }, expenses: { items: [] } };
+
+export const selectFinancialSummary = createSelector(
+  [selectFinanceData],
+  (finance) => {
+    // We roepen de kernel aan. De kernel is nu slim genoeg om het object te parsen.
+    return computePhoenixSummary(finance);
+  }
+);
+
+// Voeg de ontbrekende ViewModel selector toe waar DashboardScreen om vraagt
+export const selectFinancialSummaryVM = createSelector(
+  [selectFinancialSummary],
+  (summary) => ({
+    totalIncomeCents: summary.totalIncomeCents,
+    totalExpensesCents: summary.totalExpensesCents,
+    netCents: summary.netCents,
+    totals: {
+      totalIncomeEUR: `€ ${(summary.totalIncomeCents / 100).toFixed(2)}`,
+      totalExpensesEUR: `€ ${(summary.totalExpensesCents / 100).toFixed(2)}`,
+      netEUR: `€ ${(summary.netCents / 100).toFixed(2)}`
+    }
+  })
+);import { createSelector } from 'reselect';
+import { FormState } from '@shared-types/form';
+import { getHouseholdStatus } from '@logic/householdLogic';
+
+/**
+ * CONSTANTEN
+ */
+export const HOUSEHOLD_STATUS = {
+  SINGLE: 'SINGLE',
+  PARTNERS: 'PARTNERS',
+  SPECIAL: 'SPECIAL',
+} as const;
+
+/**
+ * BASE SELECTORS
+ */
+// Door 'as any[]' of een specifieke cast te gebruiken, voorkom je de mismatch 
+// tussen Record<string, unknown> en de verwachte Member-interface in de logica.
+const selectMembers = (state: FormState) => state.data.household.members;
+const selectSetupData = (state: FormState) => state.data.setup;
+
+/**
+ * LOGIC SELECTORS
+ */
+
+export const selectHouseholdStats = createSelector(
+  [selectSetupData],
+  (setupData) => {
+    // TypeScript weet nu dat setupData.aantalVolwassen bestaat
+    const adultCount = setupData.aantalVolwassen; 
+    return {
+      adultCount,
+      isSpecial: adultCount > 5,
+    };
+  }
+);
+
+export const selectIsSpecialStatus = createSelector(
+  [selectHouseholdStats],
+  (stats) => stats.isSpecial
+);
+
+export const selectHouseholdDataIntegrityStatus = createSelector(
+  [selectMembers],
+  (members) => {
+    // Forceer het type hier naar wat de logic-functie verwacht om TS2345 te fixen
+    return getHouseholdStatus(members as any);
+  }
+);
+
+/**
+ * UI STATUS SELECTOR
+ */
+export const selectHouseholdTypeLabel = createSelector(
+  [selectHouseholdStats],
+  (stats) => {
+    if (stats.isSpecial) return HOUSEHOLD_STATUS.SPECIAL;
+    if (stats.adultCount === 2) return HOUSEHOLD_STATUS.PARTNERS;
+    return HOUSEHOLD_STATUS.SINGLE;
+  }
+);import { Member } from '@domain/household';
+
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends (infer U)[]
+    ? DeepPartial<U>[]
+    : T[P] extends object
+    ? DeepPartial<T[P]>
+    : T[P];
+};
+
+export type DataSection = 'setup' | 'household' | 'finance';
+
+export interface FormState {
+  schemaVersion: string;
+  activeStep: string;
+  currentPageId: string;
+  isValid: boolean;
+  data: {
+    setup: {
+      aantalMensen: number;
+      aantalVolwassen: number;
+      autoCount: 'Nee' | 'Een' | 'Twee';
+      heeftHuisdieren?: boolean;
+      [key: string]: unknown;
+    };
+    household: { members: Member[] }; 
+    finance: {
+      income: { items: Array<Record<string, unknown>>; totalAmount?: number };
+      expenses: { items: Array<Record<string, unknown>>; totalAmount?: number };
+    };
+  };
+  meta: { lastModified: string; version: number };
+}
+export type ExpenseItem = {
+  fieldId: string;
+  [key: string]: any;
+};
+import type { FormState, DataSection } from './core';
+
+export type FieldType =
+  | 'counter' | 'text' | 'radio-chips' | 'toggle' | 'repeater'
+  | 'date' | 'select' | 'money' | 'section' | 'collapsible-section' | 'derived-label';
+
+export interface FieldConfig {
+  fieldId: string;
+  type: FieldType;
+  section?: DataSection;
+  labelToken?: string;
+  label?: string;
+  options?: Array<{ label: string; value: unknown }>;
+  fields?: FieldConfig[]; // Recursief (verwijst naar zichzelf, dat mag)
+  
+  min?: number;
+  max?: number;
+  required?: boolean;
+  
+  validation?: {
+    min?: number;
+    max?: number;
+    postcode?: boolean;
+    pattern?: string;
+    lengthEqualsTo?: string | number;
+  };
+
+  // Hier gebruiken we de Core types
+  visibleIf?: string | ((state: FormState) => boolean);
+  valueGetter?: (state: FormState) => unknown;
+  maxGetter?: (state: FormState) => number;
+  countGetter?: (state: FormState) => number;
+  filter?: (state: FormState) => unknown[];
+  dependentField?: FieldConfig;
+  defaultValue?: unknown;
+}
+import { z } from 'zod';
+
+export interface FinanceItem {
+    id: string;
+    amountCents: number; // integer
+    description?: string;
+  }
+  
+  export const CONTRACT_VERSION = '1.0.0';
+
+  export interface FinanceBucket {
+    items: FinanceItem[];
+    totalAmountCents?: number;
+  }
+  
+  export interface FinanceState {
+    income: FinanceBucket;
+    expenses: FinanceBucket;
+  }
+  
+  // src/shared-types/finance.ts
+export interface UndoResult {
+  id: string;
+  amount: number; // in cents
+  currency: 'EUR';
+  description?: string;
+  reason: string;
+  timestamp: string; // ISO
+  schemaVersion: string;
+}
+
+export const MoneySchema = z.object({
+  amount: z.number().int(),
+  currency: z.literal('EUR')
+});// src/shared-types/form.ts
+export * from './core';
+export * from './fields';
+export * from './wizard';
+export * from './finance';
+
+    
+export type IncomeFrequency = 'week' | '4wk' | 'month' | 'quarter' | 'year';
+
+export type UitkeringKey =
+  | 'DUO'
+  | 'Bijstand'
+  | 'WW'
+  | 'ZW'
+  | 'WAO'
+  | 'WGA'
+  | 'WIA'
+  | 'IVA'
+  | 'WAJONG'
+  | 'Pensioen'
+  | 'AOW'
+  | 'IOW'
+  | 'anders';
+
+export type UitkeringEntry = {
+  enabled: boolean;
+  amount?: number;
+  frequentie?: IncomeFrequency;
+  omschrijving?: string;
+};
+
+export type AndersEntry = {
+  fieldId: string;
+  label?: string;
+  amount?: number;
+  frequentie?: IncomeFrequency;
+};
+
+export type IncomeCategories = {
+  geen: boolean;
+  werk: boolean;
+  uitkering: boolean;
+  anders: boolean;
+};
+
+export type IncomeMember = {
+  fieldId: string;
+  categories: IncomeCategories;
+  nettoSalaris?: number;
+  frequentie?: IncomeFrequency;
+  toeslagen?: {
+    zorgtoeslag?: number;
+    overige?: number;
+    reiskosten?: number;
+  };
+  vakantiegeldPerJaar?: number;
+  vakantiegeldPerMaand?: number;
+  uitkeringen?: Partial<Record<UitkeringKey, UitkeringEntry>>;
+  anders?: AndersEntry[];
+};
+
+export type HouseholdBenefits = {
+  huurtoeslag?: number;
+  kindgebondenBudget?: number;
+  kinderopvangtoeslag?: number;
+  kinderbijslag?: number;
+};
+
+export type VermogenData = {
+  hasVermogen: boolean;
+  waarde?: number;
+};
+//====
+// ./src/types/transaction.ts
+
+export type PaymentMethod = 'pin' | 'contant' | 'creditcard';
+
+export type TransactionCategory =
+  | 'Boodschappen'
+  | 'Vervoer'
+  | 'Horeca'
+  | 'Winkelen'
+  | 'Cadeaus'
+  | 'Overig';
+
+export interface DailyTransaction {
+  id?: string;
+  date: string; // YYYY-MM-DD
+  amount: number;
+  category: TransactionCategory;
+  subcategory?: string;
+  paymentMethod: PaymentMethod;
+  weekNumber: number;
+  createdAt?: string;
+}
+
+export interface TransactionSummary {
+  totalVariableMonth: number;
+  totalVariableWeek: number;
+}
+//====
+import type { FormState, DataSection, DeepPartial } from './core';
+import { FieldConfig } from '@shared-types/form';
+
+
+export interface WizardPageConfig {
+  pageId: string;
+  titleToken?: string;
+  title?: string;
+  section?: DataSection;
+  componentName?: 'WizardPage' | 'SummaryPage' | 'CustomPage' | string;
+  fields: FieldConfig[];
+  onNext?: (state: FormState) => string;
+}
+
+export type FormAction =
+  | { type: 'SET_FIELD'; payload: { section: DataSection; field: string; value: any } }
+  | { type: 'UPDATE_DATA'; payload: DeepPartial<FormState['data']> }
+  | { type: 'SET_STEP'; payload: string }
+  | { type: 'SYNC_MEMBERS'; payload: Array<Record<string, unknown>> }
+  | { type: 'RESET_APP' }
+  | { type: 'NEXT_STEP' }
+  | { type: 'PREV_STEP' };

@@ -1,0 +1,70 @@
+ D 95%
+ D "\\$file"
+ M eslint.config.cjs
+ D jest.setup.js
+ M package-lock.json
+ M package.json
+ M src/adapters/transaction/stateful.ts
+ M src/domain/rules/evaluateDomainRules.ts
+ M src/kernel/finance/index.ts
+ M src/logic/__tests__/finance.test.ts
+ M src/logic/export.ts
+ M src/logic/finance.ts
+ M src/selectors/financialSelectors.ts
+ M src/services/__tests__/storage.migration.test.ts
+ M src/services/storageShim.ts
+ M src/services/transactionService.ts
+ M src/shared-types/form.ts
+ M src/shared-types/wizard.ts
+ M src/ui/components/FieldRenderer.tsx
+ M src/ui/components/fields/ChipButton.tsx
+ M src/ui/components/fields/FormField.tsx
+ M src/ui/components/fields/ToggleSwitch.tsx
+ M src/ui/screens/Daily/UndoScreen.tsx
+ M src/ui/screens/Daily/__tests__/UndoScreen.test.tsx
+ M src/ui/screens/Daily/__tests__/__snapshots__/UndoScreen.test.tsx.snap
+ M src/ui/screens/DailyInput/DailyInputScreen.tsx
+ M src/ui/screens/Dashboard/DashboardScreen.tsx
+ M src/ui/screens/Options/OptionsScreen.tsx
+ M src/ui/screens/Reset/ResetScreen.tsx
+ M src/ui/screens/Settings/SettingsScreen.tsx
+ M src/ui/screens/Wizard/WizardPage.tsx
+ M src/ui/screens/Wizard/pages/__tests__/wizardConfigs.test.ts
+ M src/ui/styles/__tests__/useAppStyles.test.ts
+ M src/ui/styles/modules/Cards.ts
+ T src/utils/audit/logger.ts
+ M tsconfig.json
+?? Q-Q.txt
+?? SVZ-0-Daily-Input-001.json
+?? SVZ-0-GSA-V8.0.0.md
+?? SVZ-0-MANUAL.md
+?? SVZ-0-PongV2.md
+?? SVZ-0-jest-001-GEN4.json
+?? SVZ-0-undo_screen-001-GEN4.json
+?? bitches.sh
+?? check.sh
+?? code_snapshot.log
+?? error_summary.log
+?? files_with_errors.log
+?? full_context.log
+?? gen2.sh
+?? generate-svz0.js
+?? generate-svz0.sh
+?? git_status.log
+?? gsa.user.js
+?? imported_dependencies.log
+?? jest-test.txt
+?? jest.setup.jsx
+?? lint.log
+?? npm_packages.log
+?? scraper.js
+?? scripts/gsa_harvester.user.js
+?? src/app/hooks/__tests__/useTransactionHistory.test.ts
+?? src/app/hooks/useTransactionHistory.ts
+?? src/shared-types/finance.ts
+?? src/utils/fieldVisibility.ts
+?? tests/
+?? tests_snapshot.log
+?? testscraper.js
+?? tsconfig.log
+?? typecheck.log

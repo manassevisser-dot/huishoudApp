@@ -1,30 +1,29 @@
-import { computePhoenixSummary } from '@logic/finance';
-import { formatCurrency } from '@utils/numbers'; 
+import { createSelector } from 'reselect';
 import { FormState } from '@shared-types/form';
-import Logger from '@services/logger';
+import { computePhoenixSummary } from '@kernel/finance';
+import { formatCurrency } from '@utils/index'; // of correct pad naar jouw helper
 
-export function selectFinancialSummaryVM(state: FormState) {
-  // 1. Directe en type-safe extractie
-  // Omdat FormState nu 'finance' als vaste key heeft, snapt TS dit direct.
-  const financeData = state.data.finance;
-  
-  // 2. De rekenkern (Logic laag)
-  const summary = computePhoenixSummary(financeData);
-  
-  Logger.info?.('Financial VM generated');
+// Veilige selector die nooit crasht
+const selectFinanceData = (state: FormState) => state?.data?.finance || { income: { items: [] }, expenses: { items: [] } };
 
-  // 3. De ViewModel (VM) 
-  return {
-    // Ruwe data (integers/centen volgens ADR-03)
+export const selectFinancialSummary = createSelector(
+  [selectFinanceData],
+  (finance) => {
+    // We roepen de kernel aan. De kernel is nu slim genoeg om het object te parsen.
+    return computePhoenixSummary(finance);
+  }
+);
+
+export const selectFinancialSummaryVM = createSelector(
+  [selectFinancialSummary],
+  (summary) => ({
     totalIncomeCents: summary.totalIncomeCents,
     totalExpensesCents: summary.totalExpensesCents,
     netCents: summary.netCents,
-    
-    // Geformatteerde strings voor de UI
     totals: {
       totalIncomeEUR: formatCurrency(summary.totalIncomeCents),
       totalExpensesEUR: formatCurrency(summary.totalExpensesCents),
       netEUR: formatCurrency(summary.netCents),
-    },
-  };
-}
+    }
+  })
+);

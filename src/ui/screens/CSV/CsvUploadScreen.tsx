@@ -59,7 +59,7 @@ const CsvUploadScreen: React.FC<Props> = ({ onClose, members, setupData }) => {
       if (income.isDiscrepancy) {
         message +=
           `⚠️ We zien een afwijkend inkomen tussen CSV en Setup.\n` +
-          `Verschil: €${(income.diff / 100).toFixed(2)}\n\n`;
+          `Verschil: formatCurrency(x)\n\n`;
       }
 
       if (hasMissingCosts) {

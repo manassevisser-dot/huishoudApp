@@ -12,7 +12,7 @@ interface WizardPageProps {
   isLast: boolean;
 }
 
-export const WizardPage: React.FC<WizardPageProps> = ({ config, onNext, onBack, isFirst, isLast }) => {
+export const WizardPage: React.FC<WizardPageProps> = ({ config }) => {
   const { state, dispatch } = useForm();
 
   return (

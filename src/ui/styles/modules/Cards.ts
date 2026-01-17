@@ -1,7 +1,7 @@
 // src/styles/modules/Cards.ts
 // CU-008.4: Data Visualisatie (Cards) — gebruikt surface, border, Shadows; geen hardcoded hex
 import { Platform } from 'react-native';
-import { Space, Radius, Tokens } from '@styles/Tokens';
+import { Space, Radius } from '@styles/Tokens';
 import type { ColorScheme } from '@styles/Colors';
 
 /**

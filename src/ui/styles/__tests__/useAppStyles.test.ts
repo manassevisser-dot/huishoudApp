@@ -1,6 +1,6 @@
 
 import { getAppStyles } from '../useAppStyles';
-import { Colors } from '../Colors';
+
 
 jest.mock('react-native', () => ({
   StyleSheet: { create: (obj: any) => obj },

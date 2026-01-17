@@ -13,7 +13,10 @@ const config: Config = {
   ],
 
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-
+  testEnvironment: 'jsdom',
+  testEnvironmentOptions: {
+    customExportConditions: ['react-native'],
+  },
   // 2. Module Mapping (Aliassen voor schone imports)
   moduleNameMapper: {
   // @alias-start

@@ -10,9 +10,9 @@ type Props = {
   onHerstel: () => void;
 };
 
-const ResetScreen: React.FC<Props> = ({ onClose, onWissen, onHerstel }) => {
+const ResetScreen: React.FC<Props> = ({ onWissen, onHerstel }) => {
   const insets = useSafeAreaInsets();
-  const { styles, colors } = useAppStyles();
+  const { styles } = useAppStyles();
 
   const handleWissen = () => {
     Alert.alert(

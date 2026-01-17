@@ -1,0 +1,354 @@
+./phoenix.sh all
+ℹ️  🔍 Trinity Analyse...
+ℹ️  🧪 Test Suite draaien...
+
+> test
+> jest --watchAll=false --coverage --json --outputFile=coverage/report.json --silent
+
+ PASS  src/services/__tests__/idempotency.test.ts (6.38 s)
+ PASS  src/services/__tests__/migration.members.test.ts
+ PASS  src/services/__tests__/privacyHelpers.test.ts
+ PASS  src/utils/__tests__/date.test.ts
+ PASS  src/ui/screens/Wizard/pages/__tests__/wizardConfigs.test.ts
+ PASS  src/utils/__tests__/frequency.test.ts
+ PASS  src/utils/__tests__/numbers.test.ts
+ FAIL  src/ui/screens/Daily/__tests__/UndoScreen.test.tsx (7.253 s)
+  ● UndoScreen Integratie Tests › moet transacties laden en de omschrijvingen tonen (met snapshot)
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "Tanken"
+    Received string:    "{\"type\":\"div\",\"props\":{\"className\":\"p-4\"},\"children\":[{\"type\":\"h1\",\
+"props\":{\"className\":\"text-xl font-bold\"},\"children\":[\"Transaction Undo/Redo\"]},{\"type\":\"div\",\"props\":{\"className\":\"mt-4 space-y-2\"},\"children\":[{\"type\":\"pre\",\"props\":{\"className\":\"bg-gray-100 p-2 rounded\"},\"children\":[\"{\\n  \\\"id\\\": \\\"test-123\\\",\\n  \\\"amount\\\": 1500,\\n  \\\"currency\\\": \\\"EUR\\\",\\n  \\\"description\\\": \\\"Boodschappen\\\",\\n  \\\"date\\\": \\\"2026-01-05\\\"\\n}\"]},{\"type\":\"div\",\"props\":{\"className\":\"flex space-x-2\"},\"children\":[{\"type\":\"button\",\"props\":{\"className\":\"px-4 py-2 bg-blue-500 text-white rounded\"},\"children\":[\"Undo\"]},{\"type\":\"button\",\"props\":{\"className\":\"px-4 py-2 bg-blue-500 text-white rounded\"},\"children\":[\"Redo\"]}]},{\"type\":\"button\",\"props\":{\"className\":\"block mt-4 text-xs text-gray-400\"},\"children\":[\"Test Float Violation (100.5)\"]}]}]}"                                                                                        
+      19 |   options?: { timeout?: number }
+      20 | ): Promise<void> {
+    > 21 |   await waitFor(() => {
+         |                ^
+      22 |     const allTexts = screen.toJSON();
+      23 |     const stringified = JSON.stringify(allTexts);
+      24 |     expect(stringified).toContain(searchText);
+
+      at src/ui/screens/Daily/__tests__/UndoScreen.test.tsx:21:16
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at apply (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+      at waitForTextContaining (src/ui/screens/Daily/__tests__/UndoScreen.test.tsx:17:37)
+      at Object.<anonymous> (src/ui/screens/Daily/__tests__/UndoScreen.test.tsx:57:11)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● UndoScreen Integratie Tests › moet omgaan met undefined data van de service
+
+    Unable to find an element with text: /Laatste transacties:\s*0/i
+
+    <div>
+      <h1>
+        Transaction Undo/Redo
+      </h1>
+      <div>
+        <pre>
+          {
+      "id": "test-123",
+      "amount": 1500,
+      "currency": "EUR",
+      "description": "Boodschappen",
+      "date": "2026-01-05"
+    }
+        </pre>
+        <div>
+          <button>
+            Undo
+          </button>
+          <button>
+            Redo
+          </button>
+        </div>
+        <button>
+          Test Float Violation (100.5)
+        </button>
+      </div>
+    </div>
+
+      68 |   
+      69 |     // Gebruik de regex fix voor flexibele witruimte
+    > 70 |     const counter = await screen.findByText(/Laatste transacties:\s*0/i);
+         |                                  ^
+      71 |     expect(counter).toBeTruthy();
+      72 |     expect(screen.getByText(/Geen recente transacties/i)).toBeTruthy();
+      73 |   });
+
+      at Object.<anonymous> (src/ui/screens/Daily/__tests__/UndoScreen.test.tsx:70:34)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ● UndoScreen Integratie Tests › moet alle transacties verwijderen als op de knop wordt gedrukt
+
+    Unable to find an element with text: /Boodschappen/i
+
+    <div>
+      <h1>
+        Transaction Undo/Redo
+      </h1>
+      <div>
+        <pre>
+          {
+      "id": "test-123",
+      "amount": 1500,
+      "currency": "EUR",
+      "description": "Boodschappen",
+      "date": "2026-01-05"
+    }
+        </pre>
+        <div>
+          <button>
+            Undo
+          </button>
+          <button>
+            Redo
+          </button>
+        </div>
+        <button>
+          Test Float Violation (100.5)
+        </button>
+      </div>
+    </div>
+
+      82 |
+      83 |     // Wacht tot de initiele data is geladen
+    > 84 |     await screen.findByText(/Boodschappen/i);
+         |                  ^
+      85 |
+      86 |     // Actie: Verwijderen. fireEvent triggert intern de nodige act() calls.
+      87 |     fireEvent.press(screen.getByRole('button', { name: /Verwijder Alles/i }));
+
+      at Object.<anonymous> (src/ui/screens/Daily/__tests__/UndoScreen.test.tsx:84:18)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+ PASS  src/app/hooks/__tests__/useAppOrchestration.test.tsx
+ PASS  src/selectors/__tests__/householdSelectors.test.ts
+ PASS  src/services/__tests__/csvService.test.tsx
+ PASS  src/logic/__tests__/export.test.ts
+ PASS  src/app/context/__test__/formReducer.test.ts
+ PASS  src/services/__tests__/csvService.integration.test.ts
+ PASS  src/__tests__/WAI009_FocusManagement.test.tsx (6.909 s)
+ PASS  src/services/__tests__/migrationService.test.ts
+ PASS  src/utils/__tests__/validation.test.ts
+ PASS  src/services/__tests__/householdAlign.test.ts
+ PASS  src/utils/__tests__/conditions.test.ts
+ PASS  src/__tests__/ScreenSanity.test.tsx
+ PASS  src/services/__tests__/storage.test.ts
+ PASS  src/ui/screens/Wizard/__tests__/WizardController.test.tsx
+ PASS  src/services/__tests__/storageShim.test.ts
+ PASS  src/__tests__/LandingScreen_Isolation.test.tsx
+ PASS  src/domain/__tests__/household.test.ts
+ PASS  src/services/__tests__/dataOrchestrator.test.tsx
+ PASS  src/services/__tests__/storage.migration.test.ts
+ FAIL  src/selectors/__tests__/financialFlow.test.ts
+  ● FinancialFlow Selectors › haalt de juiste totalen op in EUR formaat
+
+    expect(received).toMatch(expected)
+
+    Expected pattern: /€\s?2\.000,00/
+    Received string:  "€ 0,00"
+
+      17 |     // FIX: Match de structuur van selectFinancialSummaryVM
+      18 |     // We gaan ervan uit dat toCents(200000) -> 2000 wordt
+    > 19 |     expect(summary.totals.totalIncomeEUR).toMatch(/€\s?2\.000,00/);
+         |                                           ^
+      20 |     expect(summary.totals.totalExpensesEUR).toMatch(/€\s?500,00/);
+      21 |     expect(summary.totals.netEUR).toMatch(/€\s?1\.500,00/);
+      22 |   });
+
+      at Object.<anonymous> (src/selectors/__tests__/financialFlow.test.ts:19:43)
+
+ PASS  src/__tests__/App.projector.test.tsx
+ PASS  src/state/schemas/__tests__/schemas.test.ts
+ PASS  src/services/__tests__/migration.fixture.test.ts
+ PASS  src/logic/__tests__/finance.test.ts
+ › 1 snapshot obsolete.
+   • GM-007: Phoenix Finance Snapshot moet een consistent financieel overzicht genereren (Integriteit Contrac
+t) 1                                                                                                          PASS  src/domain/__tests__/evaluateDomainRules.test.ts
+ PASS  src/ui/styles/__tests__/useAppStyles.test.ts
+ PASS  src/ui/components/__tests__/InputCounter.test.tsx
+ PASS  src/__tests__/CoreSanity.test.tsx
+ PASS  src/utils/__tests__/ping.test.ts
+
+=============================== Coverage summary ===============================
+Statements   : 76.22% ( 776/1018 )
+Branches     : 70.42% ( 574/815 )
+Functions    : 72.98% ( 181/248 )
+Lines        : 77.15% ( 716/928 )
+================================================================================
+
+Summary of all failing tests
+ FAIL  src/ui/screens/Daily/__tests__/UndoScreen.test.tsx (7.253 s)
+  ● UndoScreen Integratie Tests › moet transacties laden en de omschrijvingen tonen (met snapshot)
+
+    expect(received).toContain(expected) // indexOf
+
+    Expected substring: "Tanken"
+    Received string:    "{\"type\":\"div\",\"props\":{\"className\":\"p-4\"},\"children\":[{\"type\":\"h1\",\
+"props\":{\"className\":\"text-xl font-bold\"},\"children\":[\"Transaction Undo/Redo\"]},{\"type\":\"div\",\"props\":{\"className\":\"mt-4 space-y-2\"},\"children\":[{\"type\":\"pre\",\"props\":{\"className\":\"bg-gray-100 p-2 rounded\"},\"children\":[\"{\\n  \\\"id\\\": \\\"test-123\\\",\\n  \\\"amount\\\": 1500,\\n  \\\"currency\\\": \\\"EUR\\\",\\n  \\\"description\\\": \\\"Boodschappen\\\",\\n  \\\"date\\\": \\\"2026-01-05\\\"\\n}\"]},{\"type\":\"div\",\"props\":{\"className\":\"flex space-x-2\"},\"children\":[{\"type\":\"button\",\"props\":{\"className\":\"px-4 py-2 bg-blue-500 text-white rounded\"},\"children\":[\"Undo\"]},{\"type\":\"button\",\"props\":{\"className\":\"px-4 py-2 bg-blue-500 text-white rounded\"},\"children\":[\"Redo\"]}]},{\"type\":\"button\",\"props\":{\"className\":\"block mt-4 text-xs text-gray-400\"},\"children\":[\"Test Float Violation (100.5)\"]}]}]}"                                                                                        
+      19 |   options?: { timeout?: number }
+      20 | ): Promise<void> {
+    > 21 |   await waitFor(() => {
+         |                ^
+      22 |     const allTexts = screen.toJSON();
+      23 |     const stringified = JSON.stringify(allTexts);
+      24 |     expect(stringified).toContain(searchText);
+
+      at src/ui/screens/Daily/__tests__/UndoScreen.test.tsx:21:16
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at apply (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+      at waitForTextContaining (src/ui/screens/Daily/__tests__/UndoScreen.test.tsx:17:37)
+      at Object.<anonymous> (src/ui/screens/Daily/__tests__/UndoScreen.test.tsx:57:11)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+
+  ● UndoScreen Integratie Tests › moet omgaan met undefined data van de service
+
+    Unable to find an element with text: /Laatste transacties:\s*0/i
+
+    <div>
+      <h1>
+        Transaction Undo/Redo
+      </h1>
+      <div>
+        <pre>
+          {
+      "id": "test-123",
+      "amount": 1500,
+      "currency": "EUR",
+      "description": "Boodschappen",
+      "date": "2026-01-05"
+    }
+        </pre>
+        <div>
+          <button>
+            Undo
+          </button>
+          <button>
+            Redo
+          </button>
+        </div>
+        <button>
+          Test Float Violation (100.5)
+        </button>
+      </div>
+    </div>
+
+      68 |   
+      69 |     // Gebruik de regex fix voor flexibele witruimte
+    > 70 |     const counter = await screen.findByText(/Laatste transacties:\s*0/i);
+         |                                  ^
+      71 |     expect(counter).toBeTruthy();
+      72 |     expect(screen.getByText(/Geen recente transacties/i)).toBeTruthy();
+      73 |   });
+
+      at Object.<anonymous> (src/ui/screens/Daily/__tests__/UndoScreen.test.tsx:70:34)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ● UndoScreen Integratie Tests › moet alle transacties verwijderen als op de knop wordt gedrukt
+
+    Unable to find an element with text: /Boodschappen/i
+
+    <div>
+      <h1>
+        Transaction Undo/Redo
+      </h1>
+      <div>
+        <pre>
+          {
+      "id": "test-123",
+      "amount": 1500,
+      "currency": "EUR",
+      "description": "Boodschappen",
+      "date": "2026-01-05"
+    }
+        </pre>
+        <div>
+          <button>
+            Undo
+          </button>
+          <button>
+            Redo
+          </button>
+        </div>
+        <button>
+          Test Float Violation (100.5)
+        </button>
+      </div>
+    </div>
+
+      82 |
+      83 |     // Wacht tot de initiele data is geladen
+    > 84 |     await screen.findByText(/Boodschappen/i);
+         |                  ^
+      85 |
+      86 |     // Actie: Verwijderen. fireEvent triggert intern de nodige act() calls.
+      87 |     fireEvent.press(screen.getByRole('button', { name: /Verwijder Alles/i }));
+
+      at Object.<anonymous> (src/ui/screens/Daily/__tests__/UndoScreen.test.tsx:84:18)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+ FAIL  src/selectors/__tests__/financialFlow.test.ts
+  ● FinancialFlow Selectors › haalt de juiste totalen op in EUR formaat
+
+    expect(received).toMatch(expected)
+
+    Expected pattern: /€\s?2\.000,00/
+    Received string:  "€ 0,00"
+
+      17 |     // FIX: Match de structuur van selectFinancialSummaryVM
+      18 |     // We gaan ervan uit dat toCents(200000) -> 2000 wordt
+    > 19 |     expect(summary.totals.totalIncomeEUR).toMatch(/€\s?2\.000,00/);
+         |                                           ^
+      20 |     expect(summary.totals.totalExpensesEUR).toMatch(/€\s?500,00/);
+      21 |     expect(summary.totals.netEUR).toMatch(/€\s?1\.500,00/);
+      22 |   });
+
+      at Object.<anonymous> (src/selectors/__tests__/financialFlow.test.ts:19:43)
+
+
+Snapshot Summary
+ › 1 snapshot obsolete from 1 test suite. To remove it, run `npm test -- -u`.
+   ↳ src/logic/__tests__/finance.test.ts
+       • GM-007: Phoenix Finance Snapshot moet een consistent financieel overzicht genereren (Integriteit Con
+tract) 1                                                                                                     
+Test Suites: 2 failed, 35 passed, 37 total
+Tests:       4 failed, 211 passed, 215 total
+Snapshots:   1 obsolete, 4 passed, 4 total
+Time:        54.376 s
+Test results written to: coverage/report.json
+
+Quick fixes:
+  • npm test -- --verbose    (zie details)
+  • npm test -- --watch      (iteratief fixen)
+  • ./phoenix health         (check systeem)
+⚠️  Tests gefaald - scores mogelijk onbetrouwbaar
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   📊 PHOENIX TRINITY SCORES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   🏛️  Audit:     85%
+   🧪  Coverage:  70%
+   🛡️  Stability: 50%
+   ⏰  Time:      22:57:11
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️  ⚠️  SOFT GATE: Coverage 70% (target: 80%+)
+⚠️  ⚠️  SOFT GATE: Stability 50% (target: 80%+)
+✅ 👑 MASTER GRADE: B

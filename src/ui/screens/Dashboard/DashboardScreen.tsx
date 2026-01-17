@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 import { View, ScrollView, RefreshControl, Text } from 'react-native';
 import { useAppStyles } from '@styles/useAppStyles';
 import { useForm } from '@app/context/FormContext';

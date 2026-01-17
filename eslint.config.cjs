@@ -1,12 +1,13 @@
-const js = require('@eslint/js');
+// eslint.config.cjs
 const tsParser = require('@typescript-eslint/parser');
 const tsPlugin = require('@typescript-eslint/eslint-plugin');
-const react = require('eslint-plugin-react');
-const prettier = require('eslint-config-prettier');
-const globals = require('globals'); // Meestal standaard aanwezig in v9 omgevingen
+const reactPlugin = require('eslint-plugin-react');
+const regexPlugin = require('eslint-plugin-regex');
+const prettierConfig = require('eslint-config-prettier');
+const globals = require('globals');
 
 module.exports = [
-  // 1) Globale ignores
+  // 1️⃣ Globale ignores
   {
     ignores: [
       'node_modules/',
@@ -18,41 +19,58 @@ module.exports = [
     ],
   },
 
-  // 2) Baseline JS rules
-  js.configs.recommended,
-
-  // 3) TypeScript + React + Testing
+  // 2️⃣ Algemene JS/TS-regels
   {
-    files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.cjs'],
+    files: ['src/**/*.{ts,tsx,js,jsx}'],
     languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        ...globals.jest,
+        ...globals.browser,
+        __DEV__: 'readonly',
+      },
       parser: tsParser,
       parserOptions: {
+        project: './tsconfig.json',
         ecmaVersion: 'latest',
         sourceType: 'module',
-      },
-      // ✅ In v9 Flat Config vervangt dit de 'env' sectie
-      globals: {
-        ...globals.node,    // Herkent 'module', 'require', 'process'
-        ...globals.jest,    // Herkent 'describe', 'it', 'expect', 'jest'
-        ...globals.browser, // Herkent 'window', 'document'
-        __DEV__: true,      // Specifiek voor React Native
       },
     },
     plugins: {
       '@typescript-eslint': tsPlugin,
-      react,
+      react: reactPlugin,
+      regex: regexPlugin,
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
     },
     rules: {
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      'react/prop-types': 'off',
-      'no-unused-vars': 'off', // Uitgezet ten gunste van TS versie
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      'react/prop-types': 'off',
+      'no-unused-vars': 'off',
+
+      // 🔹 Verbied handmatige euro-formatting
+      'regex/invalid': [
+        'error',
+        [
+          {
+            regex: '€\\s*\\$\\{[^}]*toFixed\\(2\\)[^}]*\\}',
+            message:
+              '❌ Handmatige euro-formattering verboden. Gebruik formatCurrency(amountCents).',
+          },
+        ],
+      ],
     },
   },
 
-  // 4) Prettier integratie
-  prettier,
+  // 3️⃣ Prettier als laatste
+  prettierConfig,
 ];

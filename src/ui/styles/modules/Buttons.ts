@@ -89,8 +89,10 @@ export function makeButtons(c: ColorScheme) {
       alignItems: 'center',
       marginRight: Space.md,
     },
+    deleteButton: {
+      backgroundColor: c.error,
     secondaryText: { color: c.onSecondary, fontSize: Type.lg, fontWeight: '600' },
-
+    },
     // buttonGroup (chips/segmented variant kan elders)
     buttonGroup: { flexDirection: 'row', marginTop: Space.sm },
     buttonActive: { backgroundColor: c.primary },
