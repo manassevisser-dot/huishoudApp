@@ -1,8 +1,8 @@
+import { formatDate } from '@ui/helpers/dateFormatting';
 import * as React from 'react';
 import { Platform, View, Text, Pressable } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useAppStyles } from '@ui/styles/useAppStyles';
-import { formatDate } from '@utils/date';
 
 type Props = {
   label: string;

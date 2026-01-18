@@ -1,0 +1,664 @@
+tree src \  -a \  -I "node_modules|__tests__|__mocks__|dist|build|coverage" \  --dirsfirst
+src
+├── adapters
+│   ├── audit
+│   │   └── AuditLoggerAdapter.ts
+│   ├── csv
+│   │   └── csvService.ts
+│   ├── storage
+│   │   └── storage.ts
+│   ├── transaction
+│   │   └── stateful.ts
+│   └── undo
+│       ├── .reconstruct_placeholder
+│       └── stateful.ts
+├── app
+│   ├── context
+│   │   ├── __test__
+│   │   │   └── formReducer.test.ts
+│   │   ├── FormContext.tsx
+│   │   ├── formReducer.ts
+│   │   ├── ThemeContext.tsx
+│   │   └── WizardContext.tsx
+│   ├── hooks
+│   │   ├── useAppOrchestration.ts
+│   │   └── useTransactionHistory.ts
+│   └── orchestrators
+│       ├── export.ts
+│       ├── .reconstruct_placeholder
+│       └── transactionOrchestrator.ts
+├── config
+│   ├── features.ts
+│   └── WizStrings.ts
+├── containers
+│   └── AdultsCounter.tsx
+├── core
+│   ├── logic
+│   ├── state
+│   │   └── slices
+│   └── types
+│       ├── core.ts
+│       ├── expenses.ts
+│       ├── extendedFormState.ts
+│       ├── fields.ts
+│       ├── finance.ts
+│       ├── form.ts
+│       ├── income.ts
+│       ├── transaction.ts
+│       └── wizard.ts
+├── domain
+│   ├── constants
+│   │   ├── datakeys.ts
+│   │   ├── labels.ts
+│   │   └── registry.ts
+│   ├── helpers
+│   │   ├── frequency.ts
+│   │   └── numbers.ts
+│   ├── rules
+│   │   ├── evaluateDomainRules.ts
+│   │   ├── financeRules.ts
+│   │   └── householdRules.ts
+│   ├── types
+│   ├── validation
+│   │   ├── fieldValidator.ts
+│   │   └── runtimeParser.ts
+│   ├── household.ts
+│   └── types.ts
+├── kernel
+│   └── finance
+│       ├── index.ts
+│       ├── mappers.ts
+│       └── .reconstruct_placeholder
+├── navigation
+│   └── Navigator.tsx
+├── services
+│   ├── dataOrchestrator.ts
+│   ├── dataProcessor.ts
+│   ├── householdAlign.ts
+│   ├── migrationService.ts
+│   ├── privacyHelpers.ts
+│   ├── storageShim.ts
+│   └── transactionService.ts
+├── shared
+│   ├── components
+│   │   └── ui
+│   ├── types
+│   └── utils
+├── shared-types
+├── state
+│   └── schemas
+│       └── FormStateSchema.ts
+├── test-utils
+│   ├── assertions
+│   │   └── migrationAssertions.ts
+│   ├── factories
+│   │   ├── csvFactory.ts
+│   │   ├── memberFactory.ts
+│   │   └── stateFactory.ts
+│   ├── perf
+│   │   └── measure.ts
+│   ├── render
+│   │   ├── providers.tsx
+│   │   └── renderers.tsx
+│   ├── utils
+│   │   └── name.ts
+│   ├── index.ts
+│   └── jest.setup.tsx
+├── ui
+│   ├── components
+│   │   ├── fields
+│   │   │   ├── ChipButton.tsx
+│   │   │   ├── ConditionalField.tsx
+│   │   │   ├── DateField.tsx
+│   │   │   ├── FormField.tsx
+│   │   │   ├── index.ts
+│   │   │   ├── InputCounter.tsx
+│   │   │   ├── MoneyField.tsx
+│   │   │   ├── MoneyInput.tsx
+│   │   │   └── ToggleSwitch.tsx
+│   │   ├── FieldRenderer.tsx
+│   │   └── FinancialSummary.tsx
+│   ├── navigation
+│   │   └── MainNavigator.tsx
+│   ├── screens
+│   │   ├── CSV
+│   │   │   └── CsvUploadScreen.tsx
+│   │   ├── Daily
+│   │   │   └── UndoScreen.tsx
+│   │   ├── DailyInput
+│   │   │   └── DailyInputScreen.tsx
+│   │   ├── Dashboard
+│   │   │   └── DashboardScreen.tsx
+│   │   ├── Options
+│   │   │   └── OptionsScreen.tsx
+│   │   ├── Reset
+│   │   │   └── ResetScreen.tsx
+│   │   ├── Settings
+│   │   │   └── SettingsScreen.tsx
+│   │   └── Wizard
+│   │       ├── pages
+│   │       │   ├── 1setupHousehold.config.ts
+│   │       │   ├── 2detailsHousehold.config.ts
+│   │       │   ├── 3incomeDetails.config.ts
+│   │       │   └── 4fixedExpenses.config.ts
+│   │       ├── CriticalErrorScreen.tsx
+│   │       ├── LandingScreen.tsx
+│   │       ├── SplashScreen.tsx
+│   │       ├── WelcomeWizard.tsx
+│   │       ├── WizardController.tsx
+│   │       └── WizardPage.tsx
+│   ├── selectors
+│   │   ├── financialSelectors.ts
+│   │   └── householdSelectors.ts
+│   └── styles
+│       ├── modules
+│       │   ├── Alerts.ts
+│       │   ├── Buttons.ts
+│       │   ├── Cards.ts
+│       │   ├── Checkboxes.ts
+│       │   ├── Chips.ts
+│       │   ├── Dashboard.ts
+│       │   ├── Forms.ts
+│       │   ├── Header.ts
+│       │   ├── Helpers.ts
+│       │   ├── index.ts
+│       │   ├── Layout.ts
+│       │   ├── Summary.ts
+│       │   ├── Toggles.ts
+│       │   └── Typography.ts
+│       ├── Colors.ts
+│       ├── Tokens.ts
+│       └── useAppStyles.ts
+├── utils
+│   ├── audit
+│   ├── conditions.ts
+│   ├── csvHelper.ts
+│   ├── date.ts
+│   ├── fieldVisibility.ts
+│   ├── index.ts
+│   ├── objects.ts
+│   ├── ping.ts
+│   └── strings.ts
+└── App.tsx
+
+62 directories, 119 files
+====
+GEWENST:
+
+src/
+├── domain/
+│   ├── validation/
+│   │   ├── fieldValidator.ts                  # (bestond al als migratie van utils/validation.ts)
+│   │   └── schemas/
+│   │       └── FormStateSchema.ts             # ← src/state/schemas/FormStateSchema.ts
+│   ├── types/
+│   │   ├── core.ts                            # ✅ migreert
+│   │   ├── form.ts                            # ✅ migreert
+│   │   ├── fields.ts                          # ✅ migreert
+│   │   ├── finance.ts                         # ✅ migreert
+│   │   ├── extendedFormState.ts               # ✅ migreert
+│   │   ├── expenses.ts                        # ❌ nu opgenomen
+│   │   ├── income.ts                          # ❌ nu opgenomen
+│   │   ├── transaction.ts                     # ❌ nu opgenomen
+│   │   └── wizard.ts                          # ❌ nu opgenomen
+│   └── helpers/
+│       ├── fieldVisibility.ts                 # ← utils/fieldVisibility.ts
+│       ├── frequency.ts                       # ← utils/frequency.ts
+│       ├── numbers.ts                         # ← utils/numbers.ts
+│       ├── objects.ts                         # ← utils/objects.ts
+│       ├── strings.ts                         # ← utils/strings.ts
+│       └── date.ts                            # ← utils/date.ts
+│
+├── application/                                # (nieuw) use-cases & orchestration
+│   ├── orchestrators/
+│   │   └── dataOrchestrator.ts                # ← services/dataOrchestrator.ts (ongewijzigde API)
+│   ├── processors/
+│   │   └── dataProcessor.ts                   # ← services/dataProcessor.ts
+│   ├── household/
+│   │   └── householdAlign.ts                  # ← services/householdAlign.ts
+│   ├── transactions/
+│   │   └── transactionService.ts              # ← services/transactionService.ts
+│   ├── privacy/
+│   │   └── privacyHelpers.ts                  # ← services/privacyHelpers.ts
+│   ├── migration/
+│   │   └── migrationService.ts                # ← services/migrationService.ts
+│   └── legacy/                                # compat-laag (optioneel, voor gefaseerde afbouw)
+│       └── selectors/
+│           ├── financialSelectors.ts          # ← selectors/financialSelectors.ts
+│           └── householdSelectors.ts          # ← selectors/householdSelectors.ts
+│
+├── infrastructure/
+│   ├── adapters/
+│   │   ├── csv/
+│   │   │   └── csvService.ts                  # ✅ eerder verplaatst
+│   │   ├── storage/
+│   │   │   ├── storage.ts                     # ✅ eerder verplaatst
+│   │   │   └── storageShim.ts                 # ← services/storageShim.ts (nu infra/shims)
+│   │   └── audit/
+│   │       ├── AuditLogger.ts                 # ← utils/AuditLogger.ts
+│   ├── logging/
+│   │   └── logger.ts                          # ← services/logger.ts
+│   ├── telemetry/
+│   │   └── ping.ts                            # ← utils/ping.ts
+│   └── shims/
+│       └── storageShim.ts                     # alias naar adapters/storage/storageShim.ts (1 plek)
+│
+├── ui/
+│   ├── components/
+│   │   └── Containers/
+│   │       └── AdultsCounter.tsx              # ← containers/AdultsCounter.tsx
+│   ├── navigation/
+│   │   └── Navigator.tsx                      # ← src/navigation/Navigator.tsx (geünificeerd pad)
+│   └── screens/                               # (plaatsbaken; geen verplaatsing nodig nu)
+│
+├── kernel/                                    # blijft, expliciet geborgd
+│   └── finance/
+│       ├── index.ts
+│       └── mappers.ts
+│
+├── shared/                                    # test utilities + gedeelde test data
+│   └── test-utils/                            # ← src/test-utils/ (indien aanwezig)
+│
+├── __tests__/                                  # test-infra blijft, expliciet geborgd
+│
+└── __mocks__/                                  # mocks vanuit services/__mocks__ hierheen verplaatst
+``
+
+=====
+tree src \  -a \  -I "node_modules|dist|build" \  | grep -E "(utils|helpers|common|shared|legacy|old|temp|misc|services)"
+│       ├── .reconstruct_placeholder
+│           └── .placeholder
+│       ├── .reconstruct_placeholder
+│       │   └── .placeholder
+│   ├── helpers
+│   ├── household.ts
+│   │   ├── householdRules.ts
+│   │   └── household.test.ts
+│       ├── .reconstruct_placeholder
+│           └── .placeholder
+├── services
+│   ├── householdAlign.ts
+│   │   ├── householdAlign.test.ts
+├── shared
+│   └── utils
+├── shared-types
+├── test-utils
+│   └── utils
+│   │       │   ├── 1setupHousehold.config.ts
+│   │       │   ├── 2detailsHousehold.config.ts
+│   │   ├── householdSelectors.ts
+│   │       ├── householdSelectors.test.ts
+│   │           └── householdSelectors.test.ts.snap
+└── utils
+===
+tree src \  -a \  | grep -E "(manager|handler|controller|service|adapter|provider|factory)"
+├── adapters
+├── services
+│   │   ├── providers.tsx
+=====
+tree src \  -a \  | grep -E "(shared|state|schema|types)"
+│   │   └── stateful.ts
+│       ├── stateful.ts
+│   ├── state
+│   └── types
+│   ├── types
+│   ├── types.ts
+├── shared
+│   ├── types
+├── shared-types
+├── state
+│   └── schemas
+│           └── schemas.test.ts
+│   │   └── stateFactory.ts
+====
+find src -type f -name "*.ts*" -exec wc -l {} + | awk '$1 > 100 {print $2, "→", $1, "lines"}'
+src/services/__tests__/migration.members.test.ts → 222 lines
+src/services/__tests__/privacyHelpers.test.ts → 126 lines
+src/services/__tests__/idempotency.test.ts → 329 lines
+src/services/privacyHelpers.ts → 132 lines
+src/services/dataOrchestrator.ts → 122 lines
+src/ui/components/__tests__/MoneyInput.test.tsx → 375 lines
+src/ui/screens/CSV/CsvUploadScreen.tsx → 148 lines
+src/ui/screens/Daily/__tests__/__snapshots__/UndoScreen.test.tsx.snap → 335 lines
+src/ui/styles/modules/Forms.ts → 138 lines
+src/ui/styles/modules/Buttons.ts → 103 lines
+src/utils/__tests__/numbers.test.ts → 118 lines
+src/utils/__tests__/date.test.ts → 133 lines
+src/utils/__tests__/logger.test.ts → 319 lines
+src/utils/__tests__/frequency.test.ts → 103 lines
+src/utils/date.ts → 237 lines
+src/app/hooks/useTransactionHistory.ts → 137 lines
+src/app/hooks/__tests__/useTransactionHistory.test.ts → 151 lines
+src/app/hooks/__tests__/useAppOrchestration.test.tsx → 111 lines
+total → 9770 lines
+======
+Perfect! Als we de **testbestanden** eruit halen, blijft het overzicht van **grote, productie- of helper-bestanden (>100 lijnen)** over die extra aandacht nodig hebben bij migratie. Ik heb het overzicht opgeschoond:
+
+---
+
+# 🟢 Migratie Review Overzicht — “Restschuld & Complexe Files” (tests verwijderd)
+
+## 1️⃣ Grote productie-/helper-bestanden (>100 lijnen)
+
+| Bestand                                  | Lijnen | Opmerkingen                                                                          |
+| ---------------------------------------- | ------ | ------------------------------------------------------------------------------------ |
+| `src/services/privacyHelpers.ts`         | 132    | Service; migratie naar `application/privacy/` nodig                                  |
+| `src/services/dataOrchestrator.ts`       | 122    | Service; migratie naar `application/orchestrators/`                                  |
+| `src/ui/screens/CSV/CsvUploadScreen.tsx` | 148    | UI screen; check dependencies op services/adapters                                   |
+| `src/ui/styles/modules/Forms.ts`         | 138    | UI style module; nu onder `ui/styles/modules/` maar wordt beheerd via `useAppStyles` |
+| `src/ui/styles/modules/Buttons.ts`       | 103    | UI style module; idem als Forms.ts                                                   |
+| `src/utils/date.ts`                      | 237    | Helper; migratie naar `domain/helpers/date.ts`                                       |
+| `src/app/hooks/useTransactionHistory.ts` | 137    | Hook; check afhankelijkheden en contextgebruik                                       |
+
+✅ **Aantal bestanden:** 7
+✅ **Totaal lijnen:** 1047
+
+---
+
+## 2️⃣ Mogelijk dubbel / restschuld bestanden
+
+| Bestand                                | Reden / Commentaar                         | Migratie suggestie                              |
+| -------------------------------------- | ------------------------------------------ | ----------------------------------------------- |
+| `src/services/` (diverse)              | Ongebruikte services / compat-laag?        | Migreren naar `application/` of legacy/adapter  |
+| `src/utils/`                           | Sommige helpers zijn nu `domain/helpers`   | Herplaatsen en referenties aanpassen            |
+| `src/state/schemas/FormStateSchema.ts` | Staat nu in `state/`                       | Migratie naar `domain/validation/schemas/`      |
+| `src/selectors/`                       | Dubbele functie met legacy orchestrators   | Plaatsen in `application/legacy/selectors/`     |
+| `src/ui/styles/modules/*`              | Wordt georchestratet door `useAppStyles`   | Modules kunnen blijven, maar check verwijzingen |
+| `src/ui/screens`                       | Grote UI screens (>100 lijnen)             | Review afhankelijkheden op services/adapters    |
+| `src/app/hooks`                        | Hooks zijn groot / afhankelijk van context | Check migratie naar nieuwe orchestratie-context |
+
+---
+
+## 3️⃣ Structuur en migratiepunten
+
+```
+src/
+├── domain/
+│   ├── validation/   # FormStateSchema migreren + andere schema’s
+│   ├── types/        # Expenses, Income, Transaction, Wizard nog migreren
+│   └── helpers/      # fieldVisibility, frequency, numbers, objects, strings, date
+├── application/       # services migreren (dataOrchestrator, transactionService, privacyHelpers, etc.)
+├── infrastructure/    # adapters, logging, telemetry
+├── ui/                # screens, components; style modules via useAppStyles
+├── kernel/            # finance blijft expliciet
+├── shared/            # test-utils
+└── __tests__/          # test infra blijft
+```
+
+💡 **Conclusie:**
+
+* Productie-/helper-bestanden >100 lijnen **prioriteit review**.
+* Services, utils en selectors bevatten **dubbele functies** of **nog niet gemigreerde logica**.
+* UI styles en hooks moeten gecontroleerd worden tegen `useAppStyles` en nieuwe orchestratie-context.
+* FormStateSchema en domain types zijn **kritisch** voor SVZ-0 compliance.
+
+---
+
+Als je wilt, kan ik nu meteen **een actielijst per bestand maken**, met migratiepad + risico + review-notities, zodat je **een kant-en-klare checklist** hebt voor deze resterende bestanden.
+
+Wil ik dat doen?
+
+
+
+
+======
+Hier is **de beste volgorde** om jouw migratie *daadwerkelijk* en *zonder risico* uit te voeren.  
+Dit is **SVZ‑0-proof**, sluit perfect aan op jouw gap‑analyse, én voorkomt refactor-chaos.
+
+Ik ken je hele architectuurpad inmiddels goed — dus dit is een **praktisch uitvoerbaar stappenplan** dat je direct kunt toepassen.
+
+***
+
+# 🚦 **Migratie volgorde — De Enige Juiste Volgorde (SVZ‑0 Compliant)**
+
+Je hebt nu drie hoofdgroepen:
+
+1.  **Kritische kern** (types, schema’s, helpers)
+2.  **Operationele kern** (services → application)
+3.  **UI & orchestration** (screens, hooks, styles)
+
+De ideale volgorde is **van binnen → naar buiten**:
+
+1.  **Domain stabiel maken**
+2.  **Infrastructure stabiliseren**
+3.  **Application ordenen**
+4.  **UI opnieuw verankeren op nieuwe lagen**
+
+Hier komt de exacte volgorde.
+
+***
+
+# 🥇 **Stap 1 — Domain stabiliseren (de fundering)**
+
+> *Niets anders migreren zolang dit niet rond is.*
+
+### 1.1 Migreer alle types
+
+> Types zijn de **TODO → DONE** van je hele architectuur.
+
+Doen:
+
+*   `shared-types/*` → `domain/types/*`
+*   Let op: vooral `transaction`, `wizard`, `income`, `expenses` zijn **kritisch**.
+
+Effect:  
+👉 Je hele codebase krijgt consistente low‑level contracten.
+
+***
+
+### 1.2 Migreer alle schema’s
+
+*   `state/schemas/FormStateSchema.ts` → `domain/validation/schemas/FormStateSchema.ts`
+
+Effect:
+👉 Alle validatie/mappings gebruiken dezelfde bron.
+
+***
+
+### 1.3 Migreer alle helpers
+
+Je hebt zware helpers:
+
+*   `utils/date.ts` (237 lijnen)
+*   numbers/strings/objects/frequency/fieldVisibility
+
+Doen:
+
+*   naar `domain/helpers/*`
+*   referenties systematisch updaten
+
+Effect:
+👉 **Businessregels zitten nu gecentraliseerd in een pure, side-effect-free laag.**
+
+***
+
+# 🥈 **Stap 2 — Infrastructure ordenen (bruggen & adapters)**
+
+> *Voordat je application-layer services verplaatst, moeten alle adapters valide zijn.*
+
+### 2.1 Logging
+
+*   `services/logger.ts` → `infrastructure/logging/logger.ts`
+
+### 2.2 Audit
+
+*   `AuditLogger.ts` → `infrastructure/adapters/audit/AuditLogger.ts`
+
+### 2.3 Telemetry
+
+*   `utils/ping.ts` → `infrastructure/telemetry/ping.ts`
+
+### 2.4 Storage
+
+*   `storage.ts` is al migratie-compliant
+*   `storageShim.ts` moet naar `infrastructure/adapters/storage/storageShim.ts`
+
+Effect:
+👉 **Alle side‑effect code staat nu veilig onder infrastructure voordat je application-layer gaat reorganiseren.**
+
+***
+
+# 🥉 **Stap 3 — Application migreren (services → orchestrators)**
+
+> Dit is jouw grootste restschuld én grootste winst.
+
+### 3.1 Grote services migreren
+
+Migratie naar:
+
+    application/
+      orchestrators/
+      processors/
+      migration/
+      privacy/
+      household/
+      transactions/
+
+De grote jongens:
+
+| Bestand               | Aandacht                   |
+| --------------------- | -------------------------- |
+| dataOrchestrator.ts   | 122 lijnen, high strategic |
+| privacyHelpers.ts     | 132 lijnen, complex        |
+| transactionService.ts | high coupling              |
+| dataProcessor.ts      | CPU + IO mix               |
+| householdAlign.ts     | domain heavy               |
+| migrationService.ts   | edge cases                 |
+
+**Dit is het zwaarste blok in de migratie.**
+
+***
+
+### 3.2 Legacy selectors naar compat‑laag
+
+> Mag pas NA domain + infrastructure klaar is.
+
+*   `selectors/*` → `application/legacy/selectors/`
+
+Effect:  
+👉 Je breekt niets, maar voorkomt dat deze rotzooi centraal in app blijft ronddwalen.
+
+***
+
+# 🟦 **Stap 4 — UI stabiliseren**
+
+> UI mag pas worden aangepakt als domain + infra + application stabiel zijn.
+
+UI bestaat uit drie grote issues:
+
+### 4.1 Grote screens reviewen (CSV upload screen)
+
+*   `CsvUploadScreen.tsx` (148 lijnen)
+    *   controleer dependencies op: services (nu application), utils (nu domain/helpers), adapters/infrastructure.
+
+Doel:
+👉 Screen moet alleen praten met **application-layer**, niet direct met services/infra.
+
+***
+
+### 4.2 Hooks migreren
+
+*   `useTransactionHistory.ts` (137 lijnen)
+
+Checklist:
+
+*   Praat deze hook direct met services? → fix naar `application/transactions/**`
+*   Gebruikt deze hook state die nu onder domain/validation hoort?
+
+***
+
+### 4.3 UI styles consistent maken
+
+De style modules:
+
+*   `ui/styles/modules/Forms.ts` (138 lijnen)
+*   `ui/styles/modules/Buttons.ts` (103 lijnen)
+
+Actie:
+
+*   check afhankelijkheid op `useAppStyles`
+*   styles blijven, maar zorg dat:  
+    ➤ ze **geen domeinlogica**, **geen helpers** of **geen services** aanroepen.
+
+***
+
+# 🟩 **Stap 5 — Kernel valideren**
+
+> Gebeurt *vlak voor afronding*.
+
+Kernel bestaat:
+
+*   `kernel/finance/index.ts`
+*   `kernel/finance/mappers.ts`
+
+Actie:
+
+*   alleen validatie dat nieuwe domain/helpers ze niet breekt
+
+Geen migratie nodig.
+
+***
+
+# 🟣 **Stap 6 — Cleanup & Shims verwijderen**
+
+> Dit is je “SVZ‑1 polish”.
+
+1.  Services‑shims verwijderen
+2.  Oude utils-map verwijderen
+3.  Oude shared-types-map verwijderen
+4.  Oude selectors-map verwijderen
+5.  Oude state-map verwijderen
+
+***
+
+# 🏁 **Volgorde Samengevat (Kern)**
+
+    1. DOMAIN
+       1. types
+       2. schemas
+       3. helpers
+
+    2. INFRASTRUCTURE
+       1. logging
+       2. audit
+       3. telemetry
+       4. storage
+
+    3. APPLICATION
+       1. grote services
+       2. legacy selectors
+
+    4. UI
+       1. grote screens
+       2. hooks
+       3. styles
+
+    5. KERNEL (validatie)
+
+    6. CLEANUP
+
+***
+
+# 🚀 Wat is de optimale volgende stap *nu*?
+
+Je hebt al:
+
+*   gap-analyse ✔️
+*   grote bestanden-inventaris ✔️
+*   migratiestructuur ✔️
+*   gewenste mappenstructuur ✔️
+*   prioriteitenlijst ✔️
+
+Daarmee is de **volgende concrete stap**:
+
+> **Maak een migratieboard waarin elke map (/services, /utils, /state, /selectors, /styles, /hooks, /screens) één epic is, en elk groot bestand een ticket.**
+
+Als je wilt, maak ik:
+
+### 👉 **Automatisch gegenereerd GitHub Project Board (CSV of JSON)**
+
+### 👉 **Jira-import**
+
+### 👉 **Of een commit-sjabloon + map-herstructureringsscript (Node/TS)**
+
+Wat wil je als eerst?

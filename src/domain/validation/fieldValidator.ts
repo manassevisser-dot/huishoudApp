@@ -1,6 +1,7 @@
+import { isDigitsDatePlausible } from '@domain/validation/dateValidators';
+import { parseDDMMYYYYtoISO } from '@domain/helpers/DateHydrator';
 import { FieldConfig } from '@shared-types/form';
 import { formatDutchValue } from '@domain/helpers/numbers';
-import { isDigitsDatePlausible, parseDDMMYYYYtoISO } from '@utils/date';
 
 export const validateField = (field: FieldConfig, value: any, state: any): string | null => {
   if (field.required && (value === undefined || value === null || value === '')) {

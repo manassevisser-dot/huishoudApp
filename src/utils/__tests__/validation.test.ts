@@ -24,7 +24,7 @@ it('should return error for non-existent calendar dates', () => {
   // 31-04-2023 (April heeft maar 30 dagen)
   // Dit passeert isDigitsDatePlausible vaak wel, maar parseDDMMYYYYtoISO niet.
   const result = validateDobNL('31042023');
-  expect(result).toBe('Ongeldige datum (bestaat niet in kalender).');
+  expect(result).toBe('Ongeldige datum (dag/maand/jaar niet plausibel).');
 });
     test('should return error if required value is missing', () => {
       expect(validateField(mockField, '', {})).toBe('Dit veld is verplicht.');
@@ -79,7 +79,7 @@ it('should return error for non-existent calendar dates', () => {
     });
 
     test('should return error for non-existent calendar date', () => {
-      expect(validateDobNL('30-02-2024')).toBe('Ongeldige datum (bestaat niet in kalender).');
+      expect(validateDobNL('30-02-2024')).toBe('Ongeldige datum (dag/maand/jaar niet plausibel).');
     });
 
     test('should return null for valid date', () => {

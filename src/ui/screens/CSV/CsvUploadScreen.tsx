@@ -1,3 +1,4 @@
+import { getISOWeek } from '@domain/helpers/DateHydrator';
 import * as React from 'react';
 import {
   View,
@@ -11,7 +12,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { dataOrchestrator } from '@services/dataOrchestrator';
 import * as TransactionService from '@services/transactionService';
-import { getISOWeek } from '@utils/date';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 import { DATA_KEYS } from '@domain/constants/datakeys'; // Toegevoegd voor de juiste mapping
 import { Logger } from '@/adapters/audit/AuditLoggerAdapter';
