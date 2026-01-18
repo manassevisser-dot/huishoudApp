@@ -1,7 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
 import { FormState, FormAction } from '@shared-types/form';
-import { InputCounter, ToggleSwitch } from './index';
+import InputCounter from './InputCounter';
+import ToggleSwitch from './ToggleSwitch';
 import { FieldConfig } from '@shared-types/fields';
 
 interface FormFieldProps {

@@ -1,0 +1,2 @@
+3016cd66d020ea302d4ae44d0b87cd1fce6d5c6e4b327f94c10358fb99f3fb8a  src/adapters/storage/storage.ts
+a85d8b453c67d07fd18e951fc9d0f31958a830b7144fc5f167372d558def3cc7  src/adapters/csv/csvService.ts

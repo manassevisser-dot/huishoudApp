@@ -1,0 +1,300 @@
+
+> test
+> jest
+
+PASS src/utils/__tests__/logger.test.ts
+PASS src/__tests__/ScreenSanity.test.tsx
+  ● Console
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:20:58.865Z","level":"info","message":"transaction_push","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+PASS src/__tests__/App.projector.test.tsx
+PASS src/app/hooks/__tests__/useTransactionHistory.test.ts
+  ● Console
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:21:04.015Z","level":"info","message":"transaction_push","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:21:04.079Z","level":"info","message":"transaction_push","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:21:04.104Z","level":"info","message":"transaction_push","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:21:04.130Z","level":"info","message":"transaction_push","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:21:04.145Z","level":"info","message":"transaction_push","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:21:04.160Z","level":"info","message":"transaction_push","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:21:04.200Z","level":"info","message":"transaction_push","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:21:04.208Z","level":"info","message":"transaction_push","context":{"rawArgs":["INFO","transaction_push",{"type":"USER_UPDATE","pointer":1,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:21:04.216Z","level":"info","message":"transaction_push","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:21:04.229Z","level":"info","message":"transaction_push","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:21:04.243Z","level":"info","message":"transaction_push","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:21:04.270Z","level":"info","message":"transaction_push","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+PASS src/ui/screens/Daily/__tests__/UndoScreen.test.tsx
+PASS src/ui/components/__tests__/MoneyInput.test.tsx
+PASS src/__tests__/WAI009_FocusManagement.test.tsx
+PASS src/utils/__tests__/date.test.ts
+PASS src/ui/screens/Wizard/__tests__/WizardController.test.tsx
+PASS src/services/__tests__/migrationService.test.ts
+PASS src/ui/components/__tests__/InputCounter.test.tsx
+PASS src/services/__tests__/privacyHelpers.test.ts
+PASS src/__tests__/LandingScreen_Isolation.test.tsx
+PASS src/app/context/__test__/formReducer.test.ts
+PASS src/services/__tests__/migration.members.test.ts
+  ● Console
+
+    console.log
+      [AUDIT] {"timestamp":"2026-01-18T12:21:14.686Z","level":"warning","message":"Undo functionaliteit nog niet geïmplementeerd"}
+
+      at AuditLoggerAdapter.writeToAuditLog (src/adapters/audit/AuditLoggerAdapter.ts:50:13)
+
+PASS src/ui/screens/Wizard/pages/__tests__/wizardConfigs.test.ts
+PASS src/ui/selectors/__tests__/householdSelectors.test.ts
+PASS src/services/__tests__/dataOrchestrator.test.tsx
+PASS src/__tests__/CoreSanity.test.tsx
+PASS src/app/hooks/__tests__/useAppOrchestration.test.tsx
+PASS src/services/__tests__/csvService.integration.test.ts
+PASS src/ui/selectors/__tests__/financialFlow.test.ts
+PASS src/services/__tests__/idempotency.test.ts
+PASS src/utils/__tests__/validation.test.ts
+PASS src/services/__tests__/storageShim.test.ts
+PASS src/services/__tests__/storage.test.ts
+PASS src/state/schemas/__tests__/schemas.test.ts
+PASS src/services/__tests__/migration.fixture.test.ts
+PASS src/services/__tests__/householdAlign.test.ts
+PASS src/utils/__tests__/frequency.test.ts
+PASS src/utils/__tests__/strings.test.ts
+PASS src/ui/styles/__tests__/useAppStyles.test.ts
+PASS src/utils/__tests__/numbers.test.ts
+PASS src/domain/__tests__/household.test.ts
+PASS src/services/__tests__/csvService.test.tsx
+PASS src/domain/rules/__tests__/financeRules.test.ts
+PASS src/utils/__tests__/conditions.test.ts
+PASS src/utils/__tests__/ping.test.ts
+PASS src/services/__tests__/storage.migration.test.ts
+PASS src/domain/__tests__/evaluateDomainRules.test.ts
+------------------------------|---------|----------|---------|---------|-------------------------
+File                          | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s       
+------------------------------|---------|----------|---------|---------|-------------------------
+All files                     |   75.98 |    68.27 |    74.1 |   77.04 |                         
+ src                          |     100 |      100 |     100 |     100 |                         
+  App.tsx                     |     100 |      100 |     100 |     100 |                         
+ src/adapters/audit           |   71.42 |    66.66 |   72.72 |   71.42 |                         
+  AuditLoggerAdapter.ts       |   71.42 |    66.66 |   72.72 |   71.42 | 26-27,54-64             
+ src/adapters/csv             |    93.1 |     87.5 |    87.5 |   95.83 |                         
+  csvService.ts               |    93.1 |     87.5 |    87.5 |   95.83 | 63                      
+ src/adapters/storage         |     100 |       92 |     100 |     100 |                         
+  storage.ts                  |     100 |       92 |     100 |     100 | 14,20                   
+ src/adapters/transaction     |   73.07 |       50 |     100 |      72 |                         
+  stateful.ts                 |   73.07 |       50 |     100 |      72 | 22,38-40,47-49          
+ src/adapters/undo            |       0 |      100 |       0 |       0 |                         
+  stateful.ts                 |       0 |      100 |       0 |       0 | 5-6                     
+ src/app/context              |   77.35 |    76.19 |      80 |   78.84 |                         
+  FormContext.tsx             |      90 |       75 |     100 |     100 | 32                      
+  ThemeContext.tsx            |   69.56 |    66.66 |      80 |   69.56 | 24-27,34-38,48          
+  WizardContext.tsx           |   66.66 |    66.66 |      50 |   66.66 | 46-50                   
+  formReducer.ts              |     100 |      100 |     100 |     100 |                         
+ src/app/hooks                |   97.87 |    84.61 |     100 |   97.82 |                         
+  useAppOrchestration.ts      |     100 |    94.11 |     100 |     100 | 28                      
+  useTransactionHistory.ts    |   96.15 |    66.66 |     100 |      96 | 81                      
+ src/app/orchestrators        |       0 |        0 |       0 |       0 |                         
+  export.ts                   |       0 |        0 |       0 |       0 | 4-23                    
+  transactionOrchestrator.ts  |       0 |      100 |       0 |       0 | 3                       
+ src/config                   |       0 |      100 |     100 |       0 |                         
+  WizStrings.ts               |       0 |      100 |     100 |       0 | 1                       
+  features.ts                 |       0 |      100 |     100 |       0 | 8-21                    
+ src/containers               |       0 |        0 |       0 |       0 |                         
+  AdultsCounter.tsx           |       0 |        0 |       0 |       0 | 5-25                    
+ src/core/types               |     100 |      100 |     100 |     100 |                         
+  core.ts                     |       0 |        0 |       0 |       0 |                         
+  expenses.ts                 |       0 |        0 |       0 |       0 |                         
+  extendedFormState.ts        |       0 |        0 |       0 |       0 |                         
+  fields.ts                   |       0 |        0 |       0 |       0 |                         
+  finance.ts                  |     100 |      100 |     100 |     100 |                         
+  form.ts                     |       0 |        0 |       0 |       0 |                         
+  income.ts                   |       0 |        0 |       0 |       0 |                         
+  transaction.ts              |       0 |        0 |       0 |       0 |                         
+  wizard.ts                   |       0 |        0 |       0 |       0 |                         
+ src/domain                   |       0 |        0 |       0 |       0 |                         
+  household.ts                |       0 |        0 |       0 |       0 |                         
+  types.ts                    |       0 |        0 |       0 |       0 |                         
+ src/domain/constants         |   71.42 |      100 |     100 |   71.42 |                         
+  datakeys.ts                 |     100 |      100 |     100 |     100 |                         
+  labels.ts                   |       0 |      100 |     100 |       0 | 4-22                    
+  registry.ts                 |     100 |      100 |     100 |     100 |                         
+ src/domain/helpers           |     100 |    95.12 |     100 |     100 |                         
+  frequency.ts                |     100 |      100 |     100 |     100 |                         
+  numbers.ts                  |     100 |    93.93 |     100 |     100 | 8,61                    
+ src/domain/rules             |   69.56 |    78.57 |      50 |   76.47 |                         
+  evaluateDomainRules.ts      |     100 |      100 |     100 |     100 |                         
+  financeRules.ts             |       0 |        0 |       0 |       0 | 6-20                    
+  householdRules.ts           |   92.85 |    91.66 |     100 |     100 | 21                      
+ src/domain/validation        |    87.5 |    97.43 |   66.66 |    87.5 |                         
+  fieldValidator.ts           |     100 |    97.43 |     100 |     100 | 50                      
+  runtimeParser.ts            |       0 |      100 |       0 |       0 | 5-48                    
+ src/kernel/finance           |   89.47 |    79.16 |   83.33 |   88.88 |                         
+  index.ts                    |     100 |    79.16 |     100 |     100 | 28-40                   
+  mappers.ts                  |       0 |      100 |       0 |       0 | 2-4                     
+ src/navigation               |       0 |        0 |       0 |       0 |                         
+  Navigator.tsx               |       0 |        0 |       0 |       0 | 11-20                   
+ src/services                 |   83.78 |    78.18 |   84.09 |   84.43 |                         
+  dataOrchestrator.ts         |     100 |       80 |     100 |     100 | 49-56,86-87             
+  dataProcessor.ts            |    82.6 |       75 |      80 |    82.6 | 28,36,47,58             
+  householdAlign.ts           |   96.42 |    64.28 |     100 |      95 | 56                      
+  logger.ts                   |       0 |        0 |       0 |       0 | 4-35                    
+  migrationService.ts         |     100 |    92.68 |     100 |     100 | 36-37,46                
+  privacyHelpers.ts           |   97.95 |    95.45 |     100 |     100 | 18,21,72                
+  storageShim.ts              |   43.75 |       25 |   33.33 |   43.75 | 14-21,30,39-46          
+  transactionService.ts       |     100 |    97.36 |     100 |     100 | 27                      
+ src/state/schemas            |     100 |      100 |     100 |     100 |                         
+  FormStateSchema.ts          |     100 |      100 |     100 |     100 |                         
+ src/test-utils               |       0 |        0 |       0 |       0 |                         
+  index.ts                    |       0 |        0 |       0 |       0 |                         
+ src/test-utils/assertions    |       0 |      100 |       0 |       0 |                         
+  migrationAssertions.ts      |       0 |      100 |       0 |       0 | 5-19                    
+ src/test-utils/factories     |      90 |    76.92 |   83.33 |   88.88 |                         
+  csvFactory.ts               |      60 |      100 |      50 |      60 | 9-19                    
+  memberFactory.ts            |     100 |    73.68 |     100 |     100 | 9-10,32-40              
+  stateFactory.ts             |     100 |    85.71 |     100 |     100 | 45                      
+ src/test-utils/perf          |       0 |        0 |       0 |       0 |                         
+  measure.ts                  |       0 |        0 |       0 |       0 | 7-15                    
+ src/test-utils/render        |   45.45 |    27.77 |   44.44 |   47.36 |                         
+  providers.tsx               |      40 |        0 |   66.66 |   42.85 | 34-42                   
+  renderers.tsx               |      50 |       50 |   33.33 |      50 | 49-60,65-67             
+ src/test-utils/utils         |       0 |        0 |       0 |       0 |                         
+  name.ts                     |       0 |        0 |       0 |       0 | 6-7                     
+ src/ui/components            |   33.33 |        0 |   33.33 |   35.29 |                         
+  FieldRenderer.tsx           |       0 |        0 |       0 |       0 | 11-31                   
+  FinancialSummary.tsx        |     100 |      100 |     100 |     100 |                         
+ src/ui/components/fields     |    43.9 |    30.58 |   45.83 |   43.83 |                         
+  ChipButton.tsx              |   33.33 |        0 |       0 |   33.33 | 20-22                   
+  ConditionalField.tsx        |    8.33 |        0 |       0 |    8.33 | 14-33                   
+  DateField.tsx               |    12.9 |        0 |       0 |   14.81 | 18-21,25-29,34-37,49-82 
+  FormField.tsx               |   57.14 |       80 |      25 |   57.14 | 18,31-37                
+  InputCounter.tsx            |    87.5 |      100 |      75 |     100 |                         
+  MoneyField.tsx              |      50 |    33.33 |      50 |      50 | 26-27                   
+  MoneyInput.tsx              |     100 |      100 |     100 |     100 |                         
+  ToggleSwitch.tsx            |     100 |    66.66 |     100 |     100 | 25-31                   
+  index.ts                    |       0 |        0 |       0 |       0 |                         
+ src/ui/navigation            |   83.33 |       75 |     100 |   83.33 |                         
+  MainNavigator.tsx           |   83.33 |       75 |     100 |   83.33 | 15                      
+ src/ui/screens/CSV           |   23.33 |    22.22 |      25 |   23.33 |                         
+  CsvUploadScreen.tsx         |   23.33 |    22.22 |      25 |   23.33 | 34-99                   
+ src/ui/screens/Daily         |   85.71 |    53.84 |   66.66 |   85.71 |                         
+  UndoScreen.tsx              |   85.71 |    53.84 |   66.66 |   85.71 | 80                      
+ src/ui/screens/DailyInput    |     100 |      100 |      50 |     100 |                         
+  DailyInputScreen.tsx        |     100 |      100 |      50 |     100 |                         
+ src/ui/screens/Dashboard     |     100 |      100 |     100 |     100 |                         
+  DashboardScreen.tsx         |     100 |      100 |     100 |     100 |                         
+ src/ui/screens/Options       |     100 |      100 |     100 |     100 |                         
+  OptionsScreen.tsx           |     100 |      100 |     100 |     100 |                         
+ src/ui/screens/Reset         |      75 |      100 |   33.33 |      75 |                         
+  ResetScreen.tsx             |      75 |      100 |   33.33 |      75 | 18,29                   
+ src/ui/screens/Settings      |   85.71 |    33.33 |      50 |   85.71 |                         
+  SettingsScreen.tsx          |   85.71 |    33.33 |      50 |   85.71 | 38                      
+ src/ui/screens/Wizard        |      96 |    86.36 |     100 |   95.91 |                         
+  CriticalErrorScreen.tsx     |     100 |      100 |     100 |     100 |                         
+  LandingScreen.tsx           |    92.3 |       75 |     100 |    92.3 | 28                      
+  SplashScreen.tsx            |     100 |      100 |     100 |     100 |                         
+  WelcomeWizard.tsx           |     100 |      100 |     100 |     100 |                         
+  WizardController.tsx        |     100 |      100 |     100 |     100 |                         
+  WizardPage.tsx              |   93.33 |    84.61 |     100 |   92.85 | 41                      
+ src/ui/screens/Wizard/pages  |     100 |      100 |     100 |     100 |                         
+  1setupHousehold.config.ts   |     100 |      100 |     100 |     100 |                         
+  2detailsHousehold.config.ts |     100 |      100 |     100 |     100 |                         
+  3incomeDetails.config.ts    |     100 |      100 |     100 |     100 |                         
+  4fixedExpenses.config.ts    |     100 |      100 |     100 |     100 |                         
+ src/ui/selectors             |     100 |    83.33 |     100 |     100 |                         
+  financialSelectors.ts       |     100 |       50 |     100 |     100 | 8                       
+  householdSelectors.ts       |     100 |      100 |     100 |     100 |                         
+ src/ui/styles                |     100 |      100 |     100 |     100 |                         
+  Colors.ts                   |     100 |      100 |     100 |     100 |                         
+  Tokens.ts                   |     100 |      100 |     100 |     100 |                         
+  useAppStyles.ts             |     100 |      100 |     100 |     100 |                         
+ src/ui/styles/modules        |     100 |      100 |     100 |     100 |                         
+  Alerts.ts                   |     100 |      100 |     100 |     100 |                         
+  Buttons.ts                  |     100 |      100 |     100 |     100 |                         
+  Cards.ts                    |     100 |      100 |     100 |     100 |                         
+  Checkboxes.ts               |     100 |      100 |     100 |     100 |                         
+  Chips.ts                    |     100 |      100 |     100 |     100 |                         
+  Dashboard.ts                |     100 |      100 |     100 |     100 |                         
+  Forms.ts                    |     100 |      100 |     100 |     100 |                         
+  Header.ts                   |     100 |      100 |     100 |     100 |                         
+  Helpers.ts                  |     100 |      100 |     100 |     100 |                         
+  Layout.ts                   |     100 |      100 |     100 |     100 |                         
+  Summary.ts                  |     100 |      100 |     100 |     100 |                         
+  Toggles.ts                  |     100 |      100 |     100 |     100 |                         
+  Typography.ts               |     100 |      100 |     100 |     100 |                         
+  index.ts                    |       0 |        0 |       0 |       0 |                         
+ src/utils                    |    86.2 |    77.03 |   86.66 |   90.41 |                         
+  AuditLogger.ts              |       0 |        0 |       0 |       0 | 1-22                    
+  conditions.ts               |     100 |      100 |     100 |     100 |                         
+  csvHelper.ts                |      95 |       90 |     100 |     100 | 12                      
+  date.ts                     |   94.33 |    90.54 |     100 |    98.9 | 96                      
+  fieldVisibility.ts          |      40 |       25 |     100 |      40 | 9-12                    
+  index.ts                    |       0 |        0 |       0 |       0 |                         
+  objects.ts                  |     100 |     90.9 |     100 |     100 | 8                       
+  ping.ts                     |     100 |      100 |     100 |     100 |                         
+  strings.ts                  |     100 |      100 |     100 |     100 |                         
+ src/utils/audit              |       0 |        0 |       0 |       0 |                         
+  logger.ts                   |       0 |        0 |       0 |       0 | 1-22                    
+------------------------------|---------|----------|---------|---------|-------------------------
+
+=============================== Coverage summary ===============================
+Statements   : 75.98% ( 832/1095 )
+Branches     : 68.27% ( 609/892 )
+Functions    : 74.1% ( 206/278 )
+Lines        : 77.04% ( 772/1002 )
+================================================================================
+Jest: "global" coverage threshold for branches (70%) not met: 68.27%
+
+Test Suites: 40 passed, 40 total
+Tests:       280 passed, 280 total
+Snapshots:   5 passed, 5 total
+Time:        42.766 s
+Ran all test suites.

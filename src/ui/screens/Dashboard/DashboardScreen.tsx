@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { View, ScrollView, RefreshControl, Text } from 'react-native';
 import { useAppStyles } from '@styles/useAppStyles';
 import { useForm } from '@app/context/FormContext';
-import { selectFinancialSummaryVM } from '@selectors/financialSelectors';
+import { selectFinancialSummaryVM } from '@/ui/selectors/financialSelectors';
 import { FinancialSummary } from '@components/FinancialSummary';
 
 // Props interface (WAI-006B-A)

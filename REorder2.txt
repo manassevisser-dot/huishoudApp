@@ -1,0 +1,230 @@
+Goed, dit is nu een **zuivere SVZ-0 gap-analyse**:
+*welke onderdelen uit de **OUDE** structuur zijn **niet expliciet gemigreerd of herplaatst** in de **NIEUWE** structuur zoals jij die hebt vastgelegd*.
+
+Ik maak **geen aannames**, alleen wat **niet aantoonbaar is meegenomen**.
+
+---
+
+## 🔍 Methode (kort en strikt)
+
+Ik vergelijk:
+
+* **OUD**: volledige `tree src` (68 directories, 162 files)
+* **NIEUW**: door jou gedefinieerde doelstructuur
+* **Kai-CU’s**: CU-001 t/m CU-004 (alleen die tellen)
+
+Alles wat:
+
+* niet expliciet is genoemd in de nieuwe structuur **én**
+* niet expliciet is gemigreerd door een CU
+  → **staat open**.
+
+---
+
+# ❌ NIET (EXPLICIET) MEEGENOMEN
+
+## 1️⃣ Volledige `services/` map (grotendeels)
+
+Uit `src/services/` is **alleen** dit behandeld:
+
+| Bestand         | Status               |
+| --------------- | -------------------- |
+| `csvService.ts` | ✅ → adapters/csv     |
+| `storage.ts`    | ✅ → adapters/storage |
+
+### ❌ Overige services **niet herplaatst**
+
+Deze komen **nergens terug** in de nieuwe structuur:
+
+```
+src/services/
+├── dataOrchestrator.ts
+├── dataProcessor.ts
+├── householdAlign.ts
+├── logger.ts
+├── migrationService.ts
+├── privacyHelpers.ts
+├── storageShim.ts
+├── transactionService.ts
+├── __mocks__/
+├── __tests__/
+```
+
+➡️ **Status**:
+
+* Niet benoemd in nieuwe structuur
+* Niet gemigreerd door Kai
+* Niet expliciet gedeclareerd als “blijft”
+
+⚠️ **Dit is de grootste openstaande set**
+
+---
+
+## 2️⃣ `state/` map (volledig)
+
+```
+src/state/
+└── schemas/
+    ├── FormStateSchema.ts
+    └── __tests__/
+```
+
+* Niet genoemd in nieuwe structuur
+* Niet gemigreerd naar `domain/validation` (die bevat alleen `fieldValidator.ts`)
+
+➡️ **Status: NIET MEEGENOMEN**
+
+> Dit is inhoudelijk belangrijk, want hier zat al schema-logica.
+
+---
+
+## 3️⃣ `kernel/finance/`
+
+```
+src/kernel/
+└── finance/
+    ├── index.ts
+    ├── mappers.ts
+    └── __tests__/
+```
+
+* `kernel/` staat als “blijft” vermeld
+* Maar **geen expliciete bevestiging dat deze inhoud correct past binnen nieuwe architectuur**
+
+➡️ **Status: IMPLICIET BLIJFT, MAAR NIET GEVALIDEERD**
+
+(geen fout, maar ook geen expliciete SVZ-0 borging)
+
+---
+
+## 4️⃣ `selectors/`
+
+```
+src/selectors/
+├── financialSelectors.ts
+├── householdSelectors.ts
+└── __tests__/
+```
+
+* Niet genoemd in nieuwe structuur
+* Niet gemigreerd
+* Geen expliciete “blijft waar het is”-beslissing vastgelegd
+
+➡️ **Status: OPEN / NIET GECLASSIFICEERD**
+
+---
+
+## 5️⃣ `containers/`
+
+```
+src/containers/
+└── AdultsCounter.tsx
+```
+
+* Niet genoemd in nieuw
+* Niet onder `ui/` geplaatst
+* Geen CU-besluit
+
+➡️ **Status: NIET MEEGENOMEN**
+
+---
+
+## 6️⃣ `navigation/` (root)
+
+```
+src/navigation/
+└── Navigator.tsx
+```
+
+* Nieuwe structuur noemt alleen `ui/navigation`
+* Deze root-navigation is niet herplaatst of expliciet behouden
+
+➡️ **Status: NIET MEEGENOMEN**
+
+---
+
+## 7️⃣ `utils/` (root)
+
+```
+src/utils/
+├── audit/
+├── AuditLogger.ts
+├── conditions.ts
+├── csvHelper.ts
+├── date.ts
+├── fieldVisibility.ts
+├── frequency.ts
+├── numbers.ts
+├── objects.ts
+├── ping.ts
+├── strings.ts
+├── validation.ts
+└── __tests__/
+```
+
+* Slechts **één file** (`validation.ts`) is gemigreerd → `domain/validation/fieldValidator.ts`
+* De rest is **niet herplaatst**
+* Helpers zijn deels **dubbel** met nieuwe `domain/helpers`
+
+➡️ **Status: GROTENDEELS NIET MEEGENOMEN**
+
+---
+
+## 8️⃣ `shared-types/` — gedeeltelijk
+
+```
+src/shared-types/
+├── core.ts              ✅
+├── form.ts              ✅
+├── fields.ts            ✅
+├── finance.ts           ✅
+├── extendedFormState.ts ✅
+├── expenses.ts          ❌
+├── income.ts            ❌
+├── transaction.ts       ❌
+├── wizard.ts            ❌
+```
+
+➡️ **Status**
+
+* Kerntypes: ✅ gemigreerd
+* Overige types: ❌ **niet meegenomen**
+
+---
+
+## 9️⃣ Test-only mappen buiten scope
+
+Bijv.:
+
+```
+src/__tests__/
+src/test-utils/
+```
+
+* Niet genoemd in nieuwe structuur
+* Maar impliciet “blijft” (test infra)
+
+➡️ **Status: OK, maar niet expliciet vastgelegd**
+
+---
+
+# 📌 SAMENVATTING (HARD)
+
+### ❌ NIET GEMIGREERD / NIET GEPLAATST
+
+* Grootste risico:
+
+  * `services/` (alles behalve csv/storage)
+  * `utils/` (behalve validation)
+  * `state/`
+  * `selectors/`
+  * `containers/`
+  * `navigation/`
+  * Deel van `shared-types/`
+
+### ⚠️ IMPLICIET BLIJFT (maar niet SVZ-0 geborgd)
+
+* `kernel/`
+* test-infra
+
+ALLE BESTANDEN MOETEN IN DE NIEUWE STRUCTUUR GAAN PASSEN

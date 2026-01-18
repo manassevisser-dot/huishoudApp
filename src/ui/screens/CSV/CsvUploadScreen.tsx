@@ -14,7 +14,7 @@ import * as TransactionService from '@services/transactionService';
 import { getISOWeek } from '@utils/date';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 import { DATA_KEYS } from '@domain/constants/datakeys'; // Toegevoegd voor de juiste mapping
-import { Logger } from '@services/logger';
+import { Logger } from '@/adapters/audit/AuditLoggerAdapter';
 
 type Props = {
   onClose: () => void;

@@ -1,0 +1,187 @@
+
+> test
+> jest selectors
+
+PASS src/ui/selectors/__tests__/householdSelectors.test.ts
+PASS src/ui/selectors/__tests__/financialFlow.test.ts
+------------------------------|---------|----------|---------|---------|-------------------
+File                          | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+------------------------------|---------|----------|---------|---------|-------------------
+All files                     |    8.93 |     4.85 |    8.23 |    8.86 |                   
+ src                          |       0 |      100 |       0 |       0 |                   
+  App.tsx                     |       0 |      100 |       0 |       0 | 9-10              
+ src/adapters/csv             |       0 |        0 |       0 |       0 |                   
+  csvService.ts               |       0 |        0 |       0 |       0 | 6-63              
+ src/adapters/storage         |       0 |        0 |       0 |       0 |                   
+  storage.ts                  |       0 |        0 |       0 |       0 | 9-67              
+ src/adapters/transaction     |       0 |        0 |       0 |       0 |                   
+  stateful.ts                 |       0 |        0 |       0 |       0 | 3-59              
+ src/adapters/undo            |       0 |      100 |       0 |       0 |                   
+  stateful.ts                 |       0 |      100 |       0 |       0 | 5-6               
+ src/app/context              |    13.2 |        0 |       0 |   13.46 |                   
+  FormContext.tsx             |      30 |        0 |       0 |   33.33 | 18-23,31-33       
+  ThemeContext.tsx            |   17.39 |        0 |       0 |   17.39 | 17-42,46-50       
+  WizardContext.tsx           |       0 |        0 |       0 |       0 | 20-54             
+  formReducer.ts              |       0 |        0 |       0 |       0 | 6-68              
+ src/app/hooks                |       0 |        0 |       0 |       0 |                   
+  useAppOrchestration.ts      |       0 |        0 |       0 |       0 | 16-72             
+  useTransactionHistory.ts    |       0 |        0 |       0 |       0 | 35-123            
+ src/app/orchestrators        |       0 |        0 |       0 |       0 |                   
+  export.ts                   |       0 |        0 |       0 |       0 | 4-23              
+  transactionOrchestrator.ts  |       0 |      100 |       0 |       0 | 3                 
+ src/config                   |       0 |      100 |     100 |       0 |                   
+  WizStrings.ts               |       0 |      100 |     100 |       0 | 1                 
+  features.ts                 |       0 |      100 |     100 |       0 | 8-21              
+ src/containers               |       0 |        0 |       0 |       0 |                   
+  AdultsCounter.tsx           |       0 |        0 |       0 |       0 | 5-25              
+ src/core/types               |       0 |      100 |     100 |       0 |                   
+  core.ts                     |       0 |        0 |       0 |       0 |                   
+  expenses.ts                 |       0 |        0 |       0 |       0 |                   
+  extendedFormState.ts        |       0 |        0 |       0 |       0 |                   
+  fields.ts                   |       0 |        0 |       0 |       0 |                   
+  finance.ts                  |       0 |      100 |     100 |       0 | 9-32              
+  form.ts                     |       0 |        0 |       0 |       0 |                   
+  income.ts                   |       0 |        0 |       0 |       0 |                   
+  transaction.ts              |       0 |        0 |       0 |       0 |                   
+  wizard.ts                   |       0 |        0 |       0 |       0 |                   
+ src/domain                   |       0 |        0 |       0 |       0 |                   
+  household.ts                |       0 |        0 |       0 |       0 |                   
+  types.ts                    |       0 |        0 |       0 |       0 |                   
+ src/domain/constants         |   28.57 |      100 |     100 |   28.57 |                   
+  datakeys.ts                 |     100 |      100 |     100 |     100 |                   
+  labels.ts                   |       0 |      100 |     100 |       0 | 4-22              
+  registry.ts                 |       0 |      100 |     100 |       0 | 4-16              
+ src/domain/helpers           |   11.11 |     4.87 |   16.66 |   11.62 |                   
+  frequency.ts                |   26.66 |        0 |       0 |   28.57 | 19-32,43-48       
+  numbers.ts                  |    3.33 |     6.06 |      25 |    3.44 | 8-79              
+ src/domain/rules             |   52.17 |    57.14 |    37.5 |   58.82 |                   
+  evaluateDomainRules.ts      |       0 |      100 |       0 |       0 | 2-6               
+  financeRules.ts             |       0 |        0 |       0 |       0 | 6-20              
+  householdRules.ts           |   85.71 |    66.66 |     100 |     100 | 12-21             
+ src/domain/validation        |    3.12 |        0 |       0 |    3.12 |                   
+  fieldValidator.ts           |    3.57 |        0 |       0 |    3.57 | 6-66              
+  runtimeParser.ts            |       0 |      100 |       0 |       0 | 5-48              
+ src/kernel/finance           |   68.42 |    66.66 |   66.66 |   72.22 |                   
+  index.ts                    |   76.47 |    66.66 |      80 |   81.25 | 20-24             
+  mappers.ts                  |       0 |      100 |       0 |       0 | 2-4               
+ src/navigation               |       0 |        0 |       0 |       0 |                   
+  Navigator.tsx               |       0 |        0 |       0 |       0 | 11-20             
+ src/services                 |     2.7 |        0 |       0 |    2.99 |                   
+  dataOrchestrator.ts         |       0 |        0 |       0 |       0 | 38-109            
+  dataProcessor.ts            |       0 |        0 |       0 |       0 | 16-69             
+  householdAlign.ts           |       0 |        0 |       0 |       0 | 8-65              
+  logger.ts                   |   33.33 |        0 |       0 |   41.66 | 10-29             
+  migrationService.ts         |       0 |        0 |       0 |       0 | 19-82             
+  privacyHelpers.ts           |       0 |        0 |       0 |       0 | 9-131             
+  storageShim.ts              |       0 |        0 |       0 |       0 | 6-43              
+  transactionService.ts       |       0 |        0 |       0 |       0 | 6-83              
+ src/state/schemas            |       0 |      100 |     100 |       0 |                   
+  FormStateSchema.ts          |       0 |      100 |     100 |       0 | 4-66              
+ src/test-utils               |       0 |        0 |       0 |       0 |                   
+  index.ts                    |       0 |        0 |       0 |       0 |                   
+ src/test-utils/assertions    |       0 |      100 |       0 |       0 |                   
+  migrationAssertions.ts      |       0 |      100 |       0 |       0 | 5-19              
+ src/test-utils/factories     |      50 |    11.53 |      25 |      50 |                   
+  csvFactory.ts               |      20 |      100 |       0 |      20 | 9-39              
+  memberFactory.ts            |       0 |        0 |       0 |       0 | 13-49             
+  stateFactory.ts             |     100 |    42.85 |     100 |     100 | 18-63             
+ src/test-utils/perf          |       0 |        0 |       0 |       0 |                   
+  measure.ts                  |       0 |        0 |       0 |       0 | 7-15              
+ src/test-utils/render        |   18.18 |        0 |       0 |   21.05 |                   
+  providers.tsx               |      20 |        0 |       0 |   28.57 | 8,34-42           
+  renderers.tsx               |   16.66 |        0 |       0 |   16.66 | 27-39,49-60,65-67 
+ src/test-utils/utils         |       0 |        0 |       0 |       0 |                   
+  name.ts                     |       0 |        0 |       0 |       0 | 6-7               
+ src/ui/components            |       0 |        0 |       0 |       0 |                   
+  FieldRenderer.tsx           |       0 |        0 |       0 |       0 | 11-31             
+  FinancialSummary.tsx        |       0 |      100 |       0 |       0 | 17-25             
+ src/ui/components/fields     |       0 |        0 |       0 |       0 |                   
+  ChipButton.tsx              |       0 |        0 |       0 |       0 | 13-22             
+  ConditionalField.tsx        |       0 |        0 |       0 |       0 | 12-33             
+  DateField.tsx               |       0 |        0 |       0 |       0 | 17-82             
+  FormField.tsx               |       0 |        0 |       0 |       0 | 14-37             
+  InputCounter.tsx            |       0 |        0 |       0 |       0 | 16-30             
+  MoneyField.tsx              |       0 |        0 |       0 |       0 | 11-27             
+  MoneyInput.tsx              |       0 |        0 |       0 |       0 | 14-44             
+  ToggleSwitch.tsx            |       0 |        0 |       0 |       0 | 13-22             
+  index.ts                    |       0 |        0 |       0 |       0 |                   
+ src/ui/navigation            |       0 |        0 |       0 |       0 |                   
+  MainNavigator.tsx           |       0 |        0 |       0 |       0 | 7-18              
+ src/ui/screens/CSV           |       0 |        0 |       0 |       0 |                   
+  CsvUploadScreen.tsx         |       0 |        0 |       0 |       0 | 26-103            
+ src/ui/screens/Daily         |       0 |        0 |       0 |       0 |                   
+  UndoScreen.tsx              |       0 |        0 |       0 |       0 | 14-80             
+ src/ui/screens/DailyInput    |       0 |      100 |       0 |       0 |                   
+  DailyInputScreen.tsx        |       0 |      100 |       0 |       0 | 7-10              
+ src/ui/screens/Dashboard     |       0 |      100 |       0 |       0 |                   
+  DashboardScreen.tsx         |       0 |      100 |       0 |       0 | 17-26             
+ src/ui/screens/Options       |       0 |      100 |       0 |       0 |                   
+  OptionsScreen.tsx           |       0 |      100 |       0 |       0 | 15-19             
+ src/ui/screens/Reset         |       0 |      100 |       0 |       0 |                   
+  ResetScreen.tsx             |       0 |      100 |       0 |       0 | 13-39             
+ src/ui/screens/Settings      |       0 |        0 |       0 |       0 |                   
+  SettingsScreen.tsx          |       0 |        0 |       0 |       0 | 12-38             
+ src/ui/screens/Wizard        |       0 |        0 |       0 |       0 |                   
+  CriticalErrorScreen.tsx     |       0 |      100 |       0 |       0 | 7-9               
+  LandingScreen.tsx           |       0 |        0 |       0 |       0 | 12-34             
+  SplashScreen.tsx            |       0 |      100 |       0 |       0 | 5-7               
+  WelcomeWizard.tsx           |       0 |      100 |       0 |       0 | 5-7               
+  WizardController.tsx        |       0 |        0 |       0 |       0 | 10-37             
+  WizardPage.tsx              |       0 |        0 |       0 |       0 | 15-64             
+ src/ui/screens/Wizard/pages  |       0 |        0 |       0 |       0 |                   
+  1setupHousehold.config.ts   |       0 |        0 |       0 |       0 | 10-46             
+  2detailsHousehold.config.ts |       0 |      100 |     100 |       0 | 5                 
+  3incomeDetails.config.ts    |       0 |        0 |       0 |       0 | 6-39              
+  4fixedExpenses.config.ts    |       0 |        0 |       0 |       0 | 6-36              
+ src/ui/selectors             |     100 |    83.33 |     100 |     100 |                   
+  financialSelectors.ts       |     100 |       50 |     100 |     100 | 8                 
+  householdSelectors.ts       |     100 |      100 |     100 |     100 |                   
+ src/ui/styles                |       0 |        0 |       0 |       0 |                   
+  Colors.ts                   |       0 |      100 |     100 |       0 | 30                
+  Tokens.ts                   |       0 |      100 |     100 |       0 | 2-32              
+  useAppStyles.ts             |       0 |        0 |       0 |       0 | 23-56             
+ src/ui/styles/modules        |       0 |      100 |       0 |       0 |                   
+  Alerts.ts                   |       0 |      100 |       0 |       0 | 11                
+  Buttons.ts                  |       0 |      100 |       0 |       0 | 12-23             
+  Cards.ts                    |       0 |      100 |       0 |       0 | 17-28             
+  Checkboxes.ts               |       0 |      100 |       0 |       0 | 7                 
+  Chips.ts                    |       0 |      100 |       0 |       0 | 11                
+  Dashboard.ts                |       0 |      100 |       0 |       0 | 12-23             
+  Forms.ts                    |       0 |      100 |       0 |       0 | 12                
+  Header.ts                   |       0 |      100 |       0 |       0 | 12-23             
+  Helpers.ts                  |       0 |      100 |       0 |       0 | 7                 
+  Layout.ts                   |       0 |      100 |       0 |       0 | 11                
+  Summary.ts                  |       0 |      100 |       0 |       0 | 11-44             
+  Toggles.ts                  |       0 |      100 |       0 |       0 | 7                 
+  Typography.ts               |       0 |      100 |       0 |       0 | 7                 
+  index.ts                    |       0 |        0 |       0 |       0 |                   
+ src/utils                    |    7.47 |     6.66 |    6.66 |    8.21 |                   
+  AuditLogger.ts              |       0 |        0 |       0 |       0 | 1-22              
+  conditions.ts               |    7.69 |        0 |       0 |    9.09 | 4-28              
+  csvHelper.ts                |       5 |        0 |       0 |    6.66 | 6-30              
+  date.ts                     |       0 |        0 |       0 |       0 | 21-236            
+  fieldVisibility.ts          |       0 |        0 |       0 |       0 | 6-12              
+  index.ts                    |       0 |        0 |       0 |       0 |                   
+  objects.ts                  |    90.9 |    81.81 |     100 |     100 | 8-9               
+  ping.ts                     |      50 |      100 |       0 |      50 | 6                 
+  strings.ts                  |       0 |        0 |       0 |       0 | 9-15              
+ src/utils/audit              |       0 |        0 |       0 |       0 |                   
+  logger.ts                   |       0 |        0 |       0 |       0 | 1-22              
+------------------------------|---------|----------|---------|---------|-------------------
+
+=============================== Coverage summary ===============================
+Statements   : 8.93% ( 96/1074 )
+Branches     : 4.85% ( 43/886 )
+Functions    : 8.23% ( 22/267 )
+Lines        : 8.86% ( 87/981 )
+================================================================================
+Jest: "global" coverage threshold for statements (70%) not met: 8.93%
+Jest: "global" coverage threshold for branches (70%) not met: 4.85%
+Jest: "global" coverage threshold for lines (70%) not met: 8.86%
+Jest: "global" coverage threshold for functions (70%) not met: 8.23%
+
+Test Suites: 2 passed, 2 total
+Tests:       10 passed, 10 total
+Snapshots:   1 passed, 1 total
+Time:        11.11 s
+Ran all test suites matching selectors.

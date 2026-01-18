@@ -1,0 +1,7 @@
+src/adapters/transaction/stateful.ts:import { AuditLogger } from '@/utils/audit/logger'; // Check of dit pad klopt met je find-resultaat
+src/services/__tests__/dataOrchestrator.test.tsx:import { Logger } from '@services/logger';
+src/services/transactionService.ts:import { Logger } from './logger';
+src/services/dataOrchestrator.ts:import { Logger } from '@services/logger';
+src/ui/screens/CSV/CsvUploadScreen.tsx:import { Logger } from '@services/logger';
+src/utils/__tests__/logger.test.ts:import { logger, Logger, AuditLogger } from '../../utils/audit/logger';
+src/app/context/ThemeContext.tsx:import logger from '@services/logger';

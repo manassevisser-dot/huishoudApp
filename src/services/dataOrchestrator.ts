@@ -3,7 +3,7 @@ import { csvService } from '@adapters/csv/csvService';
 import { dataProcessor } from './dataProcessor';
 import { Member, RawUIData, ResearchPayload, CsvItem, FinancialIncomeSummary } from '@domain/types';
 import { collectAndDistributeData, assertNoPIILeak } from '@services/privacyHelpers';
-import { Logger } from '@services/logger';
+import { Logger } from '@/adapters/audit/AuditLoggerAdapter';
 /* ============================================================
  * TYPES & INTERFACES
  * ============================================================ */

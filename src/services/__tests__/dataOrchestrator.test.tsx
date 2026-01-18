@@ -3,7 +3,7 @@ import { dataOrchestrator } from '../dataOrchestrator';
 import { DATA_KEYS } from '@domain/constants/datakeys';
 import { csvFactory } from '@test-utils/index';
 import { csvService } from '@adapters/csv/csvService';
-import { Logger } from '@services/logger';
+import { Logger } from '@/adapters/audit/AuditLoggerAdapter';
 import { dataProcessor } from '../dataProcessor';
 
 describe('DataOrchestrator Unit Tests', () => {

@@ -1,4 +1,4 @@
-import { AuditLogger } from '@/utils/audit/logger'; // Check of dit pad klopt met je find-resultaat
+import { AuditLogger } from '@/adapters/audit/AuditLoggerAdapter'; // Check of dit pad klopt met je find-resultaat
 
 const allocateRemainder = (total: number, parts: number): number[] => {
   const base = Math.floor(total / parts);

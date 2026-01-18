@@ -1,7 +1,7 @@
-import { StorageShim } from '@/adapters/storage/storage'; // Importeer je shim
+import { StorageShim } from '@/services/storageShim'; // Importeer je shim
 // We importeren de 'wasstraat' helper uit de privacyHelpers
 import { toMemberType } from './privacyHelpers';
-import { Logger } from './logger';
+import { Logger } from '@/adapters/audit/AuditLoggerAdapter';
 
 export const migrateTransactionsToPhoenix = async (oldState: any) => {
   const safeState = oldState || {};

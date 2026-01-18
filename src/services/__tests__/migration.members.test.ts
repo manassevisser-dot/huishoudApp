@@ -2,12 +2,13 @@ import { collectAndDistributeData, assertNoPIILeak, parseName, toNumber } from '
 import { migrateTransactionsToPhoenix } from '../transactionService';
 import { makeLegacyMember } from '../../test-utils/factories/memberFactory';
 import { TransactionService, undoLastTransaction } from '../transactionService';
-import { StorageShim } from '@/adapters/storage/storage';
+import { StorageShim } from '@/services/storageShim';
 
 // Mock de StorageShim om zij-effecten te voorkomen
-jest.mock('@/adapters/storage/storage', () => ({
+jest.mock('../storageShim', () => ({
   StorageShim: {
     loadState: jest.fn(),
+    saveState: jest.fn(),
     clearAll: jest.fn(),
   },
 }));

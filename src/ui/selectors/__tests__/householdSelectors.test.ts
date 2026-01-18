@@ -4,7 +4,7 @@ import {
   selectHouseholdTypeLabel,
   HOUSEHOLD_STATUS,
   selectHouseholdDataIntegrityStatus,
-} from '@selectors/householdSelectors';
+} from '@/ui/selectors/householdSelectors';
 import { DATA_KEYS } from '@domain/constants/datakeys';
 import { createMockState } from '@test-utils/index';
 
