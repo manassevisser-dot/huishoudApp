@@ -1,4 +1,4 @@
-import { StorageShim } from '@services/storageShim'; // Importeer je shim
+import { StorageShim } from '@/adapters/storage/storage'; // Importeer je shim
 // We importeren de 'wasstraat' helper uit de privacyHelpers
 import { toMemberType } from './privacyHelpers';
 import { Logger } from './logger';
