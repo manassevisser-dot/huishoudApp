@@ -1,32 +1,23 @@
-import * as React from 'react';
-import { View } from 'react-native';
-import { FieldConfig, FormState, FormAction } from '@shared-types/form';
-import FormField from './FormField';
-import { evaluateVisibleIf } from '../../../utils/fieldVisibility';
+import React from 'react';
+import { ValueProvider } from '../../../domain/interfaces/ValueProvider';
 
 interface ConditionalFieldProps {
-  field: FieldConfig;
-  state: FormState;
-  dispatch: React.Dispatch<FormAction>;
+  fieldId: string;
+  dependentFieldId: string;
+  expectedValue: unknown;
+  valueProvider: ValueProvider;
+  children: React.ReactNode;
 }
 
-export const ConditionalField: React.FC<ConditionalFieldProps> = ({ field, state, dispatch }) => {
-  // Gebruik de centrale util voor SSOT zichtbaarheid
-  const isVisible = evaluateVisibleIf(field.visibleIf, state);
+export const ConditionalField: React.FC<ConditionalFieldProps> = ({
+  dependentFieldId,
+  expectedValue,
+  valueProvider,
+  children
+}) => {
+  const actualValue = valueProvider.getValue(dependentFieldId);
+  const isVisible = actualValue === expectedValue;
 
-  if (!isVisible || !field.dependentField) {
-    return null;
-  }
-
-  const dependentField = field.dependentField;
-  const section = dependentField.section ?? 'setup';
-  const fieldValue = (state.data[section] as any)[dependentField.fieldId];
-
-  return (
-    <View style={{ marginTop: 10, paddingLeft: 15, borderLeftWidth: 2, borderLeftColor: '#eee' }}>
-      <FormField field={dependentField} state={state} dispatch={dispatch} value={fieldValue} />
-    </View>
-  );
+  if (!isVisible) return null;
+  return <>{children}</>;
 };
-
-export default ConditionalField;
