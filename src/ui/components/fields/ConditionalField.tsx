@@ -1,23 +1,24 @@
 import React from 'react';
-import { ValueProvider } from '../../../domain/interfaces/ValueProvider';
+import { ValueProvider } from '@domain/interfaces';
 
 interface ConditionalFieldProps {
   fieldId: string;
   dependentFieldId: string;
-  expectedValue: unknown;
   valueProvider: ValueProvider;
   children: React.ReactNode;
 }
 
 export const ConditionalField: React.FC<ConditionalFieldProps> = ({
   dependentFieldId,
-  expectedValue,
   valueProvider,
   children
 }) => {
-  const actualValue = valueProvider.getValue(dependentFieldId);
-  const isVisible = actualValue === expectedValue;
+  const dependentValue = valueProvider.getValue(dependentFieldId);
+  
+  // Alleen renderen als waarde bestaat — de domein-laag bepaalt de data-aanwezigheid
+  if (dependentValue === undefined || dependentValue === null) {
+    return null;
+  }
 
-  if (!isVisible) return null;
   return <>{children}</>;
 };
