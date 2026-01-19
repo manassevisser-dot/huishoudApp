@@ -1,0 +1,12 @@
+{
+  "Producing_Role": "CEO Manasse",
+  "Artifact_ID": "SVZ-0-UTILS-006",
+  "Status": "PENDING",
+  "Token_ID": "TOKEN-ID-MANASSE-SVZ0-C4F2919A",
+  "Runtime_Environment": "NODE_TERMINAL",
+  "SHA256_Hash": "c4f2919ae1bfdd7cb686ea979cdd08d24f8694916297471f1e8a0a97930d1019",
+  "Source_Commit": "MANUAL_CLI_INPUT",
+  "PII_Attestation": "NEE - CLEAN",
+  "File_Name": "strings.ts",
+  "Raw_Content": "/**\n * strings.ts\n * cleanName:\n * - verwijdert emoji/rare tekens (ASCII behoud)\n * - normaliseert whitespace (meerdere spaties -> 1)\n * - trimt begin/einde\n * - limiteert lengte (default 25)\n */\nexport function cleanName(input: string | undefined | null, max: number = 25): string {\n  const raw = typeof input === 'string' ? input : '';\n\n  // Filter: behoud alleen letters, cijfers en standaard leestekens (geen emoji)\n  const noEmoji = raw.replace(/[^\\x20-\\x7E\\u00C0-\\u00FF]/g, '');\n\n  // Limiteer lengte en schoon whitespace op\n  return noEmoji.slice(0, max).replace(/\\s+/g, ' ').trim();\n}\n"
+}

@@ -1,0 +1,501 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 1`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "aantalMensen",
+  "inputValue": "",
+  "scenario": "Lege invoer",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 2`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "aantalMensen",
+  "inputValue": null,
+  "scenario": "Null waarde",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 3`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "aantalMensen",
+  "inputValue": 10,
+  "scenario": "Geldig getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 4`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "aantalMensen",
+  "inputValue": -1,
+  "scenario": "Te laag getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 5`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "aantalMensen",
+  "inputValue": "not-a-number",
+  "scenario": "Foutieve string",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 6`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "aantalVolwassen",
+  "inputValue": "",
+  "scenario": "Lege invoer",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 7`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "aantalVolwassen",
+  "inputValue": null,
+  "scenario": "Null waarde",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 8`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "aantalVolwassen",
+  "inputValue": 10,
+  "scenario": "Geldig getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 9`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "aantalVolwassen",
+  "inputValue": -1,
+  "scenario": "Te laag getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 10`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "aantalVolwassen",
+  "inputValue": "not-a-number",
+  "scenario": "Foutieve string",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 11`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "kinderenLabel",
+  "inputValue": "",
+  "scenario": "Lege invoer",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 12`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "kinderenLabel",
+  "inputValue": null,
+  "scenario": "Null waarde",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 13`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "kinderenLabel",
+  "inputValue": 10,
+  "scenario": "Geldig getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 14`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "kinderenLabel",
+  "inputValue": -1,
+  "scenario": "Te laag getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 15`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "kinderenLabel",
+  "inputValue": "not-a-number",
+  "scenario": "Foutieve string",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 16`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "autoCount",
+  "inputValue": "",
+  "scenario": "Lege invoer",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 17`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "autoCount",
+  "inputValue": null,
+  "scenario": "Null waarde",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 18`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "autoCount",
+  "inputValue": 10,
+  "scenario": "Geldig getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 19`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "autoCount",
+  "inputValue": -1,
+  "scenario": "Te laag getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 20`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "autoCount",
+  "inputValue": "not-a-number",
+  "scenario": "Foutieve string",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 21`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "heeftHuisdieren",
+  "inputValue": "",
+  "scenario": "Lege invoer",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 22`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "heeftHuisdieren",
+  "inputValue": null,
+  "scenario": "Null waarde",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 23`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "heeftHuisdieren",
+  "inputValue": 10,
+  "scenario": "Geldig getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 24`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "heeftHuisdieren",
+  "inputValue": -1,
+  "scenario": "Te laag getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity > Snapshot: Setup Wizard Validation 25`] = `
+{
+  "error": [
+    "Validatie error",
+  ],
+  "fieldId": "heeftHuisdieren",
+  "inputValue": "not-a-number",
+  "scenario": "Foutieve string",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 1`] = `
+{
+  "error": null,
+  "fieldId": "aantalMensen",
+  "inputValue": "",
+  "scenario": "Lege invoer",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 2`] = `
+{
+  "error": null,
+  "fieldId": "aantalMensen",
+  "inputValue": null,
+  "scenario": "Null waarde",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 3`] = `
+{
+  "error": null,
+  "fieldId": "aantalMensen",
+  "inputValue": 10,
+  "scenario": "Geldig getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 4`] = `
+{
+  "error": null,
+  "fieldId": "aantalMensen",
+  "inputValue": -1,
+  "scenario": "Te laag getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 5`] = `
+{
+  "error": null,
+  "fieldId": "aantalMensen",
+  "inputValue": "not-a-number",
+  "scenario": "Foutieve string",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 6`] = `
+{
+  "error": null,
+  "fieldId": "aantalVolwassen",
+  "inputValue": "",
+  "scenario": "Lege invoer",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 7`] = `
+{
+  "error": null,
+  "fieldId": "aantalVolwassen",
+  "inputValue": null,
+  "scenario": "Null waarde",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 8`] = `
+{
+  "error": null,
+  "fieldId": "aantalVolwassen",
+  "inputValue": 10,
+  "scenario": "Geldig getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 9`] = `
+{
+  "error": null,
+  "fieldId": "aantalVolwassen",
+  "inputValue": -1,
+  "scenario": "Te laag getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 10`] = `
+{
+  "error": null,
+  "fieldId": "aantalVolwassen",
+  "inputValue": "not-a-number",
+  "scenario": "Foutieve string",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 11`] = `
+{
+  "error": null,
+  "fieldId": "kinderenLabel",
+  "inputValue": "",
+  "scenario": "Lege invoer",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 12`] = `
+{
+  "error": null,
+  "fieldId": "kinderenLabel",
+  "inputValue": null,
+  "scenario": "Null waarde",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 13`] = `
+{
+  "error": null,
+  "fieldId": "kinderenLabel",
+  "inputValue": 10,
+  "scenario": "Geldig getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 14`] = `
+{
+  "error": null,
+  "fieldId": "kinderenLabel",
+  "inputValue": -1,
+  "scenario": "Te laag getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 15`] = `
+{
+  "error": null,
+  "fieldId": "kinderenLabel",
+  "inputValue": "not-a-number",
+  "scenario": "Foutieve string",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 16`] = `
+{
+  "error": null,
+  "fieldId": "autoCount",
+  "inputValue": "",
+  "scenario": "Lege invoer",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 17`] = `
+{
+  "error": null,
+  "fieldId": "autoCount",
+  "inputValue": null,
+  "scenario": "Null waarde",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 18`] = `
+{
+  "error": null,
+  "fieldId": "autoCount",
+  "inputValue": 10,
+  "scenario": "Geldig getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 19`] = `
+{
+  "error": null,
+  "fieldId": "autoCount",
+  "inputValue": -1,
+  "scenario": "Te laag getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 20`] = `
+{
+  "error": null,
+  "fieldId": "autoCount",
+  "inputValue": "not-a-number",
+  "scenario": "Foutieve string",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 21`] = `
+{
+  "error": null,
+  "fieldId": "heeftHuisdieren",
+  "inputValue": "",
+  "scenario": "Lege invoer",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 22`] = `
+{
+  "error": null,
+  "fieldId": "heeftHuisdieren",
+  "inputValue": null,
+  "scenario": "Null waarde",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 23`] = `
+{
+  "error": null,
+  "fieldId": "heeftHuisdieren",
+  "inputValue": 10,
+  "scenario": "Geldig getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 24`] = `
+{
+  "error": null,
+  "fieldId": "heeftHuisdieren",
+  "inputValue": -1,
+  "scenario": "Te laag getal",
+}
+`;
+
+exports[`BT-02 Baseline: Field Validation Integrity Snapshot: Setup Wizard Validation 25`] = `
+{
+  "error": null,
+  "fieldId": "heeftHuisdieren",
+  "inputValue": "not-a-number",
+  "scenario": "Foutieve string",
+}
+`;

@@ -25,8 +25,8 @@ export const FormStateSchema = z
     data: z.object({
       setup: z
         .object({
-          aantalMensen: z.number().default(1),
-          aantalVolwassen: z.number().default(1),
+          aantalMensen: z.number().min(1, "Minimaal 1 persoon vereist").default(1),
+          aantalVolwassen: z.number().min(1, "Minimaal 1 volwassene vereist").default(1),
           // HIER AANGEPAST: Specifieke literals in plaats van algemene string
           autoCount: z.enum(['Nee', 'Een', 'Twee']).default('Nee'),
         })

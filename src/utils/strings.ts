@@ -1,4 +1,5 @@
 /**
+ * strings.ts
  * cleanName:
  * - verwijdert emoji/rare tekens (ASCII behoud)
  * - normaliseert whitespace (meerdere spaties -> 1)

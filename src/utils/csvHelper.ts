@@ -1,4 +1,5 @@
-/**
+/** 
+ * csvHelper.ts
  * Universele CSV naar JSON parser.
  * Ondersteunt: Komma (,), Puntkomma (;) en Tabs (\t).
  */

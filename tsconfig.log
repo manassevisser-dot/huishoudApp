@@ -4,6 +4,7 @@
     "module": "ESNext",
     "moduleResolution": "node",
     "jsx": "react-jsx",
+    "types": ["vitest/globals"],
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,

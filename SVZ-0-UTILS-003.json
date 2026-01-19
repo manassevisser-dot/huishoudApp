@@ -1,0 +1,12 @@
+{
+  "Producing_Role": "CEO Manasse",
+  "Artifact_ID": "SVZ-0-UTILS-003",
+  "Status": "PENDING",
+  "Token_ID": "TOKEN-ID-MANASSE-SVZ0-FE1D91C5",
+  "Runtime_Environment": "NODE_TERMINAL",
+  "SHA256_Hash": "fe1d91c5969302fd1884b929381eb5255b06848447f81b1b7e99ea8accc5b545",
+  "Source_Commit": "MANUAL_CLI_INPUT",
+  "PII_Attestation": "NEE - CLEAN",
+  "File_Name": "csvHelper.ts",
+  "Raw_Content": "/** \n * csvHelper.ts\n * Universele CSV naar JSON parser.\n * Ondersteunt: Komma (,), Puntkomma (;) en Tabs (\\t).\n */\nexport const parseRawCsv = (text: string): Record<string, string>[] => {\n  if (!text) return [];\n\n  // 1. Schoon de tekst op (verwijder Byte Order Marks)\n  const cleanText = text.replace(/^\\uFEFF/, '').trim();\n  const lines = cleanText.split(/\\r?\\n/); // Werkt voor zowel Windows als Unix line-endings\n\n  if (lines.length < 2) return [];\n\n  // 2. Detecteer de scheider op basis van de eerste regel\n  let delimiter = ',';\n  if (lines[0].includes('\\t')) delimiter = '\\t';\n  else if (lines[0].includes(';')) delimiter = ';';\n\n  // 3. Extraheer headers\n  const headers = lines[0].split(delimiter).map((h) => h.trim().replace(/\"/g, ''));\n\n  // 4. Map de rijen naar objecten\n  return lines.slice(1).map((line) => {\n    const values = line.split(delimiter);\n    return headers.reduce(\n      (obj, header, i) => {\n        // Verwijder eventuele aanhalingstekens rondom waarden\n        const val = values[i] ? values[i].trim().replace(/\"/g, '') : '';\n        obj[header] = val;\n        return obj;\n      },\n      {} as Record<string, string>,\n    );\n  });\n};\n"
+}

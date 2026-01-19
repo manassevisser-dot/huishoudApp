@@ -1,0 +1,12 @@
+{
+  "Producing_Role": "CEO Manasse",
+  "Artifact_ID": "SVZ-0-UTILS-004",
+  "Status": "PENDING",
+  "Token_ID": "TOKEN-ID-MANASSE-SVZ0-E1755DDE",
+  "Runtime_Environment": "NODE_TERMINAL",
+  "SHA256_Hash": "e1755ddea98d0983510fecc064a0326db811cf0842adeb4370c4f42f135179ba",
+  "Source_Commit": "MANUAL_CLI_INPUT",
+  "PII_Attestation": "NEE - CLEAN",
+  "File_Name": "objects.ts",
+  "Raw_Content": "// src/utils/objects.ts\n\n/**\n * Deep merge utility voor productie en test.\n * Objecten worden recursief samengevoegd, arrays worden overschreven.\n */\nexport function deepMerge<T extends object>(target: T, source?: any): T {\n  const out: any = Array.isArray(target) ? [...(target as any)] : { ...target };\n  if (!source) return out as T;\n\n  for (const [key, srcVal] of Object.entries(source)) {\n    const tgtVal = (out as any)[key];\n    const isObj = (val: unknown) => val && typeof val === 'object' && !Array.isArray(val);\n\n    if (isObj(srcVal) && isObj(tgtVal)) {\n      (out as any)[key] = deepMerge(tgtVal, srcVal as any);\n    } else {\n      (out as any)[key] = srcVal as any;\n    }\n  }\n  return out as T;\n}\n"
+}

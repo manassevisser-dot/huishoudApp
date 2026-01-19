@@ -1,0 +1,12 @@
+{
+  "Producing_Role": "CEO Manasse",
+  "Artifact_ID": "SVZ-0-UTILS-002",
+  "Status": "PENDING",
+  "Token_ID": "TOKEN-ID-MANASSE-SVZ0-1612658E",
+  "Runtime_Environment": "NODE_TERMINAL",
+  "SHA256_Hash": "1612658e311c389b0380ad8e1a17daed1b6889de0186fa3506e3492260bf6670",
+  "Source_Commit": "MANUAL_CLI_INPUT",
+  "PII_Attestation": "NEE - CLEAN",
+  "File_Name": "fieldVisibility.ts",
+  "Raw_Content": "// src/ui/utils/fieldVisibility.ts\nimport type { FieldConfig } from '@shared-types/form';\nimport type { FormState } from '@shared-types/form';\n\nexport function evaluateVisibleIf(visibleIf: FieldConfig['visibleIf'], state: FormState): boolean {\n  if (typeof visibleIf === 'function') {\n    return visibleIf(state);\n  }\n  if (typeof visibleIf === 'string') {\n    return Boolean((state as any).data?.[visibleIf]);\n  }\n  return true;\n}\n"
+}

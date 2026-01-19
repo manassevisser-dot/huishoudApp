@@ -1,0 +1,12 @@
+{
+  "Producing_Role": "CEO Manasse",
+  "Artifact_ID": "SVZ-0-UTILS-001",
+  "Status": "PENDING",
+  "Token_ID": "TOKEN-ID-MANASSE-SVZ0-22E6D2CD",
+  "Runtime_Environment": "NODE_TERMINAL",
+  "SHA256_Hash": "22e6d2cd084287f8d83c2b9c4be1874c1ec635d20bcec687debfd1c5cbcb6de7",
+  "Source_Commit": "MANUAL_CLI_INPUT",
+  "PII_Attestation": "NEE - CLEAN",
+  "File_Name": "conditions.ts",
+  "Raw_Content": "//conditions.ts\nimport { FormState } from '@shared-types/form';\n\nexport const evaluateConditions = (condition: any, state: FormState): boolean => {\n  if (!condition || !state) return true;\n\n  const { fieldId, operator, value } = condition;\n\n  // Phoenix 2025 data-lookup:\n  // We checken de root, de SETUP bucket en de HOUSEHOLD bucket\n  const actualValue =\n    (state as any)[fieldId] ??\n    (state as any).SETUP?.[fieldId] ??\n    (state as any).household?.[fieldId];\n\n  // Zorg dat we niet vergelijken met undefined\n  if (actualValue === undefined) return false;\n\n  switch (operator) {\n    case 'eq':\n      return actualValue === value;\n    case 'neq':\n      return actualValue !== value;\n    case 'gt':\n      return Number(actualValue) > Number(value);\n    case 'lt':\n      return Number(actualValue) < Number(value);\n    default:\n      return true;\n  }\n};\n"
+}

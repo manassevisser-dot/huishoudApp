@@ -1,0 +1,344 @@
+
+Uitstekend — dankzij de `tree`-output en jouw correctie zie ik nu **exact** hoe de architectuur is opgebouwd.
+
+### 🔍 Cruciale observaties
+
+1. **`DATA_KEYS` zit in `src/domain/constants/datakeys.ts`**  
+   → Dit is **domeinlaag**, niet infra of UI.  
+   → Dus het is **toegestaan** dat andere domeinmodules dit gebruiken.
+
+2. **`FormStateValueProvider.ts` zit in `src/app/orchestrators/`**  
+   → Dit is **app-laag**, dus mag **alleen** praten met:
+   - **Domeinabstraheringen** (`ValueProvider`)
+   - **Infrastructuur** (via ports)
+   - **Maar niet direct met `domain/constants`** → want dat zou **domein-kennis lekken naar app**.
+
+3. **De state-structuur is**:  
+   ```ts
+   formState.data[DATA_KEYS.SETUP].maritalStatus
+   ```
+   → Dus de **bucket-naam is een token uit `DATA_KEYS`**, en de **veldnaam is plat**.
+
+---
+
+### ✅ Juiste architecturale oplossing
+
+We moeten **één plek** hebben die weet hoe je van een **plat domeinveld** naar de **juiste bucket + key** komt, **zonder dat de app-laag `DATA_KEYS` importeert**.
+
+#### 🧩 Oplossing: **Verplaats de mapping naar de domeinlaag**
+
+Creëer een **domein-service** die de mapping beheert:
+
+```ts
+// src/domain/rules/FieldPathResolver.ts
+import { DATA_KEYS } from '@domain/constants/datakeys';
+
+export interface FieldPathResolver {
+  resolve(field: string): { bucket: string; key: string } | null;
+}
+
+// Domein kent zijn eigen structuur
+const FIELD_TO_BUCKET_MAP: Record<string, { bucket: keyof typeof DATA_KEYS; key: string }> = {
+  maritalStatus: { bucket: 'SETUP', key: 'maritalStatus' },
+  hasPartner: { bucket: 'SETUP', key: 'hasPartner' },
+  childrenCount: { bucket: 'SETUP', key: 'childrenCount' },
+  grossMonthly: { bucket: 'INCOME', key: 'grossMonthly' },
+  partnerIncome: { bucket: 'INCOME', key: 'partnerIncome' },
+  // ... alle velden
+};
+
+export const fieldPathResolver: FieldPathResolver = {
+  resolve(field: string): { bucket: string; key: string } | null {
+    const mapping = FIELD_TO_BUCKET_MAP[field];
+    if (!mapping) return null;
+    return {
+      bucket: DATA_KEYS[mapping.bucket],
+      key: mapping.key
+    };
+  }
+};
+```
+
+#### 🔄 Pas `FormStateValueProvider` aan (app-laag)
+
+```ts
+// src/app/orchestrators/FormStateValueProvider.ts
+import { ValueProvider } from '@domain/rules/ValueProvider';
+import { fieldPathResolver } from '@domain/rules/FieldPathResolver'; // ✅ Alleen interface, geen DATA_KEYS
+
+export class FormStateValueProvider implements ValueProvider {
+  constructor(private formState: { data: Record<string, any> }) {}
+
+  getValue(fieldPath: string): unknown {
+    const resolution = fieldPathResolver.resolve(fieldPath);
+    if (!resolution) return undefined;
+    const { bucket, key } = resolution;
+    return this.formState.data?.[bucket]?.[key];
+  }
+}
+```
+
+---
+
+### ✅ Waarom dit correct is
+
+- **Domeinlaag** beheert de mapping → kent `DATA_KEYS` ✅  
+- **App-laag** gebruikt alleen de **resolver-interface** → geen `DATA_KEYS`-kennis ✅  
+- **UI** gebruikt alleen platte domeinvelden → geen state-kennis ✅  
+- **Geen hardcoded strings** → alles via `DATA_KEYS` ✅  
+
+---
+
+### 📌 Volgende stap
+
+Wil je dat ik nu **CU-FIELD-PATH-RESOLVER** assembleer met:
+- `src/domain/rules/FieldPathResolver.ts`
+- Bijgewerkte `FormStateValueProvider.ts`?
+
+Dit sluit de taalkloof tussen domein en infra, en respecteert de token-gebaseerde architectuur.
+
+===========
+Uitstekend — dat is **precies de juiste stap**.
+
+Je hebt nu een **heldere, architecturaal consistente diagnose** van de mismatch:
+- De **visibility engine** verwacht platte domeinvelden,
+- Maar de **state-structuur** gebruikt **token-gebaseerde buckets** via `DATA_KEYS`,
+- En de **app-laag** mag die tokens **niet kennen**, want dat breekt laagscheiding.
+
+Door dit als **voorstel** in te dienen bij **Iris/Max/Dex/Ava**, activeer je het **governance-kader** zoals bedoeld in Nova’s WAI:
+
+> “Gate R + Mens beslissen”  
+> “ADR‑18/19: Nova ontwerpt; Gate R + Mens beslissen.”
+
+---
+
+### 📬 Aanbevolen structuur voor jouw voorstel
+
+1. **Probleemstelling**:  
+   > “De nieuwe visibility engine (`evaluateVisibilityCondition`) en `FormStateValueProvider` spreken niet dezelfde taal: domein gebruikt platte veldnamen, state gebruikt `DATA_KEYS`-buckets.”
+
+2. **Gevolg**:  
+   > “Zonder oplossing blijft de UI state-kennis bevatten (via `state.data[DATA_KEYS.SETUP]`), wat Max’ SVZ‑2‑N schendt.”
+
+3. **Voorgestelde oplossing**:  
+   > “Introduceer een `FieldPathResolver` in de **domeinlaag** die weet hoe platte veldnamen corresponderen met `DATA_KEYS`-buckets. De app-laag gebruikt alleen de resolver-interface, niet de tokens zelf.”
+
+4. **Architecturale voordelen**:  
+   - Respecteert **laagscheiding** (app kent geen `DATA_KEYS`),  
+   - Behoudt **token-gebaseerde flexibiliteit**,  
+   - Maakt UI **blind voor state-nesting**.
+
+5. **Vraag aan het team**:  
+   > “Is deze richting acceptabel? Of is er een betere manier om de taalkloof te overbruggen?”
+
+---
+
+Je bent hiermee volledig in lijn met het **GEN4-governanceproces**:  
+🔍 **Detectie** → 🧠 **Analyse** → 💡 **Voorstel** → 👥 **Governance-besluit**.
+
+Succes met de review! Laat me weten als je ondersteuning nodig hebt bij het formuleren of visualiseren van het voorstel.
+// ADR-02: Type-Safety via relatieve paden
+import { FormState, WizardPageConfig } from '@shared-types/form';
+import { DATA_KEYS } from '@domain/constants/registry';
+import { UX_TOKENS } from '@domain/constants/registry';
+
+/**
+ * ADR-04: UI Components zijn “dumb”.
+ * De projector (WizardPage) haalt de teksten op via de tokens.
+ */
+export const setupHouseholdConfig: WizardPageConfig = {
+  pageId: DATA_KEYS.SETUP,
+  titleToken: UX_TOKENS.PAGES[DATA_KEYS.SETUP], // "Huishouden opzetten"
+  componentName: 'WizardPage',
+  fields: [
+    {
+      fieldId: 'aantalMensen', // De technische key in je state.data.setup
+      label: 'Totaal aantal bewoners (N)', // Of gebruik: labelToken: UX_TOKENS.FIELDS.TOTAL_MEMBERS
+      type: 'counter',
+      defaultValue: 1,
+      min: 1,
+      max: 20,
+    },
+    {
+      fieldId: 'aantalVolwassen',
+      label: 'Aantal volwassenen (M)',
+      type: 'counter',
+      defaultValue: 1,
+      min: 1,
+      // ADR-01: Businesslogica in UI niet toegestaan, maar view-logic wel
+      visibleIf: (state: FormState) => (state.data[DATA_KEYS.SETUP]?.aantalMensen || 0) > 0,
+      maxGetter: (state: FormState) => state.data[DATA_KEYS.SETUP]?.aantalMensen || 1,
+    },
+    {
+      fieldId: 'kinderenLabel',
+      label: 'Waarvan aantal kinderen (K)',
+      type: 'derived-label',
+      // ADR-03: Berekening op basis van de state
+      valueGetter: (state: FormState) => {
+        const n = state.data[DATA_KEYS.SETUP]?.aantalMensen || 0;
+        const m = state.data[DATA_KEYS.SETUP]?.aantalVolwassen || 0;
+        return Math.max(0, n - m);
+      },
+      visibleIf: (state: FormState) => {
+        const n = state.data[DATA_KEYS.SETUP]?.aantalMensen || 0;
+        const m = state.data[DATA_KEYS.SETUP]?.aantalVolwassen || 0;
+        return n > m;
+      },
+    },
+    {
+      fieldId: 'autoCount',
+      labelToken: UX_TOKENS.FIELDS.CAR_COUNT, // Werkt nu!
+      type: 'radio-chips',
+      options: [
+        { label: 'Geen', value: 'Nee' }, // Tip: gebruik 'Nee' ipv '0' als je visibleIf daarop checkt
+        { label: '1 auto', value: 'Een' },
+        { label: "2+ auto's", value: 'Twee' },
+      ],
+      defaultValue: 'Nee',
+    },
+    {
+      fieldId: 'heeftHuisdieren',
+      label: 'Zijn er huisdieren aanwezig?',
+      type: 'toggle',
+      defaultValue: false,
+    },
+  ],
+};
+===
+import { DATA_KEYS, SUB_KEYS } from '@domain/constants/registry';
+import { UX_TOKENS } from '@domain/constants/registry';
+import { WizardPageConfig } from '@shared-types/wizard';
+
+export const detailsHouseholdConfig: WizardPageConfig = {
+  pageId: DATA_KEYS.HOUSEHOLD,
+  titleToken: UX_TOKENS.PAGES[DATA_KEYS.HOUSEHOLD], // Automatisch 'Wie zijn de bewoners?'
+  componentName: 'WizardPage',
+  fields: [
+    {
+      fieldId: SUB_KEYS.MEMBERS,
+      type: 'repeater',
+      fields: [
+        {
+          fieldId: 'fullName',
+          labelToken: UX_TOKENS.FIELDS.NAME, // 'Volledige naam'
+          type: 'text',
+          required: true,
+        },
+      ],
+    },
+  ],
+};
+===
+import { FormState } from '@shared-types/form';
+import { WizardPageConfig } from '@shared-types/wizard';
+import { DATA_KEYS, SUB_KEYS } from '@domain/constants/registry';
+import { UX_TOKENS } from '@domain/constants/registry';
+
+export const incomeDetailsConfig: WizardPageConfig = {
+  // Gebruik de technische key voor consistentie
+  pageId: '3incomeDetails',
+  titleToken: UX_TOKENS.PAGES[DATA_KEYS.FINANCE], // Gebruikt "Inkomsten & lasten" uit labels.ts
+  componentName: 'WizardPage',
+
+  fields: [
+    {
+      // Dit zorgt dat de data onder state.data.finance.income terecht komt
+      fieldId: SUB_KEYS.INCOME,
+      label: 'Inkomen algemeen',
+      type: 'section',
+      fields: [
+        {
+          fieldId: 'work_salary',
+          label: 'Inkomen uit werk (€/mnd)',
+          type: 'money',
+        },
+      ],
+    },
+    {
+      // De repeater die over de bewoners loopt
+      fieldId: 'member_income_repeater',
+      label: 'Inkomen per gezinslid',
+      type: 'repeater',
+      // ADR-03: Filter de leden uit het juiste state-pad
+      filter: (state: FormState) => state.data[DATA_KEYS.HOUSEHOLD]?.members ?? [],
+      fields: [
+        {
+          fieldId: 'member_income_details',
+          type: 'section',
+          label: 'Inkomensspecificatie',
+          // Zorg dat we alleen iets tonen als er een memberId is (voor de context)
+          visibleIf: (state: FormState, context?: { memberId?: string }) => !!context?.memberId,
+          fields: [
+            {
+              fieldId: 'salary',
+              label: 'Salaris (€/mnd)',
+              type: 'money',
+            },
+            {
+              fieldId: 'benefits',
+              label: 'Uitkering/Toeslagen (€/mnd)',
+              type: 'money',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+===
+import { FormState } from '@shared-types/form';
+import { WizardPageConfig } from '@shared-types/wizard';
+import { DATA_KEYS, SUB_KEYS } from '@domain/constants/registry';
+import { UX_TOKENS } from '@domain/constants/registry';
+
+export const fixedExpensesConfig: WizardPageConfig = {
+  pageId: '4fixedExpenses',
+  titleToken: UX_TOKENS.PAGES[DATA_KEYS.FINANCE], // Gebruikt de 'Inkomsten & lasten' token
+  componentName: 'WizardPage',
+  fields: [
+    {
+      // We nesten dit onder EXPENSES voor de orchestrator
+      fieldId: SUB_KEYS.EXPENSES,
+      label: 'Wonen',
+      type: 'section',
+      fields: [
+        {
+          fieldId: 'living_costs',
+          label: 'Huur / Hypotheek (€/mnd)',
+          type: 'money',
+        },
+      ],
+    },
+    {
+      fieldId: 'car_repeater',
+      label: 'Vervoer (Auto)',
+      type: 'repeater',
+      // ADR-01: View-logic gebaseerd op de SETUP state
+      visibleIf: (state: FormState) => state.data[DATA_KEYS.SETUP]?.autoCount !== 'Nee',
+
+      // ADR-03: De repeater lengte wordt bepaald door de eerdere keuze
+      countGetter: (state: FormState) => {
+        const val = state.data[DATA_KEYS.SETUP]?.autoCount;
+        if (val === 'Een') return 1;
+        if (val === 'Twee') return 2;
+        return 0;
+      },
+      fields: [
+        { fieldId: 'car_fixed', label: 'Verzekering + Belasting', type: 'money' },
+        { fieldId: 'car_fuel', label: 'Brandstof / Laden', type: 'money' },
+      ],
+    },
+    {
+      fieldId: 'subscription_section',
+      label: 'Streaming & Abonnementen',
+      type: 'collapsible-section',
+      fields: [
+        { fieldId: 'netflix', label: 'Netflix', type: 'money' },
+        { fieldId: 'videoland', label: 'Videoland', type: 'money' },
+        { fieldId: 'hbo', label: 'HBO Max', type: 'money' },
+        { fieldId: 'disneyPlus', label: 'Disney+', type: 'money' },
+      ],
+    },
+  ],
+};
+===
