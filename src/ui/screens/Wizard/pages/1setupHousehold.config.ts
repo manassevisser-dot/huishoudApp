@@ -1,67 +1,33 @@
-// ADR-02: Type-Safety via relatieve paden
-import { FormState, WizardPageConfig } from '@shared-types/form';
-import { DATA_KEYS } from '@domain/constants/registry';
+import { UI_SECTIONS } from '@ui/constants/uiSections';
 import { UX_TOKENS } from '@domain/constants/registry';
 
-/**
- * ADR-04: UI Components zijn “dumb”.
- * De projector (WizardPage) haalt de teksten op via de tokens.
- */
-export const setupHouseholdConfig: WizardPageConfig = {
-  pageId: DATA_KEYS.SETUP,
-  titleToken: UX_TOKENS.PAGES[DATA_KEYS.SETUP], // "Huishouden opzetten"
-  componentName: 'WizardPage',
+export const setupHouseholdConfig = {
+  pageId: UI_SECTIONS.HOUSEHOLD_SETUP,
+  titleToken: UX_TOKENS.PAGES.HOUSEHOLD_SETUP,
   fields: [
     {
-      fieldId: 'aantalMensen', // De technische key in je state.data.setup
-      label: 'Totaal aantal bewoners (N)', // Of gebruik: labelToken: UX_TOKENS.FIELDS.TOTAL_MEMBERS
+      fieldId: 'aantalMensen',
       type: 'counter',
-      defaultValue: 1,
-      min: 1,
-      max: 20,
+      labelToken: 'LABEL_AANTAL_MENSEN',
+      min: 1
     },
     {
       fieldId: 'aantalVolwassen',
-      label: 'Aantal volwassenen (M)',
       type: 'counter',
-      defaultValue: 1,
-      min: 1,
-      // ADR-01: Businesslogica in UI niet toegestaan, maar view-logic wel
-      visibleIf: (state: FormState) => (state.data[DATA_KEYS.SETUP]?.aantalMensen || 0) > 0,
-      maxGetter: (state: FormState) => state.data[DATA_KEYS.SETUP]?.aantalMensen || 1,
+      labelToken: 'LABEL_AANTAL_VOLWASSENEN',
+      min: 1
     },
     {
       fieldId: 'kinderenLabel',
-      label: 'Waarvan aantal kinderen (K)',
-      type: 'derived-label',
-      // ADR-03: Berekening op basis van de state
-      valueGetter: (state: FormState) => {
-        const n = state.data[DATA_KEYS.SETUP]?.aantalMensen || 0;
-        const m = state.data[DATA_KEYS.SETUP]?.aantalVolwassen || 0;
-        return Math.max(0, n - m);
-      },
-      visibleIf: (state: FormState) => {
-        const n = state.data[DATA_KEYS.SETUP]?.aantalMensen || 0;
-        const m = state.data[DATA_KEYS.SETUP]?.aantalVolwassen || 0;
-        return n > m;
-      },
+      type: 'label',
+      labelToken: 'LABEL_KINDEREN',
+      visibleIfField: 'kinderenLabel' // Verwijst naar de Registry in visibilityRules.ts
     },
     {
       fieldId: 'autoCount',
-      labelToken: UX_TOKENS.FIELDS.CAR_COUNT, // Werkt nu!
-      type: 'radio-chips',
-      options: [
-        { label: 'Geen', value: 'Nee' }, // Tip: gebruik 'Nee' ipv '0' als je visibleIf daarop checkt
-        { label: '1 auto', value: 'Een' },
-        { label: "2+ auto's", value: 'Twee' },
-      ],
-      defaultValue: 'Nee',
-    },
-    {
-      fieldId: 'heeftHuisdieren',
-      label: 'Zijn er huisdieren aanwezig?',
-      type: 'toggle',
-      defaultValue: false,
-    },
-  ],
+      type: 'radio',
+      options: ['Nee', 'Een', 'Twee'],
+      labelToken: 'LABEL_AUTO_COUNT'
+    }
+  ]
 };
