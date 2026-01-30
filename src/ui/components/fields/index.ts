@@ -4,11 +4,11 @@ export * from './FormField';
 export * from './ConditionalField';
 
 // Input & Interactie componenten
-export { default as ChipButton } from './ChipButton';
-export { default as DateField } from './DateField';
-export { default as InputCounter } from './InputCounter';
-export { default as MoneyField } from './MoneyField';
-export { default as MoneyInput } from './MoneyInput';
-export { default as ToggleSwitch } from './ToggleSwitch';
+export * from './ChipButton';
+export * from './DateField';
+export * from './InputCounter';
+export * from './MoneyField';
+export * from './MoneyInput';
+export * from './ToggleSwitch';
 
 // Als je later meer velden toevoegt, hoef je alleen hier een regel toe te voegen.

@@ -15,7 +15,7 @@ describe('WAI-009 - LandingScreen Integration', () => {
   const mockDispatch = jest.fn();
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.clearAllMocks();;
   });
 
   it('moet de LandingScreen renderen binnen de Phoenix-context', () => {

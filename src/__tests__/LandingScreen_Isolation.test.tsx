@@ -6,7 +6,7 @@ import LandingScreen from '@ui/screens/Wizard/LandingScreen';
 
 // 1. MOCK REACT NATIVE -> VERWIJDERD (gebeurt in jest.setup.early.js)
 
-// 2. Mock Hooks (Deze zijn prima voor ISOLATIE)
+// 2. jest.Mock Hooks (Deze zijn prima voor ISOLATIE)
 const mockDispatch = jest.fn();
 jest.mock('@app/context/FormContext', () => ({
   useForm: () => ({ dispatch: mockDispatch }),
@@ -26,7 +26,7 @@ jest.mock('react-native-safe-area-context', () => ({
 
 describe('LandingScreen Isolation', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.clearAllMocks();;
   });
 
   test('renders correctly', () => {

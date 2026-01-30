@@ -1,22 +1,53 @@
 // src/utils/objects.ts
 
 /**
+ * Helper type for deep partial objects
+ */
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+/**
+ * Type guard for objects (not arrays, not null)
+ */
+const isObject = (val: unknown): val is Record<string, unknown> => 
+  val !== null && typeof val === 'object' && !Array.isArray(val);
+
+/**
  * Deep merge utility voor productie en test.
  * Objecten worden recursief samengevoegd, arrays worden overschreven.
  */
-export function deepMerge<T extends object>(target: T, source?: any): T {
-  const out: any = Array.isArray(target) ? [...(target as any)] : { ...target };
-  if (!source) return out as T;
+export function deepMerge<T extends Record<string, unknown>>(
+  target: T,
+  source?: DeepPartial<T>
+): T {
+  // Explicit null/undefined check (strict-boolean-expressions)
+  if (source === null || source === undefined) {
+    return { ...target };
+  }
 
-  for (const [key, srcVal] of Object.entries(source)) {
-    const tgtVal = (out as any)[key];
-    const isObj = (val: unknown) => val && typeof val === 'object' && !Array.isArray(val);
+  // Handle arrays - overwrite completely
+  if (Array.isArray(target)) {
+    return (Array.isArray(source) ? [...source] : { ...target }) as unknown as T;
+  }
 
-    if (isObj(srcVal) && isObj(tgtVal)) {
-      (out as any)[key] = deepMerge(tgtVal, srcVal as any);
+  const output: Record<string, unknown> = { ...target };
+
+  for (const key in source) {
+    if (!Object.prototype.hasOwnProperty.call(source, key)) continue;
+
+    const sourceValue = source[key];
+    const targetValue = output[key];
+
+    if (isObject(sourceValue) && isObject(targetValue)) {
+      output[key] = deepMerge(
+        targetValue as Record<string, unknown>,
+        sourceValue as Record<string, unknown>
+      );
     } else {
-      (out as any)[key] = srcVal as any;
+      output[key] = sourceValue;
     }
   }
-  return out as T;
+
+  return output as T;
 }

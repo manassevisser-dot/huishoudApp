@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { View, Text } from 'react-native';
 import { useAppStyles } from '@ui/styles/useAppStyles';
-import { formatCurrency } from '@domain/helpers/numbers'; // Gebruik je nieuwe financiële grondwet
+import { formatCurrency } from '@app/orchestrators/types'; // Gebruik je nieuwe financiële grondwet
 
 // Definieer een interface voor de data die de selector levert
 interface FinancialSummaryData {

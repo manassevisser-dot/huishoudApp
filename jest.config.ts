@@ -1,8 +1,9 @@
-
-// jest.config.ts
+/** @jest-config-loader ts-node */
+/** @jest-config-loader-options {"transpileOnly": true} */
 import type { Config } from 'jest';
 
 const config: Config = {
+  // We gebruiken de preset, maar overschrijven de rotzooi die het blokkeert
   preset: 'jest-expo',
 
   setupFiles: [
@@ -17,22 +18,22 @@ const config: Config = {
   testEnvironmentOptions: {
     customExportConditions: ['react-native'],
   },
-
+  modulePathIgnorePatterns: ['<rootDir>/backups/'],
   moduleNameMapper: {
+// @alias-start
+    // FORCEER de resolutie van de gesture handler map
+    '^react-native-gesture-handler$': '<rootDir>/node_modules/react-native-gesture-handler',
+    // 1. Specifieke mapping voor finance (met $ voor exacte match)
+    // 2. De algemene mapping voor shared-types moet OOK naar core wijzen
+    '^@shared-types/(.*)$': '<rootDir>/src/core/types/$1',
+    // Aliassen
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@app/(.*)$': '<rootDir>/src/app/$1',
-
     '^@domain/(.*)$': '<rootDir>/src/domain/$1',
     '^@services/(.*)$': '<rootDir>/src/services/$1',
-
-    '^@shared-types/(.*)$': '<rootDir>/src/domain/types/$1',
-
-    // Kies hier de "primaire" utils map:
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
-    // Extra (optioneel) voor legacy submappen — alleen als je ze echt nodig hebt:
     '^@utils-legacy-helpers/(.*)$': '<rootDir>/src/domain/helpers/$1',
     '^@utils-legacy-validation/(.*)$': '<rootDir>/src/domain/validation/$1',
-
     '^@shared/(.*)$': '<rootDir>/src/shared/$1',
     '^@core/(.*)$': '<rootDir>/src/core/$1',
     '^@config/(.*)$': '<rootDir>/src/config/$1',
@@ -49,25 +50,38 @@ const config: Config = {
     '^@test-utils$': '<rootDir>/src/test-utils/index.ts',
     '^@test-utils/(.*)$': '<rootDir>/src/test-utils/$1',
     '^@kernel/(.*)$': '<rootDir>/src/kernel/$1',
-
-    // Single-file aliases
-    '^@shared-types/form$': '<rootDir>/src/core/types/form.ts',
-    '^@shared-types/finance$': '<rootDir>/src/core/types/finance.ts',
-    '^@shared-types/fields$': '<rootDir>/src/core/types/form.ts',
-    '^@shared-types/wizard$': '<rootDir>/src/core/types/wizard.ts',
-
     '^@domain/types/(.*)$': '<rootDir>/src/core/types/$1',
     '^@adapters/(.*)$': '<rootDir>/src/adapters/$1',
     '^@domain/rules/(.*)$': '<rootDir>/src/domain/rules/$1',
+// @alias-end
   },
-
-  transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native(-.*)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|expo-modules-core|expo-constants|expo-file-system|expo-asset))',
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    'index.ts',
+    '\\.config\\.ts',
   ],
+  transformIgnorePatterns: [
+    'node_modules/(?!(?:jest-)?react-native' +
+      '|@react-native(-community)?' +
+      '|expo(nent)?' +
+      '|@expo(nent)?/.*' +
+      '|react-native-gesture-handler' +
+      '|react-native-reanimated' +
+      '|react-native-worklets' +
+      '|react-native-svg' +
+      '|react-native-safe-area-context' +
+      '|@unimodules/.*' +
+      '|unimodules' +
+      '|expo-modules-core' +
+      '|expo-constants' +
+      '|expo-file-system' +
+      '|expo-asset' +
+      '|@babel/runtime)/',
+  ],
+  
 
   clearMocks: true,
   restoreMocks: true,
-
   collectCoverage: true,
   coverageDirectory: '<rootDir>/coverage',
   coverageReporters: ['html', 'text', 'text-summary', 'json', 'json-summary'],
@@ -77,7 +91,6 @@ const config: Config = {
     '!src/**/__tests__/**',
     '!**/node_modules/**',
   ],
-
   coverageThreshold: {
     global: {
       branches: 70,

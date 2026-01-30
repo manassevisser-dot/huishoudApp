@@ -1,74 +1,98 @@
-import { z } from 'zod';
-import { FormStateSchema } from '@state/schemas/FormStateSchema';
-import { isDigitsDatePlausible } from '@domain/validation/dateValidators';
-import { parseDDMMYYYYtoISO } from '@domain/helpers/DateHydrator';
-import { formatDutchValue } from '@domain/helpers/numbers';
+import { validateField as validateFieldConstraint } from '../rules/fieldConstraints';
+import { isDigitsDatePlausible } from './dateValidators';
+import { calculateAge } from '../rules/ageBoundaryRules';
+import { validationMessages } from '@state/schemas/sections/validationMessages';
 
 /**
- * PHOENIX VALIDATOR (SVZ-2-Q)
- * Volledig Type-safe conform Sam's contract en Gate-E eisen.
+ * PHOENIX VALIDATOR (Unified)
+ * Implementeert de validatielogica door te delegeren naar de fieldConstraints registry.
+ * @returns null bij succes, string bij fout (conform ADR-01 Outcome Consistency)
  */
-export function validateField(fieldPath: string, value: unknown, fullState?: any): string[] {
-  const errors: string[] = [];
+export function validateFieldInput(fieldId: string, value: unknown): string | null {
+  // Delegeer naar de constraint logic (die returns { isValid: boolean; error?: string })
+  const result = validateFieldConstraint(fieldId, value);
 
-  try {
-    const fieldSchema = extractFieldSchema(FormStateSchema, fieldPath);
-    
-    if (fieldSchema) {
-      const result = fieldSchema.safeParse(value);
-      if (!result.success) {
-        // Fix: Gebruik result.error.issues voor betere type-compatibiliteit
-        errors.push(...result.error.issues.map((issue: z.ZodIssue) => issue.message));
-      }
-    }
-
-    // Legacy Cross-field Validation
-    if (fieldPath.includes('members') && fullState) {
-       const expected = Number(fullState.data?.setup?.aantalMensen ?? 0);
-       if (Array.isArray(value) && value.length !== expected) {
-         errors.push(`Aantal leden (${value.length}) moet gelijk zijn aan totaal aantal (${expected}).`);
-       }
-    }
-
-    return errors;
-  } catch {
-    // Fix: Verwijder ongebruikte 'err' voor de linter
-    return ['Validatie error'];
+  // Transformeer naar het contract van deze functie: null = OK, string = Error
+  if (result.isValid) {
+    return null;
   }
+
+  // Fix ESLint: Use nullish coalescing (??) instead of OR (||) to avoid implicit boolean check on string
+  return result.error ?? "Ongeldige invoer";
 }
 
-export function validateDobNL(input: string): string | null {
-  const raw = input ?? '';
-  const digits = formatDutchValue(raw);
+/**
+ * P2 Foundation: validateField export (shim for test compatibility)
+ * 
+ * @pure function - no side effects, deterministic output
+ * @param fieldId - Field identifier (or path for legacy compatibility)
+ * @param value - Value to validate
+ * @param _state - Optional form state for context-dependent validation (unused in P2)
+ * @returns null if valid, error message string if invalid
+ */
+export function validateField(
+  fieldId: string,
+  value: unknown,
+  _state?: unknown
+): string | null {
+  // P2 shim: delegate to existing validateFieldInput
+  // state parameter unused until P3 (prefixed with _ per ESLint convention)
+  return validateFieldInput(fieldId, value);
+}
 
-  if (digits.length < 8) return 'Vul een volledige datum in (DD-MM-YYYY).';
-  if (!isDigitsDatePlausible(digits)) return 'Ongeldige datum.';
-
-  const display = `${digits.slice(0, 2)}-${digits.slice(2, 4)}-${digits.slice(4, 8)}`;
-  if (!parseDDMMYYYYtoISO(display)) return 'Datum bestaat niet.';
+/**
+ * P2 Foundation: Validates Dutch date of birth in DD-MM-YYYY format
+ * 
+ * @pure function - no side effects, deterministic output
+ * @param ddmmyyyy - Date string in DD-MM-YYYY format
+ * @returns null if valid, error message if invalid
+ * 
+ * Delegates to existing dateValidators.ts and ageBoundaryRules.ts
+ */
+export function validateDobNL(ddmmyyyy: unknown): string | null {
+  // Type guard
+  if (typeof ddmmyyyy !== 'string') {
+    return validationMessages.dateOfBirth.invalidType;
+  }
+  
+  // Delegate to existing date validator (from dateValidators.ts)
+  if (!isDigitsDatePlausible(ddmmyyyy)) {
+    return validationMessages.dateOfBirth.invalidFormat;
+  }
+  
+  // Convert DD-MM-YYYY to ISO format (YYYY-MM-DD)
+  const iso = convertDutchToISO(ddmmyyyy);
+  if (iso === null) {
+    return validationMessages.dateOfBirth.invalidDate;
+  }
+  
+  // Delegate to existing age calculator (from ageBoundaryRules.ts)
+  const age = calculateAge(iso);
+  if (age === null) {
+    return validationMessages.dateOfBirth.invalidDate;
+  }
+  
+  // Simple age check
+  const MIN_AGE = 18;
+  if (age < MIN_AGE) {
+    return validationMessages.dateOfBirth.minor;
+  }
   
   return null;
 }
 
 /**
- * Veilige schema-extractie die rekening houdt met ZodObject en ZodEffects (zoals .refine)
+ * Helper: Convert DD-MM-YYYY to ISO format (YYYY-MM-DD)
+ * Simple conversion - validation already done by isDigitsDatePlausible
  */
-function extractFieldSchema(schema: z.ZodTypeAny, path: string): z.ZodTypeAny | null {
-  const parts = path.split('.');
-  let current: any = schema;
-
-  for (const part of parts) {
-    // UNWRAP: Haal het echte schema uit Effects, Optional, Default, etc.
-    while (current && current._def && (current._def.schema || current._def.innerType)) {
-      current = current._def.schema || current._def.innerType;
-    }
-
-    if (current instanceof z.ZodObject) {
-      current = current.shape[part];
-    } else {
-      console.warn(`[Validator] Pad deel "${part}" niet gevonden in schema voor pad "${path}"`);
-      return null;
-    }
+function convertDutchToISO(ddmmyyyy: string): string | null {
+  const datePattern = /^(\d{2})-(\d{2})-(\d{4})$/;
+  const match = ddmmyyyy.match(datePattern);
+  
+  if (match === null) {
+    return null;
   }
-  return current;
+  
+  const [, day, month, year] = match;
+  return `${year}-${month}-${day}`;
 }

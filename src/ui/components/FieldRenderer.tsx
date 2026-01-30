@@ -1,54 +1,40 @@
 import React from 'react';
-import { ValueProvider, StateWriter } from '@domain/interfaces';
+import { View, Text } from 'react-native';
+import { useAppStyles } from '@styles/useAppStyles';
+
+// Explicit interface definition for type safety
+interface ValueProvider {
+  getValue(fieldId: string): unknown;
+}
 
 interface FieldRendererProps {
   fieldId: string;
   valueProvider: ValueProvider;
-  stateWriter: StateWriter;
-  type: 'text' | 'number' | 'radio' | 'counter' | 'money';
-  label?: string;
-  options?: string[];
 }
 
+/**
+ * P3 UI Decoupling: Field Renderer Component
+ * 
+ * ADR-01 Enforcement: Imports types from @app, not @domain directly
+ * ADR-04 Enforcement: Dumb component - no business logic, only rendering
+ * 
+ * @param fieldId - Field identifier
+ * @param valueProvider - Provider for reading field values
+ */
 export const FieldRenderer: React.FC<FieldRendererProps> = ({
   fieldId,
   valueProvider,
-  stateWriter,
-  type,
-  label,
-  options
 }) => {
-  const value = valueProvider.getValue(fieldId);
+  const { styles } = useAppStyles();
+  
+  // Read value from provider (no business logic here!)
+  const value: unknown = valueProvider.getValue(fieldId);
 
-  const handleChange = (newValue: unknown) => {
-    stateWriter.updateField(fieldId, newValue);
-  };
-
-  // Render logic remains pure projection based on type
-  switch (type) {
-    case 'text':
-      return <input type="text" value={String(value ?? '')} onChange={(e) => handleChange(e.target.value)} />;
-    case 'number':
-    case 'counter':
-      return <input type="number" value={Number(value) || 0} onChange={(e) => handleChange(Number(e.target.value))} />;
-    case 'radio':
-      return (
-        <div>
-          {options?.map(opt => (
-            <label key={opt}>
-              <input
-                type="radio"
-                checked={value === opt}
-                onChange={() => handleChange(opt)}
-              />
-              {opt}
-            </label>
-          ))}
-        </div>
-      );
-    case 'money':
-      return <input type="text" value={String(value ?? '')} onChange={(e) => handleChange(e.target.value)} />;
-    default:
-      return <span>Unknown field type</span>;
-  }
+  return (
+    <View style={styles.fieldContainer}>
+      <Text style={styles.description}>
+        {String(value ?? '')}
+      </Text>
+    </View>
+  );
 };

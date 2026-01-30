@@ -2,12 +2,16 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { render } from '@testing-library/react-native';
 
-// Mock RN
+// Update de mock zodat StyleSheet ook bestaat
 jest.mock('react-native', () => {
   const React = require('react');
   return {
     View: ({ children }: any) => React.createElement('View', {}, children),
     Text: ({ children }: any) => React.createElement('Text', {}, children),
+    StyleSheet: {
+      create: (obj: any) => obj,
+      flatten: (obj: any) => obj, // Dit is wat er miste
+    },
   };
 });
 

@@ -1,4 +1,4 @@
-import { FormStateSchema } from '@state/schemas/FormStateSchema';
+import { FormStateSchema } from '@adapters/validation/formStateSchema';
 
 describe('FormStateSchema', () => {
   const validState = {
@@ -19,8 +19,7 @@ describe('FormStateSchema', () => {
 
   it('accepteert een correcte Phoenix v1.0 state', () => {
     const res = FormStateSchema.safeParse(validState);
-    if (!res.success) {
-    }
+    if (!res.success) {}
     expect(res.success).toBe(true);
   });
 

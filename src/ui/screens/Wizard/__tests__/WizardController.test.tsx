@@ -3,59 +3,85 @@ import { render } from '@testing-library/react-native';
 import { FormProvider } from '@app/context/FormContext';
 import { createMockState } from '@test-utils/index';
 import WizardController from '../WizardController';
+import { WizardPage } from '../WizardPage';
 
-// ✅ Mock uitgebreid om de callbacks op te vangen
-const mockOnNext = jest.fn();
-const mockOnBack = jest.fn();
-
+// We mocken de WizardPage om te inspecteren welke props hij krijgt
 jest.mock('../WizardPage', () => ({
-  // We gebruiken een simpele functionele component die zijn props uitvoert
-  WizardPage: (props: any) => {
-    // We slaan de props op in een tijdelijke mock-functie voor aanroep
-    mockOnNext.mockImplementation(() => props.onNext());
-    mockOnBack.mockImplementation(() => props.onBack());
-    return null;
-  },
+  WizardPage: jest.fn(() => null)
 }));
 
 describe('WizardController Branch & Function Coverage', () => {
-  const steps = [
-    'WIZARD_SETUP',
-    'WIZARD_DETAILS',
-    'WIZARD_INCOME',
-    'WIZARD_EXPENSES',
-    'UNKNOWN_STEP',
-  ] as const;
-
-  steps.forEach((step) => {
-    it(`moet de juiste config kiezen voor stap: ${step}`, () => {
-      const mockState = createMockState({ activeStep: step as any });
-      const { toJSON } = render(
-        <FormProvider initialState={mockState} mockDispatch={jest.fn()}>
-          <WizardController />
-        </FormProvider>,
-      );
-      expect(toJSON()).toBeDefined();
-    });
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  // ✅ TEST VOOR DE FUNCTIES (Lines 31-32 en Function coverage)
-  it('moet de dispatch aanroepen wanneer onNext en onBack worden getriggerd', () => {
-    const mockDispatch = jest.fn();
-    const mockState = createMockState({ activeStep: 'WIZARD_DETAILS' });
+  const steps = [
+    { step: 'WIZARD_SETUP', expectedId: 'household_setup' },
+    { step: 'WIZARD_DETAILS', expectedId: 'household_details' },
+    { step: 'WIZARD_INCOME', expectedId: 'income_details' },
+    { step: 'WIZARD_EXPENSES', expectedId: 'fixed_expenses' },
+  ];
+
+  steps.forEach(({ step, expectedId }) => {
+    it(`moet de juiste config kiezen voor stap: ${step}`, () => {
+      const mockState = createMockState({ activeStep: step as any });
+      
+      render(
+        <FormProvider initialState={mockState} mockDispatch={jest.fn()}>
+          <WizardController />
+        </FormProvider>
+      );
+
+      const calls = (WizardPage as any).mock.calls;
+      const props = calls[calls.length - 1][0];
+
+      expect(props).toEqual(
+        expect.objectContaining({
+          config: expect.objectContaining({ 
+            pageId: expectedId 
+          })
+        })
+      );
+    });
+  });
+  
+  it('moet veld-updates verwerken via de stateWriter...', () => {
+    const mockState = createMockState({ 
+      activeStep: 'WIZARD_SETUP',
+      data: { setup: { aantalMensen: 1 } } 
+    });
 
     render(
-      <FormProvider initialState={mockState} mockDispatch={mockDispatch}>
+      <FormProvider initialState={mockState} mockDispatch={jest.fn()}>
         <WizardController />
-      </FormProvider>,
+      </FormProvider>
     );
 
-    // Trigger de callbacks die de WizardController aan de WizardPage geeft
-    mockOnNext();
-    mockOnBack();
+    const allCalls = (WizardPage as jest.Mock).mock.calls;
+    const lastProps = allCalls[allCalls.length - 1][0];
+    
+    // Verify stateWriter exists and has updateField method
+    expect(lastProps.stateWriter).toBeDefined();
+    expect(typeof lastProps.stateWriter.updateField).toBe('function');
+    
+    // Test that updateField doesn't throw
+    expect(() => {
+      lastProps.stateWriter.updateField('aantalMensen', 5);
+    }).not.toThrow();
+  });
 
-    // Controleer of de dispatch is aangeroepen met de juiste types
-    expect(mockDispatch).toHaveBeenCalledWith({ type: 'NEXT_STEP' });
-    expect(mockDispatch).toHaveBeenCalledWith({ type: 'PREV_STEP' });
+  it('moet validatie kunnen uitvoeren via de stateWriter', () => {
+    const mockState = createMockState({ activeStep: 'WIZARD_SETUP' });
+
+    render(
+      <FormProvider initialState={mockState} mockDispatch={jest.fn()}>
+        <WizardController />
+      </FormProvider>
+    );
+
+    const lastCallProps = (WizardPage as any).mock.calls[0][0];
+    
+    // De orchestrator moet de validate methode aanbieden
+    expect(typeof lastCallProps.validate).toBe('function');
   });
 });

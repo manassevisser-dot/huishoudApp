@@ -10,12 +10,12 @@ type DeepPartial<T> = {
 const SCHEMA_VERSION = '1.0' as const;
 const isoNow = () => new Date().toISOString();
 
-type MockOverrides = Partial<Omit<FormState, 'data'>> & {
+type _MockOverrides = Partial<Omit<FormState, 'data'>> & {
   data?: DeepPartial<FormState['data']>;
   status?: string;
 };
 
-export function createMockState(overrides: MockOverrides = {}): FormState {
+export function createMockState(overrides: DeepPartial<FormState> = {}): FormState {
   const baseState: FormState = {
     schemaVersion: SCHEMA_VERSION,
     activeStep: 'LANDING',
@@ -46,7 +46,7 @@ export function createMockState(overrides: MockOverrides = {}): FormState {
   };
 }
 
-export function makePhoenixState(overrides?: MockOverrides): FormState {
+export function makePhoenixState(overrides?: DeepPartial<FormState>): FormState {
   const base: FormState = {
     schemaVersion: '1.0',
     activeStep: 'LANDING',

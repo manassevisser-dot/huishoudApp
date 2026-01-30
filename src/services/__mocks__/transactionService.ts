@@ -16,7 +16,7 @@ export const TransactionService = {
   }),
 
   // Helper voor in je tests om data te 'faken'
-  _setMockData: (data: any[]) => {
+  "_setjest.MockData": (data: any[]) => {
     _store = data;
   },
 };

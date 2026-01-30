@@ -22,6 +22,11 @@ export const UX_TOKENS = {
     [DATA_KEYS.SETUP]: 'setup_page_title',
     [DATA_KEYS.HOUSEHOLD]: 'household_page_title',
     [DATA_KEYS.FINANCE]: 'finance_page_title',
+    // VOEG DEZE TOE VOOR DE WIZARD CONFIGS:
+    HOUSEHOLD_SETUP: 'setup_page_title',
+    HOUSEHOLD_DETAILS: 'household_page_title',
+    INCOME_DETAILS: 'finance_page_title',
+    FIXED_EXPENSES: 'finance_page_title',
   },
 
   FIELDS: {

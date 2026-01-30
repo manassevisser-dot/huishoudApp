@@ -1,64 +1,74 @@
+import { validationMessages } from '@state/schemas/sections/validationMessages';
+
 // Port Interface (ADR-12)
 export interface AuditEvent {
   timestamp: string;
-  level: 'info' | 'warning' | 'error';
+  level: 'info' | 'warning' | 'error' | 'fatal';
   message: string;
   context?: Record<string, unknown>;
-  userId?: string;
-  action?: string;
 }
 
 export interface AuditLoggerPort {
   logEvent(event: AuditEvent): void;
-  logError(error: Error, context?: Record<string, unknown>): void;
-  logWarning(message: string, context?: Record<string, unknown>): void;
+  getEventsByLevel(level: AuditEvent['level']): AuditEvent[];
 }
 
-// Adapter Implementation with Fail-Safe (Dex R2-H-001)
 class AuditLoggerAdapter implements AuditLoggerPort {
   private eventBuffer: AuditEvent[] = [];
-  private maxBufferSize = 100;
 
   logEvent(event: AuditEvent): void {
+    // 1. VERTALING: Kijk of we een menselijke tekst hebben voor deze code
+    const translatedMessage = this.translate(event.message);
+    if (translatedMessage) {
+      event.context = { ...event.context, originalCode: event.message };
+      event.message = translatedMessage;
+    }
+
+    // 2. ROUTERING: De Luchtverkeerstoren logica
+    if (event.message === 'SYSTEM_ERROR' || event.message === 'VALIDATION_CRASH') {
+      this.routeToTicketing(event);
+      event.level = 'fatal';
+    }
+
+    if (event.level === 'error' || event.level === 'warning') {
+      this.routeToUI(event);
+    }
+
+    this.routeToConsole(event);
+    this.eventBuffer.push(event);
+  }
+
+  private routeToConsole(event: AuditEvent): void {
+    const prefix = `[AUDIT]`;
+    const payload = JSON.stringify({
+      level: event.level,
+      message: event.message,
+      timestamp: event.timestamp,
+      context: event.context
+    });
+    console.log(prefix, payload);
+  }
+
+  private routeToUI(_event: AuditEvent): void {
+    // Voor de UI componenten (underscore voorkomt linter error)
+  }
+
+  private routeToTicketing(event: AuditEvent): void {
+    console.error('!!! TICKETING/MAIL ALERT !!!', event);
+  }
+
+  // Hulpmiddel om door het geneste validationMessages object te graven
+  private translate(path: string): string | null {
     try {
-      this.writeToAuditLog(event);
-    } catch (error) {
-      this.bufferEvent(event);
-      // AANGEPAST: error meegeven aan console.error
-      console.error('[AUDIT_FALLBACK]', JSON.stringify(event), error); 
+      if (!path || typeof path !== 'string') return null;
+      return path.split('.').reduce((obj, key) => obj?.[key], validationMessages as any) || null;
+    } catch {
+      return null;
     }
   }
 
-  logError(error: Error, context?: Record<string, unknown>): void {
-    this.logEvent({
-      timestamp: new Date().toISOString(),
-      level: 'error',
-      message: error.message,
-      context: { ...context, stack: error.stack },
-    });
-  }
-
-  logWarning(message: string, context?: Record<string, unknown>): void {
-    this.logEvent({
-      timestamp: new Date().toISOString(),
-      level: 'warning',
-      message,
-      context,
-    });
-  }
-
-  private writeToAuditLog(event: AuditEvent): void {
-    console.log('[AUDIT]', JSON.stringify(event));
-  }
-
-  private bufferEvent(event: AuditEvent): void {
-    if (this.eventBuffer.length < this.maxBufferSize) {
-      this.eventBuffer.push(event);
-    }
-  }
-
-  getBufferedEvents(): AuditEvent[] {
-    return [...this.eventBuffer];
+  getEventsByLevel(level: AuditEvent['level']): AuditEvent[] {
+    return this.eventBuffer.filter(e => e.level === level);
   }
 
   clearBuffer(): void {
@@ -66,22 +76,45 @@ class AuditLoggerAdapter implements AuditLoggerPort {
   }
 }
 
-// Singleton export
-export const auditLogger: AuditLoggerPort = new AuditLoggerAdapter();
+export const auditLogger = new AuditLoggerAdapter();
 
-// --- BACKWARD COMPATIBILITY BRIDGE ---
-// Rest parameters (...args: any[]) to handle variable legacy test calls
+// --- DE HERSTELDE BACKWARD COMPATIBILITY BRIDGE ---
 export const Logger = {
-    error: (msg: any, err?: any) => auditLogger.logError(err instanceof Error ? err : new Error(String(msg)), { msg }),
-    info: (msg: string, data?: any) => auditLogger.logEvent({ timestamp: new Date().toISOString(), level: 'info', message: msg, context: data }),
-    warn: (msg: string, data?: any) => auditLogger.logWarning(msg, data),
-    log: (...args: any[]) => auditLogger.logEvent({ 
-        timestamp: new Date().toISOString(), 
-        level: 'info', 
-        message: String(args[1] || args[0]), 
-        context: { rawArgs: args } 
-    })
+  error: (msg: any, err?: any) => {
+    const errorObj = err instanceof Error ? err : new Error(String(msg));
+    auditLogger.logEvent({
+      timestamp: new Date().toISOString(),
+      level: 'error',
+      message: errorObj.message,
+      context: { msg, stack: errorObj.stack }
+    });
+  },
+  warn: (msg: string, data?: any) => {
+    auditLogger.logEvent({
+      timestamp: new Date().toISOString(),
+      level: 'warning',
+      message: msg,
+      context: data
+    });
+  },
+  info: (msg: string, data?: any) => {
+    auditLogger.logEvent({
+      timestamp: new Date().toISOString(),
+      level: 'info',
+      message: msg,
+      context: data
+    });
+  },
+  log: (...args: any[]) => {
+    const message = String(args[1] || args[0]);
+    auditLogger.logEvent({
+      timestamp: new Date().toISOString(),
+      level: 'info',
+      message: message,
+      context: { rawArgs: args }
+    });
+  }
 };
-export const AuditLogger = Logger;
+
 export const logger = Logger;
-export default Logger;
+export const AuditLogger = Logger;

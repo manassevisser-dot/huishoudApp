@@ -12,7 +12,7 @@ set -u
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)" # Pas aan indien script niet in /scripts staat
+PROJECT_ROOT="$SCRIPT_DIR"  # Omdat het script in de projectroot staat
 UI_DIR="$PROJECT_ROOT/src/ui"
 DOMAIN_DIR="$PROJECT_ROOT/src/domain"
 APP_DIR="$PROJECT_ROOT/src/app"

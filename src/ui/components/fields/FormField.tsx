@@ -1,54 +1,37 @@
+// src/ui/components/fields/FormField.tsx
 import React from 'react';
-import { ValueProvider, StateWriter } from '@domain/interfaces';
+import { View, Text, TextInput } from 'react-native';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+
+// ✅ Lokale façade-interfaces (UI praat met strings; geen domain-types hier)
+interface ValueProvider { getValue(fieldId: string): unknown; }
+interface StateWriter   { updateField(fieldId: string, value: unknown): void; }
 
 interface FormFieldProps {
   fieldId: string;
   valueProvider: ValueProvider;
   stateWriter: StateWriter;
-  type: 'text' | 'number' | 'radio' | 'counter' | 'money';
-  label?: string;
-  options?: string[];
+  label: string; // Flow B: label komt als prop (token → label doe je in UI)
 }
 
 export const FormField: React.FC<FormFieldProps> = ({
-  fieldId,
-  valueProvider,
-  stateWriter,
-  type,
-  label,
-  options
+  fieldId, valueProvider, stateWriter, label,
 }) => {
+  const { styles } = useAppStyles();
   const value = valueProvider.getValue(fieldId);
+  const handleChange = (newValue: string) => stateWriter.updateField(fieldId, newValue);
 
-  const handleChange = (newValue: unknown) => {
-    stateWriter.updateField(fieldId, newValue);
-  };
-
-  // Render logic remains identical, data access is decoupled
-  switch (type) {
-    case 'text':
-      return <input type="text" value={String(value ?? '')} onChange={(e) => handleChange(e.target.value)} />;
-    case 'number':
-    case 'counter':
-      return <input type="number" value={Number(value) || 0} onChange={(e) => handleChange(Number(e.target.value))} />;
-    case 'radio':
-      return (
-        <div>
-          {options?.map(opt => (
-            <label key={opt}>
-              <input
-                type="radio"
-                checked={value === opt}
-                onChange={() => handleChange(opt)}
-              />
-              {opt}
-            </label>
-          ))}
-        </div>
-      );
-    case 'money':
-      return <input type="text" value={String(value ?? '')} onChange={(e) => handleChange(e.target.value)} />;
-    default:
-      return <span>Unknown field type</span>;
-  }
+  return (
+    <View style={styles.fieldContainer}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <TextInput
+        style={styles.input}
+        value={String(value ?? '')}
+        onChangeText={handleChange}
+        accessibilityLabel={label}
+      />
+    </View>
+  );
 };
+
+export default FormField;

@@ -1,14 +1,11 @@
-// 1. Herstel de import naar de juiste folder (validation ipv rules)
 import { validateField } from '../../validation/fieldValidator';
 import { createMockState } from '../../../test-utils/factories/stateFactory';
-
-// 2. Importeer de SPECIFIEKE naam uit de config
 import { setupHouseholdConfig } from '../../../ui/screens/Wizard/pages/1setupHousehold.config';
 
 describe('BT-02 Baseline: Field Validation Integrity', () => {
   const mockState = createMockState();
   
-  // Gebruik de fields uit de correcte variabele
+  // Gebruik de fields uit de officiële wizard config
   const fields = setupHouseholdConfig.fields || [];
 
   const scenarios = [
@@ -20,16 +17,18 @@ describe('BT-02 Baseline: Field Validation Integrity', () => {
   ];
 
   test('Snapshot: Setup Wizard Validation', () => {
-    // Fail-safe check
+    // Fail-safe check conform Phoenix standaarden
     expect(fields.length).toBeGreaterThan(0);
 
     fields.forEach((fieldConfig) => {
       scenarios.forEach(scenario => {
-        // We sturen de data bucket mee zoals de factory die bouwt
-        const result = validateField(fieldConfig as any, scenario.value, mockState.data);
+        /** * FIX (SVZ-2-Q): We geven fieldConfig.fieldId (string) mee 
+         * in plaats van het gehele object om path.split crashes te voorkomen.
+         */
+        const result = validateField(fieldConfig.fieldId, scenario.value, mockState.data);
 
         expect({
-          fieldId: (fieldConfig as any).fieldId,
+          fieldId: fieldConfig.fieldId,
           scenario: scenario.label,
           inputValue: scenario.value,
           error: result

@@ -4,7 +4,7 @@ import { makePhoenixState } from '@test-utils/index'; // barrel van je test-util
 describe('CU-001-SHIM StorageShim', () => {
   beforeEach(() => {
     jest.resetModules();
-    jest.clearAllMocks();
+    jest.clearAllMocks();;
   });
 
   it('enforces schemaVersion and envelope on saveState (Audit gate)', async () => {
@@ -17,7 +17,7 @@ describe('CU-001-SHIM StorageShim', () => {
       default: { setItem: mockSetItem },
     }));
 
-    // Belangrijk: importeren NA de doMock zodat mocks gelden
+    // Belangrijk: importeren NA de dojest.Mock zodat mocks gelden
     const { StorageShim } = require('../storageShim');
 
     // Valide Phoenix state met de set-up die je assert

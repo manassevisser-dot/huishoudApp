@@ -4,24 +4,17 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+// @alias-start
       "@/*": ["src/*"],
       "@app/*": ["src/app/*"],
-
       "@domain/*": ["src/domain/*"],
       "@services/*": ["src/services/*"],
-
-      "@shared-types/*": ["src/domain/types/*"],
-
-      "@utils/*": [
-        "src/utils/*",
-        "src/domain/helpers/*",
-        "src/domain/validation/*"
-      ],
-
+      "@shared-types/*": ["src/core/types/*"],
+      "@utils/*": ["src/utils/*"],
       "@shared/*": ["src/shared/*"],
       "@core/*": ["src/core/*"],
       "@config/*": ["src/config/*"],
-      "@logic/*": ["src/logic/*"],
+      "@logic/*": ["src/core/logic/*"],
       "@ui/*": ["src/ui/*"],
       "@components/*": ["src/ui/components/*"],
       "@fields/*": ["src/ui/components/fields/*"],
@@ -29,19 +22,16 @@
       "@styles/*": ["src/ui/styles/*"],
       "@state/*": ["src/state/*"],
       "@context/*": ["src/app/context/*"],
-      "@selectors/*": ["src/selectors/*"],
-      "@assets/*": ["assets/*"],
+      "@selectors/*": ["src/ui/selectors/*"],
       "@test-utils": ["src/test-utils/index.ts"],
       "@test-utils/*": ["src/test-utils/*"],
       "@kernel/*": ["src/kernel/*"],
-
-      "@shared-types/form": ["src/core/types/form.ts"],
-      "@shared-types/finance": ["src/core/types/finance.ts"],
-      "@shared-types/fields": ["src/core/types/form.ts"],
+      "@infrastructure/*": ["src/infrastructure/*"],
       "@domain/types/*": ["src/core/types/*"],
       "@adapters/*": ["src/adapters/*"],
-      "@shared-types/wizard": ["src/core/types/wizard.ts"],
-      "@domain/rules/*": ["src/domain/rules/*"]
+      "@domain": ["src/domain/index.ts"],
+      "@domain/rules/*": ["src/domain/rules/*"],
+// @alias-end   
     }
   },
   "exclude": ["node_modules", "dist", "build", ".phoenix"]

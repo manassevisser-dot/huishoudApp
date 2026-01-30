@@ -3,7 +3,7 @@ import { ThemeProvider } from '@app/context/ThemeContext';
 import { FormContext } from '@app/context/FormContext';
 import { FormState } from '@shared-types/form';
 
-// Mock Safe Area (Essentieel voor renders)
+// jest.Mock Safe Area (Essentieel voor renders)
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));

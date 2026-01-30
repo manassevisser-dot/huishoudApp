@@ -20,8 +20,8 @@ export interface Member {
   age?: number;
   dateOfBirth?: string; // ISO string (YYYY-MM-DD)
   finance?: {
-    incomeItems?: any[];
-    expenseItems?: any[];
+    incomeItems?: unknown[];
+    expenseItems?: unknown[];
   };
   [key: string]: unknown; // Voor toekomstige uitbreidingen
 }

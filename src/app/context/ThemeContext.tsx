@@ -1,7 +1,8 @@
 // @/app/context/ThemeContext.tsx
 import * as React from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import logger from '@/adapters/audit/AuditLoggerAdapter';
+import {logger} from '@/adapters/audit/AuditLoggerAdapter';
+
 type Theme = 'light' | 'dark';
 
 type ThemeContextType = {
@@ -44,8 +45,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 export const useTheme = () => {
   const context = React.useContext(ThemeContext);
-  if (!context) {
+  if (context === undefined) {  // ✅ FIXED: Check for undefined
     throw new Error('useTheme must be used within ThemeProvider');
   }
-  return context;
+  return context;  // ✅ TypeScript knows: ThemeContextType
 };

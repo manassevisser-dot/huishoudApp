@@ -16,7 +16,9 @@ interface DashboardProps {
 
 export const DashboardScreen: React.FC<DashboardProps> = () => {
   const { styles } = useAppStyles();
-  const { state, refreshData, isRefreshing } = useForm() as any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const { state, refreshData, isRefreshing } = useForm() as any;
+
 
   // ADR-01: Memoize de selector voor performance
   const financialData = useMemo(() => {

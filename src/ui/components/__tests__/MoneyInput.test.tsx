@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 import MoneyInput from '../../../ui/components/fields/MoneyInput';
-import { formatCentsToDutch, formatDutchValue, toCents } from '@domain/helpers/numbers';
+import { formatCentsToDutch, formatDutchValue, toCents } from '@app/orchestrators/types';
 import { ThemeProvider } from '../../../app/context/ThemeContext';
 
-// Mock de utility functies
-jest.mock('@domain/helpers/numbers', () => ({
+// jest.Mock de utility functies
+jest.mock('@app/orchestrators/types', () => ({
   formatCentsToDutch: jest.fn((cents: number) => {
     const euros = cents / 100;
     return euros.toFixed(2).replace('.', ',');
@@ -19,7 +19,7 @@ jest.mock('@domain/helpers/numbers', () => ({
   }),
 }));
 
-// Mock useAppStyles
+// jest.Mock useAppStyles
 jest.mock('@ui/styles/useAppStyles', () => ({
   useAppStyles: () => ({
     styles: {

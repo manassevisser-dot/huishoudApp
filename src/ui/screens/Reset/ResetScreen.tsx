@@ -68,7 +68,7 @@ const ResetScreen: React.FC<Props> = ({ onWissen, onHerstel }) => {
               style={[styles.button, { backgroundColor: '#007AFF', marginTop: 16, marginLeft: 0 }]}
               onPress={handleHerstel}
             >
-              <Text style={styles.buttonText}>HERSTEL</Text>
+              <Text testID= 'herstel' style={styles.buttonText}>HERSTEL</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>

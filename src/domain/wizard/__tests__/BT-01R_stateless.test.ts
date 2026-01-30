@@ -1,4 +1,3 @@
-import { it, expect, describe } from 'vitest';
 
 // De logica uit WizardController.tsx, maar dan testbaar geëxtraheerd
 const getStepConfig = (activeStep: string, configs: any) => {

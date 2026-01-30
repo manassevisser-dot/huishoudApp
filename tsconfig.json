@@ -1,11 +1,13 @@
 
 {
   "compilerOptions": {
+    "noEmit": true,
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
     "jsx": "react-jsx",
     "strict": true,
+    "types": ["jest", "node"],
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
@@ -14,22 +16,14 @@
     "paths": {
       "@/*": ["src/*"],
       "@app/*": ["src/app/*"],
-
-      "@domain/*": ["src/domain/*"],
+      "@domain/*": ["src/domain/*"],      
       "@services/*": ["src/services/*"],
-
-      "@shared-types/*": ["src/domain/types/*"],
-
-      "@utils/*": [
-        "src/utils/*",
-        "src/domain/helpers/*",
-        "src/domain/validation/*"
-      ],
-
+      "@shared-types/*": ["src/core/types/*"],
+      "@utils/*": ["src/utils/*"],
       "@shared/*": ["src/shared/*"],
       "@core/*": ["src/core/*"],
       "@config/*": ["src/config/*"],
-      "@logic/*": ["src/logic/*"],
+      "@logic/*": ["src/core/logic/*"],
       "@ui/*": ["src/ui/*"],
       "@components/*": ["src/ui/components/*"],
       "@fields/*": ["src/ui/components/fields/*"],
@@ -37,20 +31,16 @@
       "@styles/*": ["src/ui/styles/*"],
       "@state/*": ["src/state/*"],
       "@context/*": ["src/app/context/*"],
-      "@selectors/*": ["src/selectors/*"],
-      "@assets/*": ["assets/*"],
+      "@selectors/*": ["src/ui/selectors/*"],      
       "@test-utils": ["src/test-utils/index.ts"],
       "@test-utils/*": ["src/test-utils/*"],
       "@kernel/*": ["src/kernel/*"],
       "@infrastructure/*": ["src/infrastructure/*"],
-      "@shared-types/form": ["src/core/types/form.ts"],
-      "@shared-types/finance": ["src/core/types/finance.ts"],
-      "@shared-types/fields": ["src/core/types/form.ts"],
       "@domain/types/*": ["src/core/types/*"],
       "@adapters/*": ["src/adapters/*"],
-      "@shared-types/wizard": ["src/core/types/wizard.ts"],
+      "@domain": ["src/domain/index.ts"],
       "@domain/rules/*": ["src/domain/rules/*"]
     }
   },
-  "include": ["src/**/*", "src/__tests__", "index.tsx", "jest.config.ts"]
+  "include": ["src/**/*", "src/__tests__", "src/types", "index.tsx", "jest.config.ts"]
 }

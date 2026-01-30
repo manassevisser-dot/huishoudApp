@@ -10,45 +10,34 @@ module.exports = function (api) {
         {
           root: ['./'],
           alias: {
-            '@': './src',
-            '@app': './src/app',
-
-            '@domain': './src/domain',
-            '@services': './src/services',
-
-            '@shared-types': './src/domain/types',
-
-            // Kies primaire utils-map hier net als in Jest:
-            '@utils': './src/utils',
-            // Optioneel: aparte legacy aliassen tijdens migratie:
-            '@utils-legacy-helpers': './src/domain/helpers',
-            '@utils-legacy-validation': './src/domain/validation',
-
-            '@shared': './src/shared',
-            '@core': './src/core',
-            '@config': './src/config',
-            '@logic': './src/logic',
-            '@ui': './src/ui',
-            '@components': './src/ui/components',
-            '@fields': './src/ui/components/fields',
-            '@screens': './src/ui/screens',
-            '@styles': './src/ui/styles',
-            '@state': './src/state',
-            '@context': './src/app/context',
-            '@selectors': './src/selectors',
-            '@assets': './assets',
-            '@test-utils': './src/test-utils', // index.ts wordt door resolvers gevonden
-            '@kernel': './src/kernel',
-
-            // Single files
-            '@shared-types/form': './src/core/types/form.ts',
-            '@shared-types/finance': './src/core/types/finance.ts',
-            '@shared-types/fields': './src/core/types/form.ts',
-            '@shared-types/wizard': './src/core/types/wizard.ts',
-
-            '@domain/types': './src/core/types',
-            '@adapters': './src/adapters',
-            '@domain/rules': './src/domain/rules',
+// @alias-start
+          '@infrastructure': './src/infrastructure',
+          '@shared-types': './src/core/types',
+          '@domain/types': './src/core/types',
+          '@domain/rules': './src/domain/rules',
+          '@components': './src/ui/components',
+          '@test-utils': './src/test-utils',
+          '@selectors': './src/ui/selectors',
+          '@services': './src/services',
+          '@test-utils': './src/test-utils',
+          '@adapters': './src/adapters',
+          '@screens': './src/ui/screens',
+          '@context': './src/app/context',
+          '@domain': './src/domain',
+          '@shared': './src/shared',
+          '@config': './src/config',
+          '@fields': './src/ui/components/fields',
+          '@styles': './src/ui/styles',
+          '@kernel': './src/kernel',
+          '@utils': './src/utils',
+          '@logic': './src/core/logic',
+          '@state': './src/state',
+          '@core': './src/core',
+          '@domain': './src/domain',
+          '@app': './src/app',
+          '@ui': './src/ui',
+          '@': './src',
+// @alias-end
           },
           extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
         },

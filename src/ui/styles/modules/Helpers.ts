@@ -54,7 +54,34 @@ export function makeHelpers(c: ColorScheme) {
       fontSize: Type.xs,
       color: c.textSecondary,
     },
-  } as const;
+
+    // Counter component (InputCounter)
+    counterContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Space.lg,
+      paddingVertical: Space.sm,
+    },
+
+    counterButton: {
+      fontSize: Type.xl,
+      fontWeight: '600',
+      color: c.primary,
+      paddingHorizontal: Space.lg,
+      paddingVertical: Space.sm,
+      minWidth: 44,
+      textAlign: 'center',
+    },
+
+    counterValue: {
+      fontSize: Type.lg,
+      fontWeight: '600',
+      color: c.textPrimary,
+      minWidth: 48,
+      textAlign: 'center',
+    },
+  } as const;  // ← COUNTER STYLES MOETEN HIERVÓÓR!
 }
 
 export type HelperStyles = ReturnType<typeof makeHelpers>;

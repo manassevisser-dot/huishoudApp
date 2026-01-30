@@ -16,6 +16,7 @@ const LandingScreen: React.FC<Props> = ({ onSignup, onSignin }) => {
 
   // Phoenix 2025 logica: we gebruiken de SET_STEP actie uit FormAction
   const handleStart = () => {
+    console.log("DEBUG: handleStart aangeroepen!");
     if (onSignup) {
       onSignup();
     }

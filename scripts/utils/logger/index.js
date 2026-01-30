@@ -1,9 +1,8 @@
 #!/usr/bin/env node
 const fs = require('fs');
-// ... rest van je code
 const transports = require('./transports');
 const sync = require('./constants/sync');
-const audit = require('./constants/audit'); // NIEUW
+const audit = require('./constants/audit');
 const generic = require('./constants/generic');
 const path = require('path');
 
@@ -32,6 +31,7 @@ const logger = {
     ok: (key) => transports.ok(logger.TEXT[key] || key),
     warn: (key) => transports.warn(logger.TEXT[key] || key),
     error: (key) => transports.error(logger.TEXT[key] || key),
+    
     /**
      * NIEUW: Speciaal voor rapporten met klikbare link
      * Gebruikt transports.ok voor de consistente Phoenix-styling
@@ -48,8 +48,8 @@ const logger = {
 
         // 3. Verstuur naar de transport (zonder extra ok-icoon, want die zit al in je string)
         transports.ok(message);
-    
     },
+    
     verbose: (msg) => { 
         if (logger.isVerbose) transports.writeStream('verbose', "\x1b[2m📣 " + msg + "\x1b[0m"); 
     },
@@ -57,6 +57,11 @@ const logger = {
     die: (msgKey) => {
         const msg = logger.TEXT[msgKey] || msgKey;
         transports.die(logger.TEXT.FATAL ? logger.TEXT.FATAL(msg) : msg);
+    },
+    
+    // Alias voor backward compatibility
+    fail: function(msgKey) {
+        this.die(msgKey);
     }
 };
 

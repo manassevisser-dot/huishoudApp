@@ -17,7 +17,8 @@ const ChipButton: React.FC<ChipButtonProps> = ({
   onPress,
   accessibilityLabel,
 }) => {
-  const { styles, _colors } = useAppStyles() as any;
+  // ✅ FIX: Remove 'as any', destructure only what we need
+  const { styles } = useAppStyles();
 
   return (
     <TouchableOpacity

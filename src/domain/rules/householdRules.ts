@@ -21,3 +21,24 @@ export const getHouseholdStatus = (members: Member[]): 'empty' | 'partial' | 'co
   if (completeCount > 0) return 'partial';
   return 'empty';
 };
+// Nieuwe toevoeging aan householdRules.ts
+
+export const HOUSEHOLD_CLASSIFICATION = {
+  SINGLE: 'SINGLE',
+  PARTNERS: 'PARTNERS',
+  SPECIAL: 'SPECIAL',
+} as const;
+
+export type HouseholdType = keyof typeof HOUSEHOLD_CLASSIFICATION;
+
+/**
+ * Bepaalt het type huishouden op basis van aantal volwassenen (ADR-11)
+ */
+export const classifyHouseholdType = (adultCount: number): HouseholdType => {
+  if (adultCount > 5) return HOUSEHOLD_CLASSIFICATION.SPECIAL;
+  if (adultCount === 2) return HOUSEHOLD_CLASSIFICATION.PARTNERS;
+  return HOUSEHOLD_CLASSIFICATION.SINGLE;
+};
+
+// src/domain/rules/householdRules.ts
+export const isSpecialInvestigationRequired = (adultCount: number): boolean => adultCount > 5;

@@ -1,12 +1,12 @@
-// src/ui/screens/Daily/__tests__/UndoScreen.test.tsx
 import React from 'react';
 import { screen, cleanup } from '@testing-library/react-native';
 import { render } from '@test-utils/index';
 import { UndoScreen } from '../UndoScreen';
 import { createMockState } from 'src/test-utils/factories/stateFactory';
-import { DATA_KEYS } from '@domain/constants/datakeys';
 
-// Mock de hook
+// ADR-01 Handhaving: Geen runtime imports van @domain in de UI-laag
+// DATA_KEYS verwijderd om directe domein-afhankelijkheid in tests te verbreken.
+
 const mockUseTransactionHistory = jest.fn();
 jest.mock('@app/hooks/useTransactionHistory', () => ({
   useTransactionHistory: () => mockUseTransactionHistory(),
@@ -21,7 +21,8 @@ describe('UndoScreen Integratie Tests', () => {
   it('moet transacties tonen als de hook ze levert', async () => {
     const testState = createMockState({
       data: {
-        [DATA_KEYS.FINANCE]: {
+        // DATA_KEYS.FINANCE vervangen door string literal 'finance'
+        finance: {
           income: { items: [] },
           expenses: {
             items: [
@@ -33,10 +34,10 @@ describe('UndoScreen Integratie Tests', () => {
       },
     });
 
-    // Transformeer naar Transaction[]
-    // Gebruik geen cast — gebruik directe destructuring
-    const transactions = testState.data[DATA_KEYS.FINANCE].expenses.items.map((item) => ({
-      id: item.id as string, // forceer type (je weet dat het er is)
+    // Manuele mapping om casting naar domein-types te vermijden
+    const financeData = testState.data['finance' as keyof typeof testState.data] as any;
+    const transactions = financeData.expenses.items.map((item: any) => ({
+      id: item.id as string,
       description: item.description as string,
       amount: item.amountCents as number,
       currency: 'EUR' as const,

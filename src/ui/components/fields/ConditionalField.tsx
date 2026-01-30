@@ -1,24 +1,29 @@
 import React from 'react';
-import { ValueProvider } from '@domain/interfaces';
+
+// ✅ Geen domain imports hier!
 
 interface ConditionalFieldProps {
-  fieldId: string;
-  dependentFieldId: string;
-  valueProvider: ValueProvider;
+  parentFieldId: string;
+  condition: (value: unknown) => boolean;
+  valueProvider: {
+    getValue: (id: string) => unknown;
+  };
   children: React.ReactNode;
 }
 
 export const ConditionalField: React.FC<ConditionalFieldProps> = ({
-  dependentFieldId,
+  parentFieldId,
+  condition,
   valueProvider,
-  children
+  children,
 }) => {
-  const dependentValue = valueProvider.getValue(dependentFieldId);
-  
-  // Alleen renderen als waarde bestaat — de domein-laag bepaalt de data-aanwezigheid
-  if (dependentValue === undefined || dependentValue === null) {
+  const value = valueProvider.getValue(parentFieldId);
+
+  if (!condition(value)) {
     return null;
   }
 
   return <>{children}</>;
 };
+
+export default ConditionalField;

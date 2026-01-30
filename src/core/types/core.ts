@@ -23,7 +23,10 @@ export interface FormState {
       heeftHuisdieren?: boolean;
       [key: string]: unknown;
     };
-    household: { members: Member[] };
+    household: { members: Member[];  
+      huurtoeslag?: number;    // ➕ ADD
+      zorgtoeslag?: number;    // ➕ ADD };
+    };
     finance: {
       income: { items: Array<Record<string, unknown>>; totalAmount?: number };
       expenses: { items: Array<Record<string, unknown>>; totalAmount?: number };

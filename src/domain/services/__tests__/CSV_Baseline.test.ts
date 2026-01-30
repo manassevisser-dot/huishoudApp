@@ -1,4 +1,3 @@
-import { it, expect, describe } from 'vitest';
 import { CSVProcessor } from '../CSVProcessor';
 
 describe('CSV Baseline Snapshots', () => {

@@ -1,31 +1,33 @@
-// src/logic/__tests__/finance.test.ts
-import { computePhoenixSummary } from '@kernel/finance';
-import { UndoResult } from '@shared-types/finance';
+import { mapFinanceToUndoResults } from '../financeRules';
+import { FinanceState, FinanceItem, UndoResult  } from '/home/user/pre7/src/core/types/finance';
 
-describe('Finance Logic — Phoenix Integriteit', () => {
-  it('moet het totaal van transacties correct berekenen', () => {
-    const mockData: UndoResult[] = [
-      {
-        id: '1',
-        amount: 1000,
-        currency: 'EUR',
-        description: 'Inkomsten',
-        reason: 'salary', // Verplicht volgens interface
-        timestamp: '2026-01-05T00:00:00Z',
-        schemaVersion: '1.0.0', // Verplicht volgens interface
+describe('financeRules debug', () => {
+  it('moet FinanceState correct mappen naar UndoResult array', () => {
+    console.log('--- DEBUG START ---');
+    
+    const mockFinance: Partial<FinanceState> = {
+      income: {
+        items: [{ id: 'inc-1', amountCents: 1000, category: 'work' } as FinanceItem]
       },
-      {
-        id: '2',
-        amount: -500,
-        currency: 'EUR',
-        description: 'Uitgaven',
-        reason: 'groceries',
-        timestamp: '2026-01-05T01:00:00Z',
-        schemaVersion: '1.0.0',
-      },
-    ];
+      expenses: {
+        items: [{ id: 'exp-1', amountCents: 500, category: 'living' } as FinanceItem]
+      }
+    };
 
-    const result = computePhoenixSummary(mockData);
-    expect(result.netCents).toBe(500);
+    console.log('Mock Data aangemaakt. Items in income:', mockFinance.income?.items.length);
+    console.log('Aanroepen van mapFinanceToUndoResults...');
+
+    const results: UndoResult[] = mapFinanceToUndoResults(mockFinance as FinanceState);
+
+    console.log('Mapper resultaat lengte:', results.length);
+    console.log('Eerste item (income):', JSON.stringify(results[0], null, 2));
+    console.log('Tweede item (expense):', JSON.stringify(results[1], null, 2));
+
+    // Assertions
+    expect(results).toHaveLength(2);
+    expect(results[0].amount).toBe(1000); 
+    expect(results[1].amount).toBe(-500);
+
+    console.log('--- DEBUG EINDE (Test geslaagd) ---');
   });
 });

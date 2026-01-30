@@ -1,73 +1,94 @@
-import * as React from 'react';
+// src/ui/components/fields/InputCounter.tsx
+import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
+import { useAppStyles } from '@ui/styles/useAppStyles';
 
-/** Phoenix-only props */
-export type InputCounterProps = {
-  label?: string;
+/**
+ * UI-façade interfaces:
+ * Geen domain-imports.
+ * Geen StateWriter.updateField(...).
+ */
+interface UIValueProvider {
+  getValue(fieldId: string): unknown;
+}
+
+interface UIStateWriter {
+  (value: number): void;
+}
+
+export interface InputCounterProps {
   fieldId: string;
-  value: number;
-  min?: number;
-  max?: number;
-  disabled?: boolean;
+  valueProvider?: UIValueProvider;
+  stateWriter?: UIStateWriter;
+  value?: number;
   testIdBase?: string;
-  onChange: (payload: { fieldId: string; value: number }) => void;
-};
+}
 
-const InputCounter: React.FC<InputCounterProps> = ({
-  label,
+/**
+ * InputCounter: Dumb UI component
+ * ADR-01 Compliant: No domain imports, uses façade pattern
+ * Uses existing styles from Helpers.ts module
+ */
+export const InputCounter: React.FC<InputCounterProps> = ({
   fieldId,
-  value,
-  min = 0,
-  max = 100,
-  disabled,
+  valueProvider,
+  stateWriter,
+  value: propValue,
   testIdBase = 'counter',
-  onChange,
 }) => {
-  const emit = (next: number) => onChange({ fieldId, value: next });
-  const dec = () => emit(Math.max(min, value - 1));
-  const inc = () => emit(Math.min(max, value + 1));
+  const { styles } = useAppStyles();
+
+  // Determine display value
+  const displayValue = getDisplayValue(propValue, valueProvider, fieldId);
+
+  // Emit handler
+  const handleChange = (delta: number) => {
+    if (stateWriter !== null && stateWriter !== undefined) {
+      stateWriter(displayValue + delta);
+    }
+  };
 
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 10,
-      }}
-    >
-      {label ? <Text>{label}</Text> : null}
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <TouchableOpacity
-          testID={`${testIdBase}-decrement`}
-          accessibilityRole="button"
-          accessibilityLabel="Verlagen"
-          onPress={dec}
-          disabled={disabled || value <= min}
-        >
-          <Text style={{ fontSize: 25 }}> - </Text>
-        </TouchableOpacity>
+    <View style={styles.counterContainer}>
+      <TouchableOpacity
+        onPress={() => handleChange(-1)}
+        testID={`${testIdBase}-decrement`}
+      >
+        <Text style={styles.counterButton}>-</Text>
+      </TouchableOpacity>
 
-        <Text
-          testID={`${testIdBase}-value`}
-          accessibilityLabel={`Huidige waarde ${value}`}
-          style={{ marginHorizontal: 15 }}
-        >
-          {value}
-        </Text>
+      <Text style={styles.counterValue} testID={`${testIdBase}-value`}>
+        {displayValue}
+      </Text>
 
-        <TouchableOpacity
-          testID={`${testIdBase}-increment`}
-          accessibilityRole="button"
-          accessibilityLabel="Verhogen"
-          onPress={inc}
-          disabled={disabled || value >= max}
-        >
-          <Text style={{ fontSize: 25 }}> + </Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        onPress={() => handleChange(1)}
+        testID={`${testIdBase}-increment`}
+      >
+        <Text style={styles.counterButton}>+</Text>
+      </TouchableOpacity>
     </View>
   );
 };
+
+/**
+ * Helper: Get display value from prop or provider
+ */
+function getDisplayValue(
+  propValue: number | undefined,
+  valueProvider: UIValueProvider | undefined,
+  fieldId: string
+): number {
+  if (propValue !== undefined) {
+    return propValue;
+  }
+  
+  if (valueProvider !== null && valueProvider !== undefined) {
+    const value = valueProvider.getValue(fieldId);
+    return typeof value === 'number' ? value : 0;
+  }
+  
+  return 0;
+}
 
 export default InputCounter;

@@ -42,13 +42,11 @@ describe('DataOrchestrator Unit Tests', () => {
 
   it('zou de catch-block moeten dekken wanneer CSV mapping crasht', () => {
     // Forceer een error in de adapter
-    const spy = jest
-      .spyOn(csvService, 'mapToInternalModel')
-      .mockImplementation(() => {
-        throw new Error('Boom');
-      });
+    const spy = jest.spyOn(csvService, 'mapToInternalModel').mockImplementation(() => {
+      throw new Error('Boom');
+    });
 
-    const loggerSpy = jest.spyOn(Logger, 'error').mockImplementation();
+    const loggerSpy = jest.spyOn(Logger, 'error').mockImplementation(() => {});
 
     const result = dataOrchestrator.processAllData([], 'ongeldige-data', mockSetup);
 

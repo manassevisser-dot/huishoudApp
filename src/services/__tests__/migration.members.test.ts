@@ -1,10 +1,22 @@
-import { collectAndDistributeData, assertNoPIILeak, parseName, toNumber } from '../privacyHelpers';
-import { migrateTransactionsToPhoenix } from '../transactionService';
 import { makeLegacyMember } from '../../test-utils/factories/memberFactory';
-import { TransactionService, undoLastTransaction } from '../transactionService';
 import { StorageShim } from '@/services/storageShim';
 
-// Mock de StorageShim om zij-effecten te voorkomen
+// Functies uit transactionService
+import { 
+  migrateTransactionsToPhoenix, 
+  undoLastTransaction, 
+  TransactionService 
+} from '../transactionService';
+
+// Functies uit privacyHelpers (inclusief toNumber die hier blijkbaar ook staat)
+import { 
+  parseName, 
+  assertNoPIILeak, 
+  collectAndDistributeData,
+  toNumber 
+} from '../privacyHelpers';
+
+// jest.Mock de StorageShim om zij-effecten te voorkomen
 jest.mock('../storageShim', () => ({
   StorageShim: {
     loadState: jest.fn(),

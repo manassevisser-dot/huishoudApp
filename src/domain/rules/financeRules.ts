@@ -1,4 +1,17 @@
-import { FinanceState, FinanceItem, UndoResult, CONTRACT_VERSION } from '@shared-types/finance';
+import {
+  FinanceState,
+  FinanceItem,
+  CONTRACT_VERSION,
+} from '@core/types/finance';
+
+interface UndoResult {
+  id: string;
+  amount: number;
+  currency: 'EUR';
+  reason: string;
+  timestamp: string;
+  schemaVersion: string;
+}
 
 /**
  * Zet één FinanceItem om naar een UndoResult

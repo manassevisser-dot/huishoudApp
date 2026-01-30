@@ -17,7 +17,8 @@ const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
   labelFalse = 'Nee',
   accessibilityLabel,
 }) => {
-  const { styles, _colors } = useAppStyles() as any;
+  // ✅ FIX: Remove 'as any', destructure only what we need
+  const { styles } = useAppStyles();
 
   return (
     <View style={styles.toggleWrapper}>

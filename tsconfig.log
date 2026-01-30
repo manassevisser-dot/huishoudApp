@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+  "noEmit": true
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
@@ -21,6 +22,8 @@
       "@config/*": ["src/config/*"],
       "@logic/*": ["src/logic/*"],
       "@ui/*": ["src/ui/*"],
+      "@domain": ["src/domain/index.ts"],         
+      "@infrastructure/*": ["src/infrastructure/*"],
       "@components/*": ["src/ui/components/*"],
       "@fields/*": ["src/ui/components/fields/*"],
       "@screens/*": ["src/ui/screens/*"],

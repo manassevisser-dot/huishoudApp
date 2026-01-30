@@ -5,7 +5,6 @@ export * from '@domain/validation/fieldValidator';
 
 // Blijft lokaal (bestaat nog in src/utils)
 export * from './csvHelper';
-export * from './fieldVisibility';
 export * from './objects';
 export * from './ping';
 export * from './strings';

@@ -1,4 +1,3 @@
-import { it, expect, describe } from 'vitest';
 import { toCents } from '@domain/helpers/numbers';
 
 describe('BT-04I & BT-03: Financial Integrity Audit', () => {

@@ -2,8 +2,9 @@ import * as React from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 
-const SplashScreen: React.FC<any> = () => {
-  const { styles, colors } = useAppStyles() as any;
+const SplashScreen: React.FC = () => {
+  const { styles, colors } = useAppStyles();
+  
   return (
     <View style={styles.container}>
       <ActivityIndicator color={colors.primary} />
@@ -11,4 +12,5 @@ const SplashScreen: React.FC<any> = () => {
     </View>
   );
 };
+
 export default SplashScreen;
