@@ -1,0 +1,105 @@
+{
+  "Envelope_Version": "Q-ENV-1.0",
+  "Artifact_ID": "PHOENIX-GATE-A-2026-01-24T16-49-25",
+  "Gate": "A",
+  "Producing_Role": "Phoenix",
+  "Status": "PENDING",
+  "Token_ID": "TOKEN-ID-PHOENIX-VERDICT-STOP-85341cc7",
+  "Payload": {
+    "phoenix_report": {
+      "metadata": {
+        "role": "Phoenix - Automated Code Quality Guardian",
+        "version": "GEN4.0.0",
+        "gate": "A",
+        "execution_time_ms": 21924,
+        "timestamp": "2026-01-24T16:49:25.668Z"
+      },
+      "validators": {
+        "alias_consistency": {
+          "verdict": "PASS",
+          "adr": "ADR-12",
+          "blocking": true,
+          "weight": 20,
+          "execution_time_ms": 394,
+          "message": "✅ Alias Consistency passed"
+        },
+        "forbidden_patterns": {
+          "verdict": "PASS",
+          "adr": [
+            "ADR-04",
+            "ADR-11"
+          ],
+          "blocking": true,
+          "weight": 25,
+          "execution_time_ms": 118,
+          "message": "✅ Forbidden Patterns passed"
+        },
+        "eslint_compliance": {
+          "verdict": "FAIL",
+          "adr": [
+            "ADR-01",
+            "ADR-02",
+            "ADR-05",
+            "ADR-12"
+          ],
+          "blocking": true,
+          "weight": 25,
+          "execution_time_ms": 21412,
+          "message": "❌ ESLint Compliance failed",
+          "details": "\n> lint\n> eslint . --ext .ts,.tsx\n\n\n/home/user/pre7/src/__tests__/App.projector.test.tsx\n  12:32  warning  Arrow function has too many lines (50). Maximum allowed is 20        max-lines-per-function\n  22:42  warning  Unsafe assignment of an `any` value                                  @typescript-eslint/no-unsafe-assignment\n  29:11  warning  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment\n  40:60  warning  Async arrow function has too "
+        }
+      },
+      "adr_coverage": {
+        "checked": [
+          "ADR-01",
+          "ADR-02",
+          "ADR-04",
+          "ADR-05",
+          "ADR-11",
+          "ADR-12"
+        ],
+        "violations": [
+          {
+            "adr_id": "ADR-01",
+            "validator": "ESLint Compliance",
+            "severity": "BLOCKING",
+            "message": "❌ ESLint Compliance failed"
+          },
+          {
+            "adr_id": "ADR-02",
+            "validator": "ESLint Compliance",
+            "severity": "BLOCKING",
+            "message": "❌ ESLint Compliance failed"
+          },
+          {
+            "adr_id": "ADR-05",
+            "validator": "ESLint Compliance",
+            "severity": "BLOCKING",
+            "message": "❌ ESLint Compliance failed"
+          },
+          {
+            "adr_id": "ADR-12",
+            "validator": "ESLint Compliance",
+            "severity": "BLOCKING",
+            "message": "❌ ESLint Compliance failed"
+          }
+        ],
+        "warnings": []
+      },
+      "verdict": {
+        "status": "STOP",
+        "gate_a_passed": false,
+        "blocking_issues": [
+          "ESLint Compliance: ❌ ESLint Compliance failed"
+        ],
+        "advisory_warnings": []
+      }
+    }
+  },
+  "Router_Metadata": {
+    "Previous_Gate": "0",
+    "Locked": false,
+    "Human_GO": "NOT_REQUIRED_FOR_GATE_A",
+    "Timestamp": "2026-01-24T16:49:25.669Z"
+  }
+}

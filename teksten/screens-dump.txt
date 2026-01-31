@@ -1,0 +1,873 @@
+==== src/ui/screens/CSV/CsvUploadScreen.tsx ====
+
+// src/ui/screens/CSV/CsvUploadScreen.tsx
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { UI_SECTIONS } from '@ui/constants/uiSections';
+import { placeholderStyles } from '@/ui/styles/modules/placeholderStyles';
+
+interface CsvUploadScreenProps {
+  formStateOrchestrator: any;
+}
+
+export const CsvUploadScreen: React.FC<CsvUploadScreenProps> = ({
+  formStateOrchestrator
+}) => {
+  const [csvText, setCsvText] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleUpload = async () => {
+    try {
+      setIsUploading(true);
+      const result = await formStateOrchestrator.importCsvData(csvText);
+
+      if (!result || result.transactions?.length === 0) {
+        Alert.alert('Fout', 'Geen geldige transacties gevonden.');
+        return;
+      }
+
+      Alert.alert(
+        'Bevestig Upload',
+        `Transacties verwerkt: ${result.transactions.length}`
+      );
+    } catch (e: any) {
+      Alert.alert('Fout', 'Fout bij verwerken: ' + (e?.message || 'Onbekende fout'));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <View style={placeholderStyles.screenContainer}>
+      <Text style={placeholderStyles.screenTitle}>{UI_SECTIONS.CSV_UPLOAD}</Text>
+
+      <TextInput
+        style={placeholderStyles.textArea}
+        value={csvText}
+        onChangeText={setCsvText}
+        placeholder="Plak CSV-gegevens hier..."
+        editable={!isUploading}
+        multiline
+        numberOfLines={10}
+        textAlignVertical="top"
+      />
+
+      <TouchableOpacity
+        style={[
+          placeholderStyles.primaryButton,
+          (isUploading || !csvText.trim()) && placeholderStyles.buttonDisabled
+        ]}
+        onPress={handleUpload}
+        disabled={isUploading || !csvText.trim()}
+        accessibilityRole="button"
+        accessibilityLabel={isUploading ? 'Bezig met verwerken' : 'Verwerk CSV'}
+      >
+        {isUploading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={placeholderStyles.fieldCountText}>Verwerk CSV</Text>
+        )}
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+export default CsvUploadScreen;
+
+
+==== src/ui/screens/DailyInput/DailyInputScreen.tsx ====
+
+import * as React from 'react';
+import { View, ScrollView } from 'react-native';
+import { MoneyField } from '@components/fields/MoneyField';
+import { useAppStyles } from '@styles/useAppStyles';
+
+// We gebruiken relatieve paden om alias-conflicten te vermijden
+export const DailyInputScreen: React.FC = () => {
+  const { styles } = useAppStyles();
+
+  return (
+    <ScrollView style={styles.container}>
+      <View style={{ padding: 20 }}>
+        <MoneyField
+          label="Bedrag"
+          // MoneyField verwacht 'amount' ipv 'value' op basis van je error
+          amount={0}
+          onAmountChange={(_val) => {
+            /* logged via orchestrator */
+          }}
+        />
+      </View>
+    </ScrollView>
+  );
+};
+
+export default DailyInputScreen;
+
+
+==== src/ui/screens/Daily/__tests__/UndoScreen.test.tsx ====
+
+// src/ui/screens/Daily/__tests__/UndoScreen.test.tsx
+import React from 'react';
+import { screen, cleanup } from '@testing-library/react-native';
+import { render } from '@test-utils/index';
+import { UndoScreen } from '../UndoScreen';
+import { createMockState } from 'src/test-utils/factories/stateFactory';
+import { DATA_KEYS } from '@domain';
+
+// jest.Mock de hook
+const mockUseTransactionHistory = jest.fn();
+jest.mock('@app/hooks/useTransactionHistory', () => ({
+  useTransactionHistory: () => mockUseTransactionHistory(),
+}));
+
+describe('UndoScreen Integratie Tests', () => {
+  afterEach(() => {
+    cleanup();
+    mockUseTransactionHistory.mockReset();
+  });
+
+  it('moet transacties tonen als de hook ze levert', async () => {
+    const testState = createMockState({
+      data: {
+        [DATA_KEYS.FINANCE]: {
+          income: { items: [] },
+          expenses: {
+            items: [
+              { id: '1', description: 'Boodschappen', amountCents: 1250 },
+              { id: '2', description: 'Tanken', amountCents: 4500 },
+            ],
+          },
+        },
+      },
+    });
+
+    // Transformeer naar Transaction[]
+    // Gebruik geen cast — gebruik directe destructuring
+    const financeData = testState.data[DATA_KEYS.FINANCE as keyof typeof testState.data] as any;
+    const transactions = financeData.expenses.items.map((item: any) => ({
+      id: item.id as string, // forceer type (je weet dat het er is)
+      description: item.description as string,
+      amount: item.amountCents as number,
+      currency: 'EUR' as const,
+      date: '2026-01-05',
+    }));
+
+    mockUseTransactionHistory.mockReturnValue({
+      transactions,
+      undo: jest.fn(),
+      redo: jest.fn(),
+      clearAll: jest.fn(),
+      updateTransaction: null,
+      error: null,
+      _debugAdapterState: null,
+    });
+
+    render(<UndoScreen />);
+
+    expect(await screen.findByText(/Boodschappen/i)).toBeTruthy();
+    expect(await screen.findByText(/Tanken/i)).toBeTruthy();
+    expect(screen.getByText(/Laatste transacties:\s*2/i)).toBeTruthy();
+    expect(screen.toJSON()).toMatchSnapshot();
+  });
+});
+
+
+==== src/ui/screens/Daily/UndoScreen.tsx ====
+
+// src/ui/screens/Daily/UndoScreen.tsx
+import React from 'react';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { useTransactionHistory } from '@app/hooks/useTransactionHistory';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+
+/**
+ * UndoScreen - Transaction Management UI
+ *
+ * @architecture
+ * - ADR-01 (SoC): Alleen presentatie logica, geen business rules
+ * - ADR-04 (Dumb UI): Pure projector component (State in → View uit)
+ */
+export const UndoScreen: React.FC = () => {
+  const { styles } = useAppStyles();
+  const { transactions, undo, redo, clearAll, updateTransaction, error, _debugAdapterState } =
+    useTransactionHistory();
+
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+
+  return (
+    <ScrollView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.title}>Transaction Undo/Redo</Text>
+        {!!error && <Text style={styles.error}>{error}</Text>}
+        <View style={styles.section}>
+          <Text style={styles.subtitle}>Laatste transacties: {safeTransactions.length}</Text>
+          {safeTransactions.length === 0 ? (
+            <Text style={styles.emptyText}>Geen recente transacties</Text>
+          ) : (
+            <View style={styles.dashboardCard}>
+              {' '}
+              {/* Gebruik bestaande card als container */}
+              {safeTransactions.map((tx) => (
+                <View key={tx.id} style={{ paddingVertical: 8 }}>
+                  <Text style={styles.description}>{tx.description}</Text>
+                  <Text style={styles.details}>
+                    {tx.currency} {(tx.amount / 100).toFixed(2)} • {tx.date}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+            <TouchableOpacity
+              onPress={undo}
+              style={styles.button}
+              testID="undo-button"
+              disabled={!undo}
+            >
+              <Text style={styles.buttonText}>Undo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={redo}
+              style={styles.button}
+              testID="redo-button"
+              disabled={!redo}
+            >
+              <Text style={styles.buttonText}>Redo</Text>
+            </TouchableOpacity>
+            {safeTransactions.length > 0 && (
+              <TouchableOpacity
+                onPress={clearAll}
+                accessibilityRole="button"
+                accessibilityLabel="Verwijder Alles"
+                testID="delete-all-button"
+                style={[styles.button, styles.deleteButton]}
+                disabled={!clearAll}
+              >
+                <Text style={styles.buttonText}>Verwijder Alles</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          {/* Debug Section — alleen buiten tests */}
+          {process.env.NODE_ENV !== 'test' && _debugAdapterState && (
+            <View style={styles.dashboardCard}>
+              <Text style={styles.subtitle}>Debug Info</Text>
+              <Text style={styles.details}>{JSON.stringify(_debugAdapterState, null, 2)}</Text>
+              <TouchableOpacity
+                onPress={() => updateTransaction && updateTransaction(100.5, 2)}
+                style={{ marginTop: 12 }}
+                testID="float-test-button"
+                disabled={!updateTransaction}
+              >
+                <Text style={styles.navigationHint}>Test Float Violation (100.5)</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </View>
+    </ScrollView>
+  );
+};
+
+
+==== src/ui/screens/Dashboard/DashboardScreen.tsx ====
+
+import * as React from 'react';
+import { useMemo } from 'react';
+import { View, ScrollView, RefreshControl, Text } from 'react-native';
+import { useAppStyles } from '@styles/useAppStyles';
+import { useForm } from '@app/context/FormContext';
+import { selectFinancialSummaryVM } from '@/ui/selectors/financialSelectors';
+import { FinancialSummary } from '@components/FinancialSummary';
+
+// Props interface (WAI-006B-A)
+interface DashboardProps {
+  onAddTransaction?: () => void;
+  onLogout?: () => void;
+  onOpenOptions?: () => void;
+  onOpenUndo?: () => void;
+}
+
+export const DashboardScreen: React.FC<DashboardProps> = () => {
+  const { styles } = useAppStyles();
+  const { state, refreshData, isRefreshing } = useForm() as any;
+
+  // ADR-01: Memoize de selector voor performance
+  const financialData = useMemo(() => {
+    return selectFinancialSummaryVM(state);
+  }, [state]);
+
+  return (
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={refreshData}
+          accessibilityLabel="Vernieuw financiële gegevens"
+        />
+      }
+    >
+      <View style={styles.pageContainer}>
+        {/* WAI-009: Pagina titel met de juiste rollen */}
+        <Text style={styles.pageTitle} accessibilityRole="header" accessibilityLiveRegion="polite">
+          Dashboard
+        </Text>
+
+        <FinancialSummary data={financialData} />
+
+        {/* Ruimte voor extra widgets */}
+      </View>
+    </ScrollView>
+  );
+};
+
+export default DashboardScreen;
+
+
+==== src/ui/screens/Options/OptionsScreen.tsx ====
+
+// @ts-nocheck
+// src/ui/screens/Options/OptionsScreen.tsx
+import * as React from 'react';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+
+type Props = {
+  onClose: () => void;
+  onSettings: () => void;
+  onCsvUpload: () => void;
+  onReset: () => void;
+};
+
+const OptionsScreen: React.FC<Props> = ({ onClose, onSettings, onCsvUpload, onReset }) => {
+  const insets = useSafeAreaInsets();
+  const { styles, _colors } = useAppStyles();
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.pageContainer}>
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
+        >
+          <Text style={styles.pageTitle}>Options</Text>
+
+          <TouchableOpacity
+            style={[styles.button, { marginBottom: 16, marginLeft: 0 }]}
+            onPress={onSettings}
+          >
+            <Text style={styles.buttonText}>Settings</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, { marginBottom: 16, marginLeft: 0 }]}
+            onPress={onCsvUpload}
+          >
+            <Text style={styles.buttonText}>CSV upload</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, { marginBottom: 16, marginLeft: 0 }]}
+            onPress={onReset}
+          >
+            <Text style={styles.buttonText}>Reset</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+
+      <View
+        style={[
+          styles.buttonContainer,
+          { bottom: insets.bottom, paddingBottom: Math.max(20, insets.bottom + 8) },
+        ]}
+      >
+        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onClose}>
+          <Text style={styles.secondaryButtonText}>Terug naar Dashboard</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default OptionsScreen;
+
+
+==== src/ui/screens/Reset/ResetScreen.tsx ====
+
+// src/ui/screens/Reset/ResetScreen.tsx
+import * as React from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+
+type Props = {
+  onClose: () => void;
+  onWissen: () => void;
+  onHerstel: () => void;
+};
+
+const ResetScreen: React.FC<Props> = ({ onWissen, onHerstel }) => {
+  const insets = useSafeAreaInsets();
+  const { styles } = useAppStyles();
+
+  const handleWissen = () => {
+    Alert.alert(
+      'WISSEN - Alle data verwijderen',
+      'Dit verwijdert ALLE data inclusief setup, transacties en instellingen. Deze actie kan niet ongedaan worden gemaakt.',
+      [
+        { text: 'Annuleren', style: 'cancel' },
+        { text: 'WISSEN', style: 'destructive', onPress: onWissen },
+      ],
+    );
+  };
+
+  const handleHerstel = () => {
+    Alert.alert(
+      'HERSTEL - Setup opnieuw doorlopen',
+      'Dit reset de setup wizard naar lege velden. Uw transacties en instellingen blijven behouden.',
+      [
+        { text: 'Annuleren', style: 'cancel' },
+        { text: 'HERSTEL', onPress: onHerstel },
+      ],
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.pageContainer}>
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
+        >
+          <Text style={styles.pageTitle}>Reset Opties</Text>
+
+          <View style={[styles.dashboardCard, { marginBottom: 24 }]}>
+            <Text style={[styles.fieldLabel, { marginBottom: 8 }]}>WISSEN</Text>
+            <Text style={styles.summaryDetail}>
+              Verwijdert ALLE data: setup, transacties, en instellingen. U moet de app opnieuw
+              instellen.
+            </Text>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: '#FF3B30', marginTop: 16, marginLeft: 0 }]}
+              onPress={handleWissen}
+            >
+              <Text style={styles.buttonText}>WISSEN</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.dashboardCard, { marginBottom: 24 }]}>
+            <Text style={[styles.fieldLabel, { marginBottom: 8 }]}>HERSTEL</Text>
+            <Text style={styles.summaryDetail}>
+              Reset alleen de setup wizard naar lege velden. Transacties en instellingen blijven
+              behouden.
+            </Text>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: '#007AFF', marginTop: 16, marginLeft: 0 }]}
+              onPress={handleHerstel}
+            >
+              <Text style={styles.buttonText}>HERSTEL</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </View>
+    </View>
+  );
+};
+
+export default ResetScreen;
+
+
+==== src/ui/screens/Settings/SettingsScreen.tsx ====
+
+// src/ui/screens/Settings/SettingsScreen.tsx
+import * as React from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+import { useTheme } from '@app/context/ThemeContext';
+
+type Props = {
+  onClose: () => void;
+};
+
+const SettingsScreen: React.FC<Props> = ({ onClose }) => {
+  const insets = useSafeAreaInsets();
+  const { styles } = useAppStyles();
+  const { theme, setTheme } = useTheme();
+  const [notificationsEnabled, setNotificationsEnabled] = React.useState(false);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.pageContainer}>
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
+        >
+          <Text style={styles.pageTitle}>Settings</Text>
+
+          {/* Dark Mode Toggle */}
+          <View style={[styles.dashboardCard, { marginBottom: 16 }]}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={styles.fieldLabel}>Dark mode</Text>
+              <Switch
+                value={theme === 'dark'}
+                onValueChange={(value) => setTheme(value ? 'dark' : 'light')}
+              />
+            </View>
+            <Text style={styles.summaryDetail}>Status: {theme === 'dark' ? 'Aan' : 'Uit'}</Text>
+          </View>
+
+          {/* Notifications Toggle */}
+          <View style={[styles.dashboardCard, { marginBottom: 16 }]}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={styles.fieldLabel}>Meldingen</Text>
+              <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} />
+            </View>
+            <Text style={styles.summaryDetail}>
+              Status: {notificationsEnabled ? 'Aan' : 'Uit'} (Placeholder functie)
+            </Text>
+          </View>
+        </ScrollView>
+      </View>
+
+      {/* Footer */}
+      <View
+        style={[
+          styles.buttonContainer,
+          { bottom: insets.bottom, paddingBottom: Math.max(20, insets.bottom + 8) },
+        ]}
+      >
+        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={onClose}>
+          <Text style={styles.secondaryButtonText}>Terug naar Options</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default SettingsScreen;
+
+
+==== src/ui/screens/Wizard/CriticalErrorScreen.tsx ====
+
+import * as React from 'react';
+import { View, Text, Button } from 'react-native';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+
+type Props = { onReset: () => void };
+
+const CriticalErrorScreen: React.FC<Props> = ({ onReset }) => {
+  const { styles } = useAppStyles();
+  return (
+    <View style={styles.container}>
+      <Text style={styles.pageTitle}>
+        Er is een kritieke fout opgetreden in de data-integriteit.
+      </Text>
+      <Button title="Reset Applicatie" onPress={onReset} color="red" />
+    </View>
+  );
+};
+export default CriticalErrorScreen;
+
+
+==== src/ui/screens/Wizard/LandingScreen.tsx ====
+
+import * as React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppStyles } from '@styles/useAppStyles';
+import { useForm } from '@app/context/FormContext';
+
+interface Props {
+  onSignup?: () => void;
+  onSignin?: () => void;
+}
+
+const LandingScreen: React.FC<Props> = ({ onSignup, onSignin }) => {
+  const { styles } = useAppStyles();
+  const insets = useSafeAreaInsets();
+  const { dispatch } = useForm();
+
+  // Phoenix 2025 logica: we gebruiken de SET_STEP actie uit FormAction
+  const handleStart = () => {
+    console.log("DEBUG: handleStart aangeroepen!");
+    if (onSignup) {
+      onSignup();
+    }
+    // Aangepast naar SET_STEP omdat SET_VALUE niet bestaat in je types
+    dispatch({ type: 'SET_STEP', payload: 'WIZARD' });
+  };
+
+  const handleLogin = () => {
+    if (onSignin) {
+      onSignin();
+    }
+    // Aangepast naar SET_STEP omdat SET_VALUE niet bestaat in je types
+    dispatch({ type: 'SET_STEP', payload: 'DASHBOARD' });
+  };
+
+  return (
+    <View style={[styles.container, { paddingBottom: Math.max(20, insets.bottom + 8) }]}>
+      <View style={styles.pageContainer}>
+        <Text style={styles.pageTitle}>Welkom</Text>
+        <Text style={styles.summaryDetail}>
+          Start met het instellen van uw huishouding of ga direct naar het dashboard.
+        </Text>
+      </View>
+
+      <View style={[styles.buttonContainer, { paddingBottom: insets.bottom }]}>
+        <TouchableOpacity style={styles.button} onPress={handleStart}>
+          <Text style={styles.buttonText}>Aanmelden</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={handleLogin}>
+          <Text style={styles.secondaryButtonText}>Inloggen</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default LandingScreen;
+
+
+==== src/ui/screens/Wizard/SplashScreen.tsx ====
+
+import * as React from 'react';
+import { View, Text, ActivityIndicator } from 'react-native';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+
+const SplashScreen: React.FC<any> = () => {
+  const { styles, colors } = useAppStyles() as any;
+  return (
+    <View style={styles.container}>
+      <ActivityIndicator color={colors.primary} />
+      <Text style={styles.pageTitle}>Phoenix wordt geladen...</Text>
+    </View>
+  );
+};
+export default SplashScreen;
+
+
+==== src/ui/screens/Wizard/__tests__/WizardController.test.tsx ====
+
+import React from 'react';
+import { render } from '@testing-library/react-native';
+import { FormProvider } from '@app/context/FormContext';
+import { createMockState } from '@test-utils/index';
+import WizardController from '../WizardController';
+import { WizardPage } from '../WizardPage';
+
+// We mocken de WizardPage
+jest.mock('../WizardPage', () => ({
+  WizardPage: jest.fn(() => null)
+}));
+
+describe('WizardController Branch & Function Coverage', () => {
+  // ✅ FIX 1: jest.Mocks schoonmaken voor elke test om vervuiling te voorkomen
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const steps = [
+    { step: 'WIZARD_SETUP', expectedId: 'household_setup' },
+    { step: 'WIZARD_DETAILS', expectedId: 'household_details' },
+    { step: 'WIZARD_INCOME', expectedId: 'income_details' },
+    { step: 'WIZARD_EXPENSES', expectedId: 'fixed_expenses' },
+  ];
+
+  steps.forEach(({ step, expectedId }) => {
+    it(`moet de juiste config kiezen voor stap: ${step}`, () => {
+      const mockState = createMockState({ activeStep: step as any });
+      
+      render(
+        <FormProvider initialState={mockState} mockDispatch={jest.fn()}>
+          <WizardController />
+        </FormProvider>
+      );
+
+      // ✅ FIX 2: We inspecteren direct de laatste aanroep.
+      // Dit omzeilt het probleem met het tweede 'undefined' argument dat React soms meestuurt.
+      const calls = (WizardPage as any).mock.calls;
+      const lastCallArgs = calls[calls.length - 1]; // [props, ref/context]
+      const props = lastCallArgs[0];
+
+      expect(props).toEqual(
+        expect.objectContaining({
+          config: expect.objectContaining({ 
+            pageId: expectedId 
+          })
+        })
+      );
+    });
+  });
+  
+  it('moet de dispatch doorgeven aan de WizardPage via stateWriter', () => {
+    const mockDispatch = jest.fn();
+    const mockState = createMockState({ activeStep: 'WIZARD_SETUP' });
+
+    render(
+      <FormProvider initialState={mockState} mockDispatch={mockDispatch}>
+        <WizardController />
+      </FormProvider>
+    );
+
+    // Haal de props op van de laatste call
+    const calls = (WizardPage as any).mock.calls;
+    const lastCallProps = calls[calls.length - 1][0];
+    
+    // Test de stateWriter
+    if (lastCallProps && lastCallProps.stateWriter) {
+        lastCallProps.stateWriter({ type: 'NEXT_STEP' });
+        expect(mockDispatch).toHaveBeenCalledWith({ type: 'NEXT_STEP' });
+    } else {
+        throw new Error('WizardPage is niet aangeroepen of heeft geen stateWriter prop ontvangen');
+    }
+  });
+});
+
+==== src/ui/screens/Wizard/WelcomeWizard.tsx ====
+
+import * as React from 'react';
+import { View, Text } from 'react-native';
+import { useAppStyles } from '@ui/styles/useAppStyles';
+
+const WelcomeWizard: React.FC<any> = () => {
+  const { styles } = useAppStyles();
+  return (
+    <View style={styles.container}>
+      <Text style={styles.pageTitle}>Welkom bij de nieuwe Cashflow Wizard.</Text>
+    </View>
+  );
+};
+export default WelcomeWizard;
+
+
+==== src/ui/screens/Wizard/WizardController.tsx ====
+
+import * as React from 'react';
+import { useForm } from '@app/context/FormContext';
+import { WizardPage } from './WizardPage';
+import { setupHouseholdConfig } from './pages/1setupHousehold.config';
+import { detailsHouseholdConfig } from './pages/2detailsHousehold.config';
+import { incomeDetailsConfig } from './pages/3incomeDetails.config';
+import { fixedExpensesConfig } from './pages/4fixedExpenses.config';
+
+const WizardController: React.FC = () => {
+  const { state, dispatch } = useForm();
+
+  const getConfig = () => {
+    switch (state.activeStep) {
+      case 'WIZARD_SETUP': return setupHouseholdConfig;
+      case 'WIZARD_DETAILS': return detailsHouseholdConfig;
+      case 'WIZARD_INCOME': return incomeDetailsConfig;
+      case 'WIZARD_EXPENSES': return fixedExpensesConfig;
+      default: return setupHouseholdConfig;
+    }
+  };
+
+  const config = getConfig();
+
+  return (
+    <WizardPage
+      config={config}
+      // Voeg de ontbrekende props toe die WizardPage nodig heeft:
+      valueProvider={state as any} 
+      stateWriter={dispatch as any}
+    />
+  );
+};
+
+export default WizardController;
+
+==== src/ui/screens/Wizard/WizardPage.tsx ====
+
+// src/ui/screens/Wizard/WizardPage.tsx
+import React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import type { ValueProvider, StateWriter } from 'src/domain/index';
+
+import { placeholderStyles } from '@/ui/styles/modules/placeholderStyles';
+import { UI_SECTIONS } from '@/ui/constants/uiSections';
+
+interface WizardPageProps {
+  config: any;
+  valueProvider: ValueProvider;
+  stateWriter: StateWriter;
+}
+
+export const WizardPage: React.FC<WizardPageProps> = ({
+  config,
+  valueProvider,
+  stateWriter,
+}) => {
+ 
+
+  // Section key voor accessibility
+  const sectionKey = (UI_SECTIONS as any).WIZARD || '[HIER_MOET_NOG_EEN_UX_KEY]';
+
+  // Debug knop functionaliteit
+  const handleDebugReset = () => {
+    stateWriter.updateField('debug_reset', true);
+  };
+
+  const title = String(config?.titleToken || '[HIER_MOET_NOG_EEN_UX_KEY]');
+
+  return (
+    <View style={placeholderStyles.wizardPageContainer} accessibilityLabel={sectionKey}>
+      {/* Titel */}
+      <Text style={placeholderStyles.screenTitle}>{title}</Text>
+
+      {/* Debug knop, alleen zichtbaar als flag in valueProvider */}
+      {valueProvider.getValue('show_debug') === true && (
+        <TouchableOpacity
+          style={placeholderStyles.debugButton}
+          onPress={handleDebugReset}
+          accessibilityRole="button"
+          accessibilityLabel="Reset Wizard State"
+        >
+          <Text style={placeholderStyles.fieldCountText}>Reset Wizard State</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Fields container */}
+      <View style={placeholderStyles.fieldsContainer}>
+        <Text style={placeholderStyles.fieldCountText}>
+          Velden aanwezig: {Array.isArray(config?.fields) ? config.fields.length : 0}
+        </Text>
+        {/* Je kan hier later dynamisch velden renderen */}
+      </View>
+
+      {/* Optioneel navigatie-buttons (placeholder look) */}
+      <View style={placeholderStyles.screenContainer}>
+        {config?.showBack && (
+          <TouchableOpacity style={placeholderStyles.primaryButton}>
+            <Text style={placeholderStyles.fieldCountText}>Vorige</Text>
+          </TouchableOpacity>
+        )}
+        {config?.showNext && (
+          <TouchableOpacity style={placeholderStyles.primaryButton}>
+            <Text style={placeholderStyles.fieldCountText}>
+              {config?.isLast ? 'Voltooien' : 'Volgende'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+};
+
+export default WizardPage;
+
+

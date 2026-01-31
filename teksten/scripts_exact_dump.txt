@@ -1,0 +1,1045 @@
+]633;E;echo "";ea5c9bf3-c533-4675-95b7-10bfbd14cdae]633;C
+====== scripts/git-hooks/pre-commit =====
+#!/usr/bin/env bash
+# Example pre-commit hook (opt-in): run quick audit; block on failure
+set -euo pipefail
+./scripts/maintenance/phoenix-check.sh || { echo "❌ Audit failed. Commit blocked."; exit 1; }
+
+====== scripts/maintenance/audit_keys.sh =====
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Bepaal de root van het project (rekenend vanaf scripts/maintenance/)
+# dirname ${BASH_SOURCE[0]} geeft de map van het script zelf
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+# Nu is het pad naar de bridge ALTIJD correct
+
+log_info "COMMIT_START"
+
+# 1) Opruimen
+log_info "CLEAN_ARTIFACTS"
+rm -rf artifacts compare_out dedup_reports || true
+
+log_info "CLEAN_BAK"
+find src -type f -name '*.bak.*' -delete 2>/dev/null || true
+
+if [[ -d reports ]]; then
+  log_info "CLEAN_REPORTS"
+  ( cd reports && ls -1t | grep -v latest | tail -n +6 | xargs -r rm -rf ) 2>/dev/null || true
+fi
+
+# 2) Dev caches
+if command -v npx >/dev/null 2>&1; then
+  log_info "CLEAN_EXPO"
+  # npx expo start -c >/dev/null 2>&1 || true
+fi
+
+# 3) Lint/TypeScript (non-fatal)
+log_info "RUN_CHECKS"
+npm run -s lint  >/dev/null 2>&1 || log_val "warn" "CHECK_ISSUE" "lint"
+npx tsc --noEmit >/dev/null 2>&1 || log_val "warn" "CHECK_ISSUE" "type"
+
+# 4) Git logica
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+timestamp="$(date +'%Y-%m-%d_%H%M')"
+tag="phoenix-${timestamp}"
+commit_msg="chore: phoenix run ${timestamp} — audits green (A+) — cleanup & maintenance"
+
+log_info "GIT_ADD"
+git add -A
+
+log_val "info" "GIT_COMMIT" "$commit_msg"
+git commit -m "$commit_msg" || log_warn "GIT_COMMIT_NONE"
+
+log_val "info" "GIT_TAG" "$tag"
+git tag -f "${tag}" || true
+
+log_info "GIT_PUSH"
+git push --follow-tags || git push && git push --tags || true
+
+log_val2 "ok" "COMMIT_DONE" "$branch" "$tag"
+=====
+
+====== scripts/maintenance/audit-orchestrator.js =====
+#!/usr/bin/env node
+// scripts/maintenance/audit-orchestrator.js
+const fs = require('fs');
+const path = require('path');
+
+const isVerbose = process.env.VERBOSE === 'true';
+const args = process.argv.slice(2);
+
+/**
+ * Trinity State Machine
+ * Encapsulates all score computation logic
+ */
+class TrinityState {
+  constructor() {
+    this.audit = 0;
+    this.coverage = 0;
+    this.stability = 0;
+    this.master = 'U'; // Unknown
+    this.timestamp = new Date().toISOString();
+    this.errors = [];
+    this.warnings = [];
+    this.meta = {};
+  }
+
+  /**
+   * Berekent Audit Score
+   * In een echte implementatie zou dit uit audit-check.sh komen
+   */
+  computeAudit() {
+    // TODO: Integreer met echte audit resultaten
+    this.audit = 85;
+    this.meta.auditSource = 'static';
+  }
+
+  /**
+   * Leest Jest Coverage Data
+   */
+  computeCoverage() {
+    try {
+      const coveragePath = path.join(process.cwd(), 'coverage/coverage-summary.json');
+      
+      if (!fs.existsSync(coveragePath)) {
+        this.warnings.push('Coverage file not found - run tests first');
+        this.coverage = 0;
+        return;
+      }
+
+      const summary = JSON.parse(fs.readFileSync(coveragePath, 'utf8'));
+      
+      // Branch coverage als primaire metric
+      this.coverage = Math.round(summary.total.branches.pct);
+      
+      // Extra metadata
+      this.meta.lines = {
+        total: summary.total.lines.total,
+        covered: summary.total.lines.covered,
+        pct: summary.total.lines.pct
+      };
+      
+      this.meta.functions = {
+        total: summary.total.functions.total,
+        covered: summary.total.functions.covered,
+        pct: summary.total.functions.pct
+      };
+
+      if (isVerbose) {
+        console.error(`ℹ️  Coverage data loaded: ${this.coverage}%`);
+      }
+    } catch (error) {
+      this.errors.push(`Failed to read coverage: ${error.message}`);
+      this.coverage = 0;
+      
+      if (isVerbose) {
+        console.error('⚠️  Kon coverage data niet inlezen:', error.message);
+      }
+    }
+  }
+
+  /**
+   * Berekent Stability Score (Coverage - Risk Penalty)
+   */
+  computeStability() {
+    if (!this.meta.lines) {
+      this.stability = 0;
+      return;
+    }
+
+    const uncoveredLines = this.meta.lines.total - this.meta.lines.covered;
+    const riskPenalty = Math.min(Math.round(uncoveredLines / 10), 20);
+    
+    this.stability = Math.max(0, this.coverage - riskPenalty);
+    
+    this.meta.risk = {
+      uncoveredLines,
+      penalty: riskPenalty
+    };
+  }
+
+  /**
+   * Berekent Master Grade op basis van Audit + Stability
+   */
+  computeMaster() {
+    const avg = Math.round((this.audit + this.stability) / 2);
+    
+    if (avg >= 90) return 'S';
+    if (avg >= 75) return 'A';
+    if (avg >= 60) return 'B';
+    return 'C';
+  }
+
+  /**
+   * Run volledige Trinity berekening
+   */
+  compute() {
+    this.computeAudit();
+    this.computeCoverage();
+    this.computeStability();
+    this.master = this.computeMaster();
+  }
+
+  /**
+   * Export als JSON
+   */
+  toJSON() {
+    return {
+      audit: this.audit,
+      coverage: this.coverage,
+      stability: this.stability,
+      master: this.master,
+      timestamp: this.timestamp,
+      errors: this.errors,
+      warnings: this.warnings,
+      meta: this.meta
+    };
+  }
+
+  /**
+   * Export als legacy string (backward compatibility)
+   */
+  toLegacyString() {
+    return `TRINITY_DATA|AUDIT:${this.audit}|COV:${this.coverage}|STAB:${this.stability}|MASTER:${this.master}`;
+  }
+
+  /**
+   * Pretty print voor console
+   */
+  toString() {
+    const lines = [
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      '   📊 TRINITY SCORES',
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      `   🏛️  Audit:     ${this.audit}%`,
+      `   🧪  Coverage:  ${this.coverage}%`,
+      `   🛡️  Stability: ${this.stability}%`,
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+      `   👑 MASTER:    ${this.master}`,
+      '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+    ];
+
+    if (this.warnings.length > 0) {
+      lines.push('');
+      lines.push('⚠️  Warnings:');
+      this.warnings.forEach(w => lines.push(`   • ${w}`));
+    }
+
+    if (this.errors.length > 0) {
+      lines.push('');
+      lines.push('❌ Errors:');
+      this.errors.forEach(e => lines.push(`   • ${e}`));
+    }
+
+    return lines.join('\n');
+  }
+}
+
+/**
+ * Main Entry Point
+ */
+function main() {
+  const state = new TrinityState();
+  state.compute();
+
+  // Output format based on args
+  if (args.includes('--json')) {
+    // JSON output (preferred for scripting)
+    console.log(JSON.stringify(state.toJSON(), null, 2));
+  } else if (args.includes('--legacy')) {
+    // Legacy pipe format (backward compatibility)
+    console.log(state.toLegacyString());
+  } else if (args.includes('--pretty')) {
+    // Pretty console output
+    console.log(state.toString());
+  } else {
+    // Default: compact JSON for bash parsing
+    console.log(JSON.stringify(state.toJSON()));
+  }
+
+  // Exit code based on quality gates
+  const hasErrors = state.errors.length > 0;
+  const belowMinimum = state.coverage < 70 || state.master === 'C';
+
+  if (hasErrors) {
+    process.exit(1);
+  } else if (belowMinimum) {
+    // Soft failure - data is valid but quality is low
+    process.exit(0);
+  } else {
+    process.exit(0);
+  }
+}
+
+// Execute
+if (require.main === module) {
+  main();
+}
+
+// Export for testing
+module.exports = { TrinityState };
+
+====== scripts/maintenance/check_context_integrity.sh =====
+#!/usr/bin/env bash
+set -eo pipefail
+
+
+TARGETS=("jest.config.js|50" "babel.config.js|50" "tsconfig.json|100" "package.json|200")
+MAX_FAIL=0
+
+log_info "GUARD_CHECK"
+
+# --- Stap 1: File Size Checks ---
+for entry in "${TARGETS[@]}"; do
+  IFS="|" read -r FILE MAX_KB <<< "$entry"
+  if [ -f "$FILE" ]; then
+    SIZE_BYTES=$(date -r "$FILE" +%s 2>/dev/null || stat -c%s "$FILE" 2>/dev/null || stat -f%z "$FILE")
+    SIZE_KB=$((SIZE_BYTES / 1024))
+    if [ "$SIZE_KB" -gt "$MAX_KB" ]; then
+      log_val3 "error" "GUARD_FAIL" "$FILE" "$SIZE_KB" "$MAX_KB"
+      MAX_FAIL=1
+    else
+      log_val2 "ok" "GUARD_PASS" "$FILE" "$SIZE_KB"
+    fi
+  fi
+done
+
+# --- Stap 2: Preset Check & Auto-fix ---
+log_info "PRESET_CHECK"
+if ! grep -q "metro-react-native-babel-preset" package.json; then
+    log_err "ERR_BABEL_PRESET"
+    log_info "REMEDY_BABEL"
+    
+    # Phoenix-stijl: Probeer het zelf op te lossen
+    if npm install --save-dev metro-react-native-babel-preset; then
+        log_ok "DEDUP_OK" # Misbruik even een 'success' key of maak een nieuwe
+        MAX_FAIL=0
+    else
+        MAX_FAIL=1
+    fi
+fi
+
+# --- Stap 3: Finale ---
+if [ "$MAX_FAIL" -eq 1 ]; then
+  log_err "GUARD_CRITICAL"
+  exit 1
+fi
+
+log_ok "GUARD_SAFE"
+exit 0
+=====
+
+====== scripts/maintenance/cleanup-before-commit.sh =====
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Ga naar projectroot (zeker doen als dit script vanuit CI of andere mappen draait)
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$ROOT_DIR"
+
+# Gebruik de package manager die je gebruikt (npm/pnpm/yarn)
+npm run sync:aliases
+
+
+====== scripts/maintenance/import_repair.sh =====
+#!/usr/bin/env bash
+set -euo pipefail
+source "${PROJECT_ROOT}/scripts/utils/log_bridge.sh"
+
+log_info "PHOENIX_IMPORT_REPAIR_STARTING"
+# Hier komt de logica die we uit de bridge hebben gehaald
+# (Voor nu hebben we deze al gedraaid, dus we houden hem leeg of voegen later toe)
+log_ok "Imports gecontroleerd en hersteld."
+
+====== scripts/maintenance/phoenix-check.sh =====
+#!/usr/bin/env bash
+set -euo pipefail
+
+# 1. Bridge laden
+source "$PROJECT_ROOT/scripts/utils/log_bridge.sh"
+source "$PROJECT_ROOT/.phoenix/core.sh"
+source "$PROJECT_ROOT/.phoenix/checkers.sh"
+source "$PROJECT_ROOT/.phoenix/extractors.sh"
+source "$PROJECT_ROOT/.phoenix/audits.sh"
+source "$PROJECT_ROOT/.phoenix/reports.sh"
+
+main() {
+    # Alleen loggen als we NIET vanuit de orchestrator komen (voorkomt dubbel-log)
+    if [[ "${PHOENIX_INTERNAL:-false}" != "true" ]]; then
+        log_info "AUDIT_START"
+    fi
+
+    local start_time=$(date +%s)
+    local _audit_exit_code=0
+    
+    # Voer de audits uit (deze functies komen uit ../../.phoenix/audits.sh)
+    run_all_audits || _audit_exit_code=$? 
+
+    # Toon de samenvatting (A+ score)
+    if declare -f show_summary > /dev/null; then
+        show_summary
+    else
+        log_err "AUDIT_SUMMARY_FAIL"
+        _audit_exit_code=1
+    fi
+
+    # Timer berekenen
+    local end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+
+    # Tijd loggen via de bridge
+    node -e "const l=require('./scripts/utils/logger'); \
+      const msg = typeof l.TEXT.FINISH_TIME === 'function' ? l.TEXT.FINISH_TIME('$duration') : l.TEXT.FINISH_TIME; \
+      l.info(msg);"
+
+    # Bepaal exit status
+    if [[ "${SOFT_FAIL:-false}" == "true" ]]; then
+        exit 0
+    else
+        exit $_audit_exit_code
+    fi
+}
+
+main "$@"
+=====
+
+
+====== scripts/maintenance/phoenix_compare.sh =====
+#!/usr/bin/env bash
+set -euo pipefail
+
+# phoenix_compare.sh — Geoptimaliseerd voor Cloud Shell / Containers
+# - Geen sudo nodig
+# - Negeert node_modules/.git voor snelheid
+# - Gebruikt grep voor binary detectie (geen 'file' command nodig)
+
+usage() {
+  cat <<'USAGE'
+Gebruik: ./phoenix_compare.sh <DIR_A> <DIR_B> [--out OUTDIR] [--keywords "kw1,kw2"]
+
+Opties:
+  --out OUTDIR       Map voor rapporten (default: ./compare_out)
+  --keywords LIST    Komma-gescheiden lijst (default: "phoenix")
+  --all              Negeer 'node_modules' en '.git' NIET (standaard wel)
+
+USAGE
+}
+
+# ---- Configuratie ----
+OUTDIR="./compare_out"
+KEYWORDS="phoenix"
+IGNORE_SYSTEM_DIRS=true
+
+# ---- Args parsing ----
+if [[ $# -lt 2 ]]; then usage; exit 2; fi
+DIR_A="$1"; shift
+DIR_B="$1"; shift
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --out)      OUTDIR="$2"; shift 2;;
+    --keywords) KEYWORDS="$2"; shift 2;;
+    --all)      IGNORE_SYSTEM_DIRS=false; shift;;
+    -h|--help)  usage; exit 0;;
+    *)          echo "Onbekende optie: $1" >&2; usage; exit 2;;
+  esac
+done
+
+# ---- Dependency Check (No Sudo fix) ----
+require_cmd() {
+  if ! command -v "$1" &> /dev/null; then
+    echo "❌ Fout: Commando '$1' niet gevonden. Dit script vereist coreutils." >&2
+    exit 1
+  fi
+}
+
+require_cmd "stat"
+require_cmd "grep"
+require_cmd "awk"
+require_cmd "diff"
+
+# Check hashing tool (sha256sum of shasum)
+if command -v sha256sum &> /dev/null; then
+  HASHER="sha256sum"
+elif command -v shasum &> /dev/null; then
+  HASHER="shasum -a 256"
+else
+  echo "⚠️ Geen sha256sum gevonden, vallend terug op md5sum..."
+  require_cmd "md5sum"
+  HASHER="md5sum"
+fi
+
+# ---- Validatie ----
+for d in "$DIR_A" "$DIR_B"; do
+  if [[ ! -d "$d" ]]; then echo "❌ Fout: map bestaat niet: $d" >&2; exit 1; fi
+done
+mkdir -p "$OUTDIR"
+
+INDEX_A="$OUTDIR/index_A.tsv"
+INDEX_B="$OUTDIR/index_B.tsv"
+CSV="$OUTDIR/compare_report.csv"
+MD="$OUTDIR/compare_report.md"
+
+# ---- Helpers ----
+
+# Veilig tekst detecteren zonder 'file' commando
+is_text_file() {
+  # grep -I behandelt binaire bestanden als non-match en crasht niet
+  if grep -qI "." "$1" 2>/dev/null || [[ ! -s "$1" ]]; then
+    return 0 # Tekst (of leeg)
+  else
+    return 1 # Binair
+  fi
+}
+
+has_keyword() {
+  # $1=file path, $2=keywords
+  local f="$1"; local kws="$2"
+  # Alleen zoeken in tekstbestanden
+  if is_text_file "$f"; then
+    local pattern
+    # Zet komma's om naar pipes voor grep -E (kw1|kw2)
+    pattern=$(echo "$kws" | sed 's/,/|/g')
+    if grep -I -i -E -q "$pattern" "$f"; then
+      echo "yes"; return 0
+    fi
+  fi
+  echo "no"; return 1
+}
+
+index_dir() {
+  local root="$1"; local out="$2"
+  echo -e "dir\trelpath\tbasename\tsize\tmtime_epoch\tmtime_iso\tis_text\thash\tphx" > "$out"
+  
+  # Bouw find commando op
+  local find_cmd=(find "$root" -type f)
+  
+  if [[ "$IGNORE_SYSTEM_DIRS" == "true" ]]; then
+    # Prune node_modules en .git voor performance
+    find_cmd=(find "$root" -type d \( -name "node_modules" -o -name ".git" -o -name ".firebase" \) -prune -o -type f -print)
+  fi
+
+  "${find_cmd[@]}" | while IFS= read -r f; do
+    local rel=${f#"$root/"}
+    local base=$(basename "$f")
+    
+    # Stat (Linux/GNU syntax, standaard in Firebase/Cloud Shell)
+    local size epoch iso
+    size=$(stat -c "%s" "$f")
+    epoch=$(stat -c "%Y" "$f")
+    iso=$(date -u -d "@$epoch" +"%Y-%m-%dT%H:%M:%SZ" 2>/dev/null || echo "Unknown")
+
+    # Hash & Type
+    local hash=$($HASHER "$f" | awk '{print $1}')
+    local is_txt="binary"
+    if is_text_file "$f"; then is_txt="text"; fi
+    
+    local phx=$(has_keyword "$f" "$KEYWORDS")
+    
+    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+      "$root" "$rel" "$base" "$size" "$epoch" "$iso" "$is_txt" "$hash" "$phx" >> "$out"
+  done
+}
+
+# ---- Uitvoering ----
+echo "🔍 Indexeren van $DIR_A..."
+index_dir "$DIR_A" "$INDEX_A"
+echo "🔍 Indexeren van $DIR_B..."
+index_dir "$DIR_B" "$INDEX_B"
+
+echo "📊 Vergelijken en rapport genereren..."
+
+# CSV Header
+echo "kind,a_relpath,b_relpath,a_basename,b_basename,status,newest,a_mtime,b_mtime,a_type,b_type,a_phx,b_phx" > "$CSV"
+
+# 1. Name Match Logic (Basename based)
+awk -F"\t" 'NR==1{next} FNR==NR{ a[$3] = $0; next }
+{ if ($3 in a) { print a[$3] "\t" $0 } }' "$INDEX_A" "$INDEX_B" | \
+while IFS=$'\t' read -r a_dir a_rel a_base a_size a_epoch a_iso a_txt a_hash a_phx \
+                      b_dir b_rel b_base b_size b_epoch b_iso b_txt b_hash b_phx; do
+  
+  status="different"
+  if [[ "$a_hash" == "$b_hash" ]]; then
+    status="identical"
+  elif [[ "$a_txt" == "text" && "$b_txt" == "text" ]]; then
+     # Quick diff check (exit code 0 = same, 1 = diff)
+     if diff -q "$a_dir/$a_rel" "$b_dir/$b_rel" >/dev/null 2>&1; then
+        status="identical" # Zou al door hash gedekt moeten zijn, maar voor de zekerheid
+     else
+        status="different"
+     fi
+  else
+     status="binary_diff"
+  fi
+
+  newest="equal"
+  if (( a_epoch > b_epoch )); then newest="A"; elif (( b_epoch > a_epoch )); then newest="B"; fi
+
+  echo "name_match,$a_rel,$b_rel,$a_base,$b_base,$status,$newest,$a_iso,$b_iso,$a_txt,$b_txt,$a_phx,$b_phx" >> "$CSV"
+done
+
+# 2. Content Match Logic (Hash based, different name)
+awk -F"\t" 'NR==1{next} FNR==NR{ a[$8] = a[$8] "\n" $0; next }
+{ if ($8 in a) { 
+    split(a[$8], lines, "\n")
+    for (i in lines) { if (length(lines[i])>0) print lines[i] "\t" $0 }
+  }
+}' "$INDEX_A" "$INDEX_B" | \
+while IFS=$'\t' read -r a_dir a_rel a_base a_size a_epoch a_iso a_txt a_hash a_phx \
+                      b_dir b_rel b_base b_size b_epoch b_iso b_txt b_hash b_phx; do
+  
+  # Skip als het ook een naam-match is (die hebben we al gehad)
+  if [[ "$a_base" == "$b_base" ]]; then continue; fi
+
+  newest="equal"
+  if (( a_epoch > b_epoch )); then newest="A"; elif (( b_epoch > a_epoch )); then newest="B"; fi
+
+  echo "content_match,$a_rel,$b_rel,$a_base,$b_base,identical,$newest,$a_iso,$b_iso,$a_txt,$b_txt,$a_phx,$b_phx" >> "$CSV"
+done
+
+# ---- Markdown Rapport ----
+T_A=$(awk 'NR>1{c++}END{print c+0}' "$INDEX_A")
+T_B=$(awk 'NR>1{c++}END{print c+0}' "$INDEX_B")
+N_MATCH=$(grep -c "^name_match" "$CSV" || true)
+C_MATCH=$(grep -c "^content_match" "$CSV" || true)
+DIFFS=$(grep -c ",different" "$CSV" || true)
+PHX_A=$(awk -F, '$12=="yes"{c++}END{print c+0}' "$CSV")
+PHX_B=$(awk -F, '$13=="yes"{c++}END{print c+0}' "$CSV")
+
+cat > "$MD" <<EOF
+# 🦅 Phoenix Vergelijkingsrapport
+
+| Bron | Pad | Bestanden | Phoenix Keywords |
+|------|-----|-----------|------------------|
+| **A** | \`$DIR_A\` | $T_A | $PHX_A |
+| **B** | \`$DIR_B\` | $T_B | $PHX_B |
+
+**Gegenereerd:** $(date -u +"%Y-%m-%d %H:%M UTC")
+
+## 📊 Resultaten
+- **Naam Matches:** $N_MATCH (Bestanden met dezelfde naam in beide mappen)
+- **Inhoud Matches:** $C_MATCH (Verplaatst/Hernoemd maar zelfde inhoud)
+- **Verschillen:** $DIFFS (Bestanden met dezelfde naam maar andere inhoud)
+
+## 📂 Details
+Zie \`compare_report.csv\` voor de ruwe data.
+
+### Top 10 Recente Verschillen (Nieuwste eerst)
+| Bestand (A) | Status | Nieuwste |
+|-------------|--------|----------|
+$(grep ",different" "$CSV" | head -10 | awk -F, '{printf "| %s | %s | %s |\n", $2, $6, $7}')
+
+===
+EOF
+
+echo "✅ Klaar! Rapporten opgeslagen in: $OUTDIR"
+ls -l "$OUTDIR"
+=====
+
+====== scripts/maintenance/phoenix_dedup.sh =====
+#!/usr/bin/env bash
+# Phoenix Deduplicatie — Key-driven Editie
+set -euo pipefail
+
+# Importeer de bridge
+
+# Gebruik de centrale keys uit audit.js
+log_info "DEDUP_START"
+
+TARGET_DIR="${1:-src}"
+
+if [[ -d "$TARGET_DIR" ]]; then
+    # Hier komt de functionele logica van je dedup script [cite: 15]
+    # We simuleren hier even de run:
+    mkdir -p dedup_reports
+    touch dedup_reports/scan.txt
+    
+    log_info "DEDUP_REPORT_MOVE"
+    # De orchestrator verplaatst dit later naar de juiste plek [cite: 16]
+    
+    log_ok "DEDUP_OK"
+else
+    log_warn "DEDUP_SKIP"
+fi
+=====
+
+====== scripts/maintenance/phoenix-launcher.sh =====
+#!/usr/bin/env bash
+set -euo pipefail
+
+# 1. Bridge laden
+
+# 2. Lock-logica (Voorkomt dat de audit twee keer tegelijk draait)
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+REPO_NAME="$(basename "$REPO_ROOT")"
+LOCKDIR="/tmp/phoenix.audit.lock.${REPO_NAME}.$(id -u)"
+LOCK_FILE="$LOCKDIR/started"
+
+if mkdir "$LOCKDIR" 2>/dev/null; then
+  echo "$$" > "$LOCKDIR/pid"
+  date > "$LOCKDIR/started"
+  trap 'rm -rf "$LOCKDIR"' EXIT
+else
+  if [[ -f "$LOCK_FILE" ]]; then
+    NOW="$(date +%s)"
+    STARTED_TS=$(date -r "$LOCK_FILE" +%s 2>/dev/null || stat -f%m "$LOCK_FILE" 2>/dev/null || echo 0)
+    if [[ "$NOW" -gt $(( STARTED_TS + 1800 )) ]]; then
+      log_warn "LOCK_STALE"
+      rm -rf "$LOCKDIR"
+      exec "$0" "$@"
+    fi
+  fi
+  log_err "LOCK_ACTIVE"
+  exit 1
+fi
+
+# 3. Modules laden (Stil, tenzij verbose)
+log_info "AUDIT_START"
+set +u
+source ".phoenix/core.sh"
+source ".phoenix/checkers.sh"
+source ".phoenix/extractors.sh"
+source ".phoenix/audits.sh"
+source ".phoenix/reports.sh"
+set -u
+
+
+====== scripts/utils/backup-helper.js =====
+const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const logger = require('./logger'); // Als backup-helper en logger in dezelfde map (utils) staan.
+
+/**
+ * Phoenix Gold Backup Helper
+ * Beveiligt de cockpit-configuraties vóór elke grote operatie.
+ */
+const backupConfigs = () => {
+    const rootDir = path.resolve(__dirname, '../../');
+    const backupDir = path.join(rootDir, 'backups');
+    
+    if (!fs.existsSync(backupDir)) {
+        fs.mkdirSync(backupDir, { recursive: true });
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:T]/g, '-').split('.')[0];
+    const filename = `config_backup_${timestamp}.tar.gz`;
+    const fullPath = path.join(backupDir, filename);
+
+    try {
+        // 1. Maak de backup
+        execSync(`tar -czf "${fullPath}" -C "${rootDir}" babel.config.js jest.config.js tsconfig.json package.json 2>/dev/null`);
+        
+        // 2. Retentie: Alleen de 2 nieuwste bewaren
+        execSync(`ls -1t "${backupDir}"/config_backup_*.tar.gz | tail -n +3 | xargs rm -f 2>/dev/null || true`);
+
+        // 3. Succes-log (Geen magic strings!)
+        logger.ok(`${logger.TEXT.CONFIG_BACKUP_SUCCESS}: ${filename}`);
+        
+    } catch (e) {
+        // 4. Kritieke failure (Geen magic strings!)
+        logger.fail(logger.TEXT.CONFIG_BACKUP_FAIL);
+        process.exit(1);
+    }
+};
+
+module.exports = backupConfigs;
+====== scripts/utils/constants/audit.js =====
+module.exports = {
+  DEDUP_START: "🔍 Start Deduplicatie scan...",
+  DEDUP_OK: "✅ Deduplicatie succesvol afgerond.",
+  DEDUP_SKIP: "⚠️ Dedup script niet gevonden of doelmap ontbreekt (skip)",
+  AUDIT_START: "🛡️ Start Audit (phoenix-check)…",
+  AUDIT_SUMMARY_FAIL: "❌ Fout: Functie show_summary niet geladen uit reports.sh",
+  LOCK_STALE: "⚠️ Oude lock gevonden (>30 min). Opruimen en opnieuw starten…",
+  LOCK_ACTIVE: "❌ Phoenix audit is al bezig.",
+  CLEANUP_RUNNING: "Rapporten opschonen (behoud laatste 5)…",
+  CLEANUP_DONE: "Systeem opgeschoond.",
+  CLEANUP_FAIL: "Opschonen mislukt of map is leeg.",
+  STEP_START: (n) => `--- ${n} ---`,
+  STEP_SKIP: (cmd) => `[DRY-RUN] Overslaan: ${cmd}`,
+  STEP_FAIL: (n) => `Fout tijdens ${n}`,
+  GUARD_CHECK: "🐕 Guard Dog: Checking file sizes...",
+  GUARD_PASS: (file, size) => `✅ PASS: ${file} (${size} KB)`,
+  GUARD_FAIL: (file, size, max) => `❌ FAIL: ${file} is te groot (${size} KB). Limiet is ${max} KB.`,
+  GUARD_CRITICAL: "🚨 COMMIT AFGEKEURD: Los de bloating op voordat je commit.",
+  GUARD_SAFE: "�� Alles veilig: geen verdachte wijzigingen gevonden.",
+  PRESET_CHECK: "🧪 Controleren van Babel presets...",
+  ERR_BABEL_PRESET: "❌ CRITICAl: 'metro-react-native-babel-preset' ontbreekt in package.json!",
+  REMEDY_BABEL: "💡 Actie: npm i -D metro-react-native-babel-preset",
+  GIT_ADD: "• Git add",
+  GIT_PUSH: "• Git push",
+  GIT_COMMIT: (m) => `• Git commit: ${m}`,
+  GIT_COMMIT_NONE: "⚠️ Nothing to commit",
+  GIT_TAG: (t) => `• Create tag: ${t}`,
+  COMMIT_DONE: (branch, tag) => `✅ Done. Branch: ${branch}, tag: ${tag}`,
+  PHOENIX_FINAL_SMASH_STARTING: "PHOENIX_FINAL_SMASH_STARTING",
+};
+
+====== scripts/utils/constants/generic.js =====
+module.exports = {
+  FATAL: (msg) => `\n🚨 FATALE FOUT: ${msg}`,
+  HELP:  `\n📋 Phoenix Commander\nGebruik --dry-run voor simulatie.\n`,
+  FINISH: "Phoenix operatie voltooid.",
+  REPORTS_LOCATION: (p) => `📄 Zie rapporten in: ${p}`,
+  FINISH_TIME: (s) => `⏱️ Duur: ${s}s`,
+  KEYS_INDEX_NAME: "🔑 PHOENIX CONSTANTS INDEX",
+  KEYS_INDEX_GEN: (d) => `Gegenereerd op: ${d}`,
+  FILE_TOO_LARGE: "Kritiek: bestand is abnormaal groot",
+};
+
+====== scripts/utils/constants/sync.js =====
+module.exports = {
+  SYNC_START: "🚀 Phoenix Sync gestart…🔄",
+  SYNC_ALIASES_FOUND: (n) => `Mapping: ${n} 🤝 aliassen gevonden`,
+  SYNC_OK: "Phoenix integriteit hersteld.🧖",
+  DRY_RUN_COMPLETE: "Dry-run voltooid: Geen wijzigingen doorgevoerd.",
+};
+
+====== scripts/utils/log_bridge.sh =====
+#!/usr/bin/env bash
+# Phoenix Logging Bridge v3.3 - Hybride
+
+log_node() {
+    local cmd="const l = require('${PROJECT_ROOT}/scripts/utils/logger'); l.$1('$2'${3:+, '$3'});"
+    node -e "$cmd" 2>/dev/null || echo "$2"
+}
+
+log_info() { log_node "info" "$1"; }
+log_ok()   { log_node "ok" "$1"; }
+log_warn() { log_node "warn" "$1"; }
+log_err()  { log_node "error" "$1"; }
+log_val()  { log_node "val" "$1" "$2"; }
+
+export -f log_info log_ok log_warn log_err log_val
+
+====== scripts/utils/logger/colors.js =====
+module.exports = {
+    reset: "\x1b[0m",
+    red: "\x1b[31m",
+    green: "\x1b[32m",
+    yellow: "\x1b[33m",
+    dim: "\x1b[2m"
+};
+
+====== scripts/utils/logger/constants/audit.js =====
+module.exports = {
+    // === DEDUP ===
+    DEDUP_START: "🔍 Start Deduplicatie scan...",
+    DEDUP_REPORT_MOVE: "📦 Verplaatsen van deduplicatie rapporten naar base...",
+    DEDUP_OK: "✅ Deduplicatie succesvol afgerond.",
+    DEDUP_SKIP: "⚠️ Dedup script niet gevonden of doelmap ontbreekt (skip)",
+
+    // === PHOENIX-CHECK (AUDIT) ===
+    AUDIT_START: "🛡️ Start Audit (phoenix-check)...",
+    AUDIT_NOT_FOUND: "❌ FOUT: phoenix-check.sh niet gevonden!",
+    AUDIT_SUMMARY_FAIL: "❌ Fout: Functie show_summary niet geladen uit reports.sh",
+    AUDIT_STAT_HOUSEHOLD: "ℹ️  Statistiek: Huishoudens met > 5 adults krijgen speciale status.",
+    
+    // === LOCK LOGICA ===
+    LOCK_STALE: "⚠️  Oude lock gevonden (>30 min). Opruimen en opnieuw starten…",
+    LOCK_ACTIVE: "❌ Phoenix audit is al bezig sinds:",
+    LOCK_PID: (pid) => `ℹ️  PID: ${pid}`,
+
+    // === ORCHESTRATOR & CLEANUP ===
+    STEP_START: (name) => `--- ${name} ---`,
+    STEP_SKIP: (cmd) => `[DRY-RUN] Overslaan: ${cmd}`,
+    STEP_FAIL: (name) => `Fout tijdens ${name}`,
+    CLEANUP_RUNNING: "Rapporten opschonen (behoud laatste 5)...",
+    CLEANUP_DONE: "Systeem opgeschoond.",
+    CLEANUP_FAIL: "Opschonen mislukt of map is leeg.",
+    
+    // === GUARD DOG ===
+    GUARD_CHECK: "🐕 Guard Dog: Checking file sizes...",
+    GUARD_PASS: (file, size) => `✅ PASS: ${file} (${size} KB)`,
+    GUARD_FAIL: (file, size, max) => `❌ FAIL: ${file} is te groot (${size} KB). Limiet is ${max} KB.`,
+    GUARD_CRITICAL: "🚨 COMMIT AFGEKEURD: Los de bloating op voordat je commit.",
+    GUARD_SAFE: "🦴 Alles veilig: geen verdachte wijzigingen gevonden.",
+    
+    // === EXTRA GUARD DOG KEYS ===
+    PRESET_CHECK: "🧪 Controleren van Babel presets...",
+    ERR_BABEL_PRESET: "❌ CRITICAl: 'metro-react-native-babel-preset' ontbreekt in package.json!",
+    REMEDY_BABEL: "💡 Actie: Draai 'npm install --save-dev metro-react-native-babel-preset'",
+
+    // Voorbeeld voor log_val2
+    FILE_INFO: (file, size) => `Bestand ${file} is ${size} bytes groot.`,
+    
+    // === BABEL / JEST ERRORS ===
+    ERR_BABEL_PRESET: "❌ Babel Preset missing: 'metro-react-native-babel-preset' niet gevonden.",
+    REMEDY_BABEL: "💡 Oplossing: Draai 'npm install --save-dev metro-react-native-babel-preset' en wis de jest cache.",
+    
+    // === CLEANUP & COMMIT ===
+    COMMIT_START: "🧹 Cleanup, prepare & commit",
+    CLEAN_ARTIFACTS: "• Cleaning artifacts",
+    CLEAN_BAK: "• Removing .bak backups",
+    CLEAN_REPORTS: "• Pruning old reports (keep 5)",
+    CLEAN_EXPO: "• Clearing Expo cache",
+    RUN_CHECKS: "• Running lint/ts checks (non-fatal)",
+    CHECK_ISSUE: (type) => `⚠️ ${type} issues (ignored)`,
+    GIT_ADD: "• Git add",
+    GIT_COMMIT: (msg) => `• Git commit: ${msg}`,
+    GIT_COMMIT_NONE: "⚠️ Nothing to commit",
+    GIT_TAG: (tag) => `• Create tag: ${tag}`,
+    GIT_PUSH: "• Git push",
+    COMMIT_DONE: (branch, tag) => `✅ Done. Branch: ${branch}, tag: ${tag}`,
+    
+    // I DONT KNOW 
+    FILE_TOO_LARGE: "Kritiek: bestand is abnormaal groot",
+    DRY_RUN_COMPLETE: "Dry-run voltooid: Geen wijzigingen doorgevoerd.",
+    CONFIG_BACKUP_SUCCESS: "Configuratie backup succesvol beveiligd",
+    ADR_SAFETY_LIMIT: "Sync afgebroken door veiligheidslimieten (ADR-06).",
+    CONFIG_BACKUP_SUCCESS: "Configuratie backup succesvol beveiligd",
+    CONFIG_BACKUP_FAIL: "Kritieke fout: Configuratie backup mislukt. Operatie afgebroken.",
+    // === IMPORTS ===
+    IMPORTS_START: "🧩 Phoenix Import Fixer: Aliassen rechttrekken...",
+    IMPORTS_CLEAN: "✨ Alle imports zijn al correct geformatteerd.",
+    IMPORTS_FIXED: (count) => `🛠️  Succesvol ${count} imports hersteld naar aliassen!`,
+  
+    // === FINALE & DOCS ===
+    FINISH: "Phoenix operatie voltooid.",
+    KEYS_INDEX_NAME: "🔑 PHOENIX CONSTANTS INDEX",
+    KEYS_INDEX_GEN: (date) => `Gegenereerd op: ${date}`,
+    REPORTS_LOCATION: (path) => `📄 Zie rapporten in: ${path}`,
+    // Zoek de regel FINISH_TIME en verander hem in:
+    FINISH_TIME: (s) => `⏱️  Duur: ${s}s`,
+};
+====== scripts/utils/logger/constants/generic.js =====
+module.exports = {
+    FATAL: (msg) => "\n🚨 FATALE FOUT: " + msg,
+    HELP: "\n📋 Phoenix Commander\nGebruik --dry-run voor simulatie.\n"
+};
+
+====== scripts/utils/logger/constants/sync.js =====
+module.exports = {
+    SYNC_START: '🚀 Phoenix Sync gestart...🔄',
+    SYNC_ALIASES_FOUND: (n) => "Mapping: " + n + " 👭 aliassen gevonden",
+    SYNC_OK: 'Phoenix integriteit hersteld.🤕',
+};
+
+====== scripts/utils/logger/index.js =====
+#!/usr/bin/env node
+const fs = require('fs');
+// ... rest van je code
+const transports = require('./transports');
+const sync = require('./constants/sync');
+const audit = require('./constants/audit'); // NIEUW
+const generic = require('./constants/generic');
+const path = require('path');
+
+// --- DE TERMALINK- HELPER (buiten het object voor intern gebruik) ---
+const terminalLink = (text, filePath) => {
+    const OSC = '\u001B]8;;';
+    const ST = '\u001B\\';
+    const url = `file://${path.resolve(filePath)}`;
+    return `${OSC}${url}${ST}${text}${OSC}${ST}`;
+};
+
+const logger = {
+    TEXT: { ...generic, ...sync, ...audit },
+    
+    isVerbose: process.argv.includes('--verbose') || process.argv.includes('-v'),
+    isDryRun: process.argv.includes('--dry-run'),
+    
+    _startTime: null,
+    startTimer: () => { logger._startTime = Date.now(); },
+    stopTimer: () => {
+        const duration = ((Date.now() - logger._startTime) / 1000).toFixed(2);
+        transports.writeStream('info', "\x1b[2m⏱️  Duur: " + duration + "s\x1b[0m");
+    },
+
+    info: (key) => transports.info(logger.TEXT[key] || key),
+    ok: (key) => transports.ok(logger.TEXT[key] || key),
+    warn: (key) => transports.warn(logger.TEXT[key] || key),
+    error: (key) => transports.error(logger.TEXT[key] || key),
+    /**
+     * NIEUW: Speciaal voor rapporten met klikbare link
+     * Gebruikt transports.ok voor de consistente Phoenix-styling
+     */
+    report: (reportPath) => {
+        // 1. Maak de onzichtbare klikbare link van het pad
+        const link = terminalLink(reportPath, reportPath);
+        
+        // 2. Haal de tekst op uit je constants. 
+        // Omdat REPORTS_LOCATION een functie is, geven we de 'link' mee als argument.
+        const message = logger.TEXT.REPORTS_LOCATION 
+            ? logger.TEXT.REPORTS_LOCATION(link) 
+            : `📄 Zie rapporten in: ${link}`;
+
+        // 3. Verstuur naar de transport (zonder extra ok-icoon, want die zit al in je string)
+        transports.ok(message);
+    
+    },
+    verbose: (msg) => { 
+        if (logger.isVerbose) transports.writeStream('verbose', "\x1b[2m📣 " + msg + "\x1b[0m"); 
+    },
+    
+    die: (msgKey) => {
+        const msg = logger.TEXT[msgKey] || msgKey;
+        transports.die(logger.TEXT.FATAL ? logger.TEXT.FATAL(msg) : msg);
+    }
+};
+
+module.exports = logger;
+
+====== scripts/utils/logger/transports.js =====
+const colors = require('./colors');
+function writeStream(level, msg) {
+    const isError = level === 'error' || level === 'fatal';
+    const stream = isError ? process.stderr : process.stdout;
+    stream.write(msg + '\n');
+}
+module.exports = {
+    writeStream,
+    info: (msg) => writeStream('info', "ℹ️ " + msg),
+    ok: (msg) => writeStream('ok', colors.green + "✅ " + msg + colors.reset),
+    warn: (msg) => writeStream('warn', colors.yellow + "⚠️ " + msg + colors.reset),
+    error: (msg) => writeStream('error', colors.red + "❌ " + msg + colors.reset),
+    die: (msg) => {
+        writeStream('fatal', colors.red + msg + colors.reset);
+        process.exit(1);
+    }
+};
+
+====== scripts/utils/logger.js =====
+const chalk = require('chalk');
+
+// Check direct of we in dry-run mode draaien
+const isDryRun = process.argv.includes('--dry-run');
+
+const logger = {
+    // Properties
+    isDryRun: isDryRun,
+
+    // Methods
+    info: (msg) => console.log(chalk.blue('ℹ️  ') + msg),
+    ok: (msg) => console.log(chalk.green('✅ ') + msg),
+    warn: (msg) => console.log(chalk.yellow('⚠️  ') + msg),
+    error: (msg) => console.error(chalk.red('❌ ') + msg),
+    
+    // Mooie output voor key: value
+    val: (key, val) => console.log(chalk.blue('📊 ') + chalk.bold(key) + ': ' + val),
+
+    // Fatale error helper (optioneel, maar handig)
+    die: (msg) => {
+        console.error(chalk.bgRed.white.bold(' FATAAL ') + ' ' + chalk.red(msg));
+        process.exit(1);
+    },
+
+    // Teksten (zodat je index.js niet crasht op ontbrekende keys)
+    TEXT: {
+        SYNC_START: '🚀 Start synchronisatie aliassen...',
+        SYNC_OK: '✨ Synchronisatie succesvol voltooid.',
+        DRY_RUN_COMPLETE: '🏁 Dry run voltooid (geen wijzigingen).',
+        ADR_SAFETY_LIMIT: 'Beveiligingsfout: Bestand overschrijdt ADR limiet (50KB).',
+        FILE_TOO_LARGE: 'Bestand is te groot',
+        
+        // Dynamische tekst functie
+        SYNC_ALIASES_FOUND: (count) => `Gevonden aliassen in tsconfig: ${count}`,
+        FINISH_TIME: (d) => `Duur: ${d}s`
+    }
+};
+
+module.exports = logger;

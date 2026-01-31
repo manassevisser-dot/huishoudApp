@@ -1,0 +1,114 @@
+Het plan — vanuit de noodzaak van de mislukte refactor
+De huidige wizard‑app is instabiel geraakt omdat de eerdere refactor halverwege is blijven steken. Hierdoor zitten logica, validatie en UI‑weergave nu door elkaar, waardoor:
+
+velden niet meer goed zichtbaar zijn of verdwijnen,
+validatie onvoorspelbaar werkt,
+de wizard state inconsistent is,
+tests niet kloppen of helemaal ontbreken,
+fixes in de ene plek iets anders breken,
+uitbreiden vrijwel onmogelijk is.
+
+Daarom moet het project opnieuw, maar dit keer gestructureerd worden opgebouwd.
+
+🎯 Kern van het plan
+1️⃣ Domeinlogica moet uit de UI
+Momenteel zit business‑logica (visibility, berekeningen, validatie) verspreid door UI‑componenten.
+Dat maakt het ontestbaar, foutgevoelig en onmogelijk te migreren.
+Plan:
+
+Alle business‑regels verhuizen naar één centrale domain‑laag (pure functies, voorspelbaar, testbaar).
+
+
+2️⃣ Er moet een duidelijke scheiding komen tussen:
+
+Domain (regels, validatie, visibility, berekeningen)
+App (FormState, orchestrators, adapters, ValueProvider)
+UI (dumb components + config)
+
+Nu lopen deze drie lagen volledig door elkaar. Dat is precies waarom de refactor stukging.
+Plan:
+
+Domain wordt “zuiver”
+App‑laag krijgt één verantwoordelijkheid: state beheren en domain aansturen
+UI verwacht alleen props en configs, geen logica
+
+
+3️⃣ Config‑bestanden moeten leidend worden
+De wizard‑pagina’s moeten volledig config‑gedreven werken.
+Nu zit er nog logica in:
+
+WizardPage
+FieldRenderer
+.config.ts files
+losse componenten
+
+Plan:
+
+Config bestanden bevatten alleen data (velden, labels, types)
+Domain bepaalt:
+
+zichtbaarheid
+constraints
+berekeningen
+
+
+UI rendert alleen wat je opgeeft
+
+
+4️⃣ Velden moeten via één consistent systeem worden opgehaald
+Na de mislukte refactor zijn er:
+
+twee verschillende ValueProviders
+meerdere manieren om dingen uit state te lezen
+inconsistent path‑gebruik voor velden
+
+Plan:
+
+Één FieldPathResolver
+Één ValueProvider
+Eén FormStateValueProvider adapter
+→ zodat elk veld voorspelbaar werkt.
+
+
+5️⃣ Validatie moet gecentraliseerd en volledig testbaar worden
+Nu is validatie verspreid en deels kapot.
+Sommige velden hebben min/max op root, andere in validation, sommige nergens.
+Plan:
+
+Eén domeinvalidator
+Eén bron van waarheid voor regels
+Snapshot‑tests om bestaand gedrag vast te leggen
+Daarna uitbreiden met veilige, gecontroleerde wijzigingen
+
+
+6️⃣ De wizard flow moet weer betrouwbaar worden
+Omdat de huidige flow afhankelijk is van incomplete configuraties en uit elkaar gevallen orchestrators, werkt de wizard niet meer stabiel.
+Plan:
+
+App‑laag herstructureren (FormStateOrchestrator)
+Wizard moet state ontvangen uit app‑laag, niet meer zelf puzzelen
+Geen logica in WizardPage of FieldRenderer
+
+
+7️⃣ Testen moeten opnieuw worden opgebouwd
+Je hebt nu ±1,14% coverage — vrijwel niets werkt nog.
+Plan:
+
+Nieuwe domain‑testen
+Nieuwe app‑laag integratietesten
+UI‑rendering‑testen zonder logica
+Baselines om bestaand gedrag vast te leggen (belangrijk voor vertrouwen)
+
+
+🏁 Het eindresultaat
+Wanneer dit plan is uitgevoerd:
+
+De app werkt weer stabiel
+Businesslogica zit volledig in domain
+UI is clean, simpel, uitbreidbaar
+Wizard werkt consistent per stap
+Validatie en zichtbaarheid zijn voorspelbaar
+Nieuwe features toevoegen is veilig
+Je hebt volledige testdekking en snapshots
+Je weet zeker dat refactoren niet weer alles breekt
+

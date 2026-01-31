@@ -1,0 +1,262 @@
+#!/usr/bin/env node
+const fs = require('fs');
+const path = require('path');
+
+// 1. Logger & Config
+const logger = require('../../utils/logger'); 
+const config = require('./config');
+const backupConfigs = require('../../utils/backup-helper');
+const { validateAliases, formatValidationReport } = require('./validators');
+
+// 2. Importeer Handlers
+const babelHandler = require('./handlers/babel');
+const jestHandler = require('./handlers/jest');
+const jsonHandler = require('./handlers/json');
+
+const ROOT = config.paths.root;
+const MAX_FILE_SIZE = 50000; // 50KB limiet (ADR-06)
+
+const PATHS = {
+  tsconfig: config.paths.tsconfig,
+  babel:    config.paths.babel,
+  jest:     config.paths.jest,
+  jsconfig: config.paths.jsconfig,
+};
+
+// === CLI Flags ===
+const isStrictMode = process.argv.includes('--strict');
+const showDiff = process.argv.includes('--diff') || config.flags.verbose;
+
+// --- Helper Functies ---
+
+function checkHardening(filePath) {
+  if (fs.existsSync(filePath)) {
+    const stats = fs.statSync(filePath);
+    if (stats.size > MAX_FILE_SIZE) {
+      logger.warn(`⚠️  Bestand te groot: ${path.basename(filePath)} (${stats.size} bytes)`);
+      logger.warn('   ADR-06: Configuratie bestanden mogen max 50KB zijn.');
+      return false;
+    }
+  }
+  return true;
+}
+
+function parseTsConfig(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    
+    // Verbeterde regex die ook comments tolereert
+    const match = content.match(/"paths"\s*:\s*\{([^}]*)\}/s);
+    if (!match) throw new Error("Geen 'paths' gevonden in tsconfig.json");
+    
+    // Extract the paths block
+    let pathsBlock = match[1];
+    
+    // Remove comments (single line and multi-line)
+    pathsBlock = pathsBlock.replace(/\/\*[\s\S]*?\*\//g, '');
+    pathsBlock = pathsBlock.replace(/\/\/.*/g, '');
+    
+    // Parse JSON (with trailing comma tolerance)
+    const jsonString = `{${pathsBlock.replace(/,(\s*[}\]])/g, '$1')}}`;
+    
+    return JSON.parse(jsonString);
+  } catch (err) {
+    logger.error(`Fout bij lezen tsconfig: ${err.message}`);
+    if (config.flags.verbose) {
+      console.error(err.stack);
+    }
+    process.exit(1);
+  }
+}
+
+function computeFileDiff(oldContent, newContent) {
+  if (oldContent === newContent) return null;
+  
+  const oldLines = oldContent.split('\n');
+  const newLines = newContent.split('\n');
+  const changes = [];
+  
+  // Simple line-by-line diff
+  for (let i = 0; i < Math.max(oldLines.length, newLines.length); i++) {
+    if (oldLines[i] !== newLines[i]) {
+      if (oldLines[i] !== undefined) {
+        changes.push({ type: 'removed', line: i + 1, content: oldLines[i] });
+      }
+      if (newLines[i] !== undefined) {
+        changes.push({ type: 'added', line: i + 1, content: newLines[i] });
+      }
+    }
+  }
+  
+  return changes.length > 0 ? changes : null;
+}
+
+function showDiffSummary(filename, changes) {
+  if (!changes) return;
+  
+  console.log(`\n📝 Wijzigingen in ${filename}:`);
+  const added = changes.filter(c => c.type === 'added').length;
+  const removed = changes.filter(c => c.type === 'removed').length;
+  console.log(`   +${added} / -${removed} regels`);
+  
+  if (config.flags.verbose) {
+    changes.slice(0, 10).forEach(c => {
+      const symbol = c.type === 'added' ? '+' : '-';
+      const color = c.type === 'added' ? '\x1b[32m' : '\x1b[31m';
+      console.log(`   ${color}${symbol} ${c.content.trim()}\x1b[0m`);
+    });
+    if (changes.length > 10) {
+      console.log(`   ... en ${changes.length - 10} meer wijzigingen`);
+    }
+  }
+}
+
+// --- Main ---
+
+async function main() {
+  const startTime = Date.now();
+  
+  logger.info('🚀 Start synchronisatie aliassen...');
+  
+  if (config.flags.dryRun) {
+    logger.warn('🔸 DRY RUN: Geen wijzigingen worden opgeslagen.');
+  }
+  
+  if (isStrictMode) {
+    logger.info('🔒 Strict mode: Validatie errors blokkeren sync.');
+  }
+
+  try {
+    // 1. Hardening Check
+    if (!checkHardening(PATHS.babel) || !checkHardening(PATHS.jest)) {
+      logger.error('❌ Beveiligingsfout: Bestand(en) te groot. Stop.');
+      process.exit(1);
+    }
+
+    // 2. Aliassen lezen uit tsconfig
+    const paths = parseTsConfig(PATHS.tsconfig);
+    const entries = Object.entries(paths);
+    logger.info(`ℹ️  Gevonden aliassen in tsconfig: ${entries.length}`);
+
+    // 3. VALIDATIE (NIEUW!)
+    console.log('\n🔍 Valideer alias configuratie...');
+    const validationResult = validateAliases(paths, ROOT);
+    
+    const report = formatValidationReport(validationResult, config.flags.verbose);
+    report.forEach(line => console.log(line));
+    
+    // In strict mode: blokkeer bij errors
+    if (!validationResult.isValid && isStrictMode) {
+      logger.error('\n❌ Validatie gefaald in strict mode. Sync afgebroken.');
+      logger.info('💡 Fix de errors of draai zonder --strict flag.');
+      process.exit(1);
+    }
+    
+    // Bij warnings: toon maar ga door
+    if (validationResult.warnings.length > 0 && !isStrictMode) {
+      logger.warn('⚠️  Waarschuwingen gevonden, maar sync gaat door...');
+    }
+
+    // 4. Backup maken (alleen als we echt gaan schrijven)
+    if (!config.flags.dryRun) {
+      backupConfigs();
+    }
+
+    // 5. Handlers Uitvoeren
+    const changes = {};
+    
+    // --- BABEL ---
+    if (fs.existsSync(PATHS.babel)) {
+      const babelContent = fs.readFileSync(PATHS.babel, 'utf8');
+      const newBabel = babelHandler(babelContent, paths, config.markers.babel);
+      
+      if (newBabel) {
+        const diff = computeFileDiff(babelContent, newBabel);
+        changes.babel = diff;
+        
+        if (diff && showDiff) {
+          showDiffSummary('babel.config.js', diff);
+        }
+        
+        if (!config.flags.dryRun) {
+          fs.writeFileSync(PATHS.babel, newBabel);
+        }
+        logger.ok('✅ babel.config.js bijgewerkt');
+      } else {
+        logger.warn('⚠️  Babel markers niet gevonden - bestand niet aangepast');
+      }
+    }
+
+    // --- JEST ---
+    if (fs.existsSync(PATHS.jest)) {
+      const jestContent = fs.readFileSync(PATHS.jest, 'utf8');
+      const newJest = jestHandler(jestContent, paths, config.markers.jest);
+      
+      if (newJest) {
+        const diff = computeFileDiff(jestContent, newJest);
+        changes.jest = diff;
+        
+        if (diff && showDiff) {
+          showDiffSummary('jest.config.ts', diff);
+        }
+        
+        if (!config.flags.dryRun) {
+          fs.writeFileSync(PATHS.jest, newJest);
+        }
+        logger.ok('✅ jest.config.ts bijgewerkt');
+      } else {
+        logger.warn('⚠️  Jest markers niet gevonden - bestand niet aangepast');
+      }
+    }
+
+    // --- JSCONFIG (Optioneel) ---
+    if (fs.existsSync(PATHS.jsconfig)) {
+      const jsonContent = fs.readFileSync(PATHS.jsconfig, 'utf8');
+      const newJson = jsonHandler(jsonContent, paths, config.markers.jsconfig);
+      
+      if (newJson) {
+        const diff = computeFileDiff(jsonContent, newJson);
+        changes.jsconfig = diff;
+        
+        if (diff && showDiff) {
+          showDiffSummary('jsconfig.json', diff);
+        }
+        
+        if (!config.flags.dryRun) {
+          fs.writeFileSync(PATHS.jsconfig, newJson);
+        }
+        logger.ok('✅ jsconfig.json bijgewerkt');
+      }
+    }
+
+    // 6. Afronding
+    const totalChanges = Object.values(changes).filter(Boolean).length;
+    
+    console.log(''); // Newline voor leesbaarheid
+    
+    if (totalChanges === 0) {
+      logger.ok('✨ Alle configs zijn al gesynchroniseerd (geen wijzigingen).');
+    } else if (!config.flags.dryRun) {
+      logger.ok(`✨ Synchronisatie succesvol voltooid (${totalChanges} bestanden aangepast).`);
+    } else {
+      logger.ok(`🏁 Dry run voltooid (${totalChanges} bestanden zouden worden aangepast).`);
+    }
+    
+    // Exit code: 0 = success, maar log warnings
+    const exitCode = validationResult.errors.length > 0 && isStrictMode ? 1 : 0;
+    process.exit(exitCode);
+
+  } catch (error) {
+    logger.error(`❌ Fataal: ${error.message}`);
+    if (config.flags.verbose) {
+      console.error(error.stack);
+    }
+    process.exit(1);
+  } finally {
+    const endTime = Date.now();
+    const duration = ((endTime - startTime) / 1000).toFixed(2);
+    logger.info(`⏱️  Tijd: ${duration}s`);
+  }
+}
+
+main();
