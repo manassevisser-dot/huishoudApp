@@ -30,3 +30,5 @@ trate pages and navigation (single source of truth)"
 backups/*
 .phoenix/history/
 .phoenix/.deps-checked
+project.bundle
+teksten/
