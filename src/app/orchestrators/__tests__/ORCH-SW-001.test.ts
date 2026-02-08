@@ -9,7 +9,7 @@ describe('ORCH-SW-001: updateField(fieldId, value)', () => {
       setup: {
         aantalMensen: 0,
         aantalVolwassen: 1,
-        autoCount: 'Nee' as const,
+        autoCount: 'Geen' as const,
         heeftHuisdieren: false,
         ...setupOverrides,
       },
@@ -20,8 +20,9 @@ describe('ORCH-SW-001: updateField(fieldId, value)', () => {
   });
   
   test('updates aantalMensen correctly', () => {
+    const mockDispatch = jest.fn();
     const mockState = createMockState();
-    const orchestrator = new FormStateOrchestrator(mockState as any);
+    const orchestrator = new FormStateOrchestrator(() => mockState as any, mockDispatch);
     
     orchestrator.updateField('aantalMensen', 5);
     
@@ -30,8 +31,9 @@ describe('ORCH-SW-001: updateField(fieldId, value)', () => {
   });
 
   test('updates autoCount correctly', () => {
+    const mockDispatch = jest.fn();
     const mockState = createMockState();
-    const orchestrator = new FormStateOrchestrator(mockState as any);
+    const orchestrator = new FormStateOrchestrator(() => mockState as any, mockDispatch);
     
     orchestrator.updateField('autoCount', 'Twee');
     
@@ -41,7 +43,8 @@ describe('ORCH-SW-001: updateField(fieldId, value)', () => {
 
   test('updates heeftHuisdieren correctly', () => {
     const mockState = createMockState({ heeftHuisdieren: true });
-    const orchestrator = new FormStateOrchestrator(mockState as any);
+    const mockDispatch = jest.fn();
+    const orchestrator = new FormStateOrchestrator(() => mockState as any, mockDispatch);
     
     orchestrator.updateField('heeftHuisdieren', false);
     

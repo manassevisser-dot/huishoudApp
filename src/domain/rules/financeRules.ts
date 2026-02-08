@@ -2,7 +2,7 @@ import {
   FinanceState,
   FinanceItem,
   CONTRACT_VERSION,
-} from '@core/types/finance';
+} from '@core/types/research';
 
 interface UndoResult {
   id: string;

@@ -1,8 +1,8 @@
 // src/styles/modules/Dashboard.ts
 // CU-008.5: Informatie (Dashboard) — KPI blocks, labels/message; semantisch en tokens-based
 import { Platform } from 'react-native';
-import { Space, Type, Radius, Tokens } from '@styles/Tokens';
-import type { ColorScheme } from '@styles/Colors';
+import { Space, Type, Radius, Tokens } from '@domain/constants/Tokens';
+import type { ColorScheme } from '@domain/constants/Colors';
 
 /**
  * Fabriek: dashboard-kaarten voor KPI's en korte berichten

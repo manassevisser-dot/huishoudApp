@@ -1,34 +1,30 @@
-import * as React from 'react';
+// src/ui/components/fields/ChipButton.tsx
+
+import React from 'react';
 import { TouchableOpacity, Text } from 'react-native';
-import { useAppStyles } from '@ui/styles/useAppStyles';
+import type { ChipViewModel } from '../../../domain/registry/ComponentRegistry';
 
-export type ChipButtonProps = {
-  label: string;
-  selected: boolean;
-  error?: boolean;
-  onPress: () => void;
-  accessibilityLabel?: string;
-};
+interface ChipButtonProps {
+  viewModel: ChipViewModel;
+}
 
-const ChipButton: React.FC<ChipButtonProps> = ({
-  label,
-  selected,
-  error,
-  onPress,
-  accessibilityLabel,
-}) => {
-  // ✅ FIX: Remove 'as any', destructure only what we need
-  const { styles } = useAppStyles();
-
+/**
+ * DUMB ChipButton
+ * Geen logica, geen style-berekeningen.
+ * Alles is pre-computed door ComponentOrchestrator.
+ */
+const ChipButton: React.FC<ChipButtonProps> = ({ viewModel }) => {
   return (
     <TouchableOpacity
-      style={[styles.chip, selected && styles.chipSelected, error && styles.chipError]}
-      onPress={onPress}
+      style={viewModel.containerStyle}
+      onPress={viewModel.onPress}
       accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel ?? label}
-      accessibilityState={{ selected }}
+      accessibilityLabel={viewModel.accessibilityLabel}
+      accessibilityState={viewModel.accessibilityState}
     >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+      <Text style={viewModel.textStyle}>
+        {viewModel.label}
+      </Text>
     </TouchableOpacity>
   );
 };

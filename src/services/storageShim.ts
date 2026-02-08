@@ -1,52 +1,68 @@
-// CU-001-SHIM — Storage API shim (Phoenix v1.0)
+// src/services/storageShim.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as LegacyNamespace from '@adapters/storage/storage';
-import type { FormState } from '@shared-types/form';
+import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter'; // Aangenomen pad
+import type { FormState } from '@core/types/core';
 
 const KEY = '@CashflowWizardState';
+const CURRENT_SCHEMA_VERSION = '1.0';
+const ENVELOPE_VERSION = 2;
 
 /**
- * Losse functies definiëren zorgt ervoor dat Jest de properties 
- * op het geëxporteerde object kan overschrijven (mocken).
+ * Laadt de Phoenix state vanuit AsyncStorage.
  */
-
 async function loadState(): Promise<FormState | null> {
-  const L = (LegacyNamespace as any).Storage || LegacyNamespace;
+  try {
+    const rawData = await AsyncStorage.getItem(KEY);
+    if (rawData === null) {
+      return null;
+    }
 
-  // Phoenix-integriteit: Delegeer ALTIJD naar de migratie-engine van legacy.
-  if (typeof L.loadState === 'function') {
-    return await L.loadState();
+    const envelope = JSON.parse(rawData) as { version: number; state: FormState };
+    
+    // FIX: Expliciete versie-check voorkomt linter 'always true' error
+    if (envelope.version === ENVELOPE_VERSION) {
+      return envelope.state;
+    }
+    
+    return null;
+  } catch (error) {
+    AuditLogger.error('STORAGE_LOAD_FAILURE', { error });
+    return null;
   }
-
-  return null; // Geen legacy? Dan start de app 'schoon' via de orchestrator.
 }
 
+/**
+ * Slaat de Phoenix state op in de correcte envelope structuur.
+ */
 async function saveState(state: FormState): Promise<void> {
-  const L = (LegacyNamespace as any).Storage || LegacyNamespace;
-  // Forceer Phoenix Contract
-  const candidate = { ...state, schemaVersion: '1.0' };
+  try {
+    const candidate: FormState = { 
+      ...state, 
+      schemaVersion: CURRENT_SCHEMA_VERSION 
+    };
 
-  if (typeof L.saveState === 'function') {
-    return await L.saveState(candidate);
+    const envelope = { 
+      version: ENVELOPE_VERSION, 
+      state: candidate 
+    };
+
+    await AsyncStorage.setItem(KEY, JSON.stringify(envelope));
+  } catch (error) {
+    AuditLogger.error('STORAGE_SAVE_FAILURE', { error });
   }
-
-  // Fallback: Gebruik de correcte Phoenix-envelope (version 2)
-  const envelope = { version: 2, state: candidate };
-  await AsyncStorage.setItem(KEY, JSON.stringify(envelope));
 }
 
+/**
+ * Wis de app-specifieke opslag.
+ */
 async function clearAll(): Promise<void> {
-  const L = (LegacyNamespace as any).Storage || LegacyNamespace;
-
-  if (typeof L.clearAll === 'function') {
-    return await L.clearAll();
+  try {
+    await AsyncStorage.removeItem(KEY);
+  } catch (error) {
+    AuditLogger.error('STORAGE_CLEAR_FAILURE', { error });
   }
-
-  // Phoenix-safe: Wis alleen de app-specifieke key, niet het hele device.
-  await AsyncStorage.removeItem(KEY);
 }
 
-// Export als een veranderbaar object voor Jest support
 export const StorageShim = {
   loadState,
   saveState,

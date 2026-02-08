@@ -37,7 +37,7 @@ describe('Field Visibility Rules', () => {
 
   describe('car_repeater', () => {
     test('moet onzichtbaar zijn als autoCount "Nee" is', () => {
-      const ctx = createMockCtx({ autoCount: 'Nee' });
+      const ctx = createMockCtx({ autoCount: 'Geen' });
       expect(fieldVisibilityRules.car_repeater(ctx)).toBe(false);
     });
 

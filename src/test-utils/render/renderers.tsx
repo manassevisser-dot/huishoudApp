@@ -3,31 +3,40 @@ import {
   render as rtlRender,
   RenderOptions as RTLRenderOptions,
   renderHook,
+  screen,
+  waitFor,
 } from '@testing-library/react-native';
 import { ThemeProvider } from '@app/context/ThemeContext';
 import { FormContext } from '@app/context/FormContext';
-import { FormState } from '@shared-types/form';
+import { FormState } from '@core/types/core';
 import { makePhoenixState } from '../factories/stateFactory';
-// Voeg waitFor toe aan de lijst met imports
-import {
-  screen,
-  waitFor, // <--- DEZE MOET ERBIJ
-  // ... andere imports zoals fireEvent
-} from '@testing-library/react-native';
+
+// We maken een herbruikbare mock orchestrator voor de renderers
+const createMockOrchestrator = () => ({
+  getValue: jest.fn(),
+  updateField: jest.fn(),
+  validate: jest.fn(() => null),
+  importCsvData: jest.fn(),
+} as any);
+
 export type RenderOptions = Omit<RTLRenderOptions, 'wrapper'> & {
   state?: FormState;
   dispatch?: jest.Mock;
 };
 
-// De hoofd-render functie
 export function render(
   ui: React.ReactElement,
   { state, dispatch, ...rtlOptions }: RenderOptions = {},
 ) {
   const Wrapper = ({ children }: { children: React.ReactNode }) => {
+    // ESLint fix: expliciet checken op undefined
+    const activeState = state !== undefined ? state : makePhoenixState();
+    const activeDispatch = dispatch !== undefined ? dispatch : jest.fn();
+
     const contextValue = {
-      state: state || makePhoenixState(),
-      dispatch: dispatch || jest.fn(),
+      state: activeState,
+      dispatch: activeDispatch,
+      orchestrator: createMockOrchestrator(),
     };
 
     return (
@@ -39,7 +48,6 @@ export function render(
   return rtlRender(ui, { wrapper: Wrapper, ...rtlOptions });
 }
 
-// Aliassen zodat alle verschillende tests blijven werken
 export const renderWithState = render;
 
 export function renderHookWithProviders<TProps, TResult>(
@@ -47,20 +55,30 @@ export function renderHookWithProviders<TProps, TResult>(
   options: RenderOptions = {},
 ) {
   const { state, dispatch } = options;
-  const Wrapper = ({ children }: { children: React.ReactNode }) => (
-    <ThemeProvider>
-      <FormContext.Provider
-        value={{ state: state || makePhoenixState(), dispatch: dispatch || jest.fn() }}
-      >
-        {children}
-      </FormContext.Provider>
-    </ThemeProvider>
-  );
+  
+  const Wrapper = ({ children }: { children: React.ReactNode }) => {
+    // ESLint fix: expliciet checken op undefined
+    const activeState = state !== undefined ? state : makePhoenixState();
+    const activeDispatch = dispatch !== undefined ? dispatch : jest.fn();
+
+    return (
+      <ThemeProvider>
+        <FormContext.Provider
+          value={{ 
+            state: activeState, 
+            dispatch: activeDispatch,
+            orchestrator: createMockOrchestrator()
+          }}
+        >
+          {children}
+        </FormContext.Provider>
+      </ThemeProvider>
+    );
+  };
 
   return renderHook(callback, { wrapper: Wrapper });
 }
 
-// Voeg dit toe aan je test-utils voor later
 export const expectTextAsync = async (text: string | RegExp) => {
   await waitFor(
     () => {

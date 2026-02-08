@@ -1,5 +1,5 @@
 import { alignMembers } from '../householdAlign';
-import { Member } from '@domain/household';
+import { Member } from '@core/types/core';
 
 describe('householdAlign - alignMembers', () => {
   test('should create a fresh list of members when current is undefined', () => {

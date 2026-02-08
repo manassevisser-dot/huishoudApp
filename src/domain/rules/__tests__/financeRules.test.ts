@@ -1,5 +1,5 @@
 import { mapFinanceToUndoResults } from '../financeRules';
-import { FinanceState, FinanceItem, UndoResult  } from '/home/user/pre7/src/core/types/finance';
+import { FinanceState, FinanceItem, UndoResult  } from '@core/types/research';
 
 describe('financeRules debug', () => {
   it('moet FinanceState correct mappen naar UndoResult array', () => {

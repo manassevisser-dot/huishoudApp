@@ -3,7 +3,7 @@ import type { AlertButton } from 'react-native';
 import { render, fireEvent, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import ResetScreen from '../ResetScreen';
-import { ThemeProvider } from '@/app/context/ThemeContext';
+import { ThemeProvider } from '@app/context/ThemeContext';
 
 // ==========================================
 // Canonical Alert mock (RN-safe)

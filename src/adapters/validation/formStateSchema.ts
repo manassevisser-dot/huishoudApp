@@ -19,21 +19,23 @@ import type { FieldConstraint } from '@domain/rules/fieldConstraints';
  * @returns Zod schema that enforces the constraint
  */
 function generateSchemaFromConstraint(constraint: FieldConstraint): z.ZodType<unknown> {
-  // Handle undefined constraint (unknown fields pass through)
   if (constraint === undefined || Object.keys(constraint).length === 0) {
     return z.unknown();
   }
 
-  // Generate base schema based on type
   if (constraint.type === 'number') {
     return generateNumberSchema(constraint);
+  }
+  
+  // VOEG DIT TOE:
+  if (constraint.type === 'string') {
+    return generateStringSchema(constraint);
   }
   
   if (constraint.type === 'enum' && constraint.values !== undefined) {
     return generateEnumSchema(constraint);
   }
 
-  // Default: accept any value
   const schema = z.unknown();
   return constraint.required === true ? schema : schema.optional();
 }
@@ -55,7 +57,21 @@ function generateNumberSchema(constraint: FieldConstraint): z.ZodType<unknown> {
   // Apply required constraint
   return constraint.required === true ? numSchema : numSchema.optional();
 }
+/**
+ * Helper: Generate string schema with pattern (regex) validation
+ */
+function generateStringSchema(constraint: FieldConstraint): z.ZodType<unknown> {
+  let stringSchema = z.string();
 
+  // ADR-01: Als er een regex patroon is in de SSOT (constraints), dwing deze hier af!
+  if (constraint.pattern instanceof RegExp) {
+    stringSchema = stringSchema.regex(constraint.pattern, {
+      message: "Ongeldig formaat"
+    });
+  }
+
+  return constraint.required === true ? stringSchema : stringSchema.optional();
+}
 /**
  * Helper: Generate enum schema with allowed values
  */
@@ -138,6 +154,13 @@ export const FormStateSchema = z.object({
     household: HouseholdSchema,
     finance: FinanceSchema,
   }),
+  viewModels: z.object({
+    financialSummary: z.object({
+      totalIncomeDisplay: z.string(),
+      totalExpensesDisplay: z.string(),
+      netDisplay: z.string(),
+    }).optional(),
+  }).optional(),
   meta: z.object({
     lastModified: z.string(),
     version: z.number(),
@@ -156,3 +179,8 @@ export type ValidatedFormState = z.infer<typeof FormStateSchema>;
 export function parseFormState(input: unknown): ValidatedFormState {
   return FormStateSchema.parse(input);
 }
+// 1. Dit haalt het type automatisch uit je bestaande schema
+export type FormState = z.infer<typeof FormStateSchema>;
+
+// 2. Dit definieert de drie lades die we in de state hebben (stond ook al in je schema)
+export type DataSection = 'setup' | 'household' | 'finance';

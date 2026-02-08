@@ -8,7 +8,8 @@ jest.mock('@test-utils/index', () => ({
     currentPageId: '1setupHousehold',
     isValid: true,
     data: {
-      setup: { aantalMensen: 0, aantalVolwassen: 0, autoCount: 'Nee' },
+      setup: { aantalMensen: 0, aantalVolwassen: 0, autoCount: 'Geen', heeftHuisdieren: false,
+        woningType: 'Huur' },
       household: { members: [] },
       finance: { income: { items: [] }, expenses: { items: [] } }
     },

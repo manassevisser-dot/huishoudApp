@@ -1,7 +1,6 @@
 // Bridge: Verwijst nu naar de nieuwe domein-locaties
 export * from '@domain/helpers/frequency';
 export * from '@domain/helpers/numbers';
-export * from '@domain/validation/fieldValidator';
 
 // Blijft lokaal (bestaat nog in src/utils)
 export * from './csvHelper';

@@ -11,12 +11,21 @@ const markers = {
   jsconfig: { start: `// ${TAG}`, end: `// ${END_TAG}` },
 };
 
+const fs = require('fs');
+
+// Helper om het juiste Jest bestand te vinden
+const getJestPath = () => {
+  const tsPath = path.resolve(__dirname, '../../jest.config.ts');
+  const jsPath = path.resolve(__dirname, '../../jest.config.js');
+  return fs.existsSync(tsPath) ? tsPath : jsPath;
+};
+
 module.exports = {
   paths: {
     root: path.resolve(__dirname, '../../'),
     tsconfig: path.resolve(__dirname, '../../tsconfig.json'),
     babel: path.resolve(__dirname, '../../babel.config.js'),
-    jest: path.resolve(__dirname, '../../jest.config.js'),
+    jest: getJestPath(), // <--- Dit is nu dynamisch
     jsconfig: path.resolve(__dirname, '../../jsconfig.json'),
   },
   

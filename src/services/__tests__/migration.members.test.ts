@@ -1,5 +1,5 @@
 import { makeLegacyMember } from '../../test-utils/factories/memberFactory';
-import { StorageShim } from '@/services/storageShim';
+import { StorageShim } from '@services/storageShim';
 
 // Functies uit transactionService
 import { 

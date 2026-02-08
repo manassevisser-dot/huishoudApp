@@ -1,7 +1,7 @@
 // src/styles/modules/Layout.ts
 // CU-008.2: Layout (atomaire module) — gebruikt alleen Tokens & Colors, geen hardcoded hex
-import { Space } from '@styles/Tokens';
-import type { ColorScheme } from '@styles/Colors';
+import { Space } from '@domain/constants/Tokens';
+import type { ColorScheme } from '@domain/constants/Colors';
 
 /**
  * Fabriek: levert layout-stijlen als plain object (orchestrator doet StyleSheet.create)

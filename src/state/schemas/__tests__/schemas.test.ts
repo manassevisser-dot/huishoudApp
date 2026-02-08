@@ -7,7 +7,7 @@ describe('FormStateSchema', () => {
     currentPageId: 'page_1',
     isValid: true,
     data: {
-      setup: { aantalMensen: 1, aantalVolwassen: 1, autoCount: 'Nee' },
+      setup: { aantalMensen: 1, aantalVolwassen: 1, autoCount: 'Geen' },
       household: { members: [] },
       finance: {
         income: { items: [] },

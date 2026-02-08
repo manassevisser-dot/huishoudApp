@@ -10,14 +10,21 @@ export const CSVAdapter = {
     const rawRows = parseRawCsv(rawCsv) ?? [];
 
     return rawRows.map((row) => {
-      // 1. Zoek de juiste kolommen (Heuristiek blijft in de adapter)
       const keys = Object.keys(row ?? {});
-      
+
+      // Helper om undefined resultaten van .find() expliciet om te zetten naar een string
+      // Dit lost de "Unexpected nullable string value" waarschuwingen op.
+      const findKey = (pattern: RegExp): string => {
+        const found = keys.find((k) => pattern.test(k));
+        return found !== undefined ? found : '';
+      };
+
       const detectedKeys: CSVKeys = {
-        amount: keys.find((k) => /bedrag|amount|transactie/i.test(k)) || '',
-        mutation: keys.find((k) => /Af.?Bij|Mutatie|tegenrekening/i.test(k)),
-        description: keys.find((k) => /Naam|Omschrijving|Mededeling|Beschrijving/i.test(k)) || '',
-        date: keys.find((k) => /Datum|Boekdatum|date/i.test(k)) || ''
+        amount: findKey(/bedrag|amount|transactie/i),
+        // Fix: ook mutation moet een string zijn, geen undefined
+        mutation: findKey(/Af.?Bij|Mutatie|tegenrekening/i),
+        description: findKey(/Naam|Omschrijving|Mededeling|Beschrijving/i),
+        date: findKey(/Datum|Boekdatum|date/i)
       };
 
       // 2. Delegeer alle berekeningen en transformaties naar de Processor

@@ -1,6 +1,6 @@
 // src/test-utils/factories/memberFactory.ts
 
-import type { Member } from '@domain/household';
+import type { Member } from '@core/types/core';
 
 /**
  * Maakt één member met defaults en optionele overrides.

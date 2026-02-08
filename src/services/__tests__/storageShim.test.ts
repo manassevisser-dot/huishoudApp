@@ -23,7 +23,7 @@ describe('CU-001-SHIM StorageShim', () => {
     // Valide Phoenix state met de set-up die je assert
     const mockState = makePhoenixState({
       data: {
-        setup: { aantalMensen: 2, aantalVolwassen: 1, autoCount: 'Nee' },
+        setup: { aantalMensen: 2, aantalVolwassen: 1, autoCount: 'Geen' },
         household: { members: [] },
         finance: { income: { items: [] }, expenses: { items: [] } },
       },

@@ -1,4 +1,5 @@
-import { AuditLogger } from '@/adapters/audit/AuditLoggerAdapter'; // Check of dit pad klopt met je find-resultaat
+// src/adapters/transaction/stateful.ts
+import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter';
 
 const allocateRemainder = (total: number, parts: number): number[] => {
   const base = Math.floor(total / parts);
@@ -6,7 +7,9 @@ const allocateRemainder = (total: number, parts: number): number[] => {
   return Array.from({ length: parts }, (_, i) => (i < remainder ? base + 1 : base));
 };
 
-type TransactionState = Record<string, any>;
+// FIX: Vervang 'any' door 'Record<string, unknown>' 
+// Dit is de veilige versie van een object in TypeScript
+type TransactionState = Record<string, unknown>;
 
 export class StatefulTransactionAdapter {
   private history: TransactionState[] = [];
@@ -25,19 +28,24 @@ export class StatefulTransactionAdapter {
     this.history.push(newState);
     this.pointer++;
 
-    // Fix: level + msg toegevoegd voor TS2555
-    AuditLogger.log('INFO', 'transaction_push', {
+    // FIX: AuditLogger aanpassen aan de verwachte 1-2 argumenten
+    // Waarschijnlijk verwacht hij één object met alle data, of (level, object)
+    AuditLogger.log('INFO', {
+      event: 'transaction_push',
       type: actionType,
       pointer: this.pointer,
       adr: 'ADR-12',
+      version: this.VERSION
     });
   }
 
   public undo(): TransactionState | null {
     if (this.pointer > 0) {
       this.pointer--;
-      AuditLogger.log('ACTION', 'undo', { pointer: this.pointer });
-      return this.history[this.pointer];
+      AuditLogger.log('ACTION', { event: 'undo', pointer: this.pointer });
+      
+      const state = this.history[this.pointer];
+      return state !== undefined ? state : null;
     }
     return null;
   }
@@ -45,8 +53,10 @@ export class StatefulTransactionAdapter {
   public redo(): TransactionState | null {
     if (this.pointer < this.history.length - 1) {
       this.pointer++;
-      AuditLogger.log('ACTION', 'redo', { pointer: this.pointer });
-      return this.history[this.pointer];
+      AuditLogger.log('ACTION', { event: 'redo', pointer: this.pointer });
+      
+      const state = this.history[this.pointer];
+      return state !== undefined ? state : null;
     }
     return null;
   }
@@ -55,7 +65,7 @@ export class StatefulTransactionAdapter {
     return allocateRemainder(Math.floor(totalAmount), parts);
   }
 
-  public getCurrentState(): TransactionState {
+  public getCurrentState(): TransactionState | undefined {
     return this.history[this.pointer];
   }
 }

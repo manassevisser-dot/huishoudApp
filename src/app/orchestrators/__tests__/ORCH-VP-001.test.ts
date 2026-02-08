@@ -20,7 +20,9 @@ describe('ORCH-VP-001: getValue(fieldId)', () => {
 
   test('returns correct value for aantalMensen', () => {
     const mockState = createMockState();
-    const orchestrator = new FormStateOrchestrator(mockState as any);
+    const mockDispatch = jest.fn();
+    // We maken een functie van de state omdat de orchestrator nu () => state wil
+    const orchestrator = new FormStateOrchestrator(() => mockState as any, mockDispatch);
     
     const result = orchestrator.getValue('aantalMensen');
     expect(result).toBe(3);
@@ -28,7 +30,9 @@ describe('ORCH-VP-001: getValue(fieldId)', () => {
 
   test('returns correct value for autoCount', () => {
     const mockState = createMockState();
-    const orchestrator = new FormStateOrchestrator(mockState as any);
+    const mockDispatch = jest.fn();
+    // We maken een functie van de state omdat de orchestrator nu () => state wil
+    const orchestrator = new FormStateOrchestrator(() => mockState as any, mockDispatch);
     
     const result = orchestrator.getValue('autoCount');
     expect(result).toBe('Een');
@@ -36,7 +40,9 @@ describe('ORCH-VP-001: getValue(fieldId)', () => {
 
   test('returns undefined for unknown field', () => {
     const mockState = createMockState();
-    const orchestrator = new FormStateOrchestrator(mockState as any);
+    const mockDispatch = jest.fn();
+    // We maken een functie van de state omdat de orchestrator nu () => state wil
+    const orchestrator = new FormStateOrchestrator(() => mockState as any, mockDispatch);
     
     const result = orchestrator.getValue('unknownField' as any);
     expect(result).toBeUndefined();

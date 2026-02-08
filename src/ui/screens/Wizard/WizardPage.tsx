@@ -1,142 +1,56 @@
+// src/ui/screens/Wizard/WizardPage.tsx
+// UPDATED: Rendert containers met CollapsibleSection
+
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { InputCounter } from '@/ui/components/fields/InputCounter';
-import { placeholderStyles } from '@/ui/styles/modules/placeholderStyles';
-import { UI_SECTIONS } from '@/ui/constants/uiSections';
+import { View, Text, ScrollView } from 'react-native';
+import { useAppStyles } from '@styles/useAppStyles';
+import { FieldRenderer } from '@ui/components/FieldRenderer';
+import { CollapsibleSection } from '@ui/components/CollapsibleSection';
+import { useFormContext } from '@app/context/FormContext';
 
-// Explicit interface definitions for type safety (no domain imports!)
-interface ValueProvider {
-  getValue(fieldId: string): unknown;
-}
-
-interface StateWriter {
-  updateField(fieldId: string, value: unknown): void;
-}
-
-export interface WizardField {
+interface FieldViewModel {
   fieldId: string;
-  type: string;
+  componentType: string;
   labelToken: string;
-  uiModel?: string;
-  requiresVisibilityCheck?: boolean | string;
-  requiresConstraint?: boolean | string;
-  requiresDerivedValue?: boolean | string;
-  options?: unknown[];
-  [key: string]: unknown;
-}
-
-export interface WizardConfig {
-  pageId: string;
-  titleToken?: string;
-  fields?: WizardField[];
-  showBack?: boolean;
-  showNext?: boolean;
-  isLast?: boolean;
-  [key: string]: unknown;
+  value: unknown;
+  isVisible: boolean;
+  childFields?: FieldViewModel[];  // 🆕 Voor containers
 }
 
 interface WizardPageProps {
-  config: WizardConfig;
-  valueProvider: ValueProvider;
-  stateWriter: StateWriter;
-  validate: (fieldId: string, value: unknown) => string | null;
+  config: {
+    pageId: string;
+    titleToken: string;
+    fields: Array<{
+      fieldId: string;
+      type?: string;
+    }>;
+  };
 }
 
-export const WizardPage: React.FC<WizardPageProps> = (props) => {
-  const { config, valueProvider, stateWriter } = props;
-  const sectionKey = UI_SECTIONS.WIZARD ?? '[HIER_MOET_NOG_EEN_UX_KEY]';
+export const WizardPage: React.FC<WizardPageProps> = ({ config }) => {
+  const { orchestrator } = useFormContext();
+  const { context } = useHousehold(); // Of waar je context vandaan komt
 
-  const handleDebugReset = () => {
-    // P2 Sentinel Compliance: valideer alle velden eenmalig
-    config.fields?.forEach(field => {
-      const currentValue: unknown = valueProvider.getValue(field.fieldId);
-      props.validate(field.fieldId, currentValue);
-    });
-    stateWriter.updateField('debug_reset', true);
-  };
-
-  const title = String(config?.titleToken ?? '[HIER_MOET_NOG_EEN_UX_KEY]');
+  // Eén aanroep: de volledige pipeline (render -> visibility -> component transformatie)
+  const componentViewModels = useMemo(
+    () => orchestrator.getPageComponentViewModels(
+      config.fields.map((f) => f.fieldId),
+      context
+    ),
+    [config.fields, orchestrator, context]
+  );
 
   return (
-    <View style={placeholderStyles.wizardPageContainer} accessibilityLabel={sectionKey}>
-      <Text style={placeholderStyles.screenTitle}>{title}</Text>
-
-      {valueProvider.getValue('show_debug') === true && (
-        <TouchableOpacity
-          style={placeholderStyles.debugButton}
-          onPress={handleDebugReset}
-          accessibilityRole="button"
-          accessibilityLabel="Reset Wizard State"
-        >
-          <Text style={placeholderStyles.fieldCountText}>Reset Wizard State</Text>
-        </TouchableOpacity>
-      )}
-
-      <View style={placeholderStyles.fieldsContainer}>
-        <Text style={placeholderStyles.fieldCountText}>
-          Velden aanwezig: {Array.isArray(config?.fields) ? config.fields.length : 0}
-        </Text>
-        {/* P3-B1: Field rendering with validation integration */}
-        {Array.isArray(config?.fields) && config.fields.map((field) => {
-          const currentValue: unknown = valueProvider.getValue(field.fieldId);
-          
-          if (field.fieldId === 'aantalMensen') {
-            return (
-              <View key={field.fieldId} style={placeholderStyles.fieldsContainer}>
-                <Text style={placeholderStyles.fieldCountText}>
-                  {field.labelToken}
-                </Text>
-                <InputCounter
-                  fieldId={field.fieldId}
-                  valueProvider={valueProvider}
-                  stateWriter={(value) => stateWriter.updateField(field.fieldId, value)}
-                  testIdBase="aantalMensen"
-                />
-                {/* P3-B1: Validatie via externe handler bij interactie */}
-                <TouchableOpacity
-                  onPress={() => {
-                    const newValue = Number(currentValue) + 1;
-                    const error = props.validate(field.fieldId, newValue);
-                    if (error === null) {
-                      stateWriter.updateField(field.fieldId, newValue);
-                    } else {
-                      console.warn(`Validation error for ${field.fieldId}:`, error);
-                    }
-                  }}
-                  style={{ marginTop: 8 }}
-                >
-                  <Text style={placeholderStyles.fieldCountText}>+ (validate)</Text>
-                </TouchableOpacity>
-              </View>
-            );
-          }
-
-          return (
-            <View key={field.fieldId} style={placeholderStyles.fieldsContainer}>
-              <Text style={placeholderStyles.fieldCountText}>
-                {field.labelToken}: {String(currentValue ?? 'N/A')}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-
-      <View style={placeholderStyles.screenContainer}>
-        {config?.showBack === true && (
-          <TouchableOpacity style={placeholderStyles.primaryButton}>
-            <Text style={placeholderStyles.fieldCountText}>Vorige</Text>
-          </TouchableOpacity>
-        )}
-        {config?.showNext === true && (
-          <TouchableOpacity style={placeholderStyles.primaryButton}>
-            <Text style={placeholderStyles.fieldCountText}>
-              {config?.isLast === true ? 'Voltooien' : 'Volgende'}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
+    <View style={{ flex: 1 }}>
+      <ScrollView>
+        {componentViewModels.map((vm) => (
+          <FieldRenderer 
+            key={vm.fieldId} 
+            viewModel={vm} 
+          />
+        ))}
+      </ScrollView>
     </View>
   );
 };
-
-export default WizardPage;

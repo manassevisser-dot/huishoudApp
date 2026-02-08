@@ -1,3 +1,4 @@
+// src/domain/rules/derivedValues.ts
 import { VisibilityContext } from './fieldVisibility';
 
 export const derivedValueRules = {
@@ -6,8 +7,10 @@ export const derivedValueRules = {
    * Wordt gebruikt om dynamische labels of helper-teksten te genereren.
    */
   kinderenLabel: (ctx: VisibilityContext): number => {
-    const n = ctx.getValue('aantalMensen') as number || 0;
-    const m = ctx.getValue('aantalVolwassen') as number || 0;
+    // FIX: Gebruik ?? in plaats van || voor getallen (ADR-06)
+    const n = (ctx.getValue('aantalMensen') as number | undefined) ?? 0;
+    const m = (ctx.getValue('aantalVolwassen') as number | undefined) ?? 0;
+    
     return Math.max(0, n - m);
   }
 };

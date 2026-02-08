@@ -1,5 +1,5 @@
 import { migrateTransactionsToPhoenix } from '../transactionService';
-import { FormState } from '@shared-types/form';
+import { FormState } from '@core/types/core';
 
 describe('Storage Migration: V0 to Phoenix', () => {
   it('moet oude setup data migreren naar de nieuwe data.setup nesting', async () => {

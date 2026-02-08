@@ -17,6 +17,7 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "prepare": "husky",
+    "build": "tsc -p tsconfig.json",
     "gate:a": "node scripts/phoenix/quinn-adapter.js",
     "gate:a:report": "node scripts/phoenix/quinn-adapter.js && cat reports/phoenix-gate-a-report.json",
     "cleancode:check": "node scripts/maintenance/cleancode-automator.js",

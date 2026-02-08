@@ -1,5 +1,5 @@
-import { selectHouseholdStats } from "@/ui/selectors/householdSelectors";
-import { DATA_KEYS } from "@domain";
+import { selectHouseholdStats } from "@ui/selectors/householdSelectors";
+import { DATA_KEYS } from "@domain/constants/datakeys";
 import { createMockState } from "@test-utils/index";
 
 // 2. Top-level helper
@@ -9,7 +9,7 @@ const setupTestState = (aantalVolwassen: number) => {
       [DATA_KEYS.SETUP]: {
         aantalMensen: aantalVolwassen,
         aantalVolwassen: aantalVolwassen,
-        autoCount: 'Nee',
+        autoCount: 'Geen',
       },
       [DATA_KEYS.HOUSEHOLD]: {
         members: Array(aantalVolwassen)

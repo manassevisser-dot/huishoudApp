@@ -65,7 +65,7 @@ describe('formReducer — Onderzoeks-integriteit', () => {
   });
   it('moet UPDATE_FIELD verwerken voor legacy ondersteuning', () => {
     const action = {
-      type: 'SET_FIELD' as const,
+      type: 'UPDATE_DATA' as const,
       payload: {
         section: DATA_KEYS.SETUP,
         field: 'autoCount',

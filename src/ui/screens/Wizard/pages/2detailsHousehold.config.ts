@@ -1,18 +1,20 @@
-import { UI_SECTIONS } from '@ui/constants/uiSections';
-import { UX_TOKENS } from '@ui/constants/uxTokens';
+import { UI_SECTIONS } from '@domain/constants/uiSections';
+import { UX_TOKENS } from '@domain/constants/uxTokens';
 
 export const detailsHouseholdConfig = {
   pageId: UI_SECTIONS.HOUSEHOLD_DETAILS,
   titleToken: UX_TOKENS.PAGES.HOUSEHOLD_DETAILS,
   fields: [
+    { fieldId: 'burgerlijkeStaat' },
+    { fieldId: 'woningType' },
+    { fieldId: 'postcode' },
     {
       fieldId: 'members',
-      type: 'repeater',
-      labelToken: 'LABEL_HUISHOUDEN_LEDEN',
-      requiresFilteredData: true,
+      type: 'repeater', // De repeater zelf is een UI-structuur
       itemFields: [
-        { fieldId: 'naam', type: 'text', labelToken: UX_TOKENS.FIELDS.NAME, uiModel: 'input' },
-        { fieldId: 'leeftijd', type: 'number', labelToken: UX_TOKENS.FIELDS.AGE, min: 0, uiModel: 'numericInput' }
+        { fieldId: 'naam' },
+        { fieldId: 'leeftijd' },
+        { fieldId: 'gender' }
       ]
     }
   ]

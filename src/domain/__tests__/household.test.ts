@@ -1,4 +1,4 @@
-import { Member } from '../household';
+import { Member } from '../../core/types/research';
 import { getHouseholdStatus } from '@domain/rules/householdRules';
 // Helper om Phoenix-compliant members te maken
 

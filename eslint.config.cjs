@@ -6,6 +6,16 @@ const prettierConfig = require('eslint-config-prettier');
 const globals = require('globals');
 
 module.exports = [
+  {
+    // NIEUW: Zorg dat deze instellingen voor ALLE bestanden gelden
+    // Dit voorkomt de "could not find plugin" error in latere secties
+    plugins: {
+      '@typescript-eslint': tsPlugin,
+      'react': reactPlugin,
+      'regex': regexPlugin,
+    },
+  },
+
   // 1️⃣ Globale ignores
   {
     ignores: [
@@ -22,6 +32,7 @@ module.exports = [
       'jest.config.js',        // ← ADD
       '**/*.d.ts',             // ← ADD (alle declaration files)
       'scripts/types/**',      // ← ADD (type definitions)
+      'src_STABLE_BACKUP/',
     ],
   },
 
@@ -40,14 +51,10 @@ module.exports = [
       parser: tsParser,
       parserOptions: {
         project: './tsconfig.json',
+        tsconfigRootDir: __dirname, // Cruciaal voor strict-boolean-expressions!
         ecmaVersion: 'latest',
         sourceType: 'module',
       },
-    },
-    plugins: {
-      '@typescript-eslint': tsPlugin,
-      react: reactPlugin,
-      regex: regexPlugin,
     },
     settings: {
       react: {
@@ -234,7 +241,7 @@ module.exports = [
     files: ['src/**/*.{ts,tsx,js,jsx}'],
     rules: {
       'no-magic-numbers': ['warn', {
-        ignore: [0, 1, -1, 100], // Common values toegestaan
+        ignore: [0, 1, 2, -1, 100], // Common values toegestaan
         ignoreArrayIndexes: true,
         ignoreDefaultValues: true,
         enforceConst: true
@@ -249,6 +256,8 @@ module.exports = [
       '**/*.test.{ts,tsx}',
       '**/*.spec.{ts,tsx}',
       '**/test-utils/**/*.{ts,tsx}',
+      '**/__mocks__/**/*.{ts,tsx}',
+      
     ],
     rules: {
     // --- Type-safety (ADR-02 relaxatie voor tests) ---
@@ -283,6 +292,9 @@ module.exports = [
       '**/numbers.ts',
       '**/frequency.ts',
       '**/ageRules.ts',
+      '**/ageBoundaryRules.ts',
+      '**/fieldConstraints.ts',
+      '**/conditions.ts',
     ],
     rules: {
       'no-magic-numbers': 'off',
@@ -312,5 +324,6 @@ module.exports = [
   },
 },
   // 9️⃣ Prettier als laatste
-  prettierConfig,
+  // LET OP: Gebruik de spread operator als prettierConfig een object is
+  ...(Array.isArray(prettierConfig) ? prettierConfig : [prettierConfig]),
 ];

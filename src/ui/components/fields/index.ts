@@ -1,8 +1,6 @@
 // src/ui/components/fields/index.ts
 
 export * from './FormField';
-export * from './ConditionalField';
-
 // Input & Interactie componenten
 export * from './ChipButton';
 export * from './DateField';

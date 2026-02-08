@@ -1,7 +1,9 @@
+// src/state/schemas/zInitialTemplate.ts
 import { z } from 'zod';
 import { SetupSchema } from './sections/setup.schema';
 import { HouseholdSchema } from './sections/household.schema';
 import { FinanceSchema } from './sections/finance.schema';
+import { initialFormState } from '@app/context/initialFormState';
 
 export const FormStateSchema = z.object({
   schemaVersion: z.literal('1.0'),
@@ -23,6 +25,10 @@ export const FormStateSchema = z.object({
 
 export type FormState = z.infer<typeof FormStateSchema>;
 
+// Pak getypeerde baseline uit de huidige initiële state (via unknown om TS-overlapruis te dempen)
+const baseHousehold: FormState['data']['household'] =
+  ((initialFormState as unknown as FormState).data?.household) as FormState['data']['household'];
+
 const _initialFormState: FormState = {
   schemaVersion: '1.0',
   activeStep: 'LANDING',
@@ -32,15 +38,18 @@ const _initialFormState: FormState = {
     setup: {
       aantalMensen: 1,
       aantalVolwassen: 1,
-      autoCount: 'Nee',
+      autoCount: 'Geen',
       heeftHuisdieren: false,
       woningType: 'Huur',
     },
-    household: { 
+
+    household: {
+      ...baseHousehold,
       members: [],
-      huurtoeslag: 0, // <--- TOEGEVOEGD
-      zorgtoeslag: 0  // <--- TOEGEVOEGD
+      huurtoeslag: 0,
+      zorgtoeslag: 0,
     },
+
     finance: {
       income: { items: [] },
       expenses: {

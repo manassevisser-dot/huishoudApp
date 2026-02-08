@@ -1,39 +1,49 @@
-import { FormState } from '@shared-types/form';
-import { Member } from '@domain/household';
+// src/app/orchestrators/export.ts
+import { FormState, Member } from '@core/types/core';
 import { isSpecialInvestigationRequired } from '@domain/rules/householdRules';
 
+// We definiëren even snel wat de setup precies is voor de type-veiligheid
+type SetupData = NonNullable<NonNullable<FormState['data']>['setup']>;
+
+const getSetup = (state: FormState): Partial<SetupData> => {
+  const setup = state.data?.setup;
+  return setup !== undefined && setup !== null ? setup : {};
+};
+
+const getMembers = (state: FormState): Member[] => 
+  state.data?.household?.members !== undefined ? state.data.household.members : [];
+
+const getFinances = (state: FormState) => {
+  const finance = state.data?.finance;
+  return {
+    income: finance?.income?.items !== undefined ? finance.income.items : [],
+    expenses: finance?.expenses?.items !== undefined ? finance.expenses.items : [],
+  };
+};
+
 export const aggregateExportData = (state: FormState) => {
-  // 1. Data veilig ophalen
-  const setup = state.data?.setup || {};
-  const household = state.data?.household || { members: [] };
-  const finance = state.data?.finance || { income: { items: [] }, expenses: { items: [] } };
+  const setup = getSetup(state);
+  const members = getMembers(state);
+  const finances = getFinances(state);
 
-  // 2. Variabelen definiëren
-  const totalAdults = Number(setup.aantalVolwassen || 0);
+  // Nu weet TS dat aantalVolwassen optioneel aanwezig is in setup
+  const rawAdults = setup.aantalVolwassen;
+  const totalAdults = typeof rawAdults === 'number' 
+    ? rawAdults 
+    : Number(rawAdults ?? 0);
 
-  // 3. Mapping
-  const members = (household.members || []).map((m: Member) => ({
-    type: m.memberType,
-    leeftijd: m.age || 0,
-  }));
-
-  const incomeItems = finance.income?.items || [];
-  const expenseItems = finance.expenses?.items || [];
-
-  // 4. Return het object met de Rule uit het domein
   return {
     version: '1.0-phoenix-export',
-    schemaVersion: state.schemaVersion || 1,
-    // ✅ HIER gebruiken we de officiële rule voor n8n
+    schemaVersion: state.schemaVersion !== undefined ? state.schemaVersion : 1,
     isSpecialStatus: isSpecialInvestigationRequired(totalAdults), 
     exportDate: new Date().toISOString().split('T')[0],
     household: {
       totalAdults,
-      members,
+      members: members.map((m) => ({
+        type: m.memberType,
+        leeftijd: m.age !== undefined ? m.age : 0,
+      })),
     },
-    finances: {
-      income: incomeItems,
-      expenses: expenseItems,
-    },
+    finances,
   };
 };

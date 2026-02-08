@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
-import { UI_SECTIONS } from '@ui/constants/uiSections';
-import { placeholderStyles } from '@/ui/styles/modules/placeholderStyles';
-import { Logger } from '@/adapters/audit/AuditLoggerAdapter';
+import { UI_SECTIONS } from '@domain/constants/uiSections';
+import { placeholderStyles } from '@ui/styles/modules/placeholderStyles';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 
 interface ImportResult {
   transactions: Array<{

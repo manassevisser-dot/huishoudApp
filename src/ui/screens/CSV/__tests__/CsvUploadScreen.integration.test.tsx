@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
 import { CsvUploadScreen } from '../CsvUploadScreen';
-import { Logger } from '@/adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 
 // 1. Mock de Logger (onze verkeerstoren)
-jest.mock('@/adapters/audit/AuditLoggerAdapter', () => ({
+jest.mock('@adapters/audit/AuditLoggerAdapter', () => ({
   Logger: {
     info: jest.fn(),
     warn: jest.fn(),

@@ -1,4 +1,4 @@
-import { dataOrchestrator } from '@services/dataOrchestrator';
+import { dataOrchestrator } from '@app/orchestrators/ResearchOrchestrator.WIP';
 import { csvFactory } from '@test-utils/index';
 import { DATA_KEYS } from '@domain/constants/datakeys';
 

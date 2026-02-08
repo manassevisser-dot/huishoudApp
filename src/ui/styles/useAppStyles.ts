@@ -1,9 +1,9 @@
-// src/styles/useAppStyles.ts
-// CU-008.6: De Orchestrator (Main Factory)
+// src/ui/styles/useAppStyles.ts
+// UPDATED: makeContainers toegevoegd
 import { StyleSheet } from 'react-native';
 import { useTheme } from '@app/context/ThemeContext';
-import { Colors, Theme } from '@styles/Colors';
-import { Tokens } from '@styles/Tokens';
+import { Colors, Theme } from '@domain/constants/Colors';
+import { Tokens } from '@domain/constants/Tokens';
 import {
   makeLayout,
   makeHeader,
@@ -15,32 +15,40 @@ import {
   makeSummary,
   makeTypography,
   makeAlerts,
-  makeToggles, // ← NIEUW
-  makeCheckboxes, // ← NIEUW
-  makeHelpers, // ← NIEUW
+  makeToggles,
+  makeCheckboxes,
+  makeHelpers,
+  makeContainers,  // 🆕 NIEUW
 } from '@styles/modules';
 
+// Cache voor de gegenereerde stijlen per thema
 const styleCache: Partial<Record<Theme, ReturnType<typeof StyleSheet.create>>> = {};
 
 export function getAppStyles(theme: Theme) {
-  if (styleCache[theme]) return styleCache[theme]!;
+  // FIX: Expliciete check op undefined voor de linter
+  const cachedStyles = styleCache[theme];
+  if (cachedStyles !== undefined) {
+    return cachedStyles;
+  }
+
   const c = Colors[theme];
 
   const assembled = {
-    ...makeLayout(c), // Layout
-    ...makeHeader(c), // Header
-    ...makeForms(c), // Forms
-    ...makeButtons(c), // Buttons
-    ...makeCards(c), // Cards
-    ...makeChips(c), // Chips
-    ...makeDashboard(c), // Dashboard
-    ...makeSummary(c), // Summary
-    ...makeTypography(c), // Typography
-    ...makeAlerts(c), // Alerts
-    ...makeToggles(c), // ←Toggles NIEUW
-    ...makeCheckboxes(c), // ← Checkboxes NIEUW
-    ...makeHelpers(c), // ← Helpers NIEUW
-  } as const;
+    ...makeLayout(c),
+    ...makeHeader(c),
+    ...makeForms(c),
+    ...makeButtons(c),
+    ...makeCards(c),
+    ...makeChips(c),
+    ...makeDashboard(c),
+    ...makeSummary(c),
+    ...makeTypography(c),
+    ...makeAlerts(c),
+    ...makeToggles(c),
+    ...makeCheckboxes(c),
+    ...makeHelpers(c),
+    ...makeContainers(c),  // 🆕 NIEUW
+  };
 
   const styles = StyleSheet.create(assembled);
   styleCache[theme] = styles;

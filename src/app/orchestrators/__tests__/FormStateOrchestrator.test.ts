@@ -2,7 +2,7 @@
  * TEST: FormStateOrchestrator FSM Enforcement (CU-P2-01)
  */
 import { FormStateOrchestrator } from '../FormStateOrchestrator';
-import type { FormState } from '@shared-types/form';
+import type { FormState } from '@core/types/core';
 
 describe('FormStateOrchestrator', () => {
   const initialState = {
@@ -60,7 +60,11 @@ describe('FormStateOrchestrator', () => {
   } as unknown as FormState;
 
   it('moet state immutabel updaten via updateField', () => {
-    const orchestrator = new FormStateOrchestrator(initialState);
+    // 1. Maak eerst een nep-dispatch aan bovenin je test of voor de aanroep:
+const mockDispatch = jest.fn();
+
+// 2. Pas de aanroep aan (van waarde naar functie + dispatch):
+const orchestrator = new FormStateOrchestrator(() => initialState, mockDispatch);
     const originalRef = (orchestrator as any).state;
 
     orchestrator.updateField('aantalMensen', 5);
@@ -69,9 +73,24 @@ describe('FormStateOrchestrator', () => {
     expect(newRef).not.toBe(originalRef);
     expect(orchestrator.getValue('aantalMensen')).toBe(5);
   });
+  it('DIAGNOSE: Moet de finance-route bewandelen', () => {
+    // 1. Maak eerst een nep-dispatch aan bovenin je test of voor de aanroep:
+const mockDispatch = jest.fn();
 
+// 2. Pas de aanroep aan (van waarde naar functie + dispatch):
+const orchestrator = new FormStateOrchestrator(() => initialState, mockDispatch); // Gebruik je bestaande initialState
+    
+    
+    // We gebruiken een ID die in de isFinanceItemKey lijst van de reducer staat
+    orchestrator.updateField('nettoSalaris', '2500'); 
+ 
+  });
   it('moet ValueProvider contract implementeren', () => {
-    const orchestrator = new FormStateOrchestrator(initialState);
+    // 1. Maak eerst een nep-dispatch aan bovenin je test of voor de aanroep:
+const mockDispatch = jest.fn();
+
+// 2. Pas de aanroep aan (van waarde naar functie + dispatch):
+const orchestrator = new FormStateOrchestrator(() => initialState, mockDispatch);
     expect(orchestrator.getValue('autoCount')).toBe('Nee');
   });
 });

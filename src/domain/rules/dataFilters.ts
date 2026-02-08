@@ -1,11 +1,20 @@
+// src/domain/rules/dataFilters.ts
+import type { Member } from '@core/types/core';
 import { VisibilityContext } from './fieldVisibility';
 
+/**
+ * ADR-06: Defensive Programming
+ * Filterregels voor dynamische formulieronderdelen.
+ */
+
+type VisibilityKnownFields = { household: unknown };
+
 export const dataFilterRules = {
-  /**
-   * Business Rule: "Income repeater iterates over household members"
-   * Zorgt ervoor dat inkomstenformulieren worden gegenereerd voor elk lid in de staat.
-   */
-  member_income_repeater: (ctx: VisibilityContext): any[] => {
-    return ctx.getValue('members') as any[] || [];
-  }
+  member_income_repeater: (ctx: VisibilityContext): Member[] => {
+    const household = ctx.getValue('household' as keyof VisibilityKnownFields) as { members?: unknown } | undefined;
+
+    const rawMembers = household?.members;
+    const members: Member[] = Array.isArray(rawMembers) ? (rawMembers as Member[]) : [];
+    return members;
+  },
 };

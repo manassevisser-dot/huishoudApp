@@ -3,98 +3,74 @@ import React, {
   createContext,
   useContext,
   useReducer,
+  useMemo,
   ReactNode,
 } from 'react';
 
-import { formReducer } from './formReducer';
-
-// Re-export FormState type (SSOT voor het formuliertype)
-export type { FormState } from '@shared-types/form';
-import type { FormState } from '@shared-types/form';
+import { formReducer, type FormAction } from './formReducer';
+import { useStableOrchestrator } from './useStableOrchestrator';
+import type { FormState } from '@core/types/core';
+import { initialFormState } from './initialFormState';
 
 /**
- * Belangrijk:
- * - GEEN FormAction importeren uit elders.
- * - Leid het action-type direct af uit je eigen reducer, zodat
- *   context/Provider/mocks *altijd* hetzelfde type gebruiken.
+ * FormContext - React State Integration
+ * * VERANTWOORDELIJKHEDEN:
+ * ✅ useReducer als Single Source of Truth
+ * ✅ Orchestrator instantiatie met getState + dispatch
+ * ✅ Orchestrator exposen via context
  */
-type ReducerAction = Parameters<typeof formReducer>[1];   // = FormAction uit formReducer
-type AppDispatch = (action: ReducerAction) => void;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SSOT: initialFormState (Landing als startpunt; wizard pas na user-actie)
-// Let op: vorm sluit aan op je huidige core-typen (income/expenses met items[]).
-// ─────────────────────────────────────────────────────────────────────────────
-export const initialFormState: FormState = {
-  schemaVersion: '1.0',
-  activeStep: 'LANDING',
-  currentPageId: 'landing',
-  isValid: true,
-  data: {
-    setup: {
-      aantalMensen: 1,
-      aantalVolwassen: 1,
-      autoCount: 'Nee',
-      heeftHuisdieren: false,
-      // woningType kan hier later worden toegevoegd als het in de core-typen staat
-    },
-    household: {
-      members: [],
-      // huurtoeslag/zorgtoeslag kun je toevoegen als dit in je FormState-type staat
-    },
-    finance: {
-      income: { items: [] },
-      expenses: { items: [] }, // sluit aan op core.ts (items en evt. optioneel totalAmount)
-    },
-  },
-  meta: {
-    lastModified: new Date().toISOString(),
-    version: 1,
-  },
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Context definitie
-// ─────────────────────────────────────────────────────────────────────────────
 interface FormContextType {
   state: FormState;
-  dispatch: AppDispatch;
+  dispatch: (action: FormAction) => void;
+  orchestrator: ReturnType<typeof useStableOrchestrator>;
 }
 
 export const FormContext = createContext<FormContextType | undefined>(undefined);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Provider
-// ─────────────────────────────────────────────────────────────────────────────
-export const FormProvider: React.FC<{
+interface FormProviderProps {
   children: ReactNode;
-  initialState: FormState;
-  /** Optionele mock in tests; mag afwijken qua interne functie-signature. */
-  mockDispatch?: AppDispatch;
-}> = ({ children, initialState, mockDispatch }) => {
-  const [state, dispatch] = useReducer(formReducer, initialState);
+  initialState?: FormState;
+  mockDispatch?: (action: FormAction) => void;
+}
 
-  // ✅ ESLint: strict-boolean-expressions — expliciete null/undefined check
-  const hasMock = typeof mockDispatch === 'function';
-  const activeDispatch: AppDispatch = hasMock
-    ? (action) => (mockDispatch as AppDispatch)(action)
-    : (action) => dispatch(action);
+export const FormProvider: React.FC<FormProviderProps> = ({
+  children,
+  initialState = initialFormState,
+  mockDispatch,
+}) => {
+  // 1) useReducer (SSOT)
+  const [state, reactDispatch] = useReducer(formReducer, initialState);
 
-  return (
-    <FormContext.Provider value={{ state, dispatch: activeDispatch }}>
-      {children}
-    </FormContext.Provider>
+  // 2) Mockable dispatch
+  const dispatch = useMemo(() => {
+    if (typeof mockDispatch === 'function') return mockDispatch;
+    return reactDispatch;
+  }, [mockDispatch]);
+
+  // 3) Stabiele orchestrator
+  // VERWIJDERD: 'styles' argument. De orchestrator haalt zijn regels 
+  // nu zelf uit het domein via de ComponentStyleFactory.
+  const orchestrator = useStableOrchestrator(state, dispatch);
+
+  // 4) Context value
+  const value = useMemo(
+    () => ({ state, dispatch, orchestrator }),
+    [state, dispatch, orchestrator]
   );
+
+  return <FormContext.Provider value={value}>{children}</FormContext.Provider>;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Hook
-// ─────────────────────────────────────────────────────────────────────────────
-export const useForm = () => {
+export const useFormContext = () => {
   const context = useContext(FormContext);
-  // ✅ ESLint: strict-boolean-expressions — expliciete undefined check
   if (context === undefined) {
-    throw new Error('useForm must be used within a FormProvider');
+    throw new Error('useFormContext must be used within FormProvider');
   }
   return context;
 };
+
+// Re-exports
+export type { FormState } from '@core/types/core';
+export type { FormAction } from './formReducer';

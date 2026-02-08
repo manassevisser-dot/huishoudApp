@@ -1,8 +1,8 @@
 // src/styles/modules/Header.ts
 // CU-008.2: Headers (atomaire module) — Tokens + Platform-select schaduwmapping
 import { Platform } from 'react-native';
-import { Space, Type, Tokens } from '@styles/Tokens';
-import type { ColorScheme } from '@styles/Colors';
+import { Space, Type, Tokens } from '@domain/constants/Tokens';
+import type { ColorScheme } from '@domain/constants/Colors';
 
 /**
  * Fabriek: header- en navigatiestijlen als plain object

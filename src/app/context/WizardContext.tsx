@@ -1,54 +1,57 @@
-import * as React from 'react';
-import { createContext, useContext, useReducer, ReactNode } from 'react';
-import { formReducer } from './formReducer';
-import { FormState } from '@shared-types/form';
-import { makePhoenixState } from '../../test-utils/factories/stateFactory';
+// src/app/context/WizardContext.tsx
+import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
+import { useFormContext } from './FormContext';
 
-// De vorm van de context die beschikbaar is in de app
+/**
+ * WIZARD CONTEXT
+ * * Verantwoordelijkheid:
+ * ✅ Navigatie (currentStep, goToNextStep)
+ * ✅ De brug vormen tussen de MasterOrchestrator en de WizardPage
+ */
+
 interface WizardContextType {
-  state: FormState;
-  dispatch: React.Dispatch<any>;
+  // Navigatie state
+  currentStep: number;
+  goToNextStep: () => void;
+  goToPreviousStep: () => void;
+  
+  // Toegang tot de MasterOrchestrator voor de UI
+  // We exposen de master zodat de Page 'master.render' kan aanroepen
+  master: ReturnType<typeof useFormContext>['orchestrator'];
 }
 
-// Props voor de provider, inclusief injectie-opties voor tests
-interface WizardProviderProps {
-  children: ReactNode;
-  initialState?: FormState; // Voor test-injectie
-  mockDispatch?: React.Dispatch<any>; // Voor test-injectie (jest.fn())
-}
+const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
-const FormContext = createContext<WizardContextType | undefined>(undefined);
+export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // 1. Haal de MasterOrchestrator op uit de FormContext
+  const { orchestrator: master } = useFormContext();
+  
+  // 2. Beheer navigatie state
+  const [currentStep, setCurrentStep] = useState(0);
 
-// De standaard initiële staat van de applicatie via de factory
-const defaultInitialState = makePhoenixState();
+  // 3. Navigatie functies
+  const goToNextStep = () => setCurrentStep(prev => prev + 1);
+  const goToPreviousStep = () => setCurrentStep(prev => prev - 1);
 
-export const WizardProvider: React.FC<WizardProviderProps> = ({
-  children,
-  initialState,
-  mockDispatch,
-}) => {
-  // 1. Initialiseer de reducer met ofwel de geïnjecteerde staat, of de standaard
-  const [state, dispatch] = useReducer(formReducer, initialState || defaultInitialState);
+  // 4. Memoizeer de context waarde
+  const value = useMemo(() => ({
+    currentStep,
+    goToNextStep,
+    goToPreviousStep,
+    master // De master bevat master.render, master.updateField, etc.
+  }), [currentStep, master]);
 
-  // 2. Bepaal welke dispatch we gebruiken (echt of mock)
-  // Dit zorgt ervoor dat we in tests acties kunnen onderscheppen
-  const activeDispatch = mockDispatch || dispatch;
-
-  return (
-    <FormContext.Provider value={{ state, dispatch: activeDispatch }}>
-      {children}
-    </FormContext.Provider>
-  );
+  return <WizardContext.Provider value={value}>{children}</WizardContext.Provider>;
 };
 
-// De hook die gebruikt wordt in componenten zoals LandingScreen
-export const useForm = () => {
-  const context = useContext(FormContext);
+/**
+ * Hook om de Wizard te gebruiken.
+ * Moet ALTIJD binnen een FormProvider staan!
+ */
+export const useWizard = () => {
+  const context = useContext(WizardContext);
   if (context === undefined) {
-    throw new Error('useForm must be used within a WizardProvider/FormProvider');
+    throw new Error('useWizard must be used within a WizardProvider (which must be inside a FormProvider)');
   }
   return context;
 };
-
-// Alias voor backwards compatibility mocht je nog useWizard gebruiken
-export const useWizard = useForm;

@@ -1,16 +1,23 @@
-import { Member } from '@domain/household';
+// src/domain/rules/householdRules.ts
+import { Member } from '@core/types/core';
+
+// Fix: no-magic-numbers
+const SPECIAL_THRESHOLD = 5;
+const PARTNER_THRESHOLD = 2;
 
 /**
  * PHOENIX LOGIC: Bepaalt de validiteit van het huishouden.
  * Een huishouden is 'complete' als elk lid (entityId) een naam en geboortedatum heeft.
  */
 export const getHouseholdStatus = (members: Member[]): 'empty' | 'partial' | 'complete' => {
-  if (!members || members.length === 0) return 'empty';
+  // Fix: strict-boolean-expressions (members is typed as array, so explicit length check only)
+  if (members.length === 0) return 'empty';
 
   const memberStatus = members.map((m) => {
     // Check of de minimale Phoenix-velden gevuld zijn
-    const hasName = !!m.firstName && m.firstName.trim().length > 0;
-    const hasDOB = !!m.dateOfBirth;
+    // Fix: strict-boolean-expressions (explicit checks instead of !!)
+    const hasName = typeof m.firstName === 'string' && m.firstName.trim().length > 0;
+    const hasDOB = m.dateOfBirth !== undefined && m.dateOfBirth !== null;
 
     return hasName && hasDOB;
   });
@@ -21,7 +28,6 @@ export const getHouseholdStatus = (members: Member[]): 'empty' | 'partial' | 'co
   if (completeCount > 0) return 'partial';
   return 'empty';
 };
-// Nieuwe toevoeging aan householdRules.ts
 
 export const HOUSEHOLD_CLASSIFICATION = {
   SINGLE: 'SINGLE',
@@ -35,10 +41,11 @@ export type HouseholdType = keyof typeof HOUSEHOLD_CLASSIFICATION;
  * Bepaalt het type huishouden op basis van aantal volwassenen (ADR-11)
  */
 export const classifyHouseholdType = (adultCount: number): HouseholdType => {
-  if (adultCount > 5) return HOUSEHOLD_CLASSIFICATION.SPECIAL;
-  if (adultCount === 2) return HOUSEHOLD_CLASSIFICATION.PARTNERS;
+  // Fix: no-magic-numbers
+  if (adultCount > SPECIAL_THRESHOLD) return HOUSEHOLD_CLASSIFICATION.SPECIAL;
+  if (adultCount === PARTNER_THRESHOLD) return HOUSEHOLD_CLASSIFICATION.PARTNERS;
   return HOUSEHOLD_CLASSIFICATION.SINGLE;
 };
 
-// src/domain/rules/householdRules.ts
-export const isSpecialInvestigationRequired = (adultCount: number): boolean => adultCount > 5;
+export const isSpecialInvestigationRequired = (adultCount: number): boolean => 
+  adultCount > SPECIAL_THRESHOLD;

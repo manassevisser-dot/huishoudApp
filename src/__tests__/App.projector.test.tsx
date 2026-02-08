@@ -6,8 +6,20 @@ import { FormContext } from '../app/context/FormContext';
 import { ThemeProvider } from '../app/context/ThemeContext';
 import WizardController from '../ui/screens/Wizard/WizardController';
 
+// 1. Definieer de mocks BOVENAAN zodat ze overal in het bestand bekend zijn
 const mockDispatch = jest.fn();
 const mockSignup = jest.fn();
+
+// Dit is de ontbrekende schakel: een nep-orchestrator die doet alsof hij werkt
+const mockOrchestrator = {
+  getValue: jest.fn((key: string) => {
+    if (key === 'show_debug') return false;
+    return null;
+  }),
+  updateField: jest.fn(),
+  validate: jest.fn(() => null),
+  importCsvData: jest.fn(),
+} as any;
 
 describe('App Projector Flow', () => {
   
@@ -19,7 +31,8 @@ describe('App Projector Flow', () => {
     const { getByText } = render(
       <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 0, height: 0 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } }}>
         <ThemeProvider>
-          <FormContext.Provider value={{ state: {} as any, dispatch: mockDispatch }}>
+          {/* We geven nu de complete set door aan de Provider */}
+          <FormContext.Provider value={{ state: {} as any, dispatch: mockDispatch, orchestrator: mockOrchestrator }}>
             <LandingScreen onSignup={mockSignup} />
           </FormContext.Provider>
         </ThemeProvider>
@@ -38,35 +51,19 @@ describe('App Projector Flow', () => {
   });
 
   it('Projector: toont de eerste Wizard pagina na switch', async () => {
-    // Deze state is tegelijk de ValueProvider voor de WizardPage
-    const wizardState = {
-      activeStep: 'WIZARD_SETUP', 
-      data: {},
-      // De cruciale functie die de crash veroorzaakte:
-      getValue: jest.fn((key: string) => {
-        if (key === 'show_debug') return false;
-        return null;
-      }),
-      // Voeg een updateField mock toe voor de stateWriter prop
-      updateField: jest.fn(),
-    };
-  
+    // We gebruiken de mockOrchestrator die we bovenaan hebben gedefinieerd
     const { getByText } = render(
       <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 0, height: 0 }, insets: { top: 0, left: 0, right: 0, bottom: 0 } }}>
         <ThemeProvider>
-          <FormContext.Provider value={{ 
-            state: wizardState as any, 
-            dispatch: mockDispatch 
-          }}>
+          <FormContext.Provider value={{ state: {} as any, dispatch: mockDispatch, orchestrator: mockOrchestrator }}>
             <WizardController />
           </FormContext.Provider>
         </ThemeProvider>
       </SafeAreaProvider>
     );
   
-    // We wachten tot de WizardPage rendert. 
-    // We zoeken naar 'Velden aanwezig' omdat die tekst letterlijk in je WizardPage.tsx staat.
     await waitFor(() => {
+      // In je WizardController/Page staat vaak tekst zoals 'Velden aanwezig'
       expect(getByText(/Velden aanwezig/i)).toBeTruthy();
     });
   });

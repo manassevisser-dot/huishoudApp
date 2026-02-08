@@ -25,7 +25,7 @@ import { isoDateOnlyToLocalNoon } from '@domain/helpers/DateHydrator';
 /** Berekent leeftijd in jaren op basis van geboortedatum. */
 export function calculateAge(birthDateISO: string): number | null {
   const birthDate = isoDateOnlyToLocalNoon(birthDateISO);
-  if (!birthDate) return null;
+  if (birthDate === null) return null;
   const today = todayLocalNoon();
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();

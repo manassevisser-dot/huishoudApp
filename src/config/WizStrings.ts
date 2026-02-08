@@ -1,4 +1,5 @@
 export const WizStrings = {
+  
   wizard: {
     back: 'Vorige',
     next: 'Volgende',
@@ -14,3 +15,8 @@ export const WizStrings = {
   },
 };
 export default WizStrings;
+// 🆕 NIEUW: Group labels voor CollapsibleSection
+//LABEL_TOESLAGEN: 'Toeslagen',
+//LABEL_OVERIGE_VERZEKERINGEN: 'Overige verzekeringen',
+//LABEL_ABONNEMENTEN: 'Abonnementen',
+//},

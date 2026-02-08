@@ -4,23 +4,29 @@
  * Geen directe mutaties toegestaan.
  */
 import { FormStateOrchestrator } from '../FormStateOrchestrator';
-import type { FormState } from '@shared-types/form';
+import { initialFormState } from '@context/initialFormState';
+
+// 🔥 FIX: type van initialFormState automatisch afleiden
+type InitialFormState = typeof initialFormState;
 
 describe('FSM Enforcement', () => {
-  let initialState: FormState;
+  let initialState: InitialFormState;
   let orchestrator: FormStateOrchestrator;
 
   beforeEach(() => {
     initialState = {
-      schemaVersion: '1.0.0', // Toegevoegd
-      activeStep: 'setup',    // Toegevoegd
-      currentPageId: 'page1', // Toegevoegd
-      isValid: true,          // Toegevoegd
+      ...initialFormState,                 // behoud volledige vorm
+      schemaVersion: '1.0',
+      activeStep: 'setup',
+      currentPageId: 'page1',
+      isValid: true,
       data: {
+        ...initialFormState.data,
         setup: {
+          ...initialFormState.data.setup,
           aantalMensen: 1,
           aantalVolwassen: 1,
-          autoCount: 'Nee',
+          autoCount: 'Geen',
           heeftHuisdieren: false,
         },
         household: {
@@ -31,22 +37,24 @@ describe('FSM Enforcement', () => {
           expenses: { items: [] },
         },
       },
-      meta: { lastModified: new Date().toISOString(), version: 1 }, // Toegevoegd
+      meta: {
+        lastModified: new Date().toISOString(),
+        version: 1,
+      },
     };
-    orchestrator = new FormStateOrchestrator(initialState);
+
+    orchestrator = new FormStateOrchestrator(() => initialState, () => {});
   });
 
   it('moet state ongewijzigd laten bij leesoperatie (getValue)', () => {
     const before = orchestrator.getValue('aantalMensen');
     const after = orchestrator.getValue('aantalMensen');
     expect(before).toBe(after);
-    // Geen mutatie → object identity mag gelijk zijn
   });
 
   it('moet state immutabel updaten via dispatch (aantalMensen)', () => {
     const originalStateRef = (orchestrator as any).state;
 
-    // Act
     (orchestrator as any).dispatch({
       type: 'FIELD_CHANGED',
       fieldId: 'aantalMensen',
@@ -56,16 +64,13 @@ describe('FSM Enforcement', () => {
     const newStateRef = (orchestrator as any).state;
     const updatedValue = orchestrator.getValue('aantalMensen');
 
-    // Assert
-    expect(newStateRef).not.toBe(originalStateRef); // Immutability
+    expect(newStateRef).not.toBe(originalStateRef);
     expect(updatedValue).toBe(3);
   });
 
   it('moet pad-resolutie via façade gebruiken (autoCount)', () => {
-    // Arrange
     const originalStateRef = (orchestrator as any).state;
 
-    // Act
     (orchestrator as any).dispatch({
       type: 'FIELD_CHANGED',
       fieldId: 'autoCount',
@@ -75,7 +80,6 @@ describe('FSM Enforcement', () => {
     const newStateRef = (orchestrator as any).state;
     const updatedValue = orchestrator.getValue('autoCount');
 
-    // Assert
     expect(newStateRef).not.toBe(originalStateRef);
     expect(updatedValue).toBe('Twee');
   });

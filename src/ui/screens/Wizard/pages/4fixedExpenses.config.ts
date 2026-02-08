@@ -1,17 +1,16 @@
-import { UI_SECTIONS } from '@ui/constants/uiSections';
-import { UX_TOKENS } from '@ui/constants/uxTokens';
+// src/ui/screens/Wizard/pages/4fixedExpenses.config.ts
+import { UI_SECTIONS } from '@domain/constants/uiSections';
+import { UX_TOKENS } from '@domain/constants/uxTokens';
 
 export const fixedExpensesConfig = {
   pageId: UI_SECTIONS.FIXED_EXPENSES,
   titleToken: UX_TOKENS.PAGES.FIXED_EXPENSES,
   fields: [
-    { fieldId: 'autoVerzekering', type: 'money', labelToken: UX_TOKENS.FIELDS.AUTO_INSURANCE, requiresVisibilityCheck: true, uiModel: 'moneyRow' },
-    { 
-      fieldId: 'car_repeater', 
-      type: 'repeater', 
-      labelToken: UX_TOKENS.FIELDS.CAR_REPEATER, 
-      requiresVisibilityCheck: true, 
-      requiresConstraint: 'count' 
-    }
+    { fieldId: 'housingSection' },   // Orchestrator bepaalt: huur- of koopvelden?
+    { fieldId: 'utilitiesSection' }, // Energie, water, etc.
+    { fieldId: 'insuranceSection' }, // De lijst met verzekeringen
+    { fieldId: 'subscriptionSection' }, 
+    { fieldId: 'personExpenses', type: 'repeater' }, // Voor elk lid de persoonlijke lasten
+    { fieldId: 'carExpenses', type: 'repeater' }     // Alleen als er auto's zijn
   ]
 };

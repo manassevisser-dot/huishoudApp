@@ -2,10 +2,6 @@
  * Type guards voor visibility engine.
  */
 
-export function isBoolean(value: unknown): value is boolean {
-    return typeof value === 'boolean';
-  }
-  
   export function isEmpty(value: unknown): boolean {
     if (value == null) return true;
     if (typeof value === 'string') return value.trim() === '';

@@ -1,6 +1,6 @@
-import { dataOrchestrator } from '@services/dataOrchestrator';
- // removed unused collectAndDistributeData from '@services/privacyHelpers';
-import { Member, CsvItem, } from '@domain/types'; //FinancialIncomeSummary stond er ook bij
+import { ResearchOrchestrator } from '@app/orchestrators/ResearchOrchestrator.WIP';
+import { Member } from '@core/types/core';
+import { CsvItem } from '@core/types/research';
 
 export interface ImportResult {
   transactions: CsvItem[];
@@ -10,26 +10,29 @@ export interface ImportResult {
     isDiscrepancy: boolean;
   };
   hasMissingCosts: boolean;
-  researchPayload: any;
+  researchData: unknown; // We gebruiken even unknown omdat de research-output breed is
 }
 
 export class ImportOrchestrator {
   /**
-   * Bridge naar de domein-wasstraat. 
-   * Gebruikt destructured import voor collectAndDistributeData conform broncode.
+   * Transformeert ruwe import naar bruikbare resultaten.
+   * Regel: Ontvangt de research-instantie van de Master.
    */
-  processCsvImport(params: {
-    csvText: string;
-    members: Member[];
-    setupData: any;
-  }): ImportResult {
-    const rawResult = dataOrchestrator.processAllData(
+  public static processCsvImport(
+    research: ResearchOrchestrator, // De instantie van de Master
+    params: {
+      csvText: string;
+      members: Member[];
+      setupData: Record<string, unknown> | null;
+    }
+  ): ImportResult {
+    // FIX: Aanroep op de INSTANTIE (research), niet op de Klasse
+    const rawResult = research.processAllData(
       params.members,
       params.csvText,
       params.setupData
     );
     
-    // De wasstraat geeft data terug in de buckets 'local' en 'research'
     const finance = rawResult.local.finance;
     
     return {
@@ -40,7 +43,7 @@ export class ImportOrchestrator {
         isDiscrepancy: finance.summary.isDiscrepancy
       },
       hasMissingCosts: finance.hasMissingCosts,
-      researchPayload: rawResult.research
+      researchData: rawResult.research
     };
   }
 }

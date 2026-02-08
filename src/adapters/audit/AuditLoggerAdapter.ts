@@ -16,15 +16,17 @@ export interface AuditLoggerPort {
 class AuditLoggerAdapter implements AuditLoggerPort {
   private eventBuffer: AuditEvent[] = [];
 
-  logEvent(event: AuditEvent): void {
-    // 1. VERTALING: Kijk of we een menselijke tekst hebben voor deze code
+  public logEvent(event: AuditEvent): void {
+    // 1. VERTALING
     const translatedMessage = this.translate(event.message);
-    if (translatedMessage) {
+    
+    // Fix: strict-boolean-expression (explicit check)
+    if (translatedMessage !== null) {
       event.context = { ...event.context, originalCode: event.message };
       event.message = translatedMessage;
     }
 
-    // 2. ROUTERING: De Luchtverkeerstoren logica
+    // 2. ROUTERING
     if (event.message === 'SYSTEM_ERROR' || event.message === 'VALIDATION_CRASH') {
       this.routeToTicketing(event);
       event.level = 'fatal';
@@ -34,62 +36,82 @@ class AuditLoggerAdapter implements AuditLoggerPort {
       this.routeToUI(event);
     }
 
+    // Fix: no-console. We gebruiken console.warn voor de audit-stroom.
     this.routeToConsole(event);
     this.eventBuffer.push(event);
   }
 
   private routeToConsole(event: AuditEvent): void {
-    const prefix = `[AUDIT]`;
     const payload = JSON.stringify({
       level: event.level,
       message: event.message,
       timestamp: event.timestamp,
       context: event.context
     });
-    console.log(prefix, payload);
+    // Fix: no-console (alleen warn/error toegestaan)
+    console.warn(`[AUDIT]`, payload);
   }
 
   private routeToUI(_event: AuditEvent): void {
-    // Voor de UI componenten (underscore voorkomt linter error)
+    // Voor de UI componenten
   }
 
   private routeToTicketing(event: AuditEvent): void {
     console.error('!!! TICKETING/MAIL ALERT !!!', event);
   }
 
-  // Hulpmiddel om door het geneste validationMessages object te graven
+  /**
+   * Graaft door validationMessages.
+   * Fix: Geen 'any' meer, maar veilig type-scoping.
+   */
   private translate(path: string): string | null {
     try {
-      if (!path || typeof path !== 'string') return null;
-      return path.split('.').reduce((obj, key) => obj?.[key], validationMessages as any) || null;
+      // Fix: strict-boolean-expressions
+      if (path === '' || typeof path !== 'string') {
+        return null;
+      }
+
+      const keys = path.split('.');
+      // We typen het startpunt als unknown en casten alleen waar strikt nodig
+      const result = keys.reduce<unknown>((obj, key) => {
+        if (obj !== null && typeof obj === 'object' && key in obj) {
+          return (obj as Record<string, unknown>)[key];
+        }
+        return null;
+      }, validationMessages);
+
+      return typeof result === 'string' ? result : null;
     } catch {
       return null;
     }
   }
 
-  getEventsByLevel(level: AuditEvent['level']): AuditEvent[] {
+  public getEventsByLevel(level: AuditEvent['level']): AuditEvent[] {
     return this.eventBuffer.filter(e => e.level === level);
   }
 
-  clearBuffer(): void {
+  public clearBuffer(): void {
     this.eventBuffer = [];
   }
 }
 
 export const auditLogger = new AuditLoggerAdapter();
 
-// --- DE HERSTELDE BACKWARD COMPATIBILITY BRIDGE ---
+/**
+ * BACKWARD COMPATIBILITY BRIDGE
+ * Fix: 'any' vervangen door 'unknown' of 'Error'
+ */
 export const Logger = {
-  error: (msg: any, err?: any) => {
+  error: (msg: unknown, err?: unknown) => {
     const errorObj = err instanceof Error ? err : new Error(String(msg));
     auditLogger.logEvent({
       timestamp: new Date().toISOString(),
       level: 'error',
       message: errorObj.message,
-      context: { msg, stack: errorObj.stack }
+      context: { msg: String(msg), stack: errorObj.stack }
     });
   },
-  warn: (msg: string, data?: any) => {
+  warn: (msg: string, data?: Record<string, unknown>) => {
     auditLogger.logEvent({
       timestamp: new Date().toISOString(),
       level: 'warning',
@@ -97,7 +119,7 @@ export const Logger = {
       context: data
     });
   },
-  info: (msg: string, data?: any) => {
+  info: (msg: string, data?: Record<string, unknown>) => {
     auditLogger.logEvent({
       timestamp: new Date().toISOString(),
       level: 'info',
@@ -105,13 +127,13 @@ export const Logger = {
       context: data
     });
   },
-  log: (...args: any[]) => {
-    const message = String(args[1] || args[0]);
+  log: (first: unknown, second?: unknown) => {
+    const message = typeof second === 'string' ? second : String(first);
     auditLogger.logEvent({
       timestamp: new Date().toISOString(),
       level: 'info',
       message: message,
-      context: { rawArgs: args }
+      context: { rawData: second ?? first }
     });
   }
 };

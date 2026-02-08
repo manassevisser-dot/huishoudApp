@@ -1,62 +1,43 @@
 import * as React from 'react';
 import { View, Text, TextInput } from 'react-native';
 import { useAppStyles } from '@ui/styles/useAppStyles';
-import { toCents, formatCentsToDutch, formatDutchValue } from '@app/orchestrators/types';
 
 type MoneyInputProps = {
-  value: number; // Bedrag in centen (altijd >= 0)
-  onValueChange: (cents: number) => void;
+  displayValue: string; // De geformatteerde string vanuit de state/orchestrator
+  onValueChange: (value: string) => void; // Stuur de rauwe string terug naar de orchestrator
+  onBlur?: () => void;
   disabled?: boolean;
   placeholder?: string;
   accessibilityLabel?: string;
 };
 
 const MoneyInput: React.FC<MoneyInputProps> = ({
-  value,
+  displayValue,
   onValueChange,
+  onBlur,
   disabled = false,
   placeholder = '',
   accessibilityLabel = 'Bedrag',
 }) => {
+  // We halen de stijlen op uit de centrale hook
   const { styles } = useAppStyles();
-
-  // De lokale staat houdt de string vast die de gebruiker ziet
-  const [localValue, setLocalValue] = React.useState<string>(formatCentsToDutch(value));
-
-  // Sync lokale staat als de externe waarde (centen) wijzigt
-  React.useEffect(() => {
-    setLocalValue(formatCentsToDutch(value));
-  }, [value]);
-
-  // Bij focus: verwijder duizendtal-punten voor makkelijk bewerken
-  const onFocus = () => setLocalValue(formatDutchValue(localValue));
-
-  // Tijdens typen: saniteer direct (geen letters, geen minus)
-  const onChangeText = (text: string) => setLocalValue(formatDutchValue(text));
-
-  // Bij blur: bereken centen en formatteer naar NL-standaard
-  const onBlur = () => {
-    const cents = toCents(localValue);
-    onValueChange(cents); // Emit positieve centen naar de state
-    setLocalValue(formatCentsToDutch(cents)); // "On-blur formatting"
-  };
 
   return (
     <View style={styles.inputMoneyRow}>
-      {/* Vast, niet-bewerkbaar prefix  */}
+      {/* Het euro-teken krijgt de moneyPrefix stijl */}
       <Text style={styles.moneyPrefix} accessibilityLabel="Euro-teken">
         €
       </Text>
 
+      {/* Het invulveld krijgt de moneyTextInput stijl */}
       <TextInput
-        value={localValue}
-        onChangeText={onChangeText}
-        onFocus={onFocus}
+        value={displayValue}
+        onChangeText={onValueChange}
         onBlur={onBlur}
         placeholder={placeholder}
         editable={!disabled}
         accessibilityLabel={accessibilityLabel}
-        keyboardType="decimal-pad" // Forceert numeriek pad op mobile
+        keyboardType="decimal-pad"
         style={styles.moneyTextInput}
       />
     </View>

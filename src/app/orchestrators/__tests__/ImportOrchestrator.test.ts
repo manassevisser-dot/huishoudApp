@@ -1,6 +1,6 @@
 import { ImportOrchestrator } from '../ImportOrchestrator';
-import { dataOrchestrator } from '@services/dataOrchestrator';
-jest.mock('@services/dataOrchestrator');
+import { dataOrchestrator } from '@app/orchestrators/ResearchOrchestrator.WIP';
+jest.mock('@app/orchestrators/ResearchOrchestrator.WIP');
 
 describe('ImportOrchestrator', () => {
   let orchestrator: ImportOrchestrator;
