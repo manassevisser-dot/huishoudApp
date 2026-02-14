@@ -25,6 +25,7 @@ export interface ColorScheme {
   onSelected: string;
   card: string; // ← alias voor surface (backwards compat)
   shadow: string;
+  disabled: string;
 }
 
 export const Colors: Record<Theme, ColorScheme> = {
@@ -51,7 +52,8 @@ export const Colors: Record<Theme, ColorScheme> = {
     selected: '#007AFF',
     onSelected: '#FFFFFF',
     shadow: '#000000',
-    card: '#FFFFFF', // ← zelfde als surface
+    card: '#FFFFFF', 
+    disabled: '#CCCCCC',
   },
   dark: {
     background: '#0F172A',
@@ -76,6 +78,7 @@ export const Colors: Record<Theme, ColorScheme> = {
     selected: '#38BDF8',
     onSelected: '#0F172A',
     shadow: '#000000',
-    card: '#1E293B', // ← zelfde als surface
+    card: '#1E293B',
+    disabled: '#4D4D4D',
   },
 };

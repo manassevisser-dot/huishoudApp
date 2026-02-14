@@ -3,7 +3,7 @@
 import { FormStateOrchestrator } from './FormStateOrchestrator'; 
 import { fieldVisibilityRules } from '@domain/rules/fieldVisibility';
 
-export type VisibilityContext = { memberId?: string; };
+export type VisibilityParams = { memberId?: string; };
 // TODO (SPRINT-2):
 // VisibilityContext should not cross Render boundary.
 // This will be resolved when UIManager encapsulates visibility.

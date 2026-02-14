@@ -7,29 +7,16 @@ import {
   FINANCE_OPTIONS,
 } from '@domain/registry/options';
 import { getFieldDefinition } from '@domain/registry/FieldRegistry';
+import { ComponentType } from '@domain/registry/ComponentRegistry';
+import { FieldViewModel, PageViewModel } from './interfaces/IUIOrchestrator';
 
-// ───────────────────────────────────────────────────────────────
-// Lokale VM-types (vervang door jouw centrale types wanneer beschikbaar)
-export interface FieldViewModel {
-  fieldId: string;
-  componentType: string;
-  labelToken: string;
-  placeholderToken?: string;
-  value: unknown;
-  visibilityRuleName?: string;
-  options?: readonly string[];
-  error?: string | null;
-  uiModel?: string;
-}
+/**
+ * RENDER ORCHESTRATOR
+ * * Taak: Het verzamelen van ruwe veldgegevens (identiteit, tokens, waarde, opties)
+ * naar een FieldViewModel (Veld-fase).
+ */
 
-export interface PageViewModel {
-  pageId: string;
-  titleToken: string;
-  fields: FieldViewModel[];
-}
-// ───────────────────────────────────────────────────────────────
-
-// SSOT options — module-scope (NIET in de class)
+// SSOT options — gecombineerd uit domein registries
 const ALL_OPTIONS = {
   ...GENERAL_OPTIONS,
   ...HOUSEHOLD_OPTIONS,
@@ -38,23 +25,16 @@ const ALL_OPTIONS = {
 
 type AllOptionsMap = Record<string, readonly string[] | undefined>;
 
-// Kleine guards (vriendelijk voor @typescript-eslint/strict-boolean-expressions)
+// Type-guard voor string checks
 const isNonEmptyString = (v: unknown): v is string =>
   typeof v === 'string' && v.trim().length > 0;
 
-/**
- * RenderOrchestrator
- *
- * - Bouwt FieldViewModels uit field configs + actuele state
- * - Leest opties uit de centrale registry (options.ts)
- * - Evalueert GEEN visibility; geeft alleen visibilityRuleName door
- */
 export class RenderOrchestrator {
   constructor(private readonly fso: FormStateOrchestrator) {}
 
   /**
    * Bouw een FieldViewModel voor één veld.
-   * @returns FieldViewModel of null (onbekend veld of ontbrekende def.)
+   * Combineert de statische definitie met de actuele staat uit FSO.
    */
   public buildFieldViewModel(fieldId: string): FieldViewModel | null {
     if (!isNonEmptyString(fieldId)) {
@@ -64,33 +44,40 @@ export class RenderOrchestrator {
 
     const definition = getFieldDefinition(fieldId);
     if (definition === null) {
-      console.warn(`[RenderOrchestrator] Unknown fieldId: ${fieldId}`);
+      console.warn(`[RenderOrchestrator] unknown fieldId: ${fieldId}`);
       return null;
     }
 
-    const value = this.fso.getValue(fieldId); // unknown is ok; UI/field formatteert
+    // Waarde ophalen uit de centrale staat
+    const value = this.fso.getValue(fieldId);
 
+    // Opties resolven indien nodig
     let options: readonly string[] | undefined;
     if (isNonEmptyString(definition.optionsKey)) {
       options = this.getOptions(definition.optionsKey);
     }
 
+    /**
+     * De FieldViewModel (Veld-fase)
+     * Hier vindt de eerste koppeling tussen Registry en State plaats.
+     */
     const vm: FieldViewModel = {
       fieldId,
-      componentType: String(definition.componentType),
+      componentType: definition.componentType as ComponentType,
       labelToken: definition.labelToken,
       placeholderToken: definition.placeholderToken,
       value,
       visibilityRuleName: definition.visibilityRuleName,
       options,
       uiModel: definition.uiModel,
+      error: null, // Wordt later verrijkt door de Validation/UI flow
     };
 
     return vm;
   }
 
   /**
-   * Bouw meerdere VM's uit een rij fieldIds.
+   * Bouwt meerdere VM's voor een collectie IDs.
    */
   public buildFieldViewModels(fieldIds: string[]): FieldViewModel[] {
     if (!Array.isArray(fieldIds) || fieldIds.length === 0) return [];
@@ -100,7 +87,7 @@ export class RenderOrchestrator {
   }
 
   /**
-   * Bouw een PageViewModel uit pageConfig.
+   * Bouwt een PageViewModel voor een complete sectie/pagina.
    */
   public buildPageViewModel(pageConfig: {
     pageId: string;
@@ -122,19 +109,16 @@ export class RenderOrchestrator {
     };
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Options uit SSOT
-  // ─────────────────────────────────────────────────────────────
+  /**
+   * Private helper om opties uit de registry te vissen.
+   */
   private getOptions(optionsKey: string): readonly string[] {
     const key = isNonEmptyString(optionsKey) ? optionsKey : '';
-    if (key.length === 0) {
-      console.warn('[RenderOrchestrator] Empty optionsKey -> returning [].');
-      return [];
-    }
+    if (key.length === 0) return [];
 
     const set = (ALL_OPTIONS as AllOptionsMap)[key];
     if (set === null || set === undefined) {
-      console.warn(`[RenderOrchestrator] Unknown optionsKey "${key}" -> returning [].`);
+      console.warn(`[RenderOrchestrator] unknown optionsKey "${key}"`);
       return [];
     }
     return set;

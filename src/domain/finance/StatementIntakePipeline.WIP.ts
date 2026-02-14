@@ -1,12 +1,12 @@
 // src/domain/finance/StatementIntakePipeline.WIP.ts
 import { toCents } from '@domain/helpers/numbers';
 
-export type SetupData = {
+export type ResearchSetupData = {
   maandelijksInkomen?: number;
   housingIncluded?: boolean;
 };
 
-export type CsvItem = {
+export type ResearchCsvItem = {
   amount: number;
   description: string;
   date: string;
@@ -42,7 +42,7 @@ export const dataProcessor = {
     return 'Overig';
   },
 
-  reconcileWithSetup: (csvData: CsvItem[], setupData: SetupData) => {
+  reconcileWithSetup: (csvData: ResearchCsvItem[], setupData: ResearchSetupData) => {
     const THRESHOLD_CENTS = 5000;
 
     const csvIncome = csvData

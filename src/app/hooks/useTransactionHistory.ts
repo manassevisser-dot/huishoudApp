@@ -1,7 +1,5 @@
-// src/app/hooks/useTransactionHistory.ts
 import { useState } from 'react';
 import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter';
-import { ZodError } from 'zod';
 import { executeUpdateAction } from './transactionActions';
 import { StatefulTransactionAdapter } from '@adapters/transaction/stateful';
 
@@ -10,8 +8,8 @@ interface TransactionRecord {
   [key: string]: unknown;
 }
 
-// Helper buiten de hook om regels te besparen en logica te scheiden
-const getItemsFromState = (state: Record<string, unknown> | undefined): TransactionRecord[] => {
+const getItemsFromState = (state: Record<string, unknown> | undefined | null): TransactionRecord[] => {
+  // Expliciete checks voor ESLint strict-boolean-expressions
   if (state !== undefined && state !== null && Array.isArray(state.items)) {
     return state.items as TransactionRecord[];
   }
@@ -29,9 +27,12 @@ export const useTransactionHistory = (initialData: TransactionRecord[] = []) => 
       executeUpdateAction(adapter, inputValue, parts);
       setHasError(false);
     } catch (err) {
-      AuditLogger.log(err instanceof ZodError ? 'WARN' : 'ERROR', {
+      // We checken op 'name' of 'message' ipv de klasse, om Zod-isolatie te bewaren
+      const isValidationError = err instanceof Error && (err.name === 'ZodError' || err.message.includes('validation'));
+      
+      AuditLogger.log(isValidationError ? 'WARN' : 'ERROR', {
         event: 'transaction_update_failed',
-        error: err instanceof Error ? err.message : 'Unknown'
+        error: err instanceof Error ? err.message : 'Unknown transaction error'
       });
       setHasError(true);
     }

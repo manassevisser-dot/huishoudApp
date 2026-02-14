@@ -8,12 +8,22 @@ import type { IValidationOrchestrator, SectionValidationResult } from './interfa
 import type { INavigationOrchestrator } from './interfaces/INavigationOrchestrator';
 import { validateAtBoundary } from '@adapters/validation/validateAtBoundary';
 import { logger } from '@adapters/audit/AuditLoggerAdapter';
+import type { IThemeOrchestrator } from './interfaces/IThemeOrchestrator';
+import type { VisibilityOrchestrator } from './VisibilityOrchestrator';
+
+type DomainCluster = { 
+  data: IDataOrchestrator; 
+  business: IBusinessOrchestrator; 
+  validation: IValidationOrchestrator;
+  visibility: VisibilityOrchestrator; // <--- Toevoegen
+};
 
 
-
-type DomainCluster = { data: IDataOrchestrator; business: IBusinessOrchestrator; validation: IValidationOrchestrator };
-type AppCluster = { ui: IUIOrchestrator; navigation: INavigationOrchestrator };
-
+type AppCluster = { 
+  ui: IUIOrchestrator; 
+  navigation: INavigationOrchestrator; 
+  theme: IThemeOrchestrator; 
+};
 /**
  * MASTER ORCHESTRATOR
  *
@@ -28,6 +38,7 @@ type AppCluster = { ui: IUIOrchestrator; navigation: INavigationOrchestrator };
  */
 export class MasterOrchestrator {
   public readonly ui: IUIOrchestrator;
+  public readonly theme: IThemeOrchestrator;
 
   constructor(
     private readonly fso: FormStateOrchestrator,
@@ -36,18 +47,21 @@ export class MasterOrchestrator {
   ) {
     // Houd de façade naar buiten toe gelijk:
     this.ui = this.app.ui;
+    this.theme = this.app.theme;
   }
 
   /* ───────────────────────── UI façade ───────────────────────── */
 
   public isVisible(ruleName: string, memberId?: string): boolean {
-    return this.ui.isVisible(ruleName, memberId);
+    return this.domain.visibility.evaluate(ruleName, memberId);
   }
-  public validateSection(sectionId: string): SectionValidationResult {
+  private validateSection(sectionId: string): SectionValidationResult {
     const state = this.fso.getState();
     return this.domain.validation.validateSection(sectionId, state.data);
   }
-
+  public onNavigateBack(): void {
+    this.app.navigation.navigateBack();
+  }
   public canNavigateNext(sectionId: string): boolean {
     const result = this.validateSection(sectionId);
     return result.isValid;
@@ -59,6 +73,8 @@ export class MasterOrchestrator {
   public onNavigateNext(): void {
     this.app.navigation.navigateNext();
   }
+
+ 
   /* ─────────────────────── State boundary ────────────────────── */
 
   public updateField(fieldId: string, value: unknown): void {

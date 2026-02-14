@@ -1,4 +1,4 @@
-import { makeLegacyMember } from '../../test-utils/factories/memberFactory';
+import { makeLegacyMember } from '@test-utils/factories/memberFactory';
 import { StorageShim } from '@services/storageShim';
 
 // Functies uit transactionService
@@ -14,7 +14,7 @@ import {
   assertNoPIILeak, 
   collectAndDistributeData,
   toNumber 
-} from '../privacyHelpers';
+} from '@domain/research/PrivacyAirlock.WIP';
 
 // jest.Mock de StorageShim om zij-effecten te voorkomen
 jest.mock('../storageShim', () => ({

@@ -1,4 +1,11 @@
-import type { FormState } from '@core/types/core';
+import type {
+  FormState,
+  SetupData,
+  Household,
+  IncomeItem,
+  ExpenseItem,
+} from '@core/types/core';
+
 import { DATA_KEYS } from '@domain/constants/datakeys';
 
 export type AppDispatch = (action: {
@@ -6,9 +13,23 @@ export type AppDispatch = (action: {
   payload: Partial<FormState['data']>;
 }) => void;
 
-// Sterke item-typers (halen we uit jouw eigen FormState)
-type FinanceIncomeItem = FormState['data']['finance']['income']['items'][number];
-type FinanceExpenseItem = FormState['data']['finance']['expenses']['items'][number];
+// ── Typed field-ID unions voor dynamische collecties ───────────
+
+type KnownIncomeKey =
+  | 'nettoSalaris'
+  | 'werkFrequentie'
+  | 'vakantiegeldPerJaar'
+  | 'vakantiegeldPerMaand'
+  | `streaming_${string}`;
+
+type KnownExpenseKey =
+  | 'wegenbelasting'
+  | 'ozb'
+  | 'energieGas'
+  | 'water'
+  | `streaming_${string}`;
+
+// ── Collection helper type ─────────────────────────────────────
 
 type ItemsArray<T> = ReadonlyArray<T> | T[];
 
@@ -16,7 +37,6 @@ type ItemsArray<T> = ReadonlyArray<T> | T[];
  * StateWriterAdapter
  * - Eén plek voor "waar gaat dit veld heen?" én "maak aan bij eerste keer".
  * - Werkt met VOLLEDIG lege startsituatie (alle lades leeg).
- * - Geen field-to-section map nodig; gebruikt kleine collectie-registratie.
  *
  * Flow:
  *   updateField(fieldId, value)
@@ -27,15 +47,15 @@ type ItemsArray<T> = ReadonlyArray<T> | T[];
 export class StateWriterAdapter {
   constructor(
     private readonly getState: () => FormState,
-    private readonly dispatch: AppDispatch
+    private readonly dispatch: AppDispatch,
   ) {}
 
-  /**
-   * Publieke API voor alle writes vanuit de Orchestrator.
-   * fieldId = logisch veld; value = reeds gevalideerd/genormaliseerd aan de boundary.
-   *
-   * Opgeknipt zodat we onder de ESLint-limiet blijven.
-   */
+  // ── Publieke API (overloads voor type-safety) ────────────────
+
+  updateField<K extends keyof SetupData>(fieldId: K, value: SetupData[K]): void;
+  updateField<K extends keyof Household>(fieldId: K, value: Household[K]): void;
+  updateField(fieldId: KnownIncomeKey, value: number): void;
+  updateField(fieldId: KnownExpenseKey, value: number): void;
   updateField(fieldId: string, value: unknown): void {
     if (this.writeSetupDirect(fieldId, value)) return;
     if (this.writeHouseholdDirect(fieldId, value)) return;
@@ -43,7 +63,7 @@ export class StateWriterAdapter {
     // Onbekend / niet te routeren → fail-closed
   }
 
-  // ───────────────────────────────────────── Directe velden ─────────────────
+  // ── Directe velden ───────────────────────────────────────────
 
   private isDirectSetupField(fieldId: string): boolean {
     const known = new Set<string>([
@@ -77,7 +97,7 @@ export class StateWriterAdapter {
     if (!this.isDirectSetupField(fieldId)) return false;
 
     const state = this.getState();
-    const setup = state.data[DATA_KEYS.SETUP] ?? {};
+    const setup = state.data[DATA_KEYS.SETUP];
     this.dispatch({
       type: 'UPDATE_DATA',
       payload: {
@@ -94,7 +114,7 @@ export class StateWriterAdapter {
     if (!this.isDirectHouseholdField(fieldId)) return false;
 
     const state = this.getState();
-    const household = state.data[DATA_KEYS.HOUSEHOLD] ?? {};
+    const household = state.data[DATA_KEYS.HOUSEHOLD];
     this.dispatch({
       type: 'UPDATE_DATA',
       payload: {
@@ -107,85 +127,87 @@ export class StateWriterAdapter {
     return true;
   }
 
-  // ─────────────── Dynamische collecties (generieke upsert over items[]) ────
+  // ── Dynamische collecties ────────────────────────────────────
 
   private readonly COLLECTIONS = [
     {
       key: 'FINANCE_INCOME' as const,
-      get: (s: FormState): ItemsArray<FinanceIncomeItem> =>
+      get: (s: FormState): ItemsArray<IncomeItem> =>
         s.data[DATA_KEYS.FINANCE]?.income?.items ?? [],
-      buildPatch: (s: FormState, items: ItemsArray<FinanceIncomeItem>) => ({
+      buildPatch: (s: FormState, items: IncomeItem[]) => ({
         [DATA_KEYS.FINANCE]: {
           ...s.data[DATA_KEYS.FINANCE],
           income: {
             ...s.data[DATA_KEYS.FINANCE]?.income,
-            items: items as FormState['data'][typeof DATA_KEYS.FINANCE]['income']['items'],
+            items,
           },
         },
       }),
       accepts: (fieldId: string) => this.isKnownIncomeKey(fieldId),
-      toItem: (fieldId: string, value: unknown): FinanceIncomeItem => ({
+      toItem: (fieldId: string, value: unknown): IncomeItem => ({
         fieldId,
         amount: this.coerceNumber(value),
       }),
     },
     {
       key: 'FINANCE_EXPENSES' as const,
-      get: (s: FormState): ItemsArray<FinanceExpenseItem> =>
+      get: (s: FormState): ItemsArray<ExpenseItem> =>
         s.data[DATA_KEYS.FINANCE]?.expenses?.items ?? [],
-      buildPatch: (s: FormState, items: ItemsArray<FinanceExpenseItem>) => ({
+      buildPatch: (s: FormState, items: ExpenseItem[]) => ({
         [DATA_KEYS.FINANCE]: {
           ...s.data[DATA_KEYS.FINANCE],
           expenses: {
             ...s.data[DATA_KEYS.FINANCE]?.expenses,
-            items: items as FormState['data'][typeof DATA_KEYS.FINANCE]['expenses']['items'],
+            items,
           },
         },
       }),
       accepts: (fieldId: string) => this.isKnownExpenseKey(fieldId),
-      toItem: (fieldId: string, value: unknown): FinanceExpenseItem => ({
+      toItem: (fieldId: string, value: unknown): ExpenseItem => ({
         fieldId,
         amount: this.coerceNumber(value),
       }),
     },
-  ] as const;
+  ];
 
   /**
-   * Zoek & upsert over ALLE geregistreerde collecties:
-   * - Als fieldId ergens bestaat → update dáár.
-   * - Anders kies de EERSTE collectie waarvan `accepts(fieldId)` true geeft → create.
-   *
-   * Returnt true als er iets is gewijzigd (en dus gepatcht).
+   * Zoek & upsert over ALLE geregistreerde collecties.
+   * Returnt true als er iets is gewijzigd.
    */
   private writeDynamicCollections(fieldId: string, value: unknown): boolean {
     const state = this.getState();
 
-    // 1) Bestaande match? → update
+    // 1) Update bestaande
     for (const col of this.COLLECTIONS) {
       const items = col.get(state);
       const idx = (items as ReadonlyArray<{ fieldId: string }>).findIndex(
-        (i) => i.fieldId === fieldId
+        (i) => i.fieldId === fieldId,
       );
       if (idx !== -1) {
-        const next = items.slice() as { fieldId: string }[];
-        const updated = { ...next[idx], ...col.toItem(fieldId, value) };
-        next[idx] = updated;
-        this.dispatch({ type: 'UPDATE_DATA', payload: col.buildPatch(state, next) });
+        const next = [...items] as { fieldId: string }[];
+        next[idx] = { ...next[idx], ...col.toItem(fieldId, value) };
+        this.dispatch({
+          type: 'UPDATE_DATA',
+          payload: col.buildPatch(state, next as IncomeItem[] & ExpenseItem[]),
+        });
         return true;
       }
     }
 
-    // 2) Geen match → kies collectie via accepts(...) → geboorte
+    // 2) Create nieuwe — expliciet undefined-check (strict-boolean-expressions)
     const target = this.COLLECTIONS.find((c) => c.accepts(fieldId));
     if (target === undefined) return false;
 
     const current = target.get(state);
     const born = [...(current as { fieldId: string }[]), target.toItem(fieldId, value)];
-    this.dispatch({ type: 'UPDATE_DATA', payload: target.buildPatch(state, born) });
+    this.dispatch({
+      type: 'UPDATE_DATA',
+      payload: target.buildPatch(state, born as IncomeItem[] & ExpenseItem[]),
+    });
     return true;
   }
 
-  // ─────────────────────────────── Helpers ────────────────────────────────
+  // ── Helpers ──────────────────────────────────────────────────
 
   private coerceNumber(x: unknown): number {
     const n = Number(x);
@@ -203,7 +225,12 @@ export class StateWriterAdapter {
   }
 
   private isKnownExpenseKey(raw: string): boolean {
-    const KNOWN: ReadonlySet<string> = new Set(['wegenbelasting', 'ozb', 'energieGas', 'water']);
+    const KNOWN: ReadonlySet<string> = new Set([
+      'wegenbelasting',
+      'ozb',
+      'energieGas',
+      'water',
+    ]);
     return KNOWN.has(raw) || raw.startsWith('streaming_');
   }
 }

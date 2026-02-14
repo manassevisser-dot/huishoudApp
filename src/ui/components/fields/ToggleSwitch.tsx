@@ -1,36 +1,30 @@
 import * as React from 'react';
 import { View, TouchableOpacity, Text } from 'react-native';
-import { useAppStyles } from '@ui/styles/useAppStyles';
+import type { ToggleViewModel } from '@ui/types/viewModels';
 
-export type ToggleSwitchProps = {
-  value: boolean;
-  onToggle: () => void;
-  labelTrue?: string;
-  labelFalse?: string;
-  accessibilityLabel?: string;
-};
+interface ToggleSwitchProps {
+  viewModel: ToggleViewModel;
+}
 
-const ToggleSwitch: React.FC<ToggleSwitchProps> = ({
-  value,
-  onToggle,
-  labelTrue = 'Ja',
-  labelFalse = 'Nee',
-  accessibilityLabel,
-}) => {
-  // ✅ FIX: Remove 'as any', destructure only what we need
-  const { styles } = useAppStyles();
-
+const ToggleSwitch: React.FC<ToggleSwitchProps> = ({ viewModel }) => {
   return (
-    <View style={styles.toggleWrapper}>
+    <View style={viewModel.containerStyle}>
+      <Text style={viewModel.labelStyle}>{viewModel.label}</Text>
+
       <TouchableOpacity
-        style={[styles.toggleButton, value ? styles.toggleActive : styles.toggleInactive]}
-        onPress={onToggle}
+        style={viewModel.containerStyle} 
+        onPress={() => viewModel.onToggle(!viewModel.value)}
         accessibilityRole="switch"
-        accessibilityLabel={accessibilityLabel}
-        accessibilityState={{ checked: value }}
+        accessibilityState={{ checked: viewModel.value }}
       >
-        <Text style={styles.toggleText}>{value ? labelTrue : labelFalse}</Text>
+        <Text style={viewModel.labelStyle}>
+          {viewModel.value ? viewModel.labelTrue : viewModel.labelFalse}
+        </Text>
       </TouchableOpacity>
+
+      {(viewModel.error !== null && viewModel.error !== undefined && viewModel.error !== '') ? (
+        <Text style={viewModel.errorStyle}>{viewModel.error}</Text>
+      ) : null}
     </View>
   );
 };

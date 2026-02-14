@@ -2,17 +2,12 @@
 
 import React from 'react';
 import { TouchableOpacity, Text } from 'react-native';
-import type { ChipViewModel } from '../../../domain/registry/ComponentRegistry';
+import type { ChipViewModel } from '@ui/types/viewModels';
 
 interface ChipButtonProps {
   viewModel: ChipViewModel;
 }
 
-/**
- * DUMB ChipButton
- * Geen logica, geen style-berekeningen.
- * Alles is pre-computed door ComponentOrchestrator.
- */
 const ChipButton: React.FC<ChipButtonProps> = ({ viewModel }) => {
   return (
     <TouchableOpacity

@@ -1,73 +1,61 @@
-import * as React from 'react';
-import { Platform, View, Text, Pressable } from 'react-native';
+// src/ui/components/fields/DateField.tsx
+import React from 'react';
+import { View, Text, Pressable, Platform } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { useAppStyles } from '@ui/styles/useAppStyles';
-import { isoDateOnlyToLocalNoon, toISOFromLocalNoon, todayLocalNoon, formatToDisplay } from '@domain/helpers/DateHydrator';
+import type { DateViewModel } from '@ui/types/viewModels';
 
-type Props = {
-  label: string;
-  valueISO?: string;
-  onChangeISO: (iso: string | undefined) => void;
-  minISO?: string;
-  maxISO?: string;
-  errorText?: string | null;
-  accessibilityLabel?: string;
-};
+interface DateFieldProps {
+  viewModel: DateViewModel;
+}
 
-const DateField: React.FC<Props> = ({
-  label,
-  valueISO,
-  onChangeISO,
-  minISO,
-  maxISO,
-  errorText,
-  accessibilityLabel,
-}) => {
-  const { styles, colors } = useAppStyles();
+const DateField: React.FC<DateFieldProps> = ({ viewModel }) => {
   const [show, setShow] = React.useState(false);
 
-  // FIX: Expliciete checks voor de linter
-  const hasValue = typeof valueISO === 'string' && valueISO !== '';
-  const dateValue = hasValue ? isoDateOnlyToLocalNoon(valueISO) : null;
-  const display = dateValue !== null ? formatToDisplay(dateValue) : 'DD-MM-YYYY';
-  const hasError = typeof errorText === 'string' && errorText !== '';
-  
   const handleDateChange = (event: DateTimePickerEvent, date?: Date) => {
-    if (Platform.OS === 'android') setShow(false);
-    if (event.type === 'dismissed' || date === undefined || date === null) return;
+    if (Platform.OS === 'android') {
+      setShow(false);
+    }
     
-    onChangeISO(toISOFromLocalNoon(date));
+    if (event.type === 'dismissed' || date === undefined || date === null) {
+      return;
+    }
+    
+    viewModel.onChange(date);
   };
 
+  // We gebruiken de toLocaleDateString omdat displayValue (nog) niet in de registry interface staat
+  const displayString = (viewModel.value !== undefined && viewModel.value !== null) 
+  ? viewModel.value.toLocaleDateString('nl-NL') 
+  : 'Kies een datum';
+
   return (
-    <View style={styles.fieldContainer}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+    <View style={viewModel.containerStyle}>
+      <Text style={viewModel.labelStyle}>{viewModel.label}</Text>
+      
       <Pressable
         onPress={() => setShow(true)}
-        accessibilityRole="button"
-        accessibilityLabel={accessibilityLabel ?? label}
-        style={[
-          styles.input, 
-          { justifyContent: 'center' }, 
-          hasError ? styles.inputError : null
-        ]}
+        // We plakken de containerStyle ook op de pressable voor de omlijning/padding
+        style={viewModel.containerStyle}
       >
-        <Text style={{ color: hasValue ? colors.textPrimary : colors.textSecondary }}>
-          {display}
+        <Text>
+          {displayString}
         </Text>
       </Pressable>
 
       {show && (
         <DateTimePicker
           mode="date"
-          value={dateValue !== null ? dateValue : (typeof maxISO === 'string' ? isoDateOnlyToLocalNoon(maxISO) ?? todayLocalNoon() : todayLocalNoon())}
-          minimumDate={typeof minISO === 'string' ? isoDateOnlyToLocalNoon(minISO) ?? undefined : undefined}
-          maximumDate={typeof maxISO === 'string' ? isoDateOnlyToLocalNoon(maxISO) ?? undefined : undefined}
-          display={Platform.OS === 'ios' ? 'spinner' : 'calendar'}
+          // De orchestrator garandeert dat viewModel.value een Date is of een fallback heeft
+          value={viewModel.value ?? new Date()}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={handleDateChange}
         />
       )}
-      {hasError ? <Text style={styles.errorText}>{errorText}</Text> : null}
+
+      {/* Optionele error weergave op basis van de Base interface */}
+      {(viewModel.error !== null && viewModel.error !== undefined && viewModel.error !== '') ? (
+  <Text style={viewModel.errorStyle}>{viewModel.error}</Text>
+) : null}
     </View>
   );
 };

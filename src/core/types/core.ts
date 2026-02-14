@@ -1,53 +1,25 @@
-import { z } from 'zod';
-import { FormStateSchema } from '../../adapters/validation/formStateSchema';
-import { Member as SchemaMember } from '@state/schemas/sections/household.schema';
-export type CoreMember = SchemaMember;
-// 1. De Basis (SSOT: schema)
-type RawFormState = z.infer<typeof FormStateSchema>;
+import { 
+  FormState, 
+  Member, 
+  Auto,  
+  DataSection
+} from '@adapters/validation/formStateSchema';
 
-// 2. De Uitgebreide FormState met ViewModels
-export interface FormState extends RawFormState {
-  viewModels: {
-    financialSummary?: {
-      totalIncomeDisplay: string;
-      totalExpensesDisplay: string;
-      netDisplay: string;
-    };
-  };
-}
+// Hiermee geef je de EXACTE types door zonder een kopie te maken
+export type { FormState, Member, Auto, DataSection };
 
-// 3. Alle sub-types (afgeleid, geen eigen SSOT)
-export type Household = FormState['data']['household'];
-export type Member = Household['members'][number];
+type ElementOf<T> = T extends readonly (infer U)[] ? U : never;
+
+// Deze zijn prima, want dit zijn afgeleide sub-types die niet in de adapter staan
 export type SetupData = FormState['data']['setup'];
-export type Finance = FormState['data']['finance'];
-export type Income = Finance['income'];
-export type Expenses = Finance['expenses'];
+export type Household = FormState['data']['household'];
+export type Finance   = FormState['data']['finance'];
 
-// Enums/Keys uit het schema
-export type IncomeFrequency =
-  FormState['data']['finance']['income']['items'][number]['frequency'];
+// De rest van je bestand...
+export type IncomeItem  = ElementOf<NonNullable<Finance['income']['items']>>;
+export type ExpenseItem = ElementOf<NonNullable<Finance['expenses']['items']>>;
 
-export type DataSection = keyof FormState['data'];
 
-// 4. Infrastructuur voor Reducer & Orchestrator
-export type FormAction =
-  | {
-      type: 'UPDATE_DATA';
-      payload: {
-        section: DataSection;
-        field: string;
-        value: string | number | boolean | object | null | undefined;
-      };
-    }
-  | {
-      type: 'UPDATE_VIEWMODEL';
-      payload: Partial<FormState['viewModels']>;
-    }
-  | { type: 'SET_STEP'; payload: string }
-  | { type: 'RESET_APP' };
-
-// 5. Utility
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends (infer U)[]
     ? DeepPartial<U>[]

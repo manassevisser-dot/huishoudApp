@@ -1,12 +1,12 @@
 import { DATA_KEYS } from '@domain/constants/datakeys';
 import { csvService } from '@adapters/csv/csvService';
 import { dataProcessor } from '@domain/finance/StatementIntakePipeline.WIP'; 
-import { Member } from '@core/types/core';
 import {
   RawUIData,
   AnonymizedResearchPayload, // De nieuwe naam
   CsvItem,
   FinancialIncomeSummary,
+  ResearchMember,
 } from '@core/types/research';
 import {
   collectAndDistributeData,
@@ -14,17 +14,20 @@ import {
 } from '@domain/research/PrivacyAirlock.WIP'; 
 import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import { FormStateOrchestrator } from './FormStateOrchestrator';
-
+import { ResearchValidator } from '@adapters/validation/ResearchContractAdapter';
 /* ============================================================
  * TYPES & INTERFACES
  * ============================================================ */
 
 // Punt 3 audit: Herstel typing van processed members
-type ProcessedMember = ReturnType<typeof collectAndDistributeData>;
+interface ProcessedMember {
+  localMember: ResearchMember;
+  researchPayload: AnonymizedResearchPayload;
+}
 
 export interface MasterProcessResult {
   local: {
-    [DATA_KEYS.HOUSEHOLD]: { members: Member[] };
+    [DATA_KEYS.HOUSEHOLD]: { members: ResearchMember[] }
     [DATA_KEYS.FINANCE]: {
       transactions: CsvItem[];
       summary: FinancialIncomeSummary;
@@ -113,7 +116,7 @@ export class ResearchOrchestrator {
     const categoryTotals = transactions.reduce((acc, curr) => {
       const cat = curr.category ?? '';
       const key = cat.length > 0 ? cat : 'Overig';
-      const amount = typeof curr.amount === 'number' ? curr.amount : 0;
+      const amount = ResearchValidator.validateMoney({ amount: curr.amount, currency: 'EUR' }).amount;
       acc[key] = (acc[key] ?? 0) + amount;
       return acc;
     }, {} as Record<string, number>);
@@ -121,7 +124,7 @@ export class ResearchOrchestrator {
     return {
       memberPayloads: processedMembers.map((p) => p.researchPayload),
       financialAnalytics: {
-        totalIncomeCents: typeof incomeSummary.finalIncome === 'number' ? incomeSummary.finalIncome : 0,
+        totalIncomeCents: ResearchValidator.validateMoney({ amount: incomeSummary.finalIncome, currency: 'EUR' }).amount,
         categoryTotals,
         timestamp: new Date().toISOString(),
       },

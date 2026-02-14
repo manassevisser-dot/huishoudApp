@@ -1,45 +1,91 @@
 // src/domain/rules/fieldConstraints.ts
 import { GENERAL_OPTIONS, HOUSEHOLD_OPTIONS, FINANCE_OPTIONS } from '@domain/registry/options';
 
-/**
- * FIELD CONSTRAINT DEFINITION
- * 
- * Single Source of Truth voor alle validatie regels
- */
-export interface FieldConstraint {
-  type: 'number' | 'enum' | 'string' | 'boolean';
+// ════════════════════════════════════════════════════════════════
+// DISCRIMINATED CONSTRAINT TYPES
+// ════════════════════════════════════════════════════════════════
+// TypeScript weet nu: type === 'number' → min/max bestaan
+//                     type === 'enum'   → values bestaat
+
+export interface BaseConstraint {
   required?: boolean;
-  min?: number;
-  max?: number;
-  warn?: number; // Soft limit (toont warning maar accepteert waarde)
-  values?: readonly string[]; // Voor enum types
-  pattern?: RegExp; // Voor string validation
-  message?: string; // Custom error message
+  message?: string;
 }
 
-/**
- * FIELD CONSTRAINTS REGISTRY
- * 
- * Alle velden met hun validatie regels
- */
-export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
-  // ═══════════════════════════════════════════════════════════
-  // SETUP VELDEN
-  // ═══════════════════════════════════════════════════════════
+export interface NumberConstraint extends BaseConstraint {
+  type: 'number';
+  min?: number;
+  max?: number;
+  warn?: number;
+}
+
+export interface EnumConstraint extends BaseConstraint {
+  type: 'enum';
+  values: readonly string[];
+}
+
+export interface StringConstraint extends BaseConstraint {
+  type: 'string';
+  min?: number;
+  max?: number;
+  pattern?: RegExp;
+}
+
+export interface BooleanConstraint extends BaseConstraint {
+  type: 'boolean';
+}
+
+/** Discriminated union — de fabriek kan nu exact afleiden welk Zod-type nodig is */
+export type FieldConstraint =
+  | NumberConstraint
+  | EnumConstraint
+  | StringConstraint
+  | BooleanConstraint;
+
+// ════════════════════════════════════════════════════════════════
+// MEMBER FIELD KEYS — welke velden zijn member-templates
+// ════════════════════════════════════════════════════════════════
+
+/** Velden die per huishoudlid herhaald worden (mem_0_X, mem_1_X, ...) */
+export const MEMBER_FIELD_KEYS = [
+  'name', 'age', 'dob', 'gender', 'burgerlijkeStaat',
+  'nettoSalaris', 'frequentie',
+  'vakantiegeldPerJaar', 'vakantiegeldPerMaand',
+  'uitkeringType', 'uitkeringBedrag',
+  'zorgtoeslag', 'reiskosten', 'overigeInkomsten',
+  'telefoon', 'ov',
+] as const;
+
+export type MemberFieldKey = typeof MEMBER_FIELD_KEYS[number];
+
+/** Velden die per auto herhaald worden (auto-0_X, auto-1_X, ...) */
+export const AUTO_FIELD_KEYS = [
+  'wegenbelasting', 'brandstofOfLaden', 'apk',
+  'onderhoudReservering', 'lease', 'afschrijving',
+] as const;
+
+export type AutoFieldKey = typeof AUTO_FIELD_KEYS[number];
+
+// ════════════════════════════════════════════════════════════════
+// FIELD CONSTRAINTS REGISTRY — Single Source of Truth
+// ════════════════════════════════════════════════════════════════
+
+export const FIELD_CONSTRAINTS_REGISTRY = {
+  // ── SETUP VELDEN ─────────────────────────────────────────────
   
   aantalMensen: {
     type: 'number',
     required: true,
     min: 1,
     max: 10,
-    warn: 6, // Waarschuwing bij > 6 personen (grote huishoudens)
+    warn: 6,
   },
   
   aantalVolwassen: {
     type: 'number',
     required: true,
     min: 1,
-    max: 10, // Kan niet meer zijn dan aantalMensen (wordt gecontroleerd door orchestrator)
+    max: 10,
   },
   
   autoCount: {
@@ -59,13 +105,11 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     values: HOUSEHOLD_OPTIONS.woningType,
   },
   
-  // ═══════════════════════════════════════════════════════════
-  // HOUSEHOLD VELDEN (Members)
-  // ═══════════════════════════════════════════════════════════
+  // ── HOUSEHOLD VELDEN (Member-templates) ──────────────────────
   
   name: {
     type: 'string',
-    required: false, // Optioneel maar aanbevolen
+    required: false,
     min: 1,
     max: 50,
   },
@@ -75,13 +119,13 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     required: false,
     min: 0,
     max: 120,
-    warn: 100, // Waarschuwing bij zeer hoge leeftijd
+    warn: 100,
   },
   
   dob: {
-    type: 'string', // DIT IS CORRECT (State = string) wordt in ComponentOrchestrator omgezet naar type 'date' voor UI
+    type: 'string',
     required: false,
-    pattern: /^\d{4}-\d{2}-\d{2}$/, 
+    pattern: /^\d{4}-\d{2}-\d{2}$/,
   },
   
   gender: {
@@ -96,16 +140,14 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     values: HOUSEHOLD_OPTIONS.burgerlijkeStaat,
   },
   
-  // ═══════════════════════════════════════════════════════════
-  // INCOME VELDEN (Member-level)
-  // ═══════════════════════════════════════════════════════════
+  // ── INCOME VELDEN (Member-level) ─────────────────────────────
   
   nettoSalaris: {
     type: 'number',
     required: false,
     min: 0,
-    max: 50000, // Per periode (maand/week/etc)
-    warn: 20000, // Zeer hoog salaris (mogelijk jaarbedrag ipv maand?)
+    max: 50000,
+    warn: 20000,
   },
   
   frequentie: {
@@ -138,16 +180,15 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     type: 'number',
     required: false,
     min: 0,
-    max: 5000, // Maximale uitkering per maand
+    max: 5000,
     warn: 3000,
   },
   
-  // Toeslagen (member-level)
   zorgtoeslag: {
     type: 'number',
     required: false,
     min: 0,
-    max: 200, // Max zorgtoeslag per maand
+    max: 200,
   },
   
   reiskosten: {
@@ -164,15 +205,13 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     max: 5000,
   },
   
-  // ═══════════════════════════════════════════════════════════
-  // INCOME VELDEN (Household-level)
-  // ═══════════════════════════════════════════════════════════
+  // ── INCOME VELDEN (Household-level) ──────────────────────────
   
   huurtoeslag: {
     type: 'number',
     required: false,
     min: 0,
-    max: 500, // Max huurtoeslag per maand
+    max: 500,
   },
   
   kindgebondenBudget: {
@@ -186,7 +225,7 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     type: 'number',
     required: false,
     min: 0,
-    max: 2000, // Kan hoog zijn bij meerdere kinderen
+    max: 2000,
     warn: 1500,
   },
   
@@ -194,7 +233,7 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     type: 'number',
     required: false,
     min: 0,
-    max: 1000, // Per kwartaal, meerdere kinderen
+    max: 1000,
   },
   
   heeftVermogen: {
@@ -207,20 +246,18 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     type: 'number',
     required: false,
     min: 0,
-    max: 10000000, // 10 miljoen
-    warn: 1000000, // Waarschuwing bij > 1 miljoen (invloed op toeslagen)
+    max: 10000000,
+    warn: 1000000,
   },
   
-  // ═══════════════════════════════════════════════════════════
-  // EXPENSE VELDEN (Wonen)
-  // ═══════════════════════════════════════════════════════════
+  // ── EXPENSE VELDEN (Wonen) ───────────────────────────────────
   
   kaleHuur: {
     type: 'number',
     required: false,
     min: 0,
     max: 5000,
-    warn: 2000, // Zeer hoge huur
+    warn: 2000,
   },
   
   servicekosten: {
@@ -273,16 +310,14 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     max: 3000,
   },
   
-  // ═══════════════════════════════════════════════════════════
-  // EXPENSE VELDEN (Nuts)
-  // ═══════════════════════════════════════════════════════════
+  // ── EXPENSE VELDEN (Nuts) ────────────────────────────────────
   
   energieGas: {
     type: 'number',
     required: false,
     min: 0,
     max: 1000,
-    warn: 500, // Zeer hoog energieverbruik
+    warn: 500,
   },
   
   water: {
@@ -300,9 +335,7 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     max: 300,
   },
   
-  // ═══════════════════════════════════════════════════════════
-  // EXPENSE VELDEN (Verzekeringen)
-  // ═══════════════════════════════════════════════════════════
+  // ── EXPENSE VELDEN (Verzekeringen) ───────────────────────────
   
   ziektekostenPremie: {
     type: 'number',
@@ -353,9 +386,7 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     max: 200,
   },
   
-  // ═══════════════════════════════════════════════════════════
-  // EXPENSE VELDEN (Abonnementen)
-  // ═══════════════════════════════════════════════════════════
+  // ── EXPENSE VELDEN (Abonnementen) ────────────────────────────
   
   internetTv: {
     type: 'number',
@@ -385,20 +416,14 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     max: 200,
   },
   
-  // Streaming wordt dynamisch gegenereerd per dienst
-  // Format: streaming_{dienst}_amount
-  // Min: 0, Max: 50 (per dienst)
-  
-  // ═══════════════════════════════════════════════════════════
-  // EXPENSE VELDEN (Per Persoon)
-  // ═══════════════════════════════════════════════════════════
+  // ── EXPENSE VELDEN (Per Persoon) ─────────────────────────────
   
   telefoon: {
     type: 'number',
     required: false,
     min: 0,
     max: 200,
-    warn: 100, // Zeer duur abonnement
+    warn: 100,
   },
   
   ov: {
@@ -408,9 +433,7 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     max: 500,
   },
   
-  // ═══════════════════════════════════════════════════════════
-  // EXPENSE VELDEN (Auto)
-  // ═══════════════════════════════════════════════════════════
+  // ── EXPENSE VELDEN (Auto) ────────────────────────────────────
   
   wegenbelasting: {
     type: 'number',
@@ -424,7 +447,7 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     required: false,
     min: 0,
     max: 1000,
-    warn: 500, // Zeer hoog verbruik
+    warn: 500,
   },
   
   apk: {
@@ -455,50 +478,48 @@ export const FIELD_CONSTRAINTS_REGISTRY: Record<string, FieldConstraint> = {
     min: 0,
     max: 1000,
   },
-};
+} as const satisfies Record<string, FieldConstraint>;
 
-/**
- * Helper: Get constraint for a field
- */
+// ════════════════════════════════════════════════════════════════
+// TYPE: Alle bekende veld-namen (compile-time)
+// ════════════════════════════════════════════════════════════════
+
+export type FieldId = keyof typeof FIELD_CONSTRAINTS_REGISTRY;
+
+// ════════════════════════════════════════════════════════════════
+// HELPERS (ongewijzigd qua gedrag)
+// ════════════════════════════════════════════════════════════════
+
+/** Haal constraint op — stript prefixes (mem_0_, auto-0_, streaming_X_) */
 export function getConstraint(fieldId: string): FieldConstraint | undefined {
-  // Strip prefixes (mem_0_fieldName → fieldName)
   const cleanId = fieldId.replace(/^(mem_\d+_|auto-\d+_|streaming_\w+_)/, '');
-  return FIELD_CONSTRAINTS_REGISTRY[cleanId];
+  return FIELD_CONSTRAINTS_REGISTRY[cleanId as FieldId];
 }
 
-/**
- * Helper: Check if value exceeds warning threshold
- */
+/** Check of waarde boven soft-limit zit */
 export function exceedsWarning(fieldId: string, value: number): boolean {
   const constraint = getConstraint(fieldId);
-  
-  // Expliciete null/undefined check om de linter tevreden te stellen
-  if (constraint === null || constraint === undefined || constraint.warn === undefined) {
+  if (constraint === undefined || constraint.type !== 'number' || constraint.warn === undefined) {
     return false;
   }
-  
   return value > constraint.warn;
 }
 
-/**
- * Helper: Get warning message
- */
+/** Haal warning-bericht op */
 export function getWarningMessage(fieldId: string, value: number): string | null {
   if (!exceedsWarning(fieldId, value)) {
     return null;
   }
-  
+
   const constraint = getConstraint(fieldId);
-  const threshold = constraint?.warn;
-  
-  // Custom messages per veld type
+  const threshold = constraint?.type === 'number' ? constraint.warn : undefined;
+
   if (fieldId === 'nettoSalaris' && value > 20000) {
     return 'Dit lijkt een jaarbedrag - vul het maandbedrag in';
   }
-  
   if (fieldId === 'vermogenWaarde' && value > 1000000) {
     return 'Let op: vermogen boven €1M kan invloed hebben op toeslagen';
   }
-  
+
   return `Waarde is ongewoon hoog (>${threshold})`;
 }

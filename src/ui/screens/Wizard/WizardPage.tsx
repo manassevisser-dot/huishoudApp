@@ -1,44 +1,34 @@
 // src/ui/screens/Wizard/WizardPage.tsx
-// UPDATED: Rendert containers met CollapsibleSection
-
-import React from 'react';
-import { View, Text, ScrollView } from 'react-native';
-import { useAppStyles } from '@styles/useAppStyles';
+import React, { useMemo } from 'react';
+import { View, ScrollView } from 'react-native';
 import { FieldRenderer } from '@ui/components/FieldRenderer';
-import { CollapsibleSection } from '@ui/components/CollapsibleSection';
-import { useFormContext } from '@app/context/FormContext';
+import { useWizard } from '@app/context/WizardContext';
 
-interface FieldViewModel {
-  fieldId: string;
-  componentType: string;
-  labelToken: string;
-  value: unknown;
-  isVisible: boolean;
-  childFields?: FieldViewModel[];  // 🆕 Voor containers
+// Verander de interface van lokaal naar exported
+export interface WizardPageConfig {
+  pageId: string;
+  titleToken: string;
+  fields: Array<{
+    fieldId: string;
+    type?: string;
+  }>;
 }
 
 interface WizardPageProps {
-  config: {
-    pageId: string;
-    titleToken: string;
-    fields: Array<{
-      fieldId: string;
-      type?: string;
-    }>;
-  };
+  config: WizardPageConfig;
 }
 
 export const WizardPage: React.FC<WizardPageProps> = ({ config }) => {
-  const { orchestrator } = useFormContext();
-  const { context } = useHousehold(); // Of waar je context vandaan komt
+  // We halen de master (orchestrator) nu uit de WizardContext-schil
+  const { master } = useWizard();
 
-  // Eén aanroep: de volledige pipeline (render -> visibility -> component transformatie)
+  // De logica voor het ophalen van ViewModels
+  // We gebruiken nu de 'ui' cluster en de 'build' methode [2026-02-10]
   const componentViewModels = useMemo(
-    () => orchestrator.getPageComponentViewModels(
-      config.fields.map((f) => f.fieldId),
-      context
+    () => master.ui.buildPageComponentViewModels(
+      config.fields.map((f) => f.fieldId)
     ),
-    [config.fields, orchestrator, context]
+    [config.fields, master]
   );
 
   return (

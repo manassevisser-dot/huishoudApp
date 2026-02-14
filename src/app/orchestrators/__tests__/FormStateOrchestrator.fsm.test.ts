@@ -4,7 +4,7 @@
  * Geen directe mutaties toegestaan.
  */
 import { FormStateOrchestrator } from '../FormStateOrchestrator';
-import { initialFormState } from '@context/initialFormState';
+import { initialFormState } from '@state/initialFormState';
 
 // 🔥 FIX: type van initialFormState automatisch afleiden
 type InitialFormState = typeof initialFormState;

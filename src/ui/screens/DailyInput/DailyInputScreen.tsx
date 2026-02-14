@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { View, ScrollView } from 'react-native';
-import { MoneyField } from '@components/fields/MoneyField';
+import { MoneyField } from '@ui/components/fields/MoneyField';
 import { useAppStyles } from '@styles/useAppStyles';
 
 // We gebruiken relatieve paden om alias-conflicten te vermijden

@@ -1,5 +1,5 @@
 // src/app/hooks/transactionActions.ts
-import { MoneySchema } from '@core/types/research';
+import { ResearchValidator } from '@adapters/validation/ResearchContractAdapter';
 import { StatefulTransactionAdapter } from '@adapters/transaction/stateful';
 
 export const executeUpdateAction = (
@@ -7,7 +7,7 @@ export const executeUpdateAction = (
   inputValue: number,
   parts: number
 ): void => {
-  MoneySchema.parse({ amount: inputValue, currency: 'EUR' });
+  ResearchValidator.validateMoney({ amount: inputValue, currency: 'EUR' });
 
   const distribution = adapter.calculateDistribution(inputValue, parts);
   const current = adapter.getCurrentState() ?? {};

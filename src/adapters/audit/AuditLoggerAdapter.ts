@@ -1,6 +1,5 @@
 import { validationMessages } from '@state/schemas/sections/validationMessages';
 
-// Port Interface (ADR-12)
 export interface AuditEvent {
   timestamp: string;
   level: 'info' | 'warning' | 'error' | 'fatal';
@@ -17,16 +16,13 @@ class AuditLoggerAdapter implements AuditLoggerPort {
   private eventBuffer: AuditEvent[] = [];
 
   public logEvent(event: AuditEvent): void {
-    // 1. VERTALING
     const translatedMessage = this.translate(event.message);
-    
-    // Fix: strict-boolean-expression (explicit check)
+
     if (translatedMessage !== null) {
       event.context = { ...event.context, originalCode: event.message };
       event.message = translatedMessage;
     }
 
-    // 2. ROUTERING
     if (event.message === 'SYSTEM_ERROR' || event.message === 'VALIDATION_CRASH') {
       this.routeToTicketing(event);
       event.level = 'fatal';
@@ -36,7 +32,6 @@ class AuditLoggerAdapter implements AuditLoggerPort {
       this.routeToUI(event);
     }
 
-    // Fix: no-console. We gebruiken console.warn voor de audit-stroom.
     this.routeToConsole(event);
     this.eventBuffer.push(event);
   }
@@ -48,42 +43,29 @@ class AuditLoggerAdapter implements AuditLoggerPort {
       timestamp: event.timestamp,
       context: event.context
     });
-    // Fix: no-console (alleen warn/error toegestaan)
-    console.warn(`[AUDIT]`, payload);
+    console.warn('[AUDIT]', payload);
   }
 
   private routeToUI(_event: AuditEvent): void {
-    // Voor de UI componenten
+    // nothing
   }
 
   private routeToTicketing(event: AuditEvent): void {
     console.error('!!! TICKETING/MAIL ALERT !!!', event);
   }
 
-  /**
-   * Graaft door validationMessages.
-   * Fix: Geen 'any' meer, maar veilig type-scoping.
-   */
   private translate(path: string): string | null {
-    try {
-      // Fix: strict-boolean-expressions
-      if (path === '' || typeof path !== 'string') {
-        return null;
+    if (path.length === 0) return null;
+
+    const keys = path.split('.');
+    const result = keys.reduce<unknown>((obj, key) => {
+      if (obj !== null && typeof obj === 'object' && key in obj) {
+        return (obj as Record<string, unknown>)[key];
       }
-
-      const keys = path.split('.');
-      // We typen het startpunt als unknown en casten alleen waar strikt nodig
-      const result = keys.reduce<unknown>((obj, key) => {
-        if (obj !== null && typeof obj === 'object' && key in obj) {
-          return (obj as Record<string, unknown>)[key];
-        }
-        return null;
-      }, validationMessages);
-
-      return typeof result === 'string' ? result : null;
-    } catch {
       return null;
-    }
+    }, validationMessages);
+
+    return typeof result === 'string' ? result : null;
   }
 
   public getEventsByLevel(level: AuditEvent['level']): AuditEvent[] {
@@ -97,20 +79,26 @@ class AuditLoggerAdapter implements AuditLoggerPort {
 
 export const auditLogger = new AuditLoggerAdapter();
 
-/**
- * BACKWARD COMPATIBILITY BRIDGE
- * Fix: 'any' vervangen door 'unknown' of 'Error'
- */
 export const Logger = {
-  error: (msg: unknown, err?: unknown) => {
-    const errorObj = err instanceof Error ? err : new Error(String(msg));
+  error: (msg: string | Error, err?: unknown) => {
+    const errorObj =
+      err instanceof Error
+        ? err
+        : msg instanceof Error
+        ? msg
+        : new Error(String(msg));
+
     auditLogger.logEvent({
       timestamp: new Date().toISOString(),
       level: 'error',
       message: errorObj.message,
-      context: { msg: String(msg), stack: errorObj.stack }
+      context: {
+        msg: String(msg),
+        stack: errorObj.stack ?? null
+      }
     });
   },
+
   warn: (msg: string, data?: Record<string, unknown>) => {
     auditLogger.logEvent({
       timestamp: new Date().toISOString(),
@@ -119,6 +107,7 @@ export const Logger = {
       context: data
     });
   },
+
   info: (msg: string, data?: Record<string, unknown>) => {
     auditLogger.logEvent({
       timestamp: new Date().toISOString(),
@@ -127,13 +116,24 @@ export const Logger = {
       context: data
     });
   },
+
   log: (first: unknown, second?: unknown) => {
     const message = typeof second === 'string' ? second : String(first);
+    const rawData = second !== undefined ? second : first;
+
+    let contextValue: Record<string, unknown> | undefined;
+
+    if (rawData !== null && typeof rawData === 'object' && !Array.isArray(rawData)) {
+      contextValue = rawData as Record<string, unknown>;
+    } else if (rawData !== undefined) {
+      contextValue = { value: rawData };
+    }
+
     auditLogger.logEvent({
       timestamp: new Date().toISOString(),
       level: 'info',
-      message: message,
-      context: { rawData: second ?? first }
+      message,
+      context: contextValue
     });
   }
 };

@@ -1,5 +1,5 @@
 // src/domain/constants/Tokens.ts
-export const Space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
+export const Space = { xs: 4, sm: 8, badge: 6, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
 export const Type = { xs: 12, sm: 14, md: 16, lg: 17, xl: 18, h2: 28, kpi: 48 } as const;
 export const Radius = {
   xs: 4,
@@ -11,7 +11,13 @@ export const Radius = {
   circle: 999,
   pill: 20,
 } as const;
-export const Sizes = { inputHeight: 48, checkbox: 24, toggleWidth: 80 } as const;
+export const Sizes = { 
+  inputHeight: 48, 
+  checkbox: 24, 
+  toggleWidth: 80, 
+  hitTarget: 44, 
+  counterValue: 48 
+} as const;
 
 // Definieer eerst losse shadows (sm/md/lg), maak daarna alias level1/2/3
 const shadowSm = { ios: { y: 1, radius: 2, opacity: 0.05 }, android: { elevation: 2 } };
@@ -29,5 +35,11 @@ export const Shadows = {
   level3: shadowLg,
 } as const;
 
-export const Tokens = { Space, Type, Radius, Sizes, Shadows } as const;
+export const Opacity = {
+  transparent: 0,
+  disabled: 0.5, 
+  solid: 1,      
+} as const;
+
+export const Tokens = { Space, Type, Radius, Sizes, Shadows, Opacity } as const;
 export type TokensType = typeof Tokens;

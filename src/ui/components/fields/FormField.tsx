@@ -1,9 +1,12 @@
-// src/ui/components/fields/FormField.tsx
 import React from 'react';
-import { View, Text, TextInput } from 'react-native';
+import { View, Text, TextInput, ViewStyle, TextStyle, ImageStyle } from 'react-native';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 
-// ✅ Lokale façade-interfaces (UI praat met strings; geen domain-types hier)
+
+// De Style-truc: Voor het geval we stijlen als props gaan doorgeven
+type AnyStyle = ViewStyle | TextStyle | ImageStyle;
+
+// De Data-truc: un_known vervangen door unknown
 interface ValueProvider { getValue(fieldId: string): unknown; }
 interface StateWriter   { updateField(fieldId: string, value: unknown): void; }
 
@@ -11,18 +14,20 @@ interface FormFieldProps {
   fieldId: string;
   valueProvider: ValueProvider;
   stateWriter: StateWriter;
-  label: string; // Flow B: label komt als prop (token → label doe je in UI)
+  label: string;
+  containerStyle?: AnyStyle; // Gebruik van de style-truc
 }
 
 export const FormField: React.FC<FormFieldProps> = ({
-  fieldId, valueProvider, stateWriter, label,
+  fieldId, valueProvider, stateWriter, label, containerStyle
 }) => {
   const { styles } = useAppStyles();
   const value = valueProvider.getValue(fieldId);
+  
   const handleChange = (newValue: string) => stateWriter.updateField(fieldId, newValue);
 
   return (
-    <View style={styles.fieldContainer}>
+    <View style={[styles.fieldContainer, containerStyle]}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <TextInput
         style={styles.input}
@@ -33,5 +38,3 @@ export const FormField: React.FC<FormFieldProps> = ({
     </View>
   );
 };
-
-export default FormField;

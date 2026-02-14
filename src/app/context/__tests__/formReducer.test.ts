@@ -1,4 +1,4 @@
-import { formReducer } from '../formReducer';
+import { formReducer } from '@app/state/formReducer';
 import { createMockState } from '@test-utils/index';
 import { DATA_KEYS } from '@domain/constants/datakeys';
 

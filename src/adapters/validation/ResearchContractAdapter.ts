@@ -1,0 +1,36 @@
+import { z } from 'zod';
+import type { AnonymizedResearchPayload, ResearchMember, Money, ResearchContract } from '@core/types/research';
+import { FIELD_CONSTRAINTS_REGISTRY as REG } from '@domain/rules/fieldConstraints';
+import { isSpecialInvestigationRequired } from '@domain/rules/householdRules';
+
+/**
+ * RESEARCH CONTRACT ADAPTER
+ */
+
+export const MoneySchema = z.object({
+  amount: z.number().int({ message: "Bedrag moet in hele centen (integers) zijn" }),
+  currency: z.literal('EUR'),
+});
+
+export const ResearchPayloadSchema = z.object({
+  researchId: z.string().startsWith('res_'),
+  memberType: z.enum(['adult', 'child', 'teenager', 'senior', 'puber']),
+  age: z.number().min(REG.age.min).max(REG.age.max),
+  amount: z.number(),
+  category: z.string(),
+  timestamp: z.string().datetime(),
+});
+
+export const ResearchValidator = {
+  validateMoney: (data: unknown): Money => MoneySchema.parse(data),
+  validatePayload: (data: unknown): AnonymizedResearchPayload => ResearchPayloadSchema.parse(data),
+  
+  mapToContract: (id: string, externalId: string, members: ResearchMember[]): ResearchContract => ({
+    id,
+    externalId,
+    isSpecialStatus: isSpecialInvestigationRequired(members.filter(m => m.memberType === 'adult').length),
+    data: {
+      members,
+    },
+  }),
+};

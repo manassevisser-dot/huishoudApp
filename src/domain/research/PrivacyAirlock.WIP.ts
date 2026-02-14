@@ -1,11 +1,12 @@
 //src/domain/research/PrivacyAirlock.WIP.ts
-import { Member } from '@core/types/core';
-import { MemberType, RawUIData, AnonymizedResearchPayload } from '@core/types/research';
+
+import { ResearchValidator } from '@adapters/validation/ResearchContractAdapter';
+import { ResearchMember, MemberType, RawUIData, AnonymizedResearchPayload } from '@core/types/research';
 
 const RESEARCH_ID_LENGTH = 12;
 
 /**
- * Helper interface om 'any' casts te vermijden bij legacy velden uit de UI.
+ * Helper interface om 'a_ny' casts te vermijden bij legacy velden uit de UI.
  * Inherit 'leeftijd' van RawUIData om TypeScript-mismatches te voorkomen.
  */
 interface ExtendedRawData extends RawUIData {
@@ -87,6 +88,8 @@ export function assertNoPIILeak(obj: unknown): void {
   
   const checkDeep = (current: unknown) => {
     if (typeof current !== 'object' || current === null) return;
+    
+    // We casten naar Record om door de keys te kunnen loopen
     const entries = Object.entries(current as Record<string, unknown>);
     
     for (const [key, val] of entries) {
@@ -132,13 +135,22 @@ function resolveMemberTypeForData(raw: ExtendedRawData): MemberType {
 }
 
 /* =========================
+ * HELPER FUNCTIE
+ * ========================= */
+
+function finalizeResearchData(payload: AnonymizedResearchPayload): AnonymizedResearchPayload {
+  assertNoPIILeak(payload);
+  return ResearchValidator.validatePayload(payload);
+}
+
+/* =========================
  * DATA DISTRIBUTION (De Kern)
  * ========================= */
 
 export function collectAndDistributeData(
   raw: RawUIData,
   index: number,
-): { localMember: Member; researchPayload: AnonymizedResearchPayload } {
+): { localMember: ResearchMember; researchPayload: AnonymizedResearchPayload } { {
   const extended = raw as ExtendedRawData;
   
   const { firstName, lastName } = resolveMemberName(extended);
@@ -148,7 +160,7 @@ export function collectAndDistributeData(
   const fieldId = (raw.fieldId !== undefined && raw.fieldId !== '') ? raw.fieldId : `f-${index}`;
   const age = toNumber(raw.age ?? raw.leeftijd);
 
-  const localMember: Member = {
+  const localMember: ResearchMember= {
     entityId: localId,
     fieldId,
     memberType,
@@ -158,17 +170,15 @@ export function collectAndDistributeData(
     finance: typeof raw.finance === 'object' && raw.finance !== null ? raw.finance : {},
   };
 
-  const researchPayload: AnonymizedResearchPayload = {
+  const researchPayload = finalizeResearchData({
     researchId: makeResearchId(localId),
     memberType,
     age: toNumber(localMember.age), 
     amount: toNumber(raw.amount),
     category: String(raw.category ?? 'unassigned'),
     timestamp: new Date().toISOString(),
-  };
+  });
 
-  assertNoPIILeak(researchPayload);
-
-  // De namen hieronder moeten EXACT matchen met de namen op regel 148
   return { localMember, researchPayload };
+}
 }

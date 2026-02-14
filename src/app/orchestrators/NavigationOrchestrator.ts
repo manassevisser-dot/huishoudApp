@@ -16,15 +16,14 @@ export class NavigationOrchestrator implements INavigationOrchestrator {
   }
 
   public canNavigateNext(): boolean {
-    const currentId = this.fso.getState().currentPageId;
-    // Vraag aan de validatie of deze sectie oké is
+    const currentId = this.getCurrentPageId();
     const result = this.validation.validateSection(currentId, this.fso.getState().data);
     return result.isValid;
   }
 
   public navigateNext(): void {
     if (this.canNavigateNext()) {
-      const currentId = this.fso.getState().currentPageId; // 👈 Gebruik de juiste state-key
+      const currentId = this.fso.getState().currentPageId;
       const nextId = this.navigationManager.getNextStep(currentId);
 
       if (nextId !== null && nextId !== '') {

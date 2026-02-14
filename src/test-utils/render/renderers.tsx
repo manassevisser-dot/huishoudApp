@@ -6,7 +6,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react-native';
-import { ThemeProvider } from '@app/context/ThemeContext';
+import { ThemeProvider } from '@ui/providers/ThemeProvider';
 import { FormContext } from '@app/context/FormContext';
 import { FormState } from '@core/types/core';
 import { makePhoenixState } from '../factories/stateFactory';

@@ -1,9 +1,13 @@
+
+
 // src/ui/styles/useAppStyles.ts
-// UPDATED: makeContainers toegevoegd
 import { StyleSheet } from 'react-native';
-import { useTheme } from '@app/context/ThemeContext';
+import { useTheme } from '@ui/providers/ThemeProvider';
 import { Colors, Theme } from '@domain/constants/Colors';
 import { Tokens } from '@domain/constants/Tokens';
+import { applyShadows, AnyStyle } from './PlatformStyles';
+
+// Importeer ALLES uit de StyleRegistry — de SSOT
 import {
   makeLayout,
   makeHeader,
@@ -18,14 +22,13 @@ import {
   makeToggles,
   makeCheckboxes,
   makeHelpers,
-  makeContainers,  // 🆕 NIEUW
-} from '@styles/modules';
+  makeContainers,
+} from '@domain/registry/StyleRegistry';
 
-// Cache voor de gegenereerde stijlen per thema
+// Cache per thema
 const styleCache: Partial<Record<Theme, ReturnType<typeof StyleSheet.create>>> = {};
 
 export function getAppStyles(theme: Theme) {
-  // FIX: Expliciete check op undefined voor de linter
   const cachedStyles = styleCache[theme];
   if (cachedStyles !== undefined) {
     return cachedStyles;
@@ -33,6 +36,7 @@ export function getAppStyles(theme: Theme) {
 
   const c = Colors[theme];
 
+  // 1. Assembleer alle domein-regels (pure tokens, geen platform-code)
   const assembled = {
     ...makeLayout(c),
     ...makeHeader(c),
@@ -47,10 +51,17 @@ export function getAppStyles(theme: Theme) {
     ...makeToggles(c),
     ...makeCheckboxes(c),
     ...makeHelpers(c),
-    ...makeContainers(c),  // 🆕 NIEUW
+    ...makeContainers(c),
   };
 
-  const styles = StyleSheet.create(assembled);
+  // 2. Pas platform-specifieke shadows toe (de enige RN-afhankelijke stap)
+  const withShadows = applyShadows(
+    assembled as unknown as Record<string, AnyStyle>,
+    c
+  );
+
+  // 3. Maak StyleSheet (RN optimalisatie)
+  const styles = StyleSheet.create(withShadows);
   styleCache[theme] = styles;
   return styles;
 }

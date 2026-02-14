@@ -1,6 +1,7 @@
 // src/adapters/transaction/stateful.ts
 import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter';
 
+
 const allocateRemainder = (total: number, parts: number): number[] => {
   const base = Math.floor(total / parts);
   const remainder = total % parts;

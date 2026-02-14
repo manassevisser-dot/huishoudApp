@@ -1,6 +1,6 @@
 // src/test-utils/render/providers.tsx
 import React from 'react';
-import { ThemeProvider } from '@app/context/ThemeContext';
+import { ThemeProvider } from '@ui/providers/ThemeProvider';
 import { FormContext } from '@app/context/FormContext';
 import { FormState } from '@core/types/core';
 
@@ -57,14 +57,14 @@ type ProvidersProps = {
 export function Providers({ children, state, dispatch }: ProvidersProps) {
   const activeState = state !== undefined ? state : DEFAULT_TEST_STATE;
   
-  // We gebruiken hier 'as any' voor de context-waarde om de complexe 
+  // We gebruiken hier 'as a_ny' voor de context-waarde om de complexe 
   // Dispatch-type mismatches in tests te omzeilen, maar de orchestrator is nu wel compleet.
   const value = {
     state: activeState,
     dispatch: dispatch !== undefined ? dispatch : jest.fn(),
     orchestrator: createMockOrchestrator(activeState),
   };
-
+//we accept 'as any' this is a test utility
   return (
     <ThemeProvider>
       <FormContext.Provider value={value as any}>{children}</FormContext.Provider>

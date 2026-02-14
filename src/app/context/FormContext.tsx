@@ -7,10 +7,10 @@ import React, {
   ReactNode,
 } from 'react';
 
-import { formReducer, type FormAction } from './formReducer';
+import { formReducer, type FormAction } from '@app/state/formReducer';
 import { useStableOrchestrator } from './useStableOrchestrator';
 import type { FormState } from '@core/types/core';
-import { initialFormState } from './initialFormState';
+import { initialFormState } from '@app/state/initialFormState';
 
 /**
  * FormContext - React State Integration
@@ -73,4 +73,4 @@ export const useFormContext = () => {
 
 // Re-exports
 export type { FormState } from '@core/types/core';
-export type { FormAction } from './formReducer';
+export type { FormAction } from '@app/state/formReducer';

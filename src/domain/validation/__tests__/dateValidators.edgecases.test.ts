@@ -1,4 +1,4 @@
-import { isDigitsDatePlausible } from '../../validation/dateValidators';
+import { isDigitsDatePlausible } from '@domain/validation/dateValidators';
 
 describe('dateValidators - edge cases', () => {
   test('faalt voor niet-DD-MM-YYYY patronen', () => {

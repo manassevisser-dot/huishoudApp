@@ -28,7 +28,7 @@ export function deepMerge<T extends Record<string, unknown>>(
 
   // Handle arrays - overwrite completely
   if (Array.isArray(target)) {
-    return (Array.isArray(source) ? [...source] : { ...target }) as unknown as T;
+    return (Array.isArray(source) ? [...source] : [...target]) as unknown as T;
   }
 
   const output: Record<string, unknown> = { ...target };
@@ -45,7 +45,7 @@ export function deepMerge<T extends Record<string, unknown>>(
         sourceValue as Record<string, unknown>
       );
     } else {
-      output[key] = sourceValue;
+      output[key] = sourceValue as unknown; 
     }
   }
 

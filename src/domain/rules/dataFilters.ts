@@ -1,4 +1,3 @@
-// src/domain/rules/dataFilters.ts
 import type { Member } from '@core/types/core';
 import { VisibilityContext } from './fieldVisibility';
 
@@ -7,14 +6,20 @@ import { VisibilityContext } from './fieldVisibility';
  * Filterregels voor dynamische formulieronderdelen.
  */
 
-type VisibilityKnownFields = { household: unknown };
+// We definiëren wat we verwachten in de context voor deze specifieke regel
+type HouseholdData = { members: Member[] };
 
 export const dataFilterRules = {
   member_income_repeater: (ctx: VisibilityContext): Member[] => {
-    const household = ctx.getValue('household' as keyof VisibilityKnownFields) as { members?: unknown } | undefined;
+    // We halen de waarde op en vertellen TS dat dit HouseholdData moet zijn
+    // De 'as un_known' is hier een veilige brug van de algemene context naar dit specifieke type
+    const household = ctx.getValue('household') as unknown as HouseholdData | undefined;
 
-    const rawMembers = household?.members;
-    const members: Member[] = Array.isArray(rawMembers) ? (rawMembers as Member[]) : [];
-    return members;
+    // Als household bestaat en members een array is, geven we die terug
+    if (household !== undefined && household !== null && Array.isArray(household.members)) {
+      return household.members;
+    }
+
+    return [];
   },
 };

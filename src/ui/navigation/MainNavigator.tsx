@@ -1,11 +1,12 @@
 import React from 'react';
-import { useFormContext as useForm } from '@app/context/FormContext';
 import LandingScreen from '../screens/Wizard/LandingScreen';
-import WizardController from '../screens/Wizard/WizardController';
+import { WizardController} from '@ui/screens/Wizard/WizardController';
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
+import { useFormState } from '@ui/providers/FormStateProvider';
+
 
 const MainNavigator = () => {
-  const { state } = useForm();
+  const {state}= useFormState();
 
   // Bepaal welk scherm getoond moet worden op basis van de globale state
   switch (state.activeStep) {

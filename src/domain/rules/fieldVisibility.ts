@@ -64,7 +64,7 @@ export interface VisibilityContext {
   getValue: <K extends keyof VisibilityKnownFields>(fieldId: K) => VisibilityKnownFields[K];
 
   // (optioneel) fallback overload — laat deze weg als je ALLE keys wilt afdwingen
-  // getValue(fieldId: string): unknown;
+  // getValue(fieldId: string): un_known;
 }
 
 export type VisibilityRuleFn = (ctx: VisibilityContext, memberId?: string) => boolean;

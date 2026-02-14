@@ -1,26 +1,26 @@
 // src/app/orchestrators/UIManager.ts
-import { FormStateOrchestrator } from '@app/orchestrators/FormStateOrchestrator';
-import { VisibilityOrchestrator } from '@app/orchestrators/VisibilityOrchestrator';
-import { RenderOrchestrator } from '@app/orchestrators/RenderOrchestrator';
-import { ComponentOrchestrator } from '@app/orchestrators/ComponentOrchestrator';
+import { FormStateOrchestrator } from "@app/orchestrators/FormStateOrchestrator";
+import {
+  VisibilityOrchestrator,
+  VisibilityParams,
+} from "@app/orchestrators/VisibilityOrchestrator";
+import { RenderOrchestrator } from "@app/orchestrators/RenderOrchestrator";
+import { ComponentOrchestrator } from "@app/orchestrators/ComponentOrchestrator";
 
 import type {
   IUIOrchestrator,
   FieldViewModel,
   PageViewModel,
-  ComponentViewModel,
-} from '@app/orchestrators/interfaces/IUIOrchestrator';
+  PageConfig,
+} from "@app/orchestrators/interfaces/IUIOrchestrator";
+import type { ComponentViewModel } from "@domain/registry/ComponentRegistry";
 
-const hasString = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0;
+const hasString = (v: unknown): v is string =>
+  typeof v === "string" && v.trim().length > 0;
 
 /**
- * ═══════════════════════════════════════════════════════════
  * UI MANAGER
- * ═══════════════════════════════════════════════════════════
- * Verantwoordelijk voor de coördinatie tussen zichtbaarheid,
- * rendering en component-opbouw.
- * * Geen stijlen meer in de constructor: de ComponentOrchestrator
- * regelt dit nu zelf via de domein-factories.
+ * Coördineert de flow: Render -> Visibility -> Component transformatie.
  */
 export class UIManager implements IUIOrchestrator {
   private readonly render: RenderOrchestrator;
@@ -31,32 +31,29 @@ export class UIManager implements IUIOrchestrator {
     fso: FormStateOrchestrator,
     visibility: VisibilityOrchestrator,
     updateField?: (fieldId: string, value: unknown) => void,
-    // styles is hier definitief verwijderd
   ) {
     this.visibility = visibility;
     this.render = new RenderOrchestrator(fso);
-    
-    if (updateField !== null && updateField !== undefined) {
-      // De ComponentOrchestrator krijgt alleen nog de callback
+
+    if (typeof updateField === "function") {
       this.component = new ComponentOrchestrator(updateField);
     }
   }
 
-  public isVisible(ruleName: string, memberId?: string): boolean {
-    return this.visibility.evaluate(ruleName, memberId);
-  }
-
   public buildFieldViewModel(
     fieldId: string,
-    context?: { memberId?: string },
+    context?: VisibilityParams, // <--- Hersteld: gebruik de import
   ): FieldViewModel | null {
-    if (!hasString(fieldId)) return null;
+    if (!hasString(fieldId)) return null; // 1. Haal de basis VM op (Render-fase)
 
     const vm = this.render.buildFieldViewModel(fieldId);
-    if (vm === null || vm === undefined) return null;
+    if (vm === null) return null; // 2. Pas Visibility toe
 
     if (hasString(vm.visibilityRuleName)) {
-      const ok = this.visibility.evaluate(vm.visibilityRuleName, context?.memberId);
+      const ok = this.visibility.evaluate(
+        vm.visibilityRuleName,
+        context?.memberId,
+      );
       if (!ok) return null;
     }
 
@@ -65,24 +62,20 @@ export class UIManager implements IUIOrchestrator {
 
   public buildFieldViewModels(
     fieldIds: string[],
-    context?: { memberId?: string },
+    context?: VisibilityParams, // <--- Hersteld: gebruik de import
   ): FieldViewModel[] {
     if (!Array.isArray(fieldIds) || fieldIds.length === 0) return [];
     return fieldIds
-      .map(fid => this.buildFieldViewModel(fid, context))
+      .map((fid) => this.buildFieldViewModel(fid, context))
       .filter((vm): vm is FieldViewModel => vm !== null);
   }
 
   public buildPageViewModel(
-    pageConfig: {
-      pageId: string;
-      titleToken: string;
-      fields: Array<{ fieldId: string }>;
-    },
-    context?: { memberId?: string },
+    pageConfig: PageConfig,
+    context?: VisibilityParams, // <--- Hersteld: gebruik de import
   ): PageViewModel {
     const ids = Array.isArray(pageConfig.fields)
-      ? pageConfig.fields.map(f => f.fieldId).filter(hasString)
+      ? pageConfig.fields.map((f) => f.fieldId).filter(hasString)
       : [];
     const fields = this.buildFieldViewModels(ids, context);
     return {
@@ -94,18 +87,20 @@ export class UIManager implements IUIOrchestrator {
 
   public buildPageComponentViewModels(
     fieldIds: string[],
-    context?: { memberId?: string },
+    context?: VisibilityParams, // <--- Hersteld: gebruik de import
   ): ComponentViewModel[] {
-    if (this.component === null || this.component === undefined) return [];
-    if (!Array.isArray(fieldIds) || fieldIds.length === 0) return [];
+    if (
+      this.component === undefined ||
+      !Array.isArray(fieldIds) ||
+      fieldIds.length === 0
+    )
+      return [];
 
+    // Hier komen de draden samen: van Field naar Component
     const fieldVMs = this.buildFieldViewModels(fieldIds, context);
-    
+
     return fieldVMs
-      .map(vm => this.component!.buildComponentViewModel(vm))
-      // ComponentViewModel komt nu uit de Registry en bevat de domein-stijlen
-      .filter((cvm): cvm is ComponentViewModel => cvm != null);
+      .map((vm) => this.component!.buildComponentViewModel(vm))
+      .filter((cvm): cvm is ComponentViewModel => cvm !== null);
   }
 }
-
-export default UIManager;

@@ -22,6 +22,7 @@ export const COMPONENT_TYPES = {
   NUMBER: 'number',
   CHIP_GROUP: 'chip-group',
   CHIP_GROUP_MULTIPLE: 'chip-group-multiple',
+  TOGGLE: 'toggle',
   RADIO: 'radio',
   LABEL: 'label',
   DATE: 'date',
@@ -67,6 +68,18 @@ export interface CurrencyViewModel extends BaseComponentViewModel {
   onUpdate: (value: number) => void;
 }
 
+// ──────────── TOGGLE ────────────
+
+export interface ToggleViewModel extends BaseComponentViewModel {
+  componentType: 'toggle';
+  label: string;
+  value: boolean;
+  labelTrue: string;
+  labelFalse: string;
+  containerStyle: ComponentStyleRule; // Dit is een TYPE, dus dit is correct hier
+  labelStyle: ComponentStyleRule;     // Dit is een TYPE, dus dit is correct hier
+  onToggle: (newValue: boolean) => void;
+}
 // ──────────── TEXT ────────────
 
 export interface TextViewModel extends BaseComponentViewModel {
@@ -162,7 +175,9 @@ export type ComponentViewModel =
   | ChipGroupViewModel
   | RadioViewModel
   | LabelViewModel
-  | DateViewModel;
+  | DateViewModel
+  | ToggleViewModel;
+
 
 
 /**
@@ -253,7 +268,15 @@ export const COMPONENT_METADATA: Record<ComponentType, ComponentMetadata> = {
     isReadOnly: false,
     supportsMultiSelect: false,
   },
-};
+    [COMPONENT_TYPES.TOGGLE]: {
+      type: COMPONENT_TYPES.TOGGLE,
+      requiresOptions: true,
+      supportsPlaceholder: false,
+      isReadOnly: false,
+      supportsMultiSelect: false,
+    },
+  };
+
 
 /**
  * ═══════════════════════════════════════════════════════════

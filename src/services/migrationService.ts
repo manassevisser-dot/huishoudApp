@@ -7,46 +7,84 @@ const DEFAULT_CHILD_AGE = 10;
 const DEFAULT_ADULT_AGE = 35;
 
 type OldDataV0 = {
-  aantalMensen?: number | null;
-  aantalVolwassen?: number | null;
+  aantalMensen?: unknown;
+  aantalVolwassen?: unknown;
   leden?: unknown[];
   metadata?: { migratedAt?: string; schemaVersion?: string; itemsProcessed?: unknown };
-  income?: { items: Record<string, unknown>[] };
-  expenses?: { items: Record<string, unknown>[] };
-  household?: { members?: Record<string, unknown>[] };
+  income?: { items: unknown[] };
+  expenses?: { items: unknown[] };
+  household?: { members?: unknown[] };
   [key: string]: unknown;
 };
 
+// --- Type guards ---
+const isObject = (v: unknown): v is Record<string, unknown> => v !== null && typeof v === 'object';
+const isArray = (v: unknown): v is unknown[] => Array.isArray(v);
+
 // --- Helpers ---
 
-function mapLegacyMember(m: Record<string, unknown>, i: number): Member {
+function getMemberType(input: unknown): 'adult' | 'child' {
+  return input === 'child' ? 'child' : 'adult';
+}
+
+function getAge(input: unknown, type: 'adult' | 'child'): number {
+  return typeof input === 'number' ? input : (type === 'child' ? DEFAULT_CHILD_AGE : DEFAULT_ADULT_AGE);
+}
+
+function mapLegacyMember(m: unknown, i: number): Member {
+  if (!isObject(m)) {
+    return {
+      entityId: `mem_${i}`,
+      fieldId: `field_${i}`,
+      firstName: 'Bewoner',
+      lastName: '',
+      memberType: 'adult',
+      age: DEFAULT_ADULT_AGE,
+    };
+  }
+
   const naamStr = String(m.naam ?? m.fullName ?? 'Bewoner').trim();
   const parts = naamStr.split(/\s+/);
-  const memberType = (m.memberType as 'adult' | 'child' | undefined) ?? 'adult';
+  const memberType = getMemberType(m.memberType);
+  const age = getAge(m.age, memberType);
 
   return {
     entityId: String(m.entityId ?? `mem_${i}`),
     fieldId: String(m.fieldId ?? `field_${i}`),
-    firstName: parts[0] !== undefined && parts[0] !== '' ? parts[0] : 'Bewoner',
+    firstName: parts[0] !== '' ? parts[0] : 'Bewoner',
     lastName: parts.slice(1).join(' '),
     memberType,
-    age: (m.age as number | undefined) ?? (memberType === 'child' ? DEFAULT_CHILD_AGE : DEFAULT_ADULT_AGE),
+    age,
   };
 }
 
+function toNumber(v: unknown): number | undefined {
+  return typeof v === 'number' ? v : undefined;
+}
+
 function getSetupPatch(old: OldDataV0, base: FormState): DeepPartial<FormState['data']['setup']> {
-  const setupData = old[DATA_KEYS.SETUP] as Record<string, unknown> | undefined;
+  const setupData = old[DATA_KEYS.SETUP];
+  const setupRecord = isObject(setupData) ? setupData : {};
+
   return {
-    aantalMensen: typeof old.aantalMensen === 'number' ? old.aantalMensen : (setupData?.aantalMensen as number | undefined) ?? base.data.setup.aantalMensen,
-    aantalVolwassen: typeof old.aantalVolwassen === 'number' ? old.aantalVolwassen : (setupData?.aantalVolwassen as number | undefined) ?? base.data.setup.aantalVolwassen,
-    autoCount: (setupData?.autoCount as string | undefined) ?? 'Nee',
+    aantalMensen: toNumber(old.aantalMensen) ?? toNumber(setupRecord.aantalMensen) ?? base.data.setup.aantalMensen,
+    aantalVolwassen: toNumber(old.aantalVolwassen) ?? toNumber(setupRecord.aantalVolwassen) ?? base.data.setup.aantalVolwassen,
+    autoCount: (typeof setupRecord.autoCount === 'string') ? setupRecord.autoCount : 'Nee',
   };
 }
 
 function getFinanceData(old: OldDataV0) {
+  const incomeItems = isArray(old.income?.items)
+    ? old.income!.items.map(item => (isObject(item) ? item : {}))
+    : [];
+
+  const expenseItems = isArray(old.expenses?.items)
+    ? old.expenses!.items.map(item => (isObject(item) ? item : {}))
+    : [];
+
   return {
-    [SUB_KEYS.INCOME]: { items: Array.isArray(old.income?.items) ? old.income!.items : [] },
-    [SUB_KEYS.EXPENSES]: { items: Array.isArray(old.expenses?.items) ? old.expenses!.items : [] },
+    [SUB_KEYS.INCOME]: { items: incomeItems as Record<string, unknown>[] },
+    [SUB_KEYS.EXPENSES]: { items: expenseItems as Record<string, unknown>[] },
   };
 }
 
@@ -58,6 +96,20 @@ function getMetaPatch(old: OldDataV0, base: FormState): FormState['meta'] {
   };
 }
 
+function extractMembers(old: OldDataV0): unknown[] {
+  const raw = old[DATA_KEYS.HOUSEHOLD];
+  if (isObject(raw) && isArray(raw.members)) {
+    return raw.members;
+  }
+  if (old.household !== null && typeof old.household === 'object' && Array.isArray((old.household as Record<string, unknown>).members)) {
+    return (old.household as Record<string, unknown>).members as unknown[];
+  }
+  if (isArray(old.leden)) {
+    return old.leden;
+  }
+  return [];
+}
+
 // --- Main Function ---
 
 export async function migrateToPhoenix(old: OldDataV0 | null | undefined): Promise<FormState> {
@@ -67,12 +119,8 @@ export async function migrateToPhoenix(old: OldDataV0 | null | undefined): Promi
     return { ...base, meta: { ...base.meta, lastModified: new Date().toISOString() } };
   }
 
-  const raw = old[DATA_KEYS.HOUSEHOLD] as { members?: Record<string, unknown>[] } | undefined;
-  const legacyList = raw?.members ?? old.household?.members ?? old.leden ?? [];
-  
-  const migratedMembers = (Array.isArray(legacyList) ? legacyList : []).map((m, i) => 
-    mapLegacyMember(m as Record<string, unknown>, i)
-  );
+  const legacyList = extractMembers(old);
+  const migratedMembers = legacyList.map((m, i) => mapLegacyMember(m, i));
 
   return {
     ...base,

@@ -1,7 +1,8 @@
 // src/adapters/undo/stateful.ts
 
-export type UndoResult = unknown;
+export type StateUndoResult = { success: boolean; message?: string };
 
-export const undo = (): UndoResult | null => {
-  return null;
+export const undo = (): StateUndoResult | null => {
+  // logic
+  return { success: true };
 };

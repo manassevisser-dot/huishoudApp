@@ -1,5 +1,17 @@
 //src/core/types/research.ts
-import { z } from 'zod';
+
+/**
+ *  TODO: 
+ * isSpecialStatus laten landen in de DataBase als N8N gemaakt is:
+ * Voorbeeld van hoe de orchestrator de adapter aanroept voor de database-push:
+ * const contract = ResearchValidator.mapToContract(
+ * state.id, 
+ * state.externalId, 
+ * state.data.members
+ * );
+ *  //Nu bevat 'contract' de isSpecialStatus, klaar voor de database.
+ * await database.save(contract);
+ * */ 
 
 // --- Finance ---
 export interface FinanceItem {
@@ -35,10 +47,10 @@ export interface UndoResult {
   schemaVersion: string;
 }
 
-export const MoneySchema = z.object({
-  amount: z.number().int(),
-  currency: z.literal('EUR'),
-});
+export interface Money {
+  amount: number;
+  currency: 'EUR';
+}
 
 // --- Household ---
 export type MemberType = 'adult' | 'child' | 'teenager' | 'senior' | 'puber';
@@ -66,7 +78,14 @@ export interface CsvItem {
   amount: number;
   original: Record<string, unknown>;
 }
-
+export interface ResearchContract {
+  id: string;
+  externalId: string;
+  isSpecialStatus: boolean; 
+  data: {
+    members: ResearchMember[];
+  };
+}
 export interface RawUIData {
     setup?: Record<string, unknown>;     // Optioneel gemaakt (?)
     household?: { members: unknown[] };     // Optioneel gemaakt (?)

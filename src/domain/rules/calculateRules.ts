@@ -1,5 +1,4 @@
 // src/domain/rules/financeRules.ts
-
 export interface FinancialTotals {
   totalIncomeCents: number;
   totalExpensesCents: number;

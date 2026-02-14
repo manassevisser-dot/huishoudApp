@@ -1,57 +1,54 @@
-// src/app/context/WizardContext.tsx
-import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
-import { useFormContext } from './FormContext';
-
-/**
- * WIZARD CONTEXT
- * * Verantwoordelijkheid:
- * ✅ Navigatie (currentStep, goToNextStep)
- * ✅ De brug vormen tussen de MasterOrchestrator en de WizardPage
- */
+import React, { createContext, useContext, useMemo, ReactNode } from 'react';
+import { useFormState } from '@ui/providers/FormStateProvider';
+import { useMaster } from '@ui/providers/MasterProvider';
 
 interface WizardContextType {
-  // Navigatie state
-  currentStep: number;
+  activeStepId: string; 
   goToNextStep: () => void;
   goToPreviousStep: () => void;
-  
-  // Toegang tot de MasterOrchestrator voor de UI
-  // We exposen de master zodat de Page 'master.render' kan aanroepen
-  master: ReturnType<typeof useFormContext>['orchestrator'];
+  canNext: boolean; 
+  master: ReturnType<typeof useMaster>;
 }
 
 const WizardContext = createContext<WizardContextType | undefined>(undefined);
 
 export const WizardProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // 1. Haal de MasterOrchestrator op uit de FormContext
-  const { orchestrator: master } = useFormContext();
+  // FIX: Destructure 'state' uit de FormStateContextType
+  const { state } = useFormState();
+  const master = useMaster();
   
-  // 2. Beheer navigatie state
-  const [currentStep, setCurrentStep] = useState(0);
+  const activeStepId = state.activeStep; 
 
-  // 3. Navigatie functies
-  const goToNextStep = () => setCurrentStep(prev => prev + 1);
-  const goToPreviousStep = () => setCurrentStep(prev => prev - 1);
+  // De master bepaalt of we verder mogen op basis van de huidige sectie
+  const canNext = useMemo(() => {
+    return master.canNavigateNext(activeStepId); 
+  }, [master, activeStepId, state.data]);
 
-  // 4. Memoizeer de context waarde
+  const goToNextStep = () => {
+    if (canNext) {
+      master.onNavigateNext(); 
+    }
+  };
+
+    const goToPreviousStep = () => {
+      master.onNavigateBack();
+    };
+
   const value = useMemo(() => ({
-    currentStep,
+    activeStepId,
     goToNextStep,
     goToPreviousStep,
-    master // De master bevat master.render, master.updateField, etc.
-  }), [currentStep, master]);
+    canNext,
+    master
+  }), [activeStepId, canNext, master]);
 
   return <WizardContext.Provider value={value}>{children}</WizardContext.Provider>;
 };
 
-/**
- * Hook om de Wizard te gebruiken.
- * Moet ALTIJD binnen een FormProvider staan!
- */
 export const useWizard = () => {
   const context = useContext(WizardContext);
   if (context === undefined) {
-    throw new Error('useWizard must be used within a WizardProvider (which must be inside a FormProvider)');
+    throw new Error('useWizard must be used within a WizardProvider');
   }
   return context;
 };

@@ -1,14 +1,8 @@
-// src/domain/rules/conditions.ts
-import { z } from 'zod';
-import { HouseholdSchema } from '../../state/schemas/sections/household.schema';
-import { SetupSchema } from '../../state/schemas/sections/setup.schema';
-import { isMinor } from './ageRules';
-import { TimeProvider } from '../helpers/TimeProvider';
+import { type FormState, type Member } from '@core/types/core';
+import { type TimeProvider } from '@domain/helpers/TimeProvider';
+import { isMinor } from '@domain/rules/ageRules';
 
-// Types afgeleid van de Zod-schema's
-type Household = z.infer<typeof HouseholdSchema>;
-type Member = Household['members'][number];
-type Setup = z.infer<typeof SetupSchema>;
+type Setup = FormState['data']['setup'];
 
 // Constanten tegen magic numbers
 const RETIREMENT_AGE = 67;

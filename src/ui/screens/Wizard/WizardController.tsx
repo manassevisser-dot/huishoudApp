@@ -1,14 +1,16 @@
-const WizardContent: React.FC = () => {
-  const { state } = useFormContext();
+// src/ui/screens/Wizard/WizardController.tsx
+import React, { useMemo } from 'react';
+import { useFormState } from '@ui/providers/FormStateProvider';
+import { WizardPage } from './WizardPage';
+import { getPageConfig } from '@ui/screens/Wizard/registry/pageConfigRegistry';
 
-  // De Controller is nu ECHT alleen een wisselwachter voor de config
-  const config = React.useMemo(() => {
-    switch (state.activeStep) {
-      case 'WIZARD_SETUP': return setupHouseholdConfig;
-      // ...
-    }
-  }, [state.activeStep]);
+export const WizardController: React.FC = () => {
+  const { state } = useFormState();
 
-  // We geven ALLEEN de config door. De Page regelt de rest zelf met de Master.
+  const config = useMemo(
+    () => getPageConfig(state.currentPageId),
+    [state.currentPageId]
+  );
+
   return <WizardPage config={config} />;
 };

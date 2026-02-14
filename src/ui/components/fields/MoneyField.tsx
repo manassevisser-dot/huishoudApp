@@ -1,35 +1,27 @@
-import * as React from 'react';
-import { View, Text, TextInput } from 'react-native';
+import React from 'react';
+import { View, Text } from 'react-native';
+import type { CurrencyViewModel } from '@ui/types/viewModels';
 
-export interface MoneyFieldProps {
-  label: string;
-  amount: number; // We gebruiken 'amount' zoals geëist door de compiler in DailyInput
-  onAmountChange: (val: number) => void;
-  error?: string;
+interface MoneyFieldProps {
+  viewModel: CurrencyViewModel;
 }
 
-export const MoneyField: React.FC<MoneyFieldProps> = ({ label, amount, onAmountChange, error }) => {
+export const MoneyField: React.FC<MoneyFieldProps> = ({ viewModel }) => {
   return (
-    <View style={{ marginBottom: 15 }}>
-      <Text style={{ fontWeight: '600', marginBottom: 5 }}>{label}</Text>
-      <TextInput
-        style={{
-          borderWidth: 1,
-          borderColor: error ? 'red' : '#ccc',
-          padding: 12,
-          borderRadius: 8,
-          fontSize: 18,
-        }}
-        keyboardType="numeric"
-        value={amount.toString()}
-        onChangeText={(text) => {
-          const num = parseFloat(text.replace(',', '.'));
-          onAmountChange(isNaN(num) ? 0 : num);
-        }}
-        placeholder="0.00"
-      />
-      {error && <Text style={{ color: 'red', fontSize: 12 }}>{error}</Text>}
+    <View style={viewModel.containerStyle}>
+      <Text style={viewModel.labelStyle}>{viewModel.label}</Text>
+      
+      <View style={viewModel.containerStyle}>
+        <Text style={viewModel.labelStyle}>
+          {viewModel.value.toString()}
+        </Text>
+      </View>
+
+      {(viewModel.error !== null && viewModel.error !== undefined && viewModel.error !== '') ? (
+        <Text style={viewModel.errorStyle}>{viewModel.error}</Text>
+      ) : null}
     </View>
   );
 };
+
 export default MoneyField;

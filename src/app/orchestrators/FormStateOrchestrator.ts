@@ -1,11 +1,12 @@
-import type { FormState } from '@core/types/core';
-import type { FormAction } from '@app/context/formReducer';
+import { type FormState } from '@core/types/core';
+import type { FormAction } from '@app/state/formReducer';
 import { StateWriterAdapter } from '@adapters/StateWriter/StateWriterAdapter';
-import { DATA_KEYS } from '@domain/constants/datakeys';
 import { validateAtBoundary } from '@adapters/validation/validateAtBoundary';
 
-type IncomeItem  = FormState['data']['finance']['income'   ]['items'][number];
-type ExpenseItem = FormState['data']['finance']['expenses']['items'][number];
+// We leiden de types lokaal af van de FormState. 
+// NonNullable zorgt dat de array-access veilig is voor TypeScript.
+type IncomeItem = NonNullable<FormState['data']['finance']['income']['items']>[number];
+type ExpenseItem = NonNullable<FormState['data']['finance']['expenses']['items']>[number];
 
 export class FormStateOrchestrator {
   private readonly writer: StateWriterAdapter;
@@ -14,11 +15,9 @@ export class FormStateOrchestrator {
     public readonly getState: () => FormState,
     public readonly dispatch: (action: FormAction) => void
   ) {
-    // FIX 1: 'any' vervangen door expliciete cast naar het type dat de adapter verwacht
     this.writer = new StateWriterAdapter(this.getState, (a) => this.dispatch(a as FormAction));
   }
 
-  // FIX 2: Complexiteit verlaagd door getValue op te splitsen in kleine delen
   public getValue(fieldId: string): unknown {
     const state = this.getState();
 
@@ -29,28 +28,33 @@ export class FormStateOrchestrator {
   }
 
   private getFinancialValue(state: FormState, fieldId: string): unknown {
-    const incomeItems = state.data[DATA_KEYS.FINANCE]?.income?.items;
+    const incomeItems = state.data.finance.income.items as IncomeItem[];
     if (Array.isArray(incomeItems)) {
-      const hit = (incomeItems as ReadonlyArray<IncomeItem>).find((it) => it.fieldId === fieldId);
-      if (hit !== undefined) return hit.amount;
+      // Gebruik expliciete check it !== undefined && it !== null voor de linter
+      const hit = incomeItems.find((it) => it !== undefined && it !== null && it.fieldId === fieldId);
+      if (hit !== undefined && hit !== null) return hit.amount as unknown;
     }
 
-    const expenseItems = state.data[DATA_KEYS.FINANCE]?.expenses?.items;
+    const expenseItems = state.data.finance.expenses.items as ExpenseItem[];
     if (Array.isArray(expenseItems)) {
-      const hit = (expenseItems as ReadonlyArray<ExpenseItem>).find((it) => it.fieldId === fieldId);
-      if (hit !== undefined) return hit.amount;
+      const hit = expenseItems.find((it) => it !== undefined && it !== null && it.fieldId === fieldId);
+      if (hit !== undefined && hit !== null) return hit.amount as unknown;
     }
     return undefined;
   }
 
   private getSectionValue(state: FormState, fieldId: string): unknown {
-    for (const key of [DATA_KEYS.SETUP, DATA_KEYS.HOUSEHOLD]) {
-      const section = state.data[key];
-      // FIX 3: Strict boolean check (niet 'if (section)')
-      if (section !== undefined && section !== null && Object.prototype.hasOwnProperty.call(section, fieldId)) {
-        return (section as Record<string, unknown>)[fieldId];
-      }
+    const setup = state.data.setup as Record<string, unknown>;
+    // De linter eist expliciete checks op objecten
+    if (setup !== undefined && setup !== null && fieldId in setup) {
+      return setup[fieldId];
     }
+
+    const household = state.data.household as Record<string, unknown>;
+    if (household !== undefined && household !== null && fieldId in household) {
+      return household[fieldId];
+    }
+
     return undefined;
   }
 

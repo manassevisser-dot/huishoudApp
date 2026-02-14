@@ -1,23 +1,35 @@
 import React from 'react';
-import { ThemeProvider } from '@app/context/ThemeContext';
+import { FormStateProvider } from '@ui/providers/FormStateProvider';
+import { MasterProvider, useMaster } from '@ui/providers/MasterProvider';
+import { ThemeProvider } from '@ui/providers/ThemeProvider';
 import { WizardProvider } from '@app/context/WizardContext';
-import { FormProvider } from '@app/context/FormContext';
 import MainNavigator from '@ui/navigation/MainNavigator';
-// Let op de kleine 'i'
-import { initialFormState } from '@app/context/initialFormState';
+import { initialFormState } from '@app/state/initialFormState';
 
-const App = () => {
+/**
+ * AppContent zorgt ervoor dat we de MasterOrchestrator uit de MasterProvider 
+ * kunnen halen en doorgeven aan de ThemeProvider prop.
+ */
+const AppContent = () => {
+  const master = useMaster();
+
   return (
-    <ThemeProvider>
-      {/* Gebruik de juiste variabele naam */}
-      <FormProvider initialState={initialFormState}>
-        <WizardProvider>
-          <MainNavigator />
-        </WizardProvider>
-      </FormProvider>
+    <ThemeProvider master={master}>
+      <WizardProvider>
+        <MainNavigator />
+      </WizardProvider>
     </ThemeProvider>
   );
 };
 
+const App = () => {
+  return (
+    <FormStateProvider initialState={initialFormState}>
+      <MasterProvider>
+        <AppContent />
+      </MasterProvider>
+    </FormStateProvider>
+  );
+};
+
 export default App;
-// PHOENIX_EVENT: Boot sequence initiated

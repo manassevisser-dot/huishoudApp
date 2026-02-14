@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
-import MoneyInput from '../../../ui/components/fields/MoneyInput';
-import { ThemeProvider } from '../../../app/context/ThemeContext';
+import MoneyInput from '@ui/components/fields/MoneyInput';
+import { ThemeProvider } from '@ui/providers/ThemeProvider';
 
 // Mock voor de stijlen - nu gekoppeld aan de MoneyInput gebruik
 jest.mock('@ui/styles/useAppStyles', () => ({
