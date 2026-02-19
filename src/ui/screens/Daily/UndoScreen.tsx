@@ -9,7 +9,7 @@ import { useAppStyles } from '@ui/styles/useAppStyles';
  *
  * @architecture
  * - ADR-01 (SoC): Alleen presentatie logica, geen business rules
- * - ADR-04 (Dumb UI): Pure projector component (State in → View uit)
+ * - ADR-04 (Dumb UI): Pure projector section (State in → View uit)
  */
 export const UndoScreen: React.FC = () => {
   const { styles } = useAppStyles();

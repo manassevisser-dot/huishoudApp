@@ -1,16 +1,9 @@
-// src/app/orchestrators/interfaces/IUIOrchestrator.ts
-
-import { ComponentType, ComponentViewModel } from '@domain/registry/ComponentRegistry';
-
-export type PageConfig = {
-  pageId: string;
-  titleToken: string;
-  fields: Array<{ fieldId: string }>;
-};
+import { SectionViewModel } from '@app/orchestrators/SectionOrchestrator';
+import { PrimitiveType } from '@domain/registry/PrimitiveRegistry';
 
 export interface FieldViewModel {
   fieldId: string;
-  componentType: ComponentType;
+  primitiveType: PrimitiveType;
   labelToken: string;
   placeholderToken?: string;
   value: unknown;
@@ -20,14 +13,18 @@ export interface FieldViewModel {
   visibilityRuleName?: string;
 }
 
-export interface PageViewModel {
-  pageId: string;
-  titleToken: string;
-  fields: FieldViewModel[];
+export interface ScreenViewModel {
+  screenId: string;
+  title: string;
+  type: string;
+  sections: SectionViewModel[];
+  navigation: {
+    next?: string;
+    previous?: string;
+  };
 }
 
 export interface IUIOrchestrator {
+  buildScreen(screenId: string): ScreenViewModel | null;
   buildFieldViewModel(fieldId: string): FieldViewModel | null;
-  buildPageViewModel(pageConfig: PageConfig): PageViewModel; 
-  buildPageComponentViewModels(fieldIds: string[]): ComponentViewModel[];
 }

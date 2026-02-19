@@ -1,12 +1,12 @@
 // src/domain/rules/fieldVisibility.ts
 //
 // TYPE-SAFE HYBRIDE VERSIE — soft‑schema + hergebruik van option types
-// - Visibility rules lezen uit ECHTE state (niet uit FieldRegistry)
+// - Visibility rules lezen uit ECHTE state (niet uit EntryRegistry)
 // - Keys zijn ENGELSE conditie‑namen; velden blijven NEDERLANDS in state
 // - getValue is getypt op bekende velden (hybride): options‑types + state‑shapes
 
 import { isAowEligible } from './aowRules';
-import type { WoningType, AutoCount, UitkeringType } from '@domain/registry/options';
+import type { WoningType, AutoCount, UitkeringType } from '@domain/registry/OptionsRegistry';
 
 /* ──────────────────────────────────────────────────────────────────────────────
  * Kleine, herbruikbare type guards (ESLint strict-boolean-expressions friendly)
@@ -44,7 +44,7 @@ export interface HouseholdState {
 /* ──────────────────────────────────────────────────────────────────────────────
  * Bekende velden die de zichtbaarheid gebruikt (hybride: options + state)
  * ────────────────────────────────────────────────────────────────────────────── */
-type VisibilityKnownFields = {
+export type VisibilityKnownFields = {
   // numeriek uit setup/household
   aantalMensen: number;
   aantalVolwassen: number;
@@ -235,7 +235,7 @@ function mapAutoCountToRepeat(autoCount: AutoCount): RepeatCount {
 /**
  * UI-hints voor herhaalgedrag van secties/containers.
  * - Geen booleans (visibility), maar kwantitatieve hints.
- * - Te gebruiken door Render/Component-laag.
+ * - Te gebruiken door Render/Section-laag.
  */
 export const uiHints = {
   /** Hoeveel auto-secties/containers renderen? (0 bij 'Geen', 1 bij 'Een', 2 bij 'Twee') */

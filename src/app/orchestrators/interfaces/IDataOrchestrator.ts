@@ -24,16 +24,39 @@ export interface ResearchProcessor {
   };
 }
 
-export type ImportResult = {
-  // Transacties zijn in de kern records van velden
+// --- Nieuwe, correcte ImportResult-definitie ---
+type ImportSuccess = {
+  status: 'success';
   transactions: CsvItem[];
-  // De summary bevat boolean status + extra data velden
-  summary: { isDiscrepancy: boolean; [k: string]: unknown };
+  count: number;
+  summary: FinancialIncomeSummary;
   hasMissingCosts?: boolean;
-  // ResearchData blijft vaak een ruw object, maar we maken het een Record voor type-safety
   researchData?: Record<string, unknown>;
-  
 };
+
+type ImportEmpty = {
+  status: 'empty';
+  transactions: [];
+  count: 0;
+  summary: FinancialIncomeSummary;
+  hasMissingCosts?: boolean;
+  researchData?: Record<string, unknown>; // optioneel, maar consistent
+};
+
+type ImportError = {
+  status: 'error';
+  transactions: [];
+  count: 0;
+  errorMessage: string;
+  summary: FinancialIncomeSummary;
+  hasMissingCosts?: boolean;
+  researchData?: Record<string, unknown>;
+};
+
+
+export type ImportResult = ImportSuccess | ImportEmpty | ImportError;
+
+export type ImportStatusValue = 'success' | 'empty' | 'error';
 
 export interface IDataOrchestrator {
   processCsvImport(params: {

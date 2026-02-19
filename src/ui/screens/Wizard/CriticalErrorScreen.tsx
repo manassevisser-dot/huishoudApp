@@ -8,7 +8,7 @@ const CriticalErrorScreen: React.FC<Props> = ({ onReset }) => {
   const { styles } = useAppStyles();
   return (
     <View style={styles.container}>
-      <Text style={styles.pageTitle}>
+      <Text style={styles.screenTitle}>
         Er is een kritieke fout opgetreden in de data-integriteit.
       </Text>
       <Button title="Reset Applicatie" onPress={onReset} color="red" />

@@ -1,5 +1,5 @@
 // src/kernel/finance/mappers.ts
-import { CsvItem } from '@domain/finance/StatementIntakePipeline.WIP';
+import { CsvItem } from '@core/types/research';
 
 /**
  * Mappers zetten ruwe data om naar domein-modellen.

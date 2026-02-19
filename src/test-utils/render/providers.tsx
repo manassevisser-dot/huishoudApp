@@ -3,8 +3,9 @@ import React from 'react';
 import { ThemeProvider } from '@ui/providers/ThemeProvider';
 import { FormContext } from '@app/context/FormContext';
 import { FormState } from '@core/types/core';
+import type { MasterOrchestratorAPI } from '@app/types/MasterOrchestratorAPI';
 
-// jest.Mock Safe Area
+// jest.Mock Safe Area - Behouden uit origineel
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
@@ -12,62 +13,91 @@ jest.mock('react-native-safe-area-context', () => ({
 const DEFAULT_TEST_STATE: FormState = {
   schemaVersion: '1.0',
   activeStep: 'LANDING',
-  currentPageId: 'setupHousehold',
+  currentScreenId: 'setupHousehold',
   isValid: false,
   viewModels: {},
   data: {
-    setup: { aantalMensen: 0, aantalVolwassen: 0, autoCount: 'Geen' },
+    setup: { 
+      aantalMensen: 0, 
+      aantalVolwassen: 0, 
+      autoCount: 'Geen',
+      woningType: 'Koop', 
+    },
     household: { members: [] },
     finance: { income: { items: [] }, expenses: { items: [] } },
   },
   meta: { lastModified: '', version: 1 },
 };
 
-// FIX: Interface uitgebreid om exact te matchen met MasterOrchestrator
-interface MockOrchestrator {
-  getValue: jest.Mock;
-  updateField: jest.Mock;
-  validate: jest.Mock;
-  handleCsvImport: jest.Mock; // Naam gecorrigeerd
-  fso: Record<string, unknown>; // Toegevoegd
-  research: Record<string, unknown>; // Toegevoegd
-}
+export interface MockMasterOrchestrator extends MasterOrchestratorAPI {}
 
-const createMockOrchestrator = (state: FormState): MockOrchestrator => ({
-  getValue: jest.fn((fieldId: string) => {
-    if (fieldId === 'aantalVolwassen') {
-      return state.data.setup.aantalVolwassen;
-    }
-    return null;
-  }),
+export const createMockOrchestrator = (state: FormState): MockMasterOrchestrator => ({
+  canNavigateNext: jest.fn(() => true),
+  onNavigateNext: jest.fn(),
+  onNavigateBack: jest.fn(),
+  isVisible: jest.fn(() => true),
   updateField: jest.fn(),
-  validate: jest.fn(() => null),
-  handleCsvImport: jest.fn(), // Gecorrigeerde naam naar aanleiding van error
-  fso: {}, 
-  research: {},
+  handleCsvImport: jest.fn(() => Promise.resolve()),
+  
+  // FIX TS2322: buildScreenViewModel moet een valide ScreenViewModel structuur mocken
+  ui: {
+    buildFieldViewModel: jest.fn(() => null),
+    builScreenViewModel: jest.fn(() => ({
+      screenId: state.currentScreenId,
+      titleToken: 'mock.title',
+      fields: []
+    } as any)),
+    buildScreenViewModels: jest.fn(() => []),
+  },
+
+  // FIX TS2739: IThemeOrchestrator mist methodes
+  theme: {
+    loadTheme: jest.fn(() => Promise.resolve('light' as any)),
+    setTheme: jest.fn(),
+    getTheme: jest.fn(() => 'light'),
+    onThemeChange: jest.fn(() => () => {}), // Returns unsubscribe fn
+  },
+
+  // FIX TS2740: INavigationOrchestrator mist methodes (startWizard, goToDashboard, etc)
+  navigation: {
+    getCurrentScreenId: jest.fn(() => state.currentScreenId),
+    canNavigateNext: jest.fn(() => true),
+    navigateNext: jest.fn(),
+    navigateBack: jest.fn(),
+    startWizard: jest.fn(),
+    goToDashboard: jest.fn(),
+    goToOptions: jest.fn(),
+    goToSettings: jest.fn(),
+    // Spread any overige verplichte methodes als NOOP mocks
+    ...({
+      completeWizard: jest.fn(),
+      resetWizard: jest.fn(),
+      jumpToScreen: jest.fn(),
+    } as any)
+  },
 });
 
 type ProvidersProps = {
   children: React.ReactNode;
   state?: FormState;
   dispatch?: React.Dispatch<any>;
-  theme?: 'light' | 'dark';
 };
 
 export function Providers({ children, state, dispatch }: ProvidersProps) {
   const activeState = state !== undefined ? state : DEFAULT_TEST_STATE;
-  
-  // We gebruiken hier 'as a_ny' voor de context-waarde om de complexe 
-  // Dispatch-type mismatches in tests te omzeilen, maar de orchestrator is nu wel compleet.
+  const orchestrator = createMockOrchestrator(activeState);
+
   const value = {
     state: activeState,
     dispatch: dispatch !== undefined ? dispatch : jest.fn(),
-    orchestrator: createMockOrchestrator(activeState),
+    orchestrator,
   };
-//we accept 'as any' this is a test utility
+
   return (
-    <ThemeProvider>
-      <FormContext.Provider value={value as any}>{children}</FormContext.Provider>
+    <ThemeProvider master={orchestrator as any}>
+      <FormContext.Provider value={value as any}>
+        {children}
+      </FormContext.Provider>
     </ThemeProvider>
   );
 }

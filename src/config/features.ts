@@ -3,7 +3,7 @@
 
 /**
  * Controls visibility of the Wizard progress indicator (Phase 3).
- * When true, dots are rendered in WizardPage.
+ * When true, dots are rendered in WizardScreen.
  */
 export const showWizardProgress = true;
 

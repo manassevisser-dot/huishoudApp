@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter';
 import { executeUpdateAction } from './transactionActions';
 import { StatefulTransactionAdapter } from '@adapters/transaction/stateful';
+import { formatCurrency } from '@domain/helpers/numbers';
 
 interface TransactionRecord {
   id: string;
@@ -39,7 +40,10 @@ export const useTransactionHistory = (initialData: TransactionRecord[] = []) => 
   };
 
   return {
-    transactions: getItemsFromState(adapter.getCurrentState() as Record<string, unknown>),
+    transactions: getItemsFromState(adapter.getCurrentState() as Record<string, unknown>).map(tx => ({
+      ...tx,
+      displayAmount: formatCurrency(Number(tx.amount ?? 0)),
+    })),
     hasError,
     updateTransaction,
     undo: (): void => { if (adapter.undo() !== null) setHasError(false); },

@@ -5,7 +5,7 @@ import { DATA_KEYS } from '@domain/constants/datakeys';
 export const initialFormState: FormState = {
   schemaVersion: '1.0',
   activeStep: 'LANDING',
-  currentPageId: 'landing',
+  currentScreenId: 'landing',
   isValid: true,
   data: {
     [DATA_KEYS.SETUP]: {

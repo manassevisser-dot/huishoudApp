@@ -1,4 +1,11 @@
 // src/app/orchestrators/MasterOrchestrator.ts
+/**
+ * @file_intent De centrale hub en facade voor alle applicatie-acties.
+ * @repo_architecture Mobile Industry (MI) - Orchestration Layer (The Hub).
+ * @term_definition DomainCluster = Logica-diensten (Data, Business, Validatie). AppCluster = Presentatie-diensten (UI, Navigatie).
+ * @contract Stateless coördinatie. Mag GEEN directe domeinlogica bevatten. Werkt uitsluitend met interfaces (Dependency Inversion).
+ * @ai_instruction Dit is het enige object dat de FormStateOrchestrator (FSO) direct mag aansturen voor mutaties.
+ */
 
 import type { FormStateOrchestrator } from './FormStateOrchestrator';
 import type { IUIOrchestrator } from './interfaces/IUIOrchestrator';
@@ -9,13 +16,17 @@ import type { INavigationOrchestrator } from './interfaces/INavigationOrchestrat
 import { validateAtBoundary } from '@adapters/validation/validateAtBoundary';
 import { logger } from '@adapters/audit/AuditLoggerAdapter';
 import type { IThemeOrchestrator } from './interfaces/IThemeOrchestrator';
-import type { VisibilityOrchestrator } from './VisibilityOrchestrator';
+import type { MasterOrchestratorAPI } from '@app/types/MasterOrchestratorAPI';
+
+interface IVisibilityEvaluator {
+  evaluate(ruleName: string, memberId?: string): boolean;
+}
 
 type DomainCluster = { 
   data: IDataOrchestrator; 
   business: IBusinessOrchestrator; 
   validation: IValidationOrchestrator;
-  visibility: VisibilityOrchestrator; // <--- Toevoegen
+  visibility: IVisibilityEvaluator;
 };
 
 
@@ -36,9 +47,10 @@ type AppCluster = {
  * Doet GEEN domeinlogica.
  * Kent GEEN concrete orchestrators.
  */
-export class MasterOrchestrator {
+export class MasterOrchestrator implements MasterOrchestratorAPI {
   public readonly ui: IUIOrchestrator;
   public readonly theme: IThemeOrchestrator;
+  public readonly navigation: INavigationOrchestrator;
 
   constructor(
     private readonly fso: FormStateOrchestrator,
@@ -48,6 +60,7 @@ export class MasterOrchestrator {
     // Houd de façade naar buiten toe gelijk:
     this.ui = this.app.ui;
     this.theme = this.app.theme;
+    this.navigation = this.app.navigation;
   }
 
   /* ───────────────────────── UI façade ───────────────────────── */
@@ -93,19 +106,33 @@ export class MasterOrchestrator {
 
   public async handleCsvImport(csvText: string): Promise<void> {
     const state = this.fso.getState();
-
-    const result: ImportResult = await this.domain.data.processCsvImport({
-      csvText,
-      state,
-    });
-
-    this.fso.updateField('transactions', result.transactions);
+    const result: ImportResult = await this.domain.data.processCsvImport({ csvText, state });
+  
+    switch (result.status) {
+      case 'success':
+        logger.info('CSV_IMPORT_SUCCESS', { count: result.count });
+        this.fso.updateField('transactions', result.transactions);
+        
+        // Expliciete check voor ESLint (strict-boolean-expressions)
+        if (result.researchData !== undefined) {
+          this.fso.updateField('researchPayload', result.researchData);
+        }
+        break;
+        
+      case 'empty':
+        logger.warn('CSV_IMPORT_EMPTY', { count: result.count });
+        break;
+        
+      case 'error':
+        logger.error('CSV_IMPORT_FAILED', { error: result.errorMessage });
+        return; // Hierdoor weet TS: alles hieronder is GEEN error.
+    }
+  
     this.recomputeBusinessState();
-
+  
+    // Geen status-check meer nodig: TS weet dat we hier alleen komen bij success/empty
     if (result.summary.isDiscrepancy === true) {
-      logger.warn('import.discrepancy_found', { details: result.summary });
-    } else {
-      logger.info('import.success', { count: result.transactions.length });
+      logger.warn('CSV_IMPORT_DISCREPANCY_FOUND', { details: result.summary });
     }
   }
 

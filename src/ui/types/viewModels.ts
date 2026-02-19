@@ -2,10 +2,10 @@
 
 export type {
     // ──────────── BASE ────────────
-    ComponentStyleRule,
-    ComponentType,
-    BaseComponentViewModel, // Dit is de echte naam uit de grep
-    ComponentViewModel,     // De union type
+    PrimitiveStyleRule,
+    PrimitiveType,
+    BasePrimitiveViewModel, // Dit is de echte naam uit de grep
+    PrimitiveViewModel,     // De union type
   
     // ──────────── CONCRETE VIEW MODELS ────────────
     CounterViewModel,
@@ -29,13 +29,13 @@ export type {
     DateViewModel,
   
     // ──────────── METADATA ────────────
-    ComponentMetadata,
-} from '@domain/registry/ComponentRegistry';
+    PrimitiveMetadata,
+} from '@domain/registry/PrimitiveRegistry';
   
 /**
  * UI-utility type:
- * We gebruiken ComponentViewModel (de union uit het domein) 
+ * We gebruiken PrimitiveViewModel (de union uit het domein) 
  * als onze universele FieldViewModel.
  */
-import type { ComponentViewModel as DomainUnion } from '@domain/registry/ComponentRegistry';
+import type { PrimitiveViewModel as DomainUnion } from '@domain/registry/PrimitiveRegistry';
 export type UIFieldViewModel = DomainUnion;

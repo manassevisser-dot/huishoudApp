@@ -7,7 +7,7 @@ export type RootStackParamList = {
   Dashboard: undefined;
   CsvUpload: undefined;
   WizardController: undefined;
-  WizardPage: { stepId: string }; // Als je params hebt
+  WizardScreen: { stepId: string }; // Als je params hebt
   // Add all your other screens here
 };
 

@@ -17,11 +17,11 @@ const SettingsScreen: React.FC<Props> = ({ onClose }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.pageContainer}>
+      <View style={styles.screenContainer}>
         <ScrollView
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
         >
-          <Text style={styles.pageTitle}>Settings</Text>
+          <Text style={styles.screenTitle}>Settings</Text>
 
           {/* Dark Mode Toggle */}
           <View style={[styles.dashboardCard, { marginBottom: 16 }]}>
@@ -32,7 +32,7 @@ const SettingsScreen: React.FC<Props> = ({ onClose }) => {
                 alignItems: 'center',
               }}
             >
-              <Text style={styles.fieldLabel}>Dark mode</Text>
+              <Text style={styles.entryLabel}>Dark mode</Text>
               <Switch
                 value={theme === 'dark'}
                 onValueChange={(value) => setTheme(value ? 'dark' : 'light')}
@@ -50,7 +50,7 @@ const SettingsScreen: React.FC<Props> = ({ onClose }) => {
                 alignItems: 'center',
               }}
             >
-              <Text style={styles.fieldLabel}>Meldingen</Text>
+              <Text style={styles.entryLabel}>Meldingen</Text>
               <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} />
             </View>
             <Text style={styles.summaryDetail}>

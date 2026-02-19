@@ -39,12 +39,13 @@ function getSetupSource(oldState: LegacyState): Record<string, ZodJsonPrimitive>
 
 /** Mapt oude leden naar het nieuwe Member-formaat */
 function mapLegacyMembers(oldState: LegacyState): Member[] {
-  const rawLeden: LegacyMember[] =
-    oldState.household?.leden ??
-    oldState.data?.household?.leden ??
-    oldState.leden ??
-    oldState.data?.leden ??
-    [];
+  const rawLeden =
+  (oldState.household?.leden as LegacyMember[] | undefined) ??
+  (oldState.data?.household?.leden as LegacyMember[] | undefined) ??
+  (oldState.leden as LegacyMember[] | undefined) ??
+  (oldState.data?.leden as LegacyMember[] | undefined) ??
+  [];
+
 
   return rawLeden.map((lid, index) => {
     const rawName = lid.firstName ?? lid.naam ?? 'Lid';
@@ -96,7 +97,10 @@ export const migrateTransactionsToPhoenix = async (oldState: Partial<LegacyState
       household: {
         members: migratedMembers,
       },
-      transactions: safeState.transactions ?? safeState.data?.transactions ?? [],
+      transactions:
+  (safeState.transactions as FinanceItem[] | undefined)
+  ?? (safeState.data?.transactions as FinanceItem[] | undefined)
+  ?? [],
     },
     meta: {
       lastModified: new Date().toISOString(),
@@ -127,7 +131,10 @@ export const TransactionService = {
       return [];
     }
 
-    const finance = safeState.data.finance;
+    const finance = safeState.data.finance as {
+      income?: { items?: LegacyItem[] };
+      expenses?: { items?: LegacyItem[] };
+    };
     const incomeItems = extractFinanceItems(finance.income?.items ?? []);
     const expenseItems = extractFinanceItems(finance.expenses?.items ?? []);
 

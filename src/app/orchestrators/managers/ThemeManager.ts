@@ -2,10 +2,10 @@
 
 import { loadTheme, saveTheme } from '@services/storageShim';
 import type { Theme } from '@domain/constants/Colors';
-import type { IThemeOrchestrator } from '../interfaces/IThemeOrchestrator';
+import type { IThemeOrchestrator } from '@app/orchestrators/interfaces/IThemeOrchestrator';
 
 export class ThemeManager implements IThemeOrchestrator {
-  private _currentTheme: Theme = 'light';
+  private _currentTheme: 'light' | 'dark' = 'light';
   private _listener?: (theme: Theme) => void;
 
   /**

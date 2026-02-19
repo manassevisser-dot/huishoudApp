@@ -88,7 +88,7 @@ function handleAggregate(data: FinanceAggregate): FinancialTotals {
     : 0;
 
   const expenses = isFinanceSection(data.expenses)
-    ? sumIncomeFromItems(data.expenses.items)
+    ? sumExpensesFromItems(data.expenses.items)
     : 0;
 
   return {

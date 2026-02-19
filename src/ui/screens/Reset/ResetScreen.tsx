@@ -38,14 +38,14 @@ const ResetScreen: React.FC<Props> = ({ onWissen, onHerstel }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.pageContainer}>
+      <View style={styles.screenContainer}>
         <ScrollView
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
         >
-          <Text style={styles.pageTitle}>Reset Opties</Text>
+          <Text style={styles.screenTitle}>Reset Opties</Text>
 
           <View style={[styles.dashboardCard, { marginBottom: 24 }]}>
-            <Text style={[styles.fieldLabel, { marginBottom: 8 }]}>WISSEN</Text>
+            <Text style={[styles.entryLabel, { marginBottom: 8 }]}>WISSEN</Text>
             <Text style={styles.summaryDetail}>
               Verwijdert ALLE data: setup, transacties, en instellingen. U moet de app opnieuw
               instellen.
@@ -59,7 +59,7 @@ const ResetScreen: React.FC<Props> = ({ onWissen, onHerstel }) => {
           </View>
 
           <View style={[styles.dashboardCard, { marginBottom: 24 }]}>
-            <Text style={[styles.fieldLabel, { marginBottom: 8 }]}>HERSTEL</Text>
+            <Text style={[styles.entryLabel, { marginBottom: 8 }]}>HERSTEL</Text>
             <Text style={styles.summaryDetail}>
               Reset alleen de setup wizard naar lege velden. Transacties en instellingen blijven
               behouden.

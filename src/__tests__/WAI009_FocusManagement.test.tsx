@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, screen } from '@testing-library/react-native';
 // We gebruiken de krachtige render uit onze utils die de Provider bevat
-import { render, makePhoenixState } from '../test-utils';
+import { render, makePhoenixState } from './test-utils';
 import LandingScreen from '@ui/screens/Wizard/LandingScreen';
 
 /**
@@ -22,7 +22,7 @@ describe('WAI-009 - LandingScreen Integration', () => {
     // 1. Initialiseer de staat via onze factory
     const initialState = makePhoenixState({
       activeStep: 'LANDING',
-      currentPageId: 'setup',
+      currentScreenId: 'setup',
     });
 
     // 2. Render met de echte provider via onze custom render util

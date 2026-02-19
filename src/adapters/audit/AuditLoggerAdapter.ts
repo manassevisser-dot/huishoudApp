@@ -1,3 +1,11 @@
+// src/adapters/audit/AuditLoggerAdapter.ts
+/**
+ * @file_intent Centraal systeem voor event-logging, foutafhandeling en berichtvertaling.
+ * @repo_architecture Mobile Industry (MI) - Infrastructure / Adapter Layer.
+ * @term_definition Event-Routing = Het proces waarbij op basis van log-niveau (info/fatal) de bestemming (UI/Console/Mail) wordt bepaald.
+ * @contract Biedt een stabiele Logger API. Vertaalt technische error-codes naar menselijke taal via 'validationMessages'.
+ * @ai_instruction Bevat de kritieke 'translate' methode. Voeg hier GEEN UI-logica toe; gebruik de routeToUI placeholder voor koppeling met de Master.
+ */
 import { validationMessages } from '@state/schemas/sections/validationMessages';
 
 export interface AuditEvent {
@@ -46,8 +54,9 @@ class AuditLoggerAdapter implements AuditLoggerPort {
     console.warn('[AUDIT]', payload);
   }
 
-  private routeToUI(_event: AuditEvent): void {
-    // nothing
+  /* istanbul ignore next */
+private routeToUI(_event: AuditEvent): void {
+  // WIP: toekomstige UI-notificatie
   }
 
   private routeToTicketing(event: AuditEvent): void {

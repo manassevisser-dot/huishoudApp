@@ -10,7 +10,6 @@ export function getAdultMaxISO(referenceDate: Date = todayLocalNoon()): string {
 
 /** Min ISO voor een kind (mag niet in de toekomst geboren zijn). */
 
-
 /** Max ISO voor een kind (<18 jaar). */
 export function getChildMaxISO(referenceDate: Date = todayLocalNoon()): string {
   const year = referenceDate.getFullYear() - 18;

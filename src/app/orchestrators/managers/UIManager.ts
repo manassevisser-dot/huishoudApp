@@ -1,106 +1,96 @@
-// src/app/orchestrators/UIManager.ts
 import { FormStateOrchestrator } from "@app/orchestrators/FormStateOrchestrator";
-import {
-  VisibilityOrchestrator,
-  VisibilityParams,
-} from "@app/orchestrators/VisibilityOrchestrator";
+import { VisibilityOrchestrator } from "@app/orchestrators/VisibilityOrchestrator";
 import { RenderOrchestrator } from "@app/orchestrators/RenderOrchestrator";
-import { ComponentOrchestrator } from "@app/orchestrators/ComponentOrchestrator";
+import { SectionOrchestrator, SectionViewModel } from "@app/orchestrators/SectionOrchestrator";
+import { ScreenRegistry } from "@domain/registry/ScreenRegistry";
+import { SectionRegistry } from "@domain/registry/SectionRegistry";
+import { EntryRegistry } from "@domain/registry/EntryRegistry";
+import { labelFromToken } from "@domain/constants/labelResolver";
 
 import type {
   IUIOrchestrator,
   FieldViewModel,
-  PageViewModel,
-  PageConfig,
+  ScreenViewModel,
 } from "@app/orchestrators/interfaces/IUIOrchestrator";
-import type { ComponentViewModel } from "@domain/registry/ComponentRegistry";
 
-const hasString = (v: unknown): v is string =>
-  typeof v === "string" && v.trim().length > 0;
-
-/**
- * UI MANAGER
- * Coördineert de flow: Render -> Visibility -> Component transformatie.
- */
 export class UIManager implements IUIOrchestrator {
   private readonly render: RenderOrchestrator;
   private readonly visibility: VisibilityOrchestrator;
-  private readonly component?: ComponentOrchestrator;
+  private readonly sectionOrchestrator: SectionOrchestrator;
 
   constructor(
     fso: FormStateOrchestrator,
     visibility: VisibilityOrchestrator,
-    updateField?: (fieldId: string, value: unknown) => void,
+    updateField: (fieldId: string, value: unknown) => void,
   ) {
     this.visibility = visibility;
     this.render = new RenderOrchestrator(fso);
-
-    if (typeof updateField === "function") {
-      this.component = new ComponentOrchestrator(updateField);
-    }
+    this.sectionOrchestrator = new SectionOrchestrator(updateField);
   }
 
-  public buildFieldViewModel(
-    fieldId: string,
-    context?: VisibilityParams, // <--- Hersteld: gebruik de import
-  ): FieldViewModel | null {
-    if (!hasString(fieldId)) return null; // 1. Haal de basis VM op (Render-fase)
+  /**
+   * Het Totaalpakket: Bouwt de volledige hiërarchie op basis van ScreenRegistry.
+   */
+  public buildScreen(screenId: string): ScreenViewModel | null {
+    const screenDef = ScreenRegistry.getDefinition(screenId);
+    if (screenDef == null) return null;
 
+    const sections = screenDef.sectionIds
+      .map((compId) => this.buildSection(compId))
+      .filter((c): c is SectionViewModel => c !== null);
+
+    return {
+      screenId: screenDef.id,
+      title: labelFromToken(screenDef.titleToken),
+      type: screenDef.type,
+      sections,
+      navigation: {
+        next: screenDef.nextScreenId,
+        previous: screenDef.previousScreenId,
+      },
+    };
+  }
+
+  /**
+   * Directe toegang tot een FieldViewModel (bijv. voor losse renders).
+   */
+  public buildFieldViewModel(fieldId: string): FieldViewModel | null {
     const vm = this.render.buildFieldViewModel(fieldId);
-    if (vm === null) return null; // 2. Pas Visibility toe
+    if (vm == null) return null;
 
-    if (hasString(vm.visibilityRuleName)) {
-      const ok = this.visibility.evaluate(
-        vm.visibilityRuleName,
-        context?.memberId,
-      );
-      if (!ok) return null;
+    const ruleName = vm.visibilityRuleName;
+    if (ruleName != null && ruleName !== "") {
+      const ok = this.visibility.evaluate(ruleName);
+      if (ok !== true) return null;
     }
 
     return vm;
   }
 
-  public buildFieldViewModels(
-    fieldIds: string[],
-    context?: VisibilityParams, // <--- Hersteld: gebruik de import
-  ): FieldViewModel[] {
-    if (!Array.isArray(fieldIds) || fieldIds.length === 0) return [];
-    return fieldIds
-      .map((fid) => this.buildFieldViewModel(fid, context))
-      .filter((vm): vm is FieldViewModel => vm !== null);
-  }
+  // --- helpers ---
 
-  public buildPageViewModel(
-    pageConfig: PageConfig,
-    context?: VisibilityParams, // <--- Hersteld: gebruik de import
-  ): PageViewModel {
-    const ids = Array.isArray(pageConfig.fields)
-      ? pageConfig.fields.map((f) => f.fieldId).filter(hasString)
-      : [];
-    const fields = this.buildFieldViewModels(ids, context);
-    return {
-      pageId: pageConfig.pageId,
-      titleToken: pageConfig.titleToken,
-      fields,
-    };
-  }
+  private buildSection(compId: string): SectionViewModel | null {
+    const compDef = SectionRegistry.getDefinition(compId);
+    if (compDef == null) return null;
 
-  public buildPageComponentViewModels(
-    fieldIds: string[],
-    context?: VisibilityParams, // <--- Hersteld: gebruik de import
-  ): ComponentViewModel[] {
-    if (
-      this.component === undefined ||
-      !Array.isArray(fieldIds) ||
-      fieldIds.length === 0
-    )
-      return [];
+    const activefieldIds = compDef.fieldIds.filter((fId) => {
+      const entryDef = EntryRegistry.getDefinition(fId);
+      if (entryDef == null) return true;
 
-    // Hier komen de draden samen: van Field naar Component
-    const fieldVMs = this.buildFieldViewModels(fieldIds, context);
+      
+const ruleName = entryDef.visibilityRuleName;
+if (ruleName == null) return true;
 
-    return fieldVMs
-      .map((vm) => this.component!.buildComponentViewModel(vm))
-      .filter((cvm): cvm is ComponentViewModel => cvm !== null);
+const result = this.visibility.evaluate(ruleName);
+return result === true;
+
+    });
+
+    return this.sectionOrchestrator.prepareSection({
+      instanceId: compId,
+      sectionId: compId,
+      dataContext: {}, // Data context wordt (nu) niet gebruikt; kan later gevuld worden
+      activefieldIds,
+    });
   }
 }

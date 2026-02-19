@@ -1,0 +1,108 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`snapshot van alle Tokens 1`] = `
+{
+  "Opacity": {
+    "disabled": 0.5,
+    "solid": 1,
+    "transparent": 0,
+  },
+  "Radius": {
+    "circle": 999,
+    "lg": 10,
+    "md": 8,
+    "pill": 20,
+    "round": 20,
+    "sm": 6,
+    "xl": 12,
+    "xs": 4,
+  },
+  "Shadows": {
+    "level1": {
+      "android": {
+        "elevation": 2,
+      },
+      "ios": {
+        "opacity": 0.05,
+        "radius": 2,
+        "y": 1,
+      },
+    },
+    "level2": {
+      "android": {
+        "elevation": 3,
+      },
+      "ios": {
+        "opacity": 0.1,
+        "radius": 4,
+        "y": 2,
+      },
+    },
+    "level3": {
+      "android": {
+        "elevation": 4,
+      },
+      "ios": {
+        "opacity": 0.1,
+        "radius": 8,
+        "y": 2,
+      },
+    },
+    "lg": {
+      "android": {
+        "elevation": 4,
+      },
+      "ios": {
+        "opacity": 0.1,
+        "radius": 8,
+        "y": 2,
+      },
+    },
+    "md": {
+      "android": {
+        "elevation": 3,
+      },
+      "ios": {
+        "opacity": 0.1,
+        "radius": 4,
+        "y": 2,
+      },
+    },
+    "sm": {
+      "android": {
+        "elevation": 2,
+      },
+      "ios": {
+        "opacity": 0.05,
+        "radius": 2,
+        "y": 1,
+      },
+    },
+  },
+  "Sizes": {
+    "checkbox": 24,
+    "counterValue": 48,
+    "hitTarget": 44,
+    "inputHeight": 48,
+    "toggleWidth": 80,
+  },
+  "Space": {
+    "badge": 6,
+    "lg": 16,
+    "md": 12,
+    "sm": 8,
+    "xl": 20,
+    "xs": 4,
+    "xxl": 24,
+  },
+  "Type": {
+    "h2": 28,
+    "kpi": 48,
+    "lg": 17,
+    "md": 16,
+    "sm": 14,
+    "xl": 18,
+    "xs": 12,
+  },
+}
+`;

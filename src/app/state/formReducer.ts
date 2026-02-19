@@ -25,7 +25,7 @@ export type FormAction =
   | { type: 'SET_STEP'; payload: FormState['activeStep'] }
   | { type: 'RESET_APP' }
   | { type: 'UPDATE_VIEWMODEL'; payload: Partial<NonNullable<FormState['viewModels']>> }
-  | { type: 'SET_CURRENT_PAGE_ID'; payload: string };
+  | { type: 'SET_CURRENT_SCREEN_ID'; payload: string };
 
 export function formReducer(state: FormState, action: FormAction): FormState {
   const meta = { ...state.meta, lastModified: new Date().toISOString() };
@@ -54,8 +54,8 @@ export function formReducer(state: FormState, action: FormAction): FormState {
     case 'SET_STEP':
       return { ...state, activeStep: action.payload, meta };
 
-    case 'SET_CURRENT_PAGE_ID':
-      return { ...state, currentPageId: action.payload, meta };
+    case 'SET_CURRENT_SCREEN_ID':
+      return { ...state, currentScreenId: action.payload, meta };
 
     case 'RESET_APP':
       return resetAppState(state, meta);

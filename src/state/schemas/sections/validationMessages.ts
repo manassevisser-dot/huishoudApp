@@ -20,5 +20,28 @@ export const validationMessages = {
     invalidFormat: "Gebruik formaat DD-MM-YYYY",
     invalidDate: "Ongeldige datum",
     minor: "Je moet minimaal 18 jaar oud zijn"
-  }
+  },
+  reset: {
+    wipe: {
+      title: "Alles wissen",
+      message:
+        "Weet je zeker dat je alle gegevens wilt verwijderen? Dit omvat setup, transacties en instellingen. Deze actie kan niet ongedaan worden gemaakt.",
+      confirm: "Ja, wis alles",
+      cancel: "Annuleer",
+      hint: "Na het wissen start de app opnieuw met een lege omgeving."
+    },
+    wizardOnly: {
+      title: "Setup opnieuw starten",
+      message:
+        "De setup‑wizard wordt teruggezet naar lege velden. Je transacties en overige instellingen blijven behouden.",
+      confirm: "Setup opnieuw starten",
+      cancel: "Annuleer",
+      hint: "Je kunt later altijd nog gegevens aanpassen in het dashboard."
+    }
+  },
+    // ⬇️ NIEUW: top-level audit tokens
+    CSV_IMPORT_SUCCESS: 'CSV-bestand succesvol verwerkt',
+    CSV_IMPORT_EMPTY: 'Geen transacties gevonden in het geüploade CSV-bestand',
+    CSV_IMPORT_FAILED: 'Er is een fout opgetreden tijdens het verwerken van het CSV-bestand',
+    CSV_IMPORT_DISCREPANCY_FOUND: 'Er zijn afwijkingen gevonden in de geïmporteerde financiële data'
 };

@@ -1,3 +1,4 @@
+// src/test-utils/render/renderers.tsx
 import React from 'react';
 import {
   render as rtlRender,
@@ -10,14 +11,8 @@ import { ThemeProvider } from '@ui/providers/ThemeProvider';
 import { FormContext } from '@app/context/FormContext';
 import { FormState } from '@core/types/core';
 import { makePhoenixState } from '../factories/stateFactory';
-
-// We maken een herbruikbare mock orchestrator voor de renderers
-const createMockOrchestrator = () => ({
-  getValue: jest.fn(),
-  updateField: jest.fn(),
-  validate: jest.fn(() => null),
-  importCsvData: jest.fn(),
-} as any);
+// Importeer de factory uit providers om dubbele code te voorkomen
+import { createMockOrchestrator, MockMasterOrchestrator } from './providers'; 
 
 export type RenderOptions = Omit<RTLRenderOptions, 'wrapper'> & {
   state?: FormState;
@@ -29,19 +24,24 @@ export function render(
   { state, dispatch, ...rtlOptions }: RenderOptions = {},
 ) {
   const Wrapper = ({ children }: { children: React.ReactNode }) => {
-    // ESLint fix: expliciet checken op undefined
     const activeState = state !== undefined ? state : makePhoenixState();
     const activeDispatch = dispatch !== undefined ? dispatch : jest.fn();
+    
+    // Initialiseer de orchestrator met de actieve state
+    const orchestrator = createMockOrchestrator(activeState);
 
     const contextValue = {
       state: activeState,
       dispatch: activeDispatch,
-      orchestrator: createMockOrchestrator(),
+      orchestrator,
     };
 
     return (
-      <ThemeProvider>
-        <FormContext.Provider value={contextValue}>{children}</FormContext.Provider>
+      /* ✅ FIX: 'master' prop toegevoegd (vereist door ThemeProvider) */
+      <ThemeProvider master={orchestrator as any}>
+        <FormContext.Provider value={contextValue as any}>
+          {children}
+        </FormContext.Provider>
       </ThemeProvider>
     );
   };
@@ -57,18 +57,19 @@ export function renderHookWithProviders<TProps, TResult>(
   const { state, dispatch } = options;
   
   const Wrapper = ({ children }: { children: React.ReactNode }) => {
-    // ESLint fix: expliciet checken op undefined
     const activeState = state !== undefined ? state : makePhoenixState();
     const activeDispatch = dispatch !== undefined ? dispatch : jest.fn();
+    const orchestrator = createMockOrchestrator(activeState);
 
     return (
-      <ThemeProvider>
+      /* ✅ FIX: 'master' prop toegevoegd */
+      <ThemeProvider master={orchestrator as any}>
         <FormContext.Provider
           value={{ 
             state: activeState, 
             dispatch: activeDispatch,
-            orchestrator: createMockOrchestrator()
-          }}
+            orchestrator
+          } as any}
         >
           {children}
         </FormContext.Provider>
@@ -79,6 +80,7 @@ export function renderHookWithProviders<TProps, TResult>(
   return renderHook(callback, { wrapper: Wrapper });
 }
 
+/** ✅ Behouden: Jouw async helper */
 export const expectTextAsync = async (text: string | RegExp) => {
   await waitFor(
     () => {

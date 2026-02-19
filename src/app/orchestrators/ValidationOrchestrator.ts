@@ -1,4 +1,11 @@
 // src/app/orchestrators/ValidationOrchestrator.ts
+/**
+ * @file_intent Publieke interface voor het uitvoeren van validaties op veld- en sectieniveau.
+ * @repo_architecture Mobile Industry (MI) - Business Logic / Validation Layer.
+ * @term_definition Boundary Validation = Validatie die direct bij invoer (aan de grens) plaatsvindt, nog voordat de state wordt bijgewerkt.
+ * @contract Stateless wrapper rondom de ValidationManager. Vertaalt functionele vragen ("Is deze sectie ok?") naar technische controles.
+ * @ai_instruction Delegeert de werkelijke regel-uitvoering aan de ValidationManager. Gebruik 'validateAtBoundary' voor directe feedback-loops in de UI.
+ */
 
 import type { 
   IValidationOrchestrator, 

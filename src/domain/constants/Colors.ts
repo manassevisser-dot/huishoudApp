@@ -1,4 +1,4 @@
-// src/styles/Colors.ts
+// src/domain/constants/Colors.ts
 export type Theme = 'light' | 'dark';
 
 export interface ColorScheme {

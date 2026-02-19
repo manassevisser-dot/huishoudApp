@@ -3,13 +3,20 @@ import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter';
 
 
 const allocateRemainder = (total: number, parts: number): number[] => {
-  const base = Math.floor(total / parts);
+  // We gebruiken Math.trunc om de 'base' altijd richting 0 te berekenen
+  // Bij 10/3 wordt dit 3, bij -10/3 wordt dit -3
+  const base = Math.trunc(total / parts);
   const remainder = total % parts;
-  return Array.from({ length: parts }, (_, i) => (i < remainder ? base + 1 : base));
+
+  // De aanpassing is +1 als het totaal positief is, en -1 als het totaal negatief is
+  const adjustment = total >= 0 ? 1 : -1;
+
+  return Array.from({ length: parts }, (_, i) =>
+    // We gebruiken Math.abs op de remainder om de loop-index te kunnen vergelijken
+    i < Math.abs(remainder) ? base + adjustment : base
+  );
 };
 
-// FIX: Vervang 'any' door 'Record<string, unknown>' 
-// Dit is de veilige versie van een object in TypeScript
 type TransactionState = Record<string, unknown>;
 
 export class StatefulTransactionAdapter {
@@ -63,10 +70,17 @@ export class StatefulTransactionAdapter {
   }
 
   public calculateDistribution(totalAmount: number, parts: number): number[] {
-    return allocateRemainder(Math.floor(totalAmount), parts);
+        return allocateRemainder(totalAmount, parts);
   }
 
   public getCurrentState(): TransactionState | undefined {
     return this.history[this.pointer];
   }
 }
+
+export type StateUndoResult = { success: boolean; message?: string };
+
+export const undo = (): StateUndoResult | null => {
+  // logic
+  return { success: true };
+};

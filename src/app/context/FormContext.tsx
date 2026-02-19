@@ -50,7 +50,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({
 
   // 3) Stabiele orchestrator
   // VERWIJDERD: 'styles' argument. De orchestrator haalt zijn regels 
-  // nu zelf uit het domein via de ComponentStyleFactory.
+  // nu zelf uit het domein via de SectionStyleFactory.
   const orchestrator = useStableOrchestrator(state, dispatch);
 
   // 4) Context value

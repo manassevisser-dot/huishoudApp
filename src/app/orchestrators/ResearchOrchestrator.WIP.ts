@@ -1,3 +1,11 @@
+// src/app/orchestrators/ResearchOrchestrator.ts
+/**
+ * @file_intent Coördineert de transformatie van ruwe input naar zowel lokale UI-data als geanonimiseerde onderzoeksdata.
+ * @repo_architecture Mobile Industry (MI) - Data Privacy & Analytics Layer.
+ * @term_definition PrivacyAirlock = Domein-mechanisme dat garandeert dat er geen PII (Personally Identifiable Information) in de onderzoek-payload lekt.
+ * @contract Stateless (behalve FSO injectie voor toekomstige checks). Input: Raw Data -> Output: MasterProcessResult (Local + Research).
+ * @ai_instruction Cruciaal: Wijzigingen in 'processCsvTransactions' moeten altijd 'stripPII' aanroepen voordat data naar 'research' gaat.
+ */
 import { DATA_KEYS } from '@domain/constants/datakeys';
 import { csvService } from '@adapters/csv/csvService';
 import { dataProcessor } from '@domain/finance/StatementIntakePipeline.WIP'; 

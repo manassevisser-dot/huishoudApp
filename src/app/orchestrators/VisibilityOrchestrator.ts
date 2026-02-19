@@ -1,4 +1,11 @@
 // src/app/orchestrators/VisibilityOrchestrator.ts
+/**
+ * @file_intent Evalueert dynamische zichtbaarheidsregels (show/hide) op basis van de actuele applicatie-state.
+ * @repo_architecture Mobile Industry (MI) - Business Rules / Logic Layer.
+ * @term_definition Fail-closed = Een veiligheidsprincipe waarbij een veld bij twijfel of fouten ALTIJD verborgen wordt.
+ * @contract Stateless evaluator. Verbindt de FormStateOrchestrator (data) met de fieldVisibilityRules (domein-logica).
+ * @ai_instruction Zichtbaarheid is leidend voor validatie en rendering. Als evaluate() false geeft, mag de UI het veld niet renderen en de validatie het veld niet controleren.
+ */
 
 import { FormStateOrchestrator } from './FormStateOrchestrator'; 
 import { fieldVisibilityRules } from '@domain/rules/fieldVisibility';
@@ -23,7 +30,7 @@ export class VisibilityOrchestrator {
   /**
    * Evalueert of een veld zichtbaar moet zijn op basis van de regelnaam.
    * Maakt gebruik van de regels gedefinieerd in fieldVisibility.ts.
-   * * @param ruleName De naam van de regel zoals gedefinieerd in de FieldRegistry
+   * * @param ruleName De naam van de regel zoals gedefinieerd in de EntryRegistry
    * @param memberId Optionele ID voor regels die context van een specifiek lid nodig hebben
    * @returns boolean - Of het veld getoond moet worden (Fail-closed: false bij fouten)
    */

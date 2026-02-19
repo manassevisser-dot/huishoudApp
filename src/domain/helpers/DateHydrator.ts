@@ -24,7 +24,7 @@ function isIsoDateOnly(input: string): boolean {
     return new Date(yy, mm - 1, dd, 12, 0, 0, 0);
   }
   
-  /** YYYY-MM-DD uit een lokale Date (zonder tijdcomponenten). */
+  /** YYYY-MM-DD uit een lokale Date (zonder tijdsectionen). */
   export function toISOFromLocal(dateLocal: Date): string {
     const y = dateLocal.getFullYear();
     const m = String(dateLocal.getMonth() + 1).padStart(2, '0');

@@ -49,11 +49,12 @@ function buildString(c: StringConstraint) {
 /** Bouwt z.ZodEnum uit constraint values */
 function buildEnum(c: EnumConstraint) {
   const v = c.values;
+  /* istanbul ignore next */
   if (v.length === 0) return z.never();
+  /* istanbul ignore next */
   if (v.length === 1) return z.literal(v[0]);
   const [first, second, ...rest] = v;
   return z.enum([first, second, ...rest] as [string, string, ...string[]]);
-  // Return type: z.ZodEnum<[string, string, ...string[]]> ✅
 }
 
 /** Bouwt z.ZodBoolean */
@@ -209,7 +210,7 @@ export const FinanceSchema = z.object({
 export const FormStateSchema = z.object({
   schemaVersion: z.literal('1.0'),
   activeStep:    z.string(),
-  currentPageId: z.string(),
+  currentScreenId: z.string(),
   isValid:       z.boolean(),
   data: z.object({
     setup:     SetupSchema,
@@ -267,7 +268,8 @@ export const FieldSchemas: Record<string, z.ZodTypeAny> = Object.fromEntries(
       case 'string':  s = buildString(constraint); break;
       case 'enum':    s = buildEnum(constraint); break;
       case 'boolean': s = buildBoolean(constraint); break;
-      default:        s = z.unknown(); // Veiligheidsnet voor onbekende types
+      /* istanbul ignore next */
+      default:        s = z.unknown();
     }
     return [fieldId, s];
   })

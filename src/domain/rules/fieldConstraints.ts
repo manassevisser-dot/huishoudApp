@@ -1,5 +1,5 @@
 // src/domain/rules/fieldConstraints.ts
-import { GENERAL_OPTIONS, HOUSEHOLD_OPTIONS, FINANCE_OPTIONS } from '@domain/registry/options';
+import { GENERAL_OPTIONS, HOUSEHOLD_OPTIONS, FINANCE_OPTIONS } from '@domain/registry/OptionsRegistry';
 
 // ════════════════════════════════════════════════════════════════
 // DISCRIMINATED CONSTRAINT TYPES
@@ -484,7 +484,7 @@ export const FIELD_CONSTRAINTS_REGISTRY = {
 // TYPE: Alle bekende veld-namen (compile-time)
 // ════════════════════════════════════════════════════════════════
 
-export type FieldId = keyof typeof FIELD_CONSTRAINTS_REGISTRY;
+export type fieldId = keyof typeof FIELD_CONSTRAINTS_REGISTRY;
 
 // ════════════════════════════════════════════════════════════════
 // HELPERS (ongewijzigd qua gedrag)
@@ -493,7 +493,7 @@ export type FieldId = keyof typeof FIELD_CONSTRAINTS_REGISTRY;
 /** Haal constraint op — stript prefixes (mem_0_, auto-0_, streaming_X_) */
 export function getConstraint(fieldId: string): FieldConstraint | undefined {
   const cleanId = fieldId.replace(/^(mem_\d+_|auto-\d+_|streaming_\w+_)/, '');
-  return FIELD_CONSTRAINTS_REGISTRY[cleanId as FieldId];
+  return FIELD_CONSTRAINTS_REGISTRY[cleanId as fieldId];
 }
 
 /** Check of waarde boven soft-limit zit */

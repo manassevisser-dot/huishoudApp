@@ -1,6 +1,11 @@
-
-
 // src/ui/styles/useAppStyles.ts
+/**
+ * @file_intent De brug tussen de StyleRegistry (domein) en React Native StyleSheet (platform).
+ * @repo_architecture Mobile Industry (MI) - UI Style Layer.
+ * @term_definition StyleRegistry = De Single Source of Truth voor visuele regels, gevoed door kleurthema's.
+ * @contract Stateless factory met caching. Transformeert pure tokens naar geoptimaliseerde platform-stijlen.
+ * @ai_instruction Wijzigingen in individuele componentstijlen horen thuis in de @domain/registry/StyleRegistry, niet hier.
+ */
 import { StyleSheet } from 'react-native';
 import { useTheme } from '@ui/providers/ThemeProvider';
 import { Colors, Theme } from '@domain/constants/Colors';
@@ -11,7 +16,6 @@ import { applyShadows, AnyStyle } from './PlatformStyles';
 import {
   makeLayout,
   makeHeader,
-  makeForms,
   makeButtons,
   makeCards,
   makeChips,
@@ -40,7 +44,6 @@ export function getAppStyles(theme: Theme) {
   const assembled = {
     ...makeLayout(c),
     ...makeHeader(c),
-    ...makeForms(c),
     ...makeButtons(c),
     ...makeCards(c),
     ...makeChips(c),

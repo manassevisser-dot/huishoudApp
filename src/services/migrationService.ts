@@ -113,7 +113,7 @@ function extractMembers(old: OldDataV0): unknown[] {
 // --- Main Function ---
 
 export async function migrateToPhoenix(old: OldDataV0 | null | undefined): Promise<FormState> {
-  const base = createMockState({ activeStep: 'LANDING', currentPageId: '1setupHousehold', isValid: true });
+  const base = createMockState({ activeStep: 'LANDING', currentScreenId: '1setupHousehold', isValid: true });
 
   if (old === null || old === undefined) {
     return { ...base, meta: { ...base.meta, lastModified: new Date().toISOString() } };

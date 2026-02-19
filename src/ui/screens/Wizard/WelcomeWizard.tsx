@@ -7,7 +7,7 @@ const WelcomeWizard: React.FC = () => {
   
   return (
     <View style={styles.container}>
-      <Text style={styles.pageTitle}>Welkom bij de nieuwe Cashflow Wizard.</Text>
+      <Text style={styles.screenTitle}>Welkom bij de nieuwe Cashflow Wizard.</Text>
     </View>
   );
 };

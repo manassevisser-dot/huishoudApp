@@ -1,19 +1,25 @@
 // src/app/orchestrators/RenderOrchestrator.ts
+/**
+ * @file_intent Transformeert statische definities en actuele state naar FieldViewModels.
+ * @repo_architecture Mobile Industry (MI) - Presentation Logic Layer.
+ * @term_definition OptionsKey = De referentie naar een set keuzemogelijkheden in de OptionsRegistry.
+ * @contract Stateless (behalve de injectie van FSO). Koppelt fieldIds aan data en keuzelijsten.
+ * @ai_instruction Dit is de 'halffabrikaat-fase'. Het spuugt FieldViewModels uit die nog GEEN visuele stijlen bevatten; dat gebeurt pas in de PrimitiveOrchestrator.
+ */
 
 import { FormStateOrchestrator } from './FormStateOrchestrator';
 import {
   GENERAL_OPTIONS,
   HOUSEHOLD_OPTIONS,
   FINANCE_OPTIONS,
-} from '@domain/registry/options';
-import { getFieldDefinition } from '@domain/registry/FieldRegistry';
-import { ComponentType } from '@domain/registry/ComponentRegistry';
-import { FieldViewModel, PageViewModel } from './interfaces/IUIOrchestrator';
+} from '@domain/registry/OptionsRegistry';
+import { EntryRegistry } from '@domain/registry/EntryRegistry';
+import { PrimitiveType } from '@domain/registry/PrimitiveRegistry';
+import type { FieldViewModel } from './interfaces/IUIOrchestrator';
 
 /**
  * RENDER ORCHESTRATOR
- * * Taak: Het verzamelen van ruwe veldgegevens (identiteit, tokens, waarde, opties)
- * naar een FieldViewModel (Veld-fase).
+ * Taak: ruwe field-defs + actuele state -> FieldViewModel (Veld-fase).
  */
 
 // SSOT options — gecombineerd uit domein registries
@@ -29,6 +35,13 @@ type AllOptionsMap = Record<string, readonly string[] | undefined>;
 const isNonEmptyString = (v: unknown): v is string =>
   typeof v === 'string' && v.trim().length > 0;
 
+// Optioneel: lokaal type voor screen/sectie VM (niet de globale ScreenViewModel!)
+export type ScreenViewModel = {
+  screenId: string;
+  titleToken: string;
+  fields: FieldViewModel[];
+};
+
 export class RenderOrchestrator {
   constructor(private readonly fso: FormStateOrchestrator) {}
 
@@ -42,8 +55,8 @@ export class RenderOrchestrator {
       return null;
     }
 
-    const definition = getFieldDefinition(fieldId);
-    if (definition === null) {
+    const definition = EntryRegistry.getDefinition(fieldId);
+    if (definition == null) {
       console.warn(`[RenderOrchestrator] unknown fieldId: ${fieldId}`);
       return null;
     }
@@ -52,25 +65,24 @@ export class RenderOrchestrator {
     const value = this.fso.getValue(fieldId);
 
     // Opties resolven indien nodig
-    let options: readonly string[] | undefined;
-    if (isNonEmptyString(definition.optionsKey)) {
-      options = this.getOptions(definition.optionsKey);
-    }
+    const options =
+  definition.optionsKey !== undefined ? this.getOptions(definition.optionsKey) : undefined;
 
     /**
      * De FieldViewModel (Veld-fase)
      * Hier vindt de eerste koppeling tussen Registry en State plaats.
+     * (Let op: we geven tokens door, resolven van labels kan hoger in de UI.)
      */
     const vm: FieldViewModel = {
       fieldId,
-      componentType: definition.componentType as ComponentType,
+      primitiveType: definition.primitiveType as PrimitiveType,
       labelToken: definition.labelToken,
       placeholderToken: definition.placeholderToken,
       value,
       visibilityRuleName: definition.visibilityRuleName,
       options,
-      uiModel: definition.uiModel,
-      error: null, // Wordt later verrijkt door de Validation/UI flow
+    
+      error: null, // later verrijkt door Validation/UI flow
     };
 
     return vm;
@@ -87,25 +99,26 @@ export class RenderOrchestrator {
   }
 
   /**
-   * Bouwt een PageViewModel voor een complete sectie/pagina.
+   * Bouwt een Screen/Section-achtig model (NIET de globale ScreenViewModel uit UI-manager).
+   * Handig voor legacy/small screens.
    */
-  public buildPageViewModel(pageConfig: {
-    pageId: string;
+  public buildScreenViewModel(screenConfig: {
+    screenId: string;
     titleToken: string;
     fields: Array<{ fieldId: string }>;
-  }): PageViewModel {
-    const ids: string[] = Array.isArray(pageConfig?.fields)
-      ? pageConfig.fields
+  }): ScreenViewModel {
+    const ids: string[] = Array.isArray(screenConfig?.fields)
+      ? screenConfig.fields
           .map((f) => (isNonEmptyString(f?.fieldId) ? f.fieldId.trim() : ''))
           .filter(isNonEmptyString)
       : [];
 
-    const fieldVMs = this.buildFieldViewModels(ids);
+    const entryVMs = this.buildFieldViewModels(ids);
 
     return {
-      pageId: pageConfig.pageId,
-      titleToken: pageConfig.titleToken,
-      fields: fieldVMs,
+      screenId: screenConfig.screenId,
+      titleToken: screenConfig.titleToken,
+      fields: entryVMs,
     };
   }
 
@@ -117,7 +130,7 @@ export class RenderOrchestrator {
     if (key.length === 0) return [];
 
     const set = (ALL_OPTIONS as AllOptionsMap)[key];
-    if (set === null || set === undefined) {
+    if (set == null) {
       console.warn(`[RenderOrchestrator] unknown optionsKey "${key}"`);
       return [];
     }

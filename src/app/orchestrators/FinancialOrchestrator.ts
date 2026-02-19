@@ -1,3 +1,11 @@
+// src/app/orchestrators/FinancialOrchestrator.ts
+/**
+ * @file_intent Pure transformatie-logica voor financiële data-presentatie.
+ * @repo_architecture Mobile Industry (MI) - Business/Presentation Layer.
+ * @term_definition PhoenixSummary = De berekende totalen (in centen) uit de domain rules.
+ * @contract Stateless. Zet ruwe centen-waarden om naar gelokaliseerde display-strings (ViewModel).
+ * @ai_instruction Bevat GEEN business rules (die zitten in @domain/rules). Bevat GEEN state-mutaties.
+ */
 import { computePhoenixSummary } from '@domain/rules/calculateRules';
 import { formatCurrency } from '@domain/helpers/numbers';
 import type { FormState } from '@core/types/core';

@@ -1,3 +1,11 @@
+// src/app/orchestrators/FormStateOrchestrator.ts
+/**
+ * @file_intent De exclusieve interface voor het lezen en schrijven van FormState.
+ * @repo_architecture Mobile Industry (MI) - State Management Layer.
+ * @term_definition StateWriterAdapter = De abstractielaag die de werkelijke Redux/State mutaties uitvoert.
+ * @contract Alleen deze orchestrator mag veld-waarden ophalen (getValue) of muteren (updateField) via de writer.
+ * @ai_instruction Bij uitbreiding van de state-structuur (bijv. nieuwe domeinen), voeg hier de bijbehorende getter-logica toe.
+ */
 import { type FormState } from '@core/types/core';
 import type { FormAction } from '@app/state/formReducer';
 import { StateWriterAdapter } from '@adapters/StateWriter/StateWriterAdapter';

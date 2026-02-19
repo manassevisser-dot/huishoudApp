@@ -1,7 +1,17 @@
+// src/app/orchestrators/NavigationOrchestrator.ts
+/**
+ * @file_intent Coördineert de navigatie-flow en schermovergangen.
+ * @repo_architecture Mobile Industry (MI) - Application Flow Layer.
+ * @term_definition activeStep = De huidige positie in de algemene app-flow. currentScreenId = De specifieke wizard-pagina.
+ * @contract Stateless regisseur van beweging. Delegeert de berekening van de volgende stap aan de NavigationManager, maar voert de mutatie uit via de FSO.
+ * @ai_instruction Gebruikt de ScreenRegistry voor metadata (next/prev). Combineert navigatie met validatie (canNavigateNext).
+ */
+
+import { ScreenRegistry } from '@domain/registry/ScreenRegistry';
 import type { INavigationOrchestrator } from './interfaces/INavigationOrchestrator';
-import type { IValidationOrchestrator } from './interfaces/IValidationOrchestrator';
 import type { FormStateOrchestrator } from './FormStateOrchestrator';
 import type { NavigationManager } from './managers/NavigationManager';
+import type { IValidationOrchestrator } from './interfaces/IValidationOrchestrator';
 
 export class NavigationOrchestrator implements INavigationOrchestrator {
   constructor(
@@ -10,35 +20,78 @@ export class NavigationOrchestrator implements INavigationOrchestrator {
     private readonly validation: IValidationOrchestrator
   ) {}
 
-  public getCurrentPageId(): string {
-    // We halen de huidige pagina uit de state van de FSO
-    return this.fso.getState().currentPageId;
+  public navigateTo(screenId: string): void {
+    const definition = ScreenRegistry.getDefinition(screenId);
+    if (definition === null) {
+      console.warn(`Navigation: Screen ID "${screenId}" niet gevonden.`);
+      return;
+    }
+
+    this.fso.dispatch({ type: 'SET_STEP', payload: screenId });
+
+    if (definition.type === 'WIZARD') {
+      this.fso.dispatch({ type: 'SET_CURRENT_SCREEN_ID', payload: screenId });
+    }
+  }
+
+  // === WIZARD LOGICA (Bestand) ===
+
+  public getCurrentScreenId(): string {
+    return this.fso.getState().currentScreenId;
   }
 
   public canNavigateNext(): boolean {
-    const currentId = this.getCurrentPageId();
+    const currentId = this.getCurrentScreenId();
     const result = this.validation.validateSection(currentId, this.fso.getState().data);
     return result.isValid;
   }
 
   public navigateNext(): void {
-    if (this.canNavigateNext()) {
-      const currentId = this.fso.getState().currentPageId;
-      const nextId = this.navigationManager.getNextStep(currentId);
+    const currentId = this.fso.getState().activeStep;
+    const definition = ScreenRegistry.getDefinition(currentId);
 
+    // ESLint fix: Expliciete check op null/undefined/empty string
+    if (definition !== null && definition.nextScreenId !== undefined && definition.nextScreenId !== '') {
+      this.navigateTo(definition.nextScreenId);
+    } else if (this.canNavigateNext()) {
+      const nextId = this.navigationManager.getNextStep(currentId);
       if (nextId !== null && nextId !== '') {
-        // We rapporteren het feit dat de pagina moet veranderen naar de FSO
-        this.fso.dispatch({ type: 'SET_CURRENT_PAGE_ID', payload: nextId });
+        this.navigateTo(nextId);
       }
     }
   }
 
-  public navigateBack(): void {
-    const currentId = this.getCurrentPageId();
-    const prevId = this.navigationManager.getPreviousStep(currentId);
+  // === MACRO NAVIGATIE (Aangepast naar Registry) ===
 
-    if (prevId !== null && prevId !== '') {
-      this.fso.dispatch({ type: 'SET_CURRENT_PAGE_ID', payload: prevId });
+  public startWizard(): void {
+    const firstScreen = this.navigationManager.getFirstScreenId();
+    // ESLint fix: Check of de string niet leeg of null is
+    if (firstScreen !== null && firstScreen !== '') {
+      this.navigateTo(firstScreen);
+    } else {
+      this.navigateTo('WIZARD_SETUP_HOUSEHOLD');
     }
+  }
+
+  public goToDashboard(): void { this.navigateTo('DASHBOARD'); }
+  public goToOptions(): void { this.navigateTo('OPTIONS'); }
+  public goToSettings(): void { this.navigateTo('SETTINGS'); }
+  public goToCsvUpload(): void { this.navigateTo('CSV_UPLOAD'); }
+  public goToReset(): void { this.navigateTo('RESET'); }
+
+  public goBack(): void {
+    const currentId = this.fso.getState().activeStep;
+    const definition = ScreenRegistry.getDefinition(currentId);
+
+    // ESLint fix: Expliciete check op previousScreenId
+    if (definition !== null && definition.previousScreenId !== undefined && definition.previousScreenId !== '') {
+      this.navigateTo(definition.previousScreenId);
+    } else {
+      this.navigateTo('DASHBOARD');
+    }
+  }
+
+  public navigateBack(): void {
+    this.goBack();
   }
 }

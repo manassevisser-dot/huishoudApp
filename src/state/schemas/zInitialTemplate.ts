@@ -9,7 +9,7 @@ import type { FormState } from '@adapters/validation/formStateSchema';
 export const INITIAL_FORM_STATE: FormState = {
   schemaVersion: '1.0',
   activeStep: 'setup',
-  currentPageId: 'setup_intro',
+  currentScreenId: 'setup_intro',
   isValid: false,
   data: {
     setup: {

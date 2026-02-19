@@ -61,26 +61,36 @@ export function toMemberType(input?: string): MemberType {
  * ANONYMISERING & SECURITY
  * ========================= */
 
+
+function encodeURISection(x: string): string {
+  return encodeURIComponent(x); // of eigen implementatie
+}
+
+
 function toBase64(input: string): string {
-  if (typeof btoa === 'function') return btoa(encodeURIComponent(input));
+  if (typeof btoa === 'function') return btoa(encodeURISection(input));
   return Buffer.from(input, 'utf8').toString('base64');
 }
 
 export function makeResearchId(localId: string): string {
   const hash = toBase64(localId)
     .replace(/[^a-zA-Z0-9]/g, '')
-    .substring(0, RESEARCH_ID_LENGTH);
+    .substring(0, RESEARCH_ID_LENGTH)
+    .padEnd(RESEARCH_ID_LENGTH, '0');
   return `res_${hash.toLowerCase()}`;
 }
 
+const PII_KEYWORDS = [
+  'naam', 'name', 'voornaam', 'achternaam',
+  'e-mail', 'email', 'adres', 'telefoon', 'phone'
+];
+
 export function containsPII(value: unknown): boolean {
   if (value === null || value === undefined) return false;
-  if (typeof value === 'string') {
-    const emailRe = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
-    const nameWords = /\b(naam|name|voornaam|achternaam|e-mail|email|adres|telefoon|phone)\b/i;
-    return emailRe.test(value) || nameWords.test(value);
-  }
-  return false;
+  if (typeof value !== 'string') return false;
+  const lower = value.toLowerCase();
+  return PII_KEYWORDS.some(keyword => lower.includes(keyword)) ||
+         /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(value);
 }
 
 export function assertNoPIILeak(obj: unknown): void {

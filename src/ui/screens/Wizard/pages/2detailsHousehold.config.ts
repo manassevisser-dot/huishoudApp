@@ -2,8 +2,8 @@ import { UI_SECTIONS } from '@domain/constants/uiSections';
 import { UX_TOKENS } from '@domain/constants/uxTokens';
 
 export const detailsHouseholdConfig = {
-  pageId: UI_SECTIONS.HOUSEHOLD_DETAILS,
-  titleToken: UX_TOKENS.PAGES.HOUSEHOLD_DETAILS,
+  screenId: UI_SECTIONS.HOUSEHOLD_DETAILS,
+  titleToken: UX_TOKENS.SCREENS.HOUSEHOLD_DETAILS,
   fields: [
     { fieldId: 'burgerlijkeStaat' },
     { fieldId: 'woningType' },

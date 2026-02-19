@@ -18,11 +18,11 @@ const OptionsScreen: React.FC<Props> = ({ onClose, onSettings, onCsvUpload, onRe
 
   return (
     <View style={styles.container}>
-      <View style={styles.pageContainer}>
+      <View style={styles.screenContainer}>
         <ScrollView
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
         >
-          <Text style={styles.pageTitle}>Options</Text>
+          <Text style={styles.screenTitle}>Options</Text>
 
           <TouchableOpacity
             style={[styles.button, { marginBottom: 16, marginLeft: 0 }]}

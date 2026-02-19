@@ -2,11 +2,11 @@
 import { Member } from '@core/types/core';
 
 const makeId = (prefix: 'm', idx: number): string => `${prefix}-${idx}-${Date.now()}`;
-const makeFieldId = (idx: number): string => `field-member-${idx}`;
+const makefieldId = (idx: number): string => `field-member-${idx}`;
 
 const createEmptyMember = (type: 'adult' | 'child', idx: number): Member => ({
   entityId: makeId('m', idx),
-  fieldId: makeFieldId(idx),
+  fieldId: makefieldId(idx),
   memberType: type,
   firstName: '',
   lastName: '',
@@ -36,7 +36,7 @@ const processGroup = (options: GroupOptions): Member[] => {
         ...member,
         fieldId: (typeof member.fieldId === 'string' && member.fieldId !== '') 
           ? member.fieldId 
-          : makeFieldId(globalIdx),
+          : makefieldId(globalIdx),
       });
     } else {
       result.push(createEmptyMember(type, globalIdx));

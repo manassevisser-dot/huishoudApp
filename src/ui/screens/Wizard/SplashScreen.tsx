@@ -8,7 +8,7 @@ const SplashScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <ActivityIndicator color={colors.primary} />
-      <Text style={styles.pageTitle}>Phoenix wordt geladen...</Text>
+      <Text style={styles.screenTitle}>Phoenix wordt geladen...</Text>
     </View>
   );
 };

@@ -1,15 +1,15 @@
-// src/ui/screens/Wizard/pages/3incomeDetails.config.ts
+// src/ui/screens/Wizard/screens/3incomeDetails.config.ts
 import { UI_SECTIONS } from '@domain/constants/uiSections';
 import { UX_TOKENS } from '@domain/constants/uxTokens';
 
-// src/ui/screens/Wizard/pages/3incomeDetails.config.ts
+// src/ui/screens/Wizard/screens/3incomeDetails.config.ts
 
 export const incomeDetailsConfig = {
   // Verander UI_SECTIONS.INCOME naar:
-  pageId: UI_SECTIONS.INCOME_DETAILS, 
+  screenId: UI_SECTIONS.INCOME_DETAILS, 
   
-  // Verander UX_TOKENS.PAGES.INCOME naar:
-  titleToken: UX_TOKENS.PAGES.INCOME_DETAILS,
+  // Verander UX_TOKENS.SCREENS.INCOME naar:
+  titleToken: UX_TOKENS.SCREENS.INCOME_DETAILS,
   fields: [
     {
       fieldId: 'huurtoeslag',
