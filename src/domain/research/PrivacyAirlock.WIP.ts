@@ -1,3 +1,15 @@
+/**
+ * @file_intent [WIP] Definieert een "Privacy Airlock". Dit is een cruciale, beveiligingsgerichte component die als een strikte barrière fungeert tussen ruwe, potentieel privacy-gevoelige gebruikersdata en een geanonimiseerde dataset bedoeld voor onderzoek.
+ * @repo_architecture Domain Layer - Research (Work-In-Progress).
+ * @term_definition
+ *   - `Privacy Airlock`: Een softwarecomponent die data-stromen controleert om te voorkomen dat Persoonlijk Identificeerbare Informatie (PII) lekt naar systemen waar het niet thuishoort.
+ *   - `PII (Personally Identifiable Information)`: Gegevens die direct of indirect naar een individu kunnen leiden, zoals naam, e-mailadres, etc.
+ *   - `Anonymization`: Het proces van het onomkeerbaar verwijderen of transformeren van PII uit een dataset.
+ *   - `Data Assertion`: Een defensieve programmeertechniek (`assertNoPIILeak`) die de integriteit en veiligheid van data garandeert door een programma te stoppen als aan een kritieke voorwaarde (bv. "mag geen PII bevatten") niet wordt voldaan.
+ * @contract Dit bestand exporteert de `collectAndDistributeData` functie. Deze functie accepteert ruwe UI-data en retourneert twee objecten: `localMember` (voor intern gebruik, bevat nog PII) en `researchPayload` (volledig geanonimiseerd). De interne `assertNoPIILeak` functie garandeert contractueel dat het `researchPayload` object geen PII bevat voordat het wordt geretourneerd.
+ * @ai_instruction Dit is een beveiligingskritisch bestand. Gebruik `collectAndDistributeData` als het *enige* toegangspunt om onderzoeksdata te genereren. Het `researchPayload` object is het enige dat veilig kan worden verzonden naar externe endpoints. Het `localMember` object mag *nooit* de applicatie verlaten. De PII-detectie en -assertions (`containsPII`, `assertNoPIILeak`) zijn de kern van de beveiliging; wijzig deze niet zonder een grondige security-review. Aangezien dit een WIP-bestand is, zijn extra validatie en testen vereist voor productiegebruik.
+ */
+
 //src/domain/research/PrivacyAirlock.WIP.ts
 
 import { ResearchValidator } from '@adapters/validation/ResearchContractAdapter';

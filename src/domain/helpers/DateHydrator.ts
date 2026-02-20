@@ -1,4 +1,15 @@
 /**
+ * @file_intent Biedt een verzameling robuuste, timezone-bewuste utility-functies voor het afhandelen en converteren van datums. De focus ligt op het `YYYY-MM-DD` formaat en de lokale tijdzone om `off-by-one` fouten te voorkomen.
+ * @repo_architecture Domain Layer - Helpers.
+ * @term_definition
+ *   - `ISO Date (YYYY-MM-DD)`: Het standaard datumformaat voor data-uitwisseling.
+ *   - `Local Noon`: Een `Date` object ingesteld op 12:00 uur in de lokale tijdzone van de gebruiker. Dit is een belangrijke strategie in dit bestand om datumberekeningen betrouwbaar uit te voeren zonder dat tijdzone-verschuivingen de datum veranderen.
+ *   - `Date Hydration`: Het proces van het omzetten van een plat dataformaat (zoals een ISO-string) naar een rijk `Date`-object dat gemanipuleerd kan worden.
+ * @contract Dit bestand exporteert een reeks pure functies voor datamanipulatie. Belangrijke functies zijn `isoDateOnlyToLocalNoon` voor veilig parsen, `toISOFromLocal` voor serialisatie, `parseDDMMYYYYtoISO` voor het robuust parsen van Nederlandse datumformaten, en `formatToDisplay` voor UI-formattering. Het bevat ook business-specifieke datumberekeningen zoals `getAdultMaxISO`.
+ * @ai_instruction Gebruik deze helpers voor alle datum-gerelateerde operaties om consistentie te waarborgen en tijdzone-problemen te voorkomen. De `*LocalNoon` functies zijn cruciaal bij het werken met datums zonder tijdcomponent. Centraliseer nieuwe datumlogica hier. Vermijd het direct gebruiken van de native `new Date(string)` constructor met datum-only strings, omdat het gedrag hiervan inconsistent is tussen omgevingen; gebruik in plaats daarvan `isoDateOnlyToLocalNoon`.
+ */
+
+/**
  * ===========================================
  * Datumhulpen — TZ-robuust met lokale tijdzone
  * ===========================================

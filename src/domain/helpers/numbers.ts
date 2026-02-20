@@ -1,3 +1,13 @@
+/**
+ * @file_intent Biedt een set zeer robuuste functies voor het parsen en formatteren van numerieke (valuta)waarden. De kernstrategie is om alle financiële waarden te converteren naar en te werken met integers van centen om floating-point onnauwkeurigheden te elimineren.
+ * @repo_architecture Domain Layer - Helpers.
+ * @term_definition
+ *   - `Cents (Integer)`: De fundamentele eenheid voor alle financiële berekeningen in het domein. Door valuta als een integer van centen te representeren (bv. €12,34 wordt `1234`), worden problemen met zwevendekommagetallen vermeden.
+ *   - `Parsing / Normalization`: Het proces van het omzetten van een gebruikersinvoer (string), die verschillende formaten kan hebben (bv. "1.234,56", "1234.56", "€ 1.234"), naar een schone, gestandaardiseerde numerieke waarde (de integer van centen).
+ * @contract Dit bestand exporteert cruciale functies: `toCents` (de "Phoenix Parser") die diverse string- en getalinvoeren omzet naar een integer van centen, en `formatCentsToDutch`/`formatCurrency` die een integer van centen formatteren naar een leesbare string voor de UI. De logica is ontworpen om tolerant te zijn voor verschillende duizendtal- en decimaalscheiders.
+ * @ai_instruction Gebruik `toCents` als de *enige* manier om externe numerieke/valuta-invoer het domein binnen te brengen. Alle interne domeinlogica, berekeningen en state management moeten uitsluitend opereren op de integer-waarden van centen die door `toCents` worden geproduceerd. Gebruik de `format*` functies alleen in de UI-laag of bij het presenteren van data aan de gebruiker.
+ */
+
 // src/domain/helpers/numbers.ts
 import { cleanName } from '@utils/strings';
 

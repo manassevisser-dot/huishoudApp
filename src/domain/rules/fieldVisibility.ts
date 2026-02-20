@@ -1,3 +1,20 @@
+/**
+ * @file_intent Centraliseert de volledige logica voor de zichtbaarheid van UI-componenten en andere dynamische UI-eigenschappen. Dit bestand definieert een robuust, type-veilig systeem (`VisibilityContext`) waarmee UI-regels op een gestructureerde manier de applicatiestaat kunnen bevragen. Het scheidt de *conditie* (bv. "heeft de gebruiker kinderen?") van de *implementatie* in de UI.
+ * @repo_architecture Domain Layer - Business Rules.
+ * @term_definition
+ *   - `VisibilityContext`: Een abstractie die fungeert als een facade of een "lens" op de applicatiestaat. Het biedt regelfuncties een veilige, getypeerde `getValue`-methode om specifieke datapunten uit de staat te lezen, zonder dat de regel de volledige staat-structuur hoeft te kennen.
+ *   - `VisibilityRuleFn`: De standaardsignatuur voor een zichtbaarheidsregel: `(context, memberId?) => boolean`. Elke regel is een pure functie die de context evalueert en een ondubbelzinnige `true` of `false` retourneert.
+ *   - `fieldVisibilityRules`: Een object dat alle zichtbaarheidsregels van de applicatie centraliseert. De sleutels zijn Engelse, beschrijvende conditienamen (bv. `showMaritalStatus`), wat de logica loskoppelt van specifieke UI-componenten.
+ *   - `UI Hint`: Een speciaal type regel dat geen `boolean` retourneert, maar een kwantitatieve aanwijzing voor de UI, zoals het aantal keren dat een component herhaald moet worden (`RepeatCount`). Dit wordt gebruikt voor dynamische lijsten (repeaters).
+ * @contract Dit bestand exporteert de `fieldVisibilityRules` en `uiHints` objecten als `const`, wat een stabiele API garandeert. Het exporteert ook de benodigde types zoals `VisibilityContext` en `VisibilityRuleName` om externe afhankelijkheden (zoals de orchestrator) type-veilig te maken. De interne helper `getMemberFromContext` zorgt voor een veilige, robuuste manier om data van een specifiek lid op te zoeken.
+ * @ai_instruction Dit bestand is de kern van de dynamische UI-logica en wordt exclusief gebruikt door de **orchestrator-laag**. De orchestrator doorloopt de UI-structuur en voor elk component met een conditie:
+ *   1. Creëert een `VisibilityContext` die de actuele applicatiestaat omvat.
+ *   2. Roept de corresponderende regel uit `fieldVisibilityRules` aan (bv. `fieldVisibilityRules.showHuurtoeslag(context)`).
+ *   3. Gebruikt het `boolean` resultaat om de `visible` eigenschap in de uiteindelijke UI-staat te zetten.
+ *   4. Voor "repeaters" roept de orchestrator een hint uit `uiHints` aan (bv. `uiHints.carRepeatCount(context)`) om te bepalen hoeveel instanties van een component moeten worden aangemaakt.
+ * Dit patroon zorgt ervoor dat de UI-laag volledig "dom" is en enkel de door de orchestrator voorbereide staat rendert. Alle logica is gecentraliseerd in het domein.
+ */
+
 // src/domain/rules/fieldVisibility.ts
 //
 // TYPE-SAFE HYBRIDE VERSIE — soft‑schema + hergebruik van option types

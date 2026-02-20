@@ -5,6 +5,7 @@
  * @term_definition SectionDefinition = Groepering van entries. fieldIds = De keys die verwijzen naar de EntryRegistry.
  * @contract Een sectie bevat een lijst van 'fieldIds'. Deze IDs MOETEN bestaan in de EntryRegistry om gerenderd te kunnen worden.
  * @ai_instruction Gebruik 'fieldIds' hier als verwijzing naar de EntryRegistry. Wijzig de layout-types alleen als de UI-laag deze ondersteunt.
+ *   APP_STATIC/SYSTEM secties zijn stubs (leeg fieldIds) tot hun UniversalScreen-migratie.
  */
 import { IBaseRegistry } from './BaseRegistry';
 
@@ -17,11 +18,26 @@ export interface SectionDefinition {
 }
 
 export const SECTION_REGISTRY: Record<string, SectionDefinition> = {
+  // ══════════════════════════════════════════════════════════════
+  // WIZARD SECTIONS (actief, alle fieldIds geresolveerd)
+  // ══════════════════════════════════════════════════════════════
   householdSetup: {
     id: 'householdSetup',
     labelToken: 'SECTION_HOUSEHOLD_SETUP',
     layout: 'list',
-    fieldIds: ['aantalMensen', 'aantalVolwassen', 'kinderenLabel', 'autoCount', 'heeftHuisdieren'],
+    fieldIds: ['aantalMensen', 'aantalVolwassen', 'kinderenLabel', 'postcode', 'autoCount', 'heeftHuisdieren'],
+  },
+  householdDetails: {
+    id: 'householdDetails',
+    labelToken: 'SECTION_HOUSEHOLD_DETAILS',
+    layout: 'grid',
+    fieldIds: ['burgerlijkeStaat', 'woningType'],
+  },
+  incomeDetails: {
+    id: 'incomeDetails',
+    labelToken: 'SECTION_INCOME',
+    layout: 'list',
+    fieldIds: ['incomeCategory', 'nettoSalaris', 'frequentie', 'vakantiegeldPerJaar'],
   },
   workToeslagen: {
     id: 'workToeslagen',
@@ -29,18 +45,6 @@ export const SECTION_REGISTRY: Record<string, SectionDefinition> = {
     layout: 'card',
     uiModel: 'numericWrapper',
     fieldIds: ['zorgtoeslag', 'reiskosten', 'overigeInkomsten'],
-  },
-  householdDetails: {
-    id: 'householdDetails',
-    labelToken: 'SECTION_HOUSEHOLD_DETAILS',
-    layout: 'grid',
-    fieldIds: ['burgerlijkeStaat', 'woningType', 'postcode'],
-  },
-  incomeDetails: {
-    id: 'incomeDetails',
-    labelToken: 'SECTION_INCOME',
-    layout: 'list',
-    fieldIds: ['incomeCategory', 'nettoSalaris', 'frequentie', 'vakantiegeldPerJaar'],
   },
   fixedExpenses: {
     id: 'fixedExpenses',
@@ -60,24 +64,89 @@ export const SECTION_REGISTRY: Record<string, SectionDefinition> = {
     layout: 'grid',
     fieldIds: ['internetTv', 'sport', 'lezen'],
   },
-  loginSection: {
-    id: 'loginSection',
-    labelToken: 'SECTION_LOGIN',
-    layout: 'list',
-    fieldIds: ['naam'], // We gebruiken 'naam' even als placeholder voor login-invoer
-  },
   memberDetails: {
     id: 'memberDetails',
     labelToken: 'SECTION_MEMBER_DETAILS',
     layout: 'card',
-    uiModel: 'collapsible', // Handig als je 5 mensen hebt
+    uiModel: 'collapsible',
     fieldIds: ['naam', 'geboortedatum', 'gender'],
   },
+
+  // ══════════════════════════════════════════════════════════════
+  // APP_STATIC / SYSTEM SECTIONS (stubs)
+  // fieldIds worden ingevuld bij UniversalScreen-migratie per scherm.
+  // Tot die tijd renderen deze schermen via hun eigen hardcoded components.
+  // ══════════════════════════════════════════════════════════════
+  LANDING_ACTIONS_CARD: {
+    id: 'LANDING_ACTIONS_CARD',
+    labelToken: 'SECTION_LANDING',
+    layout: 'card',
+    fieldIds: [], // stub: LandingScreen is nog handmatig
+  },
+  DASHBOARD_OVERVIEW_CARD: {
+    id: 'DASHBOARD_OVERVIEW_CARD',
+    labelToken: 'SECTION_DASHBOARD_OVERVIEW',
+    layout: 'card',
+    fieldIds: [], // stub: DashboardScreen is nog handmatig
+  },
+  QUICK_ACTIONS_SECTION: {
+    id: 'QUICK_ACTIONS_SECTION',
+    labelToken: 'SECTION_QUICK_ACTIONS',
+    layout: 'grid',
+    fieldIds: [], // stub
+  },
+  EXPENSE_INPUT_CARD: {
+    id: 'EXPENSE_INPUT_CARD',
+    labelToken: 'SECTION_EXPENSE_INPUT',
+    layout: 'card',
+    fieldIds: [], // stub: DailyInputScreen migratie apart
+  },
+  GLOBAL_OPTIONS_LIST: {
+    id: 'GLOBAL_OPTIONS_LIST',
+    labelToken: 'SECTION_OPTIONS',
+    layout: 'list',
+    fieldIds: [], // stub: OptionsScreen is nog handmatig
+  },
+  USER_PROFILE_CARD: {
+    id: 'USER_PROFILE_CARD',
+    labelToken: 'SECTION_PROFILE',
+    layout: 'card',
+    fieldIds: [], // stub
+  },
+  APP_PREFERENCES_SECTION: {
+    id: 'APP_PREFERENCES_SECTION',
+    labelToken: 'SECTION_PREFERENCES',
+    layout: 'list',
+    fieldIds: [], // stub
+  },
+  CSV_DROPZONE_CARD: {
+    id: 'CSV_DROPZONE_CARD',
+    labelToken: 'SECTION_CSV_UPLOAD',
+    layout: 'card',
+    fieldIds: [], // stub: CsvUploadScreen is nog handmatig
+  },
+  CSV_MAPPING_SECTION: {
+    id: 'CSV_MAPPING_SECTION',
+    labelToken: 'SECTION_CSV_MAPPING',
+    layout: 'list',
+    fieldIds: [], // stub
+  },
+  RESET_CONFIRMATION_CARD: {
+    id: 'RESET_CONFIRMATION_CARD',
+    labelToken: 'SECTION_RESET',
+    layout: 'card',
+    fieldIds: [], // stub: ResetScreen is nog handmatig
+  },
+  ERROR_DIAGNOSTICS_CARD: {
+    id: 'ERROR_DIAGNOSTICS_CARD',
+    labelToken: 'SECTION_ERROR',
+    layout: 'card',
+    fieldIds: [], // stub
+  },
 };
-  export const SectionRegistry: IBaseRegistry<string, SectionDefinition> = {
-    // Fix: Voorkom 'always true' object-waarschuwing door expliciete check
-    getDefinition: (key: string) => (key in SECTION_REGISTRY) ? SECTION_REGISTRY[key] : null,
-    // Fix: Expliciete boolean vergelijking voor de linter
-    isValidKey: (key: string): key is string => (key in SECTION_REGISTRY) === true,
-    getAllKeys: () => Object.keys(SECTION_REGISTRY),
-  };
+
+export const SectionRegistry: IBaseRegistry<string, SectionDefinition> = {
+  getDefinition: (key: string) => (key in SECTION_REGISTRY) ? SECTION_REGISTRY[key] : null,
+  isValidKey: (key: string): key is string => (key in SECTION_REGISTRY) === true,
+  getAllKeys: () => Object.keys(SECTION_REGISTRY),
+};

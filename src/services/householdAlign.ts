@@ -1,4 +1,11 @@
 // src/services/householdAlign.ts
+/**
+ * @file_intent Utility voor het synchroniseren van de `members`-array in de applicatiestaat met de opgegeven aantallen volwassenen en kinderen.
+ * @repo_architecture Application Service Layer.
+ * @term_definition Alignment = Het proces van het in overeenstemming brengen van de `members`-array met de gewenste structuur (aantal volwassenen/kinderen), waarbij bestaande data wordt behouden en nieuwe lege leden worden toegevoegd.
+ * @contract De functie garandeert dat de output-array altijd de lengte `aantalMensen` heeft. Bestaande leden worden hergebruikt om data-integriteit te bewaren. Nieuwe leden worden als lege objecten geïnitialiseerd.
+ * @ai_instruction Deze functie is kritisch voor de stabiliteit van de wizard-schermen die per lid velden renderen. Zorg dat de `fieldId`-generatie uniek en consistent blijft om React key-errors en state-verlies te voorkomen.
+ */
 import { Member } from '@core/types/core';
 
 const makeId = (prefix: 'm', idx: number): string => `${prefix}-${idx}-${Date.now()}`;

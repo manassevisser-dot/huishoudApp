@@ -1,3 +1,10 @@
+/**
+ * @file_intent Gecentraliseerde repository voor user-facing validatie- en bevestigingsberichten.
+ * @repo_architecture State Layer - Validation Schemas.
+ * @term_definition Validation Message = Een gebruiksvriendelijke string die uitlegt waarom input ongeldig is of om bevestiging vraagt voor een destructieve actie.
+ * @contract Dit bestand exporteert een genest object `validationMessages`. De structuur van dit object moet de structuur van de data die het valideert weerspiegelen om de duidelijkheid te bewaren.
+ * @ai_instruction Houd bij het toevoegen of wijzigen van berichten de taal beknopt en helder voor de eindgebruiker. Gebruik consistente terminologie. Groepeer berichten per onderdeel van de staat waar ze betrekking op hebben (bijv. `setup`, `dateOfBirth`).
+ */
 // src/state/schemas/sections/validationMessages.ts
 export const validationMessages = {
   setup: {

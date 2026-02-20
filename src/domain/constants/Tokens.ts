@@ -1,3 +1,10 @@
+/**
+ * @file_intent Centraliseert de fundamentele design tokens (spacing, typografie, radius, etc.) die de basis vormen van het design system.
+ * @repo_architecture Domain Layer - Constants.
+ * @term_definition Design Token = Een primitieve, benoemde waarde voor een visueel designattribuut (bijv. `Space.sm` = 8). Dit zijn de atomaire bouwstenen.
+ * @contract Dit bestand exporteert `Tokens`, een `as const` object dat alle design tokens groepeert (`Space`, `Type`, `Radius`, `Sizes`, `Shadows`, `Opacity`). Het zorgt voor een centrale, onveranderlijke bron van waarheid voor de visuele stijl.
+ * @ai_instruction Wees terughoudend met het toevoegen van nieuwe tokens. Het doel is een beperkte, consistente set. Bij het aanpassen, overweeg de impact op de gehele app. Deze waarden moeten onafhankelijk zijn van thema (light/dark).
+ */
 // src/domain/constants/Tokens.ts
 export const Space = { xs: 4, sm: 8, badge: 6, md: 12, lg: 16, xl: 20, xxl: 24 } as const;
 export const Type = { xs: 12, sm: 14, md: 16, lg: 17, xl: 18, h2: 28, kpi: 48 } as const;

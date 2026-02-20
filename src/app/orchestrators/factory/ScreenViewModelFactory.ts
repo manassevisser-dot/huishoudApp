@@ -10,7 +10,7 @@
 import { ScreenRegistry } from '@domain/registry/ScreenRegistry';
 import { SectionRegistry } from '@domain/registry/SectionRegistry';
 import { EntryRegistry } from '@domain/registry/EntryRegistry';
-import { PrimitiveRegistry, PRIMITIVE_TYPES, type PrimitiveType } from '@domain/registry/PrimitiveRegistry';
+import { PrimitiveRegistry, type PrimitiveType } from '@domain/registry/PrimitiveRegistry';
 
 // === VM-typen die de renderer verderop gebruikt ===
 // (Gebruik jouw bestaande VM-interfaces; dit is de vorm waarop deze factory schrijft.)
@@ -24,20 +24,26 @@ export interface ScreenViewModel {
 
 export interface SectionViewModel {
   sectionId: string;
-  titleToken: string;     // afkomstig van Section.labelToken
+  titleToken: string; // afkomstig van Section.labelToken
   layout: 'list' | 'grid' | 'card' | 'stepper';
   uiModel?: 'numericWrapper' | 'collapsible' | 'swipeable' | 'readonly';
   children: EntryViewModel[];
+}
+
+export interface PrimitiveViewModel {
+  entryId: string;
+  primitiveType: PrimitiveType; // bv. 'currency' | 'text' | 'radio' | ...
+  styleKey?: string;            // later in StyleFactory te vullen
 }
 
 export interface EntryViewModel {
   entryId: string;
   labelToken: string;
   placeholderToken?: string;
-  primitiveType: PrimitiveType;     // bv. 'currency' | 'text' | 'radio' | ...
-  options?: readonly string[];      // indien in EntryRegistry ingevuld
-  optionsKey?: string;              // doorgeven t.b.v. latere options-resolving
-  visibilityRuleName?: string;      // NIET evalueren hier (MO/Visibility doet dat)
+  options?: readonly string[];
+  optionsKey?: string;
+  visibilityRuleName?: string; // NIET evalueren hier (MO/Visibility doet dat)
+  child: PrimitiveViewModel;   // lichte primitive-VM
 }
 
 function assertFound<T>(value: T | null | undefined, what: string): T {
@@ -50,11 +56,11 @@ export const ScreenViewModelFactory = {
     // Screen ophalen (met titleToken, sectionIds, type, nav)
     const screenDef = assertFound(
       ScreenRegistry.getDefinition(screenId),
-      `Screen '${screenId}'`
+      `Screen '${screenId}'`,
     );
 
     const sections: SectionViewModel[] = (screenDef.sectionIds ?? []).map(
-      (sectionId: string) => this.buildSection(sectionId)
+      (sectionId: string) => this.buildSection(sectionId),
     );
 
     return {
@@ -73,11 +79,11 @@ export const ScreenViewModelFactory = {
     // Section ophalen (met labelToken, fieldIds, layout, uiModel?)
     const sectionDef = assertFound(
       SectionRegistry.getDefinition(sectionId),
-      `Section '${sectionId}'`
+      `Section '${sectionId}'`,
     );
 
     const children: EntryViewModel[] = (sectionDef.fieldIds ?? []).map(
-      (entryId: string) => this.buildEntry(entryId)
+      (entryId: string) => this.buildEntry(entryId),
     );
 
     return {
@@ -93,7 +99,7 @@ export const ScreenViewModelFactory = {
     // Entry ophalen (labelToken, placeholderToken?, primitiveType, options?, optionsKey?, visibilityRuleName?)
     const entryDef = assertFound(
       EntryRegistry.getDefinition(entryId),
-      `Entry '${entryId}'`
+      `Entry '${entryId}'`,
     );
 
     // Validatie: primitive type moet bestaan in PrimitiveRegistry
@@ -108,10 +114,14 @@ export const ScreenViewModelFactory = {
       entryId,
       labelToken: entryDef.labelToken,
       placeholderToken: entryDef.placeholderToken,
-      primitiveType,
-      options: entryDef.options,       // als ze al ingevuld zijn in EntryRegistry
-      optionsKey: entryDef.optionsKey, // t.b.v. latere options-resolving in UI/domein
-      visibilityRuleName: entryDef.visibilityRuleName, // latere VisibilityOrchestrator
+      options: entryDef.options,
+      optionsKey: entryDef.optionsKey,
+      visibilityRuleName: entryDef.visibilityRuleName,
+      child: {
+        entryId,
+        primitiveType,
+        // styleKey wordt later door StyleFactory ingevuld
+      },
     };
   },
 };

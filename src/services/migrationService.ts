@@ -1,4 +1,11 @@
 // src/services/migrationService.ts
+/**
+ * @file_intent Service voor het migreren van verouderde datastructuren naar het gestandaardiseerde Phoenix `FormState`-schema.
+ * @repo_architecture Application Service Layer.
+ * @term_definition Data Migration = Het proces van het converteren van data van een verouderd, ongestructureerd formaat (V0) naar een nieuw, gevalideerd schema (Phoenix). Fallback = Het terugvallen op een standaardwaarde als een dataveld ontbreekt of incorrect is.
+ * @contract Accepteert een potentieel `null` of onvolledig V0-object en garandeert de output van een volledige, valide `FormState`. Ontbrekende of corrupte data wordt vervangen door veilige standaardwaarden.
+ * @ai_instruction Dit is een kritieke service voor data-integriteit bij het importeren van oudere gegevens. Wijzigingen moeten de defensieve checks (type guards, fallbacks) in stand houden om dataverlies en applicatiecrashes te voorkomen.
+ */
 import { DATA_KEYS, SUB_KEYS } from '@domain/constants/datakeys';
 import { FormState, DeepPartial, Member } from '@core/types/core';
 import { createMockState } from '@test-utils/index';

@@ -1,3 +1,14 @@
+/**
+ * @file_intent Biedt functies om financiële bedragen te normaliseren naar een maandelijkse frequentie. Dit is essentieel om bedragen met verschillende periodiciteiten (bv. weekloon, jaarlijkse verzekering) met elkaar te kunnen vergelijken en aggregeren.
+ * @repo_architecture Domain Layer - Helpers.
+ * @term_definition
+ *   - `Frequency`: Een type dat de periodiciteit van een bedrag definieert (bv. per week, per maand, per jaar).
+ *   - `Normalisatie`: Het proces van het omrekenen van bedragen met verschillende frequenties naar één gestandaardiseerde frequentie (in dit geval, maandelijks).
+ *   - `Factor`: Een vermenigvuldigingsgetal dat wordt gebruikt om een bedrag van de ene frequentie naar de andere om te rekenen.
+ * @contract Dit bestand exporteert het `Frequency` type, de `getMonthlyFactor` functie die de conversiefactor berekent, en de `convertToMonthlyCents` functie die een bedrag in centen omrekent naar een maandelijks bedrag in centen. Alle berekeningen zijn puur en stateless.
+ * @ai_instruction Gebruik `convertToMonthlyCents` om elk financieel bedrag dat niet maandelijks is, te normaliseren voordat het wordt gebruikt in berekeningen of aggregaties. Dit zorgt voor consistentie in het hele domein. De berekeningen worden uitgevoerd met centen (integers) om afrondingsfouten met zwevendekommagetallen te vermijden.
+ */
+
 // WAI-004-D — Frequentie & Maand-normalisatie
 // -------------------------------------------------------
 

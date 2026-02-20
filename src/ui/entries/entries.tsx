@@ -1,3 +1,12 @@
+/**
+ * @file_intent Assembleert UI `primitives` tot complete, functionele "Entry" componenten (bv. `MoneyEntry`, `TextEntry`). Deze componenten zijn de daadwerkelijke input-velden die de gebruiker in de UI ziet.
+ * @repo_architecture UI Layer - Component Library. Dit bestand is de brug tussen de kale primitieven en de door de domeinlaag gedefinieerde `ViewModels`.
+ * @term_definition
+ *   - `Entry Component`: Een `memoized` React-component die een specifieke `ViewModel` accepteert en een `primitive` rendert binnen een `FieldWrapper`. Voorbeeld: `MoneyEntry` neemt een `CurrencyViewModel` en rendert een `InputPrimitive`.
+ *   - `FieldWrapper`: Een interne HOC (Higher-Order Component) die de standaard layout voor een veld verzorgt, inclusief een label, het input-element zelf, en een ruimte voor een foutmelding.
+ * @contract Elk `Entry` component is `memoized` voor performance en accepteert één enkele prop: `viewModel`. Dit `viewModel` (afkomstig uit de domain-laag) bevat alle data, stijlen en callbacks die nodig zijn om het component te renderen en te laten functioneren. Het bestand exporteert een set van deze `Entry`-componenten.
+ * @ai_instruction Gebruik deze `Entry`-componenten in je schermen om data-invoer van de gebruiker te verzamelen. De logica en state worden volledig beheerd door de `ViewModel` die je aan het component meegeeft. Voeg hier een nieuw `Entry`-component toe wanneer er een nieuw type data-invoer nodig is dat niet gedekt wordt door de bestaande componenten.
+ */
 // src/ui/fields/fields.tsx
 import React, { memo } from 'react';
 import { View, Text } from 'react-native';

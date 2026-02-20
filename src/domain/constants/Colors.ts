@@ -1,3 +1,10 @@
+/**
+ * @file_intent Definieert de kleurenschema's voor de light- en dark-thema's van de applicatie.
+ * @repo_architecture Domain Layer - Constants.
+ * @term_definition Theme = De UI-modus, 'light' of 'dark'. ColorScheme = Een interface die alle kleurrollen definieert die in de app worden gebruikt voor een thema. Colors = De hoofdconstante die de ColorScheme-objecten voor beide thema's bevat.
+ * @contract Dit bestand exporteert `Colors`, een `Record<Theme, ColorScheme>`, die een consistente, type-veilige manier biedt om themakleuren te benaderen. Exporteert ook de `Theme` en `ColorScheme` types.
+ * @ai_instruction Bij het wijzigen van kleuren, zorg ervoor dat zowel `light` als `dark` thema's synchroon worden bijgewerkt en alle sleutels in `ColorScheme` in beide aanwezig zijn. Dit bestand is de enige bron van waarheid voor alle UI-kleuren.
+ */
 // src/domain/constants/Colors.ts
 export type Theme = 'light' | 'dark';
 

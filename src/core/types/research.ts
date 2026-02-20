@@ -86,7 +86,7 @@ export interface CsvItem {
 export interface ResearchContract {
   id: string;
   externalId: string;
-  isSpecialStatus: boolean; 
+  isSpecialStatus: number; 
   data: {
     members: ResearchMember[];
   };

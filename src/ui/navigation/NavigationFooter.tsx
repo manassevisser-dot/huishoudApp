@@ -1,3 +1,13 @@
+/**
+ * @file_intent Rendert een vaste footer-balk met navigatieknoppen ("Terug" en "Verder"). Het component beheert de UI en de interactie-logica voor deze knoppen, inclusief de 'disabled' state.
+ * @repo_architecture UI Layer - Navigation/Component. Dit is een specifiek UI-component dat deel uitmaakt van de algemene navigatie-layout.
+ * @term_definition
+ *   - `canGoNext`: Een boolean die bepaalt of de "Verder"-knop klikbaar is. Deze waarde wordt afgeleid van de `navigation`-orchestrator.
+ *   - `FooterContainer`: Een interne layout-component die zorgt voor de correcte positionering, achtergrond, en `safe area` insets voor de footer.
+ *   - `useMaster`: Een custom hook die toegang geeft tot de centrale `master`-orchestrator, waar de `navigation`-logica zich bevindt.
+ * @contract Het component haalt de navigatie-logica (`navigateNext`, `navigateBack`, `canNavigateNext`) uit de `MasterProvider`. Het haalt stijlen uit de `AppStyles`. De "Verder"-knop wordt automatisch uitgeschakeld (`disabled`) als `navigation.canNavigateNext()` `false` retourneert.
+ * @ai_instruction Dit component is ontworpen om 'out-of-the-box' te werken. De logica voor wanneer een gebruiker verder kan, wordt volledig bepaald door de `navigation`-orchestrator in de `master`-laag. Aanpassingen aan de *stijl* van de knoppen doe je in de `AppStyles`, niet in dit bestand. Aanpassingen aan de *logica* (wanneer je verder mag) doe je in de `domain/rules` die door de orchestrator worden gebruikt.
+ */
 // src/ui/navigation/NavigationFooter.tsx
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleProp, ViewStyle, TextStyle } from 'react-native';

@@ -1,4 +1,11 @@
 // src/services/storageShim.ts
+/**
+ * @file_intent Shim/Adapter voor AsyncStorage. Biedt een gestructureerde interface voor het opslaan en laden van de `FormState` en het thema.
+ * @repo_architecture Infrastructure Layer - Storage Adapter.
+ * @term_definition Envelope = Een wrapper-object dat de state bevat, samen met metadata zoals een versienummer, om migraties te beheren. Shim = Een dunne laag code die een API aanpast of vereenvoudigt.
+ * @contract Functies `loadState` en `saveState` gebruiken een envelope om de `FormState` te versioneren. `loadTheme` en `saveTheme` behandelen de thema-string. Alle functies vangen fouten af en loggen deze via `AuditLogger`.
+ * @ai_instruction Dit is de enige interface naar AsyncStorage. Bij een brekende wijziging in `FormState`, verhoog `ENVELOPE_VERSION` om te voorkomen dat ongeldige data wordt geladen.
+ */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter';
 import type { FormState } from '@core/types/core';

@@ -1,3 +1,10 @@
+/**
+ * @file_intent Definieert herbruikbare, semantische layoutpatronen als style-objecten.
+ * @repo_architecture Domain Layer - Constants.
+ * @term_definition Layout Token = Een benoemd style-object dat een veelvoorkomend flexbox- of positioneringspatroon vertegenwoordigt (bijv. `rowBetween`). Dit zijn de bouwstenen voor de structuur van componenten.
+ * @contract Dit bestand exporteert `Layout`, een `as const` object met style-objecten voor UI-structuur. Het exporteert ook `Space` (een alias voor `Tokens.Space`) en de `LayoutToken` type. Deze tokens moeten worden gebruikt in de `StyleRegistry` om de layout van componenten samen te stellen.
+ * @ai_instruction Voeg hier alleen pure, structurele stijlen toe (flexbox, positionering). Vermijd het toevoegen van kleuren, thematische waarden of specifieke afmetingen die niet uit `Tokens.ts` komen. Het doel is het creëren van een voorspelbaar en consistent layout-systeem.
+ */
 // src/domain/constants/LayoutTokens.ts
 import {Tokens} from '@domain/constants/Tokens';
 

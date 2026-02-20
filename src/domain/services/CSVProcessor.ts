@@ -1,3 +1,10 @@
+/**
+ * @file_intent Pure transformatie-logica voor financiële data-presentatie.
+ * @repo_architecture Mobile Industry (MI) - Business/Presentation Layer.
+ * @term_definition PhoenixSummary = De berekende totalen (in centen) uit de domain rules.
+ * @contract Stateless. Zet ruwe centen-waarden om naar gelokaliseerde display-strings (ViewModel).
+ * @ai_instruction Bevat GEEN business rules (die zitten in @domain/rules). Bevat GEEN state-mutaties.
+ */
 import { toCents } from '../helpers/numbers';
 
 export interface CSVKeys {

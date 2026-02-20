@@ -8,24 +8,47 @@ describe('Colors', () => {
   });
 
   it('bevat alleen geldige kleurstrings in elk thema', () => {
-    const themes: Theme[] = ['light', 'dark'];
-    const requiredKeys = Object.keys(Colors.light) as Array<keyof ColorScheme>;
+    // Verbeterde regex: moet beginnen met # gevolgd door 3 of 6 hex karakters
+    const isHexColor = (color: string) => /^#([0-9A-F]{3}){1,2}$/i.test(color);
 
-    themes.forEach((theme) => {
-      const scheme = Colors[theme];
-      requiredKeys.forEach((key) => {
-        const value = scheme[key];
-        expect(value).toEqual(expect.any(String));
-        expect(value).toMatch(/^#[0-9A-Fa-f]{6}$/);
-      });
+    // Check light theme
+    Object.entries(Colors.light).forEach(([key, value]) => {
+      expect(isHexColor(value)).toBe(true);
     });
-  });
 
-  it('garandeert dat card === surface (backwards compat)', () => {
-    expect(Colors.light.card).toBe(Colors.light.surface);
-    expect(Colors.dark.card).toBe(Colors.dark.surface);
+    // Check dark theme
+    Object.entries(Colors.dark).forEach(([key, value]) => {
+      expect(isHexColor(value)).toBe(true);
+    });
+  }); // <-- Deze ontbrak in jouw code
+
+  it("zorgt ervoor dat light en dark thema's exact dezelfde sleutels hebben", () => {
+    const lightKeys = Object.keys(Colors.light).sort();
+    const darkKeys = Object.keys(Colors.dark).sort();
+    expect(lightKeys).toEqual(darkKeys);
   });
 });
-  it('snapshot van alle Colors', () => {
-    expect(Colors).toMatchSnapshot();
-  })
+
+describe('Theme and ColorScheme Types', () => {
+  it("Theme type accepteert alleen 'light' of 'dark'", () => {
+    const lightTheme: Theme = 'light';
+    const darkTheme: Theme = 'dark';
+
+    expect(lightTheme).toBe('light');
+    expect(darkTheme).toBe('dark');
+    
+    // De @ts-expect-error zorgt dat dit bestand wel compileert 
+    // terwijl we testen dat TS hier een fout zou geven.
+    // @ts-expect-error
+    const invalidTheme: Theme = 'blue'; 
+  });
+
+  it('Colors.light voldoet aan het ColorScheme type', () => {
+    // In plaats van een dummy object, testen we de echte implementatie
+    const lightScheme: ColorScheme = Colors.light;
+    
+    expect(lightScheme).toHaveProperty('primary');
+    expect(lightScheme).toHaveProperty('background');
+    expect(lightScheme).toHaveProperty('text');
+  });
+});

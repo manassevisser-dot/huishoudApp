@@ -1,3 +1,13 @@
+/**
+ * @file_intent Biedt een verzameling van zeer specifieke, context-afhankelijke business rules die de state van UI-elementen of de flow van een formulier besturen. Dit zijn vaak "lijm"-functies die data uit de `FormState` gebruiken om een `boolean` conditie te evalueren (bv. "moet dit veld getoond worden?").
+ * @repo_architecture Domain Layer - Business Rules.
+ * @term_definition
+ *   - `Conditional Rule`: Een functie die een of meer datapunten uit de applicatiestaat combineert om een `boolean` resultaat te produceren. Dit resultaat wordt doorgaans gebruikt om UI-elementen conditioneel te tonen/verbergen, te activeren/deactiveren, of om navigatie te besturen.
+ *   - `Fail-safe`: Een ontwerpkeuze waarbij een functie een veilige, neutrale waarde retourneert (bv. `0` of `false`) wanneer het onverwachte of ongeldige input ontvangt, in plaats van een error te gooien.
+ * @contract Dit bestand exporteert een serie kleine, pure functies (`isPensionAge`, `showIncomeSection`, `hasChildren`, etc.). Ze nemen specifieke delen van de `FormState` (of afgeleide waarden) als input en retourneren een `boolean` of een berekende `number`. De functies zijn defensief geschreven, met veilige fallbacks en type-checks waar nodig.
+ * @ai_instruction De conditionele regels in dit bestand worden aangeroepen door **orchestrators**. Een orchestrator evalueert een conditie (bv. `hasChildren(members, timeProvider)`) om te bepalen welke UI-componenten of -schermen moeten worden weergegeven. Het resultaat (`true` of `false`) wordt door de orchestrator gebruikt om de UI-staat te construeren die naar de "domme" mobiele UI wordt gestuurd. De UI zelf bevat geen conditionele logica, maar rendert enkel de staat die de orchestrator dicteert. Dit centraliseert de control flow en business logic in het domein en de orchestrator-lagen.
+ */
+
 import { type FormState, type Member } from '@core/types/core';
 import { type TimeProvider } from '@domain/helpers/TimeProvider';
 import { isMinor } from '@domain/rules/ageRules';

@@ -1,3 +1,10 @@
+/**
+ * @file_intent Definieert de mapping van UX-tokens naar de daadwerkelijke, leesbare UI-labels (in het Nederlands).
+ * @repo_architecture Domain Layer - Constants.
+ * @term_definition UI Label = De concrete tekst die in de user interface wordt getoond (bijv. 'Huishouden Opzetten'). UX Token = Een abstracte, semantische sleutel die een UI-element identificeert (bijv. `UX_TOKENS.SCREENS.HOUSEHOLD_SETUP`).
+ * @contract Dit bestand exporteert `UI_LABELS`, een object dat `UX_TOKENS` vertaalt naar Nederlandse strings. Het dient als de centrale "woordenboek" voor de UI. Het exporteert ook `SCREEN_LABELS` voor legacy-compatibiliteit.
+ * @ai_instruction Om een nieuw label toe te voegen: 1. Definieer eerst een token in `uxTokens.ts`. 2. Voeg hier een entry toe in `UI_LABELS` met het token als sleutel en de Nederlandse tekst als waarde. Dit centraliseert alle UI-tekst en maakt vertaling in de toekomst eenvoudiger.
+ */
 // src/domain/constants/labels.ts
 import { UX_TOKENS } from './uxTokens';
 

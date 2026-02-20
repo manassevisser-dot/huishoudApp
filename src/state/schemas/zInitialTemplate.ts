@@ -1,3 +1,10 @@
+/**
+ * @file_intent Biedt een schone, schema-gevalideerde initiële staat voor de wizard.
+ * @repo_architecture State Layer - Initial State Template.
+ * @term_definition Initial State = Het standaard, lege `FormState`-object dat wordt gebruikt om de applicatiestaat te initialiseren als er geen eerdere staat bestaat. Schema Validation = Het proces om te garanderen dat het `INITIAL_FORM_STATE`-object voldoet aan het `FormStateSchema`.
+ * @contract Dit bestand exporteert `INITIAL_FORM_STATE`, een constant object dat gegarandeerd een valide `FormState` is volgens `FormStateSchema`. Dit voorkomt runtime-errors door een ongeldige beginstaat.
+ * @ai_instruction Zorg er bij het aanpassen van deze template voor dat deze geldig blijft ten opzichte van het `FormStateSchema`. Wijzigingen hier hebben invloed op elke nieuwe sessie. Dit is de "fabrieksinstelling" van de staat.
+ */
 import { FormStateSchema } from '@adapters/validation/formStateSchema';
 import type { FormState } from '@adapters/validation/formStateSchema';
 

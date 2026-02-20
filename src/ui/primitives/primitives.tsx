@@ -1,3 +1,11 @@
+/**
+ * @file_intent Definieert de meest fundamentele, herbruikbare en "domme" UI-bouwstenen (primitives) voor de applicatie, zoals text inputs, buttons en switches.
+ * @repo_architecture UI Layer - Primitives/Atoms. Dit is de fundamentele laag van de componenten-hiërarchie, die de basis-elementen levert voor het bouwen van alle andere UI-componenten. Deze componenten zijn volledig losgekoppeld van de domein- of applicatie-state.
+ * @term_definition
+ *   - `Primitive`: Een stateless, "uncontrolled" React-component dat een core React Native-element omhult. Het ontvangt al zijn data en gedrag via props (`value`, `onAction`) en bevat geen applicatie-specifieke logica.
+ * @contract Dit bestand exporteert een set van primitieve componenten (bv. `InputPrimitive`, `TogglePrimitive`). Elk primitief volgt een strikte props-interface. Ze zijn ontworpen om op een hoger niveau te worden samengesteld tot complexere componenten (`Entry`-componenten). Ze halen geen data op, beheren geen applicatie-state en interacteren niet met orchestrators.
+ * @ai_instruction Gebruik deze primitives als de bouwstenen voor het creëren van complexere UI-componenten. Wanneer je een nieuw component maakt, controleer dan eerst of het kan worden samengesteld uit deze bestaande primitives. Als een nieuw, echt fundamenteel UI-element nodig is, voeg het dan hier toe. Houd deze componenten eenvoudig, stateless en vrij van applicatie-specifieke logica of complexe styling.
+ */
 // src/ui/primitives/primitives.tsx
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, Switch, StyleProp, ViewStyle, TextStyle } from 'react-native';

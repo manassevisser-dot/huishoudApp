@@ -30,6 +30,7 @@ export interface EntryDefinition {
   constraintsKey?: string;
   isDerived?: boolean;
   defaultValue?: unknown;
+  fieldId?: string
   options?: readonly string[];
 }
 
@@ -270,6 +271,17 @@ export const ENTRY_REGISTRY: Record<string, EntryDefinition> = {
     constraintsKey: 'telefoon',
   },
 };
+export function resolveFieldId(
+  entryId: string,
+  entry: EntryDefinition
+): string {
+  // 1) constraintsKey heeft PRIORITEIT als FormState-veld
+  if (entry.constraintsKey != null && entry.constraintsKey !== '') {
+    return entry.constraintsKey;
+  }
+    // 2) fallback naar de entryId
+  return entryId;
+}
 
 export const EntryRegistry: IBaseRegistry<string, EntryDefinition> = {
   // Gebruik ternary om de 'always true' object-waarschuwing te voorkomen

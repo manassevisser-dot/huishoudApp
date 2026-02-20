@@ -12,8 +12,9 @@ import type {
   SectionViewModel as InSectionVM,
   EntryViewModel as InEntryVM,
   PrimitiveViewModel as InPrimitiveVM,
-} from '@app/orchestrators/interfaces/IUIOrchestrator';
+} from '@app/orchestrators/factory/ScreenViewModelFactory';
 import type { PrimitiveType } from '@domain/registry/PrimitiveRegistry';
+
 
 // -------- Styled-Versies (voegen alleen 'style?' toe) --------
 export type StyleObject = unknown; // laat dit je eigen UI-style type zijn (bv. RN Style)
@@ -61,63 +62,62 @@ export interface StyleKeyStrategy {
 // We benutten data die jouw registries leveren: screen.type, section.layout/uiModel, entry.entryId, primitive.primitiveType. [1](https://deconnectie-my.sharepoint.com/personal/manasse_visser_arnhem_nl/Documents/Microsoft%20Copilot%20Chat-bestanden/registry_full_context.txt)
 const defaultKeyStrategy: StyleKeyStrategy = {
   screenKey: (screen) => `screen.type:${screen.type}`,
-  sectionKey: (sec) =>
-    sec.uiModel ? `section.layout:${sec.layout}|ui:${sec.uiModel}` : `section.layout:${sec.layout}`,
+  
+sectionKey: (sec) => {
+  const hasUiModel = sec.uiModel != null; // expliciete boolean
+  if (hasUiModel) {
+    return `section.layout:${sec.layout}|ui:${sec.uiModel}`;
+  }
+  return `section.layout:${sec.layout}`;
+},
   entryKey: (entry) => `entry:${entry.entryId}`,
   primitiveKey: (prim) => `primitive:${prim.primitiveType as PrimitiveType}`,
 };
 
 // --------- De StyleFactory zelf ---------
-export const ScreenStyleFactory = {
-  /**
-   * Bind styles aan een bestaand ScreenViewModel.
-   * @param svm  - output van je pure ScreenViewModelFactory
-   * @param resolver - adapter om jouw StyleRegistry te gebruiken (vereist)
-   * @param keys - optionele key-strategie; default gebruikt type/layout/uiModel/primitiveType
-   */
-  bind(
+export class ScreenStyleFactory {
+  static bind(
     svm: InScreenVM,
     resolver: StyleResolver,
     keys: StyleKeyStrategy = defaultKeyStrategy
   ): StyledScreenVM {
-    const styleKey = keys.screenKey(svm);
-    const screenStyle = resolver.getStyle(styleKey);
-
     return {
       ...svm,
-      style: screenStyle,
-      sections: svm.sections.map((sec) => this.bindSection(sec, resolver, keys)),
+      style: resolver.getStyle(keys.screenKey(svm)),
+      sections: svm.sections.map((sec) =>
+        ScreenStyleFactory.bindSection(sec, resolver, keys)
+      ),
     };
-  },
+  }
 
-  private_bindEntry(entry: InEntryVM, resolver: StyleResolver, keys: StyleKeyStrategy): StyledEntryVM {
-    const entryStyleKey = keys.entryKey(entry);
-    const entryStyle = resolver.getStyle(entryStyleKey);
-    const child = this.private_bindPrimitive(entry.child, resolver, keys);
-    return {
-      ...entry,
-      style: entryStyle,
-      child,
-    };
-  },
-
-  private_bindPrimitive(prim: InPrimitiveVM, resolver: StyleResolver, keys: StyleKeyStrategy): StyledPrimitiveVM {
-    const primitiveStyleKey = keys.primitiveKey(prim);
-    const primitiveStyle = resolver.getStyle(primitiveStyleKey);
-    return {
-      ...prim,
-      style: primitiveStyle,
-    };
-  },
-
-  bindSection(sec: InSectionVM, resolver: StyleResolver, keys: StyleKeyStrategy): StyledSectionVM {
-    const sectionStyleKey = keys.sectionKey(sec);
-    const sectionStyle = resolver.getStyle(sectionStyleKey);
-    const children = sec.children.map((e) => this.private_bindEntry(e, resolver, keys));
+  private static bindSection(
+    sec: InSectionVM, resolver: StyleResolver, keys: StyleKeyStrategy
+  ): StyledSectionVM {
     return {
       ...sec,
-      style: sectionStyle,
-      children,
+      style: resolver.getStyle(keys.sectionKey(sec)),
+      children: sec.children.map((e) =>
+        ScreenStyleFactory.bindEntry(e, resolver, keys)
+      ),
     };
-  },
-};
+  }
+
+  private static bindEntry(
+    entry: InEntryVM, resolver: StyleResolver, keys: StyleKeyStrategy
+  ): StyledEntryVM {
+    return {
+      ...entry,
+      style: resolver.getStyle(keys.entryKey(entry)),
+      child: ScreenStyleFactory.bindPrimitive(entry.child, resolver, keys),
+    };
+  }
+
+  private static bindPrimitive(
+    prim: InPrimitiveVM, resolver: StyleResolver, keys: StyleKeyStrategy
+  ): StyledPrimitiveVM {
+    return {
+      ...prim,
+      style: resolver.getStyle(keys.primitiveKey(prim)),
+    };
+  }
+}

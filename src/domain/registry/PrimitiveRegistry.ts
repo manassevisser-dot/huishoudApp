@@ -162,15 +162,6 @@ export type PrimitiveViewModel =
   | LabelViewModel
   | DateViewModel
   | ToggleViewModel;
-
-export interface PrimitiveMetadata {
-  type: PrimitiveType;
-  requiresOptions: boolean;
-  supportsPlaceholder: boolean;
-  isReadOnly: boolean;
-  supportsMultiSelect: boolean;
-}
-
 /**
  * ═══════════════════════════════════════════════════════════
  * DATA & REGISTRY SERVICE
