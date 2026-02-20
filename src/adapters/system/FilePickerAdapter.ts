@@ -1,4 +1,11 @@
 // src/adapters/system/FilePickerAdapter.ts
+/**
+ * @file_intent Faciliteert de interactie met het besturingssysteem voor het selecteren en inlezen van lokale bestanden.
+ * @repo_architecture Mobile Industry (MI) - Infrastructure Adapter Layer.
+ * @term_definition DocumentPicker = Expo module voor OS-native file selectie. FileSystem = Module voor het uitlezen van bestandinhoud naar geheugen.
+ * @contract Stateless bridge naar device-capabilities. Levert de ruwe string-inhoud van een CSV-bestand of gooit een expliciete Error bij annulering/corruptie.
+ * @ai_instruction Maakt gebruik van Expo SDK 54 API's. Let op de asset-array structuur bij resultaatverwerking en dwing UTF-8 codering af voor tekstconsistentie.
+ */
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 

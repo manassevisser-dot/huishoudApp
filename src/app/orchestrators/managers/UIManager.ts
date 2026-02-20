@@ -1,96 +1,80 @@
-import { FormStateOrchestrator } from "@app/orchestrators/FormStateOrchestrator";
-import { VisibilityOrchestrator } from "@app/orchestrators/VisibilityOrchestrator";
-import { RenderOrchestrator } from "@app/orchestrators/RenderOrchestrator";
-import { SectionOrchestrator, SectionViewModel } from "@app/orchestrators/SectionOrchestrator";
-import { ScreenRegistry } from "@domain/registry/ScreenRegistry";
-import { SectionRegistry } from "@domain/registry/SectionRegistry";
-import { EntryRegistry } from "@domain/registry/EntryRegistry";
-import { labelFromToken } from "@domain/constants/labelResolver";
+// src/app/UIManager.ts
+// ALLES UITGEZET MET COMMENTAAR - DEZE FILE STRAKS VERWIJDEREN
+// DOEL:
+// - Pure integrator: bouwt een volledige ScreenViewModel via de Factory.
+// - Haalt visibility booleans op via MasterAPI.
+// - Past visibility toe via VisibilityOrchestrator (aanbevolen: annotate).
+// - Geen Render/Section/Entry orchestrators meer.
+// - Geen directe registry lookups in de UIManager.
+//
+// VEREISTEN:
+// - ScreenViewModelFactory.build(screenId): ScreenViewModel
+// - VisibilityOrchestrator.annotate(svm, visibilityMap): ScreenViewModel
+//   (of .reduce(...) als je prune verkiest)
+// - MasterAPI.getVisibilityMap(screenId): Record<string, boolean>
 
-import type {
-  IUIOrchestrator,
-  FieldViewModel,
-  ScreenViewModel,
-} from "@app/orchestrators/interfaces/IUIOrchestrator";
+//import { ScreenViewModelFactory } from '@app/orchestrators/factory/ScreenViewModelFactory';
+//import { VisibilityOrchestrator } from '@app/orchestrators/VisibilityOrchestrator';
+//import { labelFromToken } from '@domain/constants/labelResolver';
 
-export class UIManager implements IUIOrchestrator {
-  private readonly render: RenderOrchestrator;
-  private readonly visibility: VisibilityOrchestrator;
-  private readonly sectionOrchestrator: SectionOrchestrator;
+// Types — gebruik jouw bestaande definitions als die elders staan.
+//import type { ScreenViewModel } from '@app/orchestrators/interfaces/IUIOrchestrator';
 
-  constructor(
-    fso: FormStateOrchestrator,
-    visibility: VisibilityOrchestrator,
-    updateField: (fieldId: string, value: unknown) => void,
-  ) {
-    this.visibility = visibility;
-    this.render = new RenderOrchestrator(fso);
-    this.sectionOrchestrator = new SectionOrchestrator(updateField);
-  }
+//export interface MasterAPI {
+  /** Levert de actuele visibility per entryId (FailClose: ontbrekend = false of expliciet false). */
+  //getVisibilityMap(screenId: string): Record<string, boolean>;
+  /** (optioneel) subscribe/unsubscribe voor live updates, indien je reactive UI hebt */
+  // subscribeVisibility(screenId: string, cb: (map: Record<string, boolean>) => void): () => void;
+//}
 
-  /**
-   * Het Totaalpakket: Bouwt de volledige hiërarchie op basis van ScreenRegistry.
-   */
-  public buildScreen(screenId: string): ScreenViewModel | null {
-    const screenDef = ScreenRegistry.getDefinition(screenId);
-    if (screenDef == null) return null;
+//type UIManagerDeps = {
+  //factory: typeof ScreenViewModelFactory;
+  //visibility?: VisibilityOrchestrator; // optioneel als je annotate/prune hier wilt doen
+  //masterApi: MasterAPI;                 // UI praat via deze poort met de MO/domeinlaag
+  //resolveTitleToken?: (token?: string) => string; // optioneel: titelverrijking
+//};
 
-    const sections = screenDef.sectionIds
-      .map((compId) => this.buildSection(compId))
-      .filter((c): c is SectionViewModel => c !== null);
+//export class UIManager {
+//  private readonly factory: typeof ScreenViewModelFactory;
+//  private readonly visibility?: VisibilityOrchestrator;
+//  private readonly masterApi: MasterAPI;
+//  private readonly resolveTitleToken?: (token?: string) => string;
 
-    return {
-      screenId: screenDef.id,
-      title: labelFromToken(screenDef.titleToken),
-      type: screenDef.type,
-      sections,
-      navigation: {
-        next: screenDef.nextScreenId,
-        previous: screenDef.previousScreenId,
-      },
-    };
-  }
+//  constructor({ factory, visibility, masterApi, resolveTitleToken }: UIManagerDeps) {
+//    this.factory = factory;
+//    this.visibility = visibility;
+//    this.masterApi = masterApi;
+//    this.resolveTitleToken = resolveTitleToken ?? ((t) => (t ? labelFromToken(t) : ''));
+//  }
 
   /**
-   * Directe toegang tot een FieldViewModel (bijv. voor losse renders).
+   * Bouwt de volledige ScreenViewModel en past (optioneel) visibility toe.
+   * - Factory: bouwt ALTIJD de volledige boom (screen → sections → entries → primitives).
+   * - MasterAPI: levert visibility booleans (FailClose).
+   * - VisibilityOrchestrator: annotate (aanrader) of reduce (prune).
    */
-  public buildFieldViewModel(fieldId: string): FieldViewModel | null {
-    const vm = this.render.buildFieldViewModel(fieldId);
-    if (vm == null) return null;
+//  public buildScreen(screenId: string): ScreenViewModel {
+//    // 1) Bouw volledige SVM (zonder visibility/hydratie)
+//    const svm = this.factory.build(screenId);
 
-    const ruleName = vm.visibilityRuleName;
-    if (ruleName != null && ruleName !== "") {
-      const ok = this.visibility.evaluate(ruleName);
-      if (ok !== true) return null;
-    }
+    // 2) (optioneel) verrijk de titel buiten de factory (als je met tokens werkt)
+//    if (svm.titleToken && !svm.title) {
+//      svm.title = this.resolveTitleToken?.(svm.titleToken) ?? '';
+//    }
 
-    return vm;
-  }
+    // 3) Haal visibilityMap op via MasterAPI (UI praat niet direct met domein)
+//    const visibilityMap = this.masterApi.getVisibilityMap(screenId);
 
-  // --- helpers ---
+    // 4) Pas visibility toe — voorkeur: annotate voor minimale re-renders
+//    if (this.visibility) {
+      // Annotate: zet entry.isVisible flags, behoudt object-referenties
+//      const annotated = this.visibility.annotate(svm, visibilityMap);
+//      return annotated;
+      // Wil je prune i.p.v. annotate?
+      // return this.visibility.reduce(svm, visibilityMap);
+//    }
 
-  private buildSection(compId: string): SectionViewModel | null {
-    const compDef = SectionRegistry.getDefinition(compId);
-    if (compDef == null) return null;
-
-    const activefieldIds = compDef.fieldIds.filter((fId) => {
-      const entryDef = EntryRegistry.getDefinition(fId);
-      if (entryDef == null) return true;
-
-      
-const ruleName = entryDef.visibilityRuleName;
-if (ruleName == null) return true;
-
-const result = this.visibility.evaluate(ruleName);
-return result === true;
-
-    });
-
-    return this.sectionOrchestrator.prepareSection({
-      instanceId: compId,
-      sectionId: compId,
-      dataContext: {}, // Data context wordt (nu) niet gebruikt; kan later gevuld worden
-      activefieldIds,
-    });
-  }
-}
+    // 5) Als je hier geen visibility wilt toepassen, geef de volledige SVM terug
+//    return svm;
+//  }
+//}

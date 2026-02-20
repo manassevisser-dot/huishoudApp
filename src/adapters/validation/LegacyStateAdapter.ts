@@ -1,3 +1,12 @@
+// src/adapters/validation/LegacyValidator.ts
+/**
+ * @file_intent Valideert en saneert inkomende data van oude versies of externe bronnen om runtime crashes te voorkomen.
+ * @repo_architecture Mobile Industry (MI) - Anti-Corruption Layer (Adapter).
+ * @term_definition filteredArray = Een robuuste validator die ongeldige array-items geruisloos verwijdert in plaats van de hele parse te laten falen.
+ * @contract Biedt een tolerante interface voor "legacy" datastructuren. Garandeert een geldige LegacyState-output (eventueel leeg) door middel van safeParse, ongeacht hoe corrupt de input is.
+ * @ai_instruction Gebruik dit bestand uitsluitend bij data-import of migratie-scenario's. De hier gedefinieerde schema's zijn losser dan de strikte ZodSchemas.ts om achterwaartse compatibiliteit te waarborgen.
+ */
+
 import { z } from 'zod';
 
 const ZodjsonPrimitive = z.union([z.string(), z.number(), z.boolean(), z.null()]);

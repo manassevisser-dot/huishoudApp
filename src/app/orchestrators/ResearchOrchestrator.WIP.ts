@@ -7,7 +7,7 @@
  * @ai_instruction Cruciaal: Wijzigingen in 'processCsvTransactions' moeten altijd 'stripPII' aanroepen voordat data naar 'research' gaat.
  */
 import { DATA_KEYS } from '@domain/constants/datakeys';
-import { csvService } from '@adapters/csv/csvService';
+import { scvAdapter } from '@adapters/csv/scvAdapter';
 import { dataProcessor } from '@domain/finance/StatementIntakePipeline.WIP'; 
 import {
   RawUIData,
@@ -80,7 +80,7 @@ export class ResearchOrchestrator {
     }
 
     try {
-      const rawMapped = csvService.mapToInternalModel(rawCsv);
+      const rawMapped = scvAdapter.mapToInternalModel(rawCsv);
       const mapped = (rawMapped ?? []) as CsvItem[];
 
       return mapped.map((item) => {

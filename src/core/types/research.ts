@@ -1,4 +1,11 @@
-//src/core/types/research.ts
+// src/core/types/research.ts
+/**
+ * @file_intent Definieert de data-contracten voor externe analytics, onderzoek en database-synchronisatie (zoals N8N integraties).
+ * @repo_architecture Mobile Industry (MI) - Research & Integration Layer.
+ * @term_definition ResearchContract = Het finale pakket inclusief 'isSpecialStatus' dat naar de database wordt gepusht. CsvItem = Een getransformeerd transactie-object verrijkt met metadata voor audit-doeleinden. AnonymizedResearchPayload = Een privacy-compliant datastructuur voor statistische analyse.
+ * @contract Biedt een strikte interface voor data-export. Waar de FormState gericht is op runtime-UI, is de ResearchContract gericht op koude opslag en analyse. Het dwingt anonimisering en specifieke formaten (zoals cents voor bedragen) af om precisieverlies en privacy-lekken te voorkomen.
+ * @ai_instruction Bij het implementeren van de database-push via N8N moet de `ResearchValidator.mapToContract` utility worden gebruikt om de 'isSpecialStatus' te berekenen. Let op de CONTRACT_VERSION; bij wijzigingen in de ResearchMember-structuur moet deze versie worden opgehoogd om de integriteit van de onderzoeksdataset te waarborgen.
+ */
 
 /**
  *  TODO: 
@@ -9,11 +16,11 @@
  * state.externalId, 
  * state.data.members
  * );
- *  //Nu bevat 'contract' de isSpecialStatus, klaar voor de database.
+ * Nu bevat 'contract' de isSpecialStatus, klaar voor de database.
  * await database.save(contract);
  * */ 
 
-// --- Finance ---
+
 export interface FinanceItem {
   id: string;
   amountCents: number;
@@ -52,7 +59,6 @@ export interface Money {
   currency: 'EUR';
 }
 
-// --- Household ---
 export type MemberType = 'adult' | 'child' | 'teenager' | 'senior' | 'puber';
 
 export interface ResearchMember {
@@ -64,10 +70,9 @@ export interface ResearchMember {
   dateOfBirth?: string;
   gender?: string;
   age?: number;
-  [key: string]: unknown; // Voor index signature compatibiliteit in tests
+  [key: string]: unknown;
 }
 
-// --- Wasstraat / Services ---
 export interface CsvItem {
   id: string;
   date: string;
@@ -87,10 +92,9 @@ export interface ResearchContract {
   };
 }
 export interface RawUIData {
-    setup?: Record<string, unknown>;     // Optioneel gemaakt (?)
-    household?: { members: unknown[] };     // Optioneel gemaakt (?)
+    setup?: Record<string, unknown>;
+    household?: { members: unknown[] };    
     finance?: Record<string, unknown>;
-  // Velden die privacyHelpers direct aanroept op 'raw'
   fullName?: string;
   firstName?: string;
   lastName?: string;
@@ -106,7 +110,6 @@ export interface RawUIData {
 }
 
 export interface AnonymizedResearchPayload {
-    // We maken de structurele velden optioneel om de wasstraat-mapping te laten slagen
     version?: string;
     timestamp: string;
     anonymizedData?: Record<string, unknown>;

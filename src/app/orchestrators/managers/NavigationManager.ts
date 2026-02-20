@@ -1,3 +1,11 @@
+// src/app/orchestrators/NavigationManager.ts
+/**
+ * @file_intent Beheert de volgorde en hiërarchie van de applicatieschermen en de lineaire wizard-flow.
+ * @repo_architecture Mobile Industry (MI) - Navigation Management Layer.
+ * @term_definition wizardSteps = De hardcoded array die de verplichte volgorde van de intake-flow dwingt. DASHBOARD/OPTIONS = Ankerpunten buiten de lineaire wizard.
+ * @contract Fungeert als de bron van waarheid voor schermvolgorde. Het berekent op basis van de huidige state wat het logische volgende of vorige scherm is, inclusief de transitie van de wizard terug naar het dashboard.
+ * @ai_instruction De wizardSteps zijn strikt geordend. Bij het toevoegen van een nieuwe stap in de onboarding moet de string-ID hier op de juiste positie in de array worden geplaatst. De manager is stateless; hij reageert puur op de meegegeven `currentStep`.
+ */
 export class NavigationManager {
   private readonly wizardSteps = [
     '1setupHousehold',

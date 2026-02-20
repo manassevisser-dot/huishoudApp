@@ -1,4 +1,12 @@
 // src/app/context/FormContext.tsx
+/**
+ * @file_intent Integreert de globale applicatiestate met de React component-boom via de Context API.
+ * @repo_architecture Mobile Industry (MI) - State Infrastructure Layer.
+ * @term_definition FormProvider = De root-component die state en orchestrators beschikbaar stelt. useStableOrchestrator = Hook die garandeert dat de orchestrator-instantie stabiel blijft over renders heen.
+ * @contract Beheert de lifecycle van de 'Single Source of Truth' (SSOT) middels useReducer. Exposeert zowel de ruwe state als de orchestrator-laag naar de UI-componenten.
+ * @ai_instruction Dit is de lijm tussen de UI en de logica. Wijzigingen in de state-structuur of actie-types moeten hier worden gereflecteerd in de ContextType-definitie. Ondersteunt mockDispatch voor test-scenario's.
+ */
+
 import React, {
   createContext,
   useContext,
@@ -48,12 +56,8 @@ export const FormProvider: React.FC<FormProviderProps> = ({
     return reactDispatch;
   }, [mockDispatch]);
 
-  // 3) Stabiele orchestrator
-  // VERWIJDERD: 'styles' argument. De orchestrator haalt zijn regels 
-  // nu zelf uit het domein via de SectionStyleFactory.
   const orchestrator = useStableOrchestrator(state, dispatch);
 
-  // 4) Context value
   const value = useMemo(
     () => ({ state, dispatch, orchestrator }),
     [state, dispatch, orchestrator]
@@ -62,7 +66,6 @@ export const FormProvider: React.FC<FormProviderProps> = ({
   return <FormContext.Provider value={value}>{children}</FormContext.Provider>;
 };
 
-// Hook
 export const useFormContext = () => {
   const context = useContext(FormContext);
   if (context === undefined) {
@@ -71,6 +74,5 @@ export const useFormContext = () => {
   return context;
 };
 
-// Re-exports
 export type { FormState } from '@core/types/core';
 export type { FormAction } from '@app/state/formReducer';

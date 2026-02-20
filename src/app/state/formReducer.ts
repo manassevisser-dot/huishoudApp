@@ -1,24 +1,21 @@
+// src/app/state/formReducer.ts
+/**
+ * @file_intent FormReducer – Pure State Mutator
+ * @repo_architecture Mobile Industry (MI) - Core State Management Layer.
+ * @term_definition deepMerge = Utility voor immutabele updates van geneste objecten. FormAction = Discriminated union van alle toegestane mutaties op de globale state.
+ * @contract Verantwoordelijkheden:
+ * ✅ Puur stempelen van wijzigingen (immutabel)
+ * ✅ Type‑safe updates
+ * * Niet verantwoordelijk voor:
+ * ❌ Validatie (gebeurt aan de boundary in de Orchestrator)
+ * ❌ Business/routing logica (gebeurt in de StateWriterAdapter)
+ * * Architectuur: Pure functie: (state, action) => newState, Geen side‑effects, Immutable updates, Fail‑closed voor onbekende acties
+ * @ai_instruction Deze reducer vormt de Single Source of Truth. Gebruik 'UPDATE_DATA' voor domein-data en 'UPDATE_VIEWMODEL' voor UI-specifieke state. Bij uitbreiding van de state-structuur moeten zowel de FormAction union als de INITIAL_DATA_RESET template worden bijgewerkt.
+ */
 import type { FormState} from '@core/types/core';
 import { deepMerge } from '@utils/objects';
 import { DATA_KEYS } from '@domain/constants/datakeys';
 
-/**
- * FormReducer – Pure State Mutator
- *
- * Verantwoordelijkheden:
- * ✅ Puur stempelen van wijzigingen (immutabel)
- * ✅ Type‑safe updates
- *
- * Niet verantwoordelijk voor:
- * ❌ Validatie (gebeurt aan de boundary in de Orchestrator)
- * ❌ Business/routing logica (gebeurt in de StateWriterAdapter)
- *
- * Architectuur:
- * - Pure functie: (state, action) => newState
- * - Geen side‑effects
- * - Immutable updates
- * - Fail‑closed voor onbekende acties
- */
 
 export type FormAction =
   | { type: 'UPDATE_DATA'; payload: Partial<FormState['data']> }

@@ -1,3 +1,12 @@
+// src/adapters/validation/BoundaryValidation.ts
+/**
+ * @file_intent Dient als de primaire beveiligingsschil (Boundary) tussen de UI en de Domein-laag.
+ * @repo_architecture Mobile Industry (MI) - Application Boundary Layer.
+ * @term_definition ValidationResult = Een gediscrimineerde union die ofwel gesaneerde data of een expliciete foutmelding teruggeeft. Normalization = Het proces waarbij ruwe UI-input wordt omgezet naar het juiste type (bijv. string naar number).
+ * @contract ADR-01 & ADR-02: Dwingt runtime type-safety af aan de grens van het systeem. Geen enkele waarde mag de domein-state bereiken zonder door deze validatie-functies te zijn gegaan.
+ * @ai_instruction Gebruik validateAtBoundary voor individuele veldmutaties in orchestrators. De functie is puur (side-effect free) en vertrouwt op de FieldSchemas voor de actuele validatie-logica.
+ */
+
 import { ZodError } from 'zod';
 import { FieldSchemas } from './formStateSchema';
 import { Logger } from '@adapters/audit/AuditLoggerAdapter';

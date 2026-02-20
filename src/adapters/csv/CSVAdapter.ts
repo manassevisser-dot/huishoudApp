@@ -1,3 +1,11 @@
+// src/adapters/csv/CSVAdapter.ts
+/**
+ * @file_intent Vertaalt ruwe CSV-string data naar het interne domeinmodel van de applicatie.
+ * @repo_architecture Mobile Industry (MI) - Adapter Layer (Infrastructure).
+ * @term_definition detectedKeys = Mapping van CSV-kolomnamen naar domein-begrippen (amount, date, etc.).
+ * @contract Verantwoordelijk voor I/O transformatie en kolomdetectie. Delegeert de feitelijke business-logica voor data-verwerking aan de CSVProcessor.
+ * @ai_instruction Gebruikt regex-patronen voor flexibele kolomdetectie. Garandeert non-nullable string outputs voor de processor om type-errors te voorkomen.
+ */
 import { parseRawCsv } from '@utils/csvHelper';
 import { CSVProcessor, CSVKeys } from '@domain/services/CSVProcessor';
 

@@ -1,3 +1,11 @@
+// src/app/orchestrators/state/StateWriterAdapter.ts
+/**
+ * @file_intent Verantwoordelijk voor het routeren en wegschrijven van veld-updates naar de globale applicatiestate (FSO).
+ * @repo_architecture Mobile Industry (MI) - State Mutation Layer (Adapter).
+ * @term_definition Dynamic Collection = Een array-gebaseerde datastructuur (zoals income of expenses) waar velden als losse items in worden ge-upsert.
+ * @contract Fungeert als de 'Traffic Controller' voor mutaties. Weet welke fieldId in welke lade (Setup, Household, of Finance) van de FormState thuishoort.
+ * @ai_instruction Maakt gebruik van functionele overloads voor type-safety. Bij nieuwe velden in de registries moet hier de mapping in de COLLECTIONS of direct-field sets worden uitgebreid.
+ */
 import type {
   FormState,
   SetupData,

@@ -1,3 +1,12 @@
+// src/adapters/research/ResearchValidator.ts
+/**
+ * @file_intent Valideert en transformeert data voor onderzoeksdoeleinden en contractvorming.
+ * @repo_architecture Mobile Industry (MI) - Research & Analytics Adapter Layer.
+ * @term_definition ResearchPayload = Geanonimiseerde dataset voor externe analyse. SpecialStatus = Vlag die aangeeft of een dossier extra onderzoek behoeft op basis van de huishoudsamenstelling.
+ * @contract Vertaalt ruwe data naar strikte Research types. Dwingt het gebruik van centen (integers) af voor geldbedragen via MoneySchema en koppelt domein-regels (zoals age constraints) aan de validatie.
+ * @ai_instruction Deze adapter integreert direct met de householdRules uit het domein voor status-bepaling. Let op: bedragen moeten altijd als hele getallen (centen) worden aangeleverd om afrondingsfouten in onderzoek te voorkomen.
+ */
+
 import { z } from 'zod';
 import type { AnonymizedResearchPayload, ResearchMember, Money, ResearchContract } from '@core/types/research';
 import { FIELD_CONSTRAINTS_REGISTRY as REG } from '@domain/rules/fieldConstraints';

@@ -1,5 +1,14 @@
+// src/app/orchestrators/BusinessManager.ts
+/**
+ * @file_intent Implementeert de IBusinessOrchestrator interface en fungeert als de centrale manager voor bedrijfslogica-transformaties.
+ * @repo_architecture Mobile Industry (MI) - Business Logic Management Layer.
+ * @term_definition FinancialOrchestrator = De onderliggende domein-orchestrator die de daadwerkelijke financiële berekeningen en valuta-formattering uitvoert.
+ * @contract De BusinessManager dient als een facade; het ontsluit complexe domein-berekeningen (via de FinancialOrchestrator) aan de UI-laag in een consistent formaat (FinancialSummaryVM).
+ * @ai_instruction Deze klasse is ontworpen om lichtgewicht te blijven. 
+ * Voeg hier geen zware rekenlogica toe, maar delegeer deze naar gespecialiseerde domein-orchestrators. 
+ * De BusinessManager is verantwoordelijk voor de orchestratie van deze verschillende domein-outputs tot één samenhangend resultaat voor de presentatielaag.
+ */
 import { FormState } from '@core/types/core';
-// Importeer de interface en de orchestrator-interface van de juiste plek
 import { IBusinessOrchestrator, FinancialSummaryVM } from '@app/orchestrators/interfaces/IBusinessOrchestrator';
 import { FinancialOrchestrator } from '@app/orchestrators/FinancialOrchestrator';
 

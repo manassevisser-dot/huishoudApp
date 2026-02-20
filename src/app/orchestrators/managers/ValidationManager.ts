@@ -1,4 +1,11 @@
 // src/app/orchestrators/managers/ValidationManager.ts
+/**
+ * @file_intent Implementeert de validatie-logica door UI-secties te mappen aan domein-validatieregels via de Boundary-adapters.
+ * @repo_architecture Mobile Industry (MI) - Validation Management Layer.
+ * @term_definition UI_SECTIONS_MAP = Een statische configuratie die bepaalt welke velden gegroepeerd zijn binnen een logische schermsectie. validateAtBoundary = De adapter-functie die Zod-schema's aanroept voor type- en businessrule validatie.
+ * @contract Berekent de validatiestatus op zowel veldniveau (real-time) als sectieniveau (form-submission). Het aggregeert individuele veldfouten naar een SectionValidationResult, wat essentieel is voor navigatie-guards in de wizard.
+ * @ai_instruction De methode `validateField` voert eerst een generieke 'required' check uit alvorens de gespecialiseerde `validateAtBoundary` aan te roepen. Gebruik `shouldValidateAtBoundary` om te bepalen of een veld 'live' feedback moet geven tijdens het typen.
+ */
 
 import { validateAtBoundary } from '@adapters/validation/validateAtBoundary';
 import { SectionValidationResult, ValidationError } from "../interfaces/IValidationOrchestrator";

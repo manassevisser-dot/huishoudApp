@@ -1,22 +1,11 @@
-import { SectionViewModel } from '@app/orchestrators/SectionOrchestrator';
-import { PrimitiveType } from '@domain/registry/PrimitiveRegistry';
-
-export interface FieldViewModel {
-  fieldId: string;
-  primitiveType: PrimitiveType;
-  labelToken: string;
-  placeholderToken?: string;
-  value: unknown;
-  options?: readonly string[];
-  error?: string | null;
-  uiModel?: string;
-  visibilityRuleName?: string;
-}
+import type { PrimitiveType } from '@domain/registry/PrimitiveRegistry';
 
 export interface ScreenViewModel {
   screenId: string;
-  title: string;
+  title?: string;
+  titleToken?: string;
   type: string;
+  styleKey?: string;
   sections: SectionViewModel[];
   navigation: {
     next?: string;
@@ -24,7 +13,28 @@ export interface ScreenViewModel {
   };
 }
 
+export interface SectionViewModel {
+  sectionId: string;
+  title: string;
+  styleKey?: string;
+  children: EntryViewModel[];
+}
+
+export interface EntryViewModel {
+  entryId: string;
+  label?: string;
+  labelToken?: string;
+  styleKey?: string;
+  child: PrimitiveViewModel;
+  isVisible?: boolean; // wordt NIET door de factory gezet
+}
+
+export interface PrimitiveViewModel {
+  entryId: string;              // instance-id == entryId
+  primitiveType: PrimitiveType; // uit jouw PrimitiveRegistry
+  styleKey?: string;
+}
+
 export interface IUIOrchestrator {
   buildScreen(screenId: string): ScreenViewModel | null;
-  buildFieldViewModel(fieldId: string): FieldViewModel | null;
 }

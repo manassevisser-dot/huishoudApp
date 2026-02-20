@@ -1,3 +1,11 @@
+// src/app/hooks/useTransactionHistory.ts
+/**
+ * @file_intent Beheert de stateful lifecycle van transacties in de UI, inclusief undo/redo-functionaliteit en error-handling.
+ * @repo_architecture Mobile Industry (MI) - UI Logic / Hook Layer.
+ * @term_definition adapter = De StatefulTransactionAdapter die de stack van wijzigingen bijhoudt. hasError = Lokale UI-state die aangeeft of de laatste actie (bijv. validatie) is mislukt.
+ * @contract Exposeert een stabiele interface voor de UI om transacties te muteren. Gebruikt de AuditLogger om fouten te categoriseren (WARN voor validatie, ERROR voor systeemfouten) zonder de Zod-details te lekken naar de component.
+ * @ai_instruction Deze hook initialiseert de adapter via een useState initializer (lazy init) om persistentie over re-renders te garanderen. Gebruik de 'undo' en 'redo' functies om door de historie te navigeren die in de adapter is opgeslagen.
+ */
 import { useState } from 'react';
 import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter';
 import { executeUpdateAction } from './transactionActions';

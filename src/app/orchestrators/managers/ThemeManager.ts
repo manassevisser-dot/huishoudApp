@@ -1,4 +1,11 @@
 // src/app/orchestrators/managers/ThemeManager.ts
+/**
+ * @file_intent Implementeert de IThemeOrchestrator om de visuele weergave-instellingen te synchroniseren tussen persistente opslag en de actieve UI.
+ * @repo_architecture Mobile Industry (MI) - Presentation Management Layer.
+ * @term_definition _listener = Een interne referentie naar een UI-callback die re-renders triggert bij thema-wijzigingen. storageShim = De abstractielaag voor I/O operaties (zoals AsyncStorage of LocalStorage).
+ * @contract Beheert de stateful overgang tussen 'light' en 'dark' modi. Garandeert dat thema-wijzigingen atomair worden opgeslagen en direct worden gepropageerd naar geabonneerde componenten via het observer-patroon.
+ * @ai_instruction De klasse gebruikt een interne cache (_currentTheme) om synchrone toegang via getTheme() mogelijk te maken, wat essentieel is voor performance in React renders. De loadTheme() methode moet idealiter tijdens de applicatie-bootstrap aangeroepen worden.
+ */
 
 import { loadTheme, saveTheme } from '@services/storageShim';
 import type { Theme } from '@domain/constants/Colors';

@@ -1,3 +1,12 @@
+// src/app/context/WizardContext.tsx
+/**
+ * @file_intent Faciliteert de navigatie-logica binnen de wizard-flow door de MasterProvider en FormState te koppelen aan specifieke UI-acties.
+ * @repo_architecture Mobile Industry (MI) - UI Navigation Layer.
+ * @term_definition activeStepId = De huidige stap in de wizard. canNext = Berekende boolean die aangeeft of de huidige stap valide is voor navigatie.
+ * @contract Delegeert navigatie-orders naar de 'Master' (Orchestrator-laag). Zorgt voor een abstractie-laag zodat UI-knoppen niet direct met de orchestrator hoeven te praten.
+ * @ai_instruction ⚠️ DEPRECATION WARNING: Dit bestand is mogelijk redundant geworden door de gecentraliseerde UIOrchestrator. Controleer of componenten nog 'useWizard' gebruiken of dat ze direct naar de orchestrator via 'FormContext' zijn gemigreerd.
+ */
+
 import React, { createContext, useContext, useMemo, ReactNode } from 'react';
 import { useFormState } from '@ui/providers/FormStateProvider';
 import { useMaster } from '@ui/providers/MasterProvider';

@@ -1,6 +1,13 @@
 // src/adapters/transaction/stateful.ts
-import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter';
+/**
+ * @file_intent Beheert de tijdlijn van applicatie-states (Undo/Redo) en voert rekenkundige verdelingen uit.
+ * @repo_architecture Mobile Industry (MI) - State History & Utility Layer.
+ * @term_definition pointer = De huidige index in de geschiedenis-stack. allocateRemainder = Algoritme om bedragen eerlijk te verdelen over termijnen zonder afrondingsverschillen.
+ * @contract Biedt een stateful wrapper rondom transactie-data. Garandeert dat wijzigingen ongedaan gemaakt kunnen worden en logt elke mutatie via de AuditLogger conform ADR-12.
+ * @ai_instruction De geschiedenis wordt lineair opgeslagen; bij een 'push' op een pointer in het verleden wordt de toekomstige stack gewist. Gebruik calculateDistribution voor het berekenen van betalingstermijnen.
+ */
 
+import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter';
 
 const allocateRemainder = (total: number, parts: number): number[] => {
   // We gebruiken Math.trunc om de 'base' altijd richting 0 te berekenen

@@ -1,3 +1,12 @@
+// src/adapters/validation/ZodSchemas.ts
+/**
+ * @file_intent Genereert runtime validatie-schema's door domein-constraints (SSOT) te vertalen naar Zod.
+ * @repo_architecture Mobile Industry (MI) - Adapter Layer (Validation).
+ * @term_definition build[Type] = Specifieke Zod-builders die domein-regels (min/max/regex) omzetten naar executable code. FieldSchemas = Een runtime lookup-tabel voor individuele veldvalidatie.
+ * @contract ADR-01: Dit is de enige plek in de repository waar Zod wordt gebruikt. Dient als de poortwachter voor data-integriteit; elke input van buitenaf (FSO/File) móet door deze schemas.
+ * @ai_instruction Wijzig nooit de schemas handmatig zonder dat de FIELD_CONSTRAINTS_REGISTRY in het domein is aangepast. Gebruik .passthrough() om compatibiliteit met legacy velden te behouden tijdens de transitie.
+ */
+
 import { z } from 'zod';
 import {
   FIELD_CONSTRAINTS_REGISTRY,
