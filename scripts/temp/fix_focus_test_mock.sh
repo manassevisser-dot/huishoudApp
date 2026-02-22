@@ -43,7 +43,7 @@ jest.mock('../ui/screens/Wizard/LandingScreen', () => {
   };
 });
 
-// Importeer de gemockte component
+// Importeer de gemockte section
 import LandingScreen from '../ui/screens/Wizard/LandingScreen';
 
 describe('WAI009 Focus Management', () => {

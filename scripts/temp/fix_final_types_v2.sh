@@ -18,7 +18,7 @@ jest.mock('react-native-safe-area-context', () => ({
 const DEFAULT_STATE: FormState = {
   schemaVersion: '1.0',
   activeStep: 'LANDING',
-  currentPageId: 'setupHousehold',
+  currentScreenId: 'setupHousehold',
   isValid: false,
   data: {
     setup: {},

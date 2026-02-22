@@ -29,7 +29,7 @@ export const FinanceFixture = {
 
 export const FormStateFixture: FormState = {
   activeStep: 'WIZARD',
-  currentPageId: 'setupHousehold',
+  currentScreenId: 'setupHousehold',
   isValid: false,
   schemaVersion: '1.0',
   data: {
@@ -76,7 +76,7 @@ export function makePhoenixState(
   const base: FormState = {
     schemaVersion: '1.0',
     activeStep: 'LANDING',
-    currentPageId: 'setupHousehold',
+    currentScreenId: 'setupHousehold',
     isValid: false,
     data: {
       setup: {},

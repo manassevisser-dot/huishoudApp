@@ -44,7 +44,7 @@ check_isolation() {
 }
 check_isolation "ImportOrchestrator" "DataManager.ts"
 check_isolation "FinancialOrchestrator" "BusinessManager.ts"
-check_isolation "ComponentOrchestrator" "UIManager.ts"
+check_isolation "SectionOrchestrator" "UIManager.ts"
 
 # G. Pipeline & No-Any check
 echo -n "G. Geen 'as any' in Master: "

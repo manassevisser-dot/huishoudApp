@@ -42,7 +42,7 @@ const config: Config = {
     '^@config/(.*)$': '<rootDir>/src/config/$1',
     '^@logic/(.*)$': '<rootDir>/src/logic/$1',
     '^@ui/(.*)$': '<rootDir>/src/ui/$1',
-    '^@components/(.*)$': '<rootDir>/src/ui/components/$1',
+    '^@sections/(.*)$': '<rootDir>/src/ui/sections/$1',
     '^@styles/(.*)$': '<rootDir>/src/ui/styles/$1',
     '^@state/(.*)$': '<rootDir>/src/state/$1',
     '^@context/(.*)$': '<rootDir>/src/app/context/$1',
