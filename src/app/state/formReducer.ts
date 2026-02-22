@@ -12,13 +12,14 @@
  * * Architectuur: Pure functie: (state, action) => newState, Geen side‑effects, Immutable updates, Fail‑closed voor onbekende acties
  * @ai_instruction Deze reducer vormt de Single Source of Truth. Gebruik 'UPDATE_DATA' voor domein-data en 'UPDATE_VIEWMODEL' voor UI-specifieke state. Bij uitbreiding van de state-structuur moeten zowel de FormAction union als de INITIAL_DATA_RESET template worden bijgewerkt.
  */
-import type { FormState} from '@core/types/core';
+import type { FormState, DeepPartial} from '@core/types/core';
 import { deepMerge } from '@utils/objects';
 import { DATA_KEYS } from '@domain/constants/datakeys';
 
 
+
 export type FormAction =
-  | { type: 'UPDATE_DATA'; payload: Partial<FormState['data']> }
+  | { type: 'UPDATE_DATA'; payload: DeepPartial<FormState['data']> }
   | { type: 'SET_STEP'; payload: FormState['activeStep'] }
   | { type: 'RESET_APP' }
   | { type: 'UPDATE_VIEWMODEL'; payload: Partial<NonNullable<FormState['viewModels']>> }

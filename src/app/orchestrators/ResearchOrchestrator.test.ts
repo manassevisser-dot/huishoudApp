@@ -58,6 +58,7 @@ jest.mock('@adapters/validation/ResearchContractAdapter', () => ({
 }));
 
 import { ResearchOrchestrator } from './ResearchOrchestrator';
+import type { CsvItem } from '@core/types/research';
 import { collectAndDistributeData, assertNoPIILeak } from '@domain/research/PrivacyAirlock';
 import { DATA_KEYS } from '@domain/constants/datakeys';
 
@@ -76,11 +77,14 @@ const makeRawMember = (overrides = {}) => ({
   ...overrides,
 });
 
-const makeCsvItem = (overrides = {}) => ({
+const makeCsvItem = (overrides = {}): CsvItem => ({
+  id: 'csv-0',
   amount: 1000,
+  amountCents: 100000,
   category: 'Inkomen',
   date: '2026-01-01',
   description: 'Salaris',
+  original: {},
   ...overrides,
 });
 

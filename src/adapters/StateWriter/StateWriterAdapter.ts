@@ -12,13 +12,14 @@ import type {
   Household,
   IncomeItem,
   ExpenseItem,
+  DeepPartial
 } from '@core/types/core';
 
 import { DATA_KEYS } from '@domain/constants/datakeys';
 
 export type AppDispatch = (action: {
   type: 'UPDATE_DATA';
-  payload: Partial<FormState['data']>;
+  payload: DeepPartial<FormState['data']>;
 }) => void;
 
 // ── Typed field-ID unions voor dynamische collecties ───────────

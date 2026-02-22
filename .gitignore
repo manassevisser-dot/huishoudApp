@@ -32,3 +32,12 @@ backups/*
 .phoenix/.deps-checked
 project.bundle
 teksten/
+tmpclaude-*
+ToTest.txt
+full_error_report*.txt
+wat_zeg_je*.txt
+SAMENVATTING/app_journey_20260104_135051.jsonl
+SAMENVATTING/app_journey_20260104_135051.md
+_trash/Swipe_Archeologie.txt
+app_journey_20260104_132855.md
+chat_files/chatgpt_Code review feedback.md
