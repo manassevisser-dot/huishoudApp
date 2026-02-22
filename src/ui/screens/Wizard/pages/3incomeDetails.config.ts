@@ -1,14 +1,15 @@
-// src/ui/screens/Wizard/screens/3incomeDetails.config.ts
+/**
+ * @file_intent Definieert de configuratie voor het "Inkomensgegevens" wizard-scherm, inclusief conditionele velden en een repeater voor de inkomsten per volwassene.
+ * @repo_architecture Mobile Industry (MI) - UI Configuration / Screen Definition Layer.
+ * @term_definition requiresVisibilityCheck = Een vlag die aangeeft dat de zichtbaarheid van een veld afhangt van een domeinregel. visibilityRule = De specifieke regelnaam die door een orchestrator wordt geëvalueerd om de zichtbaarheid te bepalen. repeater = Een UI-patroon dat een set velden herhaalt voor elk item in een collectie (bijv. voor elk volwassen lid).
+ * @contract Exporteert een statisch `incomeDetailsConfig` object. De `visibilityRule` strings vormen een contract met de bovenliggende orchestrator, die de corresponderende logica moet implementeren om velden conditioneel te tonen of verbergen.
+ * @ai_instruction De zichtbaarheidslogica is ontkoppeld en wordt niet hier gedefinieerd; pas de `visibilityRule` implementaties in de orchestrator-laag aan om het gedrag te wijzigen. De `itemFields` binnen de `adultIncome` repeater specificeren welke velden voor elke volwassene worden getoond.
+ */
 import { UI_SECTIONS } from '@domain/constants/uiSections';
 import { UX_TOKENS } from '@domain/constants/uxTokens';
 
-// src/ui/screens/Wizard/screens/3incomeDetails.config.ts
-
 export const incomeDetailsConfig = {
-  // Verander UI_SECTIONS.INCOME naar:
-  screenId: UI_SECTIONS.INCOME_DETAILS, 
-  
-  // Verander UX_TOKENS.SCREENS.INCOME naar:
+  screenId: UI_SECTIONS.INCOME_DETAILS,
   titleToken: UX_TOKENS.SCREENS.INCOME_DETAILS,
   fields: [
     {
@@ -28,13 +29,11 @@ export const incomeDetailsConfig = {
     {
       fieldId: 'adultIncome',
       type: 'repeater',
-      // Geen vlaggen hier, de MasterOrchestrator injecteert de juiste lijst
       itemFields: [
         {
           fieldId: 'incomeCategory',
           type: 'chip-group-multiple',
           labelToken: 'LABEL_INCOME_CATS'
-          // Opties komen via getOptions(fieldId, memberId)
         },
         {
           fieldId: 'nettoSalaris',
@@ -47,7 +46,6 @@ export const incomeDetailsConfig = {
           type: 'chip-group-multiple',
           requiresVisibilityCheck: true,
           visibilityRule: 'hasBenefitSelected'
-          // Opties (DUO, WW, AOW) worden door de Orchestrator bepaald o.b.v. leeftijd
         }
       ]
     }

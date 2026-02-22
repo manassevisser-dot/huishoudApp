@@ -98,11 +98,11 @@ const SCREEN_REGISTRY: Record<string, ScreenDefinition> = {
     sectionIds: ['USER_PROFILE_CARD', 'APP_PREFERENCES_SECTION'],
     previousScreenId: 'OPTIONS', // Volgens jouw huidige backMap
   },
-  'CSV_UPLOAD': {
-    id: 'CSV_UPLOAD',
+  'csv_UPLOAD': {
+    id: 'csv_UPLOAD',
     type: 'APP_STATIC',
     titleToken: 'screens.csv.title',
-    sectionIds: ['CSV_DROPZONE_CARD', 'CSV_MAPPING_SECTION'],
+    sectionIds: ['csv_DROPZONE_CARD', 'csv_MAPPING_SECTION'],
     previousScreenId: 'OPTIONS',
   },
   'RESET': {

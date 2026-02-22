@@ -11,7 +11,7 @@ export const UI_SECTIONS = {
   HOUSEHOLD_DETAILS: 'household_details',
   INCOME_DETAILS: 'income_details',
   FIXED_EXPENSES: 'fixed_expenses',
-  CSV_UPLOAD: 'csv_upload',
+  csv_UPLOAD: 'csv_upload',
   WIZARD: 'wizard', // ✅ ADD THIS
 } as const;
 

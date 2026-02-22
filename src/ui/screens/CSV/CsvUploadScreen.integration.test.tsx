@@ -33,8 +33,8 @@ describe('CsvUploadScreen Integration', () => {
       <CsvUploadScreen formStateOrchestrator={mockOrchestrator} />
     );
 
-    const input = getByPlaceholderText('Plak CSV-gegevens hier...');
-    const button = getByTestId('Verwerk CSV');
+    const input = getByPlaceholderText('Plak csv-gegevens hier...');
+    const button = getByTestId('Verwerk csv');
 
     fireEvent.changeText(input, 'datum,bedrag,omschrijving\n2023-01-01,10,Test');
     fireEvent.press(button);
@@ -45,7 +45,7 @@ describe('CsvUploadScreen Integration', () => {
       
       // Check of de Logger de UI-instructies heeft ontvangen
       expect(Logger.info).toHaveBeenCalledWith(
-        'CSV_IMPORT_SUCCESS',
+        'csv_IMPORT_SUCCESS',
         expect.objectContaining({
           uiTitle: 'Bevestig Upload',
           count: 1
@@ -61,12 +61,12 @@ describe('CsvUploadScreen Integration', () => {
       <CsvUploadScreen formStateOrchestrator={mockOrchestrator} />
     );
 
-    fireEvent.changeText(getByPlaceholderText('Plak CSV-gegevens hier...'), 'leeg');
-    fireEvent.press(getByTestId('Verwerk CSV'));
+    fireEvent.changeText(getByPlaceholderText('Plak csv-gegevens hier...'), 'leeg');
+    fireEvent.press(getByTestId('Verwerk csv'));
 
     await waitFor(() => {
       expect(Logger.warn).toHaveBeenCalledWith(
-        'CSV_IMPORT_EMPTY',
+        'csv_IMPORT_EMPTY',
         expect.objectContaining({
           uiTitle: 'Geen resultaat'
         })
@@ -81,12 +81,12 @@ describe('CsvUploadScreen Integration', () => {
       <CsvUploadScreen formStateOrchestrator={mockOrchestrator} />
     );
 
-    fireEvent.changeText(getByPlaceholderText('Plak CSV-gegevens hier...'), 'foute data');
-    fireEvent.press(getByTestId('Verwerk CSV'));
+    fireEvent.changeText(getByPlaceholderText('Plak csv-gegevens hier...'), 'foute data');
+    fireEvent.press(getByTestId('Verwerk csv'));
 
     await waitFor(() => {
       expect(Logger.error).toHaveBeenCalledWith(
-        'CSV_IMPORT_FAILED',
+        'csv_IMPORT_FAILED',
         expect.objectContaining({
           error: 'Syntax Fout'
         })

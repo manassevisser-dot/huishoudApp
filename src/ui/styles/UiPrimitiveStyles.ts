@@ -9,24 +9,6 @@
  * @contract De functies in dit object (`get...Style()`) retourneren een `PrimitiveStyleRule` (een `ViewStyle` object) met layout-specifieke eigenschappen. Deze stijlen zijn bedoeld om te worden toegepast op de *container* van een groep UI-elementen, niet op de elementen zelf.
  * @ai_instruction Gebruik de stijlen uit dit bestand wanneer je de positionering van een groep van elementen (zoals chips, radio buttons, etc.) moet definiëren. Importeer `UiPrimitiveStyles` voor layout en compositie. Voor de individuele styling van de elementen zelf (kleuren, tekst, etc.), gebruik je de `PrimitiveStyleFactory` uit `@domain`. Dit bestand moet puur layout-stijlen bevatten; voeg hier geen semantische stijlen toe.
  */
-// src/ui/styles/UiPrimitiveStyles.ts
-//
-// UI-compositie (sibling/layout) — géén semantiek/policy hier.
-/**
-* TODO: 
-* Imports updaten
-* Waar je layout nodig had (chips/radio groepen), importeer je voortaan:
-* import { UiPrimitiveStyles } from '@ui/styles/UiPrimitiveStyles';
-*
-* Waar je regels nodig had (error/labels/typografie/knoppen), gebruik je:
-* import { PrimitiveStyleFactory } from '@domain/styles/PrimitiveStyleFactory';
-*/
-/**
- * UI PRIMITIVE STYLES — COMPOSITIE
- * - Layout/sibling-structuur (row, wrap, gap) voor groepen
- * - GEEN semantische policy/kleurenbeslissingen
- */
-
 import { Tokens } from '@domain/constants/Tokens';
 import type { PrimitiveStyleRule } from '@domain/registry/PrimitiveRegistry';
 

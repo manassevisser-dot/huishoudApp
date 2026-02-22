@@ -1,3 +1,12 @@
+/**
+ * @file_intent Definieert kaart-gerelateerde stijlen.
+ * @repo_architecture Domain Layer - Styles. Dit bestand bevat een functie die een stijlobject retourneert voor kaarten, gebaseerd op een kleurenschema.
+ * @term_definition
+ *   - `ColorScheme`: Een object dat de kleuren voor de applicatie definieert.
+ *   - `makeCards`: Een functie die een stijlobject voor kaarten retourneert.
+ * @contract De `makeCards` functie retourneert een object met stijlen voor kaarten. Deze stijlen zijn afhankelijk van het `ColorScheme` object dat als argument wordt meegegeven.
+ * @ai_instruction Om de stijlen van kaarten aan te passen, kun je de `makeCards` functie aanpassen. Je kunt nieuwe stijlen toevoegen of bestaande stijlen aanpassen. Zorg ervoor dat de stijlen die je toevoegt gebruik maken van de kleuren uit het `ColorScheme` object.
+ */
 // src/domain/styles/modules/Cards.ts
 import { Space, Radius, Type } from '@domain/constants/Tokens';
 import { Layout } from '@domain/constants/LayoutTokens';

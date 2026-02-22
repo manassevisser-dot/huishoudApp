@@ -1,16 +1,18 @@
+/**
+ * @file_intent Definieert het `UndoScreen`, een UI-component voor het beheren van transactiegeschiedenis. Het stelt gebruikers in staat om acties ongedaan te maken (undo), opnieuw uit te voeren (redo) en alle transacties te wissen.
+ * @repo_architecture UI Layer - Screen. Dit scherm volgt het "Dumb UI" principe (ADR-04) en bevat alleen presentatie-logica. Alle state management en business logica worden afgehandeld door de `useTransactionHistory` hook, wat zorgt voor een duidelijke scheiding der machten (ADR-01).
+ * @term_definition
+ *   - `useTransactionHistory`: Een custom hook die de state en acties voor de transactiegeschiedenis levert (`transactions`, `undo`, `redo`, `clearAll`).
+ *   - `_debugAdapterState`: Een state-property die alleen voor debug-doeleinden wordt gebruikt om de interne staat van de onderliggende adapter te inspecteren. Deze wordt niet getoond in test-omgevingen.
+ * @contract Het component rendert een lijst van recente transacties. Het toont knoppen voor "Undo", "Redo", en "Verwijder Alles". Deze knoppen worden uitgeschakeld op basis van de state die door de `useTransactionHistory` hook wordt geleverd (bijv. `undo` is uitgeschakeld als er geen acties zijn om ongedaan te maken). Foutmeldingen worden weergegeven als de `error` state is ingesteld.
+ * @ai_instruction Om de weergave van transacties aan te passen, wijzig de `map`-functie binnen de JSX. Om de logica te wijzigen (bijv. hoe undo werkt), pas de `useTransactionHistory` hook aan. De debug-sectie wordt automatisch verborgen in `NODE_ENV=test`. Voeg geen business-logica toe aan dit component; plaats die in de `useTransactionHistory` hook of de onderliggende services.
+ */
 // src/ui/screens/Daily/UndoScreen.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useTransactionHistory } from '@app/hooks/useTransactionHistory';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 
-/**
- * UndoScreen - Transaction Management UI
- *
- * @architecture
- * - ADR-01 (SoC): Alleen presentatie logica, geen business rules
- * - ADR-04 (Dumb UI): Pure projector section (State in → View uit)
- */
 export const UndoScreen: React.FC = () => {
   const { styles } = useAppStyles();
   const { transactions, undo, redo, clearAll, updateTransaction, error, _debugAdapterState } =

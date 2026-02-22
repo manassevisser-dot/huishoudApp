@@ -8,17 +8,15 @@
  * Voeg hier geen zware rekenlogica toe, maar delegeer deze naar gespecialiseerde domein-orchestrators. 
  * De BusinessManager is verantwoordelijk voor de orchestratie van deze verschillende domein-outputs tot één samenhangend resultaat voor de presentatielaag.
  */
+// src/app/orchestrators/managers/BusinessManager.ts
 import { FormState } from '@core/types/core';
-import { IBusinessOrchestrator, FinancialSummaryVM } from '@app/orchestrators/interfaces/IBusinessOrchestrator';
-import { FinancialOrchestrator } from '@app/orchestrators/FinancialOrchestrator';
+import { IBusinessOrchestrator, FinancialSummaryVM } from '../interfaces/IBusinessOrchestrator';
+import { FinancialOrchestrator } from '../FinancialOrchestrator';
 
 export class BusinessManager implements IBusinessOrchestrator {
-  /**
-   * Bereidt het financieel overzicht voor op basis van de actuele formulierstatus.
-   * @param state De volledige FormState vanuit de FormStateOrchestrator
-   */
+  constructor(private readonly financialOrch: FinancialOrchestrator) {}
+
   public prepareFinancialViewModel(state: FormState): FinancialSummaryVM {
-    // FinancialOrchestrator.prepareViewModel moet dus ook FinancialSummaryVM teruggeven
-    return FinancialOrchestrator.prepareViewModel(state);
+    return this.financialOrch.prepareViewModel(state);
   }
 }

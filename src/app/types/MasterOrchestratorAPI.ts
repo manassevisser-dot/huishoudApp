@@ -6,9 +6,9 @@
  * @contract Exclusiviteit. De UI mag uitsluitend communiceren met methoden die in deze interface zijn gedefinieerd.
  * @ai_instruction Bij consolidatie van orchestrators moet deze interface stabiel blijven om de UI-laag te beschermen tegen breaking changes.
  */
-import type { IThemeOrchestrator } from '../orchestrators/interfaces/IThemeOrchestrator';
-import type { IUIOrchestrator } from '../orchestrators/interfaces/IUIOrchestrator';
-import type { INavigationOrchestrator } from '../orchestrators/interfaces/INavigationOrchestrator';
+import type { IThemeOrchestrator } from '@app/orchestrators/interfaces/IThemeOrchestrator';
+import type { IUIOrchestrator } from '@app/orchestrators/interfaces/IUIOrchestrator';
+import type { INavigationOrchestrator } from '@app/orchestrators/interfaces/INavigationOrchestrator';
 
 export interface MasterOrchestratorAPI {
   // Navigatie & Validatie

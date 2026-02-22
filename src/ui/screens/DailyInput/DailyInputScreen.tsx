@@ -1,3 +1,14 @@
+/**
+ * @file DailyInputScreen.tsx
+ * @description This file contains the DailyInputScreen component, which allows users to input their daily expenses.
+ * @requires react
+ * @requires react-native
+ * @requires @ui/sections/fields/MoneyEntry
+ * @requires @domain/registry/PrimitiveRegistry
+ * @requires @domain/constants/Tokens
+ * @requires @domain/constants/LayoutTokens
+ * @requires @ui/styles/useAppStyles
+ */
 import React, { useMemo, useState, memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import MoneyEntry from '@ui/sections/fields/MoneyEntry';

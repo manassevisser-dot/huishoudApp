@@ -1,8 +1,8 @@
 // src/app/orchestrators/interfaces/IDataOrchestrator.ts
 /**
- * @file_intent Definieert de contracten voor dataverwerking en import-orchestratie, specifiek gericht op het transformeren van externe CSV-data naar bruikbare applicatie- en onderzoeksmodellen.
+ * @file_intent Definieert de contracten voor dataverwerking en import-orchestratie, specifiek gericht op het transformeren van externe csv-data naar bruikbare applicatie- en onderzoeksmodellen.
  * @repo_architecture Mobile Industry (MI) - Data Processing Interface Layer.
- * @term_definition ResearchProcessor = De logische engine die ledenlijsten, CSV-data en setup-data aggregeert. ImportResult = Een discriminated union die expliciet de status (success, empty, error) en de bijbehorende payload van een importoperatie afdwingt.
+ * @term_definition ResearchProcessor = De logische engine die ledenlijsten, csv-data en setup-data aggregeert. ImportResult = Een discriminated union die expliciet de status (success, empty, error) en de bijbehorende payload van een importoperatie afdwingt.
  * @contract IDataOrchestrator dient als de poortwachter voor data-import. Het garandeert dat de UI altijd een voorspelbaar resultaat-object terugkrijgt, inclusief foutmeldingen of lege states, zonder direct de globale state te muteren.
  * @ai_instruction Bij het toevoegen van nieuwe importbronnen moeten de ImportResult sub-types (zoals ImportSuccess) worden uitgebreid. Let op de strikte scheiding tussen 'local' data (voor de app-werking) en 'research' data (voor analytics).
  */

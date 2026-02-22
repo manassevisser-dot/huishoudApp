@@ -76,7 +76,7 @@ export class NavigationOrchestrator implements INavigationOrchestrator {
   public goToDashboard(): void { this.navigateTo('DASHBOARD'); }
   public goToOptions(): void { this.navigateTo('OPTIONS'); }
   public goToSettings(): void { this.navigateTo('SETTINGS'); }
-  public goToCsvUpload(): void { this.navigateTo('CSV_UPLOAD'); }
+  public goToCsvUpload(): void { this.navigateTo('csv_UPLOAD'); }
   public goToReset(): void { this.navigateTo('RESET'); }
 
   public goBack(): void {

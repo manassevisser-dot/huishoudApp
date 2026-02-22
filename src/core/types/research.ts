@@ -73,7 +73,14 @@ export interface ResearchMember {
   [key: string]: unknown;
 }
 
-export interface CsvItem {
+/**
+ * TODO: ARCHITECTURAL DEBT - BOUNDARY MAPPING
+ * Deze interface gebruikt momenteel 'extends Record<string, unknown>' om tijdelijk 
+ * weg te komen met onbekende velden uit de CSV-import (Linter-fix).
+ * * TOEKOMST: Verwijder de Record extensie en voer een strikte mapping/transformatie 
+ * uit op de grens (MasterOrchestrator) zodat dit model 100% voorspelbaar blijft.
+ */
+export interface CsvItem extends Record<string, unknown> {
   id: string;
   date: string;
   description: string;

@@ -1,8 +1,8 @@
 /**
- * @file_intent (WIP) Biedt een set functies voor het verwerken van ongestructureerde financiële transactiedata (zoals uit een CSV-bestand). Dit omvat het opschonen, categoriseren en reconciliëren van data.
+ * @file_intent (WIP) Biedt een set functies voor het verwerken van ongestructureerde financiële transactiedata (zoals uit een csv-bestand). Dit omvat het opschonen, categoriseren en reconciliëren van data.
  * @repo_architecture Domain Layer - Finance (Business Logic).
- * @term_definition Pipeline = Een reeks van dataverwerkingsstappen. PII = Personally Identifiable Information (persoonlijk identificeerbare informatie). Reconciliatie = Het vergelijken en afstemmen van data uit verschillende bronnen (bv. CSV vs. handmatige invoer).
- * @contract Dit bestand exporteert een `dataProcessor` object met methoden: `stripPII` (verwijdert IBANs), `categorize` (wijst een categorie toe o.b.v. keywords), en `reconcileWithSetup` (vergelijkt CSV-inkomen met opgegeven inkomen). Het definieert ook de datastructuren `ResearchCsvItem` en `ResearchSetupData`.
+ * @term_definition Pipeline = Een reeks van dataverwerkingsstappen. PII = Personally Identifiable Information (persoonlijk identificeerbare informatie). Reconciliatie = Het vergelijken en afstemmen van data uit verschillende bronnen (bv. csv vs. handmatige invoer).
+ * @contract Dit bestand exporteert een `dataProcessor` object met methoden: `stripPII` (verwijdert IBANs), `categorize` (wijst een categorie toe o.b.v. keywords), en `reconcileWithSetup` (vergelijkt csv-inkomen met opgegeven inkomen). Het definieert ook de datastructuren `ResearchCsvItem` en `ResearchSetupData`.
  * @ai_instruction LET OP: Dit is een "Work In Progress" (WIP) bestand. De categorisatie is momenteel een simpele, op regels gebaseerde aanpak. Bij uitbreiding, focus op het verfijnen van `CATEGORY_RULES` en de `categorize` functie zonder de cyclomatische complexiteit significant te verhogen. De PII-stripping is cruciaal voor privacy.
  */
 // src/domain/finance/StatementIntakePipeline.WIP.ts
@@ -58,7 +58,7 @@ export const dataProcessor = {
 
     const setupIncomeCents = toCents(setupData.maandelijksInkomen ?? 0);
     const finalIncome = csvIncome > 0 ? csvIncome : setupIncomeCents;
-    const source = csvIncome > 0 ? 'CSV' : 'Setup';
+    const source = csvIncome > 0 ? 'csv' : 'Setup';
     const diff = csvIncome - setupIncomeCents;
     const isDiscrepancy = csvIncome > 0 && Math.abs(diff) > THRESHOLD_CENTS;
 

@@ -47,8 +47,8 @@ export const validationMessages = {
     }
   },
     // ⬇️ NIEUW: top-level audit tokens
-    CSV_IMPORT_SUCCESS: 'CSV-bestand succesvol verwerkt',
-    CSV_IMPORT_EMPTY: 'Geen transacties gevonden in het geüploade CSV-bestand',
-    CSV_IMPORT_FAILED: 'Er is een fout opgetreden tijdens het verwerken van het CSV-bestand',
-    CSV_IMPORT_DISCREPANCY_FOUND: 'Er zijn afwijkingen gevonden in de geïmporteerde financiële data'
+    csv_IMPORT_SUCCESS: 'csv-bestand succesvol verwerkt',
+    csv_IMPORT_EMPTY: 'Geen transacties gevonden in het geüploade csv-bestand',
+    csv_IMPORT_FAILED: 'Er is een fout opgetreden tijdens het verwerken van het csv-bestand',
+    csv_IMPORT_DISCREPANCY_FOUND: 'Er zijn afwijkingen gevonden in de geïmporteerde financiële data'
 };

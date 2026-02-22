@@ -1,7 +1,7 @@
-import { CSVProcessor } from './CSVProcessor';
+import { csvProcessor } from './csvProcessor';
 
-describe('CSV Baseline Snapshots', () => {
-  const processor = new CSVProcessor();
+describe('csv Baseline Snapshots', () => {
+  const processor = new csvProcessor();
   const keys = { 
     date: 'Datum', 
     amount: 'Bedrag', 

@@ -1,17 +1,16 @@
 // src/app/orchestrators/ResearchOrchestrator.ts
 /**
- * @file_intent Coördineert de transformatie van ruwe input naar zowel lokale UI-data als geanonimiseerde onderzoeksdata.
+ * @file_intent Coördineert de transformatie van reeds geparsede transactiedata naar geanonimiseerde onderzoeksdata.
  * @repo_architecture Mobile Industry (MI) - Data Privacy & Analytics Layer.
  * @term_definition PrivacyAirlock = Domein-mechanisme dat garandeert dat er geen PII (Personally Identifiable Information) in de onderzoek-payload lekt.
- * @contract Stateless (behalve FSO injectie voor toekomstige checks). Input: Raw Data -> Output: MasterProcessResult (Local + Research).
- * @ai_instruction Cruciaal: Wijzigingen in 'processCsvTransactions' moeten altijd 'stripPII' aanroepen voordat data naar 'research' gaat.
+ * @contract Accepteert een reeds geparsede array van transacties (`CsvItem[]`). Bevat GEEN csv-parsing logica meer.
+ * @ai_instruction De input voor `processAllData` is nu een `CsvItem[]` array. De `processCsvTransactions` methode is verwijderd omdat die logica nu in de `ImportOrchestrator` leeft.
  */
 import { DATA_KEYS } from '@domain/constants/datakeys';
-import { scvAdapter } from '@adapters/csv/scvAdapter';
-import { dataProcessor } from '@domain/finance/StatementIntakePipeline.WIP'; 
+import { dataProcessor, type ResearchSetupData } from '@domain/finance/StatementIntakePipeline.WIP'; 
 import {
   RawUIData,
-  AnonymizedResearchPayload, // De nieuwe naam
+  AnonymizedResearchPayload,
   CsvItem,
   FinancialIncomeSummary,
   ResearchMember,
@@ -20,14 +19,13 @@ import {
   collectAndDistributeData,
   assertNoPIILeak,
 } from '@domain/research/PrivacyAirlock.WIP'; 
-import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import { FormStateOrchestrator } from './FormStateOrchestrator';
 import { ResearchValidator } from '@adapters/validation/ResearchContractAdapter';
+
 /* ============================================================
  * TYPES & INTERFACES
  * ============================================================ */
 
-// Punt 3 audit: Herstel typing van processed members
 interface ProcessedMember {
   localMember: ResearchMember;
   researchPayload: AnonymizedResearchPayload;
@@ -54,63 +52,31 @@ export interface MasterProcessResult {
 
 /**
  * ResearchOrchestrator — stateless coördinator voor onderzoeksflow.
- * Punt 4 audit: DI van fso is gereserveerd voor toekomstige state-checks (WIP).
+ * Werkt nu met een reeds geparsede transactie-array.
  */
 export class ResearchOrchestrator {
   constructor(private readonly fso: FormStateOrchestrator) {}
 
   public readonly processAllData = (
     rawMembers: RawUIData[],
-    rawCsv: string,
+    csvTransactions: CsvItem[], // Input is nu de geparsede array, geen string meer.
     currentSetup: Record<string, unknown> | null,
   ): MasterProcessResult => {
     const membersToProcess = rawMembers ?? [];
-    // Punt 3: Expliciete typing ipv any
     const processedMembers: ProcessedMember[] = membersToProcess.map((m, i) => 
       collectAndDistributeData(m, i)
     );
-    const csvTransactions = this.processCsvTransactions(rawCsv);
-
+    
     return this.buildFinalResult(processedMembers, csvTransactions, currentSetup);
   };
 
-  private readonly processCsvTransactions = (rawCsv: string): CsvItem[] => {
-    if (rawCsv.length === 0 || rawCsv.trim() === '') {
-      return [];
-    }
-
-    try {
-      const rawMapped = scvAdapter.mapToInternalModel(rawCsv);
-      const mapped = (rawMapped ?? []) as CsvItem[];
-
-      return mapped.map((item) => {
-        const rawDate = item.date ?? '';
-        const date = rawDate.length > 0 ? rawDate : new Date().toISOString();
-        
-        const rawDesc = item.description ?? '';
-        const description = dataProcessor.stripPII(
-          rawDesc.length > 0 ? rawDesc : 'Geen omschrijving'
-        );
-        
-        return {
-          ...item,
-          date,
-          description,
-          // Punt 6 audit: Categoriseer op de gestripte description voor consistentie
-          category: dataProcessor.categorize(description),
-        };
-      }).filter((tx) => tx.amount !== 0);
-    } catch (e) {
-      Logger.error('CSV Mapping failed in ResearchOrchestrator', e);
-      return [];
-    }
-  };
+  // VERWIJDERD: De `processCsvTransactions` methode is weg. Parsing gebeurt nu in ImportOrchestrator.
 
   private readonly detectMissingHousingCosts = (
     transactions: CsvItem[],
     setup: Record<string, unknown> | null,
   ): boolean => {
-    const housingIncluded = setup?.housingIncluded;
+    const housingIncluded = (setup as ResearchSetupData)?.housingIncluded;
     return transactions.some(
       (t) => t.category === 'Wonen' && housingIncluded !== true,
     );
@@ -169,16 +135,9 @@ export class ResearchOrchestrator {
   };
 }
 
-/* ============================================================
- * PUNT 2 AUDIT: COMPATIBILITY LAYER
- * ============================================================ */
 
-/**
- * Factory voor zachte migratie (Option A uit audit).
- * Voorkomt dat bestaande tests/orchestrators direct omvallen.
- */
 export const researchIntakeCoordinator = (fso: FormStateOrchestrator) => 
   new ResearchOrchestrator(fso);
 
-// Named export voor de klasse zelf
+
 export default ResearchOrchestrator;

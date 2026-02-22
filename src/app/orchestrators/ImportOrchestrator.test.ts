@@ -15,7 +15,7 @@ describe('ImportOrchestrator', () => {
       local: {
         finance: {
           transactions: [{ amount: 100, description: 'Test', date: '2024-01-01' }],
-          summary: { source: 'CSV', finalIncome: 100, isDiscrepancy: false },
+          summary: { source: 'csv', finalIncome: 100, isDiscrepancy: false },
           hasMissingCosts: false
         }
       },
