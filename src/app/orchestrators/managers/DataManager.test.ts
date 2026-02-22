@@ -17,7 +17,7 @@ describe('DataManager', () => {
 
   it('roept ImportOrchestrator.processCsvImport aan met correcte parameters', () => {
     const research = researchProcessorFactory();
-    const manager = new DataManager(research);
+    const manager = new DataManager();
 
     const mockResult = { success: true, imported: 2 };
     (ImportOrchestrator.processCsvImport as jest.Mock).mockReturnValue(mockResult);

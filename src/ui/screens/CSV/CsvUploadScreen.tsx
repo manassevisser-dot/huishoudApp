@@ -25,7 +25,7 @@ export const CsvUploadScreen: React.FC<CsvUploadScreenProps> = ({ onPickFile, is
 
   return (
     <View style={styles.screenContainer}>
-      <Text style={styles.screenTitle}>{UI_SECTIONS.csv_UPLOAD}</Text>
+      <Text style={styles.screenTitle}>{UI_SECTIONS.CSV_UPLOAD}</Text>
 
       <TouchableOpacity
         style={styles.button}

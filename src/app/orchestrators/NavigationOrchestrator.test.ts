@@ -165,7 +165,7 @@ describe('NavigationOrchestrator', () => {
       ['goToDashboard', 'DASHBOARD'],
       ['goToOptions', 'OPTIONS'],
       ['goToSettings', 'SETTINGS'],
-      ['goToCsvUpload', 'csv_UPLOAD'],
+      ['goToCsvUpload', 'CSV_UPLOAD'],
       ['goToReset', 'RESET'],
     ])('%s navigates to %s', (method, screenId) => {
       const fso = makeFso();

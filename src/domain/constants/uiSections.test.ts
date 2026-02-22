@@ -7,7 +7,7 @@ describe('UI_SECTIONS', () => {
     expect(UI_SECTIONS.HOUSEHOLD_DETAILS).toBe('household_details');
     expect(UI_SECTIONS.INCOME_DETAILS).toBe('income_details');
     expect(UI_SECTIONS.FIXED_EXPENSES).toBe('fixed_expenses');
-    expect(UI_SECTIONS.csv_UPLOAD).toBe('csv_upload');
+    expect(UI_SECTIONS.CSV_UPLOAD).toBe('csv_upload');
     expect(UI_SECTIONS.WIZARD).toBe('wizard');
   });
 

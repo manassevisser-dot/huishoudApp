@@ -125,15 +125,15 @@ export const SECTION_REGISTRY: Record<string, SectionDefinition> = {
     layout: 'list',
     fieldIds: [], // stub
   },
-  csv_DROPZONE_CARD: {
-    id: 'csv_DROPZONE_CARD',
-    labelToken: 'SECTION_csv_UPLOAD',
+  CSV_DROPZONE_CARD: {
+    id: 'CSV_DROPZONE_CARD',
+    labelToken: 'SECTION_CSV_UPLOAD',
     layout: 'card',
     fieldIds: [], // stub: CsvUploadScreen is nog handmatig
   },
-  csv_MAPPING_SECTION: {
-    id: 'csv_MAPPING_SECTION',
-    labelToken: 'SECTION_csv_MAPPING',
+  CSV_MAPPING_SECTION: {
+    id: 'CSV_MAPPING_SECTION',
+    labelToken: 'SECTION_CSV_MAPPING',
     layout: 'list',
     fieldIds: [], // stub
   },

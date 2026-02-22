@@ -1,1 +1,152 @@
-// src/app/orchestrators/ResearchOrchestrator.ts /** * @file_intent Coördineert de transformatie van reeds geparsede transactiedata naar geanonimiseerde onderzoeksdata. * @repo_architecture Mobile Industry (MI) - Data Privacy & Analytics Layer. * @term_definition PrivacyAirlock = Domein-mechanisme dat garandeert dat er geen PII (Personally Identifiable Information) in de onderzoek-payload lekt. * @contract Accepteert een reeds geparsede array van transacties (`CsvItem[]`). Bevat GEEN csv-parsing logica meer. * @ai_instruction De input voor `processAllData` is nu een `CsvItem[]` array. De `processCsvTransactions` methode is verwijderd omdat die logica nu in de `ImportOrchestrator` leeft. */ import { DATA_KEYS } from '@domain/constants/datakeys'; import { dataProcessor, type ResearchSetupData } from '@domain/finance/StatementIntakePipeline'; import { RawUIData, AnonymizedResearchPayload, CsvItem, FinancialIncomeSummary, ResearchMember, } from '@core/types/research'; import { collectAndDistributeData, assertNoPIILeak, } from '@domain/research/PrivacyAirlock'; import { FormStateOrchestrator } from './FormStateOrchestrator'; import { ResearchValidator } from '@adapters/validation/ResearchContractAdapter'; /* ============================================================ * TYPES & INTERFACES * ============================================================ */ interface ProcessedMember { localMember: ResearchMember; researchPayload: AnonymizedResearchPayload; } export interface MasterProcessResult { local: { [DATA_KEYS.HOUSEHOLD]: { members: ResearchMember[] } [DATA_KEYS.FINANCE]: { transactions: CsvItem[]; summary: FinancialIncomeSummary; hasMissingCosts: boolean; }; }; research: { memberPayloads: AnonymizedResearchPayload[]; financialAnalytics: { totalIncomeCents: number; categoryTotals: Record<string, number>; timestamp: string; }; }; } /** * ResearchOrchestrator — stateless coördinator voor onderzoeksflow. * Werkt nu met een reeds geparsede transactie-array. */ export class ResearchOrchestrator { constructor(private readonly fso: FormStateOrchestrator) {} public readonly processAllData = ( rawMembers: RawUIData[], csvTransactions: CsvItem[], // Input is nu de geparsede array, geen string meer. currentSetup: Record<string, unknown> | null, ): MasterProcessResult => { const membersToProcess = rawMembers ?? []; const processedMembers: ProcessedMember[] = membersToProcess.map((m, i) => collectAndDistributeData(m, i) ); return this.buildFinalResult(processedMembers, csvTransactions, currentSetup); }; // VERWIJDERD: De `processCsvTransactions` methode is weg. Parsing gebeurt nu in ImportOrchestrator. private readonly detectMissingHousingCosts = ( transactions: CsvItem[], setup: Record<string, unknown> | null, ): boolean => { const housingIncluded = (setup as ResearchSetupData)?.housingIncluded; return transactions.some( (t) => t.category === 'Wonen' && housingIncluded !== true, ); }; private readonly buildResearchData = ( processedMembers: ReadonlyArray<ProcessedMember>, transactions: ReadonlyArray<CsvItem>, incomeSummary: FinancialIncomeSummary, ): MasterProcessResult['research'] => { const categoryTotals = transactions.reduce((acc, curr) => { const cat = curr.category ?? ''; const key = cat.length > 0 ? cat : 'Overig'; const amount = ResearchValidator.validateMoney({ amount: curr.amount, currency: 'EUR' }).amount; acc[key] = (acc[key] ?? 0) + amount; return acc; }, {} as Record<string, number>); return { memberPayloads: processedMembers.map((p) => p.researchPayload), financialAnalytics: { totalIncomeCents: ResearchValidator.validateMoney({ amount: incomeSummary.finalIncome, currency: 'EUR' }).amount, categoryTotals, timestamp: new Date().toISOString(), }, }; }; private readonly buildFinalResult = ( processedMembers: ReadonlyArray<ProcessedMember>, csvTransactions: CsvItem[], currentSetup: Record<string, unknown> | null ): MasterProcessResult => { const incomeSummary = dataProcessor.reconcileWithSetup( csvTransactions, currentSetup ?? {}, ) as FinancialIncomeSummary; const researchData = this.buildResearchData(processedMembers, csvTransactions, incomeSummary); assertNoPIILeak(researchData as unknown as Record<string, unknown>); return { local: { [DATA_KEYS.HOUSEHOLD]: { members: processedMembers.map((p) => p.localMember), }, [DATA_KEYS.FINANCE]: { transactions: csvTransactions, summary: incomeSummary, hasMissingCosts: this.detectMissingHousingCosts(csvTransactions, currentSetup), }, }, research: researchData, }; }; } export const researchIntakeCoordinator = (fso: FormStateOrchestrator) => new ResearchOrchestrator(fso); export default ResearchOrchestrator; 
+// src/app/orchestrators/ResearchOrchestrator.ts
+/**
+ * @file_intent Coördineert de transformatie van reeds geparsede transactiedata naar geanonimiseerde onderzoeksdata.
+ * @repo_architecture Mobile Industry (MI) - Data Privacy & Analytics Layer.
+ * @term_definition PrivacyAirlock = Domein-mechanisme dat garandeert dat er geen PII (Personally Identifiable Information) in de onderzoek-payload lekt.
+ * @contract Accepteert een reeds geparsede array van transacties (`CsvItem[]`). Bevat GEEN csv-parsing logica meer.
+ * @ai_instruction De input voor `processAllData` is nu een `CsvItem[]` array. De `processCsvTransactions` methode is verwijderd omdat die logica nu in de `ImportOrchestrator` leeft.
+ */
+
+import { DATA_KEYS } from '@domain/constants/datakeys';
+import { dataProcessor, type ResearchSetupData } from '@domain/finance/StatementIntakePipeline';
+import {
+  RawUIData,
+  AnonymizedResearchPayload,
+  CsvItem,
+  FinancialIncomeSummary,
+  ResearchMember,
+} from '@core/types/research';
+import {
+  collectAndDistributeData,
+  assertNoPIILeak,
+} from '@domain/research/PrivacyAirlock';
+import { FormStateOrchestrator } from './FormStateOrchestrator';
+import { ResearchValidator } from '@adapters/validation/ResearchContractAdapter';
+
+/* ============================================================
+ * TYPES & INTERFACES
+ * ============================================================ */
+
+interface ProcessedMember {
+  localMember: ResearchMember;
+  researchPayload: AnonymizedResearchPayload;
+}
+
+export interface MasterProcessResult {
+  local: {
+    [DATA_KEYS.HOUSEHOLD]: { members: ResearchMember[] };
+    [DATA_KEYS.FINANCE]: {
+      transactions: CsvItem[];
+      summary: FinancialIncomeSummary;
+      hasMissingCosts: boolean;
+    };
+  };
+  research: {
+    memberPayloads: AnonymizedResearchPayload[];
+    financialAnalytics: {
+      totalIncomeCents: number;
+      categoryTotals: Record<string, number>;
+      timestamp: string;
+    };
+  };
+}
+
+/**
+ * ResearchOrchestrator — stateless coördinator voor onderzoeksflow.
+ * Werkt nu met een reeds geparsede transactie-array.
+ */
+export class ResearchOrchestrator {
+  constructor(private readonly fso: FormStateOrchestrator) {}
+
+  public readonly processAllData = (
+    rawMembers: RawUIData[],
+    csvTransactions: CsvItem[],
+    currentSetup: Record<string, unknown> | null,
+  ): MasterProcessResult => {
+    const membersToProcess = rawMembers ?? [];
+    const processedMembers: ProcessedMember[] = membersToProcess.map((m, i) =>
+      collectAndDistributeData(m, i),
+    );
+    return this.buildFinalResult(processedMembers, csvTransactions, currentSetup);
+  };
+
+  private readonly detectMissingHousingCosts = (
+    transactions: CsvItem[],
+    setup: Record<string, unknown> | null,
+  ): boolean => {
+    const housingIncluded = (setup as ResearchSetupData)?.housingIncluded;
+    return transactions.some(
+      (t) => t.category === 'Wonen' && housingIncluded !== true,
+    );
+  };
+
+  private readonly buildResearchData = (
+    processedMembers: ReadonlyArray<ProcessedMember>,
+    transactions: ReadonlyArray<CsvItem>,
+    incomeSummary: FinancialIncomeSummary,
+  ): MasterProcessResult['research'] => {
+    const categoryTotals = transactions.reduce(
+      (acc, curr) => {
+        const cat = curr.category ?? '';
+        const key = cat.length > 0 ? cat : 'Overig';
+        const amount = ResearchValidator.validateMoney({
+          amount: curr.amount,
+          currency: 'EUR',
+        }).amount;
+        acc[key] = (acc[key] ?? 0) + amount;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    return {
+      memberPayloads: processedMembers.map((p) => p.researchPayload),
+      financialAnalytics: {
+        totalIncomeCents: ResearchValidator.validateMoney({
+          amount: incomeSummary.finalIncome,
+          currency: 'EUR',
+        }).amount,
+        categoryTotals,
+        timestamp: new Date().toISOString(),
+      },
+    };
+  };
+
+  private readonly buildFinalResult = (
+    processedMembers: ReadonlyArray<ProcessedMember>,
+    csvTransactions: CsvItem[],
+    currentSetup: Record<string, unknown> | null,
+  ): MasterProcessResult => {
+    const incomeSummary = dataProcessor.reconcileWithSetup(
+      csvTransactions,
+      currentSetup ?? {},
+    ) as FinancialIncomeSummary;
+
+    const researchData = this.buildResearchData(
+      processedMembers,
+      csvTransactions,
+      incomeSummary,
+    );
+
+    assertNoPIILeak(researchData as unknown as Record<string, unknown>);
+
+    return {
+      local: {
+        [DATA_KEYS.HOUSEHOLD]: {
+          members: processedMembers.map((p) => p.localMember),
+        },
+        [DATA_KEYS.FINANCE]: {
+          transactions: csvTransactions,
+          summary: incomeSummary,
+          hasMissingCosts: this.detectMissingHousingCosts(csvTransactions, currentSetup),
+        },
+      },
+      research: researchData,
+    };
+  };
+}
+
+export const researchIntakeCoordinator = (fso: FormStateOrchestrator) =>
+  new ResearchOrchestrator(fso);
+
+export default ResearchOrchestrator;
