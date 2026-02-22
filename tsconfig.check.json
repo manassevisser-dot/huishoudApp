@@ -1,17 +1,1 @@
-{
-  "extends": "./tsconfig.json",
-  "include": [
-    "src/core/**/*",
-    "src/domain/**/*",
-    "src/app/orchestrators/**/*",
-    "src/state/**/*"
-  ],
-  "exclude": [
-    "src/ui/**/*",
-    "src/__tests__/**/*",
-    "**/__tests__/**/*",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "src/app/orchestrators/**/*.WIP.ts"
-  ]
-}
+{ "extends": "./tsconfig.json", "include": [ "src/core/**/*", "src/domain/**/*", "src/app/orchestrators/**/*", "src/state/**/*" ], "exclude": [ "src/ui/**/*", "src/__tests__/**/*", "**/__tests__/**/*", "**/*.test.ts", "**/*.test.tsx", "src/app/orchestrators/**/*.ts" ] } 
