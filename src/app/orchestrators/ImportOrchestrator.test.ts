@@ -1,6 +1,6 @@
 import { ImportOrchestrator } from './ImportOrchestrator';
-import { dataOrchestrator } from '@app/orchestrators/ResearchOrchestrator.WIP';
-jest.mock('@app/orchestrators/ResearchOrchestrator.WIP');
+import { ResearchOrchestrator } from '@app/orchestrators/ResearchOrchestrator';
+jest.mock('@app/orchestrators/ResearchOrchestrator');
 
 describe('ImportOrchestrator', () => {
   let orchestrator: ImportOrchestrator;
@@ -22,7 +22,7 @@ describe('ImportOrchestrator', () => {
       research: { some: 'anonymous-data' }
     };
 
-    (dataOrchestrator.processAllData as jest.Mock).mockReturnValue(mockResult);
+    (ResearchOrchestrator.prototype.processAllData as jest.Mock).mockReturnValue(mockResult);
 
     const result = orchestrator.processCsvImport({
       csvText: 'test;csv;data',
@@ -30,7 +30,7 @@ describe('ImportOrchestrator', () => {
       setupData: {}
     });
 
-    expect(dataOrchestrator.processAllData).toHaveBeenCalledWith([], 'test;csv;data', {});
+    expect(ResearchOrchestrator.prototype.processAllData).toHaveBeenCalledWith([], 'test;csv;data', {});
     expect(result.transactions).toHaveLength(1);
     expect(result.researchPayload).toEqual(mockResult.research);
   });

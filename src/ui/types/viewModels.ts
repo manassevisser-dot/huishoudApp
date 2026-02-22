@@ -45,8 +45,62 @@ export type {
   
 /**
  * UI-utility type:
- * We gebruiken PrimitiveViewModel (de union uit het domein) 
+ * We gebruiken PrimitiveViewModel (de union uit het domein)
  * als onze universele FieldViewModel.
  */
 import type { PrimitiveViewModel as DomainUnion } from '@domain/registry/PrimitiveRegistry';
 export type UIFieldViewModel = DomainUnion;
+
+/**
+ * ──────────── UI-LAYER SPECIFIC TYPES (geen domain imports) ────────────
+ * Deze types beschrijven de structuur van ViewModels zoals die door de
+ * orchestrator-laag worden gegenereerd voor de UI-renderer.
+ */
+
+/**
+ * Een primaire ViewModel - de basis-bouwsteen van een UI-element.
+ * Dit is de lightweight versie zonder stijling.
+ */
+export interface UIPrimitiveViewModel {
+  entryId: string;
+  primitiveType: string; // bv. 'currency' | 'text' | 'radio' | ...
+  styleKey?: string;
+}
+
+/**
+ * Een entry ViewModel - representeert een invoerveld met optionele label en primitive child.
+ */
+export interface UIEntryViewModel {
+  entryId: string;
+  labelToken: string;
+  placeholderToken?: string;
+  options?: readonly string[];
+  optionsKey?: string;
+  visibilityRuleName?: string;
+  child: UIPrimitiveViewModel;
+}
+
+/**
+ * Een sectie ViewModel - groepering van gerelateerde entries met layout/styling.
+ */
+export interface UISectionViewModel {
+  sectionId: string;
+  titleToken: string;
+  layout: 'list' | 'grid' | 'card' | 'stepper';
+  uiModel?: 'numericWrapper' | 'collapsible' | 'swipeable' | 'readonly';
+  children: UIEntryViewModel[];
+}
+
+/**
+ * Een scherm ViewModel - de top-level structuur met navigatie.
+ */
+export interface UIScreenViewModel {
+  screenId: string;
+  titleToken: string;
+  type: string; // 'AUTH' | 'WIZARD' | 'APP_STATIC' | 'SYSTEM'
+  sections: UISectionViewModel[];
+  navigation: {
+    next?: string;
+    previous?: string;
+  };
+}

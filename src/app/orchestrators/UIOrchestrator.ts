@@ -3,7 +3,8 @@
  * @repo_architecture Application Layer - Orchestrator.
  */
 import { UIManager } from './managers/UIManager';
-import { IUIOrchestrator, ScreenViewModel } from './interfaces/IUIOrchestrator';
+import { IUIOrchestrator } from './interfaces/IUIOrchestrator';
+import type { StyledScreenVM } from '@app/orchestrators/factory/StyleFactory';
 
 export class UIOrchestrator implements IUIOrchestrator {
   private readonly uiManager: UIManager;
@@ -21,7 +22,7 @@ export class UIOrchestrator implements IUIOrchestrator {
    * @param screenId De identifier van het scherm.
    * @returns Het gestylede screen view model.
    */
-  buildScreen(screenId: string): ScreenViewModel {
+  buildScreen(screenId: string): StyledScreenVM {
     return this.uiManager.buildScreen(screenId);
   }
 }

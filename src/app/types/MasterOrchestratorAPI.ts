@@ -9,6 +9,7 @@
 import type { IThemeOrchestrator } from '@app/orchestrators/interfaces/IThemeOrchestrator';
 import type { IUIOrchestrator } from '@app/orchestrators/interfaces/IUIOrchestrator';
 import type { INavigationOrchestrator } from '@app/orchestrators/interfaces/INavigationOrchestrator';
+import type { RenderScreenVM } from '@app/orchestrators/MasterOrchestrator';
 
 export interface MasterOrchestratorAPI {
   // Navigatie & Validatie
@@ -25,4 +26,6 @@ export interface MasterOrchestratorAPI {
   // Data & Side-effects
   updateField: (fieldId: string, value: unknown) => void;
   handleCsvImport: (csvText: string) => Promise<void>;
+  saveDailyTransaction: () => boolean;
+  buildRenderScreen: (screenId: string) => RenderScreenVM;
 }

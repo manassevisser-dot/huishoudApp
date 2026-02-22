@@ -10,6 +10,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, Switch, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import { PRIMITIVE_TYPES } from '@domain/registry/PrimitiveRegistry';
 /**
  * PROPS DEFINITIES
  */
@@ -153,3 +154,32 @@ export const LabelPrimitive = ({ label, value, style, labelStyle, valueStyle }: 
     <Text style={valueStyle}>{value}</Text>
   </View>
 );
+
+type PrimitiveComponent = React.ComponentType<Record<string, unknown>>;
+
+const PRIMITIVE_COMPONENTS: Record<string, PrimitiveComponent> = {
+  [PRIMITIVE_TYPES.TEXT]: InputPrimitive as unknown as PrimitiveComponent,
+  [PRIMITIVE_TYPES.CURRENCY]: InputPrimitive as unknown as PrimitiveComponent,
+  [PRIMITIVE_TYPES.NUMBER]: InputPrimitive as unknown as PrimitiveComponent,
+  [PRIMITIVE_TYPES.DATE]: DatePrimitive as unknown as PrimitiveComponent,
+  [PRIMITIVE_TYPES.COUNTER]: CounterPrimitive as unknown as PrimitiveComponent,
+  [PRIMITIVE_TYPES.TOGGLE]: TogglePrimitive as unknown as PrimitiveComponent,
+  [PRIMITIVE_TYPES.CHIP_GROUP]: ChipPrimitive as unknown as PrimitiveComponent,
+  [PRIMITIVE_TYPES.CHIP_GROUP_MULTIPLE]: ChipPrimitive as unknown as PrimitiveComponent,
+  [PRIMITIVE_TYPES.RADIO]: RadioOptionPrimitive as unknown as PrimitiveComponent,
+  [PRIMITIVE_TYPES.LABEL]: LabelPrimitive as unknown as PrimitiveComponent,
+};
+
+export const DynamicPrimitive = ({
+  primitiveType,
+  props,
+}: {
+  primitiveType: string;
+  props: Record<string, unknown>;
+}) => {
+  const PrimitiveComponent = PRIMITIVE_COMPONENTS[primitiveType];
+  if (PrimitiveComponent === undefined) {
+    return null;
+  }
+  return <PrimitiveComponent {...props} />;
+};

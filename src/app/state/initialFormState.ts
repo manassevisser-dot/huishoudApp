@@ -32,6 +32,13 @@ export const initialFormState: FormState = {
       income: { items: [], totalAmount: 0 },
       expenses: { items: [], totalAmount: 0 },
     },
+    latestTransaction: {
+      latestTransactionDate: new Date().toISOString().split('T')[0],
+      latestTransactionAmount: 0,
+      latestTransactionCategory: null,
+      latestTransactionDescription: '',
+      latestPaymentMethod: 'pin',
+    },
   },
   // FIX: Voeg de ontbrekende property toe om aan de FormState interface te voldoen
   viewModels: {

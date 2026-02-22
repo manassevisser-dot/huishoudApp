@@ -67,6 +67,7 @@ export class StateWriterAdapter {
   updateField(fieldId: string, value: unknown): void {
     if (this.writeSetupDirect(fieldId, value)) return;
     if (this.writeHouseholdDirect(fieldId, value)) return;
+    if (this.writeLatestTransaction(fieldId, value)) return;
     if (this.writeDynamicCollections(fieldId, value)) return;
     // Onbekend / niet te routeren → fail-closed
   }
@@ -130,6 +131,32 @@ export class StateWriterAdapter {
           ...household,
           [fieldId]: value,
         } as typeof household,
+      },
+    });
+    return true;
+  }
+
+  private writeLatestTransaction(fieldId: string, value: unknown): boolean {
+    const latestTransactionKeys = new Set([
+      'latestTransactionDate',
+      'latestTransactionAmount',
+      'latestTransactionCategory',
+      'latestTransactionDescription',
+      'latestPaymentMethod',
+    ]);
+
+    if (!latestTransactionKeys.has(fieldId)) return false;
+
+    const state = this.getState();
+    const latestTransaction = state.data.latestTransaction ?? {};
+
+    this.dispatch({
+      type: 'UPDATE_DATA',
+      payload: {
+        latestTransaction: {
+          ...latestTransaction,
+          [fieldId]: value,
+        },
       },
     });
     return true;

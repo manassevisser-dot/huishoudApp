@@ -77,6 +77,21 @@ export const FINANCE_OPTIONS = {
     'rechtsbijstand',
     'overlijdensrisico'
   ] as const,
+
+  EXPENSE_CATEGORIES: [
+    'Boodschappen',
+    'Vervoer',
+    'Horeca',
+    'Winkelen',
+    'Cadeaus',
+    'Overig',
+  ] as const,
+
+  PAYMENT_METHODS: [
+    'pin',
+    'contant',
+    'creditcard',
+  ] as const,
 } as const;
 
 /**
@@ -97,6 +112,8 @@ export type UitkeringType = typeof FINANCE_OPTIONS.uitkeringType[number];
 
 export type StreamingDienst = typeof FINANCE_OPTIONS.streamingDiensten[number];
 export type VerzekeringType = typeof FINANCE_OPTIONS.verzekeringTypes[number];
+export type ExpenseCategory = typeof FINANCE_OPTIONS.EXPENSE_CATEGORIES[number];
+export type PaymentMethod = typeof FINANCE_OPTIONS.PAYMENT_METHODS[number];
 
 /**
  * ═══════════════════════════════════════════════════════════

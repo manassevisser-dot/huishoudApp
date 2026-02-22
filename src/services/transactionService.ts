@@ -7,7 +7,7 @@
  * @ai_instruction Deze service is de brug tussen oude en nieuwe data. Fouten in de mapping-logica (`mapLegacyMembers`, `extractFinanceItems`) kunnen leiden tot dataverlies tijdens migratie. De `undo` functie is een placeholder en moet nog geïmplementeerd worden.
  */
 import { StorageShim } from '@services/storageShim';
-import { toMemberType } from '@domain/research/PrivacyAirlock.WIP';
+import { toMemberType } from '@domain/research/PrivacyAirlock';
 import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import type { Member } from '@core/types/core';
 // Importeer de nieuwe adapter en types
@@ -47,11 +47,11 @@ function getSetupSource(oldState: LegacyState): Record<string, ZodJsonPrimitive>
 /** Mapt oude leden naar het nieuwe Member-formaat */
 function mapLegacyMembers(oldState: LegacyState): Member[] {
   const rawLeden =
-  (oldState.household?.leden as LegacyMember[] | undefined) ??
-  (oldState.data?.household?.leden as LegacyMember[] | undefined) ??
-  (oldState.leden as LegacyMember[] | undefined) ??
-  (oldState.data?.leden as LegacyMember[] | undefined) ??
-  [];
+    (oldState.household?.leden as LegacyMember[] | undefined) ??
+    (oldState.data?.household?.leden as LegacyMember[] | undefined) ??
+    (oldState.leden as LegacyMember[] | undefined) ??
+    (oldState.data?.leden as LegacyMember[] | undefined) ??
+    [];
 
 
   return rawLeden.map((lid, index) => {
@@ -74,7 +74,7 @@ function mapLegacyMembers(oldState: LegacyState): Member[] {
 function extractFinanceItems(items: LegacyItem[]): FinanceItem[] {
   return items
     .filter((item): item is LegacyItem & { fieldId: string; amount: number } =>
-      typeof item.fieldId === 'string' && typeof item.amount === 'number',
+        typeof item.fieldId === 'string' && typeof item.amount === 'number',
     )
     .map((item) => ({
       fieldId: item.fieldId,
@@ -132,8 +132,8 @@ export const TransactionService = {
 
   
     if (safeState.data === undefined || 
-      safeState.data === null || 
-      safeState.data.finance === undefined || 
+      safeState.data === null ||
+      safeState.data.finance === undefined ||
       safeState.data.finance === null) {
       return [];
     }
@@ -142,6 +142,7 @@ export const TransactionService = {
       income?: { items?: LegacyItem[] };
       expenses?: { items?: LegacyItem[] };
     };
+
     const incomeItems = extractFinanceItems(finance.income?.items ?? []);
     const expenseItems = extractFinanceItems(finance.expenses?.items ?? []);
 

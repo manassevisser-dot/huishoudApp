@@ -81,6 +81,13 @@ const INITIAL_DATA_RESET: FormState['data'] = {
     income: { items: [], totalAmount: 0 },
     expenses: { items: [], totalAmount: 0 },
   },
+  latestTransaction: {
+    latestTransactionDate: new Date().toISOString().split('T')[0],
+    latestTransactionAmount: 0,
+    latestTransactionCategory: null,
+    latestTransactionDescription: '',
+    latestPaymentMethod: 'pin',
+  },
 };
 
 function resetAppState(state: FormState, meta: FormState['meta']): FormState {

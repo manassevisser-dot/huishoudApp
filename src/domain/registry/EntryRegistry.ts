@@ -270,6 +270,38 @@ export const ENTRY_REGISTRY: Record<string, EntryDefinition> = {
     placeholderToken: '0.00',
     constraintsKey: 'telefoon',
   },
+
+  // ==================== DAILY TRANSACTION INPUT ====================
+  dailyTransactionDate: {
+    primitiveType: PRIMITIVE_TYPES.DATE,
+    labelToken: 'LABEL_TRANSACTION_DATE',
+    placeholderToken: 'TODAY',
+    constraintsKey: 'latestTransactionDate',
+  },
+  dailyTransactionAmount: {
+    primitiveType: PRIMITIVE_TYPES.CURRENCY,
+    labelToken: 'LABEL_AMOUNT',
+    placeholderToken: '0.00',
+    constraintsKey: 'latestTransactionAmount',
+  },
+  dailyTransactionCategory: {
+    primitiveType: PRIMITIVE_TYPES.CHIP_GROUP,
+    labelToken: 'LABEL_CATEGORY',
+    optionsKey: 'EXPENSE_CATEGORIES',
+    constraintsKey: 'latestTransactionCategory',
+  },
+  dailyTransactionDescription: {
+    primitiveType: PRIMITIVE_TYPES.TEXT,
+    labelToken: 'LABEL_DESCRIPTION',
+    placeholderToken: 'PLACEHOLDER_OPTIONAL_NOTE',
+    constraintsKey: 'latestTransactionDescription',
+  },
+  dailyPaymentMethod: {
+    primitiveType: PRIMITIVE_TYPES.CHIP_GROUP,
+    labelToken: 'LABEL_PAYMENT_METHOD',
+    optionsKey: 'PAYMENT_METHODS',
+    constraintsKey: 'latestPaymentMethod',
+  },
 };
 export function resolveFieldId(
   entryId: string,

@@ -68,4 +68,40 @@ describe('useStableOrchestrator', () => {
     // (Dit bewijst dat de "bedrading" in de file werkt)
     expect(localDispatch).toHaveBeenCalled();
   });
+
+  it('leest na rerender de actuele state via de stabiele orchestrator-instantie', () => {
+    interface HookProps {
+      s: FormState;
+      d: jest.Mock;
+    }
+
+    const firstState: FormState = JSON.parse(JSON.stringify(initialFormState));
+    const secondState: FormState = {
+      ...firstState,
+      data: {
+        ...firstState.data,
+        setup: {
+          ...firstState.data.setup,
+          aantalMensen: 42,
+        },
+      },
+    };
+
+    const { result, rerender } = renderHook(
+      ({ s, d }: HookProps) => useStableOrchestrator(s, d),
+      {
+        initialProps: { s: firstState, d: mockDispatch },
+      }
+    );
+
+    const firstRef = result.current;
+    rerender({ s: secondState, d: mockDispatch });
+
+    expect(result.current).toBe(firstRef);
+
+    const withInternals = result.current as unknown as {
+      fso: { getState: () => FormState };
+    };
+    expect(withInternals.fso.getState().data.setup.aantalMensen).toBe(42);
+  });
 });

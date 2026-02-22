@@ -99,7 +99,13 @@ export const SECTION_REGISTRY: Record<string, SectionDefinition> = {
     id: 'EXPENSE_INPUT_CARD',
     labelToken: 'SECTION_EXPENSE_INPUT',
     layout: 'card',
-    fieldIds: [], // stub: DailyInputScreen migratie apart
+    fieldIds: [
+      'dailyTransactionDate',
+      'dailyTransactionAmount',
+      'dailyTransactionCategory',
+      'dailyTransactionDescription',
+      'dailyPaymentMethod',
+    ],
   },
   GLOBAL_OPTIONS_LIST: {
     id: 'GLOBAL_OPTIONS_LIST',

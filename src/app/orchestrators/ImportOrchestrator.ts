@@ -8,7 +8,7 @@
  */
 
 import type { FinancialIncomeSummary, CsvItem } from '@core/types/research';
-import { dataProcessor, type ResearchSetupData } from '@domain/finance/StatementIntakePipeline.WIP';
+import { dataProcessor, type ResearchSetupData } from '@domain/finance/StatementIntakePipeline';
 import { csvAdapter } from '@adapters/csv/csvAdapter'; // Gebruikt de bestaande adapter
 import { Logger } from '@adapters/audit/AuditLoggerAdapter'; // Gebruikt de bestaande logger
 

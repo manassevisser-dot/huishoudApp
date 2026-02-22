@@ -19,6 +19,7 @@ import { validateAtBoundary } from '@adapters/validation/validateAtBoundary';
 import { logger } from '@adapters/audit/AuditLoggerAdapter';
 import { resolveFieldId, EntryRegistry } from '@domain/registry/EntryRegistry';
 import { labelFromToken } from '@domain/constants/labelResolver';
+import { computePhoenixSummary } from '@domain/rules/calculateRules';
 import type {
   StyledScreenVM,
   StyledSectionVM,
@@ -27,7 +28,8 @@ import type {
 import { IValueOrchestrator } from './interfaces/IValueOrchestrator';
 import type { ResearchOrchestrator, MasterProcessResult } from '@app/orchestrators/ResearchOrchestrator';
 import { DATA_KEYS } from '@domain/constants/datakeys';
-import type { DataManager } from './managers/DataManager'; 
+import type { DataManager } from './managers/DataManager';
+import type { ExpenseItem } from '@core/types/core'; 
 
 // ═══════════════════════════════════════════════════════════════════
 // RENDER-READY TYPES
@@ -115,8 +117,7 @@ export class MasterOrchestrator implements MasterOrchestratorAPI {
   // ═══════════════════════════════════════════════════════════════
 
   public buildRenderScreen(screenId: string): RenderScreenVM {
-    // [FIX] Add explicit type assertion to resolve the type mismatch.
-    const styled = this.app.ui.buildScreen(screenId) as StyledScreenVM;
+    const styled = this.app.ui.buildScreen(screenId);
     return this.toRenderScreen(styled);
   }
 
@@ -205,7 +206,13 @@ export class MasterOrchestrator implements MasterOrchestratorAPI {
     const result = validateAtBoundary(fieldId, value);
 
     if (!result.success) {
-      logger.warn(result.error, { fieldId, value });
+      logger.warn('field_update_validation_failed', {
+        orchestrator: 'master',
+        action: 'updateField',
+        fieldId,
+        value,
+        errorCode: result.error,
+      });
       return;
     }
 
@@ -232,9 +239,17 @@ public async handleCsvImport(csvText: string): Promise<void> {
   // Handel parse-fouten af
   if (localImportResult.status !== 'success') {
     if (localImportResult.status === 'error') {
-      logger.error('csv_PARSE_FAILED', { error: localImportResult.errorMessage });
+      logger.error('csv_parse_failed', {
+        orchestrator: 'master',
+        action: 'handleCsvImport',
+        error: localImportResult.errorMessage,
+      });
     } else if (localImportResult.status === 'empty') {
-      logger.warn('csv_PARSE_EMPTY', { count: 0 });
+      logger.warn('csv_parse_empty', {
+        orchestrator: 'master',
+        action: 'handleCsvImport',
+        count: 0,
+      });
     }
     return;
   }
@@ -266,11 +281,115 @@ private dispatchImportData(financeData: MasterProcessResult['local']['finance'])
 
 private logImportCompletion(result: MasterProcessResult): void {
   const count = result.local.finance.transactions.length;
-  logger.info('csv_IMPORT_SUCCESS', { count });
+  logger.info('csv_import_success', {
+    orchestrator: 'master',
+    action: 'handleCsvImport',
+    count,
+  });
   if (result.local.finance.summary.isDiscrepancy === true) {
-    logger.warn('csv_IMPORT_DISCREPANCY_FOUND', { details: result.local.finance.summary });
+    logger.warn('csv_import_discrepancy_found', {
+      orchestrator: 'master',
+      action: 'handleCsvImport',
+      details: result.local.finance.summary,
+    });
   }
 }
+
+  // ═══════════════════════════════════════════════════════════════
+  // DAILY TRANSACTION WORKFLOW
+  // ═══════════════════════════════════════════════════════════════
+
+  public saveDailyTransaction(): boolean {
+    const state = this.fso.getState();
+    const tx = state.data.latestTransaction;
+
+    // Explicit null/undefined checks with proper type narrowing
+    if (tx === null || tx === undefined) {
+      logger.warn('transaction_form_not_initialized', {
+        orchestrator: 'master',
+        action: 'saveDailyTransaction',
+      });
+      return false;
+    }
+
+    if (tx.latestTransactionAmount === undefined || tx.latestTransactionAmount <= 0) {
+      logger.warn('transaction_invalid_amount', {
+        orchestrator: 'master',
+        action: 'saveDailyTransaction',
+        amount: tx.latestTransactionAmount,
+      });
+      return false;
+    }
+
+    if (tx.latestTransactionCategory === null || tx.latestTransactionCategory === undefined || tx.latestTransactionCategory === '') {
+      logger.warn('transaction_category_required', {
+        orchestrator: 'master',
+        action: 'saveDailyTransaction',
+      });
+      return false;
+    }
+
+    // Type-safe cast: after checks, category is definitively a string
+    const category = tx.latestTransactionCategory as string;
+    const expenseItem = this.buildExpenseItemForTransaction(tx, category);
+    this.persistTransactionAndReset(expenseItem);
+    this.recomputeBusinessState();
+    logger.info('transaction_saved', {
+      orchestrator: 'master',
+      action: 'saveDailyTransaction',
+      fieldId: expenseItem.fieldId,
+    });
+    return true;
+  }
+
+  private buildExpenseItemForTransaction(
+    tx: NonNullable<Exclude<ReturnType<typeof this.fso.getState>['data']['latestTransaction'], null | undefined>>,
+    category: string,
+  ): ExpenseItem {
+    return {
+      fieldId: `expense_${Date.now()}`,
+      amount: tx.latestTransactionAmount ?? 0,
+      category,
+      description: tx.latestTransactionDescription ?? '',
+      paymentMethod: tx.latestPaymentMethod ?? 'pin',
+      date: tx.latestTransactionDate ?? new Date().toISOString().split('T')[0],
+    } as ExpenseItem;
+  }
+
+  private persistTransactionAndReset(expenseItem: ExpenseItem): void {
+    const state = this.fso.getState();
+    const currentExpenses: ExpenseItem[] = state.data.finance.expenses.items ?? [];
+    const updatedExpenses = [...currentExpenses, expenseItem];
+
+    // Use domain calculation: computePhoenixSummary calculates all totals from items
+    const financeData = {
+      income: state.data.finance.income,
+      expenses: { ...state.data.finance.expenses, items: updatedExpenses },
+    };
+    const summary = computePhoenixSummary(financeData);
+
+    this.fso.dispatch({
+      type: 'UPDATE_DATA',
+      payload: {
+        finance: {
+          ...state.data.finance,
+          expenses: {
+            ...state.data.finance.expenses,
+            items: updatedExpenses,
+            totalAmount: summary.totalExpensesCents,
+          },
+        },
+        latestTransaction: {
+          latestTransactionDate: new Date().toISOString().split('T')[0],
+          latestTransactionAmount: 0,
+          latestTransactionCategory: null,
+          latestTransactionDescription: '',
+          latestPaymentMethod: 'pin',
+        },
+      },
+    });
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // PRIVATE HELPERS
   // ═══════════════════════════════════════════════════════════════

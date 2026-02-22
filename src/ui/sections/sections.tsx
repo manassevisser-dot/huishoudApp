@@ -13,9 +13,18 @@
 import React, { memo, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { AnyStyle } from '@ui/styles/PlatformStyles';
+import { DynamicEntry } from '@ui/entries/entries';
+import type { RenderEntryVM } from '@app/orchestrators/MasterOrchestrator';
 
 
-const CollapsibleWrapper = ({ children, title, style, titleStyle }: any) => {
+interface CollapsibleWrapperProps {
+  children: React.ReactNode;
+  title: string;
+  style?: AnyStyle;
+  titleStyle?: AnyStyle;
+}
+
+const CollapsibleWrapper = ({ children, title, style, titleStyle }: CollapsibleWrapperProps) => {
   const [expanded, setExpanded] = useState(false);
   return (
     <View style={style}>
@@ -27,19 +36,36 @@ const CollapsibleWrapper = ({ children, title, style, titleStyle }: any) => {
   );
 };
 
-export const DynamicSection = memo(({ 
-  definition, 
-  fields, // <--- DIRECT GEINJECTEERD DOOR MASTER/SCREEN
-  titleStyle, 
-  containerStyle 
-}: { definition: SectionDefinition; fields: any[]; titleStyle?: AnyStyle; containerStyle?: AnyStyle }) => {
-  const { labelToken, uiModel } = definition;
-  const hasLabel = typeof labelToken === 'string' && labelToken.length > 0;
-  const content = <RenderEntries fields={fields} />;
+interface DynamicSectionProps {
+  sectionId: string;
+  title: string;
+  layout: string;
+  uiModel?: string;
+  children: RenderEntryVM[];
+  titleStyle?: AnyStyle;
+  containerStyle?: AnyStyle;
+}
+
+export const DynamicSection = memo(({
+  title,
+  uiModel,
+  children,
+  titleStyle,
+  containerStyle,
+}: DynamicSectionProps) => {
+  const hasLabel = typeof title === 'string' && title.length > 0;
+
+  const content = (
+    <View>
+      {children.map((entry: RenderEntryVM) => (
+        <DynamicEntry key={entry.entryId} entry={entry} />
+      ))}
+    </View>
+  );
 
   if (uiModel === 'collapsible') {
     return (
-      <CollapsibleWrapper title={labelToken} style={containerStyle} titleStyle={titleStyle}>
+      <CollapsibleWrapper title={title} style={containerStyle} titleStyle={titleStyle}>
         {content}
       </CollapsibleWrapper>
     );
@@ -47,7 +73,7 @@ export const DynamicSection = memo(({
 
   return (
     <View style={containerStyle}>
-      {hasLabel && <Text style={titleStyle}>{labelToken}</Text>}
+      {hasLabel && <Text style={titleStyle}>{title}</Text>}
       {content}
     </View>
   );

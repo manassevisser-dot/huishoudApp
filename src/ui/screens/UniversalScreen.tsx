@@ -11,36 +11,46 @@
  */
 // src/ui/screens/UniversalScreen.tsx
 import React, { useMemo } from 'react';
-import { View, ScrollView, Text } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMaster } from '@ui/providers/MasterProvider';
-import { DynamicSection } from '@ui/sections/sections';
 import { useAppStyles } from '@ui/styles/useAppStyles';
+import { resolveScreenRenderer } from '@ui/screens/screens';
+import type { RenderScreenVM } from '@app/orchestrators/MasterOrchestrator';
+import type { MasterOrchestratorAPI } from '@app/types/MasterOrchestratorAPI';
 
-export const UniversalScreen = ({ screenId }: { screenId: string }) => {
+interface UniversalScreenProps {
+  screenId: string;
+}
+
+const buildSaveDailyTransactionHandler = (master: MasterOrchestratorAPI): (() => void) => () => {
+  const saved = master.saveDailyTransaction();
+  if (saved === true) {
+    master.navigation.goToDashboard();
+  }
+};
+
+export const UniversalScreen = ({ screenId }: UniversalScreenProps) => {
   const master = useMaster();
   const insets = useSafeAreaInsets();
   const { Tokens, styles } = useAppStyles();
+  const screenVM = useMemo(() => master.buildRenderScreen(screenId), [screenId, master]) as RenderScreenVM | null;
+  const onSaveDailyTransaction = useMemo(() => buildSaveDailyTransactionHandler(master), [master]);
 
-  // De Master bouwt de volledige boom (Sections + hun FieldViewModels)
-  const screenVM = useMemo(() => master.ui.buildScreen(screenId), [screenId, master]);
+  if (screenVM === null) {
+    return null;
+  }
 
-  if (!screenVM) return null;
+  const ScreenRenderer = resolveScreenRenderer(screenVM);
+  const topPadding = insets.top + Tokens.Space.md;
 
   return (
     <View style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={{ paddingTop: insets.top + Tokens.Space.md }}
-      >
-        {/* De Master levert sectionen die de DynamicSection kan vreten */}
-        {screenVM.sections.map((compVM: any) => (
-          <DynamicSection 
-            key={compVM.id} 
-            definition={compVM.definition} 
-            fields={compVM.fields} // De ViewModels voor de velden in dit section
-          />
-        ))}
-      </ScrollView>
+      <ScreenRenderer
+        screenVM={screenVM}
+        topPadding={topPadding}
+        onSaveDailyTransaction={onSaveDailyTransaction}
+      />
     </View>
   );
 };

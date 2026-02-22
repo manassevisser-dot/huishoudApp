@@ -1,42 +1,54 @@
-// src/adapters/audit/AuditLoggerAdapter.ts
+﻿// src/adapters/audit/AuditLoggerAdapter.ts
 /**
  * @file_intent Centraal systeem voor event-logging, foutafhandeling en berichtvertaling.
  * @repo_architecture Mobile Industry (MI) - Infrastructure / Adapter Layer.
  * @term_definition Event-Routing = Het proces waarbij op basis van log-niveau (info/fatal) de bestemming (UI/Console/Mail) wordt bepaald.
  * @contract Biedt een stabiele Logger API. Vertaalt technische error-codes naar menselijke taal via 'validationMessages'.
- * @ai_instruction Bevat de kritieke 'translate' methode. Voeg hier GEEN UI-logica toe; gebruik de routeToUI placeholder voor koppeling met de Master.
+ * @ai_instruction Bevat de kritieke 'translate' methode. Voeg hier GEEN UI-logica toe; gebruik subscribe/routeToUI voor koppeling met de app-shell.
  */
 import { validationMessages } from '@state/schemas/sections/validationMessages';
 
+export type AuditLevel = 'info' | 'warning' | 'error' | 'fatal';
+
 export interface AuditEvent {
   timestamp: string;
-  level: 'info' | 'warning' | 'error' | 'fatal';
+  level: AuditLevel;
+  eventName: string;
   message: string;
   context?: Record<string, unknown>;
 }
 
-export interface AuditLoggerPort {
-  logEvent(event: AuditEvent): void;
-  getEventsByLevel(level: AuditEvent['level']): AuditEvent[];
+export interface AuditEventInput {
+  timestamp: string;
+  level: AuditLevel;
+  eventName: string;
+  message?: string;
+  context?: Record<string, unknown>;
 }
+
+export type AuditListener = (event: AuditEvent) => void;
+
+export interface AuditLoggerPort {
+  logEvent(event: AuditEventInput): void;
+  getEventsByLevel(level: AuditLevel): AuditEvent[];
+  subscribe(listener: AuditListener): () => void;
+}
+
+const FATAL_EVENT_NAMES = new Set<string>(['SYSTEM_ERROR', 'VALIDATION_CRASH']);
 
 class AuditLoggerAdapter implements AuditLoggerPort {
   private eventBuffer: AuditEvent[] = [];
 
-  public logEvent(event: AuditEvent): void {
-    const translatedMessage = this.translate(event.message);
+  private listeners = new Set<AuditListener>();
 
-    if (translatedMessage !== null) {
-      event.context = { ...event.context, originalCode: event.message };
-      event.message = translatedMessage;
-    }
+  public logEvent(input: AuditEventInput): void {
+    const event = this.normalizeEvent(input);
 
-    if (event.message === 'SYSTEM_ERROR' || event.message === 'VALIDATION_CRASH') {
+    if (event.level === 'fatal') {
       this.routeToTicketing(event);
-      event.level = 'fatal';
     }
 
-    if (event.level === 'error' || event.level === 'warning') {
+    if (event.level === 'error' || event.level === 'warning' || event.level === 'fatal') {
       this.routeToUI(event);
     }
 
@@ -44,19 +56,55 @@ class AuditLoggerAdapter implements AuditLoggerPort {
     this.eventBuffer.push(event);
   }
 
+  public subscribe(listener: AuditListener): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  public getEventsByLevel(level: AuditLevel): AuditEvent[] {
+    return this.eventBuffer.filter((e) => e.level === level);
+  }
+
+  public clearBuffer(): void {
+    this.eventBuffer = [];
+  }
+
+  private normalizeEvent(input: AuditEventInput): AuditEvent {
+    const translatedMessage = this.translate(input.eventName);
+    const shouldEscalate = FATAL_EVENT_NAMES.has(input.eventName);
+    const normalizedLevel: AuditLevel = shouldEscalate ? 'fatal' : input.level;
+    const normalizedMessage = translatedMessage ?? input.message ?? input.eventName;
+
+    const normalizedContext = translatedMessage !== null
+      ? { ...input.context, originalCode: input.eventName }
+      : input.context;
+
+    return {
+      timestamp: input.timestamp,
+      level: normalizedLevel,
+      eventName: input.eventName,
+      message: normalizedMessage,
+      context: normalizedContext,
+    };
+  }
+
   private routeToConsole(event: AuditEvent): void {
     const payload = JSON.stringify({
       level: event.level,
+      eventName: event.eventName,
       message: event.message,
       timestamp: event.timestamp,
-      context: event.context
+      context: event.context,
     });
     console.warn('[AUDIT]', payload);
   }
 
-  /* istanbul ignore next */
-private routeToUI(_event: AuditEvent): void {
-  // WIP: toekomstige UI-notificatie
+  private routeToUI(event: AuditEvent): void {
+    this.listeners.forEach((listener) => {
+      listener(event);
+    });
   }
 
   private routeToTicketing(event: AuditEvent): void {
@@ -64,7 +112,9 @@ private routeToUI(_event: AuditEvent): void {
   }
 
   private translate(path: string): string | null {
-    if (path.length === 0) return null;
+    if (path.length === 0) {
+      return null;
+    }
 
     const keys = path.split('.');
     const result = keys.reduce<unknown>((obj, key) => {
@@ -76,76 +126,107 @@ private routeToUI(_event: AuditEvent): void {
 
     return typeof result === 'string' ? result : null;
   }
-
-  public getEventsByLevel(level: AuditEvent['level']): AuditEvent[] {
-    return this.eventBuffer.filter(e => e.level === level);
-  }
-
-  public clearBuffer(): void {
-    this.eventBuffer = [];
-  }
 }
+
+const toIsoNow = (): string => new Date().toISOString();
+
+const toEventName = (value: unknown): string => String(value);
+
+const parseLevelToken = (value: unknown): AuditLevel | null => {
+  const token = String(value).toUpperCase();
+  if (token === 'WARN' || token === 'WARNING') {
+    return 'warning';
+  }
+  if (token === 'ERROR') {
+    return 'error';
+  }
+  if (token === 'FATAL') {
+    return 'fatal';
+  }
+  if (token === 'INFO') {
+    return 'info';
+  }
+  return null;
+};
 
 export const auditLogger = new AuditLoggerAdapter();
 
 export const Logger = {
-  error: (msg: string | Error, err?: unknown) => {
+  error: (eventName: string | Error, err?: unknown) => {
     const errorObj =
       err instanceof Error
         ? err
-        : msg instanceof Error
-        ? msg
-        : new Error(String(msg));
+        : eventName instanceof Error
+          ? eventName
+          : new Error(String(eventName));
+
+    const eventNameValue = eventName instanceof Error ? 'UNEXPECTED_ERROR' : eventName;
+
+    const contextFromErr = (err !== null && typeof err === 'object' && !(err instanceof Error))
+      ? (err as Record<string, unknown>)
+      : undefined;
 
     auditLogger.logEvent({
-      timestamp: new Date().toISOString(),
+      timestamp: toIsoNow(),
       level: 'error',
+      eventName: eventNameValue,
       message: errorObj.message,
       context: {
-        msg: String(msg),
-        stack: errorObj.stack ?? null
-      }
+        msg: String(eventName),
+        stack: errorObj.stack ?? null,
+        ...contextFromErr,
+      },
     });
   },
 
-  warn: (msg: string, data?: Record<string, unknown>) => {
+  warn: (eventName: string, data?: Record<string, unknown>) => {
     auditLogger.logEvent({
-      timestamp: new Date().toISOString(),
+      timestamp: toIsoNow(),
       level: 'warning',
-      message: msg,
-      context: data
+      eventName,
+      context: data,
     });
   },
 
-  info: (msg: string, data?: Record<string, unknown>) => {
+  info: (eventName: string, data?: Record<string, unknown>) => {
     auditLogger.logEvent({
-      timestamp: new Date().toISOString(),
+      timestamp: toIsoNow(),
       level: 'info',
-      message: msg,
-      context: data
+      eventName,
+      context: data,
     });
   },
 
   log: (first: unknown, second?: unknown) => {
-    const message = typeof second === 'string' ? second : String(first);
-    const rawData = second !== undefined ? second : first;
+    const parsedLevel = parseLevelToken(first);
+    const level: AuditLevel = parsedLevel ?? 'info';
 
+    const eventName = parsedLevel === null ? toEventName(first) : toEventName(first);
+
+    let messageValue: string | undefined;
     let contextValue: Record<string, unknown> | undefined;
 
-    if (rawData !== null && typeof rawData === 'object' && !Array.isArray(rawData)) {
-      contextValue = rawData as Record<string, unknown>;
-    } else if (rawData !== undefined) {
-      contextValue = { value: rawData };
+    if (typeof second === 'string') {
+      messageValue = second;
+    } else if (second !== null && typeof second === 'object' && !Array.isArray(second)) {
+      contextValue = second as Record<string, unknown>;
+    } else if (second !== undefined) {
+      contextValue = { value: second };
     }
 
     auditLogger.logEvent({
-      timestamp: new Date().toISOString(),
-      level: 'info',
-      message,
-      context: contextValue
+      timestamp: toIsoNow(),
+      level,
+      eventName,
+      message: messageValue,
+      context: contextValue,
     });
-  }
+  },
 };
 
 export const logger = Logger;
 export const AuditLogger = Logger;
+
+export const subscribeToAuditEvents = (listener: AuditListener): (() => void) => {
+  return auditLogger.subscribe(listener);
+};

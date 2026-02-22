@@ -212,6 +212,17 @@ export const FinanceSchema = z.object({
   expenses: ExpenseSchema,
 }).passthrough();
 
+/**
+ * LatestTransaction sectie — temporary form state for daily transaction input
+ */
+export const LatestTransactionSchema = z.object({
+  latestTransactionDate: z.string().optional(),
+  latestTransactionAmount: z.number().optional(),
+  latestTransactionCategory: z.string().nullable().optional(),
+  latestTransactionDescription: z.string().optional(),
+  latestPaymentMethod: z.string().optional(),
+}).passthrough();
+
 // ════════════════════════════════════════════════════════════════
 // FORMSTATE SCHEMA — de complete state, volledig getypt
 // ════════════════════════════════════════════════════════════════
@@ -225,6 +236,7 @@ export const FormStateSchema = z.object({
     setup:     SetupSchema,
     household: HouseholdSchema,
     finance:   FinanceSchema,
+    latestTransaction: LatestTransactionSchema.optional(),
   }),
   viewModels: z.object({
     financialSummary: z.object({
@@ -249,14 +261,17 @@ export type FormState = z.infer<typeof FormStateSchema>;
 /** Alias voor validatie-resultaat */
 export type ValidatedFormState = FormState;
 
-/** De drie data-secties */
-export type DataSection = 'setup' | 'household' | 'finance';
+/** De vier data-secties */
+export type DataSection = 'setup' | 'household' | 'finance' | 'latestTransaction';
 
 /** Member type — afgeleid uit MemberSchema */
 export type Member = z.infer<typeof MemberSchema>;
 
 /** Auto type — afgeleid uit AutoSchema */
 export type Auto = z.infer<typeof AutoSchema>;
+
+/** LatestTransaction type — afgeleid uit LatestTransactionSchema */
+export type LatestTransaction = z.infer<typeof LatestTransactionSchema>;
 
 // ════════════════════════════════════════════════════════════════
 // RUNTIME VALIDATION — voor dynamische veldvalidatie

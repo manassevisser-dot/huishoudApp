@@ -1,5 +1,5 @@
 // src/app/context/useStableOrchestrator.ts
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import type { FormState } from '@core/types/core';
 import type { FormAction } from '@app/state/formReducer';
 
@@ -25,10 +25,12 @@ export function useStableOrchestrator(
   state: FormState,
   dispatch: (action: FormAction) => void,
 ): MasterOrchestrator {
+  const stateRef = useRef<FormState>(state);
+  stateRef.current = state;
+
   return useMemo(() => {
     // 1. Core State & Late-binding
-    const fso = new FormStateOrchestrator(() => state, dispatch);
-    const masterRef: { current: MasterOrchestrator | null } = { current: null };
+    const fso = new FormStateOrchestrator(() => stateRef.current, dispatch);
 
     // 2. Domein Orchestrators (Logic Clusters)
     const visibility = new VisibilityOrchestrator(fso);
@@ -53,7 +55,6 @@ export function useStableOrchestrator(
       { ui, navigation, theme }
     );
 
-    masterRef.current = master;
     return master;
   }, [dispatch]);
 }

@@ -3,7 +3,7 @@ import {
   dataProcessor,
   type ResearchCsvItem,
   type ResearchSetupData,
-} from './StatementIntakePipeline.WIP';
+} from './StatementIntakePipeline';
 
 // Mock toCents zodat we in de tests expliciet in centen kunnen denken.
 jest.mock('@domain/helpers/numbers', () => ({
