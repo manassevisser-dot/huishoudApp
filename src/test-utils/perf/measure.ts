@@ -1,16 +1,19 @@
 /**
  * Meet hoe snel een async migratie/transform verloopt.
- * Gebruikt performance.now() indien beschikbaar, anders Date.now().
  */
 export async function measureMigrationSpeed<T>(migrationFn: () => Promise<T>) {
-  const now =
-    typeof performance !== 'undefined' && performance.now
-      ? () => performance.now()
-      : () => Date.now();
+  // We bepalen de bron van de tijdmeting op een linter-veilige manier
+  const isPerformanceAvailable = 
+    typeof performance !== 'undefined' && 
+    typeof performance.now === 'function';
 
-  const start = now();
+  const getTimestamp = isPerformanceAvailable 
+    ? () => performance.now() 
+    : () => Date.now();
+
+  const start = getTimestamp();
   const result = await migrationFn();
-  const end = now();
+  const end = getTimestamp();
 
   return {
     result,

@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-01-24T16:40:22.457Z",
+  "final_score": 75.23809523809524,
+  "total_weight": 21,
+  "achieved_score": 15.8,
+  "results": [
+    {
+      "id": "S-04",
+      "regel": "TypeScript strict",
+      "status": "PASS",
+      "score": 100,
+      "message": "TypeScript strict mode enabled"
+    },
+    {
+      "id": "S-05",
+      "regel": "Geen duplicatie",
+      "status": "PARTIAL",
+      "score": 50,
+      "message": "Could not verify duplication status"
+    },
+    {
+      "id": "T-01",
+      "regel": "Domeinlogica getest",
+      "status": "PASS",
+      "score": 100,
+      "message": "Found 55 domain test files"
+    },
+    {
+      "id": "T-04",
+      "regel": "Coverage ≥ 80% kernel",
+      "status": "PARTIAL",
+      "score": 70,
+      "message": "Coverage: 71.81% (below target)"
+    },
+    {
+      "id": "R-01",
+      "regel": "ESLint/Prettier pass",
+      "status": "FAIL",
+      "score": 0,
+      "message": "ESLint: 13 errors"
+    },
+    {
+      "id": "SEC-02",
+      "regel": "Geen gevoelige data in logs",
+      "status": "PASS",
+      "score": 100,
+      "message": "No sensitive data in logs detected"
+    }
+  ]
+}

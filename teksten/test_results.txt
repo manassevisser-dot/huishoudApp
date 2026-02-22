@@ -1,0 +1,181 @@
+
+[1m[46m RUN [49m[22m [36mv4.0.17 [39m[90m/home/user/pre7[39m
+
+ [32m✓[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22minitial rendering[2m > [22mrenders with initial cents value formatted[32m 46[2mms[22m[39m
+ [32m✓[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22minitial rendering[2m > [22mrenders with zero value[32m 7[2mms[22m[39m
+ [32m✓[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22minitial rendering[2m > [22mrenders euro prefix[32m 8[2mms[22m[39m
+ [32m✓[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22minitial rendering[2m > [22mrenders with placeholder[32m 5[2mms[22m[39m
+ [32m✓[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mvalue synchronization[2m > [22mupdates local value when external value changes[32m 10[2mms[22m[39m
+ [32m✓[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mvalue synchronization[2m > [22museEffect runs when value prop changes[32m 7[2mms[22m[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mfocus behavior[2m > [22mremoves thousand separators on focus[32m 10[2mms[22m[39m
+[31m   → Cannot create property 'Symbol(dispatching)' on string 'focus'[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mfocus behavior[2m > [22monFocus is called[32m 7[2mms[22m[39m
+[31m   → Cannot create property 'Symbol(dispatching)' on string 'focus'[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mtext input changes[2m > [22msanitizes input during typing[32m 17[2mms[22m[39m
+[31m   → __vi_import_1__.fireEvent.changeText is not a function[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mtext input changes[2m > [22mblocks invalid characters during typing[32m 8[2mms[22m[39m
+[31m   → __vi_import_1__.fireEvent.changeText is not a function[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mtext input changes[2m > [22mallows decimal comma[32m 19[2mms[22m[39m
+[31m   → __vi_import_1__.fireEvent.changeText is not a function[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mblur behavior[2m > [22mconverts to cents and emits on blur[32m 23[2mms[22m[39m
+[31m   → __vi_import_1__.fireEvent.changeText is not a function[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mblur behavior[2m > [22mformats to Dutch standard on blur[32m 18[2mms[22m[39m
+[31m   → __vi_import_1__.fireEvent.changeText is not a function[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mblur behavior[2m > [22mhandles empty input on blur[32m 10[2mms[22m[39m
+[31m   → __vi_import_1__.fireEvent.changeText is not a function[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mblur behavior[2m > [22mhandles invalid input on blur[32m 12[2mms[22m[39m
+[31m   → __vi_import_1__.fireEvent.changeText is not a function[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mdisabled state[2m > [22minput is disabled when disabled prop is true[32m 20[2mms[22m[39m
+[31m   → Cannot read properties of undefined (reading 'editable')[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mdisabled state[2m > [22minput is enabled when disabled prop is false[32m 12[2mms[22m[39m
+[31m   → Cannot read properties of undefined (reading 'editable')[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mdisabled state[2m > [22minput is enabled by default[32m 9[2mms[22m[39m
+[31m   → Cannot read properties of undefined (reading 'editable')[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22maccessibility[2m > [22muses default accessibility label[32m 17[2mms[22m[39m
+[31m   → Unable to find a label with the text of: Bedrag
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div>[31m
+      [36m<div[31m
+        [33maccessibilitylabel[31m=[32m"Euro-teken"[31m
+      [36m>[31m
+        [0m€[0m
+      [36m</div>[31m
+      [36m<input[31m
+        [33maccessibilitylabel[31m=[32m"Bedrag"[31m
+        [33mkeyboardtype[31m=[32m"decimal-pad"[31m
+        [33mplaceholder[31m=[32m""[31m
+        [33mvalue[31m=[32m"100,00"[31m
+      [36m/>[31m
+    [36m</div>[31m
+  [36m</div>[31m
+[36m</body>[31m[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22maccessibility[2m > [22muses custom accessibility label[32m 16[2mms[22m[39m
+[31m   → Unable to find a label with the text of: Salaris bedrag
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div>[31m
+      [36m<div[31m
+        [33maccessibilitylabel[31m=[32m"Euro-teken"[31m
+      [36m>[31m
+        [0m€[0m
+      [36m</div>[31m
+      [36m<input[31m
+        [33maccessibilitylabel[31m=[32m"Salaris bedrag"[31m
+        [33mkeyboardtype[31m=[32m"decimal-pad"[31m
+        [33mplaceholder[31m=[32m""[31m
+        [33mvalue[31m=[32m"100,00"[31m
+      [36m/>[31m
+    [36m</div>[31m
+  [36m</div>[31m
+[36m</body>[31m[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22maccessibility[2m > [22meuro prefix has accessibility label[32m 16[2mms[22m[39m
+[31m   → Unable to find a label with the text of: Euro-teken
+
+Ignored nodes: comments, script, style
+[36m<body>[31m
+  [36m<div>[31m
+    [36m<div>[31m
+      [36m<div[31m
+        [33maccessibilitylabel[31m=[32m"Euro-teken"[31m
+      [36m>[31m
+        [0m€[0m
+      [36m</div>[31m
+      [36m<input[31m
+        [33maccessibilitylabel[31m=[32m"Bedrag"[31m
+        [33mkeyboardtype[31m=[32m"decimal-pad"[31m
+        [33mplaceholder[31m=[32m""[31m
+        [33mvalue[31m=[32m"100,00"[31m
+      [36m/>[31m
+    [36m</div>[31m
+  [36m</div>[31m
+[36m</body>[31m[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22mkeyboard type[2m > [22muses decimal-pad keyboard type[32m 6[2mms[22m[39m
+[31m   → Cannot read properties of undefined (reading 'keyboardType')[39m
+ [32m✓[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22medge cases[2m > [22mhandles very large cent values[32m 3[2mms[22m[39m
+ [32m✓[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22medge cases[2m > [22mhandles rapid value changes[32m 32[2mms[22m[39m
+ [31m×[39m src/ui/components/__tests__/MoneyInput.test.tsx[2m > [22mMoneyInput[2m > [22medge cases[2m > [22mhandles focus -> change -> blur cycle[32m 5[2mms[22m[39m
+[31m   → Cannot create property 'Symbol(dispatching)' on string 'focus'[39m
+ [31m×[39m src/__tests__/WAI009_FocusManagement.test.tsx[2m > [22mWAI-009 - LandingScreen Integration[2m > [22mmoet de LandingScreen renderen binnen de Phoenix-context[32m 76[2mms[22m[39m
+[31m   → Cannot set property 0 of #<CSSStyleDeclaration> which has only a getter[39m
+ [31m×[39m src/__tests__/WAI009_FocusManagement.test.tsx[2m > [22mWAI-009 - LandingScreen Integration[2m > [22mmoet de juiste SET_STEP actie verzenden bij klikken op "Aanmelden"[32m 14[2mms[22m[39m
+[31m   → Cannot set property 0 of #<CSSStyleDeclaration> which has only a getter[39m
+ [31m×[39m src/__tests__/WAI009_FocusManagement.test.tsx[2m > [22mWAI-009 - LandingScreen Integration[2m > [22mmoet de juiste SET_STEP actie verzenden bij klikken op "Inloggen"[32m 11[2mms[22m[39m
+[31m   → Cannot set property 0 of #<CSSStyleDeclaration> which has only a getter[39m
+ [31m×[39m src/__tests__/WAI009_FocusManagement.test.tsx[2m > [22mWAI-009 - LandingScreen Integration[2m > [22mmoet eventuele externe callbacks (onSignup) correct aanroepen[32m 16[2mms[22m[39m
+[31m   → Cannot set property 0 of #<CSSStyleDeclaration> which has only a getter[39m
+ [31m×[39m src/__tests__/App.projector.test.tsx[2m > [22mApp Projector Flow[2m > [22mWAI Check: LandingScreen heeft toegankelijke knoppen[32m 113[2mms[22m[39m
+[31m   → Cannot set property 0 of #<CSSStyleDeclaration> which has only a getter[39m
+ [31m×[39m src/__tests__/App.projector.test.tsx[2m > [22mApp Projector Flow[2m > [22mProjector: switch LANDING → WIZARD rendert wizard UI[32m 13[2mms[22m[39m
+[31m   → Cannot set property 0 of #<CSSStyleDeclaration> which has only a getter[39m
+ [31m×[39m src/__tests__/LandingScreen_Isolation.test.tsx[2m > [22mLandingScreen Isolation[2m > [22mrenders correctly[32m 58[2mms[22m[39m
+[31m   → Cannot set property 0 of #<CSSStyleDeclaration> which has only a getter[39m
+ [31m×[39m src/__tests__/LandingScreen_Isolation.test.tsx[2m > [22mLandingScreen Isolation[2m > [22mbuttons work and dispatch actions[32m 11[2mms[22m[39m
+[31m   → Cannot set property 0 of #<CSSStyleDeclaration> which has only a getter[39m
+ [31m×[39m src/ui/screens/Wizard/__tests__/WizardController.test.tsx[2m > [22mWizardController Branch & Function Coverage[2m > [22mmoet de juiste config kiezen voor stap: WIZARD_SETUP[32m 45[2mms[22m[39m
+[31m   → toJSON is not a function[39m
+ [31m×[39m src/ui/screens/Wizard/__tests__/WizardController.test.tsx[2m > [22mWizardController Branch & Function Coverage[2m > [22mmoet de juiste config kiezen voor stap: WIZARD_DETAILS[32m 21[2mms[22m[39m
+[31m   → toJSON is not a function[39m
+ [31m×[39m src/ui/screens/Wizard/__tests__/WizardController.test.tsx[2m > [22mWizardController Branch & Function Coverage[2m > [22mmoet de juiste config kiezen voor stap: WIZARD_INCOME[32m 14[2mms[22m[39m
+[31m   → toJSON is not a function[39m
+ [31m×[39m src/ui/screens/Wizard/__tests__/WizardController.test.tsx[2m > [22mWizardController Branch & Function Coverage[2m > [22mmoet de juiste config kiezen voor stap: WIZARD_EXPENSES[32m 10[2mms[22m[39m
+[31m   → toJSON is not a function[39m
+ [31m×[39m src/ui/screens/Wizard/__tests__/WizardController.test.tsx[2m > [22mWizardController Branch & Function Coverage[2m > [22mmoet de juiste config kiezen voor stap: UNKNOWN_STEP[32m 5[2mms[22m[39m
+[31m   → toJSON is not a function[39m
+ [31m×[39m src/ui/screens/Wizard/__tests__/WizardController.test.tsx[2m > [22mWizardController Branch & Function Coverage[2m > [22mmoet de dispatch aanroepen wanneer onNext en onBack worden getriggerd[32m 8[2mms[22m[39m
+[31m   → props.onNext is not a function[39m
+ [31m×[39m src/domain/services/__tests__/BT-02_Audit_New.test.ts[2m > [22mBT-02-validation-smoke-v2[2m > [22mgenereert de nieuwe waarheid voor de audit[32m 47[2mms[22m[39m
+[31m   → Snapshot `BT-02-validation-smoke-v2 > genereert de nieuwe waarheid voor de audit 1` mismatched[39m
+ [32m✓[39m src/utils/__tests__/fieldVisibility.test.ts[2m > [22mevaluateVisibleIf (Bridge Integration)[2m > [22mshould return true if no condition is provided[32m 2[2mms[22m[39m
+ [31m×[39m src/utils/__tests__/fieldVisibility.test.ts[2m > [22mevaluateVisibleIf (Bridge Integration)[2m > [22mshould find values in different buckets[32m 11[2mms[22m[39m
+[31m   → expected false to be true // Object.is equality[39m
+ [31m×[39m src/utils/__tests__/fieldVisibility.test.ts[2m > [22mevaluateVisibleIf (Bridge Integration)[2m > [22mshould evaluate "gt" operator[32m 2[2mms[22m[39m
+[31m   → expected false to be true // Object.is equality[39m
+ [32m✓[39m src/utils/__tests__/validation.test.ts[2m > [22mvalidation.ts logic[2m > [22mvalidateField[2m > [22mshould fallback to 0 when state path is missing for lengthEqualsTo[32m 2[2mms[22m[39m
+ [31m×[39m src/utils/__tests__/validation.test.ts[2m > [22mvalidation.ts logic[2m > [22mvalidateField[2m > [22mshould return error if required value is missing[32m 9[2mms[22m[39m
+[31m   → expected null to be truthy[39m
+ [32m✓[39m src/utils/__tests__/validation.test.ts[2m > [22mvalidation.ts logic[2m > [22mvalidateField[2m > [22mshould return error if number is below min[32m 1[2mms[22m[39m
+ [32m✓[39m src/utils/__tests__/validation.test.ts[2m > [22mvalidation.ts logic[2m > [22mvalidateField[2m > [22mshould return error if number is above max[32m 0[2mms[22m[39m
+ [31m×[39m src/utils/__tests__/validation.test.ts[2m > [22mvalidation.ts logic[2m > [22mvalidateField[2m > [22mshould validate postcode correctly[32m 2[2mms[22m[39m
+[31m   → expected null to be truthy[39m
+ [32m✓[39m src/utils/__tests__/validation.test.ts[2m > [22mvalidation.ts logic[2m > [22mvalidateField[2m > [22mshould validate lengthEqualsTo for arrays[32m 0[2mms[22m[39m
+ [32m✓[39m src/utils/__tests__/validation.test.ts[2m > [22mvalidation.ts logic[2m > [22mvalidateField[2m > [22mshould return null if no validation rules match[32m 0[2mms[22m[39m
+ [32m✓[39m src/utils/__tests__/validation.test.ts[2m > [22mvalidation.ts logic[2m > [22mvalidateDobNL[2m > [22mshould return error for incomplete date[32m 1[2mms[22m[39m
+ [32m✓[39m src/utils/__tests__/validation.test.ts[2m > [22mvalidation.ts logic[2m > [22mvalidateDobNL[2m > [22mshould return error for implausible digits[32m 1[2mms[22m[39m
+ [32m✓[39m src/utils/__tests__/validation.test.ts[2m > [22mvalidation.ts logic[2m > [22mvalidateDobNL[2m > [22mshould return error for non-existent calendar dates[32m 1[2mms[22m[39m
+ [32m✓[39m src/utils/__tests__/validation.test.ts[2m > [22mvalidation.ts logic[2m > [22mvalidateDobNL[2m > [22mshould return error for non-existent calendar date (leap year check etc)[32m 0[2mms[22m[39m
+ [32m✓[39m src/utils/__tests__/validation.test.ts[2m > [22mvalidation.ts logic[2m > [22mvalidateDobNL[2m > [22mshould return null for valid date[32m 1[2mms[22m[39m
+ [32m✓[39m src/domain/rules/__tests__/visibilityRules.test.ts[2m > [22mvisibilityRules[2m > [22misNumeric guard[2m > [22mCOND-GUARD-002: accepts valid numeric strings[32m 2[2mms[22m[39m
+ [32m✓[39m src/domain/rules/__tests__/visibilityRules.test.ts[2m > [22mvisibilityRules[2m > [22misNumeric guard[2m > [22mCOND-GUARD-003: rejects empty string[32m 0[2mms[22m[39m
+ [32m✓[39m src/domain/rules/__tests__/visibilityRules.test.ts[2m > [22mvisibilityRules[2m > [22misNumeric guard[2m > [22mCOND-GUARD-004: rejects NaN[32m 0[2mms[22m[39m
+ [32m✓[39m src/domain/rules/__tests__/visibilityRules.test.ts[2m > [22mvisibilityRules[2m > [22misNumeric guard[2m > [22mCOND-GUARD-005: rejects Infinity[32m 0[2mms[22m[39m
+ [32m✓[39m src/domain/rules/__tests__/visibilityRules.test.ts[2m > [22mvisibilityRules[2m > [22mBusiness rules[2m > [22mCOND-VIS-001: kinderenLabel visible when aantalMensen > 1[32m 0[2mms[22m[39m
+ [32m✓[39m src/domain/rules/__tests__/visibilityRules.test.ts[2m > [22mvisibilityRules[2m > [22mBusiness rules[2m > [22mCOND-VIS-002: kinderenLabel hidden when aantalMensen <= 1[32m 0[2mms[22m[39m
+ [32m✓[39m src/domain/rules/__tests__/visibilityRules.test.ts[2m > [22mvisibilityRules[2m > [22mBusiness rules[2m > [22mCOND-VIS-003: car_repeater visible when autoCount !== Nee[32m 0[2mms[22m[39m
+ [32m✓[39m src/domain/rules/__tests__/visibilityRules.test.ts[2m > [22mvisibilityRules[2m > [22mBusiness rules[2m > [22mCOND-VIS-005: aantalVolwassen visible when aantalMensen > 0[32m 0[2mms[22m[39m
+ [31m×[39m src/domain/rules/__tests__/visibilityRules.test.ts[2m > [22mvisibilityRules[2m > [22mBusiness rules[2m > [22mCOND-VIS-007: member_income_details visible with context[32m 10[2mms[22m[39m
+[31m   → expected false to be true // Object.is equality[39m
+ [32m✓[39m src/domain/rules/__tests__/visibilityRules.test.ts[2m > [22mvisibilityRules[2m > [22mBusiness rules[2m > [22mCOND-VIS-008: member_income_details hidden without context[32m 1[2mms[22m[39m
+ [32m✓[39m src/domain/rules/__tests__/visibilityRules.test.ts[2m > [22mvisibilityRules[2m > [22mCOND-VIS-FAIL-CLOSED: returns false for unknown or missing field[32m 0[2mms[22m[39m
+ [32m✓[39m src/services/__tests__/storage.test.ts[2m > [22mstorage.ts: migrateToPhoenix[2m > [22mmoet een volledige migratie uitvoeren van oude data naar de Phoenix structuur[32m 4[2mms[22m[39m
+ [32m✓[39m src/services/__tests__/storage.test.ts[2m > [22mstorage.ts: migrateToPhoenix[2m > [22mmoet omgaan met lege of null input (Lijn 10-14 coverage)[32m 1[2mms[22m[39m
+ [32m✓[39m src/services/__tests__/storage.test.ts[2m > [22mstorage.ts: migrateToPhoenix[2m > [22mmoet verschillende financiële input-formaten herkennen (Lijn 12-15 coverage)[32m 0[2mms[22m[39m
+ [31m×[39m src/services/__tests__/storage.test.ts[2m > [22mstorage.ts: migrateToPhoenix[2m > [22mmoet loadState aanroepen en null teruggeven (Lijn 65 coverage)[32m 5[2mms[22m[39m
+[31m   → Cannot find module '@adapters/storage/storage'
+Require stack:
+- /home/user/pre7/src/services/__tests__/storage.test.ts[39m
+ [31m×[39m src/domain/validation/__tests__/CONSISTENCY_FPR_V2.test.ts[2m > [22mCONSISTENCY-TEST-FPR-V2[2m > [22mmoet bevestigen dat de initialFormState 100% valide is[32m 19[2mms[22m[39m
+[31m   → Target cannot be null or undefined.[39m
+ [31m×[39m src/services/__tests__/storageShim.test.ts[2m > [22mCU-001-SHIM StorageShim[2m > [22menforces schemaVersion and envelope on saveState (Audit gate)[32m 8[2mms[22m[39m
+[31m   → Cannot find module '../storageShim'
+Require stack:
+- /home/user/pre7/src/services/__tests__/storageShim.test.ts[39m
+ [32m✓[39m src/__tests__/regression/ui-decoupling.integrity.test.ts[2m > [22mUI Decoupling Integrity Guard (FPR-only)[2m > [22mUI-DECOUPLE-001: Geen DATA_KEYS imports in UI-laag[32m 23[2mms[22m[39m
+ [32m✓[39m src/__tests__/regression/ui-decoupling.integrity.test.ts[2m > [22mUI Decoupling Integrity Guard (FPR-only)[2m > [22mUI-DECOUPLE-002: Geen SUB_KEYS imports in UI-laag[32m 23[2mms[22m[39m
+ [32m✓[39m src/__tests__/regression/ui-decoupling.integrity.test.ts[2m > [22mUI Decoupling Integrity Guard (FPR-only)[2m > [22mUI-DECOUPLE-003: Geen directe state.data toegang in UI-laag[32m 20[2mms[22m[39m
+ [32m✓[39m src/__tests__/regression/ui-decoupling.integrity.test.ts[2m > [22mUI Decoupling Integrity Guard (FPR-only)[2m > [22mUI-DECOUPLE-006: Geen directe domain imports in UI-laag[32m 18[2mms[22m[39m
+ [32m✓[39m src/__tests__/regression/ui-decoupling.integrity.test.ts[2m > [22mUI Decoupling Integrity Guard (FPR-only)[2m > [22mUI-RW-017: Geen dispatch calls met section/field in UI-laag[32m 19[2mms[22m[39m

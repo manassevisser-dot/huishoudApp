@@ -1,146 +1,44 @@
-import { getISOWeek } from '@domain/helpers/DateHydrator';
-import * as React from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { dataOrchestrator } from '@services/dataOrchestrator';
-import * as TransactionService from '@services/transactionService';
+/**
+ * @file_intent Definieert het `CsvUploadScreen`, een UI-component waarmee gebruikers een csv-bestand kunnen selecteren en uploaden voor verwerking.
+ * @repo_architecture UI Layer - Screen. Dit scherm is verantwoordelijk voor de presentatie van de upload-functionaliteit. Het ontvangt de `onPickFile` callback en de `isUploading` status als props. De logica voor het daadwerkelijk verwerken van het bestand bevindt zich in een hoger gelegen orchestrator (`ImportOrchestrator`).
+ * @term_definition
+ *   - `onPickFile`: Een callback-prop die wordt aangeroepen wanneer de gebruiker op de upload-knop tikt. Deze functie initieert het proces voor het selecteren van een bestand via de `FilePickerAdapter`.
+ *   - `isUploading`: Een boolean-prop die aangeeft of er momenteel een upload- en verwerkingsoperatie gaande is. Dit wordt gebruikt om de knop uit te schakelen en een `ActivityIndicator` weer te geven.
+ *   - `ActivityIndicator`: Een standaard React Native component dat een visuele spinner toont om aan te geven dat een proces (zoals uploaden) actief is.
+ * @contract Het component rendert een knop. Wanneer op de knop wordt geklikt, wordt de `onPickFile`-functie aangeroepen. Als `isUploading` waar is, wordt de knop uitgeschakeld en wordt een laadindicator getoond. Het is een presentatie-component dat zijn staat via props ontvangt.
+ * @ai_instruction Om de styling van dit scherm aan te passen, gebruik de stijlen die via `useAppStyles` worden geleverd in plaats van de verouderde `placeholderStyles`. De `placeholderStyles` worden uitgefaseerd. Om de tekst op de knop of de titel van het scherm te wijzigen, pas de constanten in `UI_SECTIONS` aan in plaats van hardcoded strings te gebruiken.
+ */
+// src/ui/screens/csv/CsvUploadScreen.tsx
+
+import React from 'react';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { UI_SECTIONS } from '@domain/constants/uiSections';
 import { useAppStyles } from '@ui/styles/useAppStyles';
-import { DATA_KEYS } from '@domain/constants/datakeys'; // Toegevoegd voor de juiste mapping
-import { Logger } from '@/adapters/audit/AuditLoggerAdapter';
 
-type Props = {
-  onClose: () => void;
-  // We verwachten nu de volledige household members en de setup
-  members: any[];
-  setupData: any;
-};
+interface CsvUploadScreenProps {
+  onPickFile: () => void;
+  isUploading: boolean;
+}
 
-const CsvUploadScreen: React.FC<Props> = ({ onClose, members, setupData }) => {
-  const insets = useSafeAreaInsets();
-  const { styles, colors } = useAppStyles();
-
-  const [csvText, setCsvText] = React.useState('');
-  const [isUploading, setIsUploading] = React.useState(false);
-
-  const handleUpload = async () => {
-    try {
-      setIsUploading(true);
-
-      // --- 1. DE NIEUWE WASSTRAAT (processAllData) ---
-      // We geven de bestaande members mee voor de privacy mapping
-      const result = dataOrchestrator.processAllData(members || [], csvText, setupData || {});
-
-      // Gebruik de DATA_KEYS om de gefilterde lokale data op te halen
-
-      const financeData = result.local[DATA_KEYS.FINANCE];
-
-      if (financeData.transactions.length === 0) {
-        Alert.alert('Fout', 'Geen geldige transacties gevonden. Controleer het formaat.');
-        setIsUploading(false);
-        return;
-      }
-
-      // --- 2. SAMENVATTING / SIGNALEN ---
-      const { summary: income, hasMissingCosts } = financeData;
-
-      let message =
-        `${financeData.transactions.length} transacties verwerkt.\n\n` +
-        `Inkomen bron: ${income.source}\n` +
-        `Inkomen (centen): ${income.finalIncome}\n\n`;
-
-      if (income.isDiscrepancy) {
-        message +=
-          `⚠️ We zien een afwijkend inkomen tussen CSV en Setup.\n` +
-          `Verschil: formatCurrency(x)\n\n`;
-      }
-
-      if (hasMissingCosts) {
-        message += `🏠 We vonden woonlasten in de CSV die niet in je setup stonden.\n\n`;
-      }
-
-      Alert.alert('Bevestig Upload', message + 'Wil je deze data opslaan?', [
-        { text: 'Annuleren', style: 'cancel', onPress: () => setIsUploading(false) },
-        {
-          text: 'Opslaan',
-          onPress: async () => {
-            // --- 3. (ANONIEM) RESEARCH PAYLOAD NAAR ANALYTICS ---
-            // Je kunt result.research direct doorsturen naar een API/n8n
-            Logger.info('Sending to research:', result.research);
-
-            // --- 4. OPSLAAN NAAR LOKALE STORAGE ---
-            for (const tx of financeData.transactions) {
-              await (TransactionService as any)._mockLocalSave({
-                date: tx.date,
-                amount: tx.amount,
-                description: tx.description, // Al geanonimiseerd door orchestrator
-                category: tx.category,
-                paymentMethod: 'pin',
-                weekNumber: getISOWeek(new Date(tx.date)),
-              });
-            }
-
-            setIsUploading(false);
-            Alert.alert('Succes', 'Je dashboard is bijgewerkt!', [
-              { text: 'OK', onPress: onClose },
-            ]);
-          },
-        },
-      ]);
-    } catch (e: any) {
-      setIsUploading(false);
-      Alert.alert('Fout', e?.message ?? 'Onbekende fout bij verwerken van CSV');
-    }
-  };
+export const CsvUploadScreen: React.FC<CsvUploadScreenProps> = ({ onPickFile, isUploading }) => {
+  const { styles } = useAppStyles();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.pageContainer}>
-        <ScrollView
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
-        >
-          <Text style={styles.pageTitle}>Bankafschrift Importeren</Text>
+    <View style={styles.screenContainer}>
+      <Text style={styles.screenTitle}>{UI_SECTIONS.csv_UPLOAD}</Text>
 
-          <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>
-            Plak hier je bank-export. Persoonsgegevens en IBANs worden automatisch geanonimiseerd.
-          </Text>
-
-          <TextInput
-            style={[styles.input, { height: 240, textAlignVertical: 'top', fontFamily: 'Courier' }]}
-            multiline
-            placeholder="Plak hier uw CSV regels..."
-            value={csvText}
-            onChangeText={setCsvText}
-            editable={!isUploading}
-          />
-
-          <TouchableOpacity
-            style={[
-              styles.button,
-              {
-                marginTop: 16,
-                marginLeft: 0,
-                backgroundColor: isUploading ? colors.secondary : colors.primary,
-              },
-            ]}
-            onPress={handleUpload}
-            disabled={isUploading || !csvText.trim()}
-          >
-            {isUploading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Analyseer CSV</Text>
-            )}
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={onPickFile}
+        disabled={isUploading}
+        testID="Kies csv-bestand"
+      >
+        {isUploading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Kies csv-bestand</Text>
+        )}
+      </TouchableOpacity>
     </View>
   );
 };

@@ -1,0 +1,474 @@
+]633;E;echo "---<< src/domain/rules/FieldPathResolver.ts >>---";863b80ae-a93c-4cb9-8e68-b1ad67bd0c78]633;C---<< src/domain/rules/FieldPathResolver.ts >>---
+/**
+ * FieldPathResolver: bridge between flat fieldId and nested state.
+ * Implements ADR-03 (Kernel Purity).
+ */
+export class FieldPathResolver {
+  // Mapping of flat field identifiers to nested state paths
+  private static FIELD_PATH_MAP: Record<string, string> = {
+    // Setup fields (LET OP: data.setup prefix!)
+    aantalMensen: 'data.setup.aantalMensen',
+    aantalVolwassen: 'data.setup.aantalVolwassen',
+    autoCount: 'data.setup.autoCount',
+    heeftHuisdieren: 'data.setup.heeftHuisdieren',
+    hasPartner: 'data.setup.hasPartner',
+    postcode: 'data.setup.postcode',
+    
+    // Members (in data.members)
+    members: 'data.members',
+    
+    // Household fields
+    household: 'data.household',
+        
+    // Finance fields
+    grossMonthly: 'data.finance.grossMonthly',
+    income: 'data.finance.income',
+    expenses: 'data.finance.expenses',
+    
+    // Add more as needed
+  };
+
+  /**
+   * Resolve a flat fieldId to its value in the nested state.
+   * @param fieldId The flat identifier from the UI
+   * @param state The full FormState object (includes data, schemaVersion, etc)
+   */
+  static resolve(fieldId: string, state: any): unknown {
+    const path = this.FIELD_PATH_MAP[fieldId];
+    
+    // Als er geen mapping is, probeer het als directe path (voor backwards compat)
+    const actualPath = path || fieldId;
+    
+    return actualPath.split('.').reduce((obj, key) => obj?.[key], state);
+  }
+
+  /**
+   * Update een waarde op een bepaald fieldId path
+   */
+  static update(fieldId: string, value: unknown, state: any): void {
+    const path = this.FIELD_PATH_MAP[fieldId];
+    if (!path) return;
+
+    const keys = path.split('.');
+    const lastKey = keys.pop()!;
+    
+    let current = state;
+    for (const key of keys) {
+      if (!current[key]) current[key] = {};
+      current = current[key];
+    }
+    
+    current[lastKey] = value;
+  }
+}
+
+---<< src/domain/rules/ValueProvider.ts >>---
+export interface ValueProvider { getValue(fieldPath: string): unknown; }
+
+---<< src/domain/interfaces/ValueProvider.ts >>---
+export interface ValueProvider { getValue(fieldId: string): unknown; }
+
+---<< src/domain/rules/visibilityRules.ts >>---
+import { ValueProvider } from '../interfaces/ValueProvider';
+
+/**
+ * 1) Hardening guard
+ */
+export function isNumeric(value: unknown): value is number | string {
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (typeof value === 'string') {
+    const t = value.trim();
+    if (t === '') return false;
+    const n = Number(t);
+    return Number.isFinite(n);
+  }
+  return false;
+}
+
+/**
+ * 2) Engine types
+ */
+export type Operator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'truthy';
+
+export type Condition = {
+  field: string;
+  operator: Operator;
+  value?: unknown;
+  contextGuard?: (ctx?: unknown) => boolean;
+};
+
+/**
+ * Kern logica voor het evalueren van een conditie.
+ */
+export function evaluateVisibilityCondition(
+  c: Condition,
+  provider: ValueProvider,
+  ctx?: unknown
+): boolean {
+  if (c.contextGuard && !c.contextGuard(ctx)) return false;
+  
+  const v = provider.getValue(c.field);
+
+  // Fail-closed: als de waarde undefined of null is, evalueren we naar false
+  if (v === undefined || v === null) {
+    if (c.operator === 'neq') return v !== c.value;
+    return false; 
+  }
+
+  switch (c.operator) {
+    case 'truthy': return !!v;
+    case 'eq': return v === c.value;
+    case 'neq': return v !== c.value;
+    case 'gt':
+      if (!isNumeric(v) || !isNumeric(c.value)) return false;
+      return Number(v) > Number(c.value);
+    case 'gte':
+      if (!isNumeric(v) || !isNumeric(c.value)) return false;
+      return Number(v) >= Number(c.value);
+    case 'lt':
+      if (!isNumeric(v) || !isNumeric(c.value)) return false;
+      return Number(v) < Number(c.value);
+    case 'lte':
+      if (!isNumeric(v) || !isNumeric(c.value)) return false;
+      return Number(v) <= Number(c.value);
+    default: return false;
+  }
+}
+
+/**
+ * 3) Registry
+ * GEFIXT: Paden aangepast naar de diepe datastructuur van FormStateSchema
+ */
+type VisibilityRule = (provider: ValueProvider, ctx?: unknown) => boolean;
+
+export const visibilityRules: Record<string, VisibilityRule> = {
+  kinderenLabel: (provider) =>
+    evaluateVisibilityCondition({ field: 'data.setup.aantalMensen', operator: 'gt', value: 1 }, provider),
+
+  car_repeater: (provider) =>
+    evaluateVisibilityCondition({ 
+      field: 'data.setup.autoCount', 
+      operator: 'neq', 
+      value: 'Geen' 
+    }, provider),
+
+  extraAutoVelden: (provider) =>
+    evaluateVisibilityCondition({ 
+      field: 'data.setup.autoCount', 
+      operator: 'eq', 
+      value: 'Twee' 
+    }, provider),
+
+  aantalVolwassen: (provider) =>
+    evaluateVisibilityCondition({ field: 'data.setup.aantalMensen', operator: 'gt', value: 0 }, provider),
+
+  member_income_details: (_provider, ctx) => {
+    const memberCtx = ctx as { memberId?: string } | undefined;
+    return !!memberCtx?.memberId;
+  }
+}; 
+
+/**
+ * Publieke API
+ */
+export const evaluateVisibility = (
+  input: string | Condition,
+  provider: ValueProvider,
+  ctx?: unknown
+): boolean => {
+  if (typeof input === 'string') {
+    const rule = visibilityRules[input];
+    if (!rule) return false; 
+    return rule(provider, ctx);
+  }
+
+  return evaluateVisibilityCondition(input, provider, ctx);
+};
+---<< src/domain/rules/evaluateDomainRules.ts >>---
+// Geen import van 'crypto' meer voor React Native
+export const evaluateRules = (_data: any) => {
+  // Simpele fallback voor UUID/ID generatie
+  const mockId = Math.random().toString(36).substring(7);
+
+  return {
+    entityId: mockId,
+    timestamp: Date.now(),
+    isValid: true,
+  };
+};
+
+---<< src/app/orchestrators/FormStateValueProvider.ts >>---
+import { ValueProvider } from '@domain/rules/ValueProvider';
+
+/**
+ * Concrete implementatie van ValueProvider voor FormState.
+ * Lost geneste paden op (bijv. 'income.grossMonthly').
+ */
+export class FormStateValueProvider implements ValueProvider {
+  constructor(private formState: Record<string, any>) {}
+
+  getValue(fieldPath: string): unknown {
+    return fieldPath.split('.').reduce((obj, key) => obj?.[key], this.formState);
+  }
+}
+---<< src/app/orchestrators/FormStateOrchestrator.ts >>---
+import { ValueProvider, StateWriter, FieldId } from '@domain/core';
+import type { FormState } from '@shared-types/form';
+import { ImportOrchestrator } from './ImportOrchestrator';
+import { FieldPathResolver } from '@domain/rules/FieldPathResolver';
+
+export class FormStateOrchestrator implements ValueProvider, StateWriter {
+  private state: FormState;
+  private importOrchestrator: ImportOrchestrator;
+
+  constructor(initialState: FormState, importOrchestrator?: ImportOrchestrator) {
+    this.state = initialState;
+    this.importOrchestrator = importOrchestrator || new ImportOrchestrator();
+  }
+
+  getValue(fieldId: FieldId): unknown {
+    return FieldPathResolver.resolve(fieldId, this.state);
+  }
+
+  updateField(fieldId: FieldId, value: unknown): void {
+    if (!this.state.data.setup) return;
+
+    switch (fieldId) {
+      case 'aantalMensen':
+        this.state.data.setup.aantalMensen = value as number;
+        break;
+      case 'aantalVolwassen':
+        this.state.data.setup.aantalVolwassen = value as number;
+        break;
+      case 'autoCount':
+        this.state.data.setup.autoCount = value as "Nee" | "Een" | "Twee";
+        break;
+      case 'heeftHuisdieren':
+        this.state.data.setup.heeftHuisdieren = value as boolean;
+        break;
+    }
+  }
+
+  async importCsvData(csvText: string): Promise<any> {
+    const members = this.getValue('members') as any[];
+    const setupData = {
+      aantalMensen: this.getValue('aantalMensen'),
+      aantalVolwassen: this.getValue('aantalVolwassen'),
+      autoCount: this.getValue('autoCount'),
+      heeftHuisdieren: this.getValue('heeftHuisdieren'),
+    };
+
+    return this.importOrchestrator.processCsvImport({
+      csvText,
+      members,
+      setupData
+    });
+  }
+}
+
+---<< src/ui/screens/Wizard/WizardPage.tsx >>---
+// src/ui/screens/Wizard/WizardPage.tsx
+import React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import type { ValueProvider, StateWriter } from 'src/domain/index';
+import { placeholderStyles } from '@/ui/styles/modules/placeholderStyles';
+import { UI_SECTIONS } from '@/ui/constants/uiSections';
+
+// ✅ Match actual config structure - flexible types
+export interface WizardField {
+  fieldId: string;
+  type: string;
+  labelToken: string;
+  uiModel?: string;
+  requiresVisibilityCheck?: boolean | string; // Can be boolean or string
+  requiresConstraint?: boolean | string;      // Can be boolean or string
+  requiresDerivedValue?: boolean | string;    // Can be boolean or string
+  options?: unknown[];
+  // Allow any additional properties from config
+  [key: string]: unknown;
+}
+
+export interface WizardConfig {
+  pageId: string;
+  titleToken?: string;
+  fields?: WizardField[];
+  showBack?: boolean;
+  showNext?: boolean;
+  isLast?: boolean;
+  // Allow any additional properties
+  [key: string]: unknown;
+}
+
+interface WizardPageProps {
+  config: WizardConfig;
+  valueProvider: ValueProvider;
+  stateWriter: StateWriter;
+}
+
+export const WizardPage: React.FC<WizardPageProps> = ({
+  config,
+  valueProvider,
+  stateWriter,
+}) => {
+  const sectionKey = UI_SECTIONS.WIZARD ?? '[HIER_MOET_NOG_EEN_UX_KEY]';
+
+  const handleDebugReset = () => {
+    stateWriter.updateField('debug_reset', true);
+  };
+
+  const title = String(config?.titleToken ?? '[HIER_MOET_NOG_EEN_UX_KEY]');
+
+  return (
+    <View style={placeholderStyles.wizardPageContainer} accessibilityLabel={sectionKey}>
+      <Text style={placeholderStyles.screenTitle}>{title}</Text>
+
+      {valueProvider.getValue('show_debug') === true && (
+        <TouchableOpacity
+          style={placeholderStyles.debugButton}
+          onPress={handleDebugReset}
+          accessibilityRole="button"
+          accessibilityLabel="Reset Wizard State"
+        >
+          <Text style={placeholderStyles.fieldCountText}>Reset Wizard State</Text>
+        </TouchableOpacity>
+      )}
+
+      <View style={placeholderStyles.fieldsContainer}>
+        <Text style={placeholderStyles.fieldCountText}>
+          Velden aanwezig: {Array.isArray(config?.fields) ? config.fields.length : 0}
+        </Text>
+      </View>
+
+      <View style={placeholderStyles.screenContainer}>
+        {config?.showBack === true && (
+          <TouchableOpacity style={placeholderStyles.primaryButton}>
+            <Text style={placeholderStyles.fieldCountText}>Vorige</Text>
+          </TouchableOpacity>
+        )}
+        {config?.showNext === true && (
+          <TouchableOpacity style={placeholderStyles.primaryButton}>
+            <Text style={placeholderStyles.fieldCountText}>
+              {config?.isLast === true ? 'Voltooien' : 'Volgende'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+};
+
+export default WizardPage;
+---<< src/ui/components/FieldRenderer.tsx >>---
+import React from 'react';
+import { View, Text } from 'react-native';
+import type { ValueProvider } from '@domain';
+import { useAppStyles } from '@styles/useAppStyles';
+
+interface FieldRendererProps {
+  fieldId: string;
+  valueProvider: ValueProvider;
+}
+
+export const FieldRenderer: React.FC<FieldRendererProps> = ({
+  fieldId,
+  valueProvider,
+}) => {
+  const { styles } = useAppStyles();
+  // ✅ FIX: Remove 'as any', getValue accepts string
+  const value = valueProvider.getValue(fieldId);
+
+  return (
+    <View style={styles.fieldContainer}>
+      <Text style={styles.description}>
+        {String(value ?? '')}
+      </Text>
+    </View>
+  );
+};
+---<< src/ui/screens/Wizard/pages/1setupHousehold.config.ts >>---
+import { UI_SECTIONS } from '@ui/constants/uiSections';
+import { UX_TOKENS } from '@ui/constants/uxTokens';
+
+export const setupHouseholdConfig = {
+  pageId: UI_SECTIONS.HOUSEHOLD_SETUP,
+  titleToken: UX_TOKENS.PAGES.HOUSEHOLD_SETUP,
+  fields: [
+    { fieldId: 'aantalMensen', type: 'counter', labelToken: UX_TOKENS.FIELDS.AANTAL_MENSEN, uiModel: 'numericWrapper' },
+    { 
+      fieldId: 'aantalVolwassen', 
+      type: 'counter', 
+      labelToken: UX_TOKENS.FIELDS.AANTAL_VOLWASSENEN,
+      requiresVisibilityCheck: true,
+      requiresConstraint: 'max',
+      uiModel: 'numericWrapper'
+    },
+    { 
+      fieldId: 'kinderenLabel', 
+      type: 'label', 
+      labelToken: UX_TOKENS.FIELDS.KINDEREN,
+      requiresVisibilityCheck: true,
+      requiresDerivedValue: true 
+    },
+    { fieldId: 'autoCount', type: 'radio', options: ['Nee', 'Een', 'Twee'], labelToken: UX_TOKENS.FIELDS.CAR_COUNT }
+  ]
+};
+
+---<< src/ui/screens/Wizard/pages/2detailsHousehold.config.ts >>---
+import { UI_SECTIONS } from '@ui/constants/uiSections';
+import { UX_TOKENS } from '@ui/constants/uxTokens';
+
+export const detailsHouseholdConfig = {
+  pageId: UI_SECTIONS.HOUSEHOLD_DETAILS,
+  titleToken: UX_TOKENS.PAGES.HOUSEHOLD_DETAILS,
+  fields: [
+    {
+      fieldId: 'members',
+      type: 'repeater',
+      labelToken: 'LABEL_HUISHOUDEN_LEDEN',
+      requiresFilteredData: true,
+      itemFields: [
+        { fieldId: 'naam', type: 'text', labelToken: UX_TOKENS.FIELDS.NAME, uiModel: 'input' },
+        { fieldId: 'leeftijd', type: 'number', labelToken: UX_TOKENS.FIELDS.AGE, min: 0, uiModel: 'numericInput' }
+      ]
+    }
+  ]
+};
+
+---<< src/ui/screens/Wizard/pages/3incomeDetails.config.ts >>---
+import { UI_SECTIONS } from '@ui/constants/uiSections';
+import { UX_TOKENS } from '@ui/constants/uxTokens';
+
+export const incomeDetailsConfig = {
+  pageId: UI_SECTIONS.INCOME_DETAILS,
+  titleToken: UX_TOKENS.PAGES.INCOME_DETAILS,
+  fields: [
+    { fieldId: 'grossMonthly', type: 'money', labelToken: UX_TOKENS.FIELDS.BRUTO_INCOME, uiModel: 'moneyRow' },
+    { 
+      fieldId: 'inkomstenPerLid', 
+      type: 'money', 
+      labelToken: UX_TOKENS.FIELDS.INCOME_MEMBER,
+      requiresVisibilityCheck: true,
+      dependsOnContext: 'memberId',
+      uiModel: 'moneyRow'
+    }
+  ]
+};
+
+---<< src/ui/screens/Wizard/pages/4fixedExpenses.config.ts >>---
+import { UI_SECTIONS } from '@ui/constants/uiSections';
+import { UX_TOKENS } from '@ui/constants/uxTokens';
+
+export const fixedExpensesConfig = {
+  pageId: UI_SECTIONS.FIXED_EXPENSES,
+  titleToken: UX_TOKENS.PAGES.FIXED_EXPENSES,
+  fields: [
+    { fieldId: 'autoVerzekering', type: 'money', labelToken: UX_TOKENS.FIELDS.AUTO_INSURANCE, requiresVisibilityCheck: true, uiModel: 'moneyRow' },
+    { 
+      fieldId: 'car_repeater', 
+      type: 'repeater', 
+      labelToken: UX_TOKENS.FIELDS.CAR_REPEATER, 
+      requiresVisibilityCheck: true, 
+      requiresConstraint: 'count' 
+    }
+  ]
+};

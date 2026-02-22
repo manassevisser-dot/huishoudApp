@@ -192,6 +192,18 @@ cmd_full() {
     log_info "🌅 Phoenix End-of-Day run..."
     echo ""
     
+        log_info "🔄 Synchroniseer aliassen..."
+    if [ "$DRY_RUN" = false ]; then
+        if ! npm run sync:aliases -- --strict; then
+            log_err "Alias sync gefaald!"
+            return 1
+        fi
+        log_ok "Aliases gesynchroniseerd"
+    else
+        log_warn "[DRY-RUN] Zou alias sync uitvoeren"
+    fi
+    echo ""
+
     # 1. Linting
     if [ "$DRY_RUN" = false ]; then
         log_info "🧹 Linting..."

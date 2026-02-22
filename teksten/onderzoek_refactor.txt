@@ -1,0 +1,202 @@
+=== ONDERZOEK MISLUKTE REFACTOR ===
+
+--- 1. HUIDIGE WIZARD CONFIG (Vaste Lasten) ---
+import { UI_SECTIONS } from '@ui/constants/uiSections';
+import { UX_TOKENS } from '@ui/constants/uxTokens';
+
+export const fixedExpensesConfig = {
+  pageId: UI_SECTIONS.FIXED_EXPENSES,
+  titleToken: UX_TOKENS.PAGES.FIXED_EXPENSES,
+  fields: [
+    { fieldId: 'autoVerzekering', type: 'money', labelToken: UX_TOKENS.FIELDS.AUTO_INSURANCE, requiresVisibilityCheck: true, uiModel: 'moneyRow' },
+    { 
+      fieldId: 'car_repeater', 
+      type: 'repeater', 
+      labelToken: UX_TOKENS.FIELDS.CAR_REPEATER, 
+      requiresVisibilityCheck: true, 
+      requiresConstraint: 'count' 
+    }
+  ]
+};
+
+--- 2. MAPPERS (Data Vertaling) ---
+// Placeholder finance mapping logica
+export const mapTransactions = (transactions: any[]) => {
+  // Coverage mist regels 3–5 → placeholder logica
+  return transactions;
+};
+
+--- 3. BACKUP ORCHESTRATOR (De 'Oude' Logica) ---
+import { getHouseholdStatus } from "@domain/rules/householdRules";
+import { ValueProvider, StateWriter } from '@domain/interfaces';
+import type { FormState } from '@state/schemas/FormStateSchema';
+import { ImportOrchestrator } from './ImportOrchestrator';
+
+// Import domain rules
+import { fieldVisibilityRules } from '@domain/rules/fieldVisibility';
+import { fieldConstraintRules } from '@domain/rules/fieldConstraints';
+import { derivedValueRules } from '@domain/rules/derivedValues';
+import { dataFilterRules } from '@domain/rules/dataFilters';
+
+export class FormStateOrchestrator implements ValueProvider, StateWriter {
+  private state: FormState;
+  private importOrchestrator: ImportOrchestrator;
+
+  constructor(initialState: FormState, importOrchestrator?: ImportOrchestrator) {
+    this.state = initialState;
+    this.importOrchestrator = importOrchestrator || new ImportOrchestrator();
+  }
+
+  getHouseholdStatus(): string {
+    return getHouseholdStatus(this.state.data.household?.members || []);
+  }
+
+  getValue(fieldId: string): unknown {
+    const flatMap: Record<string, unknown> = {
+      aantalMensen: this.state.data.setup?.aantalMensen,
+      aantalVolwassen: this.state.data.setup?.aantalVolwassen,
+      autoCount: this.state.data.setup?.autoCount,
+      heeftHuisdieren: this.state.data.setup?.heeftHuisdieren,
+      members: this.state.data.household?.members,
+    };
+    return flatMap[fieldId];
+  }
+
+  updateField(fieldId: string, value: unknown): void {
+    switch (fieldId) {
+      case 'aantalMensen':
+        if (this.state.data.setup) this.state.data.setup.aantalMensen = value as number;
+        break;
+      case 'aantalVolwassen':
+        if (this.state.data.setup) this.state.data.setup.aantalVolwassen = value as number;
+        break;
+        case 'autoCount':
+            // We casten hier specifiek naar de types die je Zod enum toestaat
+            this.state.data.setup.autoCount = value as 'Nee' | 'Een' | 'Twee';
+            break;
+          case 'heeftHuisdieren':
+            // Voeg deze case toe om de error in getValue op te lossen
+            this.state.data.setup.heeftHuisdieren = value as boolean;
+            break;
+    }
+  }
+
+  async importCsvData(csvText: string): Promise<import('./ImportOrchestrator').ImportResult> {
+    const members = this.getValue('members') as any[];
+    const setupData = {
+      aantalMensen: this.getValue('aantalMensen'),
+      aantalVolwassen: this.getValue('aantalVolwassen'),
+      autoCount: this.getValue('autoCount'),
+      heeftHuisdieren: this.getValue('heeftHuisdieren'),
+    };
+
+    return this.importOrchestrator.processCsvImport({
+      csvText,
+      members,
+      setupData
+    });
+  }
+
+  // NEW: Evaluate visibility for a field
+  isFieldVisible(fieldId: string, context?: any): boolean {
+    const rule = fieldVisibilityRules[fieldId as keyof typeof fieldVisibilityRules];
+    if (!rule) return true; 
+    return (rule as any)(this, context);
+  }
+  
+  // NEW: Get dynamic constraint (max, min, count)
+  getFieldConstraint(fieldId: string, constraintType: string): number | undefined {
+    const key = `${fieldId}_${constraintType}`;
+    const rule = fieldConstraintRules[key as keyof typeof fieldConstraintRules];
+    return rule ? (rule as any)(this) : undefined;
+  }
+  
+  // NEW: Get derived value
+  getDerivedValue(fieldId: string): unknown {
+    const rule = derivedValueRules[fieldId as keyof typeof derivedValueRules];
+    return rule ? (rule as any)(this) : undefined;
+  }
+  
+  // NEW: Apply data filter
+  getFilteredData(filterId: string): any[] {
+    const rule = dataFilterRules[filterId as keyof typeof dataFilterRules];
+    return rule ? (rule as any)(this) : [];
+  }
+}
+
+--- 4. DOMEIN REGELS (Finance) ---
+import {
+  FinanceState,
+  FinanceItem,
+  CONTRACT_VERSION,
+} from '@core/types/finance';
+
+interface UndoResult {
+  id: string;
+  amount: number;
+  currency: 'EUR';
+  reason: string;
+  timestamp: string;
+  schemaVersion: string;
+}
+
+/**
+ * Zet één FinanceItem om naar een UndoResult
+ */
+const mapItemToUndoResult = (item: FinanceItem, kind: 'income' | 'expense'): UndoResult => ({
+  id: item.id,
+  amount: kind === 'expense' ? -item.amountCents : item.amountCents,
+  currency: 'EUR',
+  reason: kind,
+  timestamp: new Date().toISOString(),
+  schemaVersion: CONTRACT_VERSION,
+});
+
+/**
+ * Map de volledige FinanceState naar een array voor de kernel
+ */
+export const mapFinanceToUndoResults = (finance: FinanceState): UndoResult[] => [
+  ...finance.income.items.map((i) => mapItemToUndoResult(i, 'income')),
+  ...finance.expenses.items.map((i) => mapItemToUndoResult(i, 'expense')),
+];
+
+--- 5. CORE TYPES (Finance & Expenses) ---
+import { z } from 'zod';
+
+export interface FinanceItem {
+  id: string;
+  amountCents: number; // integer
+  description?: string;
+}
+
+export const CONTRACT_VERSION = '1.0.0';
+
+export interface FinanceBucket {
+  items: FinanceItem[];
+  totalAmountCents?: number;
+}
+
+export interface FinanceState {
+  income: FinanceBucket;
+  expenses: FinanceBucket;
+}
+
+// src/shared-types/finance.ts
+export interface UndoResult {
+  id: string;
+  amount: number; // in cents
+  currency: 'EUR';
+  description?: string;
+  reason: string;
+  timestamp: string; // ISO
+  schemaVersion: string;
+}
+
+export const MoneySchema = z.object({
+  amount: z.number().int(),
+  currency: z.literal('EUR'),
+});
+export type ExpenseItem = {
+  fieldId: string;
+  [key: string]: any;
+};

@@ -1,7 +1,7 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const logger = require('./logger'); // Als backup-helper en logger in dezelfde map (utils) staan.
+const logger = require('./logger');
 
 /**
  * Phoenix Gold Backup Helper
@@ -20,19 +20,32 @@ const backupConfigs = () => {
     const fullPath = path.join(backupDir, filename);
 
     try {
-        // 1. Maak de backup
-        execSync(`tar -czf "${fullPath}" -C "${rootDir}" babel.config.js jest.config.js tsconfig.json package.json 2>/dev/null`);
+        // Check of bestanden bestaan voordat we backup maken
+        const filesToBackup = ['babel.config.js', 'jest.config.ts', 'tsconfig.json', 'package.json'];
+        const existingFiles = filesToBackup.filter(f => fs.existsSync(path.join(rootDir, f)));
+        
+        if (existingFiles.length === 0) {
+            logger.warn('Geen config bestanden gevonden om te backuppen (skip)');
+            return;
+        }
+        
+        // 1. Maak de backup (alleen van bestaande bestanden)
+        const fileList = existingFiles.join(' ');
+        execSync(`tar -czf "${fullPath}" -C "${rootDir}" ${fileList}`, { stdio: 'ignore' });
         
         // 2. Retentie: Alleen de 2 nieuwste bewaren
-        execSync(`ls -1t "${backupDir}"/config_backup_*.tar.gz | tail -n +3 | xargs rm -f 2>/dev/null || true`);
+        try {
+            execSync(`ls -1t "${backupDir}"/config_backup_*.tar.gz | tail -n +3 | xargs rm -f`, { stdio: 'ignore' });
+        } catch (e) {
+            // Niet erg als cleanup faalt
+        }
 
-        // 3. Succes-log (Geen magic strings!)
-        logger.ok(`${logger.TEXT.CONFIG_BACKUP_SUCCESS}: ${filename}`);
+        // 3. Succes-log
+        logger.ok(`Backup: ${filename}`);
         
     } catch (e) {
-        // 4. Kritieke failure (Geen magic strings!)
-        logger.fail(logger.TEXT.CONFIG_BACKUP_FAIL);
-        process.exit(1);
+        // Backup failure is niet kritiek - waarschuw maar ga door
+        logger.warn(`Backup overgeslagen: ${e.message}`);
     }
 };
 

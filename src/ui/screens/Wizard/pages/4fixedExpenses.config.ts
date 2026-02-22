@@ -1,55 +1,22 @@
-import { FormState } from '@shared-types/form';
-import { WizardPageConfig } from '@shared-types/wizard';
-import { DATA_KEYS, SUB_KEYS } from '@domain/constants/registry';
-import { UX_TOKENS } from '@domain/constants/registry';
+/**
+ * @file_intent Definieert de structuur voor het "Vaste Lasten" wizard-scherm, waarbij secties en repeaters worden gebruikt om een complexe datastructuur te representeren.
+ * @repo_architecture Mobile Industry (MI) - UI Configuration / Screen Definition Layer.
+ * @term_definition section = Een logische groepering van velden die door de orchestrator wordt ingevuld (bijv. alle velden gerelateerd aan huisvesting). repeater = Een UI-structuur die een set velden herhaalt voor elk item in een lijst, zoals persoonlijke uitgaven per lid of kosten per auto.
+ * @contract Exporteert een statisch `fixedExpensesConfig` object. De `fieldId`s die eindigen op 'Section' zijn placeholders; de orchestrator is verantwoordelijk voor het dynamisch injecteren van de correcte velden gebaseerd op de domein-logica (bv. huur- vs. koopwoning velden).
+ * @ai_instruction De inhoud van secties (zoals `housingSection`) en de zichtbaarheid van repeaters (zoals `carExpenses`) wordt volledig beheerd door de orchestrator. Om de velden binnen deze secties aan te passen, moet de logica in de orchestrator worden gewijzigd, niet in dit configuratiebestand.
+ */
+import { UI_SECTIONS } from '@domain/constants/uiSections';
+import { UX_TOKENS } from '@domain/constants/uxTokens';
 
-export const fixedExpensesConfig: WizardPageConfig = {
-  pageId: '4fixedExpenses',
-  titleToken: UX_TOKENS.PAGES[DATA_KEYS.FINANCE], // Gebruikt de 'Inkomsten & lasten' token
-  componentName: 'WizardPage',
+export const fixedExpensesConfig = {
+  screenId: UI_SECTIONS.FIXED_EXPENSES,
+  titleToken: UX_TOKENS.SCREENS.FIXED_EXPENSES,
   fields: [
-    {
-      // We nesten dit onder EXPENSES voor de orchestrator
-      fieldId: SUB_KEYS.EXPENSES,
-      label: 'Wonen',
-      type: 'section',
-      fields: [
-        {
-          fieldId: 'living_costs',
-          label: 'Huur / Hypotheek (€/mnd)',
-          type: 'money',
-        },
-      ],
-    },
-    {
-      fieldId: 'car_repeater',
-      label: 'Vervoer (Auto)',
-      type: 'repeater',
-      // ADR-01: View-logic gebaseerd op de SETUP state
-      visibleIf: (state: FormState) => state.data[DATA_KEYS.SETUP]?.autoCount !== 'Nee',
-
-      // ADR-03: De repeater lengte wordt bepaald door de eerdere keuze
-      countGetter: (state: FormState) => {
-        const val = state.data[DATA_KEYS.SETUP]?.autoCount;
-        if (val === 'Een') return 1;
-        if (val === 'Twee') return 2;
-        return 0;
-      },
-      fields: [
-        { fieldId: 'car_fixed', label: 'Verzekering + Belasting', type: 'money' },
-        { fieldId: 'car_fuel', label: 'Brandstof / Laden', type: 'money' },
-      ],
-    },
-    {
-      fieldId: 'subscription_section',
-      label: 'Streaming & Abonnementen',
-      type: 'collapsible-section',
-      fields: [
-        { fieldId: 'netflix', label: 'Netflix', type: 'money' },
-        { fieldId: 'videoland', label: 'Videoland', type: 'money' },
-        { fieldId: 'hbo', label: 'HBO Max', type: 'money' },
-        { fieldId: 'disneyPlus', label: 'Disney+', type: 'money' },
-      ],
-    },
-  ],
+    { fieldId: 'housingSection' },   // Orchestrator bepaalt: huur- of koopvelden?
+    { fieldId: 'utilitiesSection' }, // Energie, water, etc.
+    { fieldId: 'insuranceSection' }, // De lijst met verzekeringen
+    { fieldId: 'subscriptionSection' }, 
+    { fieldId: 'personExpenses', type: 'repeater' }, // Voor elk lid de persoonlijke lasten
+    { fieldId: 'carExpenses', type: 'repeater' }     // Alleen als er auto's zijn
+  ]
 };

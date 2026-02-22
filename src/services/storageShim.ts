@@ -1,56 +1,89 @@
-// CU-001-SHIM — Storage API shim (Phoenix v1.0)
+// src/services/storageShim.ts
+/**
+ * @file_intent Shim/Adapter voor AsyncStorage. Biedt een gestructureerde interface voor het opslaan en laden van de `FormState` en het thema.
+ * @repo_architecture Infrastructure Layer - Storage Adapter.
+ * @term_definition Envelope = Een wrapper-object dat de state bevat, samen met metadata zoals een versienummer, om migraties te beheren. Shim = Een dunne laag code die een API aanpast of vereenvoudigt.
+ * @contract Functies `loadState` en `saveState` gebruiken een envelope om de `FormState` te versioneren. `loadTheme` en `saveTheme` behandelen de thema-string. Alle functies vangen fouten af en loggen deze via `AuditLogger`.
+ * @ai_instruction Dit is de enige interface naar AsyncStorage. Bij een brekende wijziging in `FormState`, verhoog `ENVELOPE_VERSION` om te voorkomen dat ongeldige data wordt geladen.
+ */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as LegacyNamespace from '@adapters/storage/storage';
-import type { FormState } from '@shared-types/form';
+import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter';
+import type { FormState } from '@core/types/core';
+import type { Theme } from '@domain/constants/Colors'; // De enige bron van waarheid
 
 const KEY = '@CashflowWizardState';
+const THEME_KEY = '@Theme';
+const CURRENT_SCHEMA_VERSION = '1.0';
+const ENVELOPE_VERSION = 2;
 
 /**
- * Losse functies definiëren zorgt ervoor dat Jest de properties 
- * op het geëxporteerde object kan overschrijven (mocken).
+ * Laadt de Phoenix state vanuit AsyncStorage.
  */
-
 async function loadState(): Promise<FormState | null> {
-  const L = (LegacyNamespace as any).Storage || LegacyNamespace;
+  try {
+    const rawData = await AsyncStorage.getItem(KEY);
+    if (rawData === null) return null;
 
-  // Phoenix-integriteit: Delegeer ALTIJD naar de migratie-engine van legacy.
-  if (typeof L.loadState === 'function') {
-    return await L.loadState();
+    const envelope = JSON.parse(rawData) as { version: number; state: FormState };
+    if (envelope.version === ENVELOPE_VERSION) {
+      return envelope.state;
+    }
+    return null;
+  } catch (error) {
+    AuditLogger.error('STORAGE_LOAD_FAILURE', { error });
+    return null;
   }
-
-  return null; // Geen legacy? Dan start de app 'schoon' via de orchestrator.
 }
 
+/**
+ * Slaat de Phoenix state op.
+ */
 async function saveState(state: FormState): Promise<void> {
-  const L = (LegacyNamespace as any).Storage || LegacyNamespace;
-  // Forceer Phoenix Contract
-  const candidate = { ...state, schemaVersion: '1.0' };
-
-  if (typeof L.saveState === 'function') {
-    return await L.saveState(candidate);
+  try {
+    const candidate: FormState = { ...state, schemaVersion: CURRENT_SCHEMA_VERSION };
+    const envelope = { version: ENVELOPE_VERSION, state: candidate };
+    await AsyncStorage.setItem(KEY, JSON.stringify(envelope));
+  } catch (error) {
+    AuditLogger.error('STORAGE_SAVE_FAILURE', { error });
   }
-
-  // Fallback: Gebruik de correcte Phoenix-envelope (version 2)
-  const envelope = { version: 2, state: candidate };
-  await AsyncStorage.setItem(KEY, JSON.stringify(envelope));
 }
 
-async function clearAll(): Promise<void> {
-  const L = (LegacyNamespace as any).Storage || LegacyNamespace;
-
-  if (typeof L.clearAll === 'function') {
-    return await L.clearAll();
+/**
+ * Thema laden (infra).
+ */
+export async function loadTheme(): Promise<Theme | null> {
+  try {
+    const saved = await AsyncStorage.getItem(THEME_KEY);
+    return (saved === 'light' || saved === 'dark') ? (saved as Theme) : null;
+  } catch (error) {
+    AuditLogger.error('THEME_LOAD_FAILURE', { error });
+    return null;
   }
-
-  // Phoenix-safe: Wis alleen de app-specifieke key, niet het hele device.
-  await AsyncStorage.removeItem(KEY);
 }
 
-// Export als een veranderbaar object voor Jest support
+/**
+ * Thema opslaan (infra).
+ */
+export async function saveTheme(theme: Theme): Promise<void> {
+  try {
+    await AsyncStorage.setItem(THEME_KEY, theme);
+  } catch (error) {
+    AuditLogger.error('THEME_SAVE_FAILURE', { error });
+  }
+}
+
 export const StorageShim = {
   loadState,
   saveState,
-  clearAll,
+  loadTheme,
+  saveTheme,
+  clearAll: async () => {
+    try {
+      await AsyncStorage.removeItem(KEY);
+    } catch (error) {
+      AuditLogger.error('STORAGE_CLEAR_FAILURE', { error });
+    }
+  }
 };
 
 export default StorageShim;

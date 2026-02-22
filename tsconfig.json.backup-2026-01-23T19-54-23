@@ -1,0 +1,51 @@
+
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "jsx": "react-jsx",
+    "strict": true,
+    "types": ["jest", "node"],
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@app/*": ["src/app/*"],
+
+      "@domain/*": ["src/domain/*"],
+      "@domain/core": ["src/domain/core.ts"],
+      "@services/*": ["src/services/*"],
+
+      "@shared-types/*": ["src/core/types/*"],
+
+      "@utils/*": ["src/utils/*"],
+
+      "@shared/*": ["src/shared/*"],
+      "@core/*": ["src/core/*"],
+      "@config/*": ["src/config/*"],
+      "@logic/*": ["src/logic/*"],
+      "@ui/*": ["src/ui/*"],
+      "@components/*": ["src/ui/components/*"],
+      "@fields/*": ["src/ui/components/fields/*"],
+      "@screens/*": ["src/ui/screens/*"],
+      "@styles/*": ["src/ui/styles/*"],
+      "@state/*": ["src/state/*"],
+      "@context/*": ["src/app/context/*"],
+      "@selectors/*": ["src/selectors/*"],
+      "@assets/*": ["assets/*"],
+      "@test-utils": ["src/test-utils/index.ts"],
+      "@test-utils/*": ["src/test-utils/*"],
+      "@kernel/*": ["src/kernel/*"],
+      "@infrastructure/*": ["src/infrastructure/*"],
+                        "@domain/types/*": ["src/core/types/*"],
+      "@adapters/*": ["src/adapters/*"],
+            "@domain": ["src/domain/index.ts"],
+      "@domain/rules/*": ["src/domain/rules/*"]
+    }
+  },
+  "include": ["src/**/*", "src/__tests__", "src/types", "index.tsx", "jest.config.ts"]
+}

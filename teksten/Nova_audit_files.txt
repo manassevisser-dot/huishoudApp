@@ -1,0 +1,526 @@
+
+====src/ui/screens/Wizard/WizardController.tsx====
+import * as React from 'react';
+import { useForm } from '@app/context/FormContext';
+import { WizardPage } from './WizardPage';
+import { setupHouseholdConfig } from './pages/1setupHousehold.config';
+import { detailsHouseholdConfig } from './pages/2detailsHousehold.config';
+import { incomeDetailsConfig } from './pages/3incomeDetails.config';
+import { fixedExpensesConfig } from './pages/4fixedExpenses.config';
+import { FormStateValueProvider } from '@adapters/valueProviders/FormStateValueProvider';
+import { FormStateOrchestrator } from '@app/orchestrators/FormStateOrchestrator';
+
+const WizardController: React.FC = () => {
+  const { state } = useForm();
+
+  const config = React.useMemo(() => {
+    switch (state.activeStep) {
+      case 'WIZARD_SETUP':   return setupHouseholdConfig;
+      case 'WIZARD_DETAILS': return detailsHouseholdConfig;
+      case 'WIZARD_INCOME':  return incomeDetailsConfig;
+      case 'WIZARD_EXPENSES':return fixedExpensesConfig;
+      default:               return setupHouseholdConfig;
+    }
+  }, [state.activeStep]);
+
+  // ✅ Orchestrator eerst
+  const orchestrator = React.useMemo(
+    () => new FormStateOrchestrator(state),
+    [state]
+  );
+
+  // ✅ Adapter-ValueProvider voed je met de orchestrator (heeft getValue(FieldId))
+  const valueProvider = React.useMemo(
+    () => new FormStateValueProvider(orchestrator),
+    [orchestrator]
+  );
+
+  return (
+    <WizardPage
+      config={config}
+      valueProvider={valueProvider}
+      stateWriter={orchestrator}                          // object met .updateField(...)
+      validate={orchestrator.validate ?? (() => null)}    // P2: fallback naar no-op
+    />
+  );
+};
+
+export default WizardController;
+
+====src/ui/screens/Wizard/WizardPage.tsx====
+import React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import type { ValueProvider, StateWriter } from '../../../domain';
+import { InputCounter } from '@/ui/components/fields/InputCounter';
+import { placeholderStyles } from '@/ui/styles/modules/placeholderStyles';
+import { UI_SECTIONS } from '@/ui/constants/uiSections';
+
+export interface WizardField {
+  fieldId: string;
+  type: string;
+  labelToken: string;
+  uiModel?: string;
+  requiresVisibilityCheck?: boolean | string;
+  requiresConstraint?: boolean | string;
+  requiresDerivedValue?: boolean | string;
+  options?: unknown[];
+  [key: string]: unknown;
+}
+
+export interface WizardConfig {
+  pageId: string;
+  titleToken?: string;
+  fields?: WizardField[];
+  showBack?: boolean;
+  showNext?: boolean;
+  isLast?: boolean;
+  [key: string]: unknown;
+}
+
+interface WizardPageProps {
+  config: WizardConfig;
+  valueProvider: ValueProvider;
+  stateWriter: StateWriter;
+  validate: (fieldId: string, value: unknown) => string | null;
+}
+
+export const WizardPage: React.FC<WizardPageProps> = (props) => {
+  const { config, valueProvider, stateWriter } = props;
+  const sectionKey = UI_SECTIONS.WIZARD ?? '[HIER_MOET_NOG_EEN_UX_KEY]';
+
+  const handleDebugReset = () => {
+    // P2 Sentinel Compliance: valideer alle velden eenmalig
+    config.fields?.forEach(field => {
+      const currentValue = valueProvider.getValue(field.fieldId);
+      props.validate(field.fieldId, currentValue);
+    });
+    stateWriter.updateField('debug_reset', true);
+  };
+
+  const title = String(config?.titleToken ?? '[HIER_MOET_NOG_EEN_UX_KEY]');
+
+  return (
+    <View style={placeholderStyles.wizardPageContainer} accessibilityLabel={sectionKey}>
+      <Text style={placeholderStyles.screenTitle}>{title}</Text>
+
+      {valueProvider.getValue('show_debug') === true && (
+        <TouchableOpacity
+          style={placeholderStyles.debugButton}
+          onPress={handleDebugReset}
+          accessibilityRole="button"
+          accessibilityLabel="Reset Wizard State"
+        >
+          <Text style={placeholderStyles.fieldCountText}>Reset Wizard State</Text>
+        </TouchableOpacity>
+      )}
+
+      <View style={placeholderStyles.fieldsContainer}>
+        <Text style={placeholderStyles.fieldCountText}>
+          Velden aanwezig: {Array.isArray(config?.fields) ? config.fields.length : 0}
+        </Text>
+        {/* P3-B1: Field rendering with validation integration */}
+        {Array.isArray(config?.fields) && config.fields.map((field) => {
+          const currentValue = valueProvider.getValue(field.fieldId);
+          
+          if (field.fieldId === 'aantalMensen') {
+            return (
+              <View key={field.fieldId} style={placeholderStyles.fieldsContainer}>
+                <Text style={placeholderStyles.fieldCountText}>
+                  {field.labelToken}
+                </Text>
+                <InputCounter
+                  fieldId={field.fieldId}
+                  valueProvider={valueProvider}
+                  stateWriter={stateWriter}
+                  testIdBase="aantalMensen"
+                />
+                {/* P3-B1: Validatie via externe handler bij interactie */}
+                <TouchableOpacity
+                  onPress={() => {
+                    const newValue = Number(currentValue) + 1;
+                    const error = props.validate(field.fieldId, newValue);
+                    if (error === null) {
+                      stateWriter.updateField(field.fieldId, newValue);
+                    } else {
+                      console.warn(`Validation error for ${field.fieldId}:`, error);
+                    }
+                  }}
+                  style={{ marginTop: 8 }}
+                >
+                  <Text style={placeholderStyles.fieldCountText}>+ (validate)</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          }
+
+          return (
+            <View key={field.fieldId} style={placeholderStyles.fieldsContainer}>
+              <Text style={placeholderStyles.fieldCountText}>
+                {field.labelToken}: {String(currentValue ?? 'N/A')}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+
+      <View style={placeholderStyles.screenContainer}>
+        {config?.showBack === true && (
+          <TouchableOpacity style={placeholderStyles.primaryButton}>
+            <Text style={placeholderStyles.fieldCountText}>Vorige</Text>
+          </TouchableOpacity>
+        )}
+        {config?.showNext === true && (
+          <TouchableOpacity style={placeholderStyles.primaryButton}>
+            <Text style={placeholderStyles.fieldCountText}>
+              {config?.isLast === true ? 'Voltooien' : 'Volgende'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+};
+
+export default WizardPage;
+
+====src/ui/screens/Wizard/adapters.ts====
+import type { ValueProvider, StateWriter } from '@domain';
+import type { FormState } from '@/core/types/form';
+import type { Dispatch } from 'react';
+
+/**
+ * Adapter: FormState → ValueProvider
+ * TODO: Move to proper service layer
+ */
+export class FormStateValueProviderAdapter implements ValueProvider {
+  constructor(private state: FormState) {}
+
+  getValue(key: string): unknown {
+    // Navigate nested state structure
+    const parts = key.split('.');
+    let current: unknown = this.state.data;
+    
+    for (const part of parts) {
+      if (current && typeof current === 'object') {
+        current = (current as Record<string, unknown>)[part];
+      } else {
+        return undefined;
+      }
+    }
+    return current;
+  }
+}
+
+/**
+ * Adapter: Dispatch → StateWriter
+ * TODO: Move to proper service layer
+ */
+export class DispatchStateWriterAdapter implements StateWriter {
+  constructor(private dispatch: Dispatch<unknown>) {}
+
+  updateField(key: string, value: unknown): void {
+    this.dispatch({ type: 'UPDATE_FIELD', payload: { key, value } });
+  }
+}
+
+====src/ui/screens/Wizard/pages/3incomeDetails.config.ts====
+import { UI_SECTIONS } from '@ui/constants/uiSections';
+import { UX_TOKENS } from '@ui/constants/uxTokens';
+
+export const incomeDetailsConfig = {
+  pageId: UI_SECTIONS.INCOME_DETAILS,
+  titleToken: UX_TOKENS.PAGES.INCOME_DETAILS,
+  fields: [
+    { fieldId: 'grossMonthly', type: 'money', labelToken: UX_TOKENS.FIELDS.BRUTO_INCOME, uiModel: 'moneyRow' },
+    { 
+      fieldId: 'inkomstenPerLid', 
+      type: 'money', 
+      labelToken: UX_TOKENS.FIELDS.INCOME_MEMBER,
+      requiresVisibilityCheck: true,
+      dependsOnContext: 'memberId',
+      uiModel: 'moneyRow'
+    }
+  ]
+};
+
+
+====src/ui/screens/Wizard/pages/4fixedExpenses.config.ts====
+import { UI_SECTIONS } from '@ui/constants/uiSections';
+import { UX_TOKENS } from '@ui/constants/uxTokens';
+
+export const fixedExpensesConfig = {
+  pageId: UI_SECTIONS.FIXED_EXPENSES,
+  titleToken: UX_TOKENS.PAGES.FIXED_EXPENSES,
+  fields: [
+    { fieldId: 'autoVerzekering', type: 'money', labelToken: UX_TOKENS.FIELDS.AUTO_INSURANCE, requiresVisibilityCheck: true, uiModel: 'moneyRow' },
+    { 
+      fieldId: 'car_repeater', 
+      type: 'repeater', 
+      labelToken: UX_TOKENS.FIELDS.CAR_REPEATER, 
+      requiresVisibilityCheck: true, 
+      requiresConstraint: 'count' 
+    }
+  ]
+};
+
+
+====src/adapters/valueProviders/FormStateValueProvider.ts====
+import { DomainValueProvider, FieldId } from '@domain/core';
+import { ValueProvider } from '@domain/interfaces/ValueProvider';
+
+export class FormStateValueProvider implements ValueProvider {
+  constructor(private readonly domainProvider: DomainValueProvider) {}
+
+  getValue(fieldId: string): unknown {
+    const normalizedFieldId = this.normalizeFieldId(fieldId);
+    if (normalizedFieldId === null) return undefined;
+    return this.domainProvider.getValue(normalizedFieldId);
+  }
+
+  private normalizeFieldId(raw: string): FieldId | null {
+    const cleanId = raw.replace(/^data\./, '');
+    
+    // Split into smaller functions to reduce complexity
+    if (cleanId.startsWith('aantal')) {
+      return this.normalizeAantalFields(cleanId);
+    }
+    if (cleanId.startsWith('auto')) {
+      return this.normalizeAutoFields(cleanId);
+    }
+    if (cleanId === 'members') return 'members';
+    if (cleanId === 'grossMonthly') return 'grossMonthly';
+    if (cleanId === 'inkomstenPerLid') return 'inkomstenPerLid';
+    if (cleanId === 'heeftHuisdieren') return 'heeftHuisdieren';
+    if (cleanId === 'car_repeater') return 'car_repeater';
+    if (cleanId === 'kinderenLabel') return 'kinderenLabel';
+    
+    return null;
+  }
+
+  private normalizeAantalFields(id: string): FieldId | null {
+    if (id === 'aantalMensen') return 'aantalMensen';
+    if (id === 'aantalVolwassen') return 'aantalVolwassen';
+    return null;
+  }
+
+  private normalizeAutoFields(id: string): FieldId | null {
+    if (id === 'autoCount') return 'autoCount';
+    if (id === 'autoVerzekering') return 'autoVerzekering';
+    return null;
+  }
+}
+
+====src/adapters/validation/validateAtBoundary.ts====
+import { ZodError } from 'zod';
+import { FieldSchemas } from './formStateSchema';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
+
+/**
+ * ADAPTER LAYER: Boundary Validation
+ * 
+ * This is the SINGLE point where external input enters the system.
+ * All input is validated and normalized here before reaching the domain.
+ * 
+ * ADR-01 Enforcement: This adapter is the only boundary between UI and domain
+ * ADR-02 Enforcement: Type safety enforced via Zod at runtime
+ */
+
+/**
+ * Validation result type
+ */
+export type ValidationResult<T> =
+  | { success: true; data: T }
+  | { success: false; error: string };
+
+/**
+ * Validates and normalizes input at the system boundary
+ * 
+ * This function:
+ * 1. Finds the appropriate Zod schema for the field
+ * 2. Validates the input value
+ * 3. Normalizes the value (coercion, trimming, etc.)
+ * 4. Returns parsed value or error message
+ * 
+ * @pure function - no side effects
+ * @param fieldId - Field identifier
+ * @param value - Raw input value (from UI)
+ * @returns ValidationResult with parsed data or error
+ * 
+ * @example
+ * // Success case
+ * validateAtBoundary('aantalMensen', '5')
+ * // → { success: true, data: 5 }
+ * 
+ * // Error case
+ * validateAtBoundary('aantalMensen', 'invalid')
+ * // → { success: false, error: 'Waarde moet een getal zijn.' }
+ */
+export function validateAtBoundary<T = unknown>(
+  fieldId: string,
+  value: unknown
+): ValidationResult<T> {
+  // Find schema for this field
+  const schema = FieldSchemas[fieldId];
+
+  // If no schema exists, field is unknown - pass through with warning
+  if (schema === undefined) {
+    Logger.warn('BOUNDARY_NO_SCHEMA', { fieldId, value });
+    return { success: true, data: value as T };
+  }
+
+  // Validate with Zod schema
+  try {
+    const parsed = schema.parse(value);
+    return { success: true, data: parsed as T };
+  } catch (error) {
+    return handleValidationError(error, fieldId, value);
+  }
+}
+
+/**
+ * Helper: Handle validation errors with proper logging
+ */
+function handleValidationError(
+  error: unknown,
+  fieldId: string,
+  value: unknown
+): ValidationResult<never> {
+  // Extract user-friendly error message from ZodError
+  if (error instanceof ZodError) {
+    const errorMessage = extractZodErrorMessage(error);
+    
+    // Log validation failure
+    Logger.warn('BOUNDARY_VALIDATION_FAILED', {
+      fieldId,
+      value,
+      error: errorMessage,
+      issues: error.issues
+    });
+    
+    return { success: false, error: errorMessage };
+  }
+
+  // Unexpected error - route to ticketing
+  Logger.error('BOUNDARY_UNEXPECTED_ERROR', {
+    fieldId,
+    value,
+    error
+  });
+  
+  return { success: false, error: 'Onverwachte validatie fout' };
+}
+
+/**
+ * Helper: Extract user-friendly error message from ZodError
+ */
+function extractZodErrorMessage(zodError: ZodError): string {
+  const firstIssue = zodError.issues[0];
+  if (firstIssue === undefined) {
+    return 'Validatie fout';
+  }
+  return firstIssue.message;
+}
+
+/**
+ * Validates and normalizes multiple fields at once
+ * 
+ * @param fields - Record of fieldId → value pairs
+ * @returns ValidationResult with all parsed fields or first error
+ */
+export function validateAtBoundaryBatch(
+  fields: Record<string, unknown>
+): ValidationResult<Record<string, unknown>> {
+  const parsed: Record<string, unknown> = {};
+  
+  for (const [fieldId, value] of Object.entries(fields)) {
+    const result = validateAtBoundary(fieldId, value);
+    
+    if (!result.success) {
+      return { success: false, error: `${fieldId}: ${result.error}` };
+    }
+    
+    parsed[fieldId] = result.data;
+  }
+  
+  return { success: true, data: parsed };
+}
+
+/**
+ * Safe parse: returns undefined on error instead of throwing
+ * 
+ * @param fieldId - Field identifier
+ * @param value - Raw input value
+ * @returns Parsed value or undefined
+ */
+export function safeParseAtBoundary<T = unknown>(
+  fieldId: string,
+  value: unknown
+): T | undefined {
+  const result = validateAtBoundary<T>(fieldId, value);
+  return result.success ? result.data : undefined;
+}
+
+====src/domain/index.ts====
+// Verwijder deze regel:
+// export * from './interfaces';
+
+// Behoud alleen expliciete façade-exports:
+export type { ValueProvider } from './interfaces/ValueProvider';
+export type { StateWriter } from './interfaces/StateWriter';
+
+// Constants blijven:
+export const DATA_KEYS = {
+  SETUP: 'setup',
+  MEMBERS: 'members',
+  HOUSEHOLD: 'household',
+  FINANCE: 'finance',
+} as const;
+
+====src/domain/interfaces/ValueProvider.ts====
+// External façade for consumers outside domain (UI/adapters)
+// Accepts string fieldIds, normalizes internally to FieldId
+export interface ValueProvider {
+  getValue(fieldId: string): unknown;
+}
+
+====src/domain/core.ts====
+// Centralized type definitions for Domain (NOT UI)
+
+// All valid field identifiers in the application (SSOT)
+export type FieldId =
+  | 'aantalMensen'
+  | 'aantalVolwassen'
+  | 'autoCount'
+  | 'heeftHuisdieren'
+  | 'members'
+  | 'grossMonthly'
+  | 'inkomstenPerLid'
+  | 'autoVerzekering'
+  | 'car_repeater'
+  | 'kinderenLabel';
+
+// Visibility engine operators
+export type Operator =
+  | 'eq' | 'neq'
+  | 'gt' | 'gte'
+  | 'lt' | 'lte'
+  | 'truthy';
+
+// Visibility condition structure
+export type Condition = {
+  field: FieldId;
+  operator: Operator;
+  value?: unknown;
+  contextGuard?: (ctx?: unknown) => boolean;
+};
+
+// Domain ValueProvider contract (STRICT - internal use only)
+export interface DomainValueProvider {
+  getValue(fieldId: FieldId): unknown;
+}
+
+// StateWriter contract (STRICT - internal use only)
+export interface StateWriter {
+  updateField(fieldId: FieldId, value: unknown): void;
+}
+

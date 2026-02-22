@@ -14,7 +14,7 @@ export function makePhoenixState(
   const base: FormState = {
     schemaVersion: '1.0',
     activeStep: 'LANDING',
-    currentPageId: 'setupHousehold',
+    currentScreenId: 'setupHousehold',
     isValid: false,
     data: {
       setup: {},

@@ -1,0 +1,356 @@
+Processed 214 files (7s) (85 warnings)
+
+../scripts/maintenance/audit-orchestrator.js
+App.tsx
+__tests__/App.projector.test.tsx
+  app/context/FormContext.tsx
+  app/context/ThemeContext.tsx
+  ui/screens/Wizard/LandingScreen.tsx
+  ui/screens/Wizard/WizardController.tsx
+__tests__/CoreSanity.test.tsx
+__tests__/LandingScreen_Isolation.test.tsx
+__tests__/ScreenSanity.test.tsx
+  test-utils/render/renderers.tsx
+__tests__/WAI009_FocusManagement.test.tsx
+  test-utils/index.ts
+__tests__/regression/ui-decoupling.integrity.test.ts
+adapters/audit/AuditLoggerAdapter.ts
+adapters/csv/CSVAdapter.ts
+adapters/csv/csvService.ts
+  adapters/csv/CSVAdapter.ts
+adapters/storage/storage.ts
+adapters/transaction/stateful.ts
+adapters/undo/stateful.ts
+app/context/FormContext.tsx
+  app/context/formReducer.ts
+app/context/ThemeContext.tsx
+app/context/WizardContext.tsx
+  app/context/formReducer.ts
+  test-utils/factories/stateFactory.ts
+app/context/__tests__/formReducer.test.ts
+  app/context/formReducer.ts
+app/context/formReducer.ts
+app/hooks/__tests__/useAppOrchestration.test.tsx
+  app/hooks/useAppOrchestration.ts
+app/hooks/__tests__/useTransactionHistory.test.ts
+  app/hooks/useTransactionHistory.ts
+app/hooks/useAppOrchestration.ts
+app/hooks/useTransactionHistory.ts
+app/orchestrators/FormStateOrchestrator.ts
+  app/orchestrators/ImportOrchestrator.ts
+app/orchestrators/FormStateValueProvider.ts
+app/orchestrators/ImportOrchestrator.ts
+app/orchestrators/__tests__/ImportOrchestrator.test.ts
+  app/orchestrators/ImportOrchestrator.ts
+app/orchestrators/__tests__/ORCH-SW-001.test.ts
+  app/orchestrators/FormStateOrchestrator.ts
+app/orchestrators/__tests__/ORCH-VP-001.test.ts
+  app/orchestrators/FormStateOrchestrator.ts
+app/orchestrators/dateOrchestrator.ts
+app/orchestrators/export.ts
+app/orchestrators/transactionOrchestrator.ts
+app/orchestrators/types.ts
+config/WizStrings.ts
+config/features.ts
+containers/AdultsCounter.tsx
+core/types/core.ts
+core/types/expenses.ts
+core/types/extendedFormState.ts
+  core/types/core.ts
+core/types/fields.ts
+  core/types/core.ts
+core/types/finance.ts
+core/types/form.ts
+  core/types/core.ts
+  core/types/extendedFormState.ts
+  core/types/fields.ts
+  core/types/finance.ts
+  core/types/wizard.ts
+core/types/income.ts
+core/types/shared.ts
+core/types/transaction.ts
+core/types/wizard.ts
+  core/types/core.ts
+  core/types/fields.ts
+domain/__tests__/BT-04I_precision.test.ts
+domain/__tests__/evaluateDomainRules.test.ts
+domain/__tests__/household.test.ts
+  domain/household.ts
+domain/constants/datakeys.ts
+domain/constants/labels.ts
+  domain/constants/registry.ts
+domain/constants/registry.ts
+domain/core.ts
+domain/helpers/DateHydrator.ts
+domain/helpers/TimeProvider.ts
+domain/helpers/frequency.ts
+domain/helpers/numbers.ts
+domain/household.ts
+domain/index.ts
+  domain/interfaces/StateWriter.ts
+  domain/interfaces/ValueProvider.ts
+  domain/interfaces/index.ts
+domain/interfaces/StateWriter.ts
+domain/interfaces/ValueProvider.ts
+domain/interfaces/index.ts
+  domain/interfaces/StateWriter.ts
+  domain/interfaces/ValueProvider.ts
+domain/rules/FieldPathResolver.ts
+domain/rules/ValueProvider.ts
+domain/rules/__tests__/BT-02-baseline.test.ts
+  domain/validation/fieldValidator.ts
+  test-utils/factories/stateFactory.ts
+  ui/screens/Wizard/pages/1setupHousehold.config.ts
+domain/rules/__tests__/FT-TARA-01.test.ts
+  domain/rules/visibilityRules.ts
+domain/rules/__tests__/fieldVisibility.test.ts
+domain/rules/__tests__/financeRules.test.ts
+  core/types/finance.ts
+  domain/rules/financeRules.ts
+domain/rules/__tests__/visibilityRules.test.ts
+  domain/interfaces/ValueProvider.ts
+  domain/rules/visibilityRules.ts
+domain/rules/ageBoundaryRules.ts
+domain/rules/ageRules.ts
+domain/rules/dataFilters.ts
+  domain/rules/fieldVisibility.ts
+domain/rules/derivedValues.ts
+  domain/rules/fieldVisibility.ts
+domain/rules/evaluateDomainRules.ts
+domain/rules/fieldConstraints.ts
+  domain/rules/fieldVisibility.ts
+domain/rules/fieldVisibility.ts
+domain/rules/financeRules.ts
+domain/rules/householdRules.ts
+domain/rules/typeGuards.ts
+domain/rules/visibilityRules.ts
+  domain/interfaces/ValueProvider.ts
+domain/services/CSVProcessor.ts
+  domain/helpers/numbers.ts
+domain/services/__tests__/CSVProcessor.test.ts
+  domain/services/CSVProcessor.ts
+domain/services/__tests__/CSV_Baseline.test.ts
+  domain/services/CSVProcessor.ts
+domain/types.ts
+domain/validation/__tests__/CONSISTENCY_FPR_V2.test.ts
+  domain/validation/fieldValidator.ts
+  state/schemas/FormStateSchema.ts
+domain/validation/__tests__/fieldValidator.test.ts
+domain/validation/__tests__/stepValidator.test.ts
+  domain/validation/stepValidator.ts
+domain/validation/dateValidators.ts
+domain/validation/fieldValidator.ts
+domain/validation/runtimeParser.ts
+domain/validation/stepValidator.ts
+  adapters/audit/AuditLoggerAdapter.ts
+  domain/validation/fieldValidator.ts
+domain/validation/validationLog.ts
+  domain/validation/fieldValidator.ts
+domain/wizard/__tests__/BT-01R_stateless.test.ts
+infrastructure/clock/LocalNoonClock.ts
+infrastructure/clock/LocalNoonClockPort.ts
+kernel/finance/houshold/index.ts
+kernel/finance/index.ts
+kernel/finance/mappers.ts
+navigation/Navigator.tsx
+services/__mocks__/transactionService.ts
+services/__tests__/BT-04_migration_audit.test.ts
+  services/migrationService.ts
+  state/schemas/FormStateSchema.ts
+services/__tests__/csvService.integration.test.ts
+services/__tests__/csvService.test.tsx
+services/__tests__/dataOrchestrator.test.tsx
+  services/dataOrchestrator.ts
+  services/dataProcessor.ts
+services/__tests__/householdAlign.test.ts
+  services/householdAlign.ts
+services/__tests__/idempotency.test.ts
+  ../scripts/maintenance/audit-orchestrator.js
+services/__tests__/migration.fixture.test.ts
+  services/transactionService.ts
+services/__tests__/migration.members.test.ts
+  services/privacyHelpers.ts
+  services/transactionService.ts
+  test-utils/factories/memberFactory.ts
+services/__tests__/migrationService.test.ts
+  services/migrationService.ts
+services/__tests__/privacyHelpers.test.ts
+  services/privacyHelpers.ts
+services/__tests__/storage.migration.test.ts
+  services/transactionService.ts
+services/__tests__/storage.test.ts
+services/__tests__/storageShim.test.ts
+services/dataOrchestrator.ts
+  services/dataProcessor.ts
+services/dataProcessor.ts
+services/householdAlign.ts
+services/migrationService.ts
+services/privacyHelpers.ts
+services/storageShim.ts
+services/transactionService.ts
+  services/privacyHelpers.ts
+state/schemas/FormStateSchema.ts
+  state/schemas/sections/finance.schema.ts
+  state/schemas/sections/household.schema.ts
+  state/schemas/sections/setup.schema.ts
+state/schemas/__tests__/schemas.test.ts
+state/schemas/sections/finance.schema.ts
+state/schemas/sections/household.schema.ts
+state/schemas/sections/setup.schema.ts
+state/schemas/sections/validationMessages.ts
+test-utils/assertions/migrationAssertions.ts
+test-utils/factories/csvFactory.ts
+test-utils/factories/memberFactory.ts
+test-utils/factories/stateFactory.ts
+test-utils/index.ts
+  test-utils/assertions/migrationAssertions.ts
+  test-utils/factories/csvFactory.ts
+  test-utils/factories/memberFactory.ts
+  test-utils/factories/stateFactory.ts
+  test-utils/perf/measure.ts
+  test-utils/render/providers.tsx
+  test-utils/render/renderers.tsx
+  test-utils/utils/name.ts
+test-utils/jest.setup.tsx
+test-utils/perf/measure.ts
+test-utils/render/providers.tsx
+test-utils/render/renderers.tsx
+  test-utils/factories/stateFactory.ts
+test-utils/utils/name.ts
+types/common.ts
+types/navigation.ts
+types/react-native.d.ts
+ui/components/FieldRenderer.tsx
+ui/components/FinancialSummary.tsx
+ui/components/__tests__/FieldRenderer.test.tsx
+  ui/components/FieldRenderer.tsx
+ui/components/__tests__/InputCounter.test.tsx
+ui/components/__tests__/MoneyInput.test.tsx
+  app/context/ThemeContext.tsx
+  ui/components/fields/MoneyInput.tsx
+ui/components/fields/ChipButton.tsx
+ui/components/fields/ConditionalField.tsx
+ui/components/fields/DateField.tsx
+ui/components/fields/FormField.tsx
+ui/components/fields/InputCounter.tsx
+  domain/index.ts
+ui/components/fields/MoneyField.tsx
+ui/components/fields/MoneyInput.tsx
+ui/components/fields/ToggleSwitch.tsx
+ui/components/fields/index.ts
+  ui/components/fields/ChipButton.tsx
+  ui/components/fields/ConditionalField.tsx
+  ui/components/fields/DateField.tsx
+  ui/components/fields/FormField.tsx
+  ui/components/fields/InputCounter.tsx
+  ui/components/fields/MoneyField.tsx
+  ui/components/fields/MoneyInput.tsx
+  ui/components/fields/ToggleSwitch.tsx
+ui/components/fields/types.ts
+ui/constants/uiSections.ts
+ui/constants/uxTokens.ts
+ui/helpers/dateFormatting.ts
+ui/navigation/MainNavigator.tsx
+  ui/screens/Dashboard/DashboardScreen.tsx
+  ui/screens/Wizard/LandingScreen.tsx
+  ui/screens/Wizard/WizardController.tsx
+ui/screens/CSV/CsvUploadScreen.tsx
+ui/screens/Daily/UndoScreen.tsx
+ui/screens/Daily/__tests__/UndoScreen.test.tsx
+  ui/screens/Daily/UndoScreen.tsx
+ui/screens/DailyInput/DailyInputScreen.tsx
+ui/screens/Dashboard/DashboardScreen.tsx
+ui/screens/Options/OptionsScreen.tsx
+ui/screens/Reset/ResetScreen.tsx
+ui/screens/Settings/SettingsScreen.tsx
+ui/screens/Wizard/CriticalErrorScreen.tsx
+ui/screens/Wizard/LandingScreen.tsx
+ui/screens/Wizard/SplashScreen.tsx
+ui/screens/Wizard/WelcomeWizard.tsx
+ui/screens/Wizard/WizardController.tsx
+  ui/screens/Wizard/WizardPage.tsx
+  ui/screens/Wizard/adapters.ts
+  ui/screens/Wizard/pages/1setupHousehold.config.ts
+  ui/screens/Wizard/pages/2detailsHousehold.config.ts
+  ui/screens/Wizard/pages/3incomeDetails.config.ts
+  ui/screens/Wizard/pages/4fixedExpenses.config.ts
+ui/screens/Wizard/WizardPage.tsx
+ui/screens/Wizard/__tests__/WizardController.test.tsx
+  ui/screens/Wizard/WizardController.tsx
+  ui/screens/Wizard/WizardPage.tsx
+ui/screens/Wizard/adapters.ts
+ui/screens/Wizard/pages/1setupHousehold.config.ts
+ui/screens/Wizard/pages/2detailsHousehold.config.ts
+ui/screens/Wizard/pages/3incomeDetails.config.ts
+ui/screens/Wizard/pages/4fixedExpenses.config.ts
+ui/screens/Wizard/pages/__tests__/wizardConfigs.test.ts
+  ui/screens/Wizard/pages/1setupHousehold.config.ts
+  ui/screens/Wizard/pages/2detailsHousehold.config.ts
+  ui/screens/Wizard/pages/3incomeDetails.config.ts
+  ui/screens/Wizard/pages/4fixedExpenses.config.ts
+ui/selectors/__tests__/financialFlow.test.ts
+  ui/selectors/financialSelectors.ts
+ui/selectors/__tests__/householdSelectors.test.ts
+ui/selectors/financialSelectors.ts
+ui/selectors/householdSelectors.ts
+ui/styles/Colors.ts
+ui/styles/Tokens.ts
+ui/styles/__tests__/useAppStyles.test.ts
+  ui/styles/useAppStyles.ts
+ui/styles/modules/Alerts.ts
+  ui/styles/Colors.ts
+  ui/styles/Tokens.ts
+ui/styles/modules/Buttons.ts
+ui/styles/modules/Cards.ts
+ui/styles/modules/Checkboxes.ts
+  ui/styles/Colors.ts
+  ui/styles/Tokens.ts
+ui/styles/modules/Chips.ts
+ui/styles/modules/Dashboard.ts
+ui/styles/modules/Forms.ts
+ui/styles/modules/Header.ts
+ui/styles/modules/Helpers.ts
+  ui/styles/Colors.ts
+  ui/styles/Tokens.ts
+ui/styles/modules/Layout.ts
+ui/styles/modules/Summary.ts
+ui/styles/modules/Toggles.ts
+  ui/styles/Colors.ts
+  ui/styles/Tokens.ts
+ui/styles/modules/Typography.ts
+  ui/styles/Colors.ts
+  ui/styles/Tokens.ts
+ui/styles/modules/index.ts
+  ui/styles/modules/Alerts.ts
+  ui/styles/modules/Buttons.ts
+  ui/styles/modules/Cards.ts
+  ui/styles/modules/Checkboxes.ts
+  ui/styles/modules/Chips.ts
+  ui/styles/modules/Dashboard.ts
+  ui/styles/modules/Forms.ts
+  ui/styles/modules/Header.ts
+  ui/styles/modules/Helpers.ts
+  ui/styles/modules/Layout.ts
+  ui/styles/modules/Summary.ts
+  ui/styles/modules/Toggles.ts
+  ui/styles/modules/Typography.ts
+ui/styles/modules/placeholderStyles.ts
+ui/styles/useAppStyles.ts
+utils/__tests__/date.test.ts
+utils/__tests__/frequency.test.ts
+utils/__tests__/logger.test.ts
+utils/__tests__/numbers.test.ts
+utils/__tests__/ping.test.ts
+utils/__tests__/strings.test.ts
+  utils/strings.ts
+utils/__tests__/validation.test.ts
+utils/csvHelper.ts
+utils/index.ts
+  utils/csvHelper.ts
+  utils/objects.ts
+  utils/ping.ts
+  utils/strings.ts
+utils/objects.ts
+utils/ping.ts
+utils/strings.ts
+

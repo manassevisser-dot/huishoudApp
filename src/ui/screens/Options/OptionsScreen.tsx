@@ -1,3 +1,12 @@
+/**
+ * @file_intent Definieert het `OptionsScreen`, een UI-component dat fungeert als een centraal menu voor het navigeren naar verschillende applicatie-instellingen en -functies, zoals csv-upload en het resetten van de applicatie.
+ * @repo_architecture UI Layer - Screen. Dit component is een primair scherm in de navigatie-graaf van de applicatie. Het ontvangt navigatiefuncties (on...) als props van de bovenliggende navigator (`MainNavigator`) om gebruikersacties af te handelen.
+ * @term_definition
+ *   - `useSafeAreaInsets`: Een hook van `react-native-safe-area-context` om te voorkomen dat UI-elementen worden overlapt door fysieke scherm-inkepingen of home-indicatoren.
+ *   - `onClose`, `onSettings`, etc.: Callback-props die vanuit de navigator worden doorgegeven om het scherm los te koppelen van de navigatielogica. De verantwoordelijkheid van het scherm is om deze functies aan te roepen, niet om te weten hoe de navigatie is geïmplementeerd.
+ * @contract Het component rendert een lijst met knoppen. Wanneer een knop wordt ingedrukt, roept het de bijbehorende functie-prop aan (bijv. het indrukken van "Settings" roept de `onSettings`-prop aan). Het is een "dom" component dat volledig afhankelijk is van zijn props voor functionaliteit.
+ * @ai_instruction Om een nieuwe optie aan dit scherm toe te voegen, moet je: 1. Een nieuwe functie-prop toevoegen aan het `Props`-type (bijv. `onNewFeature: () => void;`). 2. De nieuwe prop toevoegen aan de functiesignatuur. 3. Een nieuw `<TouchableOpacity>`-component toevoegen dat deze nieuwe prop aanroept in zijn `onPress`-handler. 4. De bovenliggende navigator (`MainNavigator.tsx`) bijwerken om de implementatie voor de nieuwe prop te leveren.
+ */
 // @ts-nocheck
 // src/ui/screens/Options/OptionsScreen.tsx
 import * as React from 'react';
@@ -18,11 +27,11 @@ const OptionsScreen: React.FC<Props> = ({ onClose, onSettings, onCsvUpload, onRe
 
   return (
     <View style={styles.container}>
-      <View style={styles.pageContainer}>
+      <View style={styles.screenContainer}>
         <ScrollView
           contentContainerStyle={[styles.scrollContent, { paddingBottom: 120 + insets.bottom }]}
         >
-          <Text style={styles.pageTitle}>Options</Text>
+          <Text style={styles.screenTitle}>Options</Text>
 
           <TouchableOpacity
             style={[styles.button, { marginBottom: 16, marginLeft: 0 }]}
@@ -35,7 +44,7 @@ const OptionsScreen: React.FC<Props> = ({ onClose, onSettings, onCsvUpload, onRe
             style={[styles.button, { marginBottom: 16, marginLeft: 0 }]}
             onPress={onCsvUpload}
           >
-            <Text style={styles.buttonText}>CSV upload</Text>
+            <Text style={styles.buttonText}>csv upload</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

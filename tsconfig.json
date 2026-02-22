@@ -1,4 +1,3 @@
-
 {
   "compilerOptions": {
     "target": "ESNext",
@@ -6,51 +5,52 @@
     "moduleResolution": "node",
     "jsx": "react-jsx",
     "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
+    "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@app/*": ["src/app/*"],
-
-      "@domain/*": ["src/domain/*"],
-      "@services/*": ["src/services/*"],
-
-      "@shared-types/*": ["src/domain/types/*"],
-
-      "@utils/*": [
-        "src/utils/*",
-        "src/domain/helpers/*",
-        "src/domain/validation/*"
-      ],
-
-      "@shared/*": ["src/shared/*"],
-      "@core/*": ["src/core/*"],
-      "@config/*": ["src/config/*"],
-      "@logic/*": ["src/logic/*"],
-      "@ui/*": ["src/ui/*"],
-      "@components/*": ["src/ui/components/*"],
-      "@fields/*": ["src/ui/components/fields/*"],
-      "@screens/*": ["src/ui/screens/*"],
-      "@styles/*": ["src/ui/styles/*"],
-      "@state/*": ["src/state/*"],
-      "@context/*": ["src/app/context/*"],
-      "@selectors/*": ["src/selectors/*"],
-      "@assets/*": ["assets/*"],
-      "@test-utils": ["src/test-utils/index.ts"],
-      "@test-utils/*": ["src/test-utils/*"],
-      "@kernel/*": ["src/kernel/*"],
-      "@infrastructure/*": ["src/infrastructure/*"],
-      "@shared-types/form": ["src/core/types/form.ts"],
-      "@shared-types/finance": ["src/core/types/finance.ts"],
-      "@shared-types/fields": ["src/core/types/form.ts"],
-      "@domain/types/*": ["src/core/types/*"],
+      // 🔹 Specifieke, geneste paden EERST (meest specifiek)
+      "@core/types/*": ["src/core/types/*"],
+      "@domain/constants/*": ["src/domain/constants/*"],
+      "@domain/helpers/*": ["src/domain/helpers/*"],
+      "@domain/registry/*": ["src/domain/registry/*"],
+      "@domain/rules/*": ["src/domain/rules/*"],
+      "@domain/services/*": ["src/domain/services/*"],
+      "@domain/validation/*": ["src/domain/validation/*"],
+      "@domain/finance/*": ["src/domain/finance/*"],
+      "@domain/research/*": ["src/domain/research/*"],
+      "@state/schemas/*": ["src/state/schemas/*"],
+      "@state/schemas/sections/*": ["src/state/schemas/sections/*"],
+      "@state/schemas/helpers/*": ["src/state/schemas/helpers/*"],
       "@adapters/*": ["src/adapters/*"],
-      "@shared-types/wizard": ["src/core/types/wizard.ts"],
-      "@domain/rules/*": ["src/domain/rules/*"]
+      "@utils/*": ["src/utils/*"],
+      "@app/context/*": ["src/app/context/*"],
+      "@app/hooks/*": ["src/app/hooks/*"],
+      "@app/orchestrators/*": ["src/app/orchestrators/*"],
+      "@services/*": ["src/services/*"],
+      "@infrastructure/*": ["src/infrastructure/*"],
+      "@kernel/*": ["src/kernel/*"],
+
+      // 🔸 Algemene mappings LAATST (minst specifiek)
+      "@core/*": ["src/core/*"],
+      "@domain/*": ["src/domain/*"],
+      "@state/*": ["src/state/*"],
+      "@app/*": ["src/app/*"],
+      "@ui/*": ["src/ui/*"],
+      "@styles/*": ["src/ui/styles/*"],
+      "@config/*": ["src/config/*"],
+      "@test-utils/*": ["src/test-utils/*"],
+      "@test-utils": ["src/test-utils/index.ts"]
     }
   },
-  "include": ["src/**/*", "src/__tests__", "index.tsx", "jest.config.ts"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "src_STABLE_BACKUP"
+  ]
 }

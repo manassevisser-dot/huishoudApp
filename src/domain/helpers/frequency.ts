@@ -1,26 +1,31 @@
-// frequency.ts (refined)
-export const WEEKS_PER_YEAR = 52 as const;
-export const MONTHS_PER_YEAR = 12 as const;
+/**
+ * @file_intent Biedt functies om financiële bedragen te normaliseren naar een maandelijkse frequentie. Dit is essentieel om bedragen met verschillende periodiciteiten (bv. weekloon, jaarlijkse verzekering) met elkaar te kunnen vergelijken en aggregeren.
+ * @repo_architecture Domain Layer - Helpers.
+ * @term_definition
+ *   - `Frequency`: Een type dat de periodiciteit van een bedrag definieert (bv. per week, per maand, per jaar).
+ *   - `Normalisatie`: Het proces van het omrekenen van bedragen met verschillende frequenties naar één gestandaardiseerde frequentie (in dit geval, maandelijks).
+ *   - `Factor`: Een vermenigvuldigingsgetal dat wordt gebruikt om een bedrag van de ene frequentie naar de andere om te rekenen.
+ * @contract Dit bestand exporteert het `Frequency` type, de `getMonthlyFactor` functie die de conversiefactor berekent, en de `convertToMonthlyCents` functie die een bedrag in centen omrekent naar een maandelijks bedrag in centen. Alle berekeningen zijn puur en stateless.
+ * @ai_instruction Gebruik `convertToMonthlyCents` om elk financieel bedrag dat niet maandelijks is, te normaliseren voordat het wordt gebruikt in berekeningen of aggregaties. Dit zorgt voor consistentie in het hele domein. De berekeningen worden uitgevoerd met centen (integers) om afrondingsfouten met zwevendekommagetallen te vermijden.
+ */
+
+// WAI-004-D — Frequentie & Maand-normalisatie
+// -------------------------------------------------------
+
+export const WEEKS_PER_YEAR = 52;
+export const MONTHS_PER_YEAR = 12;
 
 export type Frequency = 'week' | '4wk' | 'month' | 'quarter' | 'year';
 
-// Interne helper om exhaustiveness af te dwingen bij switch
-//const assertNever = (x: never): never => {
-//  throw new Error(`Unsupported frequency: ${String(x)}`);
-//};
-
 /**
  * Berekent de factor om een bedrag naar een maandbedrag te converteren.
- * - Voor bekende Frequency union waarden is de switch exhaustief.
- * - Voor string buiten de union valt de default naar 1.
  */
 export const getMonthlyFactor = (freq?: Frequency | string): number => {
-  // Probeer te narrowen naar de union en behandel overige strings als unknown
-  switch (freq as Frequency) {
+  switch (freq) {
     case 'week':
-      return WEEKS_PER_YEAR / MONTHS_PER_YEAR; // ≈ 4.3333
+      return WEEKS_PER_YEAR / MONTHS_PER_YEAR; // 4.333...
     case '4wk':
-      return 13 / 12; // ≈ 1.08333
+      return 13 / 12; // 1.0833...
     case 'month':
       return 1;
     case 'quarter':
@@ -28,22 +33,15 @@ export const getMonthlyFactor = (freq?: Frequency | string): number => {
     case 'year':
       return 1 / MONTHS_PER_YEAR;
     default:
-      // Voor onbekende strings (niet in union): factor 1
       return 1;
   }
 };
 
 /**
  * Converteert centen naar maandelijkse centen op basis van frequentie.
- * - Centen blijven integer via Math.round.
- * - Negatieve bedragen blijven toegestaan als je dat wil (soms relevant voor correcties),
- *   maar je kunt ze ook expliciet blokkeren met een guard.
+ * We ronden af op hele centen om integers te behouden.
  */
 export const convertToMonthlyCents = (cents: number, freq?: Frequency | string): number => {
-  if (!Number.isFinite(cents)) throw new Error('Invalid cents: not a finite number');
-  // Optionele guard: blokkeer negatieve centen (comment uit indien gewenst)
-  // if (cents < 0) throw new Error('Invalid cents: must be non-negative');
-
   const factor = getMonthlyFactor(freq);
   return Math.round(cents * factor);
 };

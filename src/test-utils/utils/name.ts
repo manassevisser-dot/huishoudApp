@@ -3,9 +3,19 @@
  * "Jan Janssen" -> { firstName: "Jan", lastName: "Janssen" }
  */
 export function splitNameForUX(fullName: string = ''): { firstName: string; lastName: string } {
-  const parts = fullName.trim().split(/\s+/);
+  const trimmedName = fullName.trim();
+  const parts = trimmedName.split(/\s+/);
+
+  // Pak de eerste naam als die bestaat en niet leeg is, anders 'Lid'
+  const firstPart = parts[0];
+  const firstName = (firstPart !== undefined && firstPart !== '') ? firstPart : 'Lid';
+
+  // Pak de rest als achternaam
+  const remainingParts = parts.slice(1);
+  const lastName = remainingParts.length > 0 ? remainingParts.join(' ') : '';
+
   return {
-    firstName: parts[0] || 'Lid',
-    lastName: parts.slice(1).join(' ') || '',
+    firstName,
+    lastName,
   };
 }

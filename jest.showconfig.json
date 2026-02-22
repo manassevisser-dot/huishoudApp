@@ -1,0 +1,344 @@
+{
+  "configs": [
+    {
+      "automock": false,
+      "cache": true,
+      "cacheDirectory": "/tmp/jest_rs",
+      "clearMocks": true,
+      "collectCoverageFrom": [
+        "src/**/*.{ts,tsx,js,jsx}",
+        "!src/**/*.d.ts",
+        "!src/**/__tests__/**",
+        "!**/node_modules/**"
+      ],
+      "coverageDirectory": "/home/user/pre7/coverage",
+      "coveragePathIgnorePatterns": [
+        "/node_modules/",
+        "index.ts",
+        "\\.config\\.ts"
+      ],
+      "coverageReporters": [
+        "html",
+        "text",
+        "text-summary",
+        "json",
+        "json-summary"
+      ],
+      "cwd": "/home/user/pre7",
+      "detectLeaks": false,
+      "detectOpenHandles": false,
+      "errorOnDeprecated": false,
+      "extensionsToTreatAsEsm": [],
+      "fakeTimers": {
+        "enableGlobally": false
+      },
+      "forceCoverageMatch": [],
+      "globals": {},
+      "haste": {
+        "defaultPlatform": "ios",
+        "platforms": [
+          "android",
+          "ios",
+          "native"
+        ]
+      },
+      "id": "1c8f791fee8e5b06a5f0a77471ee6f3f",
+      "injectGlobals": true,
+      "moduleDirectories": [
+        "node_modules"
+      ],
+      "moduleFileExtensions": [
+        "ts",
+        "tsx",
+        "js",
+        "jsx",
+        "json",
+        "node"
+      ],
+      "moduleNameMapper": [
+        [
+          "^react-native-gesture-handler$",
+          "/home/user/pre7/node_modules/react-native-gesture-handler"
+        ],
+        [
+          "^@shared-types/(.*)$",
+          "/home/user/pre7/src/core/types/$1"
+        ],
+        [
+          "^@/(.*)$",
+          "/home/user/pre7/src/$1"
+        ],
+        [
+          "^@app/(.*)$",
+          "/home/user/pre7/src/app/$1"
+        ],
+        [
+          "^@domain/(.*)$",
+          "/home/user/pre7/src/domain/$1"
+        ],
+        [
+          "^@services/(.*)$",
+          "/home/user/pre7/src/services/$1"
+        ],
+        [
+          "^@utils/(.*)$",
+          "/home/user/pre7/src/utils/$1"
+        ],
+        [
+          "^@utils-legacy-helpers/(.*)$",
+          "/home/user/pre7/src/domain/helpers/$1"
+        ],
+        [
+          "^@utils-legacy-validation/(.*)$",
+          "/home/user/pre7/src/domain/validation/$1"
+        ],
+        [
+          "^@shared/(.*)$",
+          "/home/user/pre7/src/shared/$1"
+        ],
+        [
+          "^@core/(.*)$",
+          "/home/user/pre7/src/core/$1"
+        ],
+        [
+          "^@config/(.*)$",
+          "/home/user/pre7/src/config/$1"
+        ],
+        [
+          "^@logic/(.*)$",
+          "/home/user/pre7/src/logic/$1"
+        ],
+        [
+          "^@ui/(.*)$",
+          "/home/user/pre7/src/ui/$1"
+        ],
+        [
+          "^@components/(.*)$",
+          "/home/user/pre7/src/ui/components/$1"
+        ],
+        [
+          "^@fields/(.*)$",
+          "/home/user/pre7/src/ui/components/fields/$1"
+        ],
+        [
+          "^@screens/(.*)$",
+          "/home/user/pre7/src/ui/screens/$1"
+        ],
+        [
+          "^@styles/(.*)$",
+          "/home/user/pre7/src/ui/styles/$1"
+        ],
+        [
+          "^@state/(.*)$",
+          "/home/user/pre7/src/state/$1"
+        ],
+        [
+          "^@context/(.*)$",
+          "/home/user/pre7/src/app/context/$1"
+        ],
+        [
+          "^@selectors/(.*)$",
+          "/home/user/pre7/src/selectors/$1"
+        ],
+        [
+          "^@assets/(.*)$",
+          "/home/user/pre7/assets/$1"
+        ],
+        [
+          "^@test-utils$",
+          "/home/user/pre7/src/test-utils/index.ts"
+        ],
+        [
+          "^@test-utils/(.*)$",
+          "/home/user/pre7/src/test-utils/$1"
+        ],
+        [
+          "^@kernel/(.*)$",
+          "/home/user/pre7/src/kernel/$1"
+        ],
+        [
+          "^@domain/types/(.*)$",
+          "/home/user/pre7/src/core/types/$1"
+        ],
+        [
+          "^@adapters/(.*)$",
+          "/home/user/pre7/src/adapters/$1"
+        ],
+        [
+          "^@domain/rules/(.*)$",
+          "/home/user/pre7/src/domain/rules/$1"
+        ],
+        [
+          "^@shared\\-types/(.*)$",
+          "/home/user/pre7/src/core/types/$1"
+        ],
+        [
+          "^@test\\-utils$",
+          "/home/user/pre7/src/test-utils/index.ts"
+        ],
+        [
+          "^@test\\-utils/(.*)$",
+          "/home/user/pre7/src/test-utils/$1"
+        ],
+        [
+          "^@infrastructure/(.*)$",
+          "/home/user/pre7/src/infrastructure/$1"
+        ],
+        [
+          "^@domain$",
+          "/home/user/pre7/src/domain/index.ts"
+        ],
+        [
+          "^react-native-vector-icons$",
+          "@expo/vector-icons"
+        ],
+        [
+          "^react-native-vector-icons/(.*)",
+          "@expo/vector-icons/$1"
+        ]
+      ],
+      "modulePathIgnorePatterns": [],
+      "openHandlesTimeout": 1000,
+      "prettierPath": "prettier",
+      "resetMocks": false,
+      "resetModules": false,
+      "resolver": "/home/user/pre7/node_modules/react-native/jest/resolver.js",
+      "restoreMocks": true,
+      "rootDir": "/home/user/pre7",
+      "roots": [
+        "/home/user/pre7"
+      ],
+      "runner": "/home/user/pre7/node_modules/jest-runner/build/index.js",
+      "sandboxInjectedGlobals": [],
+      "setupFiles": [
+        "/home/user/pre7/node_modules/react-native/jest/setup.js",
+        "/home/user/pre7/node_modules/jest-expo/src/preset/setup.js",
+        "/home/user/pre7/jest.setup.early.js"
+      ],
+      "setupFilesAfterEnv": [
+        "/home/user/pre7/src/test-utils/jest.setup.tsx"
+      ],
+      "skipFilter": false,
+      "slowTestThreshold": 5,
+      "snapshotFormat": {
+        "escapeString": false,
+        "printBasicPrototype": false
+      },
+      "snapshotSerializers": [],
+      "testEnvironment": "/home/user/pre7/node_modules/jest-environment-jsdom/build/index.js",
+      "testEnvironmentOptions": {
+        "customExportConditions": [
+          "react-native"
+        ]
+      },
+      "testLocationInResults": false,
+      "testMatch": [
+        "**/__tests__/**/*.?([mc])[jt]s?(x)",
+        "**/?(*.)+(spec|test).?([mc])[jt]s?(x)"
+      ],
+      "testPathIgnorePatterns": [
+        "/node_modules/"
+      ],
+      "testRegex": [],
+      "testRunner": "/home/user/pre7/node_modules/jest-circus/build/runner.js",
+      "transform": [
+        [
+          "^.+\\.(bmp|gif|jpg|jpeg|mp4|png|psd|svg|webp)$",
+          "/home/user/pre7/node_modules/react-native/jest/assetFileTransformer.js",
+          {}
+        ],
+        [
+          "\\.[jt]sx?$",
+          "/home/user/pre7/node_modules/babel-jest/build/index.js",
+          {
+            "caller": {
+              "name": "metro",
+              "bundler": "metro",
+              "platform": "ios"
+            }
+          }
+        ],
+        [
+          "^.+\\.(bmp|gif|jpg|jpeg|png|psd|svg|webp|xml|m4v|mov|mp4|mpeg|mpg|webm|aac|aiff|caf|m4a|mp3|wav|html|pdf|yaml|yml|otf|ttf|zip|heic|avif|db)$",
+          "/home/user/pre7/node_modules/jest-expo/src/preset/assetFileTransformer.js",
+          {}
+        ]
+      ],
+      "transformIgnorePatterns": [
+        "node_modules/(?!(?:jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|react-native-gesture-handler|react-native-reanimated|react-native-worklets|react-native-svg|react-native-safe-area-context|@unimodules/.*|unimodules|expo-modules-core|expo-constants|expo-file-system|expo-asset|@babel/runtime)/"
+      ],
+      "waitForUnhandledRejections": false,
+      "watchPathIgnorePatterns": []
+    }
+  ],
+  "globalConfig": {
+    "bail": 0,
+    "changedFilesWithAncestor": false,
+    "ci": false,
+    "collectCoverage": true,
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx,js,jsx}",
+      "!src/**/*.d.ts",
+      "!src/**/__tests__/**",
+      "!**/node_modules/**"
+    ],
+    "coverageDirectory": "/home/user/pre7/coverage",
+    "coverageProvider": "babel",
+    "coverageReporters": [
+      "html",
+      "text",
+      "text-summary",
+      "json",
+      "json-summary"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 70,
+        "lines": 70,
+        "statements": 70
+      }
+    },
+    "detectLeaks": false,
+    "detectOpenHandles": false,
+    "errorOnDeprecated": false,
+    "expand": false,
+    "findRelatedTests": false,
+    "forceExit": false,
+    "json": false,
+    "lastCommit": false,
+    "listTests": false,
+    "logHeapUsage": false,
+    "maxConcurrency": 5,
+    "maxWorkers": 1,
+    "noStackTrace": false,
+    "nonFlagArgs": [],
+    "notify": false,
+    "notifyMode": "failure-change",
+    "onlyChanged": false,
+    "onlyFailures": false,
+    "openHandlesTimeout": 1000,
+    "passWithNoTests": false,
+    "projects": [],
+    "rootDir": "/home/user/pre7",
+    "runInBand": false,
+    "runTestsByPath": false,
+    "seed": 1746374752,
+    "skipFilter": false,
+    "snapshotFormat": {
+      "escapeString": false,
+      "printBasicPrototype": false
+    },
+    "testFailureExitCode": 1,
+    "testPathPatterns": [],
+    "testSequencer": "/home/user/pre7/node_modules/@jest/test-sequencer/build/index.js",
+    "updateSnapshot": "new",
+    "useStderr": false,
+    "waitForUnhandledRejections": false,
+    "watch": false,
+    "watchAll": false,
+    "watchman": true,
+    "workerThreads": false
+  },
+  "version": "30.1.3"
+}

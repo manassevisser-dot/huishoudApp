@@ -1,21 +1,14 @@
-// Centralized feature flags for controlled rollout of UX changes.
-// Default all flags to false for safety. Flip to true per feature when ready.
-
+// src/app/config/features.ts
 /**
- * Controls visibility of the Wizard progress indicator (Phase 3).
- * When true, dots are rendered in WizardPage.
+ * @file_intent Beheert de runtime-configuratie en feature-toggles voor de applicatie-interface en functionele flows.
+ * @repo_architecture Mobile Industry (MI) - Configuration Layer.
+ * @term_definition showWizardProgress = Toggle voor de visuele voortgangsindicator in de wizard. useTempWizard = Flag om te schakelen tussen de experimentele (temp) en stabiele wizard-implementatie.
+ * @contract Biedt een centrale plek voor conditionele logica in de UI en orchestrators. Hiermee kunnen features zoals toast-notificaties of specifieke wizard-onderdelen aan- of uitgezet worden zonder de code-structuur te wijzigen.
+ * @ai_instruction Gebruik deze constanten om gefaseerde roll-outs te faciliteren. De PHOENIX_KEYS array is gereserveerd voor toekomstige integraties of specifieke licentie-sleutels binnen het Mobile Industry framework.
  */
 export const showWizardProgress = true;
-
-/**
- * Controls success feedback after save operations (Phase 3 follow-up).
- * When true, success toasts/alerts are shown after successful actions.
- */
 export const showSuccessToasts = false;
-
-// src/config/features.ts
 export const features = {
-  useTempWizard: true, // zet naar false om de oude te gebruiken
+  useTempWizard: true, 
 };
-``;
 export const PHOENIX_KEYS = [];

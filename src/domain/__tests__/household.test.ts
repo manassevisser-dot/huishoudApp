@@ -1,8 +1,8 @@
-import { Member } from '../household';
+import { ResearchMember } from '@core/types/research';
 import { getHouseholdStatus } from '@domain/rules/householdRules';
 // Helper om Phoenix-compliant members te maken
 
-const createMembers = (count: number, type: 'adult' | 'child'): Member[] =>
+const createMembers = (count: number, type: 'adult' | 'child'): ResearchMember[] =>
   Array.from({ length: count }).map((_, i) => ({
     entityId: `m-${i}`,
     fieldId: `field-household-member-${i}`, // VOEG DIT TOE

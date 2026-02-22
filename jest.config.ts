@@ -1,8 +1,9 @@
-
-// jest.config.ts
+/** @jest-config-loader ts-node */
+/** @jest-config-loader-options {"transpileOnly": true} */
 import type { Config } from 'jest';
 
 const config: Config = {
+  // We gebruiken de preset, maar overschrijven de rotzooi die het blokkeert
   preset: 'jest-expo',
 
   setupFiles: [
@@ -17,57 +18,66 @@ const config: Config = {
   testEnvironmentOptions: {
     customExportConditions: ['react-native'],
   },
-
+  modulePathIgnorePatterns: ['<rootDir>/backups/'],
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
-    '^@app/(.*)$': '<rootDir>/src/app/$1',
-
-    '^@domain/(.*)$': '<rootDir>/src/domain/$1',
-    '^@services/(.*)$': '<rootDir>/src/services/$1',
-
-    '^@shared-types/(.*)$': '<rootDir>/src/domain/types/$1',
-
-    // Kies hier de "primaire" utils map:
-    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
-    // Extra (optioneel) voor legacy submappen — alleen als je ze echt nodig hebt:
-    '^@utils-legacy-helpers/(.*)$': '<rootDir>/src/domain/helpers/$1',
-    '^@utils-legacy-validation/(.*)$': '<rootDir>/src/domain/validation/$1',
-
-    '^@shared/(.*)$': '<rootDir>/src/shared/$1',
-    '^@core/(.*)$': '<rootDir>/src/core/$1',
-    '^@config/(.*)$': '<rootDir>/src/config/$1',
-    '^@logic/(.*)$': '<rootDir>/src/logic/$1',
-    '^@ui/(.*)$': '<rootDir>/src/ui/$1',
-    '^@components/(.*)$': '<rootDir>/src/ui/components/$1',
-    '^@fields/(.*)$': '<rootDir>/src/ui/components/fields/$1',
-    '^@screens/(.*)$': '<rootDir>/src/ui/screens/$1',
-    '^@styles/(.*)$': '<rootDir>/src/ui/styles/$1',
-    '^@state/(.*)$': '<rootDir>/src/state/$1',
-    '^@context/(.*)$': '<rootDir>/src/app/context/$1',
-    '^@selectors/(.*)$': '<rootDir>/src/selectors/$1',
-    '^@assets/(.*)$': '<rootDir>/assets/$1',
-    '^@test-utils$': '<rootDir>/src/test-utils/index.ts',
-    '^@test-utils/(.*)$': '<rootDir>/src/test-utils/$1',
-    '^@kernel/(.*)$': '<rootDir>/src/kernel/$1',
-
-    // Single-file aliases
-    '^@shared-types/form$': '<rootDir>/src/core/types/form.ts',
-    '^@shared-types/finance$': '<rootDir>/src/core/types/finance.ts',
-    '^@shared-types/fields$': '<rootDir>/src/core/types/form.ts',
-    '^@shared-types/wizard$': '<rootDir>/src/core/types/wizard.ts',
-
-    '^@domain/types/(.*)$': '<rootDir>/src/core/types/$1',
-    '^@adapters/(.*)$': '<rootDir>/src/adapters/$1',
-    '^@domain/rules/(.*)$': '<rootDir>/src/domain/rules/$1',
+// @alias-start
+      '^@state/schemas/sections/(.*)$': '<rootDir>/src/state/schemas/sections/$1',
+      '^@state/schemas/helpers/(.*)$': '<rootDir>/src/state/schemas/helpers/$1',
+      '^@domain/validation/(.*)$': '<rootDir>/src/domain/validation/$1',
+      '^@app/orchestrators/(.*)$': '<rootDir>/src/app/orchestrators/$1',
+      '^@domain/constants/(.*)$': '<rootDir>/src/domain/constants/$1',
+      '^@domain/registry/(.*)$': '<rootDir>/src/domain/registry/$1',
+      '^@domain/services/(.*)$': '<rootDir>/src/domain/services/$1',
+      '^@domain/research/(.*)$': '<rootDir>/src/domain/research/$1',
+      '^@domain/helpers/(.*)$': '<rootDir>/src/domain/helpers/$1',
+      '^@domain/finance/(.*)$': '<rootDir>/src/domain/finance/$1',
+      '^@infrastructure/(.*)$': '<rootDir>/src/infrastructure/$1',
+      '^@state/schemas/(.*)$': '<rootDir>/src/state/schemas/$1',
+      '^@domain/rules/(.*)$': '<rootDir>/src/domain/rules/$1',
+      '^@app/context/(.*)$': '<rootDir>/src/app/context/$1',
+      '^@core/types/(.*)$': '<rootDir>/src/core/types/$1',
+      '^@test-utils/(.*)$': '<rootDir>/src/test-utils/$1',
+      '^@app/hooks/(.*)$': '<rootDir>/src/app/hooks/$1',
+      '^@adapters/(.*)$': '<rootDir>/src/adapters/$1',
+      '^@services/(.*)$': '<rootDir>/src/services/$1',
+      '^@kernel/(.*)$': '<rootDir>/src/kernel/$1',
+      '^@domain/(.*)$': '<rootDir>/src/domain/$1',
+      '^@styles/(.*)$': '<rootDir>/src/ui/styles/$1',
+      '^@config/(.*)$': '<rootDir>/src/config/$1',
+      '^@utils/(.*)$': '<rootDir>/src/utils/$1',
+      '^@state/(.*)$': '<rootDir>/src/state/$1',
+      '^@core/(.*)$': '<rootDir>/src/core/$1',
+      '^@app/(.*)$': '<rootDir>/src/app/$1',
+      '^@ui/(.*)$': '<rootDir>/src/ui/$1',
+// @alias-end
   },
-
-  transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?|react-native(-.*)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|expo-modules-core|expo-constants|expo-file-system|expo-asset))',
+  coveragePathIgnorePatterns: [
+    '/node_modules/',
+    'index.ts',
+    '\\.config\\.ts',
   ],
+  transformIgnorePatterns: [
+    'node_modules/(?!(?:jest-)?react-native' +
+      '|@react-native(-community)?' +
+      '|expo(nent)?' +
+      '|@expo(nent)?/.*' +
+      '|react-native-gesture-handler' +
+      '|react-native-reanimated' +
+      '|react-native-worklets' +
+      '|react-native-svg' +
+      '|react-native-safe-area-context' +
+      '|@unimodules/.*' +
+      '|unimodules' +
+      '|expo-modules-core' +
+      '|expo-constants' +
+      '|expo-file-system' +
+      '|expo-asset' +
+      '|@babel/runtime)/',
+  ],
+  
 
   clearMocks: true,
   restoreMocks: true,
-
   collectCoverage: true,
   coverageDirectory: '<rootDir>/coverage',
   coverageReporters: ['html', 'text', 'text-summary', 'json', 'json-summary'],
@@ -77,7 +87,6 @@ const config: Config = {
     '!src/**/__tests__/**',
     '!**/node_modules/**',
   ],
-
   coverageThreshold: {
     global: {
       branches: 70,

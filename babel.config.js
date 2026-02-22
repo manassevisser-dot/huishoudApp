@@ -10,45 +10,37 @@ module.exports = function (api) {
         {
           root: ['./'],
           alias: {
-            '@': './src',
-            '@app': './src/app',
-
-            '@domain': './src/domain',
-            '@services': './src/services',
-
-            '@shared-types': './src/domain/types',
-
-            // Kies primaire utils-map hier net als in Jest:
-            '@utils': './src/utils',
-            // Optioneel: aparte legacy aliassen tijdens migratie:
-            '@utils-legacy-helpers': './src/domain/helpers',
-            '@utils-legacy-validation': './src/domain/validation',
-
-            '@shared': './src/shared',
-            '@core': './src/core',
-            '@config': './src/config',
-            '@logic': './src/logic',
-            '@ui': './src/ui',
-            '@components': './src/ui/components',
-            '@fields': './src/ui/components/fields',
-            '@screens': './src/ui/screens',
-            '@styles': './src/ui/styles',
-            '@state': './src/state',
-            '@context': './src/app/context',
-            '@selectors': './src/selectors',
-            '@assets': './assets',
-            '@test-utils': './src/test-utils', // index.ts wordt door resolvers gevonden
-            '@kernel': './src/kernel',
-
-            // Single files
-            '@shared-types/form': './src/core/types/form.ts',
-            '@shared-types/finance': './src/core/types/finance.ts',
-            '@shared-types/fields': './src/core/types/form.ts',
-            '@shared-types/wizard': './src/core/types/wizard.ts',
-
-            '@domain/types': './src/core/types',
-            '@adapters': './src/adapters',
-            '@domain/rules': './src/domain/rules',
+// @alias-start
+          '@state/schemas/sections': './src/state/schemas/sections',
+          '@state/schemas/helpers': './src/state/schemas/helpers',
+          '@domain/validation': './src/domain/validation',
+          '@app/orchestrators': './src/app/orchestrators',
+          '@domain/constants': './src/domain/constants',
+          '@domain/registry': './src/domain/registry',
+          '@domain/services': './src/domain/services',
+          '@domain/research': './src/domain/research',
+          '@domain/helpers': './src/domain/helpers',
+          '@domain/finance': './src/domain/finance',
+          '@infrastructure': './src/infrastructure',
+          '@state/schemas': './src/state/schemas',
+          '@domain/rules': './src/domain/rules',
+          '@app/context': './src/app/context',
+          '@core/types': './src/core/types',
+          '@test-utils': './src/test-utils',
+          '@app/hooks': './src/app/hooks',
+          '@adapters': './src/adapters',
+          '@services': './src/services',
+          '@test-utils': './src/test-utils',
+          '@kernel': './src/kernel',
+          '@domain': './src/domain',
+          '@styles': './src/ui/styles',
+          '@config': './src/config',
+          '@utils': './src/utils',
+          '@state': './src/state',
+          '@core': './src/core',
+          '@app': './src/app',
+          '@ui': './src/ui',
+// @alias-end
           },
           extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
         },

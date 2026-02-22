@@ -1,0 +1,15 @@
+{
+  "timestamp": "2026-01-20T01:55:00Z",
+  "suite": "RW-INTEGRATION",
+  "total_tests": 20,
+  "passed": 20,
+  "failed": 0,
+  "results": {
+    "UI-RW-001": "PASS",
+    "UI-RW-002": "PASS",
+    "UI-RW-003": "PASS",
+    "UI-RW-011": "PASS",
+    "UI-RW-019": "PASS"
+  },
+  "conclusion": "All RW integration tests pass. ValueProvider/StateWriter integration is successful."
+}

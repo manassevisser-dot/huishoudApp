@@ -1,0 +1,1804 @@
+
+> test
+> jest --verbose --no-cache
+
+PASS src/ui/components/__tests__/MoneyInput.test.tsx (18.632 s)
+  MoneyInput
+    initial rendering
+      ✓ renders with initial cents value formatted (3606 ms)
+      ✓ renders with zero value (10 ms)
+      ✓ renders euro prefix (12 ms)
+      ✓ renders with placeholder (9 ms)
+    value synchronization
+      ✓ updates local value when external value changes (24 ms)
+      ✓ useEffect runs when value prop changes (8 ms)
+    focus behavior
+      ✓ removes thousand separators on focus (14 ms)
+      ✓ onFocus is called (12 ms)
+    text input changes
+      ✓ sanitizes input during typing (13 ms)
+      ✓ blocks invalid characters during typing (10 ms)
+      ✓ allows decimal comma (15 ms)
+    blur behavior
+      ✓ converts to cents and emits on blur (10 ms)
+      ✓ formats to Dutch standard on blur (5 ms)
+      ✓ handles empty input on blur (5 ms)
+      ✓ handles invalid input on blur (7 ms)
+    disabled state
+      ✓ input is disabled when disabled prop is true (5 ms)
+      ✓ input is enabled when disabled prop is false (5 ms)
+      ✓ input is enabled by default (4 ms)
+    accessibility
+      ✓ uses default accessibility label (4 ms)
+      ✓ uses custom accessibility label (7 ms)
+      ✓ euro prefix has accessibility label (11 ms)
+    keyboard type
+      ✓ uses decimal-pad keyboard type (9 ms)
+    edge cases
+      ✓ handles very large cent values (4 ms)
+      ✓ handles rapid value changes (8 ms)
+      ✓ handles focus -> change -> blur cycle (4 ms)
+
+PASS src/utils/__tests__/logger.test.ts
+  audit logger
+    info method
+      ✓ logs info message without data (5 ms)
+      ✓ logs info message with data (2 ms)
+      ✓ logs info with undefined data (2 ms)
+    error method
+      ✓ logs error message without error object (18 ms)
+      ✓ logs error message with error object (2 ms)
+      ✓ logs error with string error (3 ms)
+      ✓ logs error with undefined (2 ms)
+    warn method
+      ✓ logs warning without data (2 ms)
+      ✓ logs warning with data (2 ms)
+      ✓ logs warning with string data (2 ms)
+    log method (audit log / legacy bridge)
+      ✓ logs with level and message (2 ms)
+      ✓ logs with level, message and args (2 ms)
+      ✓ logs with level only (2 ms)
+      ✓ logs with multiple args (2 ms)
+    exports
+      ✓ logger export works (17 ms)
+      ✓ Logger export (capitalized) works (2 ms)
+      ✓ AuditLogger export works (2 ms)
+      ✓ all exports reference same instance (1 ms)
+    edge cases
+      ✓ handles null data in info (1 ms)
+      ✓ handles null error in error (2 ms)
+      ✓ handles empty string message (1 ms)
+      ✓ handles complex objects (1 ms)
+      ✓ handles arrays as data (1 ms)
+      ✓ log handles no args (rest parameter) (1 ms)
+
+  console.log
+    [AUDIT] {"level":"warning","message":"Undo functionaliteit nog niet geïmplementeerd","timestamp":"2026-01-27T20:21:13.396Z"}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+PASS src/services/__tests__/migration.members.test.ts
+  Migration Member Mapping
+    ✓ moet oude leden correct transformeren naar Phoenix Member objecten (4 ms)
+    ✓ moet fallback IDs genereren bij ontbrekende id (1 ms)
+    ✓ moet namen splitsen voor UX maar types behouden voor onderzoek (2 ms)
+    ✓ moet bij onbekend type terugvallen op adult (1 ms)
+    ✓ moet voor n8n een anonieme payload genereren via collectAndDistributeData (7 ms)
+  Privacy Helpers - Deep Coverage
+    ✓ moet een error gooien als er PII in de research payload lekt (Security Check) (15 ms)
+    ✓ moet PII detecteren in waarden (E-mail check) (2 ms)
+    ✓ moet namen met tussenvoegsels correct parseren (1 ms)
+    ✓ moet toNumber correct afhandelen met Europese decimalen (1 ms)
+  TransactionService: Deep Migration Scenarios
+    ✓ moet setup data vinden in diep geneste oude structuren (SetupSource branches) (1 ms)
+    ✓ moet omgaan met een volledig lege state (Default branches) (2 ms)
+  TransactionService: Service Methods
+    ✓ moet een waarschuwing loggen bij undo (Regel 64) (48 ms)
+    ✓ moet alle transacties ophalen via de service (Regel 74) (7 ms)
+    ✓ moet een lege lijst geven als er geen state is (1 ms)
+    ✓ moet de clearAll aanroep doorgeven naar de shim (Regel 80) (2 ms)
+  GM-009: Migration Output Snapshot
+    ✓ moet een volledige migratie-payload consistent transformeren (4 ms)
+
+PASS src/utils/__tests__/date.test.ts
+  Date Utils — Integrale Testsuite
+    Core Parsing & TZ-robuustheid
+      ✓ moet DD-MM-YYYY correct omzetten naar ISO YYYY-MM-DD (7 ms)
+      ✓ moet DateHydrator edge-cases afdekken voor extra coverage (2 ms)
+      ✓ moet schrikkeljaren correct valideren (3 ms)
+      ✓ moet null retourneren bij onmogelijke kalenderdata (3 ms)
+    Leeftijdsberekening & Business Logic (Age Gates)
+      ✓ moet correcte ISO-grenzen genereren voor adult/child filters (2 ms)
+      ✓ moet calculateAge correct berekenen inclusief verjaardag-grenzen (4 ms)
+    Formattering (formatDate)
+      ✓ moet verschillende format types ondersteunen voor Date objecten (28 ms)
+      ✓ FORCEER DEKKING REGEL 101: formatDate met ongeldige ISO-like string (1 ms)
+      ✓ EXTRA DEKKING: formatDate met totaal corrupte string (1 ms)
+      ✓ moet ISO-strings (YYYY-MM-DD) TZ-veilig formatteren (2 ms)
+      ✓ moet gracefully falen bij corrupte input (2 ms)
+      ✓ moet vangnetten voor extreme randgevallen dekken (Regel 101 & 136) (2 ms)
+    Plausibiliteit & Utilities
+      ✓ moet isDigitsDatePlausible correct beoordelen (2 ms)
+      ✓ moet ISO weeknummers correct berekenen (2 ms)
+      ✓ moet huidige datum in ISO format retourneren (2 ms)
+
+PASS src/services/__tests__/privacyHelpers.test.ts
+  Privacy Helpers Branch Coverage
+    toNumber
+      ✓ moet verschillende inputs correct parsen (6 ms)
+      ✓ moet grensgevallen dekken (Regel 18 en 21) (1 ms)
+    parseName
+      ✓ moet namen splitsen of fallbacks geven (4 ms)
+    toMemberType
+      ✓ moet legacy types mappen naar MemberType (3 ms)
+    Security & PII
+      ✓ moet PII herkennen in strings (4 ms)
+      ✓ moet een researchId genereren (3 ms)
+      ✓ moet de toBase64 fallback gebruiken in Node (Regel 42) (4 ms)
+      ✓ moet een error gooien bij PII lekken (Sleutels & Waarden) (31 ms)
+    collectAndDistributeData
+      ✓ moet legacy data transformeren en distribueren (4 ms)
+      ✓ moet default waarden gebruiken als alles mist (3 ms)
+
+  console.log
+    [AUDIT] {"level":"info","message":"transaction_push","timestamp":"2026-01-27T20:21:16.891Z","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+  console.log
+    [AUDIT] {"level":"info","message":"transaction_push","timestamp":"2026-01-27T20:21:16.930Z","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+  console.log
+    [AUDIT] {"level":"info","message":"transaction_push","timestamp":"2026-01-27T20:21:16.942Z","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+  console.log
+    [AUDIT] {"level":"info","message":"transaction_push","timestamp":"2026-01-27T20:21:16.963Z","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+  console.log
+    [AUDIT] {"level":"info","message":"transaction_push","timestamp":"2026-01-27T20:21:16.984Z","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+  console.log
+    [AUDIT] {"level":"info","message":"transaction_push","timestamp":"2026-01-27T20:21:17.010Z","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+  console.log
+    [AUDIT] {"level":"info","message":"transaction_push","timestamp":"2026-01-27T20:21:17.034Z","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+  console.log
+    [AUDIT] {"level":"info","message":"transaction_push","timestamp":"2026-01-27T20:21:17.051Z","context":{"rawArgs":["INFO","transaction_push",{"type":"USER_UPDATE","pointer":1,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+  console.log
+    [AUDIT] {"level":"info","message":"transaction_push","timestamp":"2026-01-27T20:21:17.081Z","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+  console.log
+    [AUDIT] {"level":"info","message":"transaction_push","timestamp":"2026-01-27T20:21:17.109Z","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+  console.log
+    [AUDIT] {"level":"info","message":"transaction_push","timestamp":"2026-01-27T20:21:17.125Z","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+  console.log
+    [AUDIT] {"level":"info","message":"transaction_push","timestamp":"2026-01-27T20:21:17.149Z","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+PASS src/app/hooks/__tests__/useTransactionHistory.test.ts
+  useTransactionHistory
+    Initialization
+      ✓ moet initialiseren met lege transacties als geen data wordt meegegeven (52 ms)
+      ✓ moet initialiseren met de meegegeven transacties (9 ms)
+    Defensive Programming (ADR-06)
+      ✓ moet altijd een array retourneren, zelfs bij corrupte state (19 ms)
+      ✓ moet niet crashen bij null als initialData (22 ms)
+    clearAll Action
+      ✓ moet alle transacties verwijderen (25 ms)
+    Error Handling (ADR-05)
+      ✓ moet ZodError afvangen bij float input (23 ms)
+      ✓ moet error state clearen bij succesvolle update (44 ms)
+    Undo/Redo
+      ✓ moet undo aanroepen zonder te crashen (27 ms)
+      ✓ moet redo aanroepen zonder te crashen (14 ms)
+    Debug State
+      ✓ moet debug state exposen voor development (22 ms)
+    Immutability
+      ✓ moet de originele initialData niet muteren (20 ms)
+
+PASS src/services/__tests__/idempotency.test.ts
+  Trinity State Machine
+    Grade Calculation
+      ✓ moet S grade geven bij 90%+ gemiddelde (4 ms)
+      ✓ moet A grade geven bij 75-89% gemiddelde
+      ✓ moet B grade geven bij 60-74% gemiddelde (1 ms)
+      ✓ moet C grade geven onder 60% gemiddelde
+    Coverage Parsing
+      ✓ moet coverage correct inlezen uit summary.json (1 ms)
+      ✓ moet 0% coverage geven als bestand ontbreekt
+      ✓ moet errors catchen bij corrupt coverage bestand
+    Stability Calculation
+      ✓ moet risk penalty toepassen op basis van uncovered lines
+    Full Integration
+      ✓ moet complete Trinity flow doorlopen (1 ms)
+    Error Handling
+      ✓ moet gracefully falen bij ontbrekende coverage (1 ms)
+      ✓ moet errors loggen maar doorgaan (1 ms)
+    Edge Cases
+      ✓ moet 100% coverage correct afhandelen (1 ms)
+      ✓ moet 0% coverage correct afhandelen (1 ms)
+
+PASS src/utils/__tests__/frequency.test.ts
+  WAI-004-D: Frequency & Normalisatie Tests
+    ✓ getMonthlyFactor ratio’s (4 ms)
+    convertToMonthlyCents (integers)
+      ✓ Week → Maand: €100/wk → €433,33/pm
+      ✓ 4wk → Maand: €1000/4wk → €1083,33/pm
+      ✓ Quarter → Maand: €300/kw → €100/pm (1 ms)
+      ✓ Year → Month: €12.000/jr → €1.000/pm (1 ms)
+      ✓ Onbekend → factor 1 (1 ms)
+    Phoenix state integratie (data.finance)
+      ✓ Income items → monthlyexpenses (ct) (1 ms)
+      ✓ Aggregatie → som (1 ms)
+  WAI-004-E: Frequency Error Handling & Guards
+    ✓ moet crashen bij niet-eindige getallen (Guard check) (10 ms)
+    ✓ moet omgaan met 0 centen (1 ms)
+    ✓ moet omgaan met ontbrekende frequentie (undefined fallback) (1 ms)
+    ✓ moet negatieve bedragen ook correct omrekenen (indien toegestaan) (1 ms)
+  WAI-004-S: Frequency Snapshots
+    ✓ moet alle standaardfrequenties consistent omrekenen (7 ms)
+
+PASS src/utils/__tests__/numbers.test.ts
+  GM-001: Euro NumericParser Baseline
+    ✓ moet "1.250,50" parsen naar 125050 centen (3 ms)
+    ✓ moet "50,00" parsen naar 5000 centen
+    ✓ moet "1.000" parsen naar 100000 centen
+    ✓ moet "10.000,99" parsen naar 1000099 centen
+  GM-002: Sanitisatie Check
+    ✓ moet omgaan met spaties en vreemde tekens (1 ms)
+  GM-003: Edge cases & US/NL mix
+    ✓ US punt-decimaal zonder komma (1 ms)
+    ✓ US duizendtal + decimaal (gemixte invoer) (1 ms)
+    ✓ Meerdere punten zonder komma (hou alleen laatste als decimaal)
+    ✓ Alleen duizendtallen zonder decimaal
+    ✓ Ruwe input met letters/valutasymbolen (1 ms)
+  GM-004: De Laatste Loodjes naar 100%
+    ✓ moet 0 retourneren bij totaal corrupte tekst (isNaN check) (1 ms)
+    ✓ moet 0.XXX niet als duizendtal behandelen (left !== 0 check) (1 ms)
+    ✓ moet omgaan met ongeldige getallen in formatters (5 ms)
+    ✓ moet negatieve getallen correct omzetten naar centen met behoud van teken (1 ms)
+    ✓ Numbers direct (afronden naar centen)
+    ✓ Null/undefined geeft 0
+  GM-005: Volledige Functie Dekking (Regel 9 & 91)
+    ✓ moet formatDutchValue correct opschonen (Regel 9)
+    ✓ moet formatCurrency correct formatteren met symbool (Regel 91) (1 ms)
+    ✓ moet formatCurrency omgaan met 0 of undefined (1 ms)
+  GM-006: Snapshot Stabiliteit
+    ✓ moet een consistente output genereren voor diverse bedragen (3 ms)
+
+PASS src/services/__tests__/dataOrchestrator.test.tsx
+  DataOrchestrator Unit Tests
+    ✓ zou data moeten splitsen in een local en research laag (13 ms)
+    ✓ zou foutloos moeten omgaan met een lege CSV (3 ms)
+    ✓ zou de catch-block moeten dekken wanneer CSV mapping crasht (5 ms)
+    ✓ zou fallback waarden moeten gebruiken voor incomplete CSV items (3 ms)
+    ✓ zou hasMissingCosts op true moeten zetten als Wonen gedetecteerd wordt zonder housingIncluded (2 ms)
+
+PASS src/app/hooks/__tests__/useAppOrchestration.test.tsx
+  useAppOrchestration (Phoenix/Legacy)
+    ✓ moet status HYDRATING teruggeven als schemaVersion ontbreekt (21 ms)
+    ✓ moet data laden uit storage (Branch coverage lines 28-29) (13 ms)
+    ✓ moet status READY teruggeven en dispatch aanroepen bij een valide envelope (Lines 22-23) (12 ms)
+    ✓ moet status READY teruggeven bij voltooide interne setup (20 ms)
+    ✓ moet status INCOMPLETE teruggeven als data niet valide is (9 ms)
+    ✓ moet status ONBOARDING teruggeven als er geen members zijn (7 ms)
+
+PASS src/services/__tests__/csvService.test.tsx
+  Phoenix Financial Suite - Final Snapshot
+    Module: numbers.ts (Core Logic)
+      ✓ moet floating-point errors voorkomen via integer-berekening (3 ms)
+      ✓ moet de complexe punt-heuristiek correct toepassen (Regel 61-66) (2 ms)
+      ✓ moet robuust omgaan met nullables en corruptie (Regel 42/44) (1 ms)
+      ✓ moet formatting functies dekken (Regel 80-91) (2 ms)
+    Module: csvService.ts (Mapping Logic)
+      ✓ moet debet-tekens correct toewijzen op basis van mutatie-keys (1 ms)
+      ✓ moet fallbacks gebruiken voor inconsistente data (Regel 48/73) (2 ms)
+      ✓ moet gracefully failen bij lege of corrupte input (1 ms)
+    Module: csvHelper.ts (Parsing Logic)
+      ✓ moet diverse delimiters en BOM-characters herkennen (2 ms)
+
+FAIL src/domain/validation/__tests__/fieldValidator.test.ts
+  Validation Logic
+    validateField
+      ✕ should return null for empty values (responsibility moves to canGoNext) (2 ms)
+      ✕ should return error message when Zod validation fails (e.g. wrong type) (1 ms)
+      ✕ should return error if number is below min
+    validateDobNL
+      ✕ should return error for incomplete date (1 ms)
+      ✕ should return error for non-existent calendar dates (leap year check etc) (1 ms)
+      ✕ should return null for valid date (1 ms)
+    canGoNext
+      ✕ should return false if a required field (like members) is empty (1 ms)
+      ✕ should return true if all active fields are filled (1 ms)
+      ✕ should handle conditional fields (like partner name) correctly (1 ms)
+
+  ● Validation Logic › validateField › should return null for empty values (responsibility moves to canGoNext)
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+       7 |   describe('validateField', () => {
+       8 |     test('should return null for empty values (responsibility moves to canGoNext)', () => {
+    >  9 |       const result = validateField('data.setup.aantalMensen', '');
+         |                                   ^
+      10 |       expect(result).toBeNull();
+      11 |     });
+      12 |
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:9:35)
+
+  ● Validation Logic › validateField › should return error message when Zod validation fails (e.g. wrong type)
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      12 |
+      13 |     test('should return error message when Zod validation fails (e.g. wrong type)', () => {
+    > 14 |       const result = validateField('data.setup.aantalMensen', 'geen-getal');
+         |                                   ^
+      15 |       // Hier checken we de technische Zod error
+      16 |       expect(result).toBeDefined();
+      17 |     });
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:14:35)
+
+  ● Validation Logic › validateField › should return error if number is below min
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      18 |
+      19 |     test('should return error if number is below min', () => {
+    > 20 |       const resultKey = validateField('data.setup.aantalMensen', -1);
+         |                                      ^
+      21 |       
+      22 |       // De Validator geeft de technische code terug
+      23 |       expect(resultKey).toBe("setup.aantalMensen.min");
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:20:38)
+
+  ● Validation Logic › validateDobNL › should return error for incomplete date
+
+    TypeError: (0 , _fieldValidator.validateDobNL) is not a function
+
+      30 |   describe('validateDobNL', () => {
+      31 |     test('should return error for incomplete date', () => {
+    > 32 |       expect(validateDobNL('12-03')).toBe('Vul een volledige datum in (DD-MM-YYYY).');
+         |                           ^
+      33 |     });
+      34 |
+      35 |     test('should return error for non-existent calendar dates (leap year check etc)', () => {
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:32:27)
+
+  ● Validation Logic › validateDobNL › should return error for non-existent calendar dates (leap year check etc)
+
+    TypeError: (0 , _fieldValidator.validateDobNL) is not a function
+
+      34 |
+      35 |     test('should return error for non-existent calendar dates (leap year check etc)', () => {
+    > 36 |       const result = validateDobNL('30-02-2024'); 
+         |                                   ^
+      37 |       expect(result).toBeTruthy();
+      38 |       expect(result?.toLowerCase()).toMatch(/datum|bestaat/);
+      39 |     });
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:36:35)
+
+  ● Validation Logic › validateDobNL › should return null for valid date
+
+    TypeError: (0 , _fieldValidator.validateDobNL) is not a function
+
+      40 |
+      41 |     test('should return null for valid date', () => {
+    > 42 |       expect(validateDobNL('29-02-2024')).toBeNull(); 
+         |                           ^
+      43 |       expect(validateDobNL('15-03-1990')).toBeNull();
+      44 |     });
+      45 |   });
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:42:27)
+
+  ● Validation Logic › canGoNext › should return false if a required field (like members) is empty
+
+    TypeError: (0 , _stepValidator.canGoNext) is not a function
+
+      50 |       const formData = { data: { household: { members: [] } } };
+      51 |       
+    > 52 |       const result = canGoNext(activeFields, formData);
+         |                               ^
+      53 |       expect(result).toBe(false);
+      54 |     });
+      55 |
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:52:31)
+
+  ● Validation Logic › canGoNext › should return true if all active fields are filled
+
+    TypeError: (0 , _stepValidator.canGoNext) is not a function
+
+      60 |       };
+      61 |       
+    > 62 |       const result = canGoNext(activeFields, formData);
+         |                               ^
+      63 |       expect(result).toBe(true);
+      64 |     });
+      65 |
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:62:31)
+
+  ● Validation Logic › canGoNext › should handle conditional fields (like partner name) correctly
+
+    TypeError: (0 , _stepValidator.canGoNext) is not a function
+
+      73 |       };
+      74 |       
+    > 75 |       const result = canGoNext(activeFields, formData);
+         |                               ^
+      76 |       expect(result).toBe(false);
+      77 |     });
+      78 |   });
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:75:31)
+
+PASS src/app/context/__tests__/formReducer.test.ts
+  formReducer — Onderzoeks-integriteit
+    ✓ moet UPDATE_DATA verwerken met Deep Merge (ADR-12) (6 ms)
+    ✓ moet bij RESET_APP de state terugzetten naar default (3 ms)
+    ✓ moet SYNC_MEMBERS verwerken (Regel 33) (4 ms)
+    ✓ moet de huidige state retourneren bij een onbekend actietype (Default Branch) (1 ms)
+    ✓ moet SET_STEP verwerken en de meta-klok laten tikken (Regel 33) (3 ms)
+    ✓ moet UPDATE_FIELD verwerken voor legacy ondersteuning (3 ms)
+
+PASS src/app/orchestrators/__tests__/FormStateOrchestrator.fsm.test.ts
+  FSM Enforcement
+    ✓ moet state ongewijzigd laten bij leesoperatie (getValue) (4 ms)
+    ✓ moet state immutabel updaten via dispatch (aantalMensen) (2 ms)
+    ✓ moet FieldPathResolver gebruiken voor pad-resolutie (autoCount) (1 ms)
+    ✓ moet fail-closed bij onbekend fieldId (1 ms)
+
+PASS src/services/__tests__/migrationService.test.ts
+  migrationService - migrateToPhoenix
+    ✓ should return base state when input is null or undefined (18 ms)
+    ✓ should migrate legacy "leden" array and split names correctly (5 ms)
+    ✓ should use default ages when age is missing (4 ms)
+    ✓ should map setup data and finance items correctly (3 ms)
+    ✓ should fallback to base setup values when old data is missing numbers (4 ms)
+
+  console.log
+    DEBUG: handleStart aangeroepen!
+
+      at apply (src/ui/screens/Wizard/LandingScreen.tsx:19:13)
+
+  console.log
+    DEBUG: handleStart aangeroepen!
+
+      at apply (src/ui/screens/Wizard/LandingScreen.tsx:19:13)
+
+PASS src/__tests__/WAI009_FocusManagement.test.tsx (7.339 s)
+  WAI-009 - LandingScreen Integration
+    ✓ moet de LandingScreen renderen binnen de Phoenix-context (6357 ms)
+    ✓ moet de juiste SET_STEP actie verzenden bij klikken op "Aanmelden" (28 ms)
+    ✓ moet de juiste SET_STEP actie verzenden bij klikken op "Inloggen" (15 ms)
+    ✓ moet eventuele externe callbacks (onSignup) correct aanroepen (19 ms)
+
+PASS src/services/__tests__/csvService.integration.test.ts
+  CSV Integration via Factory
+    ✓ verwerkt ING data met de Af/Bij kolom correct (9 ms)
+    ✓ geeft een lege lijst bij een corrupt bestand (3 ms)
+    ✓ moet transacties met 0 euro uitfilteren, maar uitgaven zonder omschrijving behouden (3 ms)
+    ✓ moet PII strippen uit de omschrijvingen in de research payload (3 ms)
+    ✓ moet een lege lijst teruggeven als de csvService faalt (4 ms)
+
+FAIL src/utils/__tests__/validation.test.ts
+  validation.ts logic (Updated for New Schema)
+    validateField
+      ✕ should return null for valid members array (no length validation in schema) (3 ms)
+      ✕ should return null for empty values (canGoNext handles required fields) (1 ms)
+      ✕ should return error if number is below min (1) (1 ms)
+      ✕ should validate members array structure (1 ms)
+      ✕ should return null if field is not in schema (like postcode) (1 ms)
+    validateDobNL
+      ✕ should return error for incomplete date (1 ms)
+      ✕ should return null for valid date (1 ms)
+
+  ● validation.ts logic (Updated for New Schema) › validateField › should return null for valid members array (no length validation in schema)
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+       7 |     test('should return null for valid members array (no length validation in schema)', () => {
+       8 |       // De members array heeft geen min/max validatie in het schema
+    >  9 |       const result = validateField('data.household.members', [{ fieldId: 'm1', name: 'Jan' }]);
+         |                                   ^
+      10 |       expect(result).toBeNull();
+      11 |     });
+      12 |
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:9:35)
+
+  ● validation.ts logic (Updated for New Schema) › validateField › should return null for empty values (canGoNext handles required fields)
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      14 |       // validateField retourneert null voor lege waarden (regel 16-18 in fieldValidator.ts)
+      15 |       // De "required" check gebeurt in canGoNext, niet in validateField
+    > 16 |       const result = validateField('data.setup.aantalMensen', '');
+         |                                   ^
+      17 |       expect(result).toBeNull();
+      18 |     });
+      19 |
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:16:35)
+
+  ● validation.ts logic (Updated for New Schema) › validateField › should return error if number is below min (1)
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      20 |     test('should return error if number is below min (1)', () => {
+      21 |       // Je schema zegt: .min(1, "Minimaal 1 persoon vereist")
+    > 22 |       const resultKey = validateField('data.setup.aantalMensen', 0);
+         |                                      ^
+      23 |       
+      24 |       // De Validator geeft de technische code terug
+      25 |       expect(resultKey).toBe("setup.aantalMensen.min");
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:22:38)
+
+  ● validation.ts logic (Updated for New Schema) › validateField › should validate members array structure
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      35 |         { fieldId: 'm2', name: 'Piet' }
+      36 |       ];
+    > 37 |       const result = validateField('data.household.members', validMembers);
+         |                                   ^
+      38 |       expect(result).toBeNull();
+      39 |       
+      40 |       // Invalid member (missing fieldId) zou falen, maar validateField checkt dit niet
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:37:35)
+
+  ● validation.ts logic (Updated for New Schema) › validateField › should return null if field is not in schema (like postcode)
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      45 |       // Omdat 'postcode' niet in je nieuwe schema staat, zal extractFieldSchema null geven
+      46 |       // De validator negeert dit veld dan (geen error).
+    > 47 |       const result = validateField('data.setup.postcode', '123');
+         |                                   ^
+      48 |       expect(result).toBeNull();
+      49 |     });
+      50 |   });
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:47:35)
+
+  ● validation.ts logic (Updated for New Schema) › validateDobNL › should return error for incomplete date
+
+    TypeError: (0 , _fieldValidator.validateDobNL) is not a function
+
+      52 |   describe('validateDobNL', () => {
+      53 |     test('should return error for incomplete date', () => {
+    > 54 |       expect(validateDobNL('12-03')).toBe('Vul een volledige datum in (DD-MM-YYYY).');
+         |                           ^
+      55 |     });
+      56 |
+      57 |     test('should return null for valid date', () => {
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:54:27)
+
+  ● validation.ts logic (Updated for New Schema) › validateDobNL › should return null for valid date
+
+    TypeError: (0 , _fieldValidator.validateDobNL) is not a function
+
+      56 |
+      57 |     test('should return null for valid date', () => {
+    > 58 |       expect(validateDobNL('15-03-1990')).toBeNull();
+         |                           ^
+      59 |       expect(validateDobNL('29-02-2024')).toBeNull(); // Schrikkeljaar
+      60 |     });
+      61 |   });
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:58:27)
+
+PASS src/ui/screens/Wizard/pages/__tests__/wizardConfigs.test.ts
+  Wizard Config Contract Audit
+    ✓ moet garanderen dat alle conditionele velden in setupHouseholdConfig de juiste signalen afgeven (4 ms)
+    ✓ moet garanderen dat incomeDetailsConfig geen inline logica bevat maar signalen (3 ms)
+    ✓ moet de signalen voor de auto_repeater in fixedExpensesConfig valideren (2 ms)
+    ✓ moet basis validiteit van alle configs garanderen (Structural Integrity) (6 ms)
+
+FAIL src/__tests__/regression/ui-decoupling.integrity.test.ts (18.913 s)
+  UI Decoupling Integrity Guard (FPR-only)
+    ✓ UI-DECOUPLE-001: Geen DATA_KEYS imports in UI-laag (94 ms)
+    ✓ UI-DECOUPLE-002: Geen SUB_KEYS imports in UI-laag (110 ms)
+    ✓ UI-DECOUPLE-003: Geen directe state.data toegang in UI-laag (93 ms)
+    ✕ UI-DECOUPLE-006: Geen directe domain imports in UI-laag (97 ms)
+    ✓ UI-RW-017: Geen dispatch calls met section/field in UI-laag (90 ms)
+    ✕ BT-01B-boundary-bans: ESLint no-restricted-imports compliant (17904 ms)
+
+  ● UI Decoupling Integrity Guard (FPR-only) › UI-DECOUPLE-006: Geen directe domain imports in UI-laag
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: ""
+    Received: "/home/user/pre7/src/ui/screens/Wizard/WizardController.tsx:import { validateFieldInput } from '@domain/validation/fieldValidator';"
+
+      49 |     // Toegestaan: alleen types (maar geen runtime imports)
+      50 |     // Voor nu: volledig verboden → strict FPR-only
+    > 51 |     expect(result.trim()).toBe('');
+         |                           ^
+      52 |   });
+      53 |
+      54 |   test('UI-RW-017: Geen dispatch calls met section/field in UI-laag', () => {
+
+      at Object.<anonymous> (src/__tests__/regression/ui-decoupling.integrity.test.ts:51:27)
+
+  ● UI Decoupling Integrity Guard (FPR-only) › BT-01B-boundary-bans: ESLint no-restricted-imports compliant
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: ""
+    Received: "/home/user/pre7/src/ui/screens/Dashboard/DashboardScreen.tsx
+      19:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any·
+    /home/user/pre7/src/ui/screens/Wizard/WizardController.tsx
+      10:1  error  '@domain/validation/fieldValidator' import is restricted from being used by a pattern  no-restricted-imports·
+    ✖ 2 problems (2 errors, 0 warnings)"
+
+      69 |     
+      70 |     // Nu wordt 'result' gebruikt -> Eslint is blij.
+    > 71 |     expect(result.trim()).toBe('');
+         |                           ^
+      72 |   }, 30000); // <--- DEZE 30 SECONDEN IS CRUCIAAL
+      73 | });
+
+      at Object.<anonymous> (src/__tests__/regression/ui-decoupling.integrity.test.ts:71:27)
+
+FAIL src/ui/screens/Wizard/__tests__/WizardController.test.tsx
+  WizardController Branch & Function Coverage
+    ✓ moet de juiste config kiezen voor stap: WIZARD_SETUP (35 ms)
+    ✓ moet de juiste config kiezen voor stap: WIZARD_DETAILS (7 ms)
+    ✓ moet de juiste config kiezen voor stap: WIZARD_INCOME (5 ms)
+    ✓ moet de juiste config kiezen voor stap: WIZARD_EXPENSES (5 ms)
+    ✕ moet de dispatch doorgeven aan de WizardPage via stateWriter (5 ms)
+
+  ● WizardController Branch & Function Coverage › moet de dispatch doorgeven aan de WizardPage via stateWriter
+
+    TypeError: lastCallProps.stateWriter is not a function
+
+      66 |     // Test de stateWriter
+      67 |     if (lastCallProps && lastCallProps.stateWriter) {
+    > 68 |         lastCallProps.stateWriter({ type: 'NEXT_STEP' });
+         |                       ^
+      69 |         expect(mockDispatch).toHaveBeenCalledWith({ type: 'NEXT_STEP' });
+      70 |     } else {
+      71 |         throw new Error('WizardPage is niet aangeroepen of heeft geen stateWriter prop ontvangen');
+
+      at Object.<anonymous> (src/ui/screens/Wizard/__tests__/WizardController.test.tsx:68:23)
+
+  console.log
+    DEBUG: handleStart aangeroepen!
+
+      at apply (src/ui/screens/Wizard/LandingScreen.tsx:19:13)
+
+PASS src/__tests__/App.projector.test.tsx
+  App Projector Flow
+    ✓ Projector: switch LANDING → WIZARD rendert wizard UI (302 ms)
+    ✓ Projector: toont de eerste Wizard pagina na switch (97 ms)
+
+PASS src/services/__tests__/householdAlign.test.ts
+  householdAlign - alignMembers
+    ✓ should create a fresh list of members when current is undefined (5 ms)
+    ✓ should keep existing data and add new empty members if target is higher (2 ms)
+    ✓ should remove members when target length is lower (2 ms)
+    ✓ should handle edge cases like negative numbers or missing fieldIds (2 ms)
+    ✓ should correctly transition adults to children if counts change (2 ms)
+
+  console.log
+    [AUDIT] {"level":"info","message":"transaction_push","timestamp":"2026-01-27T20:21:59.515Z","context":{"rawArgs":["INFO","transaction_push",{"type":"INIT","pointer":0,"adr":"ADR-12"}]}}
+
+      at AuditLoggerAdapter.routeToConsole (src/adapters/audit/AuditLoggerAdapter.ts:49:13)
+
+PASS src/__tests__/ScreenSanity.test.tsx (7.298 s)
+  Screen Sanity Smoke Tests
+    ✓ CsvUploadScreen renders without crashing (455 ms)
+    ✓ UndoScreen renders without crashing (2643 ms)
+    ✓ DailyInputScreen renders without crashing (12 ms)
+    ✓ DashboardScreen renders without crashing (101 ms)
+    ✓ OptionsScreen renders without crashing (58 ms)
+    ✓ ResetScreen renders without crashing (30 ms)
+    ✓ SettingsScreen renders without crashing (554 ms)
+    ✓ CriticalErrorScreen renders without crashing (277 ms)
+    ✓ SplashScreen renders without crashing (246 ms)
+    ✓ WelcomeWizard renders without crashing (5 ms)
+
+PASS src/domain/validation/__tests__/fieldValidator.outcome.test.ts
+  Outcome Consistency
+    ✓ moet null retourneren bij valide invoer (13 ms)
+    ✓ moet foutstring retourneren bij type-schending (niet-numeriek voor numeriek veld) (31 ms)
+    ✓ moet foutstring retourneren bij verplichte velden als waarde null/undefined/empty (5 ms)
+    ✓ moet null retourneren bij niet-verplichte velden met null/undefined/andere types (2 ms)
+    ✓ moet foutstring retourneren bij range-schending (3 ms)
+    ✓ moet foutstring retourneren bij value onder min (2 ms)
+
+PASS src/domain/rules/__tests__/fieldVisibility.test.ts
+  Field Visibility Rules
+    aantalVolwassen
+      ✓ moet onzichtbaar zijn bij 0 mensen (5 ms)
+      ✓ moet zichtbaar zijn bij 1 of meer mensen (2 ms)
+    kinderenLabel
+      ✓ moet onzichtbaar zijn als mensen gelijk is aan volwassenen (3 ms)
+      ✓ moet zichtbaar zijn als er meer mensen zijn dan volwassenen (2 ms)
+      ✓ moet robuust omgaan met missende waarden (2 ms)
+    car_repeater
+      ✓ moet onzichtbaar zijn als autoCount "Nee" is (3 ms)
+      ✓ moet zichtbaar zijn bij elk ander antwoord (Ja / 1 / 2) (2 ms)
+    member_income_details
+      ✓ moet zichtbaar zijn als er een memberId is (1 ms)
+      ✓ moet onzichtbaar zijn zonder memberId (2 ms)
+
+PASS src/ui/screens/Daily/__tests__/UndoScreen.test.tsx
+  UndoScreen Integratie Tests
+    ✓ moet transacties tonen als de hook ze levert (286 ms)
+
+PASS src/app/orchestrators/__tests__/FormStateOrchestrator.test.ts
+  FormStateOrchestrator
+    ✓ moet state immutabel updaten via updateField (4 ms)
+    ✓ moet ValueProvider contract implementeren (1 ms)
+
+FAIL src/domain/rules/__tests__/FieldPathResolver.idempotency.test.ts
+  Idempotency
+    ✕ moet deterministisch zijn voor dezelfde fieldId/state combinatie (12 ms)
+    ✕ moet geen side effects hebben bij herhaalde aanroepen (2 ms)
+
+  ● Idempotency › moet deterministisch zijn voor dezelfde fieldId/state combinatie
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "data.idempotency.value"
+    Received: undefined
+
+      25 |     // Assert
+      26 |     // Verify results are identical strings
+    > 27 |     expect(result1).toBe(expectedPath);
+         |                     ^
+      28 |     expect(result2).toBe(expectedPath);
+      29 |     expect(result3).toBe(expectedPath);
+      30 |     
+
+      at Object.<anonymous> (src/domain/rules/__tests__/FieldPathResolver.idempotency.test.ts:27:21)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ● Idempotency › moet geen side effects hebben bij herhaalde aanroepen
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "side_effect_test_field"
+    Received: undefined
+
+      54 |     // Assert
+      55 |     // De output mag niet veranderen door de aanroepen (geen internal counter of mutation)
+    > 56 |     expect(initialCall).toBe(fallbackValue);
+         |                         ^
+      57 |     expect(finalCall).toBe(fallbackValue);
+      58 |     expect(initialCall).toBe(finalCall);
+      59 |   });
+
+      at Object.<anonymous> (src/domain/rules/__tests__/FieldPathResolver.idempotency.test.ts:56:25)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+PASS src/services/__tests__/storage.test.ts
+  storage.ts: migrateToPhoenix
+    ✓ moet een volledige migratie uitvoeren van oude data naar de Phoenix structuur (5 ms)
+    ✓ moet omgaan met lege of null input (Lijn 10-14 coverage) (2 ms)
+    ✓ moet verschillende financiële input-formaten herkennen (Lijn 12-15 coverage) (2 ms)
+    ✓ moet loadState aanroepen en null teruggeven (Lijn 65 coverage) (1 ms)
+
+PASS src/services/__tests__/storageShim.test.ts
+  CU-001-SHIM StorageShim
+    ✓ enforces schemaVersion and envelope on saveState (Audit gate) (114 ms)
+
+PASS src/ui/selectors/__tests__/householdSelectors.test.ts
+  WAI-003: Household Selectors
+    ✓ moet de geconsolideerde household stats ophalen (19 ms)
+
+  console.log
+    DEBUG: handleStart aangeroepen!
+
+      at apply (src/ui/screens/Wizard/LandingScreen.tsx:19:13)
+
+PASS src/__tests__/LandingScreen_Isolation.test.tsx
+  LandingScreen Isolation
+    ✓ renders correctly (178 ms)
+    ✓ buttons work and dispatch actions (23 ms)
+
+FAIL src/domain/rules/__tests__/FieldPathResolver.error.test.ts
+  Error Handling
+    ✕ moet update() weigeren buiten init-context (6 ms)
+    ✕ moet onbekende fieldId afhandelen zonder crash (2 ms)
+
+  ● Error Handling › moet update() weigeren buiten init-context
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "data.late"
+    Received: undefined
+
+      20 |     // FALLBACK IMPLEMENTATIE (totdat guard live is):
+      21 |     update(lateMapping);
+    > 22 |     expect(resolve('late_field')).toBe('data.late');
+         |                                   ^
+      23 |   });
+      24 |
+      25 |   // Scenario 2: moet onbekende fieldId afhandelen zonder crash
+
+      at Object.<anonymous> (src/domain/rules/__tests__/FieldPathResolver.error.test.ts:22:35)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ● Error Handling › moet onbekende fieldId afhandelen zonder crash
+
+    expect(received).toBeDefined()
+
+    Received: undefined
+
+      35 |     // Conform contract moet het de fieldId zelf teruggeven als fallback (Identity function)
+      36 |     // Het mag NIET undefined, null of een error zijn.
+    > 37 |     expect(result).toBeDefined();
+         |                    ^
+      38 |     expect(result).not.toBeNull();
+      39 |     expect(result).toBe(unknownId);
+      40 |     expect(typeof result).toBe('string');
+
+      at Object.<anonymous> (src/domain/rules/__tests__/FieldPathResolver.error.test.ts:37:20)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+PASS src/app/orchestrators/__tests__/ORCH-SW-001.test.ts
+  ORCH-SW-001: updateField(fieldId, value)
+    ✓ updates aantalMensen correctly (4 ms)
+    ✓ updates autoCount correctly (2 ms)
+    ✓ updates heeftHuisdieren correctly (1 ms)
+
+PASS src/ui/components/__tests__/InputCounter.test.tsx
+  InputCounter Integrity
+    ✓ zou de initiële waarde moeten tonen (194 ms)
+    ✓ plus knop verhoogt de waarde via de stateWriter (13 ms)
+    ✓ min knop verlaagt de waarde via de stateWriter (10 ms)
+
+PASS src/domain/__tests__/household.test.ts
+  Household Logic: Status Determination
+    ✓ moet "complete" teruggeven voor 2 adults (5 ms)
+    ✓ moet "complete" teruggeven voor > 5 adults (voorheen SPECIAL_LARGE) (1 ms)
+    ✓ moet "partial" teruggeven bij gemengde samenstelling (2 ms)
+    ✓ moet "empty" teruggeven bij lege lijst (1 ms)
+
+FAIL src/domain/rules/__tests__/FT-TARA-01.test.ts
+  FT-TARA-01: Real Logic Type Enforcement
+    ✕ moet een string "25" via Zod naar number converteren en succesvol evalueren (11 ms)
+    ✓ moet de evaluator beschermen tegen ongeldige data types (3 ms)
+
+  ● FT-TARA-01: Real Logic Type Enforcement › moet een string "25" via Zod naar number converteren en succesvol evalueren
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      25 |       });
+      26 |
+    > 27 |       expect(result).toBe(true);
+         |                      ^
+      28 |       expect(typeof parsed.data.age).toBe('number');
+      29 |     }
+      30 |   });
+
+      at Object.<anonymous> (src/domain/rules/__tests__/FT-TARA-01.test.ts:27:22)
+
+FAIL src/domain/rules/__tests__/BT-02-baseline.test.ts
+  BT-02 Baseline: Field Validation Integrity
+    ✕ Snapshot: Setup Wizard Validation (8 ms)
+
+  ● BT-02 Baseline: Field Validation Integrity › Snapshot: Setup Wizard Validation
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      26 |          * in plaats van het gehele object om path.split crashes te voorkomen.
+      27 |          */
+    > 28 |         const result = validateField(fieldConfig.fieldId, scenario.value, mockState.data);
+         |                                     ^
+      29 |
+      30 |         expect({
+      31 |           fieldId: fieldConfig.fieldId,
+
+      at forEach (src/domain/rules/__tests__/BT-02-baseline.test.ts:28:37)
+          at Array.forEach (<anonymous>)
+      at forEach (src/domain/rules/__tests__/BT-02-baseline.test.ts:24:17)
+          at Array.forEach (<anonymous>)
+      at Object.<anonymous> (src/domain/rules/__tests__/BT-02-baseline.test.ts:23:12)
+
+PASS src/services/__tests__/storage.migration.test.ts
+  Storage Migration: V0 to Phoenix
+    ✓ moet oude setup data migreren naar de nieuwe data.setup nesting (4 ms)
+    ✓ moet fallback waarden gebruiken bij corrupte oude data (1 ms)
+
+PASS src/app/orchestrators/__tests__/ORCH-VP-001.test.ts
+  ORCH-VP-001: getValue(fieldId)
+    ✓ returns correct value for aantalMensen (4 ms)
+    ✓ returns correct value for autoCount (2 ms)
+    ✓ returns undefined for unknown field (2 ms)
+
+  console.log
+    --- DEBUG START ---
+
+      at Object.<anonymous> (src/domain/rules/__tests__/financeRules.test.ts:6:13)
+
+  console.log
+    Mock Data aangemaakt. Items in income: 1
+
+      at Object.<anonymous> (src/domain/rules/__tests__/financeRules.test.ts:17:13)
+
+  console.log
+    Aanroepen van mapFinanceToUndoResults...
+
+      at Object.<anonymous> (src/domain/rules/__tests__/financeRules.test.ts:18:13)
+
+  console.log
+    Mapper resultaat lengte: 2
+
+      at Object.<anonymous> (src/domain/rules/__tests__/financeRules.test.ts:22:13)
+
+  console.log
+    Eerste item (income): {
+      "id": "inc-1",
+      "amount": 1000,
+      "currency": "EUR",
+      "reason": "income",
+      "timestamp": "2026-01-27T20:22:17.541Z",
+      "schemaVersion": "1.0.0"
+    }
+
+      at Object.<anonymous> (src/domain/rules/__tests__/financeRules.test.ts:23:13)
+
+  console.log
+    Tweede item (expense): {
+      "id": "exp-1",
+      "amount": -500,
+      "currency": "EUR",
+      "reason": "expense",
+      "timestamp": "2026-01-27T20:22:17.541Z",
+      "schemaVersion": "1.0.0"
+    }
+
+      at Object.<anonymous> (src/domain/rules/__tests__/financeRules.test.ts:24:13)
+
+  console.log
+    --- DEBUG EINDE (Test geslaagd) ---
+
+      at Object.<anonymous> (src/domain/rules/__tests__/financeRules.test.ts:31:13)
+
+PASS src/domain/rules/__tests__/financeRules.test.ts
+  financeRules debug
+    ✓ moet FinanceState correct mappen naar UndoResult array (68 ms)
+
+PASS src/services/__tests__/BT-04_migration_audit.test.ts
+  BT-04: Storage Migration Audit (Zod Enforcement)
+    ✓ moet bewijzen dat gemigreerde data 100% voldoet aan het FormStateSchema (9 ms)
+
+FAIL src/domain/rules/__tests__/visibilityRules.types.test.ts
+  Type Safety
+    ✕ moet numerieke waarden valideren met isNumeric guard (6 ms)
+
+  ● Type Safety › moet numerieke waarden valideren met isNumeric guard
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      24 |     // Act & Assert 1: String "18" > 10 zou true moeten zijn (coercion via isNumeric)
+      25 |     const resultString = evaluateVisibilityCondition(condition, provider);
+    > 26 |     expect(resultString).toBe(true);
+         |                          ^
+      27 |
+      28 |     // Act & Assert 2: Number 18 > 10 zou true moeten zijn
+      29 |     const resultNumber = evaluateVisibilityCondition({ ...condition, field: 'ageNumber' }, provider);
+
+      at Object.<anonymous> (src/domain/rules/__tests__/visibilityRules.types.test.ts:26:26)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+PASS src/utils/__tests__/strings.test.ts
+  cleanName
+    ✓ should return an empty string when input is null or undefined (4 ms)
+    ✓ should remove emojis and non-ASCII characters (1 ms)
+    ✓ should normalize whitespace and trim (2 ms)
+    ✓ should respect the max length parameter (1 ms)
+    ✓ should use the default max length of 25 (1 ms)
+
+PASS src/domain/validation/__tests__/stepValidator.outcome.test.ts
+  Structured Outcome - Step Validation
+    ✓ moet true retourneren bij volledig valide stap (4 ms)
+    ✓ moet { errors } retourneren bij enkele fout (2 ms)
+    ✓ moet { errors } retourneren bij meerdere fouten (3 ms)
+
+PASS src/domain/wizard/__tests__/BT-01R_stateless.test.ts
+  BT-01R: Wizard Configuration Statelessness
+    ✓ moet deterministisch de juiste config teruggeven zonder zij-effecten (7 ms)
+    ✓ moet de default config geven bij een onbekende state (fail-safe) (2 ms)
+
+PASS src/app/orchestrators/__tests__/ImportOrchestrator.test.ts
+  ImportOrchestrator
+    ✓ zou data correct moeten delegeren aan de domein-wasstraat (6 ms)
+
+PASS src/domain/rules/__tests__/visibilityRules.error.test.ts
+  Error Handling
+    ✓ moet false retourneren bij onbekend veld (6 ms)
+    ✓ moet false retourneren bij missend veld in state (3 ms)
+
+PASS src/domain/rules/__tests__/fieldConstraints.registry.test.ts
+  Field Validation (Groen versie)
+    ✓ Outcome Consistency (11 ms)
+
+PASS src/ui/selectors/__tests__/financialFlow.test.ts
+  FinancialFlow Selectors
+    ✓ haalt de juiste totalen op in EUR formaat (8 ms)
+    ✓ geeft nul-waarden bij lege state (5 ms)
+
+PASS src/adapters/valueProviders/__tests__/FormStateValueProvider.test.ts
+  FormStateValueProvider
+    ✓ moet domein-waarden correct ophalen via FieldPathResolver (12 ms)
+    ✓ moet onbekende velden fail-closed behandelen (4 ms)
+
+FAIL src/domain/validation/__tests__/CONSISTENCY_FPR_V2.test.ts
+  CONSISTENCY-TEST-FPR-V2
+    ✕ moet bevestigen dat de initialFormState 100% valide is (3 ms)
+
+  ● CONSISTENCY-TEST-FPR-V2 › moet bevestigen dat de initialFormState 100% valide is
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      13 |       path: tc.path,
+      14 |       value: tc.value,
+    > 15 |       error: validateField(tc.path, tc.value) // Verander 'errors' naar 'error'
+         |                           ^
+      16 |     }));
+      17 |
+      18 |     // Check of er GEEN foutmelding is (dus of error exact null is)
+
+      at map (src/domain/validation/__tests__/CONSISTENCY_FPR_V2.test.ts:15:27)
+          at Array.map (<anonymous>)
+      at Object.<anonymous> (src/domain/validation/__tests__/CONSISTENCY_FPR_V2.test.ts:12:31)
+
+PASS src/services/__tests__/migration.fixture.test.ts
+  Migration Fixture
+    ✓ migreert oude data naar de nieuwe Phoenix structuur (7 ms)
+
+PASS src/state/schemas/__tests__/schemas.test.ts
+  FormStateSchema
+    ✓ accepteert een correcte Phoenix v1.0 state (38 ms)
+    ✓ weigert versie 2.0 (omdat we v1.0 eisen) (5 ms)
+
+PASS src/domain/__tests__/evaluateDomainRules.test.ts
+  evaluateRules
+    ✓ should return a valid rule result object (23 ms)
+    ✓ should generate different IDs on subsequent calls (1 ms)
+
+PASS src/ui/components/__tests__/FieldRenderer.test.tsx
+  FieldRenderer
+    ✓ renders the value from the provider correctly (116 ms)
+    ✓ handles empty values gracefully (9 ms)
+
+PASS src/domain/services/__tests__/CSVProcessor.test.ts
+  ✓ BT-03-processor-invariants: Maakt bedragen schoon en veilig (11 ms)
+
+PASS src/domain/__tests__/BT-04I_precision.test.ts
+  BT-04I & BT-03: Financial Integrity Audit
+    ✓ moet floating-point errors (0.1 + 0.2) elimineren via centen-integers (7 ms)
+    ✓ moet NL formaten (1.250,50) exact omzetten naar centen (2 ms)
+    ✓ moet US formaten (1,250.50) exact omzetten naar centen (3 ms)
+    ✓ moet "rommelige" invoer opschonen naar een valide integer (5 ms)
+
+PASS src/domain/services/__tests__/CSV_Baseline.test.ts
+  CSV Baseline Snapshots
+    ✓ moet een valide rij correct omzetten naar centen (Baseline) (7 ms)
+    ✓ moet NaN-safe zijn bij corrupte invoer (2 ms)
+
+PASS src/__tests__/CoreSanity.test.tsx
+  ✓ Core Sanity Check (143 ms)
+
+PASS src/ui/styles/__tests__/useAppStyles.test.ts
+  Style System Integrity
+    ✓ should generate styles for light mode without crashing (27 ms)
+    ✓ should generate styles for dark mode (9 ms)
+
+PASS src/utils/__tests__/ping.test.ts
+  Phoenix Alias Sanity Check (met minimale state)
+    ✓ moet de ping functie werken met minimale Phoenix-state (6 ms)
+
+-----------------------------|---------|----------|---------|---------|-------------------------
+File                         | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s       
+-----------------------------|---------|----------|---------|---------|-------------------------
+All files                    |   69.28 |    61.81 |   69.02 |   70.27 |                         
+ src                         |       0 |      100 |       0 |       0 |                         
+  App.tsx                    |       0 |      100 |       0 |       0 | 9-10                    
+ src/adapters/audit          |   74.28 |       90 |   69.23 |      75 |                         
+  AuditLoggerAdapter.ts      |   74.28 |       90 |   69.23 |      75 | 23-24,29-30,57,66-75    
+ src/adapters/csv            |   91.66 |       80 |   85.71 |   91.66 |                         
+  CSVAdapter.ts              |   91.66 |       80 |   85.71 |   91.66 | 30                      
+  csvService.ts              |       0 |        0 |       0 |       0 |                         
+ src/adapters/storage        |     100 |       92 |     100 |     100 |                         
+  storage.ts                 |     100 |       92 |     100 |     100 | 14,20                   
+ src/adapters/transaction    |   73.07 |       50 |     100 |      72 |                         
+  stateful.ts                |   73.07 |       50 |     100 |      72 | 22,38-40,47-49          
+ src/adapters/undo           |       0 |      100 |       0 |       0 |                         
+  stateful.ts                |       0 |      100 |       0 |       0 | 5-6                     
+ src/adapters/valueProviders |     100 |      100 |     100 |     100 |                         
+  FormStateValueProvider.ts  |     100 |      100 |     100 |     100 |                         
+ src/app/context             |   62.26 |    57.14 |      70 |   63.46 |                         
+  FormContext.tsx            |      90 |       75 |     100 |     100 | 32                      
+  ThemeContext.tsx           |   69.56 |    66.66 |      80 |   69.56 | 24-27,34-38,48          
+  WizardContext.tsx          |       0 |        0 |       0 |       0 | 20-54                   
+  formReducer.ts             |     100 |      100 |     100 |     100 |                         
+ src/app/hooks               |   97.87 |    84.61 |     100 |   97.82 |                         
+  useAppOrchestration.ts     |     100 |    94.11 |     100 |     100 | 28                      
+  useTransactionHistory.ts   |   96.15 |    66.66 |     100 |      96 | 81                      
+ src/app/orchestrators       |   54.68 |    30.18 |      60 |   55.55 |                         
+  FormStateOrchestrator.ts   |   62.79 |    45.71 |   77.77 |   62.79 | 37-51,66,92-110,139-149 
+  ImportOrchestrator.ts      |     100 |      100 |     100 |     100 |                         
+  dateOrchestrator.ts        |   71.42 |      100 |      50 |   71.42 | 5-7                     
+  export.ts                  |       0 |        0 |       0 |       0 | 5-24                    
+  transactionOrchestrator.ts |       0 |      100 |       0 |       0 | 3                       
+  types.ts                   |       0 |        0 |       0 |       0 |                         
+ src/config                  |       0 |      100 |     100 |       0 |                         
+  WizStrings.ts              |       0 |      100 |     100 |       0 | 1                       
+  features.ts                |       0 |      100 |     100 |       0 | 8-21                    
+ src/containers              |       0 |        0 |       0 |       0 |                         
+  AdultsCounter.tsx          |       0 |        0 |       0 |       0 | 5-23                    
+ src/core/types              |     100 |      100 |     100 |     100 |                         
+  core.ts                    |       0 |        0 |       0 |       0 |                         
+  expenses.ts                |       0 |        0 |       0 |       0 |                         
+  extendedFormState.ts       |       0 |        0 |       0 |       0 |                         
+  fields.ts                  |       0 |        0 |       0 |       0 |                         
+  finance.ts                 |     100 |      100 |     100 |     100 |                         
+  form.ts                    |       0 |        0 |       0 |       0 |                         
+  income.ts                  |       0 |        0 |       0 |       0 |                         
+  shared.ts                  |       0 |        0 |       0 |       0 |                         
+  transaction.ts             |       0 |        0 |       0 |       0 |                         
+  wizard.ts                  |       0 |        0 |       0 |       0 |                         
+ src/domain                  |       0 |        0 |       0 |       0 |                         
+  core.ts                    |       0 |        0 |       0 |       0 |                         
+  household.ts               |       0 |        0 |       0 |       0 |                         
+  types.ts                   |       0 |        0 |       0 |       0 |                         
+ src/domain/constants        |   71.42 |      100 |     100 |   71.42 |                         
+  datakeys.ts                |     100 |      100 |     100 |     100 |                         
+  labels.ts                  |       0 |      100 |     100 |       0 | 4-22                    
+  registry.ts                |     100 |      100 |     100 |     100 |                         
+ src/domain/helpers          |   82.22 |     85.5 |   70.58 |   82.35 |                         
+  DateHydrator.ts            |   64.44 |    71.42 |   54.54 |   64.28 | 29-37,51-66             
+  TimeProvider.ts            |       0 |        0 |       0 |       0 |                         
+  frequency.ts               |     100 |      100 |     100 |     100 |                         
+  numbers.ts                 |     100 |    93.93 |     100 |     100 | 8,61                    
+ src/domain/interfaces       |       0 |        0 |       0 |       0 |                         
+  StateWriter.ts             |       0 |        0 |       0 |       0 |                         
+  ValueProvider.ts           |       0 |        0 |       0 |       0 |                         
+ src/domain/rules            |   62.42 |    56.58 |   68.75 |   65.24 |                         
+  FieldPathResolver.ts       |     100 |      100 |     100 |     100 |                         
+  ValueProvider.ts           |       0 |        0 |       0 |       0 |                         
+  ageBoundaryRules.ts        |     100 |      100 |     100 |     100 |                         
+  ageRules.ts                |       0 |        0 |       0 |       0 | 4-26                    
+  dataFilters.ts             |       0 |        0 |       0 |       0 | 3-9                     
+  derivedValues.ts           |       0 |        0 |       0 |       0 | 3-11                    
+  evaluateDomainRules.ts     |     100 |      100 |     100 |     100 |                         
+  fieldConstraints.ts        |   94.28 |    94.59 |     100 |   94.28 | 50,54                   
+  fieldVisibility.ts         |     100 |      100 |     100 |     100 |                         
+  financeRules.ts            |     100 |      100 |     100 |     100 |                         
+  householdRules.ts          |   60.86 |    56.25 |      60 |   68.75 | 21-22,38-40             
+  typeGuards.ts              |       0 |        0 |       0 |       0 | 6-14                    
+  visibilityRules.ts         |      20 |    17.85 |   33.33 |   21.73 | 11-23,32,36,45-51       
+ src/domain/services         |   92.85 |    95.45 |     100 |     100 |                         
+  CSVProcessor.ts            |   92.85 |    95.45 |     100 |     100 | 49                      
+ src/domain/validation       |   49.31 |    48.97 |      30 |   55.55 |                         
+  dateValidators.ts          |   48.88 |    53.33 |   33.33 |   58.33 | 4-9,25-27,35-37,71-73   
+  fieldValidator.ts          |     100 |       75 |     100 |     100 | 18                      
+  runtimeParser.ts           |       0 |      100 |       0 |       0 | 5-48                    
+  stepValidator.ts           |    90.9 |    83.33 |     100 |    90.9 | 19                      
+  validationLog.ts           |       0 |        0 |       0 |       0 | 10-30                   
+ src/infrastructure/clock    |   42.85 |      100 |   33.33 |   42.85 |                         
+  LocalNoonClock.ts          |   42.85 |      100 |   33.33 |   42.85 | 12-18                   
+  LocalNoonClockPort.ts      |       0 |        0 |       0 |       0 |                         
+ src/kernel/finance          |       0 |      100 |       0 |       0 |                         
+  mappers.ts                 |       0 |      100 |       0 |       0 | 2-4                     
+ src/navigation              |       0 |        0 |       0 |       0 |                         
+  Navigator.tsx              |       0 |        0 |       0 |       0 | 11-20                   
+ src/services                |   91.17 |     85.2 |    92.5 |   90.96 |                         
+  dataOrchestrator.ts        |     100 |       80 |     100 |     100 | 49-56,86-87             
+  dataProcessor.ts           |    82.6 |       75 |      80 |    82.6 | 28,36,47,58             
+  householdAlign.ts          |   96.42 |    64.28 |     100 |      95 | 56                      
+  migrationService.ts        |     100 |    92.68 |     100 |     100 | 36-37,46                
+  privacyHelpers.ts          |   97.95 |    95.45 |     100 |     100 | 18,21,72                
+  storageShim.ts             |   43.75 |       25 |   33.33 |   43.75 | 14-21,30,39-46          
+  transactionService.ts      |     100 |    97.36 |     100 |     100 | 27                      
+ src/state/schemas           |     100 |      100 |     100 |     100 |                         
+  FormStateSchema.ts         |     100 |      100 |     100 |     100 |                         
+ src/state/schemas/sections  |     100 |      100 |     100 |     100 |                         
+  finance.schema.ts          |     100 |      100 |     100 |     100 |                         
+  household.schema.ts        |     100 |      100 |     100 |     100 |                         
+  setup.schema.ts            |     100 |      100 |     100 |     100 |                         
+  validationMessages.ts      |     100 |      100 |     100 |     100 |                         
+ src/test-utils/assertions   |       0 |      100 |       0 |       0 |                         
+  migrationAssertions.ts     |       0 |      100 |       0 |       0 | 5-19                    
+ src/test-utils/factories    |      65 |    23.07 |      50 |   66.66 |                         
+  csvFactory.ts              |      60 |      100 |      50 |      60 | 9-19                    
+  memberFactory.ts           |   16.66 |        0 |      20 |      20 | 13-41                   
+  stateFactory.ts            |     100 |    85.71 |     100 |     100 | 45                      
+ src/test-utils/perf         |       0 |        0 |       0 |       0 |                         
+  measure.ts                 |       0 |        0 |       0 |       0 | 7-15                    
+ src/test-utils/render       |   45.45 |    27.77 |   44.44 |   47.36 |                         
+  providers.tsx              |      40 |        0 |   66.66 |   42.85 | 34-42                   
+  renderers.tsx              |      50 |       50 |   33.33 |      50 | 49-60,65-67             
+ src/test-utils/utils        |       0 |        0 |       0 |       0 |                         
+  name.ts                    |       0 |        0 |       0 |       0 | 6-7                     
+ src/types                   |       0 |        0 |       0 |       0 |                         
+  common.ts                  |       0 |        0 |       0 |       0 |                         
+  navigation.ts              |       0 |        0 |       0 |       0 |                         
+ src/ui/components           |     100 |      100 |     100 |     100 |                         
+  FieldRenderer.tsx          |     100 |      100 |     100 |     100 |                         
+  FinancialSummary.tsx       |     100 |      100 |     100 |     100 |                         
+ src/ui/components/fields    |   28.57 |    12.34 |   43.47 |   27.16 |                         
+  ChipButton.tsx             |       0 |        0 |       0 |       0 | 13-23                   
+  ConditionalField.tsx       |       0 |        0 |       0 |       0 | 11-16                   
+  DateField.tsx              |       0 |        0 |       0 |       0 | 31-107                  
+  FormField.tsx              |       0 |        0 |       0 |       0 | 13-28                   
+  InputCounter.tsx           |     100 |    71.42 |     100 |     100 | 23-26                   
+  MoneyField.tsx             |      50 |    33.33 |      50 |      50 | 26-27                   
+  MoneyInput.tsx             |     100 |      100 |     100 |     100 |                         
+  ToggleSwitch.tsx           |       0 |        0 |       0 |       0 | 13-23                   
+  types.ts                   |       0 |        0 |       0 |       0 |                         
+ src/ui/constants            |     100 |      100 |     100 |     100 |                         
+  uiSections.ts              |     100 |      100 |     100 |     100 |                         
+  uxTokens.ts                |     100 |      100 |     100 |     100 |                         
+ src/ui/helpers              |      78 |       70 |     100 |   82.22 |                         
+  dateFormatting.ts          |      78 |       70 |     100 |   82.22 | 23,64-67,69-71          
+ src/ui/navigation           |       0 |        0 |       0 |       0 |                         
+  MainNavigator.tsx          |       0 |        0 |       0 |       0 | 7-18                    
+ src/ui/screens/CSV          |   33.33 |    46.66 |      50 |   33.33 |                         
+  CsvUploadScreen.tsx        |   33.33 |    46.66 |      50 |   33.33 | 31-49                   
+ src/ui/screens/Daily        |   85.71 |    53.84 |   66.66 |   85.71 |                         
+  UndoScreen.tsx             |   85.71 |    53.84 |   66.66 |   85.71 | 80                      
+ src/ui/screens/DailyInput   |     100 |      100 |      50 |     100 |                         
+  DailyInputScreen.tsx       |     100 |      100 |      50 |     100 |                         
+ src/ui/screens/Dashboard    |     100 |      100 |     100 |     100 |                         
+  DashboardScreen.tsx        |     100 |      100 |     100 |     100 |                         
+ src/ui/screens/Options      |     100 |      100 |     100 |     100 |                         
+  OptionsScreen.tsx          |     100 |      100 |     100 |     100 |                         
+ src/ui/screens/Reset        |      75 |      100 |   33.33 |      75 |                         
+  ResetScreen.tsx            |      75 |      100 |   33.33 |      75 | 18,29                   
+ src/ui/screens/Settings     |   85.71 |    33.33 |      50 |   85.71 |                         
+  SettingsScreen.tsx         |   85.71 |    33.33 |      50 |   85.71 | 38                      
+ src/ui/screens/Wizard       |   70.76 |    54.28 |   63.15 |   70.76 |                         
+  CriticalErrorScreen.tsx    |     100 |      100 |     100 |     100 |                         
+  LandingScreen.tsx          |   92.85 |       75 |     100 |   92.85 | 29                      
+  SplashScreen.tsx           |     100 |      100 |     100 |     100 |                         
+  WelcomeWizard.tsx          |     100 |      100 |     100 |     100 |                         
+  WizardController.tsx       |   93.33 |       80 |     100 |   93.33 | 21                      
+  WizardPage.tsx             |   52.63 |    54.54 |      40 |   52.63 | 43-47,90-95             
+  adapters.ts                |       0 |        0 |       0 |       0 | 14-36                   
+ src/ui/selectors            |     100 |       50 |     100 |     100 |                         
+  financialSelectors.ts      |     100 |       50 |     100 |     100 | 8                       
+  householdSelectors.ts      |     100 |       50 |     100 |     100 | 4-10                    
+ src/ui/styles               |     100 |      100 |     100 |     100 |                         
+  Colors.ts                  |     100 |      100 |     100 |     100 |                         
+  Tokens.ts                  |     100 |      100 |     100 |     100 |                         
+  useAppStyles.ts            |     100 |      100 |     100 |     100 |                         
+ src/ui/styles/modules       |     100 |      100 |     100 |     100 |                         
+  Alerts.ts                  |     100 |      100 |     100 |     100 |                         
+  Buttons.ts                 |     100 |      100 |     100 |     100 |                         
+  Cards.ts                   |     100 |      100 |     100 |     100 |                         
+  Checkboxes.ts              |     100 |      100 |     100 |     100 |                         
+  Chips.ts                   |     100 |      100 |     100 |     100 |                         
+  Dashboard.ts               |     100 |      100 |     100 |     100 |                         
+  Forms.ts                   |     100 |      100 |     100 |     100 |                         
+  Header.ts                  |     100 |      100 |     100 |     100 |                         
+  Helpers.ts                 |     100 |      100 |     100 |     100 |                         
+  Layout.ts                  |     100 |      100 |     100 |     100 |                         
+  Summary.ts                 |     100 |      100 |     100 |     100 |                         
+  Toggles.ts                 |     100 |      100 |     100 |     100 |                         
+  Typography.ts              |     100 |      100 |     100 |     100 |                         
+  placeholderStyles.ts       |     100 |      100 |     100 |     100 |                         
+ src/utils                   |   92.68 |    83.33 |     100 |   97.14 |                         
+  csvHelper.ts               |      95 |       90 |     100 |     100 | 13                      
+  objects.ts                 |    87.5 |    76.47 |     100 |   93.33 | 31                      
+  ping.ts                    |     100 |      100 |     100 |     100 |                         
+  strings.ts                 |     100 |      100 |     100 |     100 |                         
+-----------------------------|---------|----------|---------|---------|-------------------------
+
+=============================== Coverage summary ===============================
+Statements   : 69.28% ( 848/1224 )
+Branches     : 61.81% ( 586/948 )
+Functions    : 69.02% ( 205/297 )
+Lines        : 70.27% ( 806/1147 )
+================================================================================
+Jest: "global" coverage threshold for statements (70%) not met: 69.28%
+Jest: "global" coverage threshold for branches (70%) not met: 61.81%
+Jest: "global" coverage threshold for functions (70%) not met: 69.02%
+Summary of all failing tests
+FAIL src/domain/validation/__tests__/fieldValidator.test.ts
+  ● Validation Logic › validateField › should return null for empty values (responsibility moves to canGoNext)
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+       7 |   describe('validateField', () => {
+       8 |     test('should return null for empty values (responsibility moves to canGoNext)', () => {
+    >  9 |       const result = validateField('data.setup.aantalMensen', '');
+         |                                   ^
+      10 |       expect(result).toBeNull();
+      11 |     });
+      12 |
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:9:35)
+
+  ● Validation Logic › validateField › should return error message when Zod validation fails (e.g. wrong type)
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      12 |
+      13 |     test('should return error message when Zod validation fails (e.g. wrong type)', () => {
+    > 14 |       const result = validateField('data.setup.aantalMensen', 'geen-getal');
+         |                                   ^
+      15 |       // Hier checken we de technische Zod error
+      16 |       expect(result).toBeDefined();
+      17 |     });
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:14:35)
+
+  ● Validation Logic › validateField › should return error if number is below min
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      18 |
+      19 |     test('should return error if number is below min', () => {
+    > 20 |       const resultKey = validateField('data.setup.aantalMensen', -1);
+         |                                      ^
+      21 |       
+      22 |       // De Validator geeft de technische code terug
+      23 |       expect(resultKey).toBe("setup.aantalMensen.min");
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:20:38)
+
+  ● Validation Logic › validateDobNL › should return error for incomplete date
+
+    TypeError: (0 , _fieldValidator.validateDobNL) is not a function
+
+      30 |   describe('validateDobNL', () => {
+      31 |     test('should return error for incomplete date', () => {
+    > 32 |       expect(validateDobNL('12-03')).toBe('Vul een volledige datum in (DD-MM-YYYY).');
+         |                           ^
+      33 |     });
+      34 |
+      35 |     test('should return error for non-existent calendar dates (leap year check etc)', () => {
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:32:27)
+
+  ● Validation Logic › validateDobNL › should return error for non-existent calendar dates (leap year check etc)
+
+    TypeError: (0 , _fieldValidator.validateDobNL) is not a function
+
+      34 |
+      35 |     test('should return error for non-existent calendar dates (leap year check etc)', () => {
+    > 36 |       const result = validateDobNL('30-02-2024'); 
+         |                                   ^
+      37 |       expect(result).toBeTruthy();
+      38 |       expect(result?.toLowerCase()).toMatch(/datum|bestaat/);
+      39 |     });
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:36:35)
+
+  ● Validation Logic › validateDobNL › should return null for valid date
+
+    TypeError: (0 , _fieldValidator.validateDobNL) is not a function
+
+      40 |
+      41 |     test('should return null for valid date', () => {
+    > 42 |       expect(validateDobNL('29-02-2024')).toBeNull(); 
+         |                           ^
+      43 |       expect(validateDobNL('15-03-1990')).toBeNull();
+      44 |     });
+      45 |   });
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:42:27)
+
+  ● Validation Logic › canGoNext › should return false if a required field (like members) is empty
+
+    TypeError: (0 , _stepValidator.canGoNext) is not a function
+
+      50 |       const formData = { data: { household: { members: [] } } };
+      51 |       
+    > 52 |       const result = canGoNext(activeFields, formData);
+         |                               ^
+      53 |       expect(result).toBe(false);
+      54 |     });
+      55 |
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:52:31)
+
+  ● Validation Logic › canGoNext › should return true if all active fields are filled
+
+    TypeError: (0 , _stepValidator.canGoNext) is not a function
+
+      60 |       };
+      61 |       
+    > 62 |       const result = canGoNext(activeFields, formData);
+         |                               ^
+      63 |       expect(result).toBe(true);
+      64 |     });
+      65 |
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:62:31)
+
+  ● Validation Logic › canGoNext › should handle conditional fields (like partner name) correctly
+
+    TypeError: (0 , _stepValidator.canGoNext) is not a function
+
+      73 |       };
+      74 |       
+    > 75 |       const result = canGoNext(activeFields, formData);
+         |                               ^
+      76 |       expect(result).toBe(false);
+      77 |     });
+      78 |   });
+
+      at Object.<anonymous> (src/domain/validation/__tests__/fieldValidator.test.ts:75:31)
+
+FAIL src/utils/__tests__/validation.test.ts
+  ● validation.ts logic (Updated for New Schema) › validateField › should return null for valid members array (no length validation in schema)
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+       7 |     test('should return null for valid members array (no length validation in schema)', () => {
+       8 |       // De members array heeft geen min/max validatie in het schema
+    >  9 |       const result = validateField('data.household.members', [{ fieldId: 'm1', name: 'Jan' }]);
+         |                                   ^
+      10 |       expect(result).toBeNull();
+      11 |     });
+      12 |
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:9:35)
+
+  ● validation.ts logic (Updated for New Schema) › validateField › should return null for empty values (canGoNext handles required fields)
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      14 |       // validateField retourneert null voor lege waarden (regel 16-18 in fieldValidator.ts)
+      15 |       // De "required" check gebeurt in canGoNext, niet in validateField
+    > 16 |       const result = validateField('data.setup.aantalMensen', '');
+         |                                   ^
+      17 |       expect(result).toBeNull();
+      18 |     });
+      19 |
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:16:35)
+
+  ● validation.ts logic (Updated for New Schema) › validateField › should return error if number is below min (1)
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      20 |     test('should return error if number is below min (1)', () => {
+      21 |       // Je schema zegt: .min(1, "Minimaal 1 persoon vereist")
+    > 22 |       const resultKey = validateField('data.setup.aantalMensen', 0);
+         |                                      ^
+      23 |       
+      24 |       // De Validator geeft de technische code terug
+      25 |       expect(resultKey).toBe("setup.aantalMensen.min");
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:22:38)
+
+  ● validation.ts logic (Updated for New Schema) › validateField › should validate members array structure
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      35 |         { fieldId: 'm2', name: 'Piet' }
+      36 |       ];
+    > 37 |       const result = validateField('data.household.members', validMembers);
+         |                                   ^
+      38 |       expect(result).toBeNull();
+      39 |       
+      40 |       // Invalid member (missing fieldId) zou falen, maar validateField checkt dit niet
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:37:35)
+
+  ● validation.ts logic (Updated for New Schema) › validateField › should return null if field is not in schema (like postcode)
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      45 |       // Omdat 'postcode' niet in je nieuwe schema staat, zal extractFieldSchema null geven
+      46 |       // De validator negeert dit veld dan (geen error).
+    > 47 |       const result = validateField('data.setup.postcode', '123');
+         |                                   ^
+      48 |       expect(result).toBeNull();
+      49 |     });
+      50 |   });
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:47:35)
+
+  ● validation.ts logic (Updated for New Schema) › validateDobNL › should return error for incomplete date
+
+    TypeError: (0 , _fieldValidator.validateDobNL) is not a function
+
+      52 |   describe('validateDobNL', () => {
+      53 |     test('should return error for incomplete date', () => {
+    > 54 |       expect(validateDobNL('12-03')).toBe('Vul een volledige datum in (DD-MM-YYYY).');
+         |                           ^
+      55 |     });
+      56 |
+      57 |     test('should return null for valid date', () => {
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:54:27)
+
+  ● validation.ts logic (Updated for New Schema) › validateDobNL › should return null for valid date
+
+    TypeError: (0 , _fieldValidator.validateDobNL) is not a function
+
+      56 |
+      57 |     test('should return null for valid date', () => {
+    > 58 |       expect(validateDobNL('15-03-1990')).toBeNull();
+         |                           ^
+      59 |       expect(validateDobNL('29-02-2024')).toBeNull(); // Schrikkeljaar
+      60 |     });
+      61 |   });
+
+      at Object.<anonymous> (src/utils/__tests__/validation.test.ts:58:27)
+
+FAIL src/__tests__/regression/ui-decoupling.integrity.test.ts (18.913 s)
+  ● UI Decoupling Integrity Guard (FPR-only) › UI-DECOUPLE-006: Geen directe domain imports in UI-laag
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: ""
+    Received: "/home/user/pre7/src/ui/screens/Wizard/WizardController.tsx:import { validateFieldInput } from '@domain/validation/fieldValidator';"
+
+      49 |     // Toegestaan: alleen types (maar geen runtime imports)
+      50 |     // Voor nu: volledig verboden → strict FPR-only
+    > 51 |     expect(result.trim()).toBe('');
+         |                           ^
+      52 |   });
+      53 |
+      54 |   test('UI-RW-017: Geen dispatch calls met section/field in UI-laag', () => {
+
+      at Object.<anonymous> (src/__tests__/regression/ui-decoupling.integrity.test.ts:51:27)
+
+  ● UI Decoupling Integrity Guard (FPR-only) › BT-01B-boundary-bans: ESLint no-restricted-imports compliant
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: ""
+    Received: "/home/user/pre7/src/ui/screens/Dashboard/DashboardScreen.tsx
+      19:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any·
+    /home/user/pre7/src/ui/screens/Wizard/WizardController.tsx
+      10:1  error  '@domain/validation/fieldValidator' import is restricted from being used by a pattern  no-restricted-imports·
+    ✖ 2 problems (2 errors, 0 warnings)"
+
+      69 |     
+      70 |     // Nu wordt 'result' gebruikt -> Eslint is blij.
+    > 71 |     expect(result.trim()).toBe('');
+         |                           ^
+      72 |   }, 30000); // <--- DEZE 30 SECONDEN IS CRUCIAAL
+      73 | });
+
+      at Object.<anonymous> (src/__tests__/regression/ui-decoupling.integrity.test.ts:71:27)
+
+FAIL src/ui/screens/Wizard/__tests__/WizardController.test.tsx
+  ● WizardController Branch & Function Coverage › moet de dispatch doorgeven aan de WizardPage via stateWriter
+
+    TypeError: lastCallProps.stateWriter is not a function
+
+      66 |     // Test de stateWriter
+      67 |     if (lastCallProps && lastCallProps.stateWriter) {
+    > 68 |         lastCallProps.stateWriter({ type: 'NEXT_STEP' });
+         |                       ^
+      69 |         expect(mockDispatch).toHaveBeenCalledWith({ type: 'NEXT_STEP' });
+      70 |     } else {
+      71 |         throw new Error('WizardPage is niet aangeroepen of heeft geen stateWriter prop ontvangen');
+
+      at Object.<anonymous> (src/ui/screens/Wizard/__tests__/WizardController.test.tsx:68:23)
+
+FAIL src/domain/rules/__tests__/FieldPathResolver.idempotency.test.ts
+  ● Idempotency › moet deterministisch zijn voor dezelfde fieldId/state combinatie
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "data.idempotency.value"
+    Received: undefined
+
+      25 |     // Assert
+      26 |     // Verify results are identical strings
+    > 27 |     expect(result1).toBe(expectedPath);
+         |                     ^
+      28 |     expect(result2).toBe(expectedPath);
+      29 |     expect(result3).toBe(expectedPath);
+      30 |     
+
+      at Object.<anonymous> (src/domain/rules/__tests__/FieldPathResolver.idempotency.test.ts:27:21)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ● Idempotency › moet geen side effects hebben bij herhaalde aanroepen
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "side_effect_test_field"
+    Received: undefined
+
+      54 |     // Assert
+      55 |     // De output mag niet veranderen door de aanroepen (geen internal counter of mutation)
+    > 56 |     expect(initialCall).toBe(fallbackValue);
+         |                         ^
+      57 |     expect(finalCall).toBe(fallbackValue);
+      58 |     expect(initialCall).toBe(finalCall);
+      59 |   });
+
+      at Object.<anonymous> (src/domain/rules/__tests__/FieldPathResolver.idempotency.test.ts:56:25)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+FAIL src/domain/rules/__tests__/FieldPathResolver.error.test.ts
+  ● Error Handling › moet update() weigeren buiten init-context
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: "data.late"
+    Received: undefined
+
+      20 |     // FALLBACK IMPLEMENTATIE (totdat guard live is):
+      21 |     update(lateMapping);
+    > 22 |     expect(resolve('late_field')).toBe('data.late');
+         |                                   ^
+      23 |   });
+      24 |
+      25 |   // Scenario 2: moet onbekende fieldId afhandelen zonder crash
+
+      at Object.<anonymous> (src/domain/rules/__tests__/FieldPathResolver.error.test.ts:22:35)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+  ● Error Handling › moet onbekende fieldId afhandelen zonder crash
+
+    expect(received).toBeDefined()
+
+    Received: undefined
+
+      35 |     // Conform contract moet het de fieldId zelf teruggeven als fallback (Identity function)
+      36 |     // Het mag NIET undefined, null of een error zijn.
+    > 37 |     expect(result).toBeDefined();
+         |                    ^
+      38 |     expect(result).not.toBeNull();
+      39 |     expect(result).toBe(unknownId);
+      40 |     expect(typeof result).toBe('string');
+
+      at Object.<anonymous> (src/domain/rules/__tests__/FieldPathResolver.error.test.ts:37:20)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+FAIL src/domain/rules/__tests__/FT-TARA-01.test.ts
+  ● FT-TARA-01: Real Logic Type Enforcement › moet een string "25" via Zod naar number converteren en succesvol evalueren
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      25 |       });
+      26 |
+    > 27 |       expect(result).toBe(true);
+         |                      ^
+      28 |       expect(typeof parsed.data.age).toBe('number');
+      29 |     }
+      30 |   });
+
+      at Object.<anonymous> (src/domain/rules/__tests__/FT-TARA-01.test.ts:27:22)
+
+FAIL src/domain/rules/__tests__/BT-02-baseline.test.ts
+  ● BT-02 Baseline: Field Validation Integrity › Snapshot: Setup Wizard Validation
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      26 |          * in plaats van het gehele object om path.split crashes te voorkomen.
+      27 |          */
+    > 28 |         const result = validateField(fieldConfig.fieldId, scenario.value, mockState.data);
+         |                                     ^
+      29 |
+      30 |         expect({
+      31 |           fieldId: fieldConfig.fieldId,
+
+      at forEach (src/domain/rules/__tests__/BT-02-baseline.test.ts:28:37)
+          at Array.forEach (<anonymous>)
+      at forEach (src/domain/rules/__tests__/BT-02-baseline.test.ts:24:17)
+          at Array.forEach (<anonymous>)
+      at Object.<anonymous> (src/domain/rules/__tests__/BT-02-baseline.test.ts:23:12)
+
+FAIL src/domain/rules/__tests__/visibilityRules.types.test.ts
+  ● Type Safety › moet numerieke waarden valideren met isNumeric guard
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: true
+    Received: false
+
+      24 |     // Act & Assert 1: String "18" > 10 zou true moeten zijn (coercion via isNumeric)
+      25 |     const resultString = evaluateVisibilityCondition(condition, provider);
+    > 26 |     expect(resultString).toBe(true);
+         |                          ^
+      27 |
+      28 |     // Act & Assert 2: Number 18 > 10 zou true moeten zijn
+      29 |     const resultNumber = evaluateVisibilityCondition({ ...condition, field: 'ageNumber' }, provider);
+
+      at Object.<anonymous> (src/domain/rules/__tests__/visibilityRules.types.test.ts:26:26)
+      at asyncGeneratorStep (node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+      at _next (node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+      at node_modules/@babel/runtime/helpers/asyncToGenerator.js:22:7
+      at Object.<anonymous> (node_modules/@babel/runtime/helpers/asyncToGenerator.js:14:12)
+
+FAIL src/domain/validation/__tests__/CONSISTENCY_FPR_V2.test.ts
+  ● CONSISTENCY-TEST-FPR-V2 › moet bevestigen dat de initialFormState 100% valide is
+
+    TypeError: (0 , _fieldValidator.validateField) is not a function
+
+      13 |       path: tc.path,
+      14 |       value: tc.value,
+    > 15 |       error: validateField(tc.path, tc.value) // Verander 'errors' naar 'error'
+         |                           ^
+      16 |     }));
+      17 |
+      18 |     // Check of er GEEN foutmelding is (dus of error exact null is)
+
+      at map (src/domain/validation/__tests__/CONSISTENCY_FPR_V2.test.ts:15:27)
+          at Array.map (<anonymous>)
+      at Object.<anonymous> (src/domain/validation/__tests__/CONSISTENCY_FPR_V2.test.ts:12:31)
+
+
+Test Suites: 10 failed, 54 passed, 64 total
+Tests:       27 failed, 299 passed, 326 total
+Snapshots:   5 passed, 5 total
+Time:        104.491 s
+Ran all test suites.
