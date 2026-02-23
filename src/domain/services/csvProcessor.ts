@@ -7,15 +7,15 @@
  */
 import { toCents } from '../helpers/numbers';
 
-export interface CSVKeys {
+export interface csvKeys {
   date: string;
   amount: string;
   description: string;
   mutation?: string;
 }
 
-export class CSVProcessor {
-  public processRow(row: Record<string, string>, keys: CSVKeys) {
+export class csvProcessor {
+  public processRow(row: Record<string, string>, keys: csvKeys) {
     const rawAmount = row[keys.amount] ?? '0';
     
     // 1. Richting bepalen (Extractie verlaagt complexity)
@@ -39,7 +39,7 @@ export class CSVProcessor {
   /**
    * Helper om de linter blij te maken met strikte checks en lagere complexiteit.
    */
-  private determineIfDebit(row: Record<string, string>, keys: CSVKeys): boolean {
+  private determineIfDebit(row: Record<string, string>, keys: csvKeys): boolean {
     if (keys.mutation === undefined || keys.mutation === '') {
       return false;
     }

@@ -1,105 +1,152 @@
-// src/app/orchestrators/ImportOrchestrator.ts
+
 /**
- * @file_intent Coördineert de verwerking van externe CSV-data naar interne modellen.
+ * @file_intent Converteert een CSV-string naar lokaal bruikbare transactie-objecten.
  * @repo_architecture Mobile Industry (MI) - Data Ingestion Layer.
- * @term_definition ResearchProcessor = De interface voor de zware domein-logica (vaak anonieme opslag).
- * @contract Stateless regisseur. Transformeert ruwe input naar een ImportResult. Delegeert PII-filtering en categorisatie aan de StatementIntakePipeline.
- * @ai_instruction Zorg dat de scheiding tussen 'local' (UI) en 'research' data strikt gehandhaafd blijft.
+ * @term_definition PII (Personally Identifiable Information) = Persoonlijke data die uit beschrijvingen wordt gefilterd.
+ * @contract Stateless Transformer. Deze klasse is enkel verantwoordelijk voor het parsen, opschonen en verrijken van CSV-data voor lokaal gebruik. Het heeft geen kennis van andere orchestrators of externe processen zoals 'research'.
+ * @ai_instruction De logica hier is een directe verplaatsing van de logica uit de originele ResearchOrchestrator.
  */
 
-import type { Member } from '@core/types/core';
-import type { ImportResult, ResearchProcessor } from './interfaces/IDataOrchestrator';
 import type { FinancialIncomeSummary, CsvItem } from '@core/types/research';
-import { dataProcessor } from '@domain/finance/StatementIntakePipeline.WIP';
+import { dataProcessor, type ResearchSetupData } from '@domain/finance/StatementIntakePipeline.WIP';
+import { csvAdapter } from '@adapters/csv/csvAdapter'; // Gebruikt de bestaande adapter
+import { Logger } from '@adapters/audit/AuditLoggerAdapter'; // Gebruikt de bestaande logger
+
+// Een specifiek, lokaal resultaat-type.
+export interface LocalImportResult {
+  status: 'success' | 'empty' | 'error';
+  transactions: CsvItem[];
+  count: number;
+  summary: FinancialIncomeSummary;
+  hasMissingCosts: boolean;
+  errorMessage?: string;
+}
 
 const EMPTY_SUMMARY: FinancialIncomeSummary = {
   source: 'none',
   finalIncome: 0,
-  isDiscrepancy: false
+  isDiscrepancy: false,
 };
 
 /**
- * IMPORT ORCHESTRATOR
- * Regisseert de stroom van CSV naar twee bestemmingen:
- * 1. UI (via lokale verwerking voor direct resultaat)
- * 2. ONDERZOEK (via de ResearchProcessor voor geanonimiseerde opslag)
+ * IMPORT ORCHESTRATOR (Refactored & Corrected)
+ * VERANTWOORDELIJKHEID: Pure CSV Parser & Transformer.
+ * Converteert CSV naar een `LocalImportResult` door bestaande logica te hergebruiken.
  */
 export class ImportOrchestrator {
   constructor() {}
 
-  public processCsvImport(
-    research: ResearchProcessor,
-    params: { csvText: string; members: Member[]; setupData: Record<string, unknown> | null }
-  ): ImportResult {
+  public processCsvImport(params: {
+    csvText: string;
+    setupData: Record<string, unknown> | null;
+  }): LocalImportResult {
     try {
-      const { local, research: resData } = research.processAllData(
-        params.members,
-        params.csvText,
-        params.setupData
-      );
+      // Stap 1: Parse de CSV met de bestaande adapter.
+      // Deze logica is direct overgenomen uit ResearchOrchestrator.processCsvTransactions
+      const parsedTransactions = this.parseAndEnrichCsv(params.csvText);
 
-      const enriched = this.enrichTransactions(local.finance.transactions ?? []);
-      const summary = this.calculateSummary(enriched, params.setupData);
-
-      if (enriched.length === 0) {
-        return this.buildEmptyResult(summary, resData);
+      if (parsedTransactions.length === 0) {
+        return {
+          status: 'empty',
+          transactions: [],
+          count: 0,
+          summary: this.calculateSummary([], params.setupData), // Lege summary voor de zekerheid
+          hasMissingCosts: false,
+        };
       }
+      
+      // Stap 2: Bereken de summary en hasMissingCosts, zoals ook in de originele flow gebeurde.
+      const summary = this.calculateSummary(parsedTransactions, params.setupData);
+      const hasMissingCosts = this.detectMissingHousingCosts(parsedTransactions, params.setupData);
 
+      // Stap 3: Retourneer het lokale resultaat.
       return {
         status: 'success',
-        transactions: enriched,
-        count: enriched.length,
+        transactions: parsedTransactions,
+        count: parsedTransactions.length,
         summary,
-        researchData: resData,
-        hasMissingCosts: local.finance.hasMissingCosts ?? false
+        hasMissingCosts,
       };
     } catch (e) {
       return this.mapError(e);
     }
   }
 
-  private enrichTransactions(transactions: CsvItem[]): CsvItem[] {
-    return transactions.map(tx => ({
-      ...tx,
-      category: dataProcessor.categorize(tx.description),
-      description: dataProcessor.stripPII(tx.description)
-    }));
+  // Deze methode is de verplaatste logica uit ResearchOrchestrator.processCsvTransactions
+  private parseAndEnrichCsv(rawCsv: string): CsvItem[] {
+    if (rawCsv.length === 0 || rawCsv.trim() === '') {
+      return [];
+    }
+
+    try {
+      const rawMapped = csvAdapter.mapToInternalModel(rawCsv);
+      const mapped = (rawMapped ?? []) as CsvItem[];
+
+      return mapped.map((item) => {
+        const rawDate = item.date ?? '';
+        const date = rawDate.length > 0 ? rawDate : new Date().toISOString();
+        
+        const rawDesc = item.description ?? '';
+        const description = dataProcessor.stripPII(
+          rawDesc.length > 0 ? rawDesc : 'Geen omschrijving'
+        );
+        
+        return {
+          ...item,
+          date,
+          description,
+          category: dataProcessor.categorize(description),
+        };
+      }).filter((tx) => tx.amount !== 0);
+    } catch (e) {
+      Logger.error('csv Mapping failed in ImportOrchestrator', e);
+      // Gooi de error door zodat de 'try/catch' in processCsvImport hem kan afvangen.
+      throw e;
+    }
   }
 
-  private calculateSummary(transactions: CsvItem[], setup: Record<string, unknown> | null): FinancialIncomeSummary {
-    const result = dataProcessor.reconcileWithSetup(transactions, setup !== null ? setup : {});
-    
+  private calculateSummary(
+    transactions: CsvItem[],
+    setup: Record<string, unknown> | null,
+  ): FinancialIncomeSummary {
+    const result = dataProcessor.reconcileWithSetup(
+      transactions,
+      setup !== null ? setup : {},
+    );
+
     return {
       finalIncome: result.finalIncome,
-      source: String(result.source) as 'CSV' | 'Setup' | 'none', // Expliciet type i.p.v. any
-      isDiscrepancy: result.isDiscrepancy
+      source: String(result.source) as 'csv' | 'Setup' | 'none',
+      isDiscrepancy: result.isDiscrepancy,
     };
   }
-
-  private buildEmptyResult(
-    summary: FinancialIncomeSummary, 
-    researchData: Record<string, unknown>
-  ): ImportResult {
-    return {
-      status: 'empty',
-      transactions: [],
-      count: 0,
-      summary,
-      researchData,
-      hasMissingCosts: false
-    };
+  
+  // Deze methode is overgenomen uit de originele ResearchOrchestrator
+  private detectMissingHousingCosts(
+    transactions: CsvItem[],
+    setup: Record<string, unknown> | null,
+  ): boolean {
+    // Aanname dat de setup een boolean 'housingIncluded' kan bevatten.
+    // Dit is consistent met de logica in ResearchOrchestrator.
+    const housingIncluded = (setup as ResearchSetupData)?.housingIncluded; 
+    return transactions.some(
+      (t) => t.category === 'Wonen' && housingIncluded !== true,
+    );
   }
 
-  private mapError(e: unknown): ImportResult {
-    console.error('[ImportOrchestrator] Critical Failure in CSV-Research Pipeline:', e);
+  private mapError(e: unknown): LocalImportResult {
+    // Gebruikt de bestaande logger, geen console.error
+    Logger.error(
+      '[ImportOrchestrator] Critical Failure in csv-parsing pipeline:',
+      e,
+    );
     return {
       status: 'error',
       transactions: [],
       count: 0,
-      errorMessage: e instanceof Error ? e.message : 'Fout in Onderzoeks-verwerking',
+      errorMessage: e instanceof Error ? e.message : 'Fout bij verwerken van CSV',
       summary: EMPTY_SUMMARY,
-      researchData: {},
-      hasMissingCosts: false
+      hasMissingCosts: false,
     };
   }
 }

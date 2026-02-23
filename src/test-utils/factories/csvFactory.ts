@@ -1,5 +1,5 @@
 /**
- * Factory voor het genereren van verschillende bank CSV formaten.
+ * Factory voor het genereren van verschillende bank csv formaten.
  * Gebaseerd op de officiële export-structuren van ABN, Rabo en ING.
  */
 export const csvFactory = {

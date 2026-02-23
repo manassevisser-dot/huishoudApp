@@ -1,6 +1,6 @@
 import { toCents, formatCurrency, formatCentsToDutch, formatDutchValue } from '@domain/helpers/numbers';
 import { parseRawCsv } from '@utils/csvHelper';
-import { scvAdapter } from '@adapters/csv/scvAdapter';
+import { csvAdapter } from '@adapters/csv/csvAdapter';
 
 describe('Phoenix Financial Suite - Final Snapshot', () => {
   describe('Module: numbers.ts (Core Logic)', () => {
@@ -31,10 +31,10 @@ describe('Phoenix Financial Suite - Final Snapshot', () => {
     });
   });
 
-  describe('Module: scvAdapter.ts (Mapping Logic)', () => {
+  describe('Module: csvAdapter.ts (Mapping Logic)', () => {
     it('moet debet-tekens correct toewijzen op basis van mutatie-keys', () => {
       const csv = 'transactie,Af Bij\n100,af\n200,d\n300,-';
-      const result = scvAdapter.mapToInternalModel(csv);
+      const result = csvAdapter.mapToInternalModel(csv);
 
       expect(result[0].amount).toBe(-10000);
       expect(result[1].amount).toBe(-20000);
@@ -43,7 +43,7 @@ describe('Phoenix Financial Suite - Final Snapshot', () => {
 
     it('moet fallbacks gebruiken voor inconsistente data', () => {
       const csv = 'OnbekendeKolom\nSommigeWaarde';
-      const result = scvAdapter.mapToInternalModel(csv);
+      const result = csvAdapter.mapToInternalModel(csv);
 
       expect(result[0]).toEqual({
         amount: 0,
@@ -54,17 +54,17 @@ describe('Phoenix Financial Suite - Final Snapshot', () => {
     });
 
     it('moet gracefully failen bij lege of corrupte input', () => {
-      expect(scvAdapter.mapToInternalModel('')).toEqual([]);
+      expect(csvAdapter.mapToInternalModel('')).toEqual([]);
       const corruptCsv = 'Datum;Bedrag\n20240101;FOUT';
-      expect(scvAdapter.mapToInternalModel(corruptCsv)[0].amount).toBe(0);
+      expect(csvAdapter.mapToInternalModel(corruptCsv)[0].amount).toBe(0);
     });
 
-    it('converts valid Dutch CSV to internal model with correct sign', () => {
+    it('converts valid Dutch csv to internal model with correct sign', () => {
       const csv = `Datum;Bedrag;Af Bij;Naam
 2024-01-01;100,50;Af;Supermarkt
 2024-01-02;200,00;Bij;Salaris`;
 
-      const result = scvAdapter.mapToInternalModel(csv);
+      const result = csvAdapter.mapToInternalModel(csv);
       expect(result).toEqual([
         expect.objectContaining({ date: '2024-01-01', amount: -10050, description: 'Supermarkt' }),
         expect.objectContaining({ date: '2024-01-02', amount: 20000, description: 'Salaris' }),
@@ -74,31 +74,31 @@ describe('Phoenix Financial Suite - Final Snapshot', () => {
     it('defaults to POSITIVE amount when mutation column is missing (Correction based on test output)', () => {
       const csv = `Datum;Bedrag;Omschrijving
 2024-01-01;50,00;Unknown`;
-      const result = scvAdapter.mapToInternalModel(csv);
+      const result = csvAdapter.mapToInternalModel(csv);
       expect(result[0].amount).toBe(5000);
     });
 
     it('uses "NotADate" verbatim if date parsing logic is strict (Correction based on test output)', () => {
       const csv = `Datum;Bedrag
 NotADate;100,00`;
-      const result = scvAdapter.mapToInternalModel(csv);
+      const result = csvAdapter.mapToInternalModel(csv);
       expect(result[0].date).toBe('NotADate');
     });
 
     it('returns empty array for empty input (explicit check)', () => {
-      expect(scvAdapter.mapToInternalModel('')).toEqual([]);
-      expect(scvAdapter.mapToInternalModel('\n\n')).toEqual([]);
+      expect(csvAdapter.mapToInternalModel('')).toEqual([]);
+      expect(csvAdapter.mapToInternalModel('\n\n')).toEqual([]);
     });
 
     it('handles real-world bank exports (ING, Knab) without quotes', () => {
       // ING: semicolon-separated, no quotes
       const ingCsv = 'Datum;Bedrag;Af Bij;Naam\n2024-01-01;-100,50;Af;PARKING';
-      const ingResult = scvAdapter.mapToInternalModel(ingCsv);
+      const ingResult = csvAdapter.mapToInternalModel(ingCsv);
       expect(ingResult[0].amount).toBe(-10050);
     
       // Knab: comma-separated, no quotes
       const knabCsv = 'Date,Amount,Mutation\n2024-01-01,-100.50,D';
-      const knabResult = scvAdapter.mapToInternalModel(knabCsv);
+      const knabResult = csvAdapter.mapToInternalModel(knabCsv);
       expect(knabResult[0].amount).toBe(-10050);
     
       // Bevestig dat parseRawCsv ze correct splitst

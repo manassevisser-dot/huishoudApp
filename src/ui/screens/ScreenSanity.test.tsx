@@ -4,7 +4,7 @@ import { render } from '@test-utils/render/renderers';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Import Screens
-import { CsvUploadScreen } from '@ui/screens/CSV/CsvUploadScreen';
+import { CsvUploadScreen } from '@ui/screens/csv/CsvUploadScreen';
 import { UndoScreen } from '@ui/screens/Daily/UndoScreen';
 import DailyInputScreen from '@ui/screens/DailyInput/DailyInputScreen';
 import DashboardScreen from '@ui/screens/Dashboard/DashboardScreen';

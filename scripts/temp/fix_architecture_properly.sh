@@ -23,7 +23,7 @@ jest.mock('react-native-safe-area-context', () => ({
 const DEFAULT_TEST_STATE: FormState = {
   schemaVersion: '1.0',
   activeStep: 'LANDING',
-  currentPageId: 'setupHousehold',
+  currentScreenId: 'setupHousehold',
   isValid: false,
   data: {
     setup: {},
@@ -150,8 +150,8 @@ const LandingScreen: React.FC<Props> = ({ onSignup }) => {
       testID="landing-screen"
       style={[styles.container, { paddingBottom: Math.max(20, (insets?.bottom || 0) + 8) }]}
     >
-      <View style={styles.pageContainer}>
-        <Text testID="landing-title" style={styles.pageTitle}>Welkom</Text>
+      <View style={styles.screenContainer}>
+        <Text testID="landing-title" style={styles.screenTitle}>Welkom</Text>
         <Text style={styles.summaryDetail}>
           Start met het instellen van uw huishouding of ga direct naar het dashboard.
         </Text>
@@ -184,7 +184,7 @@ EOF
 # ==============================================================================
 # 4. DE TEST (src/__tests__/WAI009_FocusManagement.test.tsx)
 # ==============================================================================
-# Nu gebruiken we de ECHTE componenten, geen mocks!
+# Nu gebruiken we de ECHTE sectionen, geen mocks!
 cat > src/__tests__/WAI009_FocusManagement.test.tsx << 'EOF'
 import React from 'react';
 import { fireEvent } from '@testing-library/react-native';
@@ -192,7 +192,7 @@ import LandingScreen from '../ui/screens/Wizard/LandingScreen';
 import { renderWithState } from '../test-utils/render/renderers';
 import { makePhoenixState } from '../test-utils/state';
 
-// We mocken alleen de styles en safe-area, niet de component zelf!
+// We mocken alleen de styles en safe-area, niet de section zelf!
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));

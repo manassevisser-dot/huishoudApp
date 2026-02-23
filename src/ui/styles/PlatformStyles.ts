@@ -10,19 +10,10 @@
  * @contract 1. `getPlatformShadow` ontvangt een kleurschema en een `ShadowLevel` en retourneert een platform-specifiek stijl-object. 2. `SHADOW_MAP` definieert welke semantische stijl-keys een schaduw krijgen. 3. `applyShadows` ontvangt het complete, maar schaduwloze, stylesheet en het kleurschema. Het itereert over `SHADOW_MAP` en voegt de juiste schaduw-stijlen toe aan de corresponderende styles, en retourneert het nieuwe, complete stylesheet.
  * @ai_instruction Om een component een schaduw te geven, pas je niet de stijl van het component direct aan. In plaats daarvan voeg je een entry toe aan de `SHADOW_MAP` in dit bestand. Om bijvoorbeeld een nieuwe `mijnNieuweStijl` een `level1` schaduw te geven, voeg je `'mijnNieuweStijl': 'level1'` toe aan `SHADOW_MAP`. De `useAppStyles`-hook regelt de rest. Je hoeft `getPlatformShadow` alleen te bewerken als je het uiterlijk van de schaduw-levels zelf wilt aanpassen.
  */
-// src/ui/styles/PlatformStyles.ts
-//
-// PLATFORM STYLES — de enige plek waar Platform.select leeft.
-// Shadows worden hier berekend en door useAppStyles toegepast
-// op de keys die dat nodig hebben.
-
 import { Platform, ViewStyle, TextStyle, ImageStyle } from 'react-native';
 import { Tokens } from '@domain/constants/Tokens';
 import type { ColorScheme } from '@domain/constants/Colors';
 
-
-
-// ── Shadow level → platform-specifieke stijl ─────────────────
 export type AnyStyle = ViewStyle | TextStyle | ImageStyle  
 export type ShadowLevel = 'level1' | 'level2' | 'level3';
 
@@ -40,18 +31,12 @@ export function getPlatformShadow(c: ColorScheme, level: ShadowLevel) {
   }) ?? {};
 }
 
-// ── Shadow-map: welke style-keys krijgen welke shadow ────────
-// Dit is de SSOT voor "key X heeft shadow level Y".
-// useAppStyles past dit automatisch toe na het assemblen.
-
 export const SHADOW_MAP: Record<string, ShadowLevel> = {
   button:        'level2',
   headerBar:     'level1',
   card:          'level1',
   dashboardCard: 'level3',
 } as const;
-
-// ── Helper: pas shadows toe op assembled styles ──────────────
 
 export function applyShadows(
   assembled: Record<string, AnyStyle>,
@@ -62,8 +47,6 @@ export function applyShadows(
   for (const [key, level] of Object.entries(SHADOW_MAP)) {
     const baseStyle = result[key];
     if (baseStyle !== undefined) {
-      // Gebruik een type-safe spread door te casten naar ViewStyle
-      // Dit mag in de UI-laag omdat shadows alleen op View-niveau werken.
       result[key] = { 
         ...(baseStyle as ViewStyle), 
         ...getPlatformShadow(c, level) 

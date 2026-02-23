@@ -40,7 +40,7 @@ export * from '@testing-library/react-native';
 EOF
 
 # ==============================================================================
-# 2. LANDING SCREEN (De Echte Component)
+# 2. LANDING SCREEN (De Echte Section)
 # ==============================================================================
 # We zorgen voor een schone implementatie met testID's en correcte hooks.
 cat > src/ui/screens/Wizard/LandingScreen.tsx << 'EOF'
@@ -76,8 +76,8 @@ const LandingScreen: React.FC<Props> = ({ onSignup, onSignin }) => {
     <View 
       style={[styles.container, { paddingBottom: Math.max(20, (insets?.bottom || 0) + 8) }]}
     >
-      <View style={styles.pageContainer}>
-        <Text style={styles.pageTitle}>Welkom</Text>
+      <View style={styles.screenContainer}>
+        <Text style={styles.screenTitle}>Welkom</Text>
         <Text style={styles.summaryDetail}>
           Start met het instellen van uw huishouding of ga direct naar het dashboard.
         </Text>
@@ -115,7 +115,7 @@ cat > src/__tests__/WAI009_FocusManagement.test.tsx << 'EOF'
 import React from 'react';
 import { fireEvent } from '@testing-library/react-native';
 
-// 1. Importeer de ECHTE component
+// 1. Importeer de ECHTE section
 import LandingScreen from '../ui/screens/Wizard/LandingScreen';
 
 // 2. Importeer de ECHTE renderer (die Providers gebruikt)
@@ -145,7 +145,7 @@ describe('WAI009 Focus Management (Real Integration)', () => {
   it('renders the real LandingScreen correctly', () => {
     const state = makePhoenixState({ activeStep: 'LANDING' });
     
-    // Hier testen we nu de hele keten: Renderer -> Provider -> Component
+    // Hier testen we nu de hele keten: Renderer -> Provider -> Section
     const { getByText, getByTestId } = renderWithState(
       <LandingScreen />, 
       { state, dispatch: mockDispatch }

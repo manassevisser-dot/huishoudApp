@@ -12,7 +12,7 @@ describe('csvHelper', () => {
       expect(parseRawCsv(csv)).toEqual([]);
     });
 
-    it('moet standaard komma-gescheiden CSV correct parsen', () => {
+    it('moet standaard komma-gescheiden csv correct parsen', () => {
       const csv = `id,name,city
 1,Jan,Amsterdam
 2,Piet,Rotterdam`;

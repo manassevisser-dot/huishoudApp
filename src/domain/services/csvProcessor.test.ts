@@ -1,7 +1,7 @@
-import { CSVProcessor } from './CSVProcessor';
+import { csvProcessor } from './csvProcessor';
 
 test('BT-03-processor-invariants: Maakt bedragen schoon en veilig', () => {
-  const processor = new CSVProcessor();
+  const processor = new csvProcessor();
   const keys = { amount: 'Bedrag', description: 'Omschrijving', date: 'Datum' };
 
   // Test 1: Duizendtallen en komma's

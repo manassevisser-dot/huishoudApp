@@ -1,3 +1,12 @@
+/**
+ * @file_intent Definieert stijlen voor formulierelementen.
+ * @repo_architecture Domain Layer - Styles. Dit bestand bevat een functie die een stijlobject retourneert voor formulierelementen, gebaseerd op een kleurenschema.
+ * @term_definition
+ *   - `ColorScheme`: Een object dat de kleuren voor de applicatie definieert.
+ *   - `makeForms`: Een functie die een stijlobject voor formulierelementen retourneert.
+ * @contract De `makeForms` functie retourneert een object met stijlen voor formulierelementen. Deze stijlen zijn afhankelijk van het `ColorScheme` object dat als argument wordt meegegeven.
+ * @ai_instruction Om de stijlen van formulierelementen aan te passen, kun je de `makeForms` functie aanpassen. Je kunt nieuwe stijlen toevoegen of bestaande stijlen aanpassen. Zorg ervoor dat de stijlen die je toevoegt gebruik maken van de kleuren uit het `ColorScheme` object.
+ */
 // src/domain/styles/modules/Forms.ts
 import { Space, Type, Radius } from '@domain/constants/Tokens';
 import { Layout } from '@domain/constants/LayoutTokens';

@@ -22,7 +22,7 @@ export const UX_TOKENS = {
 };
 
 // Types voor consistentie
-export type PageToken = keyof typeof UX_TOKENS;
+export type ScreenToken = keyof typeof UX_TOKENS;
 export type FieldToken = string;
 EOF
 
@@ -50,7 +50,7 @@ fi
 
 # 4. Fix Imports in Configs (Registry)
 # Zorg dat configs naar de juiste registry wijzen
-grep -rl "@domain/constants/datakeys" src/ui/screens/Wizard/pages | xargs sed -i "s|@domain/constants/datakeys|@domain/constants/registry|g" 2>/dev/null || true
+grep -rl "@domain/constants/datakeys" src/ui/screens/Wizard/screens | xargs sed -i "s|@domain/constants/datakeys|@domain/constants/registry|g" 2>/dev/null || true
 
 echo "✅ Consistentie hersteld."
 echo "👉 Draai nu: npx tsc --noEmit"

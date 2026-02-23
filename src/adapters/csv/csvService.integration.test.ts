@@ -2,7 +2,7 @@ import { ImportOrchestrator } from '@app/orchestrators/ImportOrchestrator';
 import { csvFactory } from '@test-utils/index';
 import { DATA_KEYS } from '@domain/constants/datakeys';
 
-describe('CSV Integration via ImportOrchestrator', () => {
+describe('csv Integration via ImportOrchestrator', () => {
   const setup = { maandelijksInkomen: 2500, housingIncluded: false };
 
   // Hulpfunctie om state te maken

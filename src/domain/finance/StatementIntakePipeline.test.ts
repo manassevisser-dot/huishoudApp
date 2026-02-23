@@ -10,7 +10,7 @@ jest.mock('@domain/helpers/numbers', () => ({
   toCents: (x: number) => x,
 }));
 
-/** Helper om snel CSV items te maken */
+/** Helper om snel csv items te maken */
 const mkCsv = (overrides: Partial<ResearchCsvItem>): ResearchCsvItem => ({
   amount: 0,
   description: '',
@@ -75,7 +75,7 @@ describe('StatementIntakePipeline.WIP – dataProcessor', () => {
   });
 
   describe('reconcileWithSetup', () => {
-    it('kiest CSV-inkomen als som > 0, anders setupIncome (via toCents)', () => {
+    it('kiest csv-inkomen als som > 0, anders setupIncome (via toCents)', () => {
       // Arrange
       const csv: ResearchCsvItem[] = [
         mkCsv({ description: 'Salaris ACME', amount: 300_000 }), // €3.000,00 (centen)
@@ -88,7 +88,7 @@ describe('StatementIntakePipeline.WIP – dataProcessor', () => {
 
       // Assert
       expect(res.finalIncome).toBe(300_000);
-      expect(res.source).toBe('CSV');
+      expect(res.source).toBe('csv');
       expect(res.diff).toBe(300_000 - 250_000);
       expect(res.isDiscrepancy).toBe(true); // |50.000| > 5.000
     });
@@ -152,7 +152,7 @@ describe('StatementIntakePipeline.WIP – dataProcessor', () => {
       });
     });
 
-    it('negeert niet-eindige bedragen in CSV (NaN/Infinity) en telt alleen geldige numbers', () => {
+    it('negeert niet-eindige bedragen in csv (NaN/Infinity) en telt alleen geldige numbers', () => {
       // Arrange
       const csv: ResearchCsvItem[] = [
         mkCsv({ description: 'Salaris', amount: 100_000 }),
@@ -166,7 +166,7 @@ describe('StatementIntakePipeline.WIP – dataProcessor', () => {
 
       // Assert
       expect(res.finalIncome).toBe(100_000);
-      expect(res.source).toBe('CSV');
+      expect(res.source).toBe('csv');
       expect(res.diff).toBe(100_000 - 90_000);
       expect(res.isDiscrepancy).toBe(true); // |10.000| > 5.000
     });
@@ -181,7 +181,7 @@ describe('StatementIntakePipeline.WIP – dataProcessor', () => {
 
       // Assert
       expect(res.finalIncome).toBe(75_000);
-      expect(res.source).toBe('CSV');
+      expect(res.source).toBe('csv');
       expect(res.diff).toBe(75_000 - 0);
       expect(res.isDiscrepancy).toBe(true); // |75.000| > 5.000
     });

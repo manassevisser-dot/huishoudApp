@@ -1,3 +1,13 @@
+/**
+ * @file_intent Definieert het `ResetScreen`, een UI-component dat gebruikers de mogelijkheid biedt om de applicatiegegevens te wissen of de setup-wizard te herstellen. Dit scherm is cruciaal voor gebruikers die opnieuw willen beginnen of configuratiefouten willen corrigeren.
+ * @repo_architecture UI Layer - Screen. Dit scherm wordt door de `MainNavigator` gepresenteerd en ontvangt callback-functies (`onWissen`, `onHerstel`) om de reset-logica, die buiten het UI-domein ligt, aan te roepen.
+ * @term_definition
+ *   - `Alert.alert`: Een standaard React Native API om een native dialoogvenster te tonen. Dit wordt gebruikt om de gebruiker te waarschuwen voor de destructieve aard van de acties.
+ *   - `onWissen`: Een callback-prop die wordt aangeroepen wanneer de gebruiker bevestigt dat alle data gewist moet worden.
+ *   - `onHerstel`: Een callback-prop die wordt aangeroepen wanneer de gebruiker bevestigt dat de setup-wizard gereset moet worden.
+ * @contract Het component rendert twee hoofdacties: "WISSEN" en "HERSTEL". Voordat een actie wordt uitgevoerd, toont het een `Alert`-dialoog ter bevestiging. Bij bevestiging worden de respectievelijke `on...`-props aangeroepen. De daadwerkelijke logica voor het wissen en herstellen is gedelegeerd aan de aanroeper (de `MainNavigator` en de daaronder liggende orchestrators).
+ * @ai_instruction Bij het aanpassen van de waarschuwingsteksten, zorg ervoor dat de `Alert.alert`-parameters (`title`, `message`, en de knop-teksten) duidelijk en ondubbelzinnig de gevolgen van de actie beschrijven. De destructieve actie (`WISSEN`) moet visueel en tekstueel worden benadrukt (bijv. rode knop, hoofdletters, `style: 'destructive'`).
+ */
 // src/ui/screens/Reset/ResetScreen.tsx
 import * as React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
