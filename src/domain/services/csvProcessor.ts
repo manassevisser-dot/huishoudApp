@@ -5,7 +5,7 @@
  * @contract Stateless. Zet ruwe centen-waarden om naar gelokaliseerde display-strings (ViewModel).
  * @ai_instruction Bevat GEEN business rules (die zitten in @domain/rules). Bevat GEEN state-mutaties.
  */
-import { toCents } from '../helpers/numbers';
+// toCents verwijderd — parseAmount retourneert euros (float). toCents() gebeurt in ImportOrchestrator.
 
 export interface csvKeys {
   date: string;
@@ -29,7 +29,7 @@ export class csvProcessor {
 
     // 3. Mapping naar domein-model met expliciete checks voor de linter
     return {
-      amount: this.normalizeToCents(amountStr),
+      amountEuros: this.parseAmount(amountStr),
       description: row[keys.description] ?? 'Geen omschrijving',
       date: row[keys.date] ?? '1970-01-01',
       original: row,
@@ -57,8 +57,12 @@ export class csvProcessor {
     );
   }
 
-  private normalizeToCents(raw: string | undefined | null): number {
-    // Strikte check voor null/undefined/empty om linter te pleasen
+  /**
+   * Parseert een ruwe bedrag-string naar euros (float).
+   * Naamgeving: parseAmount, niet normalizeToCents — deze methode converteert NIET naar centen.
+   * toCents() is verantwoordelijkheid van ImportOrchestrator (ACL-grens).
+   */
+  private parseAmount(raw: string | undefined | null): number {
     if (raw === undefined || raw === null || raw === '') {
       return 0;
     }
@@ -69,6 +73,6 @@ export class csvProcessor {
     value = value.replace(/(\d+)\.(?=\d{3}\b)/g, '$1');
 
     const num = Number(value);
-    return Number.isFinite(num) ? toCents(num) : 0;
+    return Number.isFinite(num) ? num : 0;
   }
 }

@@ -105,6 +105,13 @@ const SCREEN_REGISTRY: Record<string, ScreenDefinition> = {
     sectionIds: ['CSV_DROPZONE_CARD', 'CSV_MAPPING_SECTION'],
     previousScreenId: 'OPTIONS',
   },
+  'CSV_ANALYSIS': {
+    id: 'CSV_ANALYSIS',
+    type: 'APP_STATIC',
+    titleToken: 'screens.csv_analysis.title',
+    sectionIds: ['CSV_ANALYSIS_RESULT_CARD'],
+    previousScreenId: 'CSV_UPLOAD',
+  },
   'RESET': {
     id: 'RESET',
     type: 'SYSTEM',

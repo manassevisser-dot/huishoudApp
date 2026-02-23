@@ -1,18 +1,28 @@
-
+// src/app/orchestrators/ImportOrchestrator.ts
 /**
- * @file_intent Converteert een CSV-string naar lokaal bruikbare transactie-objecten.
- * @repo_architecture Mobile Industry (MI) - Data Ingestion Layer.
- * @term_definition PII (Personally Identifiable Information) = Persoonlijke data die uit beschrijvingen wordt gefilterd.
- * @contract Stateless Transformer. Deze klasse is enkel verantwoordelijk voor het parsen, opschonen en verrijken van CSV-data voor lokaal gebruik. Het heeft geen kennis van andere orchestrators of externe processen zoals 'research'.
- * @ai_instruction De logica hier is een directe verplaatsing van de logica uit de originele ResearchOrchestrator.
+ * @file_intent Converteert een CSV-string naar ACL-cleaned ParsedCsvTransaction objecten.
+ * @repo_architecture Mobile Industry (MI) - Data Ingestion Layer (ACL Boundary).
+ * @term_definition
+ *   ACL (Anti-Corruption Layer) = De gecontroleerde grens tussen ruwe bankdata en het domeinmodel.
+ *   PII (Personally Identifiable Information) = Persoonlijke data die uit beschrijvingen wordt gefilterd.
+ * @contract
+ *   processCsvImport(csvText: string): CsvParseResult
+ *   Stateless transformer. Geen setupData, geen reconciliatie, geen business-logica.
+ *   Parse → strip PII → normaliseer datum → categoriseer → retourneer ParsedCsvTransaction[].
+ * @ai_instruction
+ *   setupData is VOLLEDIG verwijderd — CSV-data is géén wizard-setup-data.
+ *   summary en hasMissingCosts zijn VERWIJDERD — horen in CsvAnalysisService (Fase 6).
+ *   Return type is CsvParseResult (discriminated union: success | empty | error).
+ *   De analyse (reconcile vs setup) gebeurt in CsvAnalysisService, niet hier.
+ * @changes [Fase 3+8] processCsvImport({ csvText, setupData }) → processCsvImport(csvText: string).
+ *   LocalImportResult verwijderd. Return type is nu CsvParseResult uit csvUpload.types.ts.
+ *   calculateSummary() verwijderd — hoort in CsvAnalysisService.
+ *   detectMissingHousingCosts() verwijderd — hoort in CsvAnalysisService.
  */
 
-import type { 
-  FinancialIncomeSummary, 
-  CsvItem as ImportCsvItem,
-} from '@core/types/research';
-import { dataProcessor, type ResearchSetupData } from '@domain/finance/StatementIntakePipeline';
-import { 
+import type { CsvParseResult, ParsedCsvTransaction } from '@app/orchestrators/types/csvUpload.types';
+import { dataProcessor } from '@domain/finance/StatementIntakePipeline';
+import {
   csvAdapter,
   type CsvItem as AdapterCsvItem,
 } from '@adapters/csv/csvAdapter';
@@ -30,11 +40,6 @@ const IMPORT_FALLBACK_CATEGORY = 'Overig';
 const IMPORT_SCHEMA_VERSION = 'csv-v1';
 const IMPORT_COLUMN_MAP_VERSION = 'v1';
 
-
-type ImportSetupData = Readonly<
-  Pick<ResearchSetupData, 'maandelijksInkomen' | 'housingIncluded'>
->;
-
 // Magic number replacements
 const DIGEST_RADIX_HEX = 16;
 const DIGEST_ID_SLICE = 16;
@@ -44,28 +49,10 @@ const DIGEST_PAD_LENGTH = 8;
 const DIGEST_REPEAT_COUNT = 4;
 
 /* -------------------------------------------------------------------------- */
-/*                               RESULT INTERFACE                              */
+/*                           BUILD PARAMS TYPE                                 */
 /* -------------------------------------------------------------------------- */
 
-export interface LocalImportResult {
-  status: 'success' | 'empty' | 'error';
-  transactions: ImportCsvItem[];
-  count: number;
-  summary: FinancialIncomeSummary;
-  hasMissingCosts: boolean;
-  errorMessage?: string;
-}
-
-const EMPTY_SUMMARY: FinancialIncomeSummary = {
-  source: 'none',
-  finalIncome: 0,
-  isDiscrepancy: false,
-};
-
-/* -------------------------------------------------------------------------- */
-/*                           IMPORT ORCHESTRATOR CLASS                         */
-/* -------------------------------------------------------------------------- */
-interface ImportedTransactionBuildParams {
+interface TransactionBuildParams {
   row: AdapterCsvItem;
   index: number;
   importedAtIso: string;
@@ -76,39 +63,46 @@ interface ImportedTransactionBuildParams {
   rawDigest: string;
 }
 
+/* -------------------------------------------------------------------------- */
+/*                           IMPORT ORCHESTRATOR CLASS                         */
+/* -------------------------------------------------------------------------- */
 
 export class ImportOrchestrator {
-  constructor() {}
-
-  public processCsvImport(params: {
-    csvText: string;
-    setupData: ImportSetupData | null;
-  }): LocalImportResult {
+  /**
+   * Converteert ruwe CSV-tekst naar ACL-cleaned transacties.
+   *
+   * @param csvText - Ruwe CSV-tekst van de gebruiker (UTF-8).
+   * @returns CsvParseResult — success met ParsedCsvTransaction[], empty of error.
+   */
+  public processCsvImport(csvText: string): CsvParseResult {
     try {
-      const parsedTransactions = this.parseAndEnrichCsv(params.csvText);
+      const transactions = this.parseAndEnrichCsv(csvText);
 
-      if (parsedTransactions.length === 0) {
+      if (transactions.length === 0) {
         return {
           status: 'empty',
-          transactions: [],
-          count: 0,
-          summary: this.calculateSummary([], params.setupData),
-          hasMissingCosts: false,
+          message: 'Geen verwerkte transacties gevonden in het CSV-bestand.',
         };
       }
 
-      const summary = this.calculateSummary(parsedTransactions, params.setupData);
-      const hasMissingCosts = this.detectMissingHousingCosts(parsedTransactions, params.setupData);
-
       return {
         status: 'success',
-        transactions: parsedTransactions,
-        count: parsedTransactions.length,
-        summary,
-        hasMissingCosts,
+        transactions,
+        metadata: {
+          parsedCount: transactions.length,
+          skippedCount: 0, // TODO: bijhouden in parseAndEnrichCsv
+        },
       };
-    } catch (e) {
-      return this.mapError(e);
+    } catch (e: unknown) {
+      Logger.error('[ImportOrchestrator] Critical failure in CSV-parsing pipeline:', e);
+      return {
+        status: 'error',
+        errorMessage: e instanceof Error ? e.message : 'Fout bij verwerken van CSV',
+        technicalDetails: {
+          errorCode: 'PARSING_ERROR',
+          originalError: e,
+        },
+      };
     }
   }
 
@@ -116,134 +110,87 @@ export class ImportOrchestrator {
   /*                        CSV PARSING & ENRICHMENT                            */
   /* -------------------------------------------------------------------------- */
 
-  private parseAndEnrichCsv(rawCsv: string): ImportCsvItem[] {
+  private parseAndEnrichCsv(rawCsv: string): ParsedCsvTransaction[] {
     if (rawCsv.trim().length === 0) {
       return [];
     }
 
-    try {
-      
-      const mapped: AdapterCsvItem[] = csvAdapter.mapToInternalModel(rawCsv) ?? [];
-      const importedAtIso = new Date().toISOString();
+    const mapped: AdapterCsvItem[] = csvAdapter.mapToInternalModel(rawCsv) ?? [];
+    const importedAtIso = new Date().toISOString();
 
-      return mapped
-        .map((row, index) => this.mapCsvToImportedTransaction(row, index, importedAtIso))
-        .filter((tx): tx is ImportCsvItem => tx !== null);
-    } catch (e) {
-      Logger.error('csv Mapping failed in ImportOrchestrator', e);
-      throw e;
+    return mapped
+      .map((row, index) => this.mapToParsedTransaction(row, index, importedAtIso))
+      .filter((tx): tx is ParsedCsvTransaction => tx !== null);
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                          TRANSACTION MAPPING                               */
+  /* -------------------------------------------------------------------------- */
+
+  private mapToParsedTransaction(
+    row: AdapterCsvItem,
+    index: number,
+    importedAtIso: string,
+  ): ParsedCsvTransaction | null {
+    if (!this.isValidAmount(row.amountEuros)) {
+      return null;
     }
-  }
 
-  /* -------------------------------------------------------------------------- */
-  /*                               SUMMARY LOGIC                                */
-  /* -------------------------------------------------------------------------- */
+    const flags: ImportFlag[] = [];
 
-  private calculateSummary(
-    transactions: ImportCsvItem[],
-    setup: ImportSetupData | null,
-  ): FinancialIncomeSummary {
-    const result = dataProcessor.reconcileWithSetup(
-      transactions,
-      setup ?? {},
-    );
+    const sanitizedDescription = this.resolveDescription(row.description, flags);
+    const normalizedDate = this.normalizeDate(row.date ?? '', importedAtIso, flags);
+    const category = this.resolveCategory(sanitizedDescription, flags);
 
-    return {
-      finalIncome: result.finalIncome,
-      source: String(result.source) as 'csv' | 'Setup' | 'none',
-      isDiscrepancy: result.isDiscrepancy,
-    };
-  }
+    const canonical = `${normalizedDate}|${row.amountEuros}|${sanitizedDescription}`;
+    const rawDigest = this.generateDigest(canonical);
 
-  private detectMissingHousingCosts(
-    transactions: ImportCsvItem[],
-    setup: ImportSetupData | null,
-  ): boolean {
-    const housingIncluded = (setup as ResearchSetupData)?.housingIncluded;
-    return transactions.some(
-      (t) => t.category === 'Wonen' && housingIncluded !== true,
-    );
-  }
-
-  private mapError(e: unknown): LocalImportResult {
-    Logger.error('[ImportOrchestrator] Critical Failure in csv-parsing pipeline:', e);
-
-    return {
-      status: 'error',
-      transactions: [],
-      count: 0,
-      errorMessage: e instanceof Error ? e.message : 'Fout bij verwerken van CSV',
-      summary: EMPTY_SUMMARY,
-      hasMissingCosts: false,
-    };
-  }
-
-  /* -------------------------------------------------------------------------- */
-  /*                          IMPORT MAPPING HELPERS                            */
-  /* -------------------------------------------------------------------------- */
-private mapCsvToImportedTransaction(
-  row: AdapterCsvItem,
-  index: number,
-  importedAtIso: string,
-): ImportCsvItem | null {
-  if (!this.isValidAmount(row.amount)) {
-    return null;
-  }
-
-  const flags: ImportFlag[] = [];
-
-  const sanitizedDescription = this.resolveDescription(row.description, flags);
-  const normalizedDate = this.normalizeImportedDate(row.date ?? '', importedAtIso, flags);
-  const category = this.resolveCategory(sanitizedDescription, flags);
-
-  const canonical = `${normalizedDate}|${row.amount}|${sanitizedDescription}`;
-  const rawDigest = this.generateImportDigest(canonical);
-
-  return this.buildImportedTransaction({
-  row,
-  index,
-  importedAtIso,
-  normalizedDate,
-  sanitizedDescription,
-  category,
-  flags: Object.freeze([...flags]),
-  rawDigest,
-});
-
-}
-
-  /* ------------------------------- Sub-helpers ------------------------------ */
-
-private buildImportedTransaction(params: ImportedTransactionBuildParams): ImportCsvItem {
-  const {
-    row,
-    index,
-    importedAtIso,
-    normalizedDate,
-    sanitizedDescription,
-    category,
-    flags,
-    rawDigest,
-  } = params;
-
-  return {
-    id: `csv_${rawDigest.slice(0, DIGEST_ID_SLICE)}`,
-    fieldId: `csv_tx_${rawDigest.slice(0, DIGEST_FIELD_SLICE)}_${index}`,
-    amount: row.amount,
-    amountCents: toCents(row.amount),
-    date: normalizedDate,
-    description: sanitizedDescription,
-    category,
-    isIgnored: false,
-    original: {
+    return this.buildTransaction({
+      row,
+      index,
+      importedAtIso,
+      normalizedDate,
+      sanitizedDescription,
+      category,
+      flags: Object.freeze([...flags]),
       rawDigest,
-      schemaVersion: IMPORT_SCHEMA_VERSION,
-      importedAt: importedAtIso,
-      columnMapVersion: IMPORT_COLUMN_MAP_VERSION,
+    });
+  }
+
+  private buildTransaction(params: TransactionBuildParams): ParsedCsvTransaction {
+    const {
+      row,
+      index,
+      importedAtIso,
+      normalizedDate,
+      sanitizedDescription,
+      category,
       flags,
-    },
-  };
-}
+      rawDigest,
+    } = params;
+
+    return {
+      id: `csv_${rawDigest.slice(0, DIGEST_ID_SLICE)}`,
+      fieldId: `csv_tx_${rawDigest.slice(0, DIGEST_FIELD_SLICE)}_${index}`,
+      amount: row.amountEuros,
+      amountCents: toCents(row.amountEuros),
+      date: normalizedDate,
+      description: sanitizedDescription,
+      category,
+      isIgnored: false,
+      original: {
+        rawDigest,
+        schemaVersion: IMPORT_SCHEMA_VERSION,
+        importedAt: importedAtIso,
+        columnMapVersion: IMPORT_COLUMN_MAP_VERSION,
+        flags,
+      },
+    };
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                               HELPERS                                      */
+  /* -------------------------------------------------------------------------- */
 
   private isValidAmount(amount: number | undefined): boolean {
     return Number.isFinite(amount) && amount !== 0;
@@ -251,11 +198,9 @@ private buildImportedTransaction(params: ImportedTransactionBuildParams): Import
 
   private resolveDescription(raw: string | undefined, flags: ImportFlag[]): string {
     const trimmed = typeof raw === 'string' ? raw.trim() : '';
-
     if (trimmed.length === 0) {
       flags.push('missing_description');
     }
-
     return dataProcessor.stripPII(
       trimmed.length > 0 ? trimmed : IMPORT_FALLBACK_DESCRIPTION,
     );
@@ -263,33 +208,28 @@ private buildImportedTransaction(params: ImportedTransactionBuildParams): Import
 
   private resolveCategory(description: string, flags: ImportFlag[]): string {
     const candidate = dataProcessor.categorize(description).trim();
-
     if (candidate.length === 0) {
       flags.push('fallback_category');
       return IMPORT_FALLBACK_CATEGORY;
     }
-
     return candidate;
   }
 
-  private normalizeImportedDate(
+  private normalizeDate(
     rawDate: string,
     importedAtIso: string,
     flags: ImportFlag[],
   ): string {
     const trimmed = rawDate.trim();
-
     if (trimmed.length === 0) {
       flags.push('missing_date');
       return this.toDateOnly(importedAtIso);
     }
-
     const parsed = new Date(trimmed);
     if (Number.isNaN(parsed.getTime())) {
       flags.push('missing_date');
       return this.toDateOnly(importedAtIso);
     }
-
     return parsed.toISOString().split('T')[0];
   }
 
@@ -301,16 +241,13 @@ private buildImportedTransaction(params: ImportedTransactionBuildParams): Import
     return parsed.toISOString().split('T')[0];
   }
 
-  private generateImportDigest(input: string): string {
+  private generateDigest(input: string): string {
     let hash = 0;
-
     for (let i = 0; i < input.length; i += 1) {
       hash = (hash << HASH_SHIFT) - hash + input.charCodeAt(i);
       hash |= 0;
     }
-
     const unsigned = hash >>> 0;
-
     return unsigned
       .toString(DIGEST_RADIX_HEX)
       .padStart(DIGEST_PAD_LENGTH, '0')

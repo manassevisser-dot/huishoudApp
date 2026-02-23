@@ -20,14 +20,14 @@ interface FinancialSummaryData {
   netDisplay: string;
 }
 
-interface SummaryRowProps {
+export interface SummaryRowProps {
   label: string;
   value: string;
   valueColor: ColorValue; // Verplicht maken voorkomt boolean-fouten
   styles: AppStyles;
 }
 
-const SummaryRow: React.FC<SummaryRowProps> = ({ label, value, valueColor, styles }) => (
+export const SummaryRow: React.FC<SummaryRowProps> = ({ label, value, valueColor, styles }) => (
   <View style={styles.summaryRow}>
     <Text style={styles.summaryLabel}>{label}</Text>
     <Text style={[styles.summaryValue, { color: valueColor, fontWeight: '700' }]}>

@@ -83,6 +83,7 @@ export class NavigationOrchestrator implements INavigationOrchestrator {
   public goToSettings(): void { this.navigateTo('SETTINGS'); }
   public goToCsvUpload(): void { this.navigateTo('CSV_UPLOAD'); }
   public goToReset(): void { this.navigateTo('RESET'); }
+  public goToCsvAnalysis(): void { this.navigateTo('CSV_ANALYSIS'); }
 
   public goBack(): void {
     const currentId = this.fso.getState().activeStep;

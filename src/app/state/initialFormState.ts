@@ -5,6 +5,7 @@
  * @term_definition DATA_KEYS = Enum of constanten die de namespaces (setup, household, finance) binnen de data-store bewaken. schemaVersion = Versienummer gebruikt voor migraties van opgeslagen state.
  * @contract Dient als de blauwdruk voor de FormState interface. Garandeert dat alle verplichte velden, zoals gedefinieerd in @core/types/core, aanwezig zijn met veilige default-waarden om runtime undefined errors te voorkomen.
  * @ai_instruction Wijzigingen in het domeinmodel moeten hier worden doorgevoerd om te voorkomen dat de reducer of UI-componenten op ongeldige data-paden proberen te lezen. De property 'viewModels' is hier geïnitialiseerd als een leeg object ter voorbereiding op runtime-hydratatie door de orchestrators.
+ * @changes [Fase 5] csvImport slice toegevoegd binnen data (niet op top-level).
  */
 
 import type { FormState } from '@core/types/core';
@@ -39,12 +40,20 @@ export const initialFormState: FormState = {
       latestTransactionDescription: '',
       latestPaymentMethod: 'pin',
     },
+    // ─── CSV Import State ───────────────────────────────────────────────────
+    // Leeg bij eerste start. Wordt gevuld door CsvUploadWorkflow (Fase 6).
+    // CsvImportSchema is .optional() in FormStateSchema — undefined is ook geldig.
+    csvImport: {
+      transactions: [],
+      importedAt: '',
+      period: null,
+      status: 'idle',
+      sourceBank: undefined,
+      fileName: '',
+      transactionCount: 0,
+    },
   },
-  // FIX: Voeg de ontbrekende property toe om aan de FormState interface te voldoen
-  viewModels: {
-    // Als de linter hier klaagt over ontbrekende sub-properties, 
-    // moeten we die hier ook met hun defaults neerzetten.
-  },
+  viewModels: {},
   meta: {
     lastModified: new Date().toISOString(),
     version: 1,

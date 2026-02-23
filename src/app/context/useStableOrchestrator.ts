@@ -14,7 +14,7 @@ import { ValueOrchestrator } from '@app/orchestrators/ValueOrchestrator'; // <--
 import { FinancialOrchestrator } from '@app/orchestrators/FinancialOrchestrator';
 
 // Managers
-import { UIManager } from '@app/orchestrators/managers/UIManager';
+import { UIOrchestrator } from '@app/orchestrators/UIOrchestrator';
 import { DataManager } from '@app/orchestrators/managers/DataManager';
 import { BusinessManager } from '@app/orchestrators/managers/BusinessManager';
 import { NavigationManager } from '@app/orchestrators/managers/NavigationManager';
@@ -35,15 +35,15 @@ export function useStableOrchestrator(
     // 2. Domein Orchestrators (Logic Clusters)
     const visibility = new VisibilityOrchestrator(fso);
     const research = new ResearchOrchestrator(fso);
-    const validation = new ValidationOrchestrator(fso);
-    const valueOrch = new ValueOrchestrator(fso); // <--- De "pure" data-bron
-
+    const valueOrch = new ValueOrchestrator(fso);
+    const financial = new FinancialOrchestrator(fso);
+    const business = new BusinessManager(financial);             // ← eerst
+    
     // 3. Infrastructure Managers
-    const ui = new UIManager();
+    const validation = new ValidationOrchestrator(fso, business); // ← dan pas
+    const ui = new UIOrchestrator(visibility);
     const data = new DataManager();
     const value = new ValueManager(valueOrch);
-    const financial = new FinancialOrchestrator(fso);
-    const business = new BusinessManager(financial);
     const theme = new ThemeManager();
     const navManager = new NavigationManager();
     const navigation = new NavigationOrchestrator(fso, navManager, validation);

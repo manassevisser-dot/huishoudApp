@@ -49,6 +49,11 @@ export const dataProcessor = {
     return 'Overig';
   },
 
+  /**
+   * @deprecated Gebruik CsvAnalysisService.analyse() — consolideert alle reconcile-logica.
+   *   StatementIntakePipeline.reconcileWithSetup wordt verwijderd in Fase 6.
+   *   Drempel was 5000 (€50), nu gedeeld via INCOME_DISCREPANCY_THRESHOLD_CENTS.
+   */
   reconcileWithSetup: (csvData: ResearchCsvItem[], setupData: ResearchSetupData) => {
     const THRESHOLD_CENTS = 5000;
 

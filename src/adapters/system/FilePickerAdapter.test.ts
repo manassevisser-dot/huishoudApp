@@ -1,3 +1,11 @@
+jest.mock('expo-document-picker', () => ({
+  getDocumentAsync: jest.fn(),
+}));
+
+jest.mock('expo-file-system', () => ({
+  readAsStringAsync: jest.fn(),
+}));
+
 /**
  * @file_intent Unit tests for FilePickerAdapter - OS file system integration
  * @repo_architecture Adapter Layer - Tests. Tests Expo SDK integration for file picking and reading.
@@ -16,8 +24,8 @@ import { pickAndReadCsvFile } from './FilePickerAdapter';
 // MOCKS - External Dependencies
 // ═══════════════════════════════════════════════════════════════════
 
-jest.mock('expo-document-picker');
-jest.mock('expo-file-system');
+const mockedDocumentPicker = jest.mocked(DocumentPicker);
+const mockedFileSystem = jest.mocked(FileSystem);
 
 // ═══════════════════════════════════════════════════════════════════
 // TEST FIXTURES
@@ -26,8 +34,7 @@ jest.mock('expo-file-system');
 const FILE_CONTENT = 'Datum;Bedrag\n2024-01-01;100,00\n2024-01-02;50,00';
 const FILE_URI = 'file:///cache/document.csv';
 
-// Success response from DocumentPicker
-const SUCCESS_RESPONSE = {
+const SUCCESS_RESPONSE: DocumentPicker.DocumentPickerSuccessResult = {
   canceled: false,
   assets: [
     {
@@ -35,46 +42,48 @@ const SUCCESS_RESPONSE = {
       name: 'data.csv',
       size: 512,
       mimeType: 'text/csv',
+      lastModified: Date.now(),
     },
   ],
 };
 
-// User cancelled file picker
-const CANCELLED_RESPONSE = {
+const NULL_ASSETS_RESPONSE = {
+  canceled: false,
+  assets: null,
+} as any;
+
+const UNDEFINED_ASSETS_RESPONSE = {
+  canceled: false,
+  assets: undefined,
+} as any;
+
+const EMPTY_ASSETS_RESPONSE = {
+  canceled: false,
+  assets: [],
+} as any;
+
+const NULL_ASSET_RESPONSE = {
+  canceled: false,
+  assets: [null],
+} as any;
+
+const UNDEFINED_ASSET_RESPONSE = {
+  canceled: false,
+  assets: [undefined],
+} as any;
+
+const CANCELLED_RESPONSE: DocumentPicker.DocumentPickerCanceledResult = {
   canceled: true,
   assets: null,
 };
 
-// Assets array is null
-const NULL_ASSETS_RESPONSE = {
+const MULTI_ASSET_RESPONSE: DocumentPicker.DocumentPickerSuccessResult = {
   canceled: false,
-  assets: null,
+  assets: [
+    { uri: 'file:///first.csv', name: 'first.csv', size: 512, lastModified: Date.now() },
+    { uri: 'file:///second.csv', name: 'second.csv', size: 512, lastModified: Date.now() },
+  ],
 };
-
-// Assets array is undefined
-const UNDEFINED_ASSETS_RESPONSE = {
-  canceled: false,
-  assets: undefined,
-};
-
-// Assets array is empty
-const EMPTY_ASSETS_RESPONSE = {
-  canceled: false,
-  assets: [],
-};
-
-// First asset is null
-const NULL_ASSET_RESPONSE = {
-  canceled: false,
-  assets: [null],
-};
-
-// First asset is undefined
-const UNDEFINED_ASSET_RESPONSE = {
-  canceled: false,
-  assets: [undefined],
-};
-
 // ═══════════════════════════════════════════════════════════════════
 // TESTS
 // ═══════════════════════════════════════════════════════════════════
@@ -91,14 +100,14 @@ describe('FilePickerAdapter', () => {
   describe('pickAndReadCsvFile()', () => {
     it('should call DocumentPicker.getDocumentAsync with correct options', async () => {
       // Arrange
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(SUCCESS_RESPONSE);
-      (FileSystem.readAsStringAsync as jest.Mock).mockResolvedValue(FILE_CONTENT);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(SUCCESS_RESPONSE);
+      mockedFileSystem.readAsStringAsync.mockResolvedValue(FILE_CONTENT);
 
       // Act
       await pickAndReadCsvFile();
 
       // Assert
-      expect(DocumentPicker.getDocumentAsync).toHaveBeenCalledWith({
+      expect(mockedDocumentPicker.getDocumentAsync).toHaveBeenCalledWith({
         type: ['text/comma-separated-values', 'text/plain'],
         copyToCacheDirectory: true,
       });
@@ -106,36 +115,36 @@ describe('FilePickerAdapter', () => {
 
     it('should request both csv and text MIME types for maximum compatibility', async () => {
       // Arrange
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(SUCCESS_RESPONSE);
-      (FileSystem.readAsStringAsync as jest.Mock).mockResolvedValue(FILE_CONTENT);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(SUCCESS_RESPONSE);
+      mockedFileSystem.readAsStringAsync.mockResolvedValue(FILE_CONTENT);
 
       // Act
       await pickAndReadCsvFile();
 
       // Assert
-      const callArgs = (DocumentPicker.getDocumentAsync as jest.Mock).mock.calls[0][0];
-      expect(callArgs.type).toContain('text/comma-separated-values');
-      expect(callArgs.type).toContain('text/plain');
+      const callArgs = mockedDocumentPicker.getDocumentAsync.mock.calls[0]?.[0];
+      expect(callArgs?.type).toContain('text/comma-separated-values');
+      expect(callArgs?.type).toContain('text/plain');
     });
 
     it('should set copyToCacheDirectory to true for proper file caching', async () => {
       // Arrange
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(SUCCESS_RESPONSE);
-      (FileSystem.readAsStringAsync as jest.Mock).mockResolvedValue(FILE_CONTENT);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(SUCCESS_RESPONSE);
+      mockedFileSystem.readAsStringAsync.mockResolvedValue(FILE_CONTENT);
 
       // Act
       await pickAndReadCsvFile();
 
       // Assert
-      const callArgs = (DocumentPicker.getDocumentAsync as jest.Mock).mock.calls[0][0];
-      expect(callArgs.copyToCacheDirectory).toBe(true);
+      const callArgs = mockedDocumentPicker.getDocumentAsync.mock.calls[0]?.[0];
+      expect(callArgs?.copyToCacheDirectory).toBe(true);
     });
 
     it('should return file content as string on successful file read', async () => {
       // Arrange
       const expectedContent = 'Header1;Header2\nValue1;Value2';
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(SUCCESS_RESPONSE);
-      (FileSystem.readAsStringAsync as jest.Mock).mockResolvedValue(expectedContent);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(SUCCESS_RESPONSE);
+      mockedFileSystem.readAsStringAsync.mockResolvedValue(expectedContent);
 
       // Act
       const result = await pickAndReadCsvFile();
@@ -146,21 +155,21 @@ describe('FilePickerAdapter', () => {
 
     it('should call FileSystem.readAsStringAsync with correct URI and UTF-8 encoding', async () => {
       // Arrange
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(SUCCESS_RESPONSE);
-      (FileSystem.readAsStringAsync as jest.Mock).mockResolvedValue(FILE_CONTENT);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(SUCCESS_RESPONSE);
+      mockedFileSystem.readAsStringAsync.mockResolvedValue(FILE_CONTENT);
 
       // Act
       await pickAndReadCsvFile();
 
       // Assert
-      expect(FileSystem.readAsStringAsync).toHaveBeenCalledWith(FILE_URI, {
+      expect(mockedFileSystem.readAsStringAsync).toHaveBeenCalledWith(FILE_URI, {
         encoding: 'utf8',
       });
     });
 
     it('should throw "Bestand selecteren geannuleerd" if user cancels (result.canceled === true)', async () => {
       // Arrange
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(CANCELLED_RESPONSE);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(CANCELLED_RESPONSE);
 
       // Act & Assert
       await expect(pickAndReadCsvFile()).rejects.toThrow('Bestand selecteren geannuleerd');
@@ -168,7 +177,7 @@ describe('FilePickerAdapter', () => {
 
     it('should throw "Geen bestand geselecteerd" if assets is null', async () => {
       // Arrange
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(NULL_ASSETS_RESPONSE);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(NULL_ASSETS_RESPONSE);
 
       // Act & Assert
       await expect(pickAndReadCsvFile()).rejects.toThrow('Geen bestand geselecteerd');
@@ -176,7 +185,7 @@ describe('FilePickerAdapter', () => {
 
     it('should throw "Geen bestand geselecteerd" if assets is undefined', async () => {
       // Arrange
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(UNDEFINED_ASSETS_RESPONSE);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(UNDEFINED_ASSETS_RESPONSE);
 
       // Act & Assert
       await expect(pickAndReadCsvFile()).rejects.toThrow('Geen bestand geselecteerd');
@@ -184,7 +193,7 @@ describe('FilePickerAdapter', () => {
 
     it('should throw "Geen bestand geselecteerd" if assets is empty array', async () => {
       // Arrange
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(EMPTY_ASSETS_RESPONSE);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(EMPTY_ASSETS_RESPONSE);
 
       // Act & Assert
       await expect(pickAndReadCsvFile()).rejects.toThrow('Geen bestand geselecteerd');
@@ -192,7 +201,7 @@ describe('FilePickerAdapter', () => {
 
     it('should throw "Bestandsdata is corrupt of ontbreekt" if first asset is null', async () => {
       // Arrange
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(NULL_ASSET_RESPONSE);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(NULL_ASSET_RESPONSE);
 
       // Act & Assert
       await expect(pickAndReadCsvFile()).rejects.toThrow('Bestandsdata is corrupt of ontbreekt');
@@ -200,7 +209,7 @@ describe('FilePickerAdapter', () => {
 
     it('should throw "Bestandsdata is corrupt of ontbreekt" if first asset is undefined', async () => {
       // Arrange
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(UNDEFINED_ASSET_RESPONSE);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(UNDEFINED_ASSET_RESPONSE);
 
       // Act & Assert
       await expect(pickAndReadCsvFile()).rejects.toThrow('Bestandsdata is corrupt of ontbreekt');
@@ -209,8 +218,8 @@ describe('FilePickerAdapter', () => {
     it('should wrap file system read errors with FilePickerAdapter context', async () => {
       // Arrange
       const originalError = new Error('File read operation failed');
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(SUCCESS_RESPONSE);
-      (FileSystem.readAsStringAsync as jest.Mock).mockRejectedValue(originalError);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(SUCCESS_RESPONSE);
+      mockedFileSystem.readAsStringAsync.mockRejectedValue(originalError);
 
       // Act & Assert
       try {
@@ -227,8 +236,8 @@ describe('FilePickerAdapter', () => {
     it('should wrap unknown errors with FilePickerAdapter context', async () => {
       // Arrange
       const unknownError = 'Unknown error type';
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(SUCCESS_RESPONSE);
-      (FileSystem.readAsStringAsync as jest.Mock).mockRejectedValue(unknownError);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(SUCCESS_RESPONSE);
+      mockedFileSystem.readAsStringAsync.mockRejectedValue(unknownError);
 
       // Act & Assert
       try {
@@ -243,8 +252,8 @@ describe('FilePickerAdapter', () => {
 
     it('should be async and return Promise<string>', () => {
       // Arrange
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(SUCCESS_RESPONSE);
-      (FileSystem.readAsStringAsync as jest.Mock).mockResolvedValue(FILE_CONTENT);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(SUCCESS_RESPONSE);
+      mockedFileSystem.readAsStringAsync.mockResolvedValue(FILE_CONTENT);
 
       // Act
       const result = pickAndReadCsvFile();
@@ -258,7 +267,7 @@ describe('FilePickerAdapter', () => {
     it('should handle DocumentPicker rejection with proper error context', async () => {
       // Arrange
       const pickerError = new Error('Picker denied permissions');
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockRejectedValue(pickerError);
+      mockedDocumentPicker.getDocumentAsync.mockRejectedValue(pickerError);
 
       // Act & Assert
       try {
@@ -273,17 +282,17 @@ describe('FilePickerAdapter', () => {
       // Arrange
       const customUri = 'file:///specific/path/file.csv';
       const customResponse = {
-        canceled: false,
+        canceled: false as const,
         assets: [{ uri: customUri, name: 'custom.csv', size: 1024 }],
       };
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(customResponse);
-      (FileSystem.readAsStringAsync as jest.Mock).mockResolvedValue(FILE_CONTENT);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(customResponse as any);
+      mockedFileSystem.readAsStringAsync.mockResolvedValue(FILE_CONTENT);
 
       // Act
       await pickAndReadCsvFile();
 
       // Assert
-      expect(FileSystem.readAsStringAsync).toHaveBeenCalledWith(
+      expect(mockedFileSystem.readAsStringAsync).toHaveBeenCalledWith(
         customUri,
         expect.any(Object),
       );
@@ -292,24 +301,24 @@ describe('FilePickerAdapter', () => {
     it('should only read the first asset in case of multiple assets', async () => {
       // Arrange
       const multiAssetResponse = {
-        canceled: false,
+        canceled: false as const,
         assets: [
           { uri: 'file:///first.csv', name: 'first.csv', size: 512 },
           { uri: 'file:///second.csv', name: 'second.csv', size: 512 },
         ],
       };
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(multiAssetResponse);
-      (FileSystem.readAsStringAsync as jest.Mock).mockResolvedValue(FILE_CONTENT);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(MULTI_ASSET_RESPONSE);
+      mockedFileSystem.readAsStringAsync.mockResolvedValue(FILE_CONTENT);
 
       // Act
       await pickAndReadCsvFile();
 
       // Assert
-      expect(FileSystem.readAsStringAsync).toHaveBeenCalledWith(
+      expect(mockedFileSystem.readAsStringAsync).toHaveBeenCalledWith(
         'file:///first.csv',
         expect.any(Object),
       );
-      expect(FileSystem.readAsStringAsync).toHaveBeenCalledTimes(1);
+      expect(mockedFileSystem.readAsStringAsync).toHaveBeenCalledTimes(1);
     });
 
     it('should explicitly check result.canceled === true (not truthy)', async () => {
@@ -318,10 +327,10 @@ describe('FilePickerAdapter', () => {
         canceled: 0, // falsy but not true
         assets: [{ uri: FILE_URI, name: 'file.csv' }],
       };
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(
         falseyCancelResponse as any,
       );
-      (FileSystem.readAsStringAsync as jest.Mock).mockResolvedValue(FILE_CONTENT);
+      mockedFileSystem.readAsStringAsync.mockResolvedValue(FILE_CONTENT);
 
       // Act
       const result = await pickAndReadCsvFile();
@@ -334,8 +343,8 @@ describe('FilePickerAdapter', () => {
       // Arrange
       const originalMessage = 'Specific file system error: permission denied';
       const originalError = new Error(originalMessage);
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(SUCCESS_RESPONSE);
-      (FileSystem.readAsStringAsync as jest.Mock).mockRejectedValue(originalError);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(SUCCESS_RESPONSE);
+      mockedFileSystem.readAsStringAsync.mockRejectedValue(originalError);
 
       // Act & Assert
       try {
@@ -352,23 +361,23 @@ describe('FilePickerAdapter', () => {
     it('should successfully complete full file pick and read flow', async () => {
       // Arrange
       const csvData = 'Column1;Column2\nValue1;Value2\nValue3;Value4';
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(SUCCESS_RESPONSE);
-      (FileSystem.readAsStringAsync as jest.Mock).mockResolvedValue(csvData);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(SUCCESS_RESPONSE);
+      mockedFileSystem.readAsStringAsync.mockResolvedValue(csvData);
 
       // Act
       const result = await pickAndReadCsvFile();
 
       // Assert
       expect(result).toBe(csvData);
-      expect(DocumentPicker.getDocumentAsync).toHaveBeenCalled();
-      expect(FileSystem.readAsStringAsync).toHaveBeenCalled();
+      expect(mockedDocumentPicker.getDocumentAsync).toHaveBeenCalled();
+      expect(mockedFileSystem.readAsStringAsync).toHaveBeenCalled();
     });
 
     it('should handle large CSV files correctly', async () => {
       // Arrange
       const largeContent = 'Header\n' + 'Data\n'.repeat(10000);
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(SUCCESS_RESPONSE);
-      (FileSystem.readAsStringAsync as jest.Mock).mockResolvedValue(largeContent);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(SUCCESS_RESPONSE);
+      mockedFileSystem.readAsStringAsync.mockResolvedValue(largeContent);
 
       // Act
       const result = await pickAndReadCsvFile();
@@ -381,8 +390,8 @@ describe('FilePickerAdapter', () => {
     it('should handle CSV content with special characters and encodings', async () => {
       // Arrange
       const specialContent = 'Résumé;Naïve\nÄpfel;Öl\n€uro;¥en';
-      (DocumentPicker.getDocumentAsync as jest.Mock).mockResolvedValue(SUCCESS_RESPONSE);
-      (FileSystem.readAsStringAsync as jest.Mock).mockResolvedValue(specialContent);
+      mockedDocumentPicker.getDocumentAsync.mockResolvedValue(SUCCESS_RESPONSE);
+      mockedFileSystem.readAsStringAsync.mockResolvedValue(specialContent);
 
       // Act
       const result = await pickAndReadCsvFile();

@@ -131,7 +131,7 @@ describe('ImportOrchestrator', () => {
           Array.isArray(tx.original.flags) &&
           (tx.original.flags as readonly string[]).includes('missing_description')
         );
-        if (txWithMissingDesc) {
+        if (txWithMissingDesc != null) {
           expect(txWithMissingDesc.description).toBe('Geen omschrijving');
         }
       }

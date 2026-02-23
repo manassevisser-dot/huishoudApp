@@ -10,17 +10,27 @@ import {
   FormState, 
   Member, 
   Auto,  
-  DataSection
+  DataSection,
+  CsvImportState,        
+  CsvAnalysisResult,
 } from '@adapters/validation/formStateSchema';
 
-export type { FormState, Member, Auto, DataSection };
+export type { 
+  FormState, 
+  Member, 
+  Auto, 
+  DataSection, 
+  CsvImportState, 
+  CsvAnalysisResult 
+};
 
 type ElementOf<T> = T extends readonly (infer U)[] ? U : never;
 
 export type SetupData = FormState['data']['setup'];
 export type Household = FormState['data']['household'];
 export type Finance   = FormState['data']['finance'];
-
+export type CsvImportData = FormState['data']['csvImport'];
+export type CsvAnalysisVM = CsvAnalysisResult;
 export type IncomeItem  = ElementOf<NonNullable<Finance['income']['items']>>;
 export type ExpenseItem = ElementOf<NonNullable<Finance['expenses']['items']>>;
 

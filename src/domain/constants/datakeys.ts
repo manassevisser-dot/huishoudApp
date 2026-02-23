@@ -11,6 +11,8 @@ export const DATA_KEYS = {
   HOUSEHOLD: 'household',
   FINANCE: 'finance',
   META: 'meta',
+  LATEST_TRANSACTION: 'latestTransaction',
+  CSV_IMPORT: 'csvImport',
 } as const;
 
 export const SUB_KEYS = {

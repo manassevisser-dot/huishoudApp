@@ -137,6 +137,12 @@ export const SECTION_REGISTRY: Record<string, SectionDefinition> = {
     layout: 'list',
     fieldIds: [], // stub
   },
+  CSV_ANALYSIS_RESULT_CARD: {
+    id: 'CSV_ANALYSIS_RESULT_CARD',
+    labelToken: 'SECTION_CSV_ANALYSIS',
+    layout: 'card',
+    fieldIds: [], // stub: CsvAnalysisFeedback rendert via eigen container (geen EntryRegistry-velden)
+  },
   RESET_CONFIRMATION_CARD: {
     id: 'RESET_CONFIRMATION_CARD',
     labelToken: 'SECTION_RESET',

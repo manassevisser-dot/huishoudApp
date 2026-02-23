@@ -14,7 +14,8 @@ import type { csvKeys } from '@domain/services/csvProcessor';
  * Interface die exact matcht met de return-waarde van csvProcessor.processRow
  */
 export interface CsvItem {
-  amount: number;
+  /** Bedrag in euros (float). toCents() gebeurt in ImportOrchestrator. */
+  amountEuros: number;
   description: string;
   date: string;
   original: Record<string, string>;
@@ -40,7 +41,8 @@ export const csvAdapter = {
       };
 
       const detectedKeys: csvKeys = {
-        amount: findKey(/bedrag|amount|transactie/i),
+        // 'transactie' verwijderd: matcht 'Transactiesoort' (ABN AMRO) vóór 'Bedrag' → amount = 0
+        amount: findKey(/bedrag|amount/i),
         mutation: findKey(/Af.?Bij|Mutatie|tegenrekening/i),
         description: findKey(/Naam|Omschrijving|Mededeling|Beschrijving/i),
         date: findKey(/Datum|Boekdatum|date/i)

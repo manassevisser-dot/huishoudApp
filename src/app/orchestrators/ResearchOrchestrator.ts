@@ -1,9 +1,9 @@
 // src/app/orchestrators/ResearchOrchestrator.ts
 /**
- * @file_intent Coördineert de transformatie van reeds geparsede transactiedata naar geanonimiseerde onderzoeksdata.
+ * @file_intent Coördineert de transformatie van reeds geparste transactiedata naar geanonimiseerde onderzoeksdata.
  * @repo_architecture Mobile Industry (MI) - Data Privacy & Analytics Layer.
  * @term_definition PrivacyAirlock = Domein-mechanisme dat garandeert dat er geen PII (Personally Identifiable Information) in de onderzoek-payload lekt.
- * @contract Accepteert een reeds geparsede array van transacties (`CsvItem[]`). Bevat GEEN csv-parsing logica meer.
+ * @contract Accepteert een reeds geparste array van transacties (`CsvItem[]`). Bevat GEEN csv-parsing logica meer.
  * @ai_instruction De input voor `processAllData` is nu een `CsvItem[]` array. De `processCsvTransactions` methode is verwijderd omdat die logica nu in de `ImportOrchestrator` leeft.
  */
 
@@ -53,7 +53,7 @@ export interface MasterProcessResult {
 
 /**
  * ResearchOrchestrator — stateless coördinator voor onderzoeksflow.
- * Werkt nu met een reeds geparsede transactie-array.
+ * Werkt nu met een reeds geparste transactie-array.
  */
 export class ResearchOrchestrator {
   constructor(private readonly fso: FormStateOrchestrator) {}

@@ -19,5 +19,6 @@ export interface INavigationOrchestrator {
   goToSettings(): void;
   goToCsvUpload(): void;
   goToReset(): void;
+  goToCsvAnalysis(): void;
   goBack(): void;
 }

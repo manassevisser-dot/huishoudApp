@@ -1,4 +1,4 @@
-// src/adapters/validation/ZodSchemas.ts
+// src/adapters/validation/formStateSchema.ts
 /**
  * @file_intent Genereert runtime validatie-schema's door domein-constraints (SSOT) te vertalen naar Zod.
  * @repo_architecture Mobile Industry (MI) - Adapter Layer (Validation).
@@ -223,6 +223,56 @@ export const LatestTransactionSchema = z.object({
   latestPaymentMethod: z.string().optional(),
 }).passthrough();
 
+/** 
+ * csvUpload sectie
+ */
+export const ParsedCsvTransactionSchema = z.object({
+  id: z.string(),
+  date: z.string(),              // ISO string
+  description: z.string(),
+  amountCents: z.number(),
+  amount: z.number(),
+  category: z.string().optional(),
+  isIgnored: z.boolean().optional(),
+  original: z.record(z.string(), z.unknown()),
+}).strict();
+
+// ════════════════════════════════════════════════════════════════
+// CSV IMPORT SCHEMA — nieuw voor Fase 5
+// ════════════════════════════════════════════════════════════════
+export const CsvImportSchema = z.object({
+  transactions: z.array(ParsedCsvTransactionSchema),  // ← bestaat al (regel ~155)
+  importedAt: z.string(),                              // ISO string wanneer geïmporteerd
+  period: z.object({ 
+    from: z.string(), 
+    to: z.string() 
+  }).nullable(),                                       // Periode van de transacties
+  status: z.enum(['idle', 'parsed', 'analyzed']),      // Import-status
+  sourceBank: z.string().optional(),                   // Bijv. 'ING', 'Rabobank'
+  fileName: z.string(),                                // Originele bestandsnaam
+  transactionCount: z.number(),                        // Aantal transacties
+}).optional();
+
+// CSV Analysis Result (voor viewModels.csvAnalysis — berekend, nooit in data)
+// Structuur gespiegeld aan CsvAnalysisResult in @app/orchestrators/types/csvUpload.types.ts
+// @sync: Houd in lijn met de canonieke interface in csvUpload.types.ts
+export const CsvAnalysisResultSchema = z.object({
+  isDiscrepancy: z.boolean(),
+  hasMissingCosts: z.boolean(),
+  discrepancyDetails: z.string().optional(),
+  periodSummary: z.object({
+    totalIncomeCents: z.number(),
+    totalExpensesCents: z.number(),
+    balanceCents: z.number(),
+    transactionCount: z.number(),
+  }),
+  setupComparison: z.object({
+    csvIncomeCents: z.number(),
+    setupIncomeCents: z.number(),
+    diffCents: z.number(),
+  }).nullable(),
+}).optional();
+
 // ════════════════════════════════════════════════════════════════
 // FORMSTATE SCHEMA — de complete state, volledig getypt
 // ════════════════════════════════════════════════════════════════
@@ -237,6 +287,7 @@ export const FormStateSchema = z.object({
     household: HouseholdSchema,
     finance:   FinanceSchema,
     latestTransaction: LatestTransactionSchema.optional(),
+    csvImport:  CsvImportSchema,
   }),
   viewModels: z.object({
     financialSummary: z.object({
@@ -244,6 +295,7 @@ export const FormStateSchema = z.object({
       totalExpensesDisplay: z.string(),
       netDisplay:           z.string(),
     }).optional(),
+    csvAnalysis: CsvAnalysisResultSchema.optional(),
   }).optional(),
   meta: z.object({
     lastModified: z.string(),
@@ -272,6 +324,15 @@ export type Auto = z.infer<typeof AutoSchema>;
 
 /** LatestTransaction type — afgeleid uit LatestTransactionSchema */
 export type LatestTransaction = z.infer<typeof LatestTransactionSchema>;
+
+// ════════════════════════════════════════════════════════════════
+// AFGELEIDE TYPES — CSV Import
+// ════════════════════════════════════════════════════════════════
+/** CSV Import State — afgeleid uit schema */
+export type CsvImportState = z.infer<typeof CsvImportSchema>;
+
+/** CSV Analysis Result — afgeleid uit schema */
+export type CsvAnalysisResult = z.infer<typeof CsvAnalysisResultSchema>;
 
 // ════════════════════════════════════════════════════════════════
 // RUNTIME VALIDATION — voor dynamische veldvalidatie
