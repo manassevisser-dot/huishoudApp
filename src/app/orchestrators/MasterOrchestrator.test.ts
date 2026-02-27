@@ -1,753 +1,416 @@
-/**
- * @file_intent Comprehensive unit tests for MasterOrchestrator - the central hub and facade for all application actions.
- * @repo_architecture App Layer - Orchestrator Tests. Tests the delegation, state management, and workflow coordination.
- * @term_definition
- *   - Render-Ready VM: Data transformed from domain ViewModels into a format directly usable by UI (with resolved labels, visibility flags, onChange handlers)
- *   - DomainCluster: Collection of business logic orchestrators (data, business, validation, visibility, value, research)
- *   - AppCluster: Collection of application-layer orchestrators (ui, navigation, theme)
- */
+// src/app/orchestrators/__tests__/MasterOrchestrator.test.ts
 
-import { describe, it, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import type { FormState } from '@core/types/core';
-import type { ExpenseItem } from '@core/types/core';
 import { MasterOrchestrator } from './MasterOrchestrator';
 import type { FormStateOrchestrator } from './FormStateOrchestrator';
-import type { IBusinessOrchestrator } from './interfaces/IBusinessOrchestrator';
-import type { IValidationOrchestrator, SectionValidationResult } from './interfaces/IValidationOrchestrator';
-import type { IUIOrchestrator } from './interfaces/IUIOrchestrator';
+import type { DataManager } from './managers/DataManager';
+import type { ResearchOrchestrator } from './ResearchOrchestrator';
+import type { UIOrchestrator } from './UIOrchestrator';
 import type { INavigationOrchestrator } from './interfaces/INavigationOrchestrator';
 import type { IThemeOrchestrator } from './interfaces/IThemeOrchestrator';
-import type { ResearchOrchestrator, MasterProcessResult } from './ResearchOrchestrator';
+import type { IBusinessOrchestrator } from './interfaces/IBusinessOrchestrator';
+import type { IValidationOrchestrator } from './interfaces/IValidationOrchestrator';
+import type { IValueOrchestrator } from './interfaces/IValueOrchestrator';
+import { BusinessManager } from './managers/BusinessManager';
+import { ValidationOrchestrator } from './ValidationOrchestrator';
+import { DailyTransactionWorkflow } from './../workflows/DailyTransactionWorkflow';
+import type { CsvUploadParams } from './../types/MasterOrchestratorAPI';
+import type { RenderScreenVM } from './types/render.types';
 
-// ═══════════════════════════════════════════════════════════════════
-// MOCKS - External Dependencies (adapters)
-// ═══════════════════════════════════════════════════════════════════
+// Mocks
+jest.mock('./managers/BusinessManager');
+jest.mock('./ValidationOrchestrator');
+jest.mock('./../workflows/DailyTransactionWorkflow');
 
-jest.mock('@adapters/validation/validateAtBoundary');
-jest.mock('@adapters/audit/AuditLoggerAdapter');
-jest.mock('@domain/rules/calculateRules');
-jest.mock('@domain/registry/EntryRegistry');
-jest.mock('@domain/constants/labelResolver');
-
-import { validateAtBoundary } from '@adapters/validation/validateAtBoundary';
-import { logger } from '@adapters/audit/AuditLoggerAdapter';
-import { computePhoenixSummary } from '@domain/rules/calculateRules';
-import { EntryRegistry } from '@domain/registry/EntryRegistry';
-import { labelFromToken } from '@domain/constants/labelResolver';
-
-// ═══════════════════════════════════════════════════════════════════
-// TEST FIXTURES & BUILDERS
-// ═══════════════════════════════════════════════════════════════════
-
-const ISO_NOW = '2026-02-23T10:00:00Z';
-
-const createTestFormState = (): FormState => ({
-  schemaVersion: '1.0',
-  activeStep: 'setup',
-  currentScreenId: 'SCREEN_TEST',
-  isValid: true,
-  data: {
-    setup: {
-      aantalMensen: 1,
-      aantalVolwassen: 1,
-      autoCount: 'Nee' as const,
-      heeftHuisdieren: false,
-      woningType: 'Huur' as const,
-    },
-    household: {
-      members: [],
-      huurtoeslag: 0,
-      zorgtoeslag: 0,
-    },
-    finance: {
-      income: { items: [] },
-      expenses: {
-        items: [],
-        living_costs: 0,
-        energy_costs: 0,
-        insurance_total: 0,
-      },
-    },
-    latestTransaction: {
-      latestTransactionDate: '2026-02-23',
-      latestTransactionAmount: 0,
-      latestTransactionCategory: null,
-      latestTransactionDescription: '',
-      latestPaymentMethod: 'pin',
-    },
-  } as any, // Extended with dynamic properties via [key: string]: unknown
-  meta: { lastModified: ISO_NOW, version: 1 },
-});
-
-// Mock builders for DomainCluster
-const createMockFormStateOrchestrator = (): Partial<FormStateOrchestrator> => ({
-  getState: jest.fn().mockReturnValue(createTestFormState()),
-  dispatch: jest.fn(),
-  getValue: jest.fn((fieldId: string) => null),
-  updateField: jest.fn(),
-});
-
-const createMockBusinessOrchestrator = (): Partial<IBusinessOrchestrator> => ({
-  prepareFinancialViewModel: jest.fn().mockReturnValue({
-    totalIncomeDisplay: '€0',
-    totalExpensesDisplay: '€0',
-    netDisplay: '€0',
-  }),
-});
-
-const createMockValidationOrchestrator = (): Partial<IValidationOrchestrator> => ({
-  validateSection: jest.fn().mockReturnValue({ isValid: true, errors: [] } as SectionValidationResult),
-});
-
-const createMockVisibilityEvaluator = () => ({
-  evaluate: jest.fn().mockReturnValue(true),
-});
-
-const createMockValueOrchestrator = () => ({
-  getValueViewModel: jest.fn(),
-});
-
-const createMockResearchOrchestrator = (): Partial<ResearchOrchestrator> => ({
-  processAllData: jest.fn().mockReturnValue({
-    local: {
-      finance: {
-        transactions: [],
-        hasMissingCosts: false,
-        summary: { isDiscrepancy: false },
-      },
-    },
-    research: {},
-  } as MasterProcessResult),
-});
-
-const createMockDataManager = () => ({
-  processCsvImport: jest.fn().mockReturnValue({
-    status: 'success' as const,
-    transactions: [],
-  }),
-});
-
-const createMockUIOrchestrator = (): Partial<IUIOrchestrator> => ({
-  buildScreen: jest.fn().mockReturnValue({
-    screenId: 'SCREEN_TEST',
-    titleToken: 'TITLE_TEST',
-    type: 'form',
-    sections: [],
-    navigation: { next: undefined, previous: undefined },
-    style: {},
-  }),
-});
-
-const createMockNavigationOrchestrator = (): Partial<INavigationOrchestrator> => ({
-  navigateBack: jest.fn(),
-  navigateNext: jest.fn(),
-  goToDashboard: jest.fn(),
-});
-
-const createMockThemeOrchestrator = (): Partial<IThemeOrchestrator> => ({
-  getTheme: jest.fn(),
-});
-
-// ═══════════════════════════════════════════════════════════════════
-// TEST DESCRIBE BLOCKS
-// ═══════════════════════════════════════════════════════════════════
+// Interface voor visibility evaluator (niet geëxporteerd)
+interface IVisibilityEvaluator {
+  evaluate(ruleName: string, memberId?: string): boolean;
+}
 
 describe('MasterOrchestrator', () => {
-  let master: MasterOrchestrator;
-  let mockFso: Partial<FormStateOrchestrator>;
-  let mockBusiness: Partial<IBusinessOrchestrator>;
-  let mockValidation: Partial<IValidationOrchestrator>;
-  let mockVisibility: ReturnType<typeof createMockVisibilityEvaluator>;
-  let mockValue: ReturnType<typeof createMockValueOrchestrator>;
-  let mockResearch: Partial<ResearchOrchestrator>;
-  let mockDataManager: ReturnType<typeof createMockDataManager>;
-  let mockUI: Partial<IUIOrchestrator>;
-  let mockNavigation: Partial<INavigationOrchestrator>;
-  let mockTheme: Partial<IThemeOrchestrator>;
+  // Mocks
+  let mockFSO: jest.Mocked<FormStateOrchestrator>;
+  let mockDataManager: jest.Mocked<DataManager>;
+  let mockResearch: jest.Mocked<ResearchOrchestrator>;
+  let mockBusiness: jest.Mocked<BusinessManager>;
+  let mockValidation: jest.Mocked<ValidationOrchestrator>;
+  let mockVisibility: jest.Mocked<IVisibilityEvaluator>;
+  let mockValue: jest.Mocked<IValueOrchestrator>;
+  let mockUI: jest.Mocked<UIOrchestrator>;
+  let mockNavigation: jest.Mocked<INavigationOrchestrator>;
+  let mockTheme: jest.Mocked<IThemeOrchestrator>;
+  let mockDomain: any;
+  let mockApp: any;
+  let orchestrator: MasterOrchestrator;
 
   beforeEach(() => {
-    // Reset all mocks
+    // Reset alle mocks
     jest.clearAllMocks();
 
-    // Create fresh mocks for each test
-    mockFso = createMockFormStateOrchestrator();
-    mockBusiness = createMockBusinessOrchestrator();
-    mockValidation = createMockValidationOrchestrator();
-    mockVisibility = createMockVisibilityEvaluator();
-    mockValue = createMockValueOrchestrator();
-    mockResearch = createMockResearchOrchestrator();
-    mockDataManager = createMockDataManager();
-    mockUI = createMockUIOrchestrator();
-    mockNavigation = createMockNavigationOrchestrator();
-    mockTheme = createMockThemeOrchestrator();
+    // Maak alle mocks aan
+    mockFSO = {
+      dispatch: jest.fn(),
+    } as any;
 
-    // Mock external adapters
-    (labelFromToken as jest.Mock).mockImplementation((token: string) => token.replace('_', ' '));
-    (computePhoenixSummary as jest.Mock).mockReturnValue({
-      totalIncomeCents: 0,
-      totalExpensesCents: 0,
-      netCents: 0,
-    });
-    (EntryRegistry.getDefinition as jest.Mock).mockReturnValue({
-      primitiveType: 'TEXT',
-      labelToken: 'LABEL_TEST',
-    });
+    mockDataManager = {
+      executeImportWorkflow: jest.fn().mockResolvedValue(undefined),
+    } as any;
 
-    // Create MasterOrchestrator with mocked dependencies
-    master = new MasterOrchestrator(
-      mockFso as FormStateOrchestrator,
-      {
-        data: mockDataManager as any,
-        business: mockBusiness as IBusinessOrchestrator,
-        validation: mockValidation as IValidationOrchestrator,
-        visibility: mockVisibility,
-        value: mockValue,
-        research: mockResearch as ResearchOrchestrator,
-      },
-      {
-        ui: mockUI as IUIOrchestrator,
-        navigation: mockNavigation as INavigationOrchestrator,
-        theme: mockTheme as IThemeOrchestrator,
-      },
-    );
+    mockResearch = {} as any;
+
+    mockBusiness = {
+      recompute: jest.fn(),
+    } as any;
+    (BusinessManager as jest.Mock).mockImplementation(() => mockBusiness);
+
+    mockValidation = {
+      updateAndValidate: jest.fn(),
+    } as any;
+    (ValidationOrchestrator as jest.Mock).mockImplementation(() => mockValidation);
+
+    mockVisibility = {
+      evaluate: jest.fn().mockReturnValue(true),
+    };
+
+    mockValue = {} as any;
+
+    mockUI = {
+      buildRenderScreen: jest.fn(),
+      isVisible: jest.fn().mockReturnValue(true),
+    } as any;
+
+    mockNavigation = {
+      getCurrentScreenId: jest.fn(),
+      canNavigateNext: jest.fn(),
+      navigateNext: jest.fn(),
+      navigateBack: jest.fn(),
+      startWizard: jest.fn(),
+      goToDashboard: jest.fn(),
+      goToOptions: jest.fn(),
+      goToSettings: jest.fn(),
+      goToCsvUpload: jest.fn(),
+      goToCsvAnalysis: jest.fn(),
+      goToReset: jest.fn(),
+      goBack: jest.fn(),
+      goToUndo: jest.fn(),
+    } as any;
+
+    mockTheme = {} as any;
+
+    mockDomain = {
+      data: mockDataManager,
+      business: mockBusiness,
+      validation: mockValidation,
+      visibility: mockVisibility,
+      value: mockValue,
+      research: mockResearch,
+    };
+
+    mockApp = {
+      ui: mockUI,
+      navigation: mockNavigation,
+      theme: mockTheme,
+    };
+
+    // Maak de orchestrator aan
+    orchestrator = new MasterOrchestrator(mockFSO, mockDomain, mockApp);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
+  // =========================================================================
+  // CONSTRUCTOR TESTS
+  // =========================================================================
 
-  // ═══════════════════════════════════════════════════════════════
-  // RENDERING & SCREEN BUILDING
-  // ═══════════════════════════════════════════════════════════════
-
-  describe('Rendering & Screen Building', () => {
-    it('buildRenderScreen() should call ui.buildScreen() with screenId and transform result', () => {
-      // Arrange
-      const screenId = 'TEST_SCREEN_ID';
-
-      // Act
-      const result = master.buildRenderScreen(screenId);
-
-      // Assert
-      expect(mockUI.buildScreen).toHaveBeenCalledWith(screenId);
-      expect(result).toHaveProperty('screenId');
-      expect(result).toHaveProperty('title');
-      expect(result).toHaveProperty('sections');
+  describe('constructor', () => {
+    it('should expose app properties', () => {
+      expect(orchestrator.theme).toBe(mockTheme);
+      expect(orchestrator.navigation).toBe(mockNavigation);
+      expect(orchestrator.ui).toBe(mockUI);
     });
 
-    it('buildRenderScreen() should resolve label tokens to readable text', () => {
-      // Arrange
-      (labelFromToken as jest.Mock).mockReturnValue('Test Title');
-
-      // Act
-      const result = master.buildRenderScreen('TEST_SCREEN');
-
-      // Assert
-      expect(labelFromToken).toHaveBeenCalled();
-      expect(result.title).toBe('Test Title');
+    it('should instantiate DailyTransactionWorkflow', () => {
+      expect(DailyTransactionWorkflow).toHaveBeenCalledTimes(1);
     });
 
-    it('buildRenderScreen() should handle screens with sections and entries', () => {
-      // Arrange
-      (mockUI.buildScreen as jest.Mock).mockReturnValue({
-        screenId: 'COMPLEX_SCREEN',
-        titleToken: 'TITLE_COMPLEX',
-        type: 'form',
-        sections: [
-          {
-            sectionId: 'SEC_1',
-            titleToken: 'SECTION_TITLE',
-            layout: 'card',
-            children: [
-              {
-                entryId: 'ENTRY_1',
-                labelToken: 'LABEL_ENTRY',
-                child: { primitiveType: 'TEXT' },
-              },
-            ],
-          },
-        ],
-        navigation: {},
-      });
+    it('should use passed-in business and validation dependencies', () => {
+      expect(BusinessManager).toHaveBeenCalledTimes(0);
+      expect(ValidationOrchestrator).toHaveBeenCalledTimes(0);
 
-      // Act
-      const result = master.buildRenderScreen('COMPLEX_SCREEN');
-
-      // Assert
-      expect(result.sections).toHaveLength(1);
-      expect(result.sections[0].sectionId).toBe('SEC_1');
+      orchestrator.updateField('x', 1);
+      expect(mockValidation.updateAndValidate).toHaveBeenCalledWith('x', 1);
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════
-  // NAVIGATION & VALIDATION
-  // ═══════════════════════════════════════════════════════════════
+  // =========================================================================
+  // buildRenderScreen
+  // =========================================================================
 
-  describe('Navigation & Validation', () => {
-    it('isVisible() should delegate to visibility evaluator', () => {
-      // Arrange
-      (mockVisibility.evaluate as jest.Mock).mockReturnValue(true);
+  describe('buildRenderScreen', () => {
+    it('should delegate to UIOrchestrator.buildRenderScreen with context', () => {
+      const screenId = 'dashboard';
+      const expectedResult: RenderScreenVM = {
+        screenId: 'dashboard',
+        title: 'Dashboard',
+        type: 'wizard',
+        navigation: { next: 'next', previous: 'prev' },
+        sections: [],
+      };
+      mockUI.buildRenderScreen.mockReturnValue(expectedResult);
 
-      // Act
-      const result = master.isVisible('RULE_TEST', 'member_1');
+      const result = orchestrator.buildRenderScreen(screenId);
 
-      // Assert
-      expect(mockVisibility.evaluate).toHaveBeenCalledWith('RULE_TEST', 'member_1');
+      expect(mockUI.buildRenderScreen).toHaveBeenCalledTimes(1);
+      expect(mockUI.buildRenderScreen).toHaveBeenCalledWith(
+        screenId,
+        expect.objectContaining({
+          fso: mockFSO,
+          onFieldChange: expect.any(Function),
+          onNavigate: expect.any(Function),
+          onCommand: expect.any(Function)
+        })
+      );
+      expect(result).toBe(expectedResult);
+    });
+
+    it('should pass updateField as onFieldChange callback', () => {
+      const screenId = 'dashboard';
+      const mockCallback = jest.fn();
+      
+      orchestrator.updateField = mockCallback;
+      orchestrator.buildRenderScreen(screenId);
+
+      const [, context] = mockUI.buildRenderScreen.mock.calls[0] as [string, any];
+      context.onFieldChange('field123', 'new value');
+      
+      expect(mockCallback).toHaveBeenCalledWith('field123', 'new value');
+    });
+  });
+
+  // =========================================================================
+  // isVisible
+  // =========================================================================
+
+  describe('isVisible', () => {
+    it('should delegate to UIOrchestrator.isVisible', () => {
+      const ruleName = 'test-rule';
+      const memberId = 'member-123';
+      mockUI.isVisible.mockReturnValue(false);
+
+      const result = orchestrator.isVisible(ruleName, memberId);
+
+      expect(mockUI.isVisible).toHaveBeenCalledTimes(1);
+      expect(mockUI.isVisible).toHaveBeenCalledWith(ruleName, memberId);
+      expect(result).toBe(false);
+    });
+
+    it('should work without memberId', () => {
+      const ruleName = 'test-rule';
+      mockUI.isVisible.mockReturnValue(true);
+
+      const result = orchestrator.isVisible(ruleName);
+
+      expect(mockUI.isVisible).toHaveBeenCalledWith(ruleName, undefined);
+      expect(result).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // updateField
+  // =========================================================================
+
+  describe('updateField', () => {
+    it('should delegate to ValidationOrchestrator.updateAndValidate', () => {
+      const fieldId = 'field-123';
+      const value = 'new value';
+
+      orchestrator.updateField(fieldId, value);
+
+      expect(mockValidation.updateAndValidate).toHaveBeenCalledTimes(1);
+      expect(mockValidation.updateAndValidate).toHaveBeenCalledWith(fieldId, value);
+    });
+  });
+
+  // =========================================================================
+  // NAVIGATION METHODS
+  // =========================================================================
+
+  describe('onNavigateBack', () => {
+    it('should delegate to NavigationOrchestrator.navigateBack', () => {
+      orchestrator.onNavigateBack();
+      expect(mockNavigation.navigateBack).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('onNavigateNext', () => {
+    it('should delegate to NavigationOrchestrator.navigateNext', () => {
+      orchestrator.onNavigateNext();
+      expect(mockNavigation.navigateNext).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('canNavigateNext', () => {
+    it('should delegate to NavigationOrchestrator.canNavigateNext', () => {
+      mockNavigation.canNavigateNext.mockReturnValue(false);
+      const sectionId = 'section-123';
+
+      const result = orchestrator.canNavigateNext(sectionId);
+
+      expect(mockNavigation.canNavigateNext).toHaveBeenCalledTimes(1);
+      expect(mockNavigation.canNavigateNext).toHaveBeenCalledWith();
+      expect(result).toBe(false);
+    });
+  });
+
+  // =========================================================================
+  // handleCsvImport
+  // =========================================================================
+
+  describe('handleCsvImport', () => {
+    it('should delegate to DataManager.executeImportWorkflow', async () => {
+      const params: CsvUploadParams = {
+        csvText: 'date,amount,description\n2024-01-01,42.50,Test',
+        fileName: 'test.csv',
+        bank: 'ABN AMRO',
+      };
+
+      await orchestrator.handleCsvImport(params);
+
+      expect(mockDataManager.executeImportWorkflow).toHaveBeenCalledTimes(1);
+      expect(mockDataManager.executeImportWorkflow).toHaveBeenCalledWith(
+        params,
+        {
+          fso: mockFSO,
+          research: mockResearch,
+          business: mockBusiness,
+        }
+      );
+    });
+
+    it('should work without optional bank field', async () => {
+      const params: CsvUploadParams = {
+        csvText: 'date,amount,description\n2024-01-01,42.50,Test',
+        fileName: 'test.csv',
+      };
+
+      await orchestrator.handleCsvImport(params);
+
+      expect(mockDataManager.executeImportWorkflow).toHaveBeenCalledWith(
+        params,
+        {
+          fso: mockFSO,
+          research: mockResearch,
+          business: mockBusiness,
+        }
+      );
+    });
+
+    it('should propagate errors from DataManager', async () => {
+      const params: CsvUploadParams = {
+        csvText: 'invalid',
+        fileName: 'test.csv',
+      };
+      const expectedError = new Error('Import failed');
+      mockDataManager.executeImportWorkflow.mockRejectedValue(expectedError);
+
+      await expect(orchestrator.handleCsvImport(params)).rejects.toThrow(expectedError);
+    });
+  });
+
+  // =========================================================================
+  // saveDailyTransaction
+  // =========================================================================
+
+  describe('saveDailyTransaction', () => {
+    it('should delegate to DailyTransactionWorkflow.execute', () => {
+      const mockDailyExecute = jest.fn().mockReturnValue(true);
+      (DailyTransactionWorkflow as jest.Mock).mockImplementation(() => ({
+        execute: mockDailyExecute,
+      }));
+
+      // Nieuwe orchestrator met de gemockte workflow
+      const newOrchestrator = new MasterOrchestrator(mockFSO, mockDomain, mockApp);
+
+      const result = newOrchestrator.saveDailyTransaction();
+
+      expect(mockDailyExecute).toHaveBeenCalledTimes(1);
+      expect(mockDailyExecute).toHaveBeenCalledWith(mockFSO, mockBusiness);
       expect(result).toBe(true);
     });
 
-    it('canNavigateNext() should validate section and return isValid flag', () => {
-      // Arrange
-      (mockValidation.validateSection as jest.Mock).mockReturnValue({ isValid: true });
+    it('should return false when workflow returns false', () => {
+      const mockDailyExecute = jest.fn().mockReturnValue(false);
+      (DailyTransactionWorkflow as jest.Mock).mockImplementation(() => ({
+        execute: mockDailyExecute,
+      }));
 
-      // Act
-      const result = master.canNavigateNext('SECTION_ID');
+      const newOrchestrator = new MasterOrchestrator(mockFSO, mockDomain, mockApp);
 
-      // Assert
-      expect(mockValidation.validateSection).toHaveBeenCalledWith('SECTION_ID', expect.any(Object));
-      expect(result).toBe(true);
-    });
+      const result = newOrchestrator.saveDailyTransaction();
 
-    it('canNavigateNext() should return false when section validation fails', () => {
-      // Arrange
-      (mockValidation.validateSection as jest.Mock).mockReturnValue({ isValid: false, errors: ['Field required'] });
-
-      // Act
-      const result = master.canNavigateNext('SECTION_ID');
-
-      // Assert
       expect(result).toBe(false);
-    });
-
-    it('onNavigateBack() should delegate to navigation orchestrator', () => {
-      // Act
-      master.onNavigateBack();
-
-      // Assert
-      expect(mockNavigation.navigateBack).toHaveBeenCalled();
-    });
-
-    it('onNavigateNext() should delegate to navigation orchestrator', () => {
-      // Act
-      master.onNavigateNext();
-
-      // Assert
-      expect(mockNavigation.navigateNext).toHaveBeenCalled();
     });
   });
 
-  // ═══════════════════════════════════════════════════════════════
-  // STATE MANAGEMENT (updateField)
-  // ═══════════════════════════════════════════════════════════════
+  // =========================================================================
+  // PRIVATE METHODS (indirect getest via public methods)
+  // =========================================================================
 
-  describe('State Management (updateField)', () => {
-    it('updateField() should validate input at boundary', () => {
-      // Arrange
-      (validateAtBoundary as jest.Mock).mockReturnValue({ success: true, data: 123 });
-
-      // Act
-      master.updateField('testField', 123);
-
-      // Assert
-      expect(validateAtBoundary).toHaveBeenCalledWith('testField', 123);
-    });
-
-    it('updateField() should call fso.updateField() on validation success', () => {
-      // Arrange
-      (validateAtBoundary as jest.Mock).mockReturnValue({ success: true, data: 'valid_value' });
-
-      // Act
-      master.updateField('testField', 'valid_value');
-
-      // Assert
-      expect(mockFso.updateField).toHaveBeenCalledWith('testField', 'valid_value');
-    });
-
-    it('updateField() should recompute business state after successful update', () => {
-      // Arrange
-      (validateAtBoundary as jest.Mock).mockReturnValue({ success: true, data: 100 });
-
-      // Act
-      master.updateField('salary', 100);
-
-      // Assert
-      expect(mockBusiness.prepareFinancialViewModel).toHaveBeenCalled();
-      expect(mockFso.dispatch).toHaveBeenCalled();
-    });
-
-    it('updateField() should log warning on validation failure and NOT update state', () => {
-      // Arrange
-      const validationError = { success: false, error: 'Invalid value' };
-      (validateAtBoundary as jest.Mock).mockReturnValue(validationError);
-
-      // Act
-      master.updateField('testField', 'invalid');
-
-      // Assert
-      expect(logger.warn).toHaveBeenCalled();
-      expect(mockFso.updateField).not.toHaveBeenCalled();
-    });
-
-    it('updateField() should dispatch UPDATE_VIEWMODEL action', () => {
-      // Arrange
-      (validateAtBoundary as jest.Mock).mockReturnValue({ success: true, data: 50 });
-
-      // Act
-      master.updateField('amount', 50);
-
-      // Assert
-      expect(mockFso.dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'UPDATE_VIEWMODEL',
-          payload: expect.objectContaining({ financialSummary: expect.any(Object) }),
-        }),
-      );
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════════
-  // CSV IMPORT WORKFLOW
-  // ═══════════════════════════════════════════════════════════════
-
-  describe('CSV Import Workflow (handleCsvImport)', () => {
-    it('handleCsvImport() should parse CSV via DataManager', async () => {
-      // Arrange
-      const csvText = 'a,b,c\n1,2,3';
-      (mockDataManager.processCsvImport as jest.Mock).mockReturnValue({
-        status: 'success',
-        transactions: [],
+  describe('private navigation methods', () => {
+    it('should navigate to different screens via navigateTo', () => {
+      // Test via buildRenderScreen die onNavigate callback gebruikt
+      mockUI.buildRenderScreen.mockImplementation((id, context: any) => {
+        context.onNavigate('SETTINGS');
+        context.onNavigate('CSV_UPLOAD');
+        context.onNavigate('RESET');
+        context.onNavigate('OPTIONS');
+        context.onNavigate('DASHBOARD');
+        context.onNavigate('UNDO');
+        return {} as any;
       });
 
-      // Act
-      await master.handleCsvImport(csvText);
+      orchestrator.buildRenderScreen('test');
 
-      // Assert
-      expect(mockDataManager.processCsvImport).toHaveBeenCalledWith(
-        expect.objectContaining({ csvText }),
-      );
+      expect(mockNavigation.goToSettings).toHaveBeenCalledTimes(1);
+      expect(mockNavigation.goToCsvUpload).toHaveBeenCalledTimes(1);
+      expect(mockNavigation.goToReset).toHaveBeenCalledTimes(1);
+      expect(mockNavigation.goToOptions).toHaveBeenCalledTimes(1);
+      expect(mockNavigation.goToDashboard).toHaveBeenCalledTimes(1);
+      expect(mockNavigation.goToUndo).toHaveBeenCalledTimes(1);
     });
 
-    it('handleCsvImport() should process transactions through ResearchOrchestrator', async () => {
-      // Arrange
-      const mockTransactions = [{ amount: 100, date: '2026-02-23' }];
-      (mockDataManager.processCsvImport as jest.Mock).mockReturnValue({
-        status: 'success',
-        transactions: mockTransactions,
+    it('should dispatch commands via dispatchCommand', () => {
+      // Test via buildRenderScreen die onCommand callback gebruikt
+      mockUI.buildRenderScreen.mockImplementation((id, context: any) => {
+        context.onCommand('UNDO');
+        context.onCommand('REDO');
+        context.onCommand('CLEAR_ALL');
+        return {} as any;
       });
 
-      // Act
-      await master.handleCsvImport('csv_data');
+      orchestrator.buildRenderScreen('test');
 
-      // Assert
-      expect(mockResearch.processAllData).toHaveBeenCalledWith(
-        expect.any(Array),
-        mockTransactions,
-        expect.any(Object),
-      );
+      expect(mockFSO.dispatch).toHaveBeenCalledTimes(3);
+      expect(mockFSO.dispatch).toHaveBeenCalledWith({ type: 'UNDO_TRANSACTION' });
+      expect(mockFSO.dispatch).toHaveBeenCalledWith({ type: 'REDO_TRANSACTION' });
+      expect(mockFSO.dispatch).toHaveBeenCalledWith({ type: 'CLEAR_TRANSACTIONS' });
     });
 
-    it('handleCsvImport() should dispatch finance data to state on success', async () => {
-      // Arrange
-      (mockDataManager.processCsvImport as jest.Mock).mockReturnValue({
-        status: 'success',
-        transactions: [{ amount: 100 }],
+    it('should ignore unknown navigation targets', () => {
+      mockUI.buildRenderScreen.mockImplementation((id, context: any) => {
+        context.onNavigate('UNKNOWN');
+        return {} as any;
       });
 
-      // Act
-      await master.handleCsvImport('csv_data');
-
-      // Assert
-      expect(mockFso.dispatch).toHaveBeenCalled();
+      orchestrator.buildRenderScreen('test');
+      // Geen errors, niets geroepen
     });
 
-    it('handleCsvImport() should log warning on parse error', async () => {
-      // Arrange
-      (mockDataManager.processCsvImport as jest.Mock).mockReturnValue({
-        status: 'error',
-        errorMessage: 'Invalid CSV format',
+    it('should ignore unknown commands', () => {
+      mockUI.buildRenderScreen.mockImplementation((id, context: any) => {
+        context.onCommand('UNKNOWN');
+        return {} as any;
       });
 
-      // Act
-      await master.handleCsvImport('invalid_csv');
-
-      // Assert
-      expect(logger.error).toHaveBeenCalled();
-    });
-
-    it('handleCsvImport() should log warning on empty CSV', async () => {
-      // Arrange
-      (mockDataManager.processCsvImport as jest.Mock).mockReturnValue({
-        status: 'empty',
-      });
-
-      // Act
-      await master.handleCsvImport('');
-
-      // Assert
-      expect(logger.warn).toHaveBeenCalled();
-    });
-
-    it('handleCsvImport() should log discrepancy if detected', async () => {
-      // Arrange
-      (mockDataManager.processCsvImport as jest.Mock).mockReturnValue({
-        status: 'success',
-        transactions: [],
-      });
-      (mockResearch.processAllData as jest.Mock).mockReturnValue({
-        local: {
-          finance: {
-            transactions: [],
-            summary: { isDiscrepancy: true, details: 'Mismatch' },
-          },
-        },
-      });
-
-      // Act
-      await master.handleCsvImport('csv_data');
-
-      // Assert
-      expect(logger.warn).toHaveBeenCalledWith('csv_IMPORT_DISCREPANCY_FOUND', expect.any(Object));
-    });
-
-    it('handleCsvImport() should recompute business state after import', async () => {
-      // Arrange
-      (mockDataManager.processCsvImport as jest.Mock).mockReturnValue({
-        status: 'success',
-        transactions: [],
-      });
-
-      // Act
-      await master.handleCsvImport('csv_data');
-
-      // Assert
-      expect(mockBusiness.prepareFinancialViewModel).toHaveBeenCalled();
-    });
-  });
-
-  // ═══════════════════════════════════════════════════════════════
-  // DAILY TRANSACTION WORKFLOW
-  // ═══════════════════════════════════════════════════════════════
-
-  describe('Daily Transaction Workflow (saveDailyTransaction)', () => {
-    it('saveDailyTransaction() should return false if form not initialized', () => {
-      // Arrange
-      (mockFso.getState as jest.Mock).mockReturnValue({
-        ...createTestFormState(),
-        data: { ...createTestFormState().data, latestTransaction: null },
-      });
-
-      // Act
-      const result = master.saveDailyTransaction();
-
-      // Assert
-      expect(result).toBe(false);
-      expect(logger.warn).toHaveBeenCalled();
-    });
-
-    it('saveDailyTransaction() should return false if amount is invalid (zero or negative)', () => {
-      // Arrange
-      const state = createTestFormState();
-      (mockFso.getState as jest.Mock).mockReturnValue({
-        ...state,
-        data: {
-          ...state.data,
-          latestTransaction: { ...state.data.latestTransaction, latestTransactionAmount: 0 },
-        },
-      });
-
-      // Act
-      const result = master.saveDailyTransaction();
-
-      // Assert
-      expect(result).toBe(false);
-      expect(logger.warn).toHaveBeenCalledWith('transaction_INVALID_AMOUNT', expect.any(Object));
-    });
-
-    it('saveDailyTransaction() should return false if category is missing', () => {
-      // Arrange
-      const state = createTestFormState();
-      (mockFso.getState as jest.Mock).mockReturnValue({
-        ...state,
-        data: {
-          ...state.data,
-          latestTransaction: {
-            ...state.data.latestTransaction,
-            latestTransactionAmount: 50,
-            latestTransactionCategory: null,
-          },
-        },
-      });
-
-      // Act
-      const result = master.saveDailyTransaction();
-
-      // Assert
-      expect(result).toBe(false);
-      expect(logger.warn).toHaveBeenCalledWith('transaction_CATEGORY_REQUIRED');
-    });
-
-    it('saveDailyTransaction() should save valid transaction to finance.expenses', () => {
-      // Arrange
-      const state = createTestFormState();
-      (mockFso.getState as jest.Mock).mockReturnValue({
-        ...state,
-        data: {
-          ...state.data,
-          latestTransaction: {
-            latestTransactionDate: '2026-02-23',
-            latestTransactionAmount: 25.50,
-            latestTransactionCategory: 'Groceries',
-            latestTransactionDescription: 'Weekly shopping',
-            latestPaymentMethod: 'card',
-          },
-        },
-      });
-
-      // Act
-      const result = master.saveDailyTransaction();
-
-      // Assert
-      expect(result).toBe(true);
-    });
-
-    it('saveDailyTransaction() should dispatch state update with new expense item', () => {
-      // Arrange
-      const state = createTestFormState();
-      (mockFso.getState as jest.Mock).mockReturnValue({
-        ...state,
-        data: {
-          ...state.data,
-          latestTransaction: {
-            latestTransactionDate: '2026-02-23',
-            latestTransactionAmount: 30,
-            latestTransactionCategory: 'Restaurants',
-            latestTransactionDescription: 'Dinner',
-            latestPaymentMethod: 'pin',
-          },
-        },
-      });
-
-      // Act
-      master.saveDailyTransaction();
-
-      // Assert
-      expect(mockFso.dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'UPDATE_DATA',
-          payload: expect.objectContaining({
-            finance: expect.any(Object),
-            latestTransaction: expect.any(Object),
-          }),
-        }),
-      );
-    });
-
-    it('saveDailyTransaction() should reset form after saving', () => {
-      // Arrange
-      const state = createTestFormState();
-      (mockFso.getState as jest.Mock).mockReturnValue({
-        ...state,
-        data: {
-          ...state.data,
-          latestTransaction: {
-            latestTransactionDate: '2026-02-23',
-            latestTransactionAmount: 15,
-            latestTransactionCategory: 'Coffee',
-            latestTransactionDescription: '',
-            latestPaymentMethod: 'card',
-          },
-        },
-      });
-
-      // Act
-      master.saveDailyTransaction();
-
-      // Assert
-      expect(mockFso.dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          payload: expect.objectContaining({
-            latestTransaction: {
-              latestTransactionDate: expect.any(String),
-              latestTransactionAmount: 0,
-              latestTransactionCategory: null,
-              latestTransactionDescription: '',
-              latestPaymentMethod: 'pin',
-            },
-          }),
-        }),
-      );
-    });
-
-    it('saveDailyTransaction() should use domain calculation for finance summary', () => {
-      // Arrange
-      const state = createTestFormState();
-      (mockFso.getState as jest.Mock).mockReturnValue({
-        ...state,
-        data: {
-          ...state.data,
-          latestTransaction: {
-            latestTransactionDate: '2026-02-23',
-            latestTransactionAmount: 45,
-            latestTransactionCategory: 'Transport',
-            latestTransactionDescription: 'Gas',
-            latestPaymentMethod: 'card',
-          },
-        },
-      });
-
-      // Act
-      master.saveDailyTransaction();
-
-      // Assert
-      expect(computePhoenixSummary).toHaveBeenCalled();
-    });
-
-    it('saveDailyTransaction() should recompute business state after save', () => {
-      // Arrange
-      const state = createTestFormState();
-      (mockFso.getState as jest.Mock).mockReturnValue({
-        ...state,
-        data: {
-          ...state.data,
-          latestTransaction: {
-            latestTransactionDate: '2026-02-23',
-            latestTransactionAmount: 20,
-            latestTransactionCategory: 'Utilities',
-            latestTransactionDescription: 'Electricity bill',
-            latestPaymentMethod: 'transfer',
-          },
-        },
-      });
-
-      // Act
-      master.saveDailyTransaction();
-
-      // Assert
-      expect(mockBusiness.prepareFinancialViewModel).toHaveBeenCalled();
-    });
-
-    it('saveDailyTransaction() should log success with expense fieldId', () => {
-      // Arrange
-      const state = createTestFormState();
-      (mockFso.getState as jest.Mock).mockReturnValue({
-        ...state,
-        data: {
-          ...state.data,
-          latestTransaction: {
-            latestTransactionDate: '2026-02-23',
-            latestTransactionAmount: 35,
-            latestTransactionCategory: 'Medical',
-            latestTransactionDescription: 'Pharmacy',
-            latestPaymentMethod: 'card',
-          },
-        },
-      });
-
-      // Act
-      master.saveDailyTransaction();
-
-      // Assert
-      expect(logger.info).toHaveBeenCalledWith('transaction_SAVED', expect.any(Object));
+      orchestrator.buildRenderScreen('test');
+      // Geen errors, niets geroepen
     });
   });
 });

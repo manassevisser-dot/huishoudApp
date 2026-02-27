@@ -70,7 +70,7 @@ describe('csvAdapter', () => {
       ];
       (parseRawCsv as jest.Mock).mockReturnValue(mockRows);
       (csvProcessor.prototype.processRow as jest.Mock).mockReturnValue({
-        amount: 10,
+        amountEuros: 10,
         description: 'Bakker',
         date: '2024-01-01',
         original: {},
@@ -82,7 +82,7 @@ describe('csvAdapter', () => {
       // Assert
       expect(parseRawCsv).toHaveBeenCalledWith(VALID_ING_CSV);
       expect(result).toHaveLength(2);
-      expect(result[0]).toHaveProperty('amount');
+      expect(result[0]).toHaveProperty('amountEuros');
       expect(result[0]).toHaveProperty('description');
       expect(result[0]).toHaveProperty('date');
     });
@@ -116,7 +116,7 @@ describe('csvAdapter', () => {
       let capturedKeys: any = null;
       processRowMock.mockImplementation((row, keys) => {
         capturedKeys = keys;
-        return { amount: 25, description: '', date: '2024-01-01', original: {} };
+        return { amountEuros: 25, description: '', date: '2024-01-01', original: {} };
       });
 
       // Act
@@ -133,7 +133,7 @@ describe('csvAdapter', () => {
       let capturedKeys: any = null;
       processRowMock.mockImplementation((row, keys) => {
       capturedKeys = keys;
-        return { amount: 10, description: '', date: '2024-01-01', original: {} };
+        return { amountEuros: 10, description: '', date: '2024-01-01', original: {} };
       });
 
       // Act
@@ -150,7 +150,7 @@ describe('csvAdapter', () => {
       let capturedKeys: any = null;
       processRowMock.mockImplementation((row, keys) => {
         capturedKeys = keys;
-        return { amount: 50, description: 'Payment', date: '', original: {} };
+        return { amountEuros: 50, description: 'Payment', date: '', original: {} };
       });
 
       // Act
@@ -167,7 +167,7 @@ describe('csvAdapter', () => {
       let capturedKeys: any = null;
       processRowMock.mockImplementation((row, keys) => {
         capturedKeys = keys;
-        return { amount: 0, description: '', date: '', original: {} };
+        return { amountEuros: 0, description: '', date: '', original: {} };
       });
 
       // Act
@@ -230,19 +230,19 @@ describe('csvAdapter', () => {
       // Arrange
       const mockRow = { Bedrag: '50' };
       (parseRawCsv as jest.Mock).mockReturnValue([mockRow]);
-      const procesedItem = {
+      const processedItem = {
         amount: 50,
         description: 'Test',
         date: '2024-01-01',
         original: { Bedrag: '50' },
       };
-      (csvProcessor.prototype.processRow as jest.Mock).mockReturnValue(procesedItem);
+      (csvProcessor.prototype.processRow as jest.Mock).mockReturnValue(processedItem);
 
       // Act
       const result = csvAdapter.mapToInternalModel(VALID_ING_CSV);
 
       // Assert
-      expect(result[0]).toEqual(procesedItem);
+      expect(result[0]).toEqual(processedItem);
       expect(result[0]).toHaveProperty('amount');
       expect(result[0]).toHaveProperty('description');
       expect(result[0]).toHaveProperty('date');
@@ -276,7 +276,7 @@ describe('csvAdapter', () => {
       const mockRow = { Bedrag: '75', Beschrijving: 'Expense' };
       (parseRawCsv as jest.Mock).mockReturnValue([mockRow]);
       const expectedItem: CsvItem = {
-        amount: 75,
+        amountEuros: 75,
         description: 'Expense',
         date: '',
         original: mockRow,
@@ -332,7 +332,7 @@ describe('csvAdapter', () => {
       let detectedAmount: string = '';
       processRowMock.mockImplementation((row, keys) => {
         detectedAmount = keys.amount;
-        return { amount: 0, description: '', date: '', original: {} };
+        return { amountEuros: 0, description: '', date: '', original: {} };
       });
 
       // Test BEDRAG variant
@@ -350,27 +350,43 @@ describe('csvAdapter', () => {
       expect(detectedAmount).toBe('BeDrAg');
     });
 
-    it('should handle multiple synonyms for amount column', () => {
-      // Arrange
-      const mockRows = [
-        { amount: '10' },
-        { transactie: '20' },
-      ];
-      let detectedAmountSynonym: string = '';
-      processRowMock.mockImplementation((row, keys) => {
-        detectedAmountSynonym = keys.amount;
-        return { amount: 0, description: '', date: '', original: {} };
-      });
-
-      // Test "amount" synonym
-      (parseRawCsv as jest.Mock).mockReturnValue([mockRows[0]]);
-      csvAdapter.mapToInternalModel(VALID_ING_CSV);
-      expect(detectedAmountSynonym).toBe('amount');
-
-      // Test "transactie" synonym
-      (parseRawCsv as jest.Mock).mockReturnValue([mockRows[1]]);
-      csvAdapter.mapToInternalModel(VALID_ING_CSV);
-      expect(detectedAmountSynonym).toBe('transactie');
+    describe('Column Detection - Edge Cases', () => {
+     it('should detect "amount" as amount column synonym', () => {
+    // Arrange
+    const mockRows = [{ amount: '10' }];
+    let detectedAmountSynonym: string = '';
+    
+    processRowMock.mockImplementationOnce((row, keys) => {
+      detectedAmountSynonym = keys.amount;
+      return { amountEuros: 0, description: '', date: '', original: {} };
     });
-  });
+    (parseRawCsv as jest.Mock).mockReturnValueOnce([mockRows[0]]);
+
+    // Act
+    csvAdapter.mapToInternalModel(VALID_ING_CSV);
+
+    // Assert
+    expect(detectedAmountSynonym).toBe('amount');
+    });
+
+   it('should NOT detect "transactie" as amount column synonym', () => {
+  // Arrange
+  const mockRows = [{ transactie: '20' }];
+  
+  // parseRawCsv returned DIRECT de array, niet een array in een array
+  (parseRawCsv as jest.Mock).mockReturnValue(mockRows);  // ← GEWOON mockRows, niet [mockRows]
+  
+  const processRowSpy = jest.spyOn(csvProcessor.prototype, 'processRow');
+  
+  // Act
+  const result = csvAdapter.mapToInternalModel(VALID_ING_CSV);
+
+  // Assert
+  expect(processRowSpy).toHaveBeenCalledWith(
+    mockRows[0],  // ← { transactie: '20' }
+    expect.objectContaining({ amount: '' })
+  );
+});
+});
+});
 });

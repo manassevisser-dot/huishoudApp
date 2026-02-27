@@ -1,39 +1,14 @@
 // src/app/orchestrators/types/csvUpload.types.ts
 /**
- * @file_intent Definieert de volledige type-keten voor de CSV-upload ACL, van ruw bankbestand tot analyse-resultaat.
- * @repo_architecture Mobile Industry (MI) - Type Definition Layer (CSV Domain).
- * @term_definition
- *   ACL (Anti-Corruption Layer) = De gecontroleerde grens tussen ruwe bankdata en het domeinmodel.
- *   De keten loopt in vijf lagen: RawCsvRow → AdapterCsvItem → ParsedCsvTransaction → CsvImportStateSlice → CsvAnalysisResult
- * @contract
- *   - Laag 1 (RawCsvRow/RawCsvItem): vóór de adapter, puur string, bank-afhankelijk
- *   - Laag 2 (AdapterCsvItem): ná csvAdapter.mapToInternalModel(), genormaliseerd, PII nog aanwezig
- *   - Laag 3 (ParsedCsvTransaction): ná ImportOrchestrator, PII gestript, ACL voltooid
- *   - Laag 4 (CsvImportStateSlice): wat in FormState.data.csvImport wordt opgeslagen
- *   - Laag 5 (CsvAnalysisResult): berekend resultaat in viewModels.csvAnalysis (nooit in data)
- * @acl_boundary
- *   ParsedCsvTransaction is de STRIKTE vervanging van research.CsvItem.
- *   Geen 'extends Record<string, unknown>' — alle velden zijn bekend en getypt.
- * @removed
- *   - BaseTransaction, IncomeItem, ExpenseItem, Transaction → conflict met core/types/core.ts
- *   - FinanceData, FinancePeriodOverview → horen niet in csv-grenslaag
- *   - ResearchResult, ResearchStatus, ResearchFinanceResult, ResearchFinanceSummary, ResearchWarning
- *     → duplicaten van MasterProcessResult uit ResearchOrchestrator
- *   - csvMember, csvSetupData → onnodige duplicaten van Member en SetupData uit core/types/core.ts
- *   - ImportStatus → bevatte Date-object (niet JSON-serialiseerbaar), vervangen door CsvImportStateSlice
- *   - isResearchCompleted → ResearchResult verwijderd
- * @added
- *   - DutchBank — alle Nederlandse consumentenbanken als union type
- *   - RawCsvRow — de flexibele Record<string,string> die parseRawCsv retourneert
- *   - AdapterCsvItem — expliciete alias voor de output van csvAdapter (was impliciet)
- *   - CsvOriginalMetadata — concreet type voor het 'original'-veld (was Record<string,unknown>)
- *   - ParsedCsvTransaction — strikte ACL-output, vervangt research.CsvItem
- *   - CsvImportStateSlice — state-shape voor FormState.data.csvImport
- *   - CsvAnalysisResult — resultaat van de vergelijkingsstap (viewModels, niet data)
- *   - CsvImportPeriod — gedetecteerde periode van de geüploade transacties
- *   - CsvImportWarning — hernoemd van ResearchWarning om domein-clash te vermijden
- *   - isAdapterCsvItem — type guard voor laag 2
- *   - isParsedCsvTransaction — type guard voor laag 3
+ * Volledige ACL-typeketen voor CSV-upload: van ruw bankbestand tot analyse-resultaat.
+ *
+ * @module app/orchestrators/types
+ * @see {@link ../README.md | Orchestrators — Types-submap}
+ *
+ * @remarks
+ * Vijf lagen: `RawCsvRow` → `AdapterCsvItem` → `ParsedCsvTransaction` → `CsvImportStateSlice` → `CsvAnalysisResult`.
+ * `ParsedCsvTransaction` is de ACL-grens: PII gestript, alle velden bekend en getypt.
+ * Datums zijn altijd ISO strings — geen `Date`-objecten (niet JSON-serialiseerbaar).
  */
 
 // ============================================================================
@@ -42,10 +17,10 @@
 
 /**
  * Nederlandse consumentenbanken waarvan CSV-exports worden ondersteund.
- * undefined = bank niet gedetecteerd of niet opgegeven.
+ * `undefined` = bank niet gedetecteerd of niet opgegeven.
  *
- * @note Elk bankformaat heeft eigen kolomnamen en separatoren.
- *   CsvParseOptions.bank kan als hint worden meegegeven voor betere kolomdetectie.
+ * @remarks Elk bankformaat heeft eigen kolomnamen en separatoren.
+ * Geef `CsvParseOptions.bank` mee als hint voor betere kolomdetectie.
  */
 export type DutchBank =
   | 'ING'
@@ -80,8 +55,8 @@ export type RawCsvRow = Record<string, string>;
  * Een typische Nederlandse bankexport-rij met bekende veldnamen.
  * Niet alle banken gebruiken deze exacte namen — vandaar de index signature.
  *
- * @note Controleer veldnamen met isRawCsvItem() alleen voor ING/Rabobank-formaat.
- *   Voor andere banken geldt RawCsvRow.
+ * @remarks Gebruik `isRawCsvItem()` alleen voor ING/Rabobank-formaat.
+ * Voor andere banken volstaat `RawCsvRow`.
  */
 export interface RawCsvItem {
   /** Datum in formaat DD-MM-YYYY of YYYY-MM-DD (bank-afhankelijk) */
@@ -111,12 +86,12 @@ export interface RawCsvItem {
 // ============================================================================
 
 /**
- * De output van csvAdapter.mapToInternalModel().
- * Kolomnamen zijn genormaliseerd naar Engels, bedrag is al een number.
- * PII is nog NIET gestript — dat gebeurt in ImportOrchestrator.
+ * Output van `csvAdapter.mapToInternalModel()`.
+ * Kolomnamen zijn genormaliseerd naar Engels, bedrag is al een `number`.
+ * PII is nog **niet** gestript — dat gebeurt in `ImportOrchestrator`.
  *
- * @acl_note Dit type spiegelt exact de CsvItem uit csvAdapter.ts.
- *   Hier als expliciete alias zodat de ACL-keten volledig getypt is.
+ * @remarks Spiegelt exact `CsvItem` uit `csvAdapter.ts`; expliciete alias
+ * zodat de ACL-keten volledig getypt is.
  */
 export interface AdapterCsvItem {
   /** Bedrag in euro's (negatief = uitgave, positief = inkomst) */
@@ -210,12 +185,12 @@ export interface CsvImportPeriod {
 }
 
 /**
- * De state-shape voor FormState.data.csvImport.
+ * State-shape voor `FormState.data.csvImport`.
  *
- * @important Alle datums zijn ISO strings — geen Date-objecten.
- *   Date is niet JSON-serialiseerbaar en crasht state-persistence.
- * @important Deze slice heeft zijn eigen sectie in FormState.data,
- *   gescheiden van finance.income/expenses (wizard-data).
+ * @remarks
+ * Alle datums zijn ISO strings — `Date`-objecten zijn niet JSON-serialiseerbaar
+ * en crashen state-persistence. Deze slice is gescheiden van
+ * `finance.income/expenses` (wizard-data).
  */
 export interface CsvImportStateSlice {
   /** Geparste en ACL-cleaned transacties */
@@ -245,11 +220,10 @@ export interface CsvImportStateSlice {
 // ============================================================================
 
 /**
- * Het resultaat van de vergelijkingsstap (reconcile csv vs. wizard-setup).
+ * Resultaat van de vergelijkingsstap (reconcile CSV vs. wizard-setup).
  *
- * @important Dit type hoort in viewModels, NIET in data.
- *   Het is een berekend resultaat, net als financialSummary.
- *   Bij een RESET_APP wordt dit gewist samen met viewModels.
+ * @remarks Hoort in `viewModels`, niet in `data` — het is een berekend
+ * resultaat dat bij `RESET_APP` wordt gewist samen met `viewModels`.
  */
 export interface CsvAnalysisResult {
   /** Of er een significante afwijking is tussen csv-inkomen en wizard-inkomen */

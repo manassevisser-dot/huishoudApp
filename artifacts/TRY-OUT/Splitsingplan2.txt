@@ -1,0 +1,252 @@
+Perfect — dan pakken we het plan dat ik eerder schetste, maar nu **specifiek afgestemd op jouw huidige situatie**, waarin:
+
+- de **ACL (Anti‑Corruption Layer)** nu in de **ImportOrchestrator** zit  
+- de **MasterOrchestrator** nog steeds te veel verantwoordelijkheden heeft  
+- de architectuur al richting “clusters” beweegt (domain, app, ui)
+
+Hier is een **concreet, uitvoerbaar opsplitsplan** dat precies past bij jouw codebase en de richting waarin je al aan het refactoren bent.
+
+---
+
+# 🧭 Doel van de opsplitsing
+De MasterOrchestrator moet een **façade** worden:
+
+- dun  
+- declaratief  
+- geen logica  
+- alleen orkestratie tussen clusters
+
+Alles wat nu in de Master zit, maar eigenlijk een *workflow*, *mapping*, *state‑mutatie* of *businesslogica* is, moet eruit.
+
+---
+
+# 🧩 Het uiteindelijke ontwerp (4 sub‑orchestrators + façade)
+
+```
+MasterOrchestrator
+│
+├── ScreenOrchestrator
+├── FieldOrchestrator
+├── ImportWorkflowOrchestrator   ← ACL zit hier al in ImportOrchestrator
+├── DailyTransactionOrchestrator
+└── BusinessStateOrchestrator
+```
+
+De Master wordt dan:
+
+```ts
+class MasterOrchestrator {
+  screen: ScreenOrchestrator
+  fields: FieldOrchestrator
+  importWorkflow: ImportWorkflowOrchestrator
+  daily: DailyTransactionOrchestrator
+  business: BusinessStateOrchestrator
+}
+```
+
+---
+
+# 🧱 Stap‑voor‑stap opsplitsplan
+
+## 1. **ScreenOrchestrator**  
+Verplaats ALLE UI‑mapping:
+
+- `buildRenderScreen`
+- `toRenderScreen`
+- `toRenderSection`
+- `toRenderEntry`
+- `evaluateVisibility`
+
+Waarom?
+
+- Dit is pure view‑mapping.
+- Geen businesslogica.
+- Geen state‑mutatie.
+- Perfect te testen.
+
+**Nieuwe klasse:**
+
+```ts
+class ScreenOrchestrator {
+  constructor(private ui, private fso, private visibility) {}
+
+  buildRenderScreen(screenId: string) { ... }
+}
+```
+
+Master:
+
+```ts
+return this.screen.buildRenderScreen(screenId);
+```
+
+---
+
+## 2. **FieldOrchestrator**  
+Verplaats:
+
+- `updateField`
+- `validateSection`
+- `canNavigateNext`
+- `onNavigateNext`
+- `onNavigateBack`
+
+Waarom?
+
+- Dit is boundary‑validatie + state‑mutatie.
+- Dit hoort niet in dezelfde klasse als CSV‑import of daily transactions.
+
+**Nieuwe klasse:**
+
+```ts
+class FieldOrchestrator {
+  updateField(fieldId, value) { ... }
+  validateSection(sectionId) { ... }
+}
+```
+
+Master:
+
+```ts
+this.fields.updateField(fieldId, value);
+```
+
+---
+
+## 3. **ImportWorkflowOrchestrator**  
+Dit is de belangrijkste workflow.  
+Je ACL zit nu in de **ImportOrchestrator**, dus deze orchestrator moet:
+
+- state ophalen
+- ImportOrchestrator aanroepen
+- ResearchOrchestrator aanroepen
+- dispatchen naar FSO
+- business state recomputen
+- logging doen
+
+Verplaats:
+
+- `handleCsvImport`
+- `dispatchImportData`
+- `logImportCompletion`
+
+**Nieuwe klasse:**
+
+```ts
+class ImportWorkflowOrchestrator {
+  constructor(private fso, private data, private research, private business) {}
+
+  async handleCsvImport(csvText: string) { ... }
+}
+```
+
+Master:
+
+```ts
+await this.importWorkflow.handleCsvImport(csvText);
+```
+
+---
+
+## 4. **DailyTransactionOrchestrator**
+Verplaats:
+
+- `saveDailyTransaction`
+- `buildExpenseItemForTransaction`
+- `persistTransactionAndReset`
+
+Waarom?
+
+- Dit is een compleet aparte use case.
+- Heeft niets te maken met UI‑rendering of CSV‑import.
+
+**Nieuwe klasse:**
+
+```ts
+class DailyTransactionOrchestrator {
+  saveDailyTransaction() { ... }
+}
+```
+
+Master:
+
+```ts
+this.daily.saveDailyTransaction();
+```
+
+---
+
+## 5. **BusinessStateOrchestrator**
+Verplaats:
+
+- `recomputeBusinessState`
+
+Waarom?
+
+- Wordt door meerdere workflows gebruikt
+- Hoort niet in de Master
+
+**Nieuwe klasse:**
+
+```ts
+class BusinessStateOrchestrator {
+  recompute(state) { ... }
+}
+```
+
+Master:
+
+```ts
+this.business.recompute(this.fso.getState());
+```
+
+---
+
+# 🧨 Hoe de Master er daarna uitziet
+
+```ts
+export class MasterOrchestrator {
+  constructor(
+    private readonly screen: ScreenOrchestrator,
+    private readonly fields: FieldOrchestrator,
+    private readonly importWorkflow: ImportWorkflowOrchestrator,
+    private readonly daily: DailyTransactionOrchestrator,
+    private readonly business: BusinessStateOrchestrator,
+  ) {}
+
+  buildRenderScreen(id) {
+    return this.screen.buildRenderScreen(id);
+  }
+
+  updateField(id, value) {
+    this.fields.updateField(id, value);
+  }
+
+  async handleCsvImport(csv) {
+    await this.importWorkflow.handleCsvImport(csv);
+  }
+
+  saveDailyTransaction() {
+    return this.daily.saveDailyTransaction();
+  }
+}
+```
+
+**Dun.  
+Overzichtelijk.  
+Geen logica.  
+Alle workflows netjes gescheiden.**
+
+---
+
+# 🧠 Waarom dit perfect aansluit op jouw huidige code
+
+- De ACL zit al in de ImportOrchestrator → dus de ImportWorkflowOrchestrator hoeft alleen te orkestreren.
+- Je clusters (domain, app, ui) zijn al gescheiden → dit plan sluit daar direct op aan.
+- Je Master is nu een God Object → dit plan maakt hem een façade.
+- Je FormStateOrchestrator blijft de enige bron van waarheid → consistent.
+
+---
+
+# 🚀 Wil je dat ik de code‑skeletbestanden genereer voor alle 5 orchestrators?  
+Dan kun je ze direct in je repo plakken en beginnen met verplaatsen.

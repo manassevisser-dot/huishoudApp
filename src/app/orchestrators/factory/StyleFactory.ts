@@ -76,6 +76,12 @@ sectionKey: (sec) => {
 
 // --------- De StyleFactory zelf ---------
 export class ScreenStyleFactory {
+  /**
+   * Exposed als static property zodat tests de strategie direct kunnen inspecteren
+   * zonder de volledige bind()-pipeline te doorlopen.
+   */
+  static readonly defaultKeyStrategy: StyleKeyStrategy = defaultKeyStrategy;
+
   static bind(
     svm: InScreenVM,
     resolver: StyleResolver,

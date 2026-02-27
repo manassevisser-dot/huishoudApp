@@ -1,5 +1,5 @@
 ﻿import React, { memo } from 'react';
-import { PRIMITIVE_TYPES } from '@domain/registry/PrimitiveRegistry';
+import { PRIMITIVE_TYPES } from '@ui/kernel';
 import { DynamicPrimitive } from '@ui/primitives/primitives';
 import type { RenderEntryVM } from '@app/orchestrators/MasterOrchestrator';
 import {
@@ -12,6 +12,7 @@ import {
   ChipGroupEntry,
   RadioEntry,
   LabelEntry,
+  ActionEntry,
 } from './entries.components';
 import {
   toCurrencyViewModel,
@@ -23,6 +24,7 @@ import {
   toChipGroupViewModel,
   toRadioViewModel,
   toLabelViewModel,
+  toActionViewModel,
 } from './entry.mappers';
 
 const renderByPrimitive = (entry: RenderEntryVM): React.ReactElement | null => {
@@ -46,6 +48,8 @@ const renderByPrimitive = (entry: RenderEntryVM): React.ReactElement | null => {
       return <RadioEntry viewModel={toRadioViewModel(entry)} />;
     case PRIMITIVE_TYPES.LABEL:
       return <LabelEntry viewModel={toLabelViewModel(entry)} />;
+    case PRIMITIVE_TYPES.ACTION:
+      return <ActionEntry viewModel={toActionViewModel(entry)} />;
     default:
       return <DynamicPrimitive primitiveType={entry.primitiveType} props={{ value: entry.value, onAction: entry.onChange }} />;
   }

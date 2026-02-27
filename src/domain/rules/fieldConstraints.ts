@@ -1,16 +1,12 @@
 /**
- * @file_intent Dient als een "Single Source of Truth" (SSOT) voor alle validatieregels en metadata van individuele formuliervelden. Dit bestand centraliseert de *constraints* (zoals minimum/maximum waarden, verplichte velden, en enum-opties) van elk veld in een type-veilige registry. Het ontkoppelt de definitie van een veld van zijn gebruik in de UI of business logic.
- * @repo_architecture Domain Layer - Business Rules / Registry.
- * @term_definition
- *   - `Field Constraint`: Een object dat de validatieregels voor een specifiek veld definieert (bv. `{ type: 'number', min: 0, max: 100 }`). Dit is de metadata die de validatie-engine aanstuurt.
- *   - `Discriminated Union`: Een geavanceerd type in TypeScript (`FieldConstraint`) dat verschillende varianten van een type toelaat (bv. `NumberConstraint`, `EnumConstraint`), waarbij een specifieke eigenschap (`type`) wordt gebruikt om te bepalen welke variant het is. Dit maakt de code veel robuuster en type-veiliger.
- *   - `Registry`: Een centraal object (`FIELD_CONSTRAINTS_REGISTRY`) dat alle gedefinieerde constraints mapt op basis van een unieke veld-ID. Dit is de kern van de SSOT-benadering.
- *   - `Template Field Keys`: Constanten (`MEMBER_FIELD_KEYS`, `AUTO_FIELD_KEYS`) die aangeven welke velden als sjabloon worden gebruikt voor herhalende componenten (repeaters), zoals voor huishoudleden of auto's.
- * @contract Dit bestand exporteert de `FIELD_CONSTRAINTS_REGISTRY` als een `const` object, wat een stabiele en voorspelbare structuur garandeert. Het exporteert ook de `FieldConstraint` discriminated union en diverse type-helpers. De `getConstraint` functie biedt een robuuste manier om de constraint voor een specifiek veld op te halen, waarbij het automatisch prefixes (zoals `mem_0_`) negeert. De `exceedsWarning` en `getWarningMessage` functies bieden logica voor "soft validation" (waarschuwingen in plaats van harde fouten).
- * @ai_instruction De `FIELD_CONSTRAINTS_REGISTRY` wordt primair gebruikt door de **validation-laag (bv. Zod-schema-generator)** en de **orchestrator**. 
- *   1.  **Validator**: Een schema-generator leest dit registry om dynamisch validatieschema's te bouwen. Wanneer een gebruiker data invoert, wordt deze data gevalideerd tegen het schema dat op basis van deze constraints is gegenereerd.
- *   2.  **Orchestrator**: De orchestrator kan `getConstraint` gebruiken om UI-metadata op te halen, zoals het instellen van een `maxLength` op een inputveld in de UI-staat. Het kan ook `exceedsWarning` gebruiken om niet-blokkerende waarschuwingen aan de gebruiker te tonen, wat de gebruikerservaring verbetert.
- * Dit centraliseert de validatielogica volledig, maakt de UI "dommer" en zorgt voor consistente validatie over de hele applicatie.
+ * Single Source of Truth voor alle validatieregels en veld-metadata.
+ *
+ * @module domain/rules
+ * @see {@link ./README.md | FieldConstraints — Details}
+ *
+ * @remarks
+ * - `FIELD_CONSTRAINTS_REGISTRY` is de primaire bron voor Zod-validators en UI-metadata.
+ * - `getConstraint()` stript member/auto-prefixes automatisch.
  */
 
 // src/domain/rules/fieldConstraints.ts
@@ -118,6 +114,13 @@ export const FIELD_CONSTRAINTS_REGISTRY = {
     type: 'enum',
     required: true,
     values: HOUSEHOLD_OPTIONS.woningType,
+  },
+
+  postcode: {
+    type: 'string',
+    required: true,
+    pattern: /^[1-9]\d{3}[A-Z]{2}$/,
+    message: 'Voer een geldige postcode in (bijv. 1234AB)',
   },
   
   // ── HOUSEHOLD VELDEN (Member-templates) ──────────────────────
@@ -505,13 +508,27 @@ export type fieldId = keyof typeof FIELD_CONSTRAINTS_REGISTRY;
 // HELPERS (ongewijzigd qua gedrag)
 // ════════════════════════════════════════════════════════════════
 
-/** Haal constraint op — stript prefixes (mem_0_, auto-0_, streaming_X_) */
+/**
+ * Haalt de constraint op voor een veld-ID; stript automatisch member/auto-prefixes.
+ *
+ * @param fieldId - Veld-ID met of zonder prefix (bijv. `'mem_0_nettoSalaris'` of `'nettoSalaris'`)
+ * @returns De bijbehorende `FieldConstraint`, of `undefined` als niet gevonden
+ *
+ * @example
+ * const c = getConstraint('mem_0_nettoSalaris'); // { type: 'number', min: 0, max: 50000 }
+ */
 export function getConstraint(fieldId: string): FieldConstraint | undefined {
   const cleanId = fieldId.replace(/^(mem_\d+_|auto-\d+_|streaming_\w+_)/, '');
   return FIELD_CONSTRAINTS_REGISTRY[cleanId as fieldId];
 }
 
-/** Check of waarde boven soft-limit zit */
+/**
+ * Controleert of een waarde de soft-limit (`warn`) van een veld overschrijdt.
+ *
+ * @param fieldId - Veld-ID (prefixes worden gestript)
+ * @param value   - Numerieke waarde om te controleren
+ * @returns `true` als `value` boven de `warn`-drempel zit
+ */
 export function exceedsWarning(fieldId: string, value: number): boolean {
   const constraint = getConstraint(fieldId);
   if (constraint === undefined || constraint.type !== 'number' || constraint.warn === undefined) {
@@ -520,7 +537,16 @@ export function exceedsWarning(fieldId: string, value: number): boolean {
   return value > constraint.warn;
 }
 
-/** Haal warning-bericht op */
+/**
+ * Haalt een waarschuwingstekst op als een waarde de soft-limit overschrijdt.
+ *
+ * @param fieldId - Veld-ID (prefixes worden gestript)
+ * @param value   - Numerieke waarde om te controleren
+ * @returns Waarschuwingstekst als de drempel overschreden is, anders `null`
+ *
+ * @example
+ * getWarningMessage('nettoSalaris', 25000); // 'Dit lijkt een jaarbedrag - vul het maandbedrag in'
+ */
 export function getWarningMessage(fieldId: string, value: number): string | null {
   if (!exceedsWarning(fieldId, value)) {
     return null;

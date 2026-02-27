@@ -1,63 +1,97 @@
-/**
- * @file_intent Definieert herbruikbare, semantische layoutpatronen als style-objecten.
- * @repo_architecture Domain Layer - Constants.
- * @term_definition Layout Token = Een benoemd style-object dat een veelvoorkomend flexbox- of positioneringspatroon vertegenwoordigt (bijv. `rowBetween`). Dit zijn de bouwstenen voor de structuur van componenten.
- * @contract Dit bestand exporteert `Layout`, een `as const` object met style-objecten voor UI-structuur. Het exporteert ook `Space` (een alias voor `Tokens.Space`) en de `LayoutToken` type. Deze tokens moeten worden gebruikt in de `StyleRegistry` om de layout van componenten samen te stellen.
- * @ai_instruction Voeg hier alleen pure, structurele stijlen toe (flexbox, positionering). Vermijd het toevoegen van kleuren, thematische waarden of specifieke afmetingen die niet uit `Tokens.ts` komen. Het doel is het creëren van een voorspelbaar en consistent layout-systeem.
- */
 // src/domain/constants/LayoutTokens.ts
-import {Tokens} from '@domain/constants/Tokens';
 
+/**
+ * Herbruikbare, semantische flexbox- en positioneringspatronen als style-objecten.
+ *
+ * @module domain/constants
+ * @see {@link ./README.md | Constants — Details}
+ * @see {@link ./Tokens.ts | Tokens — spacing-waarden}
+ *
+ * @remarks
+ * `Layout`-tokens zijn puur structureel: flexbox-richting, uitlijning, positionering.
+ * Geen kleuren, geen thema-waarden. Spacing-waarden komen uitsluitend uit `Tokens.Space`.
+ *
+ * Gebruik via spread in `StyleRegistry`-modules:
+ * ```typescript
+ * container: { ...Layout.rowBetweenCenter, padding: Space.lg }
+ * ```
+ */
+
+import { Tokens } from '@domain/constants/Tokens';
+
+/**
+ * Re-export van `Tokens.Space` voor convenience in `LayoutTokens`-consumers
+ * die al `Layout` importeren en geen losse `Tokens`-import willen.
+ */
 export const Space = Tokens.Space;
 
-// LAYOUT TOKENS — herbruikbare structuur-patronen
-// Geen kleuren, geen spacing-waarden — alleen compositie.
-// Waarden komen uit Tokens.ts (Space) waar nodig.
-//
-// Gebruik:  ...Layout.rowBetween  in StyleRegistry-modules
-
+/**
+ * Alle layout-tokens gegroepeerd per patroon.
+ *
+ * @example
+ * // In een StyleRegistry-module:
+ * headerRow: { ...Layout.rowBetweenCenter, paddingHorizontal: Space.lg }
+ */
 export const Layout = {
-    // ── Flex basis ──────────────────────────────────
-    fullWidth:        { flex: 1 } as const,
-  
-    // ── Row varianten ──────────────────────────────
-    row:              { flexDirection: 'row' as const },
-    rowBetween:       { flexDirection: 'row' as const, justifyContent: 'space-between' as const },
-    rowCenter:        { flexDirection: 'row' as const, alignItems: 'center' as const },
-    rowBetweenCenter: { flexDirection: 'row' as const, justifyContent: 'space-between' as const, alignItems: 'center' as const },
-    rowWrap:          { flexDirection: 'row' as const, flexWrap: 'wrap' as const },
-    rowWrapCenter:    { flexDirection: 'row' as const, flexWrap: 'wrap' as const, justifyContent: 'center' as const },
-  // ── Rij varianten (Uitbreiding) ──────────────
+  // ── Flex basis ──────────────────────────────────────────────────────────
+  /** `flex: 1` — vult beschikbare ruimte. */
+  fullWidth:        { flex: 1 } as const,
+
+  // ── Row-varianten ───────────────────────────────────────────────────────
+  /** Horizontale rij zonder verdere uitlijning. */
+  row:              { flexDirection: 'row' as const },
+  /** Horizontale rij, kinderen verspreid over de volledige breedte. */
+  rowBetween:       { flexDirection: 'row' as const, justifyContent: 'space-between' as const },
+  /** Horizontale rij, kinderen verticaal gecentreerd. */
+  rowCenter:        { flexDirection: 'row' as const, alignItems: 'center' as const },
+  /** Horizontale rij, kinderen verspreid én verticaal gecentreerd. */
+  rowBetweenCenter: { flexDirection: 'row' as const, justifyContent: 'space-between' as const, alignItems: 'center' as const },
+  /** Horizontale rij met wrapping. */
+  rowWrap:          { flexDirection: 'row' as const, flexWrap: 'wrap' as const },
+  /** Horizontale rij met wrapping, horizontaal gecentreerd. */
+  rowWrapCenter:    { flexDirection: 'row' as const, flexWrap: 'wrap' as const, justifyContent: 'center' as const },
+  /** Horizontale rij, volledig gecentreerd (horizontaal + verticaal). */
   rowCentered:      { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'center' as const },
-    
-  // ── Positionering (Uitbreiding) ─────────────
+
+  // ── Uitlijning ──────────────────────────────────────────────────────────
+  /** Volledig gecentreerd (kolom-richting). */
+  centered:         { alignItems: 'center' as const, justifyContent: 'center' as const },
+  /** Tekst horizontaal gecentreerd. */
+  centerText:       { textAlign: 'center' as const },
+  /** Tekst rechts uitgelijnd. */
+  rightText:        { textAlign: 'right' as const },
+
+  // ── Positionering ───────────────────────────────────────────────────────
+  /** Absoluut gepositioneerd element (vereist `top/left/right/bottom` van de consumer). */
   absolute:         { position: 'absolute' as const },
+  /** Relatief gepositioneerd element (default, explicieter dan impliciet). */
+  relative:         { position: 'relative' as const },
+  /** Verbergt overflow (bijv. voor afgeronde hoeken). */
   hidden:           { overflow: 'hidden' as const },
-  
-    // ── Alignment ──────────────────────────────────
-    centered:         { alignItems: 'center' as const, justifyContent: 'center' as const },
-    centerText:       { textAlign: 'center' as const },
-    rightText:        { textAlign: 'right' as const },
-  
-    // ── Positionering ──────────────────────────────
-    pinBottom:        { position: 'absolute' as const, bottom: 0, left: 0, right: 0 },
-    relative:         { position: 'relative' as const },
-  
-    footer: {
-      minHeight: 80,
-      horizontalPadding: Space.xl,
-      verticalPadding: Space.md,
-      safeAreaMin: 16, // De minimale padding onderaan als insets.bottom 0 is
-    },
-  
-    buttonRow: {
-      flexDirection: 'row' as const,
-      alignItems: 'center' as const,
-      justifyContent: 'space-between' as const,
-      width: '100%',
-    }
-  
-  } as const;
-  
-  // Type-export zodat consumers het kunnen typen als ze willen
-  export type LayoutToken = keyof typeof Layout;
+  /** Vastgepind aan de onderkant van het scherm. */
+  pinBottom:        { position: 'absolute' as const, bottom: 0, left: 0, right: 0 },
+
+  // ── Samengestelde tokens ────────────────────────────────────────────────
+  /**
+   * Standaard footer-afmetingen.
+   * Geen style-object maar maatvaste waarden — consumer assembleert de stijl zelf.
+   */
+  footer: {
+    minHeight:         80,
+    horizontalPadding: Space.xl,
+    verticalPadding:   Space.md,
+    /** Minimale bottom-padding als `insets.bottom === 0`. */
+    safeAreaMin:       16,
+  },
+
+  /** Standaard knoppenrij voor navigatie-footers. */
+  buttonRow: {
+    flexDirection:  'row' as const,
+    alignItems:     'center' as const,
+    justifyContent: 'space-between' as const,
+    width:          '100%',
+  },
+} as const;
+
+/** Union van alle geldige `Layout`-sleutels. */
+export type LayoutToken = keyof typeof Layout;

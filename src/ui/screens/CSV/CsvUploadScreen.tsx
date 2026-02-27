@@ -12,7 +12,7 @@
 
 import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { UI_SECTIONS } from '@domain/constants/uiSections';
+import { UI_SECTIONS } from '@ui/kernel';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 
 interface CsvUploadScreenProps {

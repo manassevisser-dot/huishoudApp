@@ -8,6 +8,7 @@
   ChipGroupEntry,
   RadioEntry,
   LabelEntry,
+  ActionEntry,
 } from './entries.components';
 
 export { DynamicEntry } from './DynamicEntry';

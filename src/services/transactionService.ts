@@ -1,10 +1,9 @@
 // src/services/transactionService.ts
 /**
- * @file_intent Service voor het migreren van legacy transactiedata naar het nieuwe Phoenix-formaat en het beheren van transacties.
- * @repo_architecture Application Service Layer.
- * @term_definition Migration = Het proces van het omzetten van data van een verouderde, ongestructureerde `LegacyState` naar de nieuwe, gevalideerde `FormState`. FinanceItem = Een genormaliseerd object voor een enkele inkomsten- of uitgavetransactie.
- * @contract De `migrate` functie gebruikt een `LegacyValidator` (Zod-schema) om de input te valideren en transformeert deze naar een Phoenix-compatibele structuur. De `getAllTransactions` functie extraheert alle financiële items uit de opgeslagen state.
- * @ai_instruction Deze service is de brug tussen oude en nieuwe data. Fouten in de mapping-logica (`mapLegacyMembers`, `extractFinanceItems`) kunnen leiden tot dataverlies tijdens migratie. De `undo` functie is een placeholder en moet nog geïmplementeerd worden.
+ * Service voor migratie van legacy transactiedata naar Phoenix-formaat en transactiebeheer.
+ *
+ * @module services
+ * @see {@link ./README.md | TransactionService — Details}
  */
 import { StorageShim } from '@services/storageShim';
 import { toMemberType } from '@domain/research/PrivacyAirlock';
@@ -128,9 +127,15 @@ export const TransactionService = {
 
   getAllTransactions: async (): Promise<FinanceItem[]> => {
     const rawState = await StorageShim.loadState();
-    const safeState = LegacyValidator.parseState(rawState);
 
-  
+
+      // ✅ Eerst checken op null
+  if (rawState === null) {
+    return [];
+  }  
+  // ✅ Pas dan parseState aanroepen (veilig!)
+  const safeState = LegacyValidator.parseState(rawState);
+  // ✅ Gebruik optional chaining voor leesbare code
     if (safeState.data === undefined || 
       safeState.data === null ||
       safeState.data.finance === undefined ||

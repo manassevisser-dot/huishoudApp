@@ -11,26 +11,33 @@
  * @ai_instruction
  *   Voeg een nieuw scherm toe in SCREEN_RENDERERS als het:
  *     - Een extra footer/actieknop nodig heeft (DailyInput-patroon)
- *     - Volledig eigen UI heeft die niet via de ViewModel-pipeline loopt (CSV, Options)
- *   Schermen die puur via de ViewModel-pipeline renderen (wizard-stappen, Settings)
+ *     - Volledig eigen UI heeft die niet via de ViewModel-pipeline loopt (bijv. CSV, CriticalError)
+ *   Schermen die puur via de ViewModel-pipeline renderen (wizard-stappen, Settings, Options)
  *   hoeven hier NIET geregistreerd te worden — DefaultScreenRenderer of WizardScreenRenderer
- *   pakt ze automatisch op.
+ *   pakt ze automatisch op via SectionRegistry + EntryRegistry.
+ *   LANDING valt door naar DefaultScreenRenderer (type 'AUTH', geen type-renderer).
  * @changes [Fase 4]
- *   OptionsScreenRenderer  — navigatieknoppen via useMaster(), vervangt losstaande OptionsScreen.
  *   CsvUploadScreenRenderer — delegeert volledig aan CsvUploadContainer (stateful container).
- *   CsvAnalysisScreenRenderer — delegeert aan CsvAnalysisFeedback (presentatie-sectie).
+ *   CsvAnalysisScreenRenderer — delegeert aan CsvAnalysisFeedbackContainer (VM via factory).
+ * @changes [Fase 6]
+ *   ACTION primitive toegevoegd: navigatieknoppen als gewone entries in SectionRegistry.
+ * @changes [Fase 7+]
+ *   OptionsScreenRenderer     — OPTIONS = SectionList + NavigationBackFooter.
+ *   SplashScreenRenderer      — SPLASH = ActivityIndicator + laadtekst (geen pipeline).
+ *   CriticalErrorScreenRenderer — CRITICAL_ERROR = CriticalErrorContainer (Alert + full reset).
+ *   LandingScreen.tsx, SplashScreen.tsx, CriticalErrorScreen.tsx kunnen worden verwijderd.
  */
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScrollView as RNScrollView } from 'react-native';
+import { View, ScrollView, ActivityIndicator, Text } from 'react-native';
+import { useAppStyles } from '@ui/styles/useAppStyles';
 import { DynamicSection } from '@ui/sections/sections';
-import { NavigationFooter } from '@ui/navigation/NavigationFooter';
+import { NavigationFooter, NavigationBackFooter } from '@ui/navigation/NavigationFooter';
 import { DailyInputActionFooter } from '@ui/screens/actions/DailyInputActionFooter';
 import { CsvUploadContainer } from '@ui/screens/csv/CsvUploadContainer';
-import { CsvAnalysisFeedback } from '@ui/sections/CsvAnalysisFeedback';
-import { useMaster } from '@ui/providers/MasterProvider';
-import { useAppStyles } from '@ui/styles/useAppStyles';
+import { CsvAnalysisFeedbackContainer } from '@ui/sections/CsvAnalysisFeedback';
+import { TransactionHistoryContainer } from '@ui/sections/TransactionHistoryContainer';
+import { ResetConfirmationContainer } from '@ui/screens/Reset/ResetConfirmationContainer';
+import { CriticalErrorContainer } from '@ui/screens/CriticalError/CriticalErrorContainer';
 import type { RenderScreenVM } from '@app/orchestrators/MasterOrchestrator';
 
 interface ScreenRendererProps {
@@ -39,7 +46,7 @@ interface ScreenRendererProps {
   onSaveDailyTransaction: () => void;
 }
 
-// ─── Gedeelde basis ───────────────────────────────────────────────────────────
+// --- Gedeelde basis -----------------------------------------------------------
 
 const SectionList: React.FC<{ screenVM: RenderScreenVM; topPadding: number }> = ({
   screenVM,
@@ -59,7 +66,7 @@ const SectionList: React.FC<{ screenVM: RenderScreenVM; topPadding: number }> = 
   </ScrollView>
 );
 
-// ─── Standaard renderers ──────────────────────────────────────────────────────
+// --- Standaard renderers ------------------------------------------------------
 
 const DefaultScreenRenderer: React.FC<ScreenRendererProps> = ({ screenVM, topPadding }) => (
   <SectionList screenVM={screenVM} topPadding={topPadding} />
@@ -83,65 +90,39 @@ const WizardScreenRenderer: React.FC<ScreenRendererProps> = ({ screenVM, topPadd
   </>
 );
 
-// ─── Options renderer [Fase 4A] ───────────────────────────────────────────────
-// Vervangt de losstaande OptionsScreen.tsx die props-callbacks verwachtte.
-// Navigatie loopt nu via useMaster() — geen prop-drilling meer.
+// --- Splash renderer ----------------------------------------------------------
+// Toont een ActivityIndicator + laadtekst. SPLASH.sectionIds = [] — geen pipeline-sections.
+// DefaultScreenRenderer zou een lege ScrollView renderen zonder spinner: niet bruikbaar.
+// SplashContent scheidt hook-gebruik (useAppStyles) van de renderer-shell.
+// SplashScreen.tsx kan na deze registratie verwijderd worden.
 
-const OptionsScreenRenderer: React.FC<ScreenRendererProps> = ({ topPadding }) => {
-  const master = useMaster();
-  const { styles } = useAppStyles();
-  const insets = useSafeAreaInsets();
-
+const SplashContent: React.FC = () => {
+  const { styles, colors } = useAppStyles();
   return (
-    <View style={styles.container}>
-      <RNScrollView
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingTop: topPadding, paddingBottom: 120 + insets.bottom },
-        ]}
-      >
-        <Text style={styles.screenTitle}>Opties</Text>
-
-        <TouchableOpacity
-          style={[styles.button, { marginBottom: 16 }]}
-          onPress={() => master.navigation.goToSettings()}
-        >
-          <Text style={styles.buttonText}>Instellingen</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, { marginBottom: 16 }]}
-          onPress={() => master.navigation.goToCsvUpload()}
-        >
-          <Text style={styles.buttonText}>CSV uploaden</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, { marginBottom: 16 }]}
-          onPress={() => master.navigation.goToReset()}
-        >
-          <Text style={styles.buttonText}>Reset</Text>
-        </TouchableOpacity>
-      </RNScrollView>
-
-      <View
-        style={[
-          styles.buttonContainer,
-          { paddingBottom: Math.max(20, insets.bottom + 8) },
-        ]}
-      >
-        <TouchableOpacity
-          style={[styles.button, styles.secondaryButton]}
-          onPress={() => master.navigation.goToDashboard()}
-        >
-          <Text style={styles.secondaryButtonText}>Terug naar Dashboard</Text>
-        </TouchableOpacity>
-      </View>
+    <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={styles.screenTitle}>Phoenix wordt geladen...</Text>
     </View>
   );
 };
 
-// ─── CSV Upload renderer [Fase 4B/4C] ────────────────────────────────────────
+const SplashScreenRenderer: React.FC<ScreenRendererProps> = () => <SplashContent />;
+
+// --- Options renderer ---------------------------------------------------------
+// GLOBAL_OPTIONS_LIST-entries (goToSettings, goToCsvUpload, goToReset) renderen
+// via SectionList (ACTION-primitives in EntryRegistry).
+// NavigationBackFooter levert "Terug" via:
+//   navigation.navigateBack() → goBack() → ScreenRegistry[OPTIONS].previousScreenId = 'DASHBOARD'
+// OptionsScreen.tsx kan na deze registratie verwijderd worden.
+
+const OptionsScreenRenderer: React.FC<ScreenRendererProps> = ({ screenVM, topPadding }) => (
+  <>
+    <SectionList screenVM={screenVM} topPadding={topPadding} />
+    <NavigationBackFooter />
+  </>
+);
+
+// --- CSV Upload renderer [Fase 4B/4C] -----------------------------------------
 // Delegeert volledig aan CsvUploadContainer (stateful: isUploading, error, navigatie).
 // SectionList wordt overgeslagen — CSV_DROPZONE_CARD heeft geen fieldIds.
 
@@ -151,32 +132,91 @@ const CsvUploadScreenRenderer: React.FC<ScreenRendererProps> = ({ topPadding }) 
   </View>
 );
 
-// ─── CSV Analyse renderer [Fase 4D] ──────────────────────────────────────────
-// Delegeert aan CsvAnalysisFeedback (presentatie-only, leest viewModels.csvAnalysis).
-// ScrollView voor lange analyse-resultaten.
+// --- CSV Analyse renderer [Fase 6] --------------------------------------------
+// Delegeert aan CsvAnalysisFeedbackContainer (stateless: VM via factory).
 
 const CsvAnalysisScreenRenderer: React.FC<ScreenRendererProps> = ({ topPadding }) => (
-  <ScrollView contentContainerStyle={{ paddingTop: topPadding }}>
-    <CsvAnalysisFeedback />
-  </ScrollView>
+  <View style={{ flex: 1, paddingTop: topPadding }}>
+    <CsvAnalysisFeedbackContainer />
+  </View>
 );
 
-// ─── Renderer registry ────────────────────────────────────────────────────────
+// --- Reset renderer -----------------------------------------------------------
+// Delegeert volledig aan ResetConfirmationContainer (Alert.alert + master.executeReset).
+// RESET_CONFIRMATION_CARD.fieldIds = [] — geen EntryRegistry-velden, container slaat de pipeline over.
+
+const ResetScreenRenderer: React.FC<ScreenRendererProps> = ({ topPadding }) => (
+  <View style={{ flex: 1, paddingTop: topPadding }}>
+    <ResetConfirmationContainer />
+  </View>
+);
+
+// --- Critical Error renderer --------------------------------------------------
+// Delegeert volledig aan CriticalErrorContainer (Alert.alert + master.executeReset('full')).
+// ERROR_DIAGNOSTICS_CARD.fieldIds = [] — geen EntryRegistry-velden, container slaat de pipeline over.
+// Toont foutmelding (validationMessages.criticalError.screenMessage) + één reset-knop.
+// Geen 'setup'-optie: bij een kritieke fout is een gedeeltelijke reset onveilig.
+// CriticalErrorScreen.tsx kan na deze registratie verwijderd worden.
+
+const CriticalErrorScreenRenderer: React.FC<ScreenRendererProps> = ({ topPadding }) => (
+  <View style={{ flex: 1, paddingTop: topPadding }}>
+    <CriticalErrorContainer />
+  </View>
+);
+
+// --- Undo renderer [Fase 7] ---------------------------------------------------
+// TRANSACTION_HISTORY_LIST → TransactionHistoryContainer (Swipeable lijst, VM via factory).
+// TRANSACTION_ACTIONS_CARD → DynamicSection (ACTION entries via registry).
+
+const UndoScreenRenderer: React.FC<ScreenRendererProps> = ({ screenVM, topPadding }) => {
+  const historySection = screenVM.sections.find(
+    (s) => s.sectionId === 'TRANSACTION_HISTORY_LIST'
+  );
+  const actionsSection = screenVM.sections.find(
+    (s) => s.sectionId === 'TRANSACTION_ACTIONS_CARD'
+  );
+
+  return (
+    <View style={{ flex: 1, paddingTop: topPadding }}>
+      <TransactionHistoryContainer />
+
+      {actionsSection !== undefined && (
+        <DynamicSection
+          key={actionsSection.sectionId}
+          sectionId={actionsSection.sectionId}
+          title={actionsSection.title}
+          layout={actionsSection.layout}
+          uiModel={actionsSection.uiModel}
+          children={actionsSection.children}
+        />
+      )}
+
+      {/* Suppress unused historySection warning */}
+      {historySection !== undefined && null}
+    </View>
+  );
+};
+
+// --- Renderer registry --------------------------------------------------------
 
 type ScreenRenderer = React.ComponentType<ScreenRendererProps>;
 
 const SCREEN_RENDERERS: Record<string, ScreenRenderer> = {
-  DAILY_INPUT: DailyInputScreenRenderer,
-  OPTIONS: OptionsScreenRenderer,
-  CSV_UPLOAD: CsvUploadScreenRenderer,
-  CSV_ANALYSIS: CsvAnalysisScreenRenderer,
+  SPLASH:          SplashScreenRenderer,
+  DAILY_INPUT:     DailyInputScreenRenderer,
+  OPTIONS:         OptionsScreenRenderer,
+  CSV_UPLOAD:      CsvUploadScreenRenderer,
+  CSV_ANALYSIS:    CsvAnalysisScreenRenderer,
+  UNDO:            UndoScreenRenderer,
+  RESET:           ResetScreenRenderer,
+  CRITICAL_ERROR:  CriticalErrorScreenRenderer,
 };
 
 const SCREEN_TYPE_RENDERERS: Record<string, ScreenRenderer> = {
   WIZARD: WizardScreenRenderer,
 };
 
-// ─── Resolver ─────────────────────────────────────────────────────────────────
+// --- Resolver -----------------------------------------------------------------
 
 export function resolveScreenRenderer(screenVM: RenderScreenVM): ScreenRenderer {
   const byId = SCREEN_RENDERERS[screenVM.screenId];

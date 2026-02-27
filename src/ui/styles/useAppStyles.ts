@@ -20,12 +20,10 @@
  */
 import { StyleSheet } from 'react-native';
 import { useTheme } from '@ui/providers/ThemeProvider';
-import { Colors, Theme } from '@domain/constants/Colors';
-import { Tokens } from '@domain/constants/Tokens';
 import { applyShadows, AnyStyle } from './PlatformStyles';
-
-// Importeer ALLES uit de StyleRegistry — de SSOT
 import {
+  Colors,
+  Tokens,
   makeLayout,
   makeHeader,
   makeButtons,
@@ -39,7 +37,8 @@ import {
   makeCheckboxes,
   makeHelpers,
   makeContainers,
-} from '@domain/registry/StyleRegistry';
+} from '@ui/kernel';
+import type { Theme } from '@ui/kernel';
 
 // Cache per thema
 const styleCache: Partial<Record<Theme, ReturnType<typeof StyleSheet.create>>> = {};

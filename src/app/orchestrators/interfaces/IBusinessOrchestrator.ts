@@ -1,10 +1,9 @@
 // src/app/orchestrators/interfaces/IBusinessOrchestrator.ts
 /**
- * @file_intent Definieert het contract voor de Business Orchestrator, verantwoordelijk voor het berekenen van afgeleide data (ViewModels) uit de ruwe domeinstate.
- * @repo_architecture Mobile Industry (MI) - Business Logic Interface Layer.
- * @term_definition FinancialSummaryVM = Een presentatie-model dat berekende totalen (inkomsten, uitgaven, netto) bevat, geformatteerd als leesbare strings voor de UI.
- * @contract Dwingt een pure transformatie af: de orchestrator neemt de volledige FormState en vertaalt deze naar een specifiek UI-behoeften-pakket (FinancialSummary) zonder de originele state te muteren.
- * @ai_instruction Implementaties van deze interface moeten zich focussen op rekenregels en aggregaties. Gebruik deze interface om de UI los te koppelen van de complexe berekeningen achter de financiële samenvatting.
+ * Contract voor de BusinessOrchestrator: berekent afgeleide ViewModels uit ruwe `FormState`.
+ *
+ * @module app/orchestrators/interfaces
+ * @see {@link ./README.md | Interfaces — Details}
  */
 import type { FormState } from '@core/types/core';
 
@@ -15,5 +14,11 @@ export interface FinancialSummaryVM {
   }
   
   export interface IBusinessOrchestrator {
+    /**
+     * Vertaalt `FormState` naar een presentatie-model met geformatteerde financiële totalen.
+     *
+     * @param state - Huidige `FormState`
+     * @returns `FinancialSummaryVM` met `totalIncomeDisplay`, `totalExpensesDisplay` en `netDisplay`
+     */
     prepareFinancialViewModel(state: FormState): FinancialSummaryVM;
   }

@@ -23,24 +23,82 @@ import { FormStateOrchestrator } from './FormStateOrchestrator';
 import { validateAtBoundary } from '@adapters/validation/validateAtBoundary';
 import { logger } from '@adapters/audit/AuditLoggerAdapter';
 import type { BusinessManager } from './managers/BusinessManager';
+import { ScreenRegistry } from '@domain/registry/ScreenRegistry';
+import { SectionRegistry } from '@domain/registry/SectionRegistry';
+import { EntryRegistry } from '@domain/registry/EntryRegistry';
+import { PRIMITIVE_TYPES } from '@domain/registry/PrimitiveRegistry';
 
 export class ValidationOrchestrator implements IValidationOrchestrator {
   private readonly manager: ValidationManager;
 
   constructor(
     private readonly fso: FormStateOrchestrator,
-    private readonly business: BusinessManager,
+    private readonly business?: BusinessManager,
   ) {
     this.manager = new ValidationManager();
   }
 
-  // ─── Bestaande methoden (ongewijzigd) ────────────────────────────
+  // ─── Sectie-validatie via ScreenRegistry + SectionRegistry ────────
 
+  /**
+   * Valideert alle velden van het opgegeven scherm (screenId).
+   *
+   * Keten: screenId → ScreenRegistry.sectionIds → SectionRegistry.fieldIds
+   *        → EntryRegistry (skip derived/action) → fso.getValue() → validateField()
+   *
+   * @param screenId  - De activeStep/currentScreenId (bijv. 'WIZARD_SETUP_HOUSEHOLD').
+   * @param _formData - Niet meer gebruikt; waarden worden via fso.getValue() opgehaald.
+   *                    Parameter blijft voor interface-compatibiliteit (IValidationOrchestrator).
+   */
   public validateSection(
-    sectionId: string,
-    formData: Record<string, unknown>,
+    screenId: string,
+    _formData: Record<string, unknown>,
   ): SectionValidationResult {
-    return this.manager.validateSection(sectionId, formData);
+    const fieldIds = this.resolveValidatableFieldIds(screenId);
+
+    if (fieldIds.length === 0) {
+      // Scherm zonder velden (bijv. SPLASH, LANDING, APP_STATIC) → altijd valid
+      return { isValid: true, errorFields: [], errors: {} };
+    }
+
+    // Bouw een platte value-map via fso.getValue() — de enige bron van waarheid
+    const resolvedValues: Record<string, unknown> = {};
+    for (const fieldId of fieldIds) {
+      resolvedValues[fieldId] = this.fso.getValue(fieldId);
+    }
+
+    return this.manager.validateFields(fieldIds, resolvedValues);
+  }
+
+  /**
+   * Leidt valide fieldIds af voor een screenId.
+   * Filtert derived (LABEL) en ACTION entries: die hebben geen invoer-validatie.
+   */
+  private resolveValidatableFieldIds(screenId: string): string[] {
+    const screen = ScreenRegistry.getDefinition(screenId);
+    if (screen === null) {
+      logger.warn('validation_screen_not_found', {
+        orchestrator: 'validation',
+        action: 'resolveValidatableFieldIds',
+        screenId,
+      });
+      return [];
+    }
+
+    return screen.sectionIds.flatMap((sectionId) => {
+      const section = SectionRegistry.getDefinition(sectionId);
+      if (section === null) return [];
+
+      return section.fieldIds.filter((fieldId) => {
+        const entry = EntryRegistry.getDefinition(fieldId);
+        if (entry === null) return false;
+        // Derived labels en ACTION-knoppen hebben geen invulbare waarde
+        if (entry.isDerived === true) return false;
+        if (entry.primitiveType === PRIMITIVE_TYPES.ACTION) return false;
+        if (entry.primitiveType === PRIMITIVE_TYPES.LABEL) return false;
+        return true;
+      });
+    });
   }
 
   public validateField(fieldId: string, value: unknown): string | null {
@@ -80,6 +138,6 @@ export class ValidationOrchestrator implements IValidationOrchestrator {
     }
 
     this.fso.updateField(fieldId, result.data);
-    this.business.recompute(this.fso);
+    this.business?.recompute(this.fso);
   }
 }

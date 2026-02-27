@@ -24,7 +24,13 @@
     "cleancode:verbose": "node scripts/maintenance/cleancode-automator.js --verbose",
     "sync": "node scripts/sync-aliases/index.js",
     "sync:check": "node scripts/sync-aliases/index.js --dry-run --verbose",
-    "sync:restore": "node scripts/sync-aliases/index.js --restore"
+    "sync:restore": "node scripts/sync-aliases/index.js --restore",
+    "docs:api": "typedoc",
+    "docs:api:watch": "typedoc --watch",
+    "docs:collect": "node scripts/collect-readmes.js",
+    "docs:build": "npm run docs:api && npm run docs:collect",
+    "docs:serve": "npx serve docs",
+    "phoenix": "./phoenix.sh"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -34,8 +40,8 @@
     "expo-document-picker": "^14.0.8",
     "expo-file-system": "^19.0.21",
     "expo-status-bar": "~3.0.9",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "react-native": "0.81.5",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-reanimated": "^4.2.1",
@@ -68,6 +74,7 @@
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-regex": "^1.10.0",
     "fs-extra": "^11.3.3",
     "happy-dom": "^20.3.4",
@@ -82,10 +89,12 @@
     "metro-react-native-babel-preset": "^0.77.0",
     "prettier": "^3.7.4",
     "react-native-web": "^0.21.2",
-    "react-test-renderer": "^19.1.0",
+    "react-test-renderer": "^19.2.4",
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
+    "typedoc": "^0.28.17",
+    "typedoc-plugin-markdown": "^4.10.0",
     "typescript": "~5.9.2"
   }
 }

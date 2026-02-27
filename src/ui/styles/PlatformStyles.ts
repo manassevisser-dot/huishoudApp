@@ -11,8 +11,8 @@
  * @ai_instruction Om een component een schaduw te geven, pas je niet de stijl van het component direct aan. In plaats daarvan voeg je een entry toe aan de `SHADOW_MAP` in dit bestand. Om bijvoorbeeld een nieuwe `mijnNieuweStijl` een `level1` schaduw te geven, voeg je `'mijnNieuweStijl': 'level1'` toe aan `SHADOW_MAP`. De `useAppStyles`-hook regelt de rest. Je hoeft `getPlatformShadow` alleen te bewerken als je het uiterlijk van de schaduw-levels zelf wilt aanpassen.
  */
 import { Platform, ViewStyle, TextStyle, ImageStyle } from 'react-native';
-import { Tokens } from '@domain/constants/Tokens';
-import type { ColorScheme } from '@domain/constants/Colors';
+import { Tokens } from '@ui/kernel';
+import type { ColorScheme } from '@ui/kernel';
 
 export type AnyStyle = ViewStyle | TextStyle | ImageStyle  
 export type ShadowLevel = 'level1' | 'level2' | 'level3';

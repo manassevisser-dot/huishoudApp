@@ -10,9 +10,6 @@ import { parseRawCsv } from '@utils/csvHelper';
 import { csvProcessor } from '@domain/services/csvProcessor';
 import type { csvKeys } from '@domain/services/csvProcessor'; 
 
-/**
- * Interface die exact matcht met de return-waarde van csvProcessor.processRow
- */
 export interface CsvItem {
   /** Bedrag in euros (float). toCents() gebeurt in ImportOrchestrator. */
   amountEuros: number;

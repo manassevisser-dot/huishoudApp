@@ -30,6 +30,10 @@ jest.mock('@domain/research/PrivacyAirlock', () => ({
     },
   })),
   assertNoPIILeak: jest.fn(),
+  // Spiegelt de echte implementatie: geeft de eerste 4 cijfers terug
+  extractWijkLevelResearch: jest.fn((postcode: string) =>
+    postcode.replace(/[^0-9]/g, '').slice(0, 4)
+  ),
 }));
 
 jest.mock('@domain/finance/StatementIntakePipeline', () => ({
@@ -65,7 +69,13 @@ import { DATA_KEYS } from '@domain/constants/datakeys';
 const mockCollectAndDistribute = collectAndDistributeData as jest.Mock;
 const mockAssertNoPIILeak = assertNoPIILeak as jest.Mock;
 
-const makeFso = () => ({} as any);
+const makeFso = (postcodeOverride = '1234AB') => ({
+  getState: () => ({
+    data: {
+      setup: { postcode: postcodeOverride },
+    },
+  }),
+} as any);
 
 const makeRawMember = (overrides = {}) => ({
   id: 'local-0',
@@ -131,6 +141,21 @@ describe('ResearchOrchestrator', () => {
       expect(result.research.financialAnalytics).toHaveProperty('totalIncomeCents');
       expect(result.research.financialAnalytics).toHaveProperty('categoryTotals');
       expect(result.research.financialAnalytics).toHaveProperty('timestamp');
+      expect(result.research.financialAnalytics).toHaveProperty('postcodeDigits');
+    });
+
+    it('stuurt alleen de cijfers van de postcode door (PII-strip)', () => {
+      const orchestrator = new ResearchOrchestrator(makeFso('2718SJ'));
+      const result = orchestrator.processAllData([makeRawMember()], [makeCsvItem()], null);
+
+      expect(result.research.financialAnalytics.postcodeDigits).toBe('2718');
+    });
+
+    it('geeft lege string terug bij ontbrekende postcode', () => {
+      const orchestrator = new ResearchOrchestrator(makeFso(''));
+      const result = orchestrator.processAllData([makeRawMember()], [makeCsvItem()], null);
+
+      expect(result.research.financialAnalytics.postcodeDigits).toBe('');
     });
   });
 

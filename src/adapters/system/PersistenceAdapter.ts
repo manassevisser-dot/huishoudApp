@@ -100,31 +100,42 @@ export async function save(state: FormState): Promise<void> {
  * Bij corrupt JSON, ontbrekende key, of schema-mismatch: verwijder de key en retourneer null.
  * De caller (FormStateProvider) valt dan terug op initialFormState.
  */
+// ─── Helper: probeert corrupte storage op te ruimen ─────────────
+async function cleanupCorruptStorage(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Niets meer te doen — fallback is al null return
+  }
+}
+
+// ─── Helper: log corrupte data en ruim op ───────────────────────
+async function handleInvalidState(parsed: unknown): Promise<null> {
+  logger.warn('storage_corrupt', {
+    adapter: 'persistence',
+    action: 'load',
+    reason: 'schema_mismatch_or_invalid_structure',
+    parsed: true,  // JSON.parse() slaagde
+    hasExpectedShape: typeof parsed === 'object' && parsed !== null && 'data' in parsed,
+  });
+  await cleanupCorruptStorage();
+  return null;
+}
+
+// ─── Main functie ───────────────────────────────────────────────
 export async function load(): Promise<PersistableFormState | null> {
   try {
     const json = await AsyncStorage.getItem(STORAGE_KEY);
-
-    // Geen opgeslagen state — eerste keer opstarten
     if (json === null) return null;
 
     const parsed: unknown = JSON.parse(json);
-
-    if (!isPersistableFormState(parsed)) {
-      logger.warn('storage_corrupt', {
-        adapter: 'persistence',
-        action: 'load',
-        reason: 'schema_mismatch_or_invalid_structure',
-      });
-      await AsyncStorage.removeItem(STORAGE_KEY);
-      return null;
-    }
+    if (!isPersistableFormState(parsed)) return await handleInvalidState(parsed);
 
     logger.info('hydration_success', {
       adapter: 'persistence',
       action: 'load',
       lastModified: parsed.meta.lastModified,
     });
-
     return parsed;
   } catch (error) {
     logger.warn('hydration_failed', {
@@ -132,14 +143,7 @@ export async function load(): Promise<PersistableFormState | null> {
       action: 'load',
       error: error instanceof Error ? error.message : 'unknown',
     });
-
-    // Probeer de corrupte key te verwijderen zodat de volgende start schoon is
-    try {
-      await AsyncStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // Niets meer te doen
-    }
-
+    void cleanupCorruptStorage(); // fire-and-forget, return blijft null
     return null;
   }
 }

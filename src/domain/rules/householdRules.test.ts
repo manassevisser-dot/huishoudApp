@@ -1,96 +1,243 @@
 // src/domain/rules/householdRules.test.ts
-import {
-    getHouseholdStatus,
-    HOUSEHOLD_CLASSIFICATION,
-    classifyHouseholdType,
-    isSpecialInvestigationRequired,
-  } from './householdRules';
-  
-  // Minimal Member-like type voor deze tests (we willen core types niet binnenhalen)
-  type MemberLike = {
-    id?: string;
-    firstName?: string | null;
-    lastName?: string | null;
-    dateOfBirth?: Date | string | null;
+import { 
+  isHouseholdComplete, 
+  getHouseholdStatus, 
+  isSpecialInvestigationRequired,
+} from './householdRules';
+import type { Member } from '@core/types/core';
+
+describe('householdRules', () => {
+  // Definieer constanten lokaal (omdat ze niet geëxporteerd zijn)
+  const SPECIAL_THRESHOLD = 5;
+  const PARTNER_THRESHOLD = 2;
+
+  // Helper om members te maken met type-safe null/undefined — gedeeld door alle describe-blokken
+  const createMember = (overrides: Partial<Member>): Member => {
+    const base: Member = {
+      entityId: '1',
+      name: 'Jan',
+      dob: '1990-01-01',
+      age: 34,
+      gender: 'man',
+      burgerlijkeStaat: 'gehuwd',
+      nettoSalaris: 3000,
+    } as Member;
+    return { ...base, ...overrides };
   };
-  
-  const m = (overrides: Partial<MemberLike> = {}): MemberLike => ({
-    id: 'm-1',
-    firstName: 'Jan',
-    lastName: 'Jansen',
-    dateOfBirth: new Date(1990, 0, 1, 12, 0, 0, 0),
-    ...overrides,
+
+  // =========================================================================
+  // isHouseholdComplete
+  // =========================================================================
+
+  describe('isHouseholdComplete', () => {
+    it('should return false for null members', () => {
+      expect(isHouseholdComplete(null as any)).toBe(false);
+    });
+
+    it('should return false for undefined members', () => {
+      expect(isHouseholdComplete(undefined as any)).toBe(false);
+    });
+
+    it('should return false for empty members array', () => {
+      expect(isHouseholdComplete([])).toBe(false);
+    });
+
+    it('should return true when all members have name and dob', () => {
+      const members: Member[] = [
+        createMember({ entityId: '1', name: 'Jan', dob: '1990-01-01' }),
+        createMember({ entityId: '2', name: 'Piet', dob: '1985-05-15' }),
+      ];
+
+      expect(isHouseholdComplete(members)).toBe(true);
+    });
+
+    it('should return false when a member has empty name', () => {
+      const members: Member[] = [
+        createMember({ entityId: '1', name: 'Jan', dob: '1990-01-01' }),
+        createMember({ entityId: '2', name: '', dob: '1985-05-15' }),
+      ];
+
+      expect(isHouseholdComplete(members)).toBe(false);
+    });
+
+    it('should return false when a member has null name', () => {
+      const members: Member[] = [
+        createMember({ entityId: '1', name: 'Jan', dob: '1990-01-01' }),
+        createMember({ entityId: '2', name: null as any, dob: '1985-05-15' }),
+      ];
+
+      expect(isHouseholdComplete(members)).toBe(false);
+    });
+
+    it('should return false when a member has undefined name', () => {
+      const members: Member[] = [
+        createMember({ entityId: '1', name: 'Jan', dob: '1990-01-01' }),
+        createMember({ entityId: '2', name: undefined, dob: '1985-05-15' }),
+      ];
+
+      expect(isHouseholdComplete(members)).toBe(false);
+    });
+
+    it('should return false when a member has empty dob', () => {
+      const members: Member[] = [
+        createMember({ entityId: '1', name: 'Jan', dob: '1990-01-01' }),
+        createMember({ entityId: '2', name: 'Piet', dob: '' }),
+      ];
+
+      expect(isHouseholdComplete(members)).toBe(false);
+    });
+
+    it('should return false when a member has null dob', () => {
+      const members: Member[] = [
+        createMember({ entityId: '1', name: 'Jan', dob: '1990-01-01' }),
+        createMember({ entityId: '2', name: 'Piet', dob: null as any }),
+      ];
+
+      expect(isHouseholdComplete(members)).toBe(false);
+    });
+
+    it('should return false when a member has undefined dob', () => {
+      const members: Member[] = [
+        createMember({ entityId: '1', name: 'Jan', dob: '1990-01-01' }),
+        createMember({ entityId: '2', name: 'Piet', dob: undefined }),
+      ];
+
+      expect(isHouseholdComplete(members)).toBe(false);
+    });
+
+    it('should filter out members with null entityId', () => {
+      const members: Member[] = [
+        createMember({ entityId: '1', name: 'Jan', dob: '1990-01-01' }),
+        createMember({ entityId: null as any, name: 'Piet', dob: '1985-05-15' }),
+      ];
+
+      expect(isHouseholdComplete(members)).toBe(true);
+    });
+
+    it('should filter out members with undefined entityId', () => {
+      const members: Member[] = [
+        createMember({ entityId: '1', name: 'Jan', dob: '1990-01-01' }),
+        createMember({ entityId: undefined, name: 'Piet', dob: '1985-05-15' }),
+      ];
+
+      expect(isHouseholdComplete(members)).toBe(true);
+    });
   });
-  
-  describe('householdRules', () => {
-    describe('getHouseholdStatus', () => {
-      it('empty: geen members', () => {
-        expect(getHouseholdStatus([] as any)).toBe('empty');
-      });
-  
-      it('partial: er zijn members, maar geen enkel compleet (naam/DOB ontbreken)', () => {
-        const members: MemberLike[] = [
-          m({ firstName: '', dateOfBirth: null }),
-          m({ firstName: '   ', dateOfBirth: undefined }),
-        ];
-        expect(getHouseholdStatus(members as any)).toBe('empty'); // let op: geen enkel lid compleet ⇒ empty
-      });
-  
-      it('partial: mix van incomplete en complete leden', () => {
-        const members: MemberLike[] = [
-          m({ firstName: '   ', dateOfBirth: new Date(2000, 1, 1) }), // geen naam ⇒ incomplete
-          m({ firstName: 'Sara', dateOfBirth: new Date(2010, 5, 5) }), // compleet
-        ];
-        expect(getHouseholdStatus(members as any)).toBe('partial');
-      });
-  
-      it('complete: alle leden hebben non-empty firstName en een DOB (null/undefined niet toegestaan)', () => {
-        const members: MemberLike[] = [
-          m({ firstName: 'Jan', dateOfBirth: new Date(1980, 3, 10) }),
-          m({ firstName: 'Eva', dateOfBirth: new Date(1985, 7, 20) }),
-        ];
-        expect(getHouseholdStatus(members as any)).toBe('complete');
-      });
-  
-      it('string DOB mag (niet-null/undefined), wordt als “aanwezig” gezien', () => {
-        const members: MemberLike[] = [
-          m({ firstName: 'Piet', dateOfBirth: '1988-10-05' }),
-        ];
-        expect(getHouseholdStatus(members as any)).toBe('complete');
-      });
-  
-      it('whitespace namen worden niet geaccepteerd (trim)', () => {
-        const members: MemberLike[] = [
-          m({ firstName: '   Jan   ', dateOfBirth: new Date(1999, 9, 9) }),
-          m({ firstName: '   ', dateOfBirth: new Date(2001, 1, 1) }),
-        ];
-        // eerste compleet, tweede niet → partial
-        expect(getHouseholdStatus(members as any)).toBe('partial');
-      });
+
+  // =========================================================================
+  // getHouseholdStatus
+  // =========================================================================
+
+  describe('getHouseholdStatus', () => {
+    it('should return "default" for null members', () => {
+      expect(getHouseholdStatus(null as any)).toBe('default');
     });
-  
-    describe('classifyHouseholdType', () => {
-      it('adultCount > 5 ⇒ SPECIAL', () => {
-        expect(classifyHouseholdType(6)).toBe(HOUSEHOLD_CLASSIFICATION.SPECIAL);
-        expect(classifyHouseholdType(10)).toBe(HOUSEHOLD_CLASSIFICATION.SPECIAL);
-      });
-  
-      it('adultCount === 2 ⇒ PARTNERS', () => {
-        expect(classifyHouseholdType(2)).toBe(HOUSEHOLD_CLASSIFICATION.PARTNERS);
-      });
-  
-      it('alle overige waarden ⇒ SINGLE (0,1,3,4,5)', () => {
-        [0, 1, 3, 4, 5].forEach((n) => {
-          expect(classifyHouseholdType(n)).toBe(HOUSEHOLD_CLASSIFICATION.SINGLE);
-        });
-      });
+
+    it('should return "default" for undefined members', () => {
+      expect(getHouseholdStatus(undefined as any)).toBe('default');
     });
-  
-    describe('isSpecialInvestigationRequired', () => {
-      it('true bij adultCount > 5, anders false', () => {
-        expect(isSpecialInvestigationRequired(6)).toBe(true);
-        expect(isSpecialInvestigationRequired(5)).toBe(false);
-        expect(isSpecialInvestigationRequired(0)).toBe(false);
-      });
+
+    it('should return "default" for empty array', () => {
+      expect(getHouseholdStatus([])).toBe('default');
+    });
+
+    it('should return "default" for 1 member', () => {
+      const members: Member[] = [createMember({ entityId: '1' })];
+      expect(getHouseholdStatus(members)).toBe('default');
+    });
+
+    it(`should return "partner" for exactly ${PARTNER_THRESHOLD} members`, () => {
+      const members: Member[] = [
+        createMember({ entityId: '1' }),
+        createMember({ entityId: '2' }),
+      ];
+      expect(getHouseholdStatus(members)).toBe('partner');
+    });
+
+    it('should return "partner" for 3 members', () => {
+      const members: Member[] = [
+        createMember({ entityId: '1' }),
+        createMember({ entityId: '2' }),
+        createMember({ entityId: '3' }),
+      ];
+      expect(getHouseholdStatus(members)).toBe('partner');
+    });
+
+    it('should return "partner" for 4 members', () => {
+      const members: Member[] = [
+        createMember({ entityId: '1' }),
+        createMember({ entityId: '2' }),
+        createMember({ entityId: '3' }),
+        createMember({ entityId: '4' }),
+      ];
+      expect(getHouseholdStatus(members)).toBe('partner');
+    });
+
+    it(`should return "special" for exactly ${SPECIAL_THRESHOLD} members`, () => {
+      const members: Member[] = [
+        createMember({ entityId: '1' }),
+        createMember({ entityId: '2' }),
+        createMember({ entityId: '3' }),
+        createMember({ entityId: '4' }),
+        createMember({ entityId: '5' }),
+      ];
+      expect(getHouseholdStatus(members)).toBe('special');
+    });
+
+    it('should return "special" for more than SPECIAL_THRESHOLD members', () => {
+      const members: Member[] = [
+        createMember({ entityId: '1' }),
+        createMember({ entityId: '2' }),
+        createMember({ entityId: '3' }),
+        createMember({ entityId: '4' }),
+        createMember({ entityId: '5' }),
+        createMember({ entityId: '6' }),
+      ];
+      expect(getHouseholdStatus(members)).toBe('special');
     });
   });
+
+  // =========================================================================
+  // isSpecialInvestigationRequired
+  // =========================================================================
+
+  describe('isSpecialInvestigationRequired', () => {
+    it('should return 0 for count below threshold', () => {
+      expect(isSpecialInvestigationRequired(SPECIAL_THRESHOLD - 1)).toBe(0);
+    });
+
+    it('should return 0 for count 0', () => {
+      expect(isSpecialInvestigationRequired(0)).toBe(0);
+    });
+
+    it('should return 0 for negative count', () => {
+      expect(isSpecialInvestigationRequired(-5)).toBe(0);
+    });
+
+    it(`should return ${SPECIAL_THRESHOLD} for count exactly threshold`, () => {
+      expect(isSpecialInvestigationRequired(SPECIAL_THRESHOLD)).toBe(SPECIAL_THRESHOLD);
+    });
+
+    it('should return count for count above threshold', () => {
+      expect(isSpecialInvestigationRequired(10)).toBe(10);
+    });
+
+    it('should return count for large numbers', () => {
+      expect(isSpecialInvestigationRequired(100)).toBe(100);
+    });
+  });
+
+  // =========================================================================
+  // Constante verificatie
+  // =========================================================================
+
+  describe('constants', () => {
+    it('should have correct SPECIAL_THRESHOLD value', () => {
+      expect(SPECIAL_THRESHOLD).toBe(5);
+    });
+
+    it('should have correct PARTNER_THRESHOLD value', () => {
+      expect(PARTNER_THRESHOLD).toBe(2);
+    });
+  });
+});

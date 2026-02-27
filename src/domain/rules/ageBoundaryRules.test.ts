@@ -1,106 +1,243 @@
-// src/domain/rules/ageBoundaryRules.test.ts
-import { getAdultMaxISO, getChildMaxISO, calculateAge } from './ageBoundaryRules';
+// src/domain/rules/__tests__/ageBoundaries.test.ts
+/**
+ * @file_intent Unit tests voor de leeftijd-sandbox regels
+ * @test_strategy
+ *   - Test leeftijdsgrenzen (MIN_AGE = 18, MAX_AGE = 85)
+ *   - Test exacte grenswaarden
+ *   - Test mock TimeProvider voor consistente testresultaten
+ *   - Test alle paden: onder, binnen, boven de grenzen
+ */
 
-// We mocken DateHydrator om deterministische "vandaag 12:00" en parsing te krijgen.
-jest.mock('@domain/helpers/DateHydrator', () => {
-  // We maken "vandaag" vervangbaar per test via een variabele.
-  let mockedToday = new Date('2026-02-15T12:00:00'); // default (jouw huidige datum/tijdzone is niet van invloed, we fixeren lokale noon)
-  return {
-    todayLocalNoon: () => new Date(mockedToday), // clone
-    // Simpele parser: alleen YYYY-MM-DD is geldig, anders null
-    isoDateOnlyToLocalNoon: (iso: string) => {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
-      // Maak een lokale noon van die datum
-      const [y, m, d] = iso.split('-').map(Number);
-      return new Date(y, m - 1, d, 12, 0, 0, 0);
-    },
-    // helper om in tests "vandaag" te kunnen wisselen
-    __setToday: (iso: string) => {
-      const [y, m, d] = iso.split('-').map(Number);
-      mockedToday = new Date(y, m - 1, d, 12, 0, 0, 0);
-    },
-  };
-});
+import { isWithinAgeBoundaries } from './ageBoundaryRules';
+import { calculateAge } from './ageRules';
+import type { TimeProvider } from '@domain/helpers/TimeProvider';
 
-// Type augmentatie om __setToday te kunnen aanroepen
-type HydratorMock = {
-  todayLocalNoon: () => Date;
-  isoDateOnlyToLocalNoon: (iso: string) => Date | null;
-  __setToday: (iso: string) => void;
+// Mock calculateAge functie
+jest.mock('./ageRules', () => ({
+  calculateAge: jest.fn(),
+}));
+
+describe('ageBoundaries', () => {
+  // Mock TimeProvider
+const mockProvider: TimeProvider = {
+  getCurrentLocalNoon: jest.fn().mockReturnValue(new Date('2024-01-01T12:00:00Z')),
 };
 
-const Hydrator = jest.requireMock('@domain/helpers/DateHydrator') as HydratorMock;
+  const mockDob = new Date('1990-01-01');
 
-describe('ageBoundaryRules helpers', () => {
-  describe('getAdultMaxISO', () => {
-    it('geeft (vandaag - 18 jaar) in YYYY-MM-DD, behoudt maand en dag', () => {
-      Hydrator.__setToday('2026-02-15');
-      expect(getAdultMaxISO()).toBe('2008-02-15');
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // =========================================================================
+  // BINNEN GRENZEN (18-85)
+  // =========================================================================
+
+  describe('when age is within boundaries', () => {
+    it('should return true for age exactly MIN_AGE (18)', () => {
+      // Arrange
+      (calculateAge as jest.Mock).mockReturnValue(18);
+
+      // Act
+      const result = isWithinAgeBoundaries(mockDob, mockProvider);
+
+      // Assert
+      expect(calculateAge).toHaveBeenCalledWith(mockDob, mockProvider);
+      expect(result).toBe(true);
     });
 
-    it('werkt ook met expliciete referentiedatum', () => {
-      const ref = new Date(2025, 6, 9, 12, 0, 0, 0); // 2025-07-09 local noon
-      expect(getAdultMaxISO(ref)).toBe('2007-07-09');
+    it('should return true for age exactly MAX_AGE (85)', () => {
+      // Arrange
+      (calculateAge as jest.Mock).mockReturnValue(85);
+
+      // Act
+      const result = isWithinAgeBoundaries(mockDob, mockProvider);
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should return true for age in the middle of range (30)', () => {
+      // Arrange
+      (calculateAge as jest.Mock).mockReturnValue(30);
+
+      // Act
+      const result = isWithinAgeBoundaries(mockDob, mockProvider);
+
+      // Assert
+      expect(result).toBe(true);
+    });
+
+    it('should return true for age 50 (mid-range)', () => {
+      // Arrange
+      (calculateAge as jest.Mock).mockReturnValue(50);
+
+      // Act
+      const result = isWithinAgeBoundaries(mockDob, mockProvider);
+
+      // Assert
+      expect(result).toBe(true);
     });
   });
 
-  describe('getChildMaxISO', () => {
-    it('is precies 1 dag vóór (vandaag - 18 jaar)', () => {
-      Hydrator.__setToday('2026-02-15');
-      expect(getChildMaxISO()).toBe('2008-02-14');
+  // =========================================================================
+  // ONDER GRENZEN (< 18)
+  // =========================================================================
+
+  describe('when age is below minimum', () => {
+    it('should return false for age 17', () => {
+      // Arrange
+      (calculateAge as jest.Mock).mockReturnValue(17);
+
+      // Act
+      const result = isWithinAgeBoundaries(mockDob, mockProvider);
+
+      // Assert
+      expect(result).toBe(false);
     });
 
-    it('rolt correct terug naar vorige maand als dag=1 (month boundary)', () => {
-      // 2025-03-01 → 18 jaar terug = 2007-03-01 → minus 1 dag = 2007-02-28
-      Hydrator.__setToday('2025-03-01');
-      expect(getChildMaxISO()).toBe('2007-02-28');
+    it('should return false for age 0 (newborn)', () => {
+      // Arrange
+      (calculateAge as jest.Mock).mockReturnValue(0);
+
+      // Act
+      const result = isWithinAgeBoundaries(mockDob, mockProvider);
+
+      // Assert
+      expect(result).toBe(false);
     });
 
-    it('rolt correct bij schrikkeljaar-grens (1 maart → laatste dag februari)', () => {
-      // 2024-03-01 → 18 jaar terug = 2006-03-01 → minus 1 dag = 2006-02-28 (2006 is geen schrikkeljaar)
-      Hydrator.__setToday('2024-03-01');
-      expect(getChildMaxISO()).toBe('2006-02-28');
+    it('should return false for negative age (future birth date)', () => {
+      // Arrange
+      (calculateAge as jest.Mock).mockReturnValue(-5);
+
+      // Act
+      const result = isWithinAgeBoundaries(mockDob, mockProvider);
+
+      // Assert
+      expect(result).toBe(false);
     });
   });
 
-  describe('calculateAge', () => {
-    it('retourneert null bij ongeldige ISO YYYY-MM-DD string', () => {
-      expect(calculateAge('15-02-2020')).toBeNull();
-      expect(calculateAge('2020/02/15')).toBeNull();
-      expect(calculateAge('')).toBeNull();
+  // =========================================================================
+  // BOVEN GRENZEN (> 85)
+  // =========================================================================
+
+  describe('when age is above maximum', () => {
+    it('should return false for age 86', () => {
+      // Arrange
+      (calculateAge as jest.Mock).mockReturnValue(86);
+
+      // Act
+      const result = isWithinAgeBoundaries(mockDob, mockProvider);
+
+      // Assert
+      expect(result).toBe(false);
     });
 
-    it('geeft exacte leeftijd in jaren — verjaardag vandaag', () => {
-      // Vandaag 2026-02-15
-      Hydrator.__setToday('2026-02-15');
-      expect(calculateAge('2008-02-15')).toBe(18);
-      expect(calculateAge('1990-02-15')).toBe(36);
+    it('should return false for age 100', () => {
+      // Arrange
+      (calculateAge as jest.Mock).mockReturnValue(100);
+
+      // Act
+      const result = isWithinAgeBoundaries(mockDob, mockProvider);
+
+      // Assert
+      expect(result).toBe(false);
     });
 
-    it('neemt maand/dag mee — verjaardag morgen is nog niet gehaald', () => {
-      Hydrator.__setToday('2026-02-15');
-      expect(calculateAge('2008-02-16')).toBe(17); // morgen 18
-      expect(calculateAge('1990-02-16')).toBe(35);
+    it('should return false for age 150 (max realistic)', () => {
+      // Arrange
+      (calculateAge as jest.Mock).mockReturnValue(150);
+
+      // Act
+      const result = isWithinAgeBoundaries(mockDob, mockProvider);
+
+      // Assert
+      expect(result).toBe(false);
+    });
+  });
+
+  // =========================================================================
+  // EDGE CASES
+  // =========================================================================
+
+  describe('edge cases', () => {
+    it('should handle undefined dob gracefully', () => {
+      // Arrange
+      (calculateAge as jest.Mock).mockReturnValue(NaN);
+
+      // Act
+      const result = isWithinAgeBoundaries(undefined as any, mockProvider);
+
+      // Assert
+      expect(calculateAge).toHaveBeenCalledWith(undefined, mockProvider);
+      expect(result).toBe(false); // NaN >= 18 is false
     });
 
-    it('neemt maand/dag mee — verjaardag gisteren is al gehaald', () => {
-      Hydrator.__setToday('2026-02-15');
-      expect(calculateAge('2008-02-14')).toBe(18);
-      expect(calculateAge('1990-02-14')).toBe(36);
+    it('should handle null dob gracefully', () => {
+      // Arrange
+      (calculateAge as jest.Mock).mockReturnValue(NaN);
+
+      // Act
+      const result = isWithinAgeBoundaries(null as any, mockProvider);
+
+      // Assert
+      expect(result).toBe(false);
     });
 
-    it('randgeval: 29 feb (geboren op schrikkeldag) — correcte berekening rond 28/29 feb', () => {
-      // Stel vandaag is 2025-02-28 (geen schrikkeldag), iemand geboren 2008-02-29
-      Hydrator.__setToday('2025-02-28');
-      expect(calculateAge('2008-02-29')).toBe(16); // nog geen 17
+    it('should pass the correct TimeProvider to calculateAge', () => {
+      // Arrange
+      const customProvider: TimeProvider = {
+  getCurrentLocalNoon: jest.fn().mockReturnValue(new Date('2030-01-01')),
+};
+      (calculateAge as jest.Mock).mockReturnValue(40);
 
-      // Op 2025-03-01 is verjaardag "voorbij" in niet-schrikkeljaar → nu 17
-      Hydrator.__setToday('2025-03-01');
-      expect(calculateAge('2008-02-29')).toBe(17);
+      // Act
+      isWithinAgeBoundaries(mockDob, customProvider);
 
-      // In schrikkeljaar 2024-02-29 exact 16 geworden
-      Hydrator.__setToday('2024-02-29');
-      expect(calculateAge('2008-02-29')).toBe(16);
+      // Assert
+      expect(calculateAge).toHaveBeenCalledWith(mockDob, customProvider);
+    });
+
+    it('should use the result from calculateAge directly', () => {
+      // Arrange
+      (calculateAge as jest.Mock).mockReturnValue(25);
+
+      // Act
+      const result = isWithinAgeBoundaries(mockDob, mockProvider);
+
+      // Assert
+      expect(calculateAge).toHaveBeenCalledTimes(1);
+      expect(result).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // INTEGRATIE MET ECHTE calculateAge (OPTIONEEL)
+  // =========================================================================
+
+  describe('integration with real calculateAge', () => {
+    // Herstel de echte implementatie voor deze tests
+    beforeEach(() => {
+      jest.unmock('./ageRules');
+    });
+
+    it('should calculate age correctly with real calculateAge', () => {
+      // Dit is een integratietest - gebruik echte calculateAge
+      const { calculateAge: realCalculateAge } = jest.requireActual('./ageRules');
+      (calculateAge as jest.Mock).mockImplementation(realCalculateAge);
+
+      const birthDate = new Date('1990-01-01');
+      const today = new Date('2024-01-01');
+      const provider: TimeProvider = { 
+  getCurrentLocalNoon: () => today 
+};
+
+      const result = isWithinAgeBoundaries(birthDate, provider);
+
+      // 2024 - 1990 = 34 jaar
+      expect(result).toBe(true);
     });
   });
 });

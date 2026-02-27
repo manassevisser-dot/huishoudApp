@@ -122,11 +122,6 @@ export const fieldVisibilityRules = {
     return aantalVolwassen > 1;
   },
 
-  showPostcode: (ctx: VisibilityContext): boolean => {
-    const aantalVolwassen = ctx.getValue('aantalVolwassen');
-    return aantalVolwassen <= 1;
-  },
-
   /**
    * ==================== INCOME / BENEFIT RULES ====================
    */

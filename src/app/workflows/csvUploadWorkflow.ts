@@ -115,12 +115,13 @@ export class CsvUploadWorkflow {
   }
 
   public async execute(params: CsvWorkflowInput): Promise<ImportResult> {
+    let result: ImportResult;
     try {
       const parseOutcome = this.runPhaseA(params);
       if (parseOutcome.outcome === 'failure') return parseOutcome;
 
       const analysisResult = this.runPhaseB(parseOutcome.transactions, params);
-      return this.runPhaseC(parseOutcome.transactions, analysisResult, params);
+      result = this.runPhaseC(parseOutcome.transactions, analysisResult, params);
     } catch (error) {
       logger.error('csv_workflow_failed', {
         workflow: 'csvUpload',
@@ -128,6 +129,12 @@ export class CsvUploadWorkflow {
       });
       return { outcome: 'failure', errorMessage: 'Onverwachte fout tijdens import' };
     }
+
+    // business.recompute staat BUITEN de catch:
+    // programmeerfouten hier moeten propageren, niet stil worden omgezet naar 'failure'.
+    this.business.recompute(this.fso);
+
+    return result;
   }
 
   // ─── Fase A: Parse ──────────────────────────────────────────────────────────
@@ -202,14 +209,24 @@ export class CsvUploadWorkflow {
   ): ImportResult {
     const state = this.fso.getState();
 
-    // Gereserveerd voor Fase 7 (anonymized insights) — resultaat nog niet gebruikt.
-    void this.research.processAllData(
-      state.data.household.members,
-      transactions as unknown as Parameters<typeof this.research.processAllData>[1],
-      state.data.setup,
-    );
+    // Research: omsloten door try-catch — fouten hier mogen de import NIET afbreken.
+    // processAllData is synchroon (retourneert MasterProcessResult, geen Promise).
+    // .catch() bestond niet op het return-type — vervangen door try-catch.
+    try {
+      this.research.processAllData(
+        state.data.household.members,
+        transactions as unknown as Parameters<typeof this.research.processAllData>[1],
+        state.data.setup,
+      );
+    } catch (err: unknown) {
+      logger.warn('csv_research_phase_error', {
+        workflow: 'csvUpload',
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
 
-    this.business.recompute(this.fso);
+    // business.recompute is verplaatst naar execute() buiten de try/catch
+    // zodat programmeerfouten daar propageren in plaats van worden geslikt.
 
     logger.info('csv_import_completed', {
       workflow: 'csvUpload',

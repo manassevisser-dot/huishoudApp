@@ -10,7 +10,7 @@
  *   Pure functie — geen side effects, geen I/O.
  *   Retourneert undefined als geen bekend patroon herkend wordt.
  * @ai_instruction
- *   Voeg nieuwe bankpatronen toe aan BANK_PATTERNS.
+ *   Voeg nieuwe bank-patronen toe aan BANK_PATTERNS.
  *   Zorg dat elke patroon-check op unieke kolomcombinaties leunt, niet op één kolom.
  *   Volgorde in BANK_PATTERNS is belangrijk: meest specifiek eerst.
  */
@@ -94,6 +94,11 @@ const BANK_PATTERNS: ReadonlyArray<{ bank: Exclude<DutchBank, undefined>; column
  *   // → undefined
  */
 export function detectBank(headerLine: string): DutchBank {
+  // ✅ Input validatie toevoegen
+  if (typeof headerLine !== 'string' || headerLine === '') {
+    return undefined;
+  }
+
   // Normaliseer: lowercase, trim spaties rondom separatoren
   const normalizedHeader = headerLine.toLowerCase();
 

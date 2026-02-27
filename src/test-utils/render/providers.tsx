@@ -32,33 +32,38 @@ const DEFAULT_TEST_STATE: FormState = {
 export interface MockMasterOrchestrator extends MasterOrchestratorAPI {}
 
 export const createMockOrchestrator = (state: FormState): MockMasterOrchestrator => ({
-  canNavigateNext: jest.fn(() => true),
-  onNavigateNext: jest.fn(),
-  onNavigateBack: jest.fn(),
-  isVisible: jest.fn(() => true),
-  updateField: jest.fn(),
-  handleCsvImport: jest.fn(() => Promise.resolve()),
-  
-  // FIX TS2322: buildScreenViewModel moet een valide ScreenViewModel structuur mocken
+canNavigateNext: jest.fn(() => true),
+onNavigateNext: jest.fn(),
+onNavigateBack: jest.fn(),
+isVisible: jest.fn(() => true),
+updateField: jest.fn(),
+handleCsvImport: jest.fn(() => Promise.resolve()),
+executeReset: jest.fn(),
+saveDailyTransaction: jest.fn(),
+buildRenderScreen: jest.fn(() => ({
+  screenId: state.currentScreenId,
+  titleToken: 'mock.title',
+  fields: [],
+} as any)),
+
+  // ✔ IUIOrchestrator – enige geldige methode
   ui: {
-    buildFieldViewModel: jest.fn(() => null),
-    builScreenViewModel: jest.fn(() => ({
+    buildScreen: jest.fn(() => ({
       screenId: state.currentScreenId,
       titleToken: 'mock.title',
-      fields: []
+      fields: [],
     } as any)),
-    buildScreenViewModels: jest.fn(() => []),
   },
 
-  // FIX TS2739: IThemeOrchestrator mist methodes
+  // ✔ IThemeOrchestrator
   theme: {
     loadTheme: jest.fn(() => Promise.resolve('light' as any)),
     setTheme: jest.fn(),
     getTheme: jest.fn(() => 'light'),
-    onThemeChange: jest.fn(() => () => {}), // Returns unsubscribe fn
+    onThemeChange: jest.fn(() => () => {}),
   },
 
-  // FIX TS2740: INavigationOrchestrator mist methodes (startWizard, goToDashboard, etc)
+  // ✔ INavigationOrchestrator – volledig & correct
   navigation: {
     getCurrentScreenId: jest.fn(() => state.currentScreenId),
     canNavigateNext: jest.fn(() => true),
@@ -68,12 +73,11 @@ export const createMockOrchestrator = (state: FormState): MockMasterOrchestrator
     goToDashboard: jest.fn(),
     goToOptions: jest.fn(),
     goToSettings: jest.fn(),
-    // Spread any overige verplichte methodes als NOOP mocks
-    ...({
-      completeWizard: jest.fn(),
-      resetWizard: jest.fn(),
-      jumpToScreen: jest.fn(),
-    } as any)
+    goToCsvUpload: jest.fn(),
+    goToCsvAnalysis: jest.fn(),
+    goToReset: jest.fn(),
+    goBack: jest.fn(),
+    goToUndo: jest.fn(), // ← verplicht volgens interface
   },
 });
 

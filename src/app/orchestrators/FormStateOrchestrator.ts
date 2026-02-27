@@ -1,10 +1,9 @@
 // src/app/orchestrators/FormStateOrchestrator.ts
 /**
- * @file_intent De exclusieve interface voor het lezen en schrijven van FormState.
- * @repo_architecture Mobile Industry (MI) - State Management Layer.
- * @term_definition StateWriterAdapter = De abstractielaag die de werkelijke Redux/State mutaties uitvoert.
- * @contract Alleen deze orchestrator mag veld-waarden ophalen (getValue) of muteren (updateField) via de writer.
- * @ai_instruction Bij uitbreiding van de state-structuur (bijv. nieuwe domeinen), voeg hier de bijbehorende getter-logica toe.
+ * Exclusieve interface voor het lezen en schrijven van `FormState`.
+ *
+ * @module app/orchestrators
+ * @see {@link ./README.md | FormStateOrchestrator — Details}
  */
 import { type FormState } from '@core/types/core';
 import type { FormAction } from '@app/state/formReducer';
@@ -26,6 +25,12 @@ export class FormStateOrchestrator {
     this.writer = new StateWriterAdapter(this.getState, (a) => this.dispatch(a as FormAction));
   }
 
+  /**
+   * Haalt de huidige waarde op voor een veld-ID uit de FormState.
+   *
+   * @param fieldId - Het te zoeken veld (bijv. `'nettoSalaris'` of `'mem_0_name'`)
+   * @returns De opgeslagen waarde, of `undefined` als niet gevonden
+   */
   public getValue(fieldId: string): unknown {
     const state = this.getState();
 
@@ -66,10 +71,23 @@ export class FormStateOrchestrator {
     return undefined;
   }
 
+  /**
+   * Schrijft een gevalideerde waarde naar het opgegeven veld via de `StateWriterAdapter`.
+   *
+   * @param fieldId        - Het doelveld in de FormState
+   * @param validatedValue - Reeds gevalideerde waarde
+   */
   public updateField(fieldId: string, validatedValue: unknown): void {
     this.writer.updateField(fieldId, validatedValue);
   }
 
+  /**
+   * Valideert een waarde op de grens en retourneert een foutmelding of `null`.
+   *
+   * @param fieldId - Het veld waarvoor gevalideerd wordt
+   * @param value   - Te valideren waarde
+   * @returns Foutmelding als de validatie faalt, anders `null`
+   */
   public getValidationError(fieldId: string, value: unknown): string | null {
     const r = validateAtBoundary(fieldId, value);
     return r.success ? null : r.error;

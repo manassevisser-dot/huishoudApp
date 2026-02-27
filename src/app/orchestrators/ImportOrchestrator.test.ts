@@ -1,293 +1,432 @@
+// src/app/orchestrators/__tests__/ImportOrchestrator.test.ts
+/**
+ * @file_intent Unit tests voor ImportOrchestrator - CSV parsing ACL boundary
+ */
+
 import { ImportOrchestrator } from './ImportOrchestrator';
-import type { CsvItem as ImportCsvItem } from '@core/types/research';
+import { dataProcessor } from '@domain/finance/StatementIntakePipeline';
+import { csvAdapter } from '@adapters/csv/csvAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
+import type { CsvItem } from '@adapters/csv/csvAdapter';
+import type { CsvParseResult } from './types/csvUpload.types';
+
+// Mocks
+jest.mock('@domain/finance/StatementIntakePipeline');
+jest.mock('@adapters/csv/csvAdapter');
+jest.mock('@adapters/audit/AuditLoggerAdapter');
 
 describe('ImportOrchestrator', () => {
   let orchestrator: ImportOrchestrator;
 
   beforeEach(() => {
-    orchestrator = new ImportOrchestrator();
     jest.clearAllMocks();
+    orchestrator = new ImportOrchestrator();
   });
 
-  describe('processCsvImport - Empty CSV', () => {
-    it('moet lege CSV als empty status retourneren', () => {
-      const result = orchestrator.processCsvImport({
-        csvText: '',
-        setupData: null
-      });
+  // =========================================================================
+  // processCsvImport - SUCCESS PATHS
+  // =========================================================================
 
-      expect(result.status).toBe('empty');
-      expect(result.transactions).toHaveLength(0);
-      expect(result.count).toBe(0);
-      expect(result.summary.finalIncome).toBe(0);
-    });
+  describe('processCsvImport - success', () => {
+    it('should parse valid CSV and return transactions', () => {
+      // Arrange
+      const mockCsv = 'datum,bedrag,omschrijving\n2024-01-01,42.50,Boodschappen';
+      const mockAdapterResult: CsvItem[] = [{
+        date: '2024-01-01',
+        amountEuros: 42.50,
+        description: 'Boodschappen',
+        original: { datum: '2024-01-01', bedrag: '42,50', omschrijving: 'Boodschappen' }
+      }];
 
-    it('moet whitespace-only CSV als empty status retourneren', () => {
-      const result = orchestrator.processCsvImport({
-        csvText: '   \n\t  ',
-        setupData: null
-      });
+      (csvAdapter.mapToInternalModel as jest.Mock).mockReturnValue(mockAdapterResult);
+      (dataProcessor.stripPII as jest.Mock).mockReturnValue('Boodschappen');
+      (dataProcessor.categorize as jest.Mock).mockReturnValue('Boodschappen');
 
-      expect(result.status).toBe('empty');
-      expect(result.transactions).toHaveLength(0);
-    });
-  });
+      // Act
+      const result = orchestrator.processCsvImport(mockCsv);
 
-  describe('processCsvImport - Valid Transactions', () => {
-    it('moet geldige CSV-transacties correct parsen', () => {
-      // Aanname: csvAdapter zal dit moeten mapen naar AdapterCsvItem[]
-      const csvData = 'date\tamount\tdescription\n2024-01-15\t100.50\tTest Transaction';
-
-      const result = orchestrator.processCsvImport({
-        csvText: csvData,
-        setupData: null
-      });
-
-      // Als er transacties zijn geparst:
+      // Assert
+      expect(result.status).toBe('success');
       if (result.status === 'success') {
-        expect(result.transactions).toHaveLength(result.count);
-        expect(result.transactions[0]).toHaveProperty('id');
-        expect(result.transactions[0]).toHaveProperty('fieldId');
-        expect(result.transactions[0]).toHaveProperty('amount');
-        expect(result.transactions[0]).toHaveProperty('date');
-        expect(result.transactions[0]).toHaveProperty('description');
-        expect(result.transactions[0]).toHaveProperty('category');
-        expect(result.transactions[0]).toHaveProperty('isIgnored', false);
-        expect(result.transactions[0]).toHaveProperty('original');
-      }
-    });
-
-    it('moet transactie-ID consistent genereren op basis van canonical data', () => {
-      const csvData = 'date\tamount\tdescription\n2024-01-15\t100.50\tTest';
-
-      const result1 = orchestrator.processCsvImport({
-        csvText: csvData,
-        setupData: null
-      });
-
-      const result2 = orchestrator.processCsvImport({
-        csvText: csvData,
-        setupData: null
-      });
-
-      if (result1.status === 'success' && result2.status === 'success') {
-        expect(result1.transactions[0].id).toBe(result2.transactions[0].id);
-      }
-    });
-
-    it('moet amountCents correct als integraal getal calculeren', () => {
-      const csvData = 'date\tamount\tdescription\n2024-01-15\t50.75\tTest';
-
-      const result = orchestrator.processCsvImport({
-        csvText: csvData,
-        setupData: null
-      });
-
-      if (result.status === 'success' && result.transactions.length > 0) {
-        const tx = result.transactions[0];
-        expect(tx.amountCents).toBe(Math.round(tx.amount * 100));
-        expect(Number.isInteger(tx.amountCents)).toBe(true);
-      }
-    });
-
-    it('moet zero-amount transacties filteren', () => {
-      // Zero amounts worden gefilterd in isValidAmount()
-      const result = orchestrator.processCsvImport({
-        csvText: 'date\tamount\tdescription\n2024-01-15\t0\tZero Amount',
-        setupData: null
-      });
-
-      if (result.status === 'success') {
-        expect(result.transactions).not.toContainEqual(
-          expect.objectContaining({ amount: 0 })
-        );
-      }
-    });
-
-    it('moet undefined/NaN amounts filteren', () => {
-      // Invalid amounts worden gefilterd
-      const result = orchestrator.processCsvImport({
-        csvText: 'date\tamount\tdescription\n2024-01-15\tinvalid\tBad Amount',
-        setupData: null
-      });
-
-      // Zou lege transacties moeten hebben of empty status
-      expect(result.transactions).toHaveLength(0);
-    });
-  });
-
-  describe('processCsvImport - Data Sanitization', () => {
-    it('moet missing descriptions met fallback vullen en flag zetten', () => {
-      const csvData = 'date\tamount\tdescription\n2024-01-15\t100\t\n2024-01-16\t200\tValid desc';
-
-      const result = orchestrator.processCsvImport({
-        csvText: csvData,
-        setupData: null
-      });
-
-      if (result.status === 'success' && result.transactions.length > 0) {
-        // Check if any transaction has the missing_description flag
-        const txWithMissingDesc = result.transactions.find(tx =>
-          Array.isArray(tx.original.flags) &&
-          (tx.original.flags as readonly string[]).includes('missing_description')
-        );
-        if (txWithMissingDesc != null) {
-          expect(txWithMissingDesc.description).toBe('Geen omschrijving');
-        }
-      }
-    });
-
-    it('moet missing dates met import-timestamp vullen en flag zetten', () => {
-      const csvData = 'date\tamount\tdescription\n\t100\tTest';
-
-      const result = orchestrator.processCsvImport({
-        csvText: csvData,
-        setupData: null
-      });
-
-      if (result.status === 'success' && result.transactions.length > 0) {
-        const tx = result.transactions[0];
-        expect(tx.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-        expect(tx.original.flags).toContain('missing_date');
-      }
-    });
-
-    it('moet invalid dates met fallback vullen en flag zetten', () => {
-      const csvData = 'date\tamount\tdescription\n2024-99-99\t100\tTest';
-
-      const result = orchestrator.processCsvImport({
-        csvText: csvData,
-        setupData: null
-      });
-
-      if (result.status === 'success' && result.transactions.length > 0) {
-        const tx = result.transactions[0];
-        expect(tx.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-        expect(tx.original.flags).toContain('missing_date');
-      }
-    });
-
-    it('moet PII uit beschrijvingen strippen', () => {
-      // Dit hangt af van dataProcessor.stripPII implementatie
-      const csvData = 'date\tamount\tdescription\n2024-01-15\t100\tJohn Doe paid rent';
-
-      const result = orchestrator.processCsvImport({
-        csvText: csvData,
-        setupData: null
-      });
-
-      if (result.status === 'success' && result.transactions.length > 0) {
-        const tx = result.transactions[0];
-        // PII strip logic zou "John Doe" moeten verwijderen
-        expect(tx.description).toBeDefined();
-      }
-    });
-
-    it('moet fallback category gebruiken voor ongeclassificeerde transacties', () => {
-      // Afhankelijk van dataProcessor.categorize implementatie
-      const csvData = 'date\tamount\tdescription\n2024-01-15\t100\txyzunknownxyz';
-
-      const result = orchestrator.processCsvImport({
-        csvText: csvData,
-        setupData: null
-      });
-
-      if (result.status === 'success' && result.transactions.length > 0) {
-        const tx = result.transactions[0];
-        const flags = Array.isArray(tx.original.flags) ? tx.original.flags : [];
-        if (flags.includes('fallback_category' as never)) {
-          expect(tx.category).toBe('Overig');
-        }
-      }
-    });
-  });
-
-  describe('processCsvImport - Summary Calculation', () => {
-    it('moet summary met setupData calculeren', () => {
-      const setupData = {
-        maandelijksInkomen: 2000,
-        housingIncluded: false
-      };
-
-      const csvData = 'date\tamount\tdescription\n2024-01-15\t100\tTest';
-
-      const result = orchestrator.processCsvImport({
-        csvText: csvData,
-        setupData
-      });
-
-      expect(result.summary).toBeDefined();
-      expect(result.summary).toHaveProperty('finalIncome');
-      expect(result.summary).toHaveProperty('source');
-      expect(result.summary).toHaveProperty('isDiscrepancy');
-    });
-
-    it('moet hasMissingCosts detecteren voor Wonen transacties', () => {
-      // Afhankelijk van categorization - Wonen items detection
-      const setupData = {
-        maandelijksInkomen: 2000,
-        housingIncluded: false
-      };
-
-      const csvData = 'date\tamount\tdescription\n2024-01-15\t500\tRent payment';
-
-      const result = orchestrator.processCsvImport({
-        csvText: csvData,
-        setupData
-      });
-
-      // Als categorization "Wonen" resulteert en housingIncluded false:
-      // hasMissingCosts zou true kunnen zijn
-      expect(result).toHaveProperty('hasMissingCosts');
-    });
-  });
-
-  describe('processCsvImport - Error Handling', () => {
-    it('moet malformed CSV gracefully afhandelen met error status', () => {
-      const result = orchestrator.processCsvImport({
-        csvText: '{{invalid json structure',
-        setupData: null
-      });
-
-      // Afhankelijk van csvAdapter implementation
-      expect(result).toHaveProperty('status');
-      if (result.status === 'error') {
-        expect(result.errorMessage).toBeDefined();
-        expect(result.transactions).toHaveLength(0);
-      }
-    });
-
-    it('moet transactie-metadata correct instellen', () => {
-      const csvData = 'date\tamount\tdescription\n2024-01-15\t100\tTest';
-
-      const result = orchestrator.processCsvImport({
-        csvText: csvData,
-        setupData: null
-      });
-
-      if (result.status === 'success' && result.transactions.length > 0) {
-        const tx = result.transactions[0];
-        expect(tx.original).toMatchObject({
-          schemaVersion: 'csv-v1',
-          columnMapVersion: 'v1',
-          flags: expect.any(Array),
-          importedAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T/)
+        expect(result.transactions).toHaveLength(1);
+        expect(result.transactions[0]).toMatchObject({
+          amount: 42.50,
+          amountCents: 4250,
+          description: 'Boodschappen',
+          category: 'Boodschappen',
+          original: {
+            rawDigest: expect.any(String),
+            schemaVersion: 'csv-v1',
+            importedAt: expect.any(String),
+            columnMapVersion: 'v1',
+            flags: [],
+          },
         });
-        expect(Object.isFrozen(tx.original.flags)).toBe(true);
+        expect(result.transactions[0].id).toMatch(/^csv_[0-9a-f]+$/);
+        expect(result.transactions[0].fieldId).toMatch(/^csv_tx_[0-9a-f]+_0$/);
       }
     });
 
-    it('moet fieldId unique per transactie genereren', () => {
-      const csvData = 'date\tamount\tdescription\n2024-01-15\t100\tTest1\n2024-01-16\t200\tTest2';
+    it('should handle multiple transactions', () => {
+      // Arrange
+      const mockCsv = 'datum,bedrag,omschrijving\n2024-01-01,42.50,Boodschappen\n2024-01-02,15.30,Koffie';
+      const mockAdapterResult: CsvItem[] = [
+        {
+          date: '2024-01-01',
+          amountEuros: 42.50,
+          description: 'Boodschappen',
+          original: { datum: '2024-01-01', bedrag: '42,50', omschrijving: 'Boodschappen' }
+        },
+        {
+          date: '2024-01-02',
+          amountEuros: 15.30,
+          description: 'Koffie',
+          original: { datum: '2024-01-02', bedrag: '15,30', omschrijving: 'Koffie' }
+        }
+      ];
 
-      const result = orchestrator.processCsvImport({
-        csvText: csvData,
-        setupData: null
+      (csvAdapter.mapToInternalModel as jest.Mock).mockReturnValue(mockAdapterResult);
+      (dataProcessor.stripPII as jest.Mock).mockImplementation((desc: string) => desc);
+      (dataProcessor.categorize as jest.Mock).mockImplementation((desc: string) => desc);
+
+      // Act
+      const result = orchestrator.processCsvImport(mockCsv);
+
+      // Assert
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.transactions).toHaveLength(2);
+        expect(result.metadata.parsedCount).toBe(2);
+      }
+    });
+  });
+
+  // =========================================================================
+  // processCsvImport - EMPTY PATHS
+  // =========================================================================
+
+  describe('processCsvImport - empty', () => {
+    it('should return empty status when CSV is empty string', () => {
+      // Arrange
+      (csvAdapter.mapToInternalModel as jest.Mock).mockReturnValue([]);
+
+      // Act
+      const result = orchestrator.processCsvImport('');
+
+      // Assert
+      expect(result.status).toBe('empty');
+      if (result.status === 'empty') {
+        expect(result.message).toBe('Geen verwerkte transacties gevonden in het CSV-bestand.');
+      }
+    });
+
+    it('should return empty status when CSV contains only headers', () => {
+      // Arrange
+      const mockCsv = 'datum,bedrag,omschrijving';
+      (csvAdapter.mapToInternalModel as jest.Mock).mockReturnValue([]);
+
+      // Act
+      const result = orchestrator.processCsvImport(mockCsv);
+
+      // Assert
+      expect(result.status).toBe('empty');
+    });
+
+    it('should return empty status when all rows are invalid', () => {
+      // Arrange
+      const mockCsv = 'datum,bedrag,omschrijving\n2024-01-01,0,Test';
+      const mockAdapterResult: CsvItem[] = [{
+        date: '2024-01-01',
+        amountEuros: 0,
+        description: 'Test',
+        original: { datum: '2024-01-01', bedrag: '0', omschrijving: 'Test' }
+      }];
+
+      (csvAdapter.mapToInternalModel as jest.Mock).mockReturnValue(mockAdapterResult);
+
+      // Act
+      const result = orchestrator.processCsvImport(mockCsv);
+
+      // Assert
+      expect(result.status).toBe('empty');
+    });
+  });
+
+  // =========================================================================
+  // processCsvImport - ERROR PATHS
+  // =========================================================================
+
+  describe('processCsvImport - error', () => {
+    it('should return error status when csvAdapter throws', () => {
+      // Arrange
+      const mockCsv = 'invalid,csv';
+      const mockError = new Error('Adapter failure');
+      (csvAdapter.mapToInternalModel as jest.Mock).mockImplementation(() => {
+        throw mockError;
       });
 
-      if (result.status === 'success' && result.transactions.length >= 2) {
-        const [tx1, tx2] = result.transactions;
-        expect(tx1.fieldId).not.toBe(tx2.fieldId);
+      // Act
+      const result = orchestrator.processCsvImport(mockCsv);
+
+      // Assert
+      expect(result.status).toBe('error');
+      if (result.status === 'error') {
+        expect(result.errorMessage).toBe('Adapter failure');
+        expect(result.technicalDetails?.errorCode).toBe('PARSING_ERROR');
+      }
+      expect(Logger.error).toHaveBeenCalled();
+    });
+
+    it('should return error status with fallback message for non-Error throws', () => {
+      // Arrange
+      const mockCsv = 'invalid,csv';
+      (csvAdapter.mapToInternalModel as jest.Mock).mockImplementation(() => {
+        throw 'String error';
+      });
+
+      // Act
+      const result = orchestrator.processCsvImport(mockCsv);
+
+      // Assert
+      expect(result.status).toBe('error');
+      if (result.status === 'error') {
+        expect(result.errorMessage).toBe('Fout bij verwerken van CSV');
+      }
+    });
+  });
+
+  // =========================================================================
+  // Edge Cases & Flag Logic
+  // =========================================================================
+
+  describe('edge cases and flag handling', () => {
+    it('should filter out transactions with invalid amount', () => {
+      // Arrange
+      const mockAdapterResult: CsvItem[] = [
+        {
+          date: '2024-01-01',
+          amountEuros: 42.50,
+          description: 'Valid',
+          original: { datum: '2024-01-01', bedrag: '42,50', omschrijving: 'Valid' }
+        },
+        {
+          date: '2024-01-02',
+          amountEuros: 0,
+          description: 'Zero amount',
+          original: { datum: '2024-01-02', bedrag: '0', omschrijving: 'Zero amount' }
+        },
+        {
+          date: '2024-01-03',
+          amountEuros: NaN,
+          description: 'NaN',
+          original: { datum: '2024-01-03', bedrag: 'invalid', omschrijving: 'NaN' }
+        }
+      ];
+
+      (csvAdapter.mapToInternalModel as jest.Mock).mockReturnValue(mockAdapterResult);
+      (dataProcessor.stripPII as jest.Mock).mockReturnValue('Valid');
+      (dataProcessor.categorize as jest.Mock).mockReturnValue('Valid');
+
+      // Act
+      const result = orchestrator.processCsvImport('mock,csv');
+
+      // Assert
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.transactions).toHaveLength(1);
+        expect(result.transactions[0].description).toBe('Valid');
+      }
+    });
+
+   it('should add missing_description flag when description is empty', () => {
+  // Arrange
+  const mockAdapterResult: CsvItem[] = [{
+    date: '2024-01-01',
+    amountEuros: 42.50,
+    description: '',
+    original: { datum: '2024-01-01', bedrag: '42,50', omschrijving: '' }
+  }];
+
+  (csvAdapter.mapToInternalModel as jest.Mock).mockReturnValue(mockAdapterResult);
+  (dataProcessor.stripPII as jest.Mock).mockReturnValue('Geen omschrijving');
+  (dataProcessor.categorize as jest.Mock).mockReturnValue('Overig'); // ← Dit is GEEN lege string
+
+  // Act
+  const result = orchestrator.processCsvImport('mock,csv');
+
+  // Assert
+  expect(result.status).toBe('success');
+  if (result.status === 'success') {
+    expect(result.transactions[0].description).toBe('Geen omschrijving');
+    expect(result.transactions[0].original.flags).toContain('missing_description');
+    // fallback_category wordt NIET toegevoegd omdat categorize 'Overig' teruggeeft
+    expect(result.transactions[0].original.flags).not.toContain('fallback_category');
+  }
+});
+it('should add fallback_category flag when categorize returns empty string', () => {
+  // Arrange
+  const mockAdapterResult: CsvItem[] = [{
+    date: '2024-01-01',
+    amountEuros: 42.50,
+    description: 'Iets onbekends',
+    original: { datum: '2024-01-01', bedrag: '42,50', omschrijving: 'Iets onbekends' }
+  }];
+
+  (csvAdapter.mapToInternalModel as jest.Mock).mockReturnValue(mockAdapterResult);
+  (dataProcessor.stripPII as jest.Mock).mockReturnValue('Iets onbekends');
+  (dataProcessor.categorize as jest.Mock).mockReturnValue(''); // ← LEGE STRING!
+
+  // Act
+  const result = orchestrator.processCsvImport('mock,csv');
+
+  // Assert
+  expect(result.status).toBe('success');
+  if (result.status === 'success') {
+    expect(result.transactions[0].category).toBe('Overig');
+    expect(result.transactions[0].original.flags).toContain('fallback_category');
+  }
+});
+
+    it('should add missing_date flag and use imported date when date is missing', () => {
+      // Arrange
+      const mockDate = '2024-01-15';
+      jest.useFakeTimers().setSystemTime(new Date(mockDate));
+
+      const mockAdapterResult: CsvItem[] = [{
+        date: '',
+        amountEuros: 42.50,
+        description: 'Boodschappen',
+        original: { datum: '', bedrag: '42,50', omschrijving: 'Boodschappen' }
+      }];
+
+      (csvAdapter.mapToInternalModel as jest.Mock).mockReturnValue(mockAdapterResult);
+      (dataProcessor.stripPII as jest.Mock).mockReturnValue('Boodschappen');
+      (dataProcessor.categorize as jest.Mock).mockReturnValue('Boodschappen');
+
+      // Act
+      const result = orchestrator.processCsvImport('mock,csv');
+
+      // Assert
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.transactions[0].date).toBe(mockDate);
+        expect(result.transactions[0].original.flags).toContain('missing_date');
+      }
+
+      jest.useRealTimers();
+    });
+
+    it('should add missing_date flag when date is invalid', () => {
+      // Arrange
+      const mockAdapterResult: CsvItem[] = [{
+        date: 'invalid-date',
+        amountEuros: 42.50,
+        description: 'Boodschappen',
+        original: { datum: 'invalid-date', bedrag: '42,50', omschrijving: 'Boodschappen' }
+      }];
+
+      (csvAdapter.mapToInternalModel as jest.Mock).mockReturnValue(mockAdapterResult);
+      (dataProcessor.stripPII as jest.Mock).mockReturnValue('Boodschappen');
+      (dataProcessor.categorize as jest.Mock).mockReturnValue('Boodschappen');
+
+      // Act
+      const result = orchestrator.processCsvImport('mock,csv');
+
+      // Assert
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.transactions[0].original.flags).toContain('missing_date');
+        expect(result.transactions[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      }
+    });
+
+    it('should add fallback_category flag when categorization returns empty', () => {
+      // Arrange
+      const mockAdapterResult: CsvItem[] = [{
+        date: '2024-01-01',
+        amountEuros: 42.50,
+        description: 'Unknown',
+        original: { datum: '2024-01-01', bedrag: '42,50', omschrijving: 'Unknown' }
+      }];
+
+      (csvAdapter.mapToInternalModel as jest.Mock).mockReturnValue(mockAdapterResult);
+      (dataProcessor.stripPII as jest.Mock).mockReturnValue('Unknown');
+      (dataProcessor.categorize as jest.Mock).mockReturnValue('');
+
+      // Act
+      const result = orchestrator.processCsvImport('mock,csv');
+
+      // Assert
+      expect(result.status).toBe('success');
+      if (result.status === 'success') {
+        expect(result.transactions[0].category).toBe('Overig');
+        expect(result.transactions[0].original.flags).toContain('fallback_category');
+      }
+    });
+  });
+
+  // =========================================================================
+  // Digest Generation
+  // =========================================================================
+
+  describe('digest generation', () => {
+    it('should generate consistent digest for same input', () => {
+      // Arrange
+      const mockAdapterResult: CsvItem[] = [{
+        date: '2024-01-01',
+        amountEuros: 42.50,
+        description: 'Boodschappen',
+        original: { datum: '2024-01-01', bedrag: '42,50', omschrijving: 'Boodschappen' }
+      }];
+
+      (csvAdapter.mapToInternalModel as jest.Mock).mockReturnValue(mockAdapterResult);
+      (dataProcessor.stripPII as jest.Mock).mockReturnValue('Boodschappen');
+      (dataProcessor.categorize as jest.Mock).mockReturnValue('Boodschappen');
+
+      // Act
+      const result1 = orchestrator.processCsvImport('mock,csv');
+      const result2 = orchestrator.processCsvImport('mock,csv');
+
+      // Assert
+      expect(result1.status).toBe('success');
+      expect(result2.status).toBe('success');
+      if (result1.status === 'success' && result2.status === 'success') {
+        expect(result1.transactions[0].original.rawDigest)
+          .toBe(result2.transactions[0].original.rawDigest);
+      }
+    });
+
+    it('should generate different digests for different inputs', () => {
+      // Arrange
+      const mockAdapterResult1: CsvItem[] = [{
+        date: '2024-01-01',
+        amountEuros: 42.50,
+        description: 'Boodschappen',
+        original: { datum: '2024-01-01', bedrag: '42,50', omschrijving: 'Boodschappen' }
+      }];
+      const mockAdapterResult2: CsvItem[] = [{
+        date: '2024-01-02',
+        amountEuros: 42.50,
+        description: 'Boodschappen',
+        original: { datum: '2024-01-02', bedrag: '42,50', omschrijving: 'Boodschappen' }
+      }];
+
+      (csvAdapter.mapToInternalModel as jest.Mock)
+        .mockReturnValueOnce(mockAdapterResult1)
+        .mockReturnValueOnce(mockAdapterResult2);
+      (dataProcessor.stripPII as jest.Mock).mockReturnValue('Boodschappen');
+      (dataProcessor.categorize as jest.Mock).mockReturnValue('Boodschappen');
+
+      // Act
+      const result1 = orchestrator.processCsvImport('mock1,csv');
+      const result2 = orchestrator.processCsvImport('mock2,csv');
+
+      // Assert
+      expect(result1.status).toBe('success');
+      expect(result2.status).toBe('success');
+      if (result1.status === 'success' && result2.status === 'success') {
+        expect(result1.transactions[0].original.rawDigest)
+          .not.toBe(result2.transactions[0].original.rawDigest);
       }
     });
   });

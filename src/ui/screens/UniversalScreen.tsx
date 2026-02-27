@@ -1,3 +1,4 @@
+// src/ui/screens/UniversalScreen.tsx
 /**
  * @file_intent Dient als een generieke, herbruikbare container voor het renderen van elke willekeurige, door de orchestrator gedefinieerde, scherm-view. Het vraagt op basis van een `screenId` de `MasterOrchestrator` om de bijbehorende `screenViewModel` te bouwen en rendert deze vervolgens.
  * @repo_architecture UI Layer - Screen/View. Dit is het top-level component voor het weergeven van een volledige schermweergave. Het is een directe consument van de `MasterOrchestrator` en de brug tussen de navigatie-state en de daadwerkelijke UI-rendering.

@@ -1,0 +1,331 @@
+LOCATIES en rechten:
+TRY-OUT ===> READ-ONLY
+|   3-splitsings-plannen.md
+|   cascade+blindspots.txt
+|   CASCADE_RAPPORT.md
+|   HERGEBRUIK_RAPPORT.md
+|   OPEN_EINDJES.md
+|   Splitisinsplan3.txt
+|   SPLITSINGPLAN.md
+|   Splitsingplan2.txt
+|   STAPPENPLAN.txt
+|
++---NIEUW ====> WRITE & READ
+|       BusinessManager_new.ts
+|       DataManager_new.ts
+|       MasterOrchestrator_new.ts
+|       renderTypes_new.ts
+|       UIOrchestrator_new.ts
+|
+\---OUD ====> READ-ONLY
+        BusinessManager_ori.ts
+        DataManager_ori.ts
+        MasterOrchestrator_ori.ts
+        UIOrchestrator_ori.ts
+
+
+
+
+
+🧱 Fase 1 — Render types extraheren
+Stap 1.1 — Maak nieuw bestand
+src/types/render.types.ts
+
+Verplaats hierheen uit MasterOrchestrator:
+
+RenderScreenVM
+
+RenderSectionVM
+
+RenderEntryVM
+
+eventuele gerelateerde helper types
+
+✔ Geen logica verplaatsen
+✔ Alleen types
+
+🏗 Fase 2 — BusinessStateOrchestrator NIET maken
+
+We breiden BusinessManager uit.
+
+Stap 2.1 — Open BusinessManager.ts
+
+Voeg methode toe:
+
+recompute(fso: FormStateOrchestrator): void {
+  const summary = this.prepareFinancialViewModel(fso.getState());
+
+  fso.dispatch({
+    type: 'UPDATE_VIEWMODEL',
+    payload: { financialSummary: summary }
+  });
+}
+Belangrijk:
+
+❗ Geen FSO in constructor injecteren
+
+❗ Klasse moet stateless blijven
+
+FSO alleen als methode-parameter
+
+Stap 2.2 — Verwijder uit MasterOrchestrator
+
+Verwijder volledige recomputeBusinessState() implementatie
+Vervang door:
+
+this.businessManager.recompute(this.fso);
+🧩 Fase 3 — FieldOrchestrator NIET maken
+
+Geen nieuw bestand.
+
+Stap 3.1 — Laat deze orchestrators intact
+
+Blijven onaangeraakt:
+
+ValidationOrchestrator
+
+NavigationOrchestrator
+
+Stap 3.2 — Verplaats alleen updateField-logica
+
+Zoek in MasterOrchestrator:
+
+updateField(...)
+
+Verplaats de boundary-validatie + dispatch + recompute logica naar:
+
+ValidationOrchestrator.ts
+
+Nieuwe methode:
+
+updateAndValidate(
+  fieldId: string,
+  value: unknown,
+  fso: FormStateOrchestrator,
+  business: BusinessManager
+): void {
+  const validationResult = this.validateAtBoundary(fieldId, value);
+
+  if (!validationResult.valid) {
+    return;
+  }
+
+  fso.updateField(fieldId, value);
+  business.recompute(fso);
+}
+Stap 3.3 — MasterOrchestrator aanpassen
+
+Vervang:
+
+updateField(...)
+
+door:
+
+this.validation.updateAndValidate(
+  fieldId,
+  value,
+  this.fso,
+  this.businessManager
+);
+⚠️ Cruciaal
+
+NIET:
+
+canNavigateNext() opnieuw implementeren
+
+validateSection() dupliceren
+
+Die blijven autoriteit in:
+
+NavigationOrchestrator
+
+ValidationOrchestrator
+
+🖥 Fase 4 — ScreenOrchestrator NIET maken
+
+We breiden UIOrchestrator uit.
+
+Stap 4.1 — Open UIOrchestrator.ts
+
+Voeg toe:
+
+buildRenderScreen(
+  screenId: string,
+  fso: FormStateOrchestrator,
+  visibility: VisibilityOrchestrator
+): RenderScreenVM {
+  const styled = this.buildScreen(screenId);
+
+  return this.mapToRenderScreen(styled, fso, visibility);
+}
+Stap 4.2 — Verplaats mapping-logica uit Master
+
+Verplaats ALLE:
+
+toRenderScreen
+
+toRenderSection
+
+toRenderEntry
+
+visibility-resolving
+
+label-resolving
+
+onChange binding
+
+naar private helpers in UIOrchestrator.
+
+Bijvoorbeeld:
+
+private mapToRenderScreen(...)
+private mapToRenderSection(...)
+private mapToRenderEntry(...)
+Stap 4.3 — Voeg delegatie toe voor visibility
+isVisible(ruleName: string, memberId: string): boolean {
+  return this.visibility.evaluate(ruleName, memberId);
+}
+
+(Injecteer VisibilityOrchestrator via constructor als nog niet aanwezig)
+
+Stap 4.4 — MasterOrchestrator aanpassen
+
+Vervang volledige render-opbouw door:
+
+return this.ui.buildRenderScreen(
+  screenId,
+  this.fso,
+  this.visibility
+);
+📦 Fase 5 — ImportWorkflowOrchestrator NIET maken
+
+We breiden DataManager uit.
+
+Stap 5.1 — Open DataManager.ts
+
+Voeg methode toe:
+
+async executeImportWorkflow(
+  csvText: string,
+  fso: FormStateOrchestrator,
+  research: ResearchOrchestrator
+): Promise<void> {
+
+  const parsed = await this.processCsvImport(csvText);
+
+  const enriched = research.processAllData(parsed);
+
+  fso.dispatch({
+    type: 'IMPORT_DATA',
+    payload: enriched
+  });
+}
+Stap 5.2 — MasterOrchestrator aanpassen
+
+Vervang volledige handleCsvImport() door:
+
+await this.dataManager.executeImportWorkflow(
+  csvText,
+  this.fso,
+  this.research
+);
+Stap 5.3 — Verwijder ACL TODO
+
+In MasterOrchestrator:
+
+Verwijder ACL TODO comment
+
+ImportOrchestrator is al effectieve ACL
+
+💰 Fase 6 — DailyTransactionWorkflow (ENIGE nieuwe file)
+
+Dit is de enige echte nieuwe orchestrator.
+
+Stap 6.1 — Maak nieuw bestand
+src/workflows/DailyTransactionWorkflow.ts
+Stap 6.2 — Verplaats uit Master:
+
+saveDailyTransaction
+
+buildExpenseItemForTransaction
+
+persistTransactionAndReset
+
+Maak:
+
+export class DailyTransactionWorkflow {
+  execute(
+    fso: FormStateOrchestrator
+  ): boolean {
+    ...
+  }
+}
+
+✔ Domeinfuncties blijven importeren
+✔ Geen businesslogica dupliceren
+
+Stap 6.3 — MasterOrchestrator aanpassen
+
+Constructor:
+
+private dailyWorkflow = new DailyTransactionWorkflow();
+
+Gebruik:
+
+return this.dailyWorkflow.execute(this.fso);
+🧹 Fase 7 — MasterOrchestrator minimaliseren
+
+Na alle delegaties moet Master nog maar bevatten:
+
+constructor dependencies
+
+pure delegaties
+
+geen logica
+
+geen mapping
+
+geen workflow-coördinatie
+
+Doelstructuur:
+
+class MasterOrchestrator {
+
+  updateField(...) {
+    this.validation.updateAndValidate(...);
+  }
+
+  buildScreen(...) {
+    return this.ui.buildRenderScreen(...);
+  }
+
+  async import(...) {
+    await this.dataManager.executeImportWorkflow(...);
+  }
+
+  saveTransaction() {
+    return this.dailyWorkflow.execute(...);
+  }
+}
+📊 Verwacht eindresultaat
+Bestand	Type wijziging
+BusinessManager.ts	+ 1 methode
+ValidationOrchestrator.ts	+ 1 methode
+UIOrchestrator.ts	+ mapping
+DataManager.ts	+ workflow
+DailyTransactionWorkflow.ts	NIEUW
+render.types.ts	NIEUW
+MasterOrchestrator.ts	-70% code
+⚠️ Belangrijke bewakingsregels
+
+❌ Geen duplicatie van canNavigateNext
+
+❌ Geen nieuwe FieldOrchestrator klasse
+
+❌ Geen ScreenOrchestrator klasse
+
+❌ Geen ImportWorkflowOrchestrator klasse
+
+✔ Alleen DailyTransactionWorkflow is nieuw
+
+✔ Bestaande orchestrators blijven autoriteit binnen hun domein

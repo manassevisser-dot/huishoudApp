@@ -1,6 +1,7 @@
 const tsParser = require('@typescript-eslint/parser');
 const tsPlugin = require('@typescript-eslint/eslint-plugin');
 const reactPlugin = require('eslint-plugin-react');
+const reactHooksPlugin = require('eslint-plugin-react-hooks'); 
 const regexPlugin = require('eslint-plugin-regex');
 const prettierConfig = require('eslint-config-prettier');
 const globals = require('globals');
@@ -13,6 +14,7 @@ module.exports = [
       '@typescript-eslint': tsPlugin,
       'react': reactPlugin,
       'regex': regexPlugin,
+      'react-hooks': reactHooksPlugin, 
     },
   },
 
@@ -32,7 +34,10 @@ module.exports = [
       'jest.config.js',        // ← ADD
       '**/*.d.ts',             // ← ADD (alle declaration files)
       'scripts/types/**',      // ← ADD (type definitions)
-      'src_STABLE_BACKUP/',
+      'src_STABLE_BACKUP/',   // ← NIEUW: Backup folder voor stabiele code
+      '_trash/',              // ← NIEUW: Prullenbak voor verwijderde code
+      '**/_trash/**',         // ← NIEUW: Prullenbak in subfolders
+      '**/__backups__/**',       // ← NIEUW: Backup folders overal
     ],
   },
 
@@ -74,6 +79,10 @@ module.exports = [
         allowNullableObject: false
       }],
       
+      // === React Hooks rules ===
+      'react-hooks/rules-of-hooks': 'error',     // Verplicht: hooks alleen op top-level
+      'react-hooks/exhaustive-deps': 'warn',     // Warning voor missende dependencies
+
       // === ADR-16: Simplicity over Perfection ===
       'max-lines-per-function': ['warn', {
         max: 30,
@@ -250,16 +259,15 @@ module.exports = [
   },
 
   // 🧪 Test files: Allow 'any' types
-  {
-    files: [
-      '**/__tests__/**/*.{ts,tsx}',
-      '**/*.test.{ts,tsx}',
-      '**/*.spec.{ts,tsx}',
-      '**/test-utils/**/*.{ts,tsx}',
-      '**/__mocks__/**/*.{ts,tsx}',
-      
-    ],
-    rules: {
+ {
+  files: [
+    '**/__tests__/**/*.{ts,tsx}',
+    '**/*.test.{ts,tsx}',
+    '**/*.spec.{ts,tsx}',
+    '**/test-utils/**/*.{ts,tsx}',
+    '**/__mocks__/**/*.{ts,tsx}',
+  ],
+  rules: {
     // --- Type-safety (ADR-02 relaxatie voor tests) ---
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-unsafe-assignment': 'off',
@@ -268,17 +276,23 @@ module.exports = [
     '@typescript-eslint/no-unsafe-return': 'off',
     '@typescript-eslint/no-unsafe-argument': 'off',
     '@typescript-eslint/no-unsafe-enum-comparison': 'off',
+    '@typescript-eslint/strict-boolean-expressions': 'off',
 
     // --- Stijl & complexiteit (tests mogen lang/messy zijn) ---
     'max-lines-per-function': 'off',
     'complexity': 'off',
     'no-magic-numbers': 'off',
+    'max-lines': 'off',  // ← Tests mogen langer zijn dan 150 regels
+   
 
     // --- Variabelen (tests gebruiken vaak fixtures) ---
     '@typescript-eslint/no-unused-vars': 'off',
     'no-unused-vars': 'off',
-    }
+    
+    // === ✅ ADR-05: Euro formatting UIT voor tests ===
+    'regex/invalid': 'off',  // ← DIT ZET DE EURO FORMATTING UIT VOOR TESTS
   },
+},
   
   // 🔧 Files with legitimate magic numbers
   {
@@ -295,6 +309,7 @@ module.exports = [
       '**/ageBoundaryRules.ts',
       '**/fieldConstraints.ts',
       '**/conditions.ts',
+      '**/*.test.{ts,tsx}',
     ],
     rules: {
       'no-magic-numbers': 'off',
@@ -321,6 +336,20 @@ module.exports = [
     'max-lines-per-function': 'off',
     'complexity': 'off',
     '@typescript-eslint/strict-boolean-expressions': 'warn',
+  }
+},
+// 🎯 Reducer files: hogere limieten voor complexiteit
+{
+  files: [
+    '**/formReducer.ts', 
+    '**/*Reducer.ts',
+    '**/DynamicEntry.tsx',
+  ],
+  rules: {
+    'max-lines-per-function': 'off',      // Zet helemaal uit
+    'complexity': 'off',                   // Zet helemaal uit
+    'max-lines': 'off',                    // Ook max-lines uitzetten
+    'max-depth': 'off',                     // Eventueel ook nesting depth
   },
 },
   // 9️⃣ Prettier als laatste

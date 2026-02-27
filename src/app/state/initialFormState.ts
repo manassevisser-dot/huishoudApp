@@ -23,6 +23,7 @@ export const initialFormState: FormState = {
       autoCount: 'Geen',
       heeftHuisdieren: false,
       woningType: 'Huur',
+      postcode: '',
     },
     [DATA_KEYS.HOUSEHOLD]: {
       members: [],
@@ -51,6 +52,13 @@ export const initialFormState: FormState = {
       sourceBank: undefined,
       fileName: '',
       transactionCount: 0,
+    },
+    // ─── Transaction History [Fase 7] ───────────────────────────────────────
+    // Leeg bij eerste start. Wordt gevuld door DailyTransactionWorkflow.
+    transactionHistory: {
+      past:    [],
+      present: null,
+      future:  [],
     },
   },
   viewModels: {},

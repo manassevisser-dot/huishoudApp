@@ -1,3 +1,4 @@
+//src/ui/screens/actions/DailyInputActionFooter.tsx
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

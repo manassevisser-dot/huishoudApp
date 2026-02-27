@@ -1,6 +1,8 @@
 /**
- * @file_intent Definieert het contract voor de UIOrchestrator.
- * @repo_architecture Application Layer - Orchestrator Interface.
+ * Contract voor de UIOrchestrator: assembleert gestylde screen view models.
+ *
+ * @module app/orchestrators/interfaces
+ * @see {@link ./README.md | Interfaces — Details}
  */
 import type { StyledScreenVM } from '@app/orchestrators/factory/StyleFactory';
 

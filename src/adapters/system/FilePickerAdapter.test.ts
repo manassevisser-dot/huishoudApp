@@ -150,7 +150,7 @@ describe('FilePickerAdapter', () => {
       const result = await pickAndReadCsvFile();
 
       // Assert
-      expect(result).toBe(expectedContent);
+      expect(result.text).toBe(expectedContent);
     });
 
     it('should call FileSystem.readAsStringAsync with correct URI and UTF-8 encoding', async () => {
@@ -336,7 +336,7 @@ describe('FilePickerAdapter', () => {
       const result = await pickAndReadCsvFile();
 
       // Assert - Should NOT throw because 0 !== true
-      expect(result).toBe(FILE_CONTENT);
+      expect(result.text).toBe(FILE_CONTENT);
     });
 
     it('should preserve original error message when wrapping file system errors', async () => {
@@ -368,12 +368,12 @@ describe('FilePickerAdapter', () => {
       const result = await pickAndReadCsvFile();
 
       // Assert
-      expect(result).toBe(csvData);
+      expect(result.text).toBe(csvData);
       expect(mockedDocumentPicker.getDocumentAsync).toHaveBeenCalled();
       expect(mockedFileSystem.readAsStringAsync).toHaveBeenCalled();
     });
 
-    it('should handle large CSV files correctly', async () => {
+it('should handle large CSV files correctly', async () => {
       // Arrange
       const largeContent = 'Header\n' + 'Data\n'.repeat(10000);
       mockedDocumentPicker.getDocumentAsync.mockResolvedValue(SUCCESS_RESPONSE);
@@ -383,8 +383,9 @@ describe('FilePickerAdapter', () => {
       const result = await pickAndReadCsvFile();
 
       // Assert
-      expect(result).toBe(largeContent);
-      expect(result.length).toBeGreaterThan(10000);
+      // VERANDERING HIERONDER: we kijken naar result.text in plaats van result
+      expect(result.text).toBe(largeContent); 
+      expect(result.text.length).toBeGreaterThan(10000);
     });
 
     it('should handle CSV content with special characters and encodings', async () => {
@@ -397,9 +398,9 @@ describe('FilePickerAdapter', () => {
       const result = await pickAndReadCsvFile();
 
       // Assert
-      expect(result).toBe(specialContent);
-      expect(result).toContain('Résumé');
-      expect(result).toContain('€uro');
+      expect(result.text).toBe(specialContent);
+      expect(result.text).toContain('Résumé');
+      expect(result.text).toContain('€uro');
     });
   });
 });

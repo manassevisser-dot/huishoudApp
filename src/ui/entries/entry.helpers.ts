@@ -1,4 +1,4 @@
-﻿import type { PrimitiveStyleRule, BasePrimitiveViewModel } from '@domain/registry/PrimitiveRegistry';
+﻿import type { PrimitiveStyleRule, BasePrimitiveViewModel } from '@ui/kernel';
 import type { RenderEntryVM } from '@app/orchestrators/MasterOrchestrator';
 
 const EMPTY_STYLE: PrimitiveStyleRule = {};

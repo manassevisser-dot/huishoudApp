@@ -5,7 +5,7 @@
  *   - `Member`: Een type dat een lid van het huishouden representeert.
  *   - `Household Status`: Een status die de samenstelling van het huishouden beschrijft (special, partner, default).
  * @contract
- *   - `isHouseholdComplete`: Bepaalt of de huishoudensamenstelling compleet is ingevuld.
+ *   - `isHouseholdComplete`: Bepaalt of de huishoudsamenstelling compleet is ingevuld.
  *   - `getHouseholdStatus`: Retourneert de status van het huishouden op basis van het aantal leden.
  *   - `isSpecialInvestigationRequired`: Bepaalt of er een speciaal onderzoek nodig is op basis van het aantal leden.
  * @ai_instruction Deze functies zijn pure, state-loze business rules. Wijzigingen in deze functies hebben direct invloed op de bedrijfslogica van de applicatie. Zorg ervoor dat de functies pure functies blijven en geen state van buitenaf gebruiken.
@@ -39,7 +39,7 @@ export function getHouseholdStatus(members: Member[]): 'special' | 'partner' | '
   if (count >= SPECIAL_THRESHOLD) {
     return 'special';
   }
-  if (count === PARTNER_THRESHOLD) {
+  if (count >= PARTNER_THRESHOLD) {
     return 'partner';
   }
   return 'default';

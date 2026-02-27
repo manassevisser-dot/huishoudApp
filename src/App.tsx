@@ -13,7 +13,7 @@ import React from 'react';
 import { FormStateProvider } from '@ui/providers/FormStateProvider';
 import { MasterProvider, useMaster } from '@ui/providers/MasterProvider';
 import { ThemeProvider } from '@ui/providers/ThemeProvider';
-import { WizardProvider } from '@app/context/WizardContext';
+
 import MainNavigator from '@ui/navigation/MainNavigator';
 import { initialFormState } from '@app/state/initialFormState';
 
@@ -26,9 +26,9 @@ const AppContent = () => {
 
   return (
     <ThemeProvider master={master}>
-      <WizardProvider>
+      
         <MainNavigator />
-      </WizardProvider>
+     
     </ThemeProvider>
   );
 };

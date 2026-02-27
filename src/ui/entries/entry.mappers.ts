@@ -1,4 +1,4 @@
-﻿import { PRIMITIVE_TYPES } from '@domain/registry/PrimitiveRegistry';
+﻿import { PRIMITIVE_TYPES } from '@ui/kernel';
 import type {
   CurrencyViewModel,
   DateViewModel,
@@ -9,7 +9,8 @@ import type {
   ChipGroupViewModel,
   RadioViewModel,
   LabelViewModel,
-} from '@domain/registry/PrimitiveRegistry';
+  ActionViewModel,
+} from '@ui/kernel';
 import type { RenderEntryVM } from '@app/orchestrators/MasterOrchestrator';
 import {
   getEmptyStyle,
@@ -123,6 +124,13 @@ export const toRadioViewModel = (entry: RenderEntryVM): RadioViewModel => {
     })),
   };
 };
+
+export const toActionViewModel = (entry: RenderEntryVM): ActionViewModel => ({
+  ...toBaseViewModel(entry, PRIMITIVE_TYPES.ACTION),
+  label: entry.label,
+  containerStyle: toStyleRule(entry.style),
+  onPress: () => { entry.onChange(null); },
+});
 
 export const toLabelViewModel = (entry: RenderEntryVM): LabelViewModel => ({
   ...toBaseViewModel(entry, PRIMITIVE_TYPES.LABEL),

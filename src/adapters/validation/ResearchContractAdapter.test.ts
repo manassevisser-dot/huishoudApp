@@ -78,8 +78,9 @@ describe('ResearchContractAdapter', () => {
   });
 
   describe('mapToContract', () => {
-    it('markeert speciaal onderzoek als true bij > 5 volwassenen', () => {
-      // 6 volwassenen (adult)
+    it('retourneert de count (> 0) bij meer dan 5 volwassenen', () => {
+      // isSpecialInvestigationRequired retourneert de count, niet een boolean.
+      // Bij >= SPECIAL_THRESHOLD (5) retourneert het de count zelf.
       const members = Array(6).fill(null).map((_, i) => ({
         entityId: `m${i}`,
         memberType: 'adult',
@@ -87,10 +88,12 @@ describe('ResearchContractAdapter', () => {
       })) as any[];
   
       const contract = ResearchValidator.mapToContract('id-1', 'ext-1', members);
-      expect(contract.isSpecialStatus).toBe(true);
+      expect(contract.isSpecialStatus).toBeGreaterThan(0);
+      expect(contract.isSpecialStatus).toBe(6);
     });
   
-    it('markeert speciaal onderzoek als false bij exact 5 volwassenen', () => {
+    it('retourneert de count bij exact 5 volwassenen (op de drempel)', () => {
+      // SPECIAL_THRESHOLD = 5, dus exact 5 >= 5 → retourneert 5 (speciaal).
       const members = Array(5).fill(null).map((_, i) => ({
         entityId: `m${i}`,
         memberType: 'adult',
@@ -98,7 +101,7 @@ describe('ResearchContractAdapter', () => {
       })) as any[];
   
       const contract = ResearchValidator.mapToContract('id-1', 'ext-1', members);
-      expect(contract.isSpecialStatus).toBe(false);
+      expect(contract.isSpecialStatus).toBe(5);
     });
   
     it('telt alleen types die als volwassen worden beschouwd', () => {
@@ -107,15 +110,12 @@ describe('ResearchContractAdapter', () => {
         { entityId: 'm2', memberType: 'adult', age: 38 },
         { entityId: 'm3', memberType: 'child', age: 10 },    // telt niet
         { entityId: 'm4', memberType: 'teenager', age: 16 }, // telt niet
-        { entityId: 'm5', memberType: 'senior', age: 70 },   // telt dit?
+        { entityId: 'm5', memberType: 'senior', age: 70 },   // telt niet (geen 'adult')
       ] as any[];
   
       const contract = ResearchValidator.mapToContract('id-1', 'ext-1', members);
-      
-      // Als senior NIET als adult telt in je code, zijn dit er maar 2.
-      // Als senior WEL als adult telt, zijn dit er 3.
-      // In beide gevallen is het <= 5, dus false.
-      expect(contract.isSpecialStatus).toBe(false);
+      // 2 adults < 5 → isSpecialStatus === 0
+      expect(contract.isSpecialStatus).toBe(0);
     });
   });
 });

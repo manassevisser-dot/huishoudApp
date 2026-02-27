@@ -1,5 +1,8 @@
 /**
- * @file_intent Rendert een vaste footer-balk met navigatieknoppen ("Terug" en "Verder"). Het component beheert de UI en de interactie-logica voor deze knoppen, inclusief de 'disabled' state.
+ * @file_intent Rendert vaste footer-balken voor navigatie.
+ *   NavigationFooter     = "Terug" + "Verder" (wizard-stappen, Verder disabled als validatie faalt).
+ *   NavigationBackFooter = alleen "Terug" (APP_STATIC schermen met previousScreenId, bijv. OPTIONS).
+ *     Gebruikt navigation.navigateBack() → NavigationOrchestrator.goBack() → leest previousScreenId.
  * @repo_architecture UI Layer - Navigation/Component. Dit is een specifiek UI-component dat deel uitmaakt van de algemene navigatie-layout.
  * @term_definition
  *   - `canGoNext`: Een boolean die bepaalt of de "Verder"-knop klikbaar is. Deze waarde wordt afgeleid van de `navigation`-orchestrator.
@@ -10,85 +13,125 @@
  */
 // src/ui/navigation/NavigationFooter.tsx
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleProp, ViewStyle, TextStyle } from 'react-native';
+import { View, TouchableOpacity, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMaster } from '@ui/providers/MasterProvider';
 import { useAppStyles } from '@ui/styles/useAppStyles';
+import { Tokens } from '@ui/kernel';
+import type { ColorScheme } from '@ui/kernel';
+import type { AppStyles } from '@ui/styles/useAppStyles';
 
-// Sterk getypte subset van de styles die hier gebruikt worden.
-// Geen 'any', alleen React Native StyleProp types.
-type FooterButtonStyles = {
-  button: StyleProp<ViewStyle>;
-  secondaryButton: StyleProp<ViewStyle>;
-  secondaryButtonText: StyleProp<TextStyle>;
-  buttonDisabled: StyleProp<ViewStyle>;
-  buttonText: StyleProp<TextStyle>;
-  // Optioneel: als je buiten de container nog 'styles.buttonRow' gebruikt
-  // buttonRow?: StyleProp<ViewStyle>;
-};
+// --- Private hook ------------------------------------------------------------
 
-export const NavigationFooter: React.FC = () => {
+interface FooterSetup {
+  styles: AppStyles;
+  colors: ColorScheme;
+  navigation: ReturnType<typeof useMaster>['navigation'];
+  bottomSpace: number;
+}
+
+function useFooterSetup(): FooterSetup {
   const insets = useSafeAreaInsets();
-  const { styles, Tokens } = useAppStyles();
+  const { styles, colors, Tokens } = useAppStyles();
   const master = useMaster();
 
-  // Orchestrator uit master
-  const { navigation } = master;
+  return {
+    styles,
+    colors,
+    navigation: master.navigation,
+    bottomSpace: Math.max(insets.bottom, Tokens.Space.lg),
+  };
+}
 
-  // Zorg voor expliciete boolean (strict-boolean-expressions)
+// --- NavigationFooter --------------------------------------------------------
+
+export const NavigationFooter: React.FC = () => {
+  const { styles, colors, navigation, bottomSpace } = useFooterSetup();
+
+  // Expliciete boolean — strict-boolean-expressions
   const canGoNext: boolean = navigation.canNavigateNext() === true;
 
-  // SafeArea
-  const bottomSpace = Math.max(insets.bottom, Tokens.Space.lg);
-
-  // Hard-typed view van de gebruikte styles, zonder 'any'
-  const s = styles as unknown as FooterButtonStyles;
-
   return (
-    <FooterContainer bottomSpace={bottomSpace}>
-      <TouchableOpacity onPress={navigation.navigateBack} style={[s.button, s.secondaryButton]}>
-        <Text style={s.secondaryButtonText}>Terug</Text>
+    <FooterContainer bottomSpace={bottomSpace} colors={colors}>
+      <TouchableOpacity
+      testID="nav-button-back"
+        onPress={navigation.navigateBack}
+        style={[styles.button, styles.secondaryButton]}
+      >
+        <Text style={styles.secondaryButtonText}>Terug</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
+      testID="nav-button-next"
         onPress={navigation.navigateNext}
         disabled={!canGoNext}
-        style={[s.button, !canGoNext && s.buttonDisabled]}
+        style={[styles.button, !canGoNext && styles.buttonDisabled]}
       >
-        <Text style={s.buttonText}>Verder</Text>
+        <Text style={styles.buttonText}>Verder</Text>
       </TouchableOpacity>
     </FooterContainer>
   );
 };
 
-// --- helpers ---
+// --- NavigationBackFooter ----------------------------------------------------
 
-const FooterContainer: React.FC<{ bottomSpace: number; children: React.ReactNode }> = ({
-  bottomSpace,
-  children,
-}) => {
-  // Thema-agnostische, veilige defaults (kan later naar Colors uit je theme)
-  const bg = '#FFFFFF';
-  const border = '#E5E7EB';
+/**
+ * Rendert alleen een "Terug"-knop. Bedoeld voor APP_STATIC schermen die
+ * previousScreenId hebben in ScreenRegistry maar geen wizard-"Verder"-knop nodig hebben.
+ *
+ * Flow: knop → navigation.navigateBack() → NavigationOrchestrator.goBack()
+ *       → leest previousScreenId uit ScreenRegistry → navigateTo(previousScreenId).
+ *
+ * @example OPTIONS: previousScreenId = 'DASHBOARD' → "Terug" navigeert naar dashboard.
+ * @see ScreenRegistry — previousScreenId per scherm
+ * @see NavigationOrchestrator.goBack() — de implementatie
+ */
+export const NavigationBackFooter: React.FC = () => {
+  const { styles, colors, navigation, bottomSpace } = useFooterSetup();
 
   return (
-    <View
-      style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        paddingBottom: bottomSpace,
-        backgroundColor: bg,
-        borderTopWidth: 1,
-        borderTopColor: border,
-        flexDirection: 'row',
-        paddingHorizontal: 16,
-        paddingTop: 12,
-        gap: 12,
-      }}
-    >
-      {children}
-    </View>
+    <FooterContainer bottomSpace={bottomSpace} colors={colors}>
+      <TouchableOpacity
+        testID="nav-button-back"
+        onPress={navigation.navigateBack}
+        style={[styles.button, styles.secondaryButton]}
+      >
+        <Text style={styles.secondaryButtonText}>Terug</Text>
+      </TouchableOpacity>
+    </FooterContainer>
   );
 };
+
+// --- FooterContainer ---------------------------------------------------------
+
+interface FooterContainerProps {
+  bottomSpace: number;
+  colors: ColorScheme;
+  children: React.ReactNode;
+}
+
+const FooterContainer: React.FC<FooterContainerProps> = ({
+  bottomSpace,
+  colors,
+  children,
+}) => (
+  <View
+    testID="footer-container"
+    style={{
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      paddingBottom: bottomSpace,
+      backgroundColor: colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      flexDirection: 'row',
+      paddingHorizontal: Tokens.Space.lg,
+      paddingTop: Tokens.Space.md,
+      gap: Tokens.Space.md,
+    }}
+  >
+    {children}
+  </View>
+);

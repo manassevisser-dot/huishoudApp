@@ -9,9 +9,9 @@
  *   - `isHydrated`: Boolean die aangeeft of de AsyncStorage-load voltooid is. Zolang false: app toont niets (voorkomt flicker van initialFormState).
  * @contract Componenten binnen de `FormStateProvider` kunnen de `useFormState()` hook aanroepen om de `state` (alleen-lezen) en `dispatch` (schrijf-actie) te verkrijgen. Directe mutatie van de state is onmogelijk; alle wijzigingen moeten via de `dispatch`-functie gaan met een gedefinieerde `FormAction`.
  * @ai_instruction
- *   Hydration gebeurt exact één keer bij mount via useEffect.
- *   Auto-save triggert alleen bij wijzigingen in state.data of state.meta.lastModified.
- *   Auto-save triggert NIET bij HYDRATE dispatch (isHydrated guard voorkomt dit).
+ *   Hydration gebeurt exact een keer bij mount via useHydration().
+ *   Auto-save triggert alleen bij wijzigingen in state.data of state.meta.lastModified via useAutoSave().
+ *   Auto-save triggert NIET bij HYDRATE dispatch (isHydrated guard in useAutoSave voorkomt dit).
  *   Bij RESET_APP: PersistenceAdapter.clear() aanroepen zodat opgeslagen state ook gewist wordt.
  *   Om later van AsyncStorage naar MMKV te migreren: alleen PersistenceAdapter.ts aanpassen.
  */
@@ -36,29 +36,18 @@ type FormStateContextType = {
 
 const FormStateContext = createContext<FormStateContextType | undefined>(undefined);
 
-export function FormStateProvider({
-  children,
-  initialState = initialFormState,
-  mockDispatch,
-}: {
-  children: ReactNode;
-  initialState?: FormState;
-  mockDispatch?: (action: FormAction) => void;
-}) {
-  const [state, reactDispatch] = useReducer(formReducer, initialState);
+// --- Private hooks -----------------------------------------------------------
+// Niet geëxporteerd - implementatiedetail van deze module.
 
-  // Mockable dispatch — alleen voor tests
-  const dispatch = useMemo(
-    () => (typeof mockDispatch === 'function' ? mockDispatch : reactDispatch),
-    [mockDispatch, reactDispatch],
-  );
-
-  // Bijhouden of hydration klaar is — voorkomt dat auto-save triggert tijdens/voor hydration
-  const isHydratedRef = useRef(false);
-
-  // ─── Hydration bij mount ────────────────────────────────────────────────────
-  // Laadt opgeslagen state uit AsyncStorage. Eenmalig bij mount.
-  // Bij null (eerste start of corrupt): blijft op initialFormState staan.
+/**
+ * Laadt opgeslagen state uit AsyncStorage exact een keer bij mount.
+ * Bij null (eerste start of corrupt): blijft op initialFormState staan.
+ * Markeert isHydratedRef NA dispatch zodat auto-save niet triggert op HYDRATE.
+ */
+function useHydration(
+  dispatch: (action: FormAction) => void,
+  isHydratedRef: React.MutableRefObject<boolean>,
+): void {
   useEffect(() => {
     let cancelled = false;
 
@@ -77,7 +66,6 @@ export function FormStateProvider({
         });
       }
 
-      // Pas ná dispatch markeren als gehydrateerd zodat auto-save niet triggert op HYDRATE
       isHydratedRef.current = true;
     }
 
@@ -87,11 +75,18 @@ export function FormStateProvider({
       cancelled = true;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Bewust leeg: hydration hoort exact één keer te lopen bij mount
+  }, []); // Bewust leeg: hydration hoort exact een keer te lopen bij mount
+}
 
-  // ─── Auto-save ───────────────────────────────────────────────────────────────
-  // Triggert alleen bij echte data-mutaties, niet bij hydration of navigatie-wijzigingen.
-  // state.meta.lastModified verandert bij elke reducer-actie — dat is de trigger.
+/**
+ * Slaat state op bij elke echte data-mutatie.
+ * Triggert NIET bij hydration (isHydratedRef guard) of navigatie-wijzigingen.
+ * state.meta.lastModified verandert bij elke reducer-actie - dat is de trigger.
+ */
+function useAutoSave(
+  state: FormState,
+  isHydratedRef: React.MutableRefObject<boolean>,
+): void {
   useEffect(() => {
     if (!isHydratedRef.current) return;
 
@@ -100,6 +95,31 @@ export function FormStateProvider({
   // Navigatie (activeStep, currentScreenId) en viewModels worden niet opgeslagen.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.data, state.meta.lastModified]);
+}
+
+// --- Provider ----------------------------------------------------------------
+
+export function FormStateProvider({
+  children,
+  initialState = initialFormState,
+  mockDispatch,
+}: {
+  children: ReactNode;
+  initialState?: FormState;
+  mockDispatch?: (action: FormAction) => void;
+}) {
+  const [state, reactDispatch] = useReducer(formReducer, initialState);
+
+  // Mockable dispatch - alleen voor tests
+  const dispatch = useMemo(
+    () => (typeof mockDispatch === 'function' ? mockDispatch : reactDispatch),
+    [mockDispatch, reactDispatch],
+  );
+
+  const isHydratedRef = useRef(false);
+
+  useHydration(dispatch, isHydratedRef);
+  useAutoSave(state, isHydratedRef);
 
   const value = useMemo(() => ({ state, dispatch }), [state, dispatch]);
 
@@ -109,6 +129,8 @@ export function FormStateProvider({
     </FormStateContext.Provider>
   );
 }
+
+// --- Consumer hook -----------------------------------------------------------
 
 export function useFormState(): FormStateContextType {
   const ctx = useContext(FormStateContext);

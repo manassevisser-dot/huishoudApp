@@ -1,26 +1,50 @@
-/**
- * @file_intent Definieert de hoofdsleutels (`DATA_KEYS`) en subsleutels (`SUB_KEYS`) die worden gebruikt om data te structureren en op te slaan in de applicatie.
- * @repo_architecture Domain Layer - Constants.
- * @term_definition Data Key = Een top-level sleutel (bv. 'setup', 'finance') die een hoofdgedeelte van de applicatiestaat vertegenwoordigt. Sub Key = Een sleutel voor een geneste datastructuur binnen een Data Key (bv. 'members', 'income').
- * @contract Dit bestand exporteert `DATA_KEYS` en `SUB_KEYS` als `as const` objecten, en de corresponderende `DataKey` en `SubKey` types. Deze sleutels zijn de canonieke identificatoren voor data-opslag en -toegang via de `StorageAdapter`.
- * @ai_instruction Deze sleutels zijn de ruggengraat van de data-architectuur. Wees uiterst voorzichtig bij het wijzigen ervan, aangezien dit migraties van opgeslagen data kan vereisen. Gebruik altijd deze constanten in plaats van hardgecodeerde strings om dataconsistentie te garanderen.
- */
 // src/domain/constants/datakeys.ts
+
+/**
+ * Canonieke sleutels voor opslag en toegang tot `FormState`-secties.
+ *
+ * @module domain/constants
+ * @see {@link ./README.md | Constants — Details}
+ *
+ * @remarks
+ * `DATA_KEYS` en `SUB_KEYS` zijn de enige toegestane strings voor opslag via
+ * `PersistenceAdapter`. Gebruik altijd deze constanten — nooit hardcoded strings —
+ * om data-consistentie te garanderen bij AsyncStorage-migraties.
+ *
+ * ⚠️ Wijzig bestaande waarden alleen samen met een storage-migratie;
+ * bestaande opgeslagen data gebruikt de huidige string-waarden als sleutel.
+ */
+
+/**
+ * Top-level sleutels voor de hoofdsecties van de applicatie-state.
+ *
+ * @example
+ * const setup = state.data[DATA_KEYS.SETUP];
+ */
 export const DATA_KEYS = {
-  SETUP: 'setup',
-  HOUSEHOLD: 'household',
-  FINANCE: 'finance',
-  META: 'meta',
+  SETUP:              'setup',
+  HOUSEHOLD:          'household',
+  FINANCE:            'finance',
+  META:               'meta',
   LATEST_TRANSACTION: 'latestTransaction',
-  CSV_IMPORT: 'csvImport',
+  CSV_IMPORT:         'csvImport',
 } as const;
 
+/**
+ * Geneste sleutels binnen een `DATA_KEYS`-sectie.
+ *
+ * @example
+ * const members = state.data[DATA_KEYS.HOUSEHOLD][SUB_KEYS.MEMBERS];
+ */
 export const SUB_KEYS = {
-  MEMBERS: 'members',
-  INCOME: 'income',
+  MEMBERS:  'members',
+  INCOME:   'income',
   EXPENSES: 'expenses',
-  ITEMS: 'items',
+  ITEMS:    'items',
 } as const;
 
+/** Union van alle top-level data-sleutels. */
 export type DataKey = (typeof DATA_KEYS)[keyof typeof DATA_KEYS];
+
+/** Union van alle geneste sub-sleutels. */
 export type SubKey = (typeof SUB_KEYS)[keyof typeof SUB_KEYS];

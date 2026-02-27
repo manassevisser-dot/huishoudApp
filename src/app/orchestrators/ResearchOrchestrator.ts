@@ -7,6 +7,7 @@
  * @ai_instruction De input voor `processAllData` is nu een `CsvItem[]` array. De `processCsvTransactions` methode is verwijderd omdat die logica nu in de `ImportOrchestrator` leeft.
  */
 
+
 import { DATA_KEYS } from '@domain/constants/datakeys';
 import { dataProcessor, type ResearchSetupData } from '@domain/finance/StatementIntakePipeline';
 import {
@@ -19,6 +20,7 @@ import {
 import {
   collectAndDistributeData,
   assertNoPIILeak,
+  extractWijkLevelResearch,
 } from '@domain/research/PrivacyAirlock';
 import { FormStateOrchestrator } from './FormStateOrchestrator';
 import { ResearchValidator } from '@adapters/validation/ResearchContractAdapter';
@@ -47,8 +49,23 @@ export interface MasterProcessResult {
       totalIncomeCents: number;
       categoryTotals: Record<string, number>;
       timestamp: string;
+      postcodeDigits: string;
     };
   };
+}
+// ─── Parameter object voor buildLocalResult (fixes max-params) ──
+interface BuildLocalResultParams {
+  processedMembers: ReadonlyArray<ProcessedMember>;
+  csvTransactions: CsvItem[];
+  incomeSummary: FinancialIncomeSummary;
+  hasMissingCosts: boolean;
+}
+// ─── Parameter object voor buildResearchData (fixes max-params) ──
+interface BuildResearchDataParams {
+  processedMembers: ReadonlyArray<ProcessedMember>;
+  transactions: ReadonlyArray<CsvItem>;
+  incomeSummary: FinancialIncomeSummary;
+  postcodeDigits: string;
 }
 
 /**
@@ -80,24 +97,28 @@ export class ResearchOrchestrator {
     );
   };
 
-  private readonly buildResearchData = (
-    processedMembers: ReadonlyArray<ProcessedMember>,
+  // ─── Helper: berekent category totals (extracted voor max-lines) ─
+  private readonly calculateCategoryTotals = (
     transactions: ReadonlyArray<CsvItem>,
-    incomeSummary: FinancialIncomeSummary,
+  ): Record<string, number> => {
+    return transactions.reduce((acc, curr) => {
+      const cat = curr.category ?? '';
+      const key = cat.length > 0 ? cat : 'Overig';
+      const amount = ResearchValidator.validateMoney({
+        amount: curr.amount,
+        currency: 'EUR',
+      }).amount;
+      acc[key] = (acc[key] ?? 0) + amount;
+      return acc;
+    }, {} as Record<string, number>);
+  };
+
+  // ─── Method: bouwt research data (refactored: 1 param + helper) ─
+  private readonly buildResearchData = (
+    params: BuildResearchDataParams,
   ): MasterProcessResult['research'] => {
-    const categoryTotals = transactions.reduce(
-      (acc, curr) => {
-        const cat = curr.category ?? '';
-        const key = cat.length > 0 ? cat : 'Overig';
-        const amount = ResearchValidator.validateMoney({
-          amount: curr.amount,
-          currency: 'EUR',
-        }).amount;
-        acc[key] = (acc[key] ?? 0) + amount;
-        return acc;
-      },
-      {} as Record<string, number>,
-    );
+    const { processedMembers, transactions, incomeSummary, postcodeDigits } = params;
+    const categoryTotals = this.calculateCategoryTotals(transactions);
 
     return {
       memberPayloads: processedMembers.map((p) => p.researchPayload),
@@ -108,10 +129,32 @@ export class ResearchOrchestrator {
         }).amount,
         categoryTotals,
         timestamp: new Date().toISOString(),
+        postcodeDigits,
       },
     };
   };
 
+  // ─── Helper: extraheert postcode digits uit state (extracted) ───
+  private readonly extractPostcodeDigits = (): string => {
+    const postcodeRaw = (this.fso.getState().data.setup as Record<string, unknown>)?.postcode ?? '';
+    return extractWijkLevelResearch(String(postcodeRaw));
+  };
+
+  // ─── Helper: bouwt local result object (extracted voor max-lines) ─
+ private readonly buildLocalResult = (
+  params: BuildLocalResultParams,
+): MasterProcessResult['local'] => ({
+  [DATA_KEYS.HOUSEHOLD]: {
+    members: params.processedMembers.map((p) => p.localMember),
+  },
+  [DATA_KEYS.FINANCE]: {
+    transactions: params.csvTransactions,
+    summary: params.incomeSummary,
+    hasMissingCosts: params.hasMissingCosts,
+  },
+  });
+
+  // ─── Method: bouwt final result (refactored: gebruikt helpers) ──
   private readonly buildFinalResult = (
     processedMembers: ReadonlyArray<ProcessedMember>,
     csvTransactions: CsvItem[],
@@ -122,27 +165,26 @@ export class ResearchOrchestrator {
       currentSetup ?? {},
     ) as FinancialIncomeSummary;
 
-    const researchData = this.buildResearchData(
+    const postcodeDigits = this.extractPostcodeDigits();
+    
+    const researchData = this.buildResearchData({
       processedMembers,
-      csvTransactions,
+      transactions: csvTransactions,
       incomeSummary,
-    );
+      postcodeDigits,
+    });
 
     assertNoPIILeak(researchData as unknown as Record<string, unknown>);
 
-    return {
-      local: {
-        [DATA_KEYS.HOUSEHOLD]: {
-          members: processedMembers.map((p) => p.localMember),
-        },
-        [DATA_KEYS.FINANCE]: {
-          transactions: csvTransactions,
-          summary: incomeSummary,
-          hasMissingCosts: this.detectMissingHousingCosts(csvTransactions, currentSetup),
-        },
-      },
-      research: researchData,
-    };
+    const hasMissingCosts = this.detectMissingHousingCosts(csvTransactions, currentSetup);
+    const localData = this.buildLocalResult({
+  processedMembers,
+  csvTransactions,
+  incomeSummary,
+  hasMissingCosts,
+});
+
+    return { local: localData, research: researchData };
   };
 }
 

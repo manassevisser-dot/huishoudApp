@@ -1,96 +1,65 @@
+// src/app/orchestrators/FormStateOrchestrator.test.ts
 /**
- * TEST: FormStateOrchestrator FSM Enforcement (CU-P2-01)
+ * TEST: FormStateOrchestrator — state mutatie via updateField
+ *
+ * Patroon: echte reducer-koppeling via stateRef-closure.
+ * FormStateOrchestrator bezit geen eigen state — hij werkt via getState/dispatch.
+ * Na updateField muteert stateRef (via formReducer) zodat getValue() de nieuwe waarde leest.
  */
 import { FormStateOrchestrator } from './FormStateOrchestrator';
+import { formReducer, type FormAction } from '@app/state/formReducer';
+import { initialFormState } from '@app/state/initialFormState';
 import type { FormState } from '@core/types/core';
 
-describe('FormStateOrchestrator', () => {
-  const initialState = {
-    schemaVersion: "1.0",
-    activeStep: 'setup',
-    currentScreenId: 'screen1',
-    isValid: true,
+// ─── Helper: stateRef-closure met echte reducer ───────────────────────────────
+
+const createOrchestrator = (overrides: Partial<FormState['data']['setup']> = {}) => {
+  let stateRef: FormState = {
+    ...initialFormState,
     data: {
+      ...initialFormState.data,
       setup: {
-        aantalMensen: 1,
-        aantalVolwassen: 1,
-        autoCount: 'Nee' as const,
-        heeftHuisdieren: false,
-        woningType: 'Huur' as const,
-      },
-      household: {
-        members: [
-          {
-            entityId: 'mem_0',
-            fieldId: 'member-1',
-            memberType: 'adult' as const,
-            firstName: 'Jan',
-            lastName: 'Jansen',
-            // 'dateOfBirth' ipv 'dob' om te matchen met je interface
-            dateOfBirth: '1990-01-01',
-            // Deze velden zitten in [key: string]: unknown maar we casten naar unknown 
-            // om de 'excess property check' van de object literal te omzeilen.
-            categories: {
-              geen: false,
-              werk: true,
-              uitkering: false,
-              anders: false,
-            },
-            nettoSalaris: 2500,
-          },
-        ],
-        huurtoeslag: 0,
-        zorgtoeslag: 0,
-      },
-      // ✅ K-B2: Finance plat onder data, niet genest in household
-      finance: {
-        income: { items: [] },
-        expenses: {
-          items: [],
-          living_costs: 0,
-          energy_costs: 0,
-          insurance_total: 0,
-        },
+        ...initialFormState.data.setup,
+        ...overrides,
       },
     },
-    meta: { 
-      lastModified: new Date().toISOString(), 
-      version: 1 
-    },
-  } as unknown as FormState;
+  };
 
+  const getState = () => stateRef;
+  const dispatch = (action: FormAction) => {
+    stateRef = formReducer(stateRef, action);
+  };
+
+  return {
+    orchestrator: new FormStateOrchestrator(getState, dispatch),
+    getRef: () => stateRef,
+  };
+};
+
+// ─── Tests ────────────────────────────────────────────────────────────────────
+
+describe('FormStateOrchestrator', () => {
   it('moet state immutabel updaten via updateField', () => {
-    // 1. Maak eerst een nep-dispatch aan bovenin je test of voor de aanroep:
-const mockDispatch = jest.fn();
-
-// 2. Pas de aanroep aan (van waarde naar functie + dispatch):
-const orchestrator = new FormStateOrchestrator(() => initialState, mockDispatch);
-    const originalRef = (orchestrator as any).state;
+    const { orchestrator, getRef } = createOrchestrator({ aantalMensen: 1 });
+    const originalRef = getRef();
 
     orchestrator.updateField('aantalMensen', 5);
-    const newRef = (orchestrator as any).state;
 
-    expect(newRef).not.toBe(originalRef);
+    // formReducer retourneert altijd een nieuw object
+    expect(getRef()).not.toBe(originalRef);
     expect(orchestrator.getValue('aantalMensen')).toBe(5);
   });
-  it('DIAGNOSE: Moet de finance-route bewandelen', () => {
-    // 1. Maak eerst een nep-dispatch aan bovenin je test of voor de aanroep:
-const mockDispatch = jest.fn();
 
-// 2. Pas de aanroep aan (van waarde naar functie + dispatch):
-const orchestrator = new FormStateOrchestrator(() => initialState, mockDispatch); // Gebruik je bestaande initialState
-    
-    
-    // We gebruiken een ID die in de isFinanceItemKey lijst van de reducer staat
-    orchestrator.updateField('nettoSalaris', '2500'); 
- 
+  it('moet de finance-route bewandelen voor bekende income-velden', () => {
+    const { orchestrator } = createOrchestrator();
+
+    // nettoSalaris zit in KnownIncomeKey → gaat via writeDynamicCollections
+    // Verwacht: geen throw, dispatch wordt aangeroepen
+    expect(() => orchestrator.updateField('nettoSalaris', 2500)).not.toThrow();
   });
-  it('moet ValueProvider contract implementeren', () => {
-    // 1. Maak eerst een nep-dispatch aan bovenin je test of voor de aanroep:
-const mockDispatch = jest.fn();
 
-// 2. Pas de aanroep aan (van waarde naar functie + dispatch):
-const orchestrator = new FormStateOrchestrator(() => initialState, mockDispatch);
-    expect(orchestrator.getValue('autoCount')).toBe('Nee');
+  it('moet ValueProvider contract implementeren (getValue)', () => {
+    const { orchestrator } = createOrchestrator({ autoCount: 'Geen' });
+    expect(orchestrator.getValue('autoCount')).toBe('Geen');
   });
 });

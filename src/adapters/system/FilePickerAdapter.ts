@@ -53,6 +53,9 @@ export interface CsvFileResult {
  * @throws Error met Nederlandse melding bij annulering of bestandsfouten.
  * @returns CsvFileResult met tekst, bestandsnaam en optionele bank-hint.
  */
+/** Annuleringsmelding — geëxporteerd zodat consumers annulering kunnen onderscheiden van echte fouten. */
+export const ANNULERING_MESSAGE = 'Bestand selecteren geannuleerd';
+
 export async function pickAndReadCsvFile(): Promise<CsvFileResult> {
   const result = await DocumentPicker.getDocumentAsync({
     // Array van mime-types voor maximale compatibiliteit (bank-afhankelijk)
@@ -61,7 +64,7 @@ export async function pickAndReadCsvFile(): Promise<CsvFileResult> {
   });
 
   if (result.canceled === true) {
-    throw new Error('Bestand selecteren geannuleerd');
+    throw new Error(ANNULERING_MESSAGE);
   }
 
   if (result.assets === null || result.assets === undefined || result.assets.length === 0) {

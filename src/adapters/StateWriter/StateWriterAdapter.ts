@@ -1,6 +1,6 @@
 // src/app/orchestrators/state/StateWriterAdapter.ts
 /**
- * @file_intent Verantwoordelijk voor het routeren en wegschrijven van veld-updates naar de globale applicatiestate (FSO).
+ * @file_intent Verantwoordelijk voor het routeren en wegschrijven van veld-updates naar de globale applicatie-state (FSO).
  * @repo_architecture Mobile Industry (MI) - State Mutation Layer (Adapter).
  * @term_definition Dynamic Collection = Een array-gebaseerde datastructuur (zoals income of expenses) waar velden als losse items in worden ge-upsert.
  * @contract Fungeert als de 'Traffic Controller' voor mutaties. Weet welke fieldId in welke lade (Setup, Household, of Finance) van de FormState thuishoort.
@@ -82,6 +82,7 @@ export class StateWriterAdapter {
       'autoCount',
       'heeftHuisdieren',
       'woningType',
+      'postcode',
       'car_repeater',
       'kinderenLabel',
     ]);
@@ -208,7 +209,7 @@ export class StateWriterAdapter {
 
   /**
    * Zoek & upsert over ALLE geregistreerde collecties.
-   * Returnt true als er iets is gewijzigd.
+   * Returns true als er iets is gewijzigd.
    */
   private writeDynamicCollections(fieldId: string, value: unknown): boolean {
     const state = this.getState();

@@ -1,0 +1,971 @@
+
+> test
+> jest
+
+(node:2220) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/app/orchestrators/UIOrchestrator.test.ts
+(node:14840) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:12904) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/app/orchestrators/ImportOrchestrator.test.ts
+PASS src/app/orchestrators/ValidationOrchestrator.test.ts
+  ● Console
+
+    console.warn
+      [AUDIT] {"level":"warning","eventName":"validation_screen_not_found","message":"validation_screen_not_found","timestamp":"2026-02-25T04:47:45.676Z","context":{"orchestrator":"validation","action":"resolveValidatableFieldIds","screenId":"1setupHousehold"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as warn] (src/adapters/audit/AuditLoggerAdapter.ts:183:17)
+      at ValidationOrchestrator.warn [as resolveValidatableFieldIds] (src/app/orchestrators/ValidationOrchestrator.ts:80:14)
+      at ValidationOrchestrator.resolveValidatableFieldIds [as validateSection] (src/app/orchestrators/ValidationOrchestrator.ts:57:27)
+      at Object.validateSection (src/app/orchestrators/ValidationOrchestrator.test.ts:40:35)
+
+    console.warn
+      [AUDIT] {"level":"warning","eventName":"validation_screen_not_found","message":"validation_screen_not_found","timestamp":"2026-02-25T04:47:45.728Z","context":{"orchestrator":"validation","action":"resolveValidatableFieldIds","screenId":"1setupHousehold"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as warn] (src/adapters/audit/AuditLoggerAdapter.ts:183:17)
+      at ValidationOrchestrator.warn [as resolveValidatableFieldIds] (src/app/orchestrators/ValidationOrchestrator.ts:80:14)
+      at ValidationOrchestrator.resolveValidatableFieldIds [as validateSection] (src/app/orchestrators/ValidationOrchestrator.ts:57:27)
+      at Object.validateSection (src/app/orchestrators/ValidationOrchestrator.test.ts:52:35)
+
+    console.warn
+      [AUDIT] {"level":"warning","eventName":"validation_screen_not_found","message":"validation_screen_not_found","timestamp":"2026-02-25T04:47:45.732Z","context":{"orchestrator":"validation","action":"resolveValidatableFieldIds","screenId":"1setupHousehold"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as warn] (src/adapters/audit/AuditLoggerAdapter.ts:183:17)
+      at ValidationOrchestrator.warn [as resolveValidatableFieldIds] (src/app/orchestrators/ValidationOrchestrator.ts:80:14)
+      at ValidationOrchestrator.resolveValidatableFieldIds [as validateSection] (src/app/orchestrators/ValidationOrchestrator.ts:57:27)
+      at Object.validateSection (src/app/orchestrators/ValidationOrchestrator.test.ts:64:35)
+
+    console.warn
+      [AUDIT] {"level":"warning","eventName":"validation_screen_not_found","message":"validation_screen_not_found","timestamp":"2026-02-25T04:47:45.734Z","context":{"orchestrator":"validation","action":"resolveValidatableFieldIds","screenId":"leegSectie"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as warn] (src/adapters/audit/AuditLoggerAdapter.ts:183:17)
+      at ValidationOrchestrator.warn [as resolveValidatableFieldIds] (src/app/orchestrators/ValidationOrchestrator.ts:80:14)
+      at ValidationOrchestrator.resolveValidatableFieldIds [as validateSection] (src/app/orchestrators/ValidationOrchestrator.ts:57:27)
+      at Object.validateSection (src/app/orchestrators/ValidationOrchestrator.test.ts:76:35)
+
+    console.warn
+      [AUDIT] {"level":"warning","eventName":"validation_screen_not_found","message":"validation_screen_not_found","timestamp":"2026-02-25T04:47:45.737Z","context":{"orchestrator":"validation","action":"resolveValidatableFieldIds","screenId":"ONBEKEND"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as warn] (src/adapters/audit/AuditLoggerAdapter.ts:183:17)
+      at ValidationOrchestrator.warn [as resolveValidatableFieldIds] (src/app/orchestrators/ValidationOrchestrator.ts:80:14)
+      at ValidationOrchestrator.resolveValidatableFieldIds [as validateSection] (src/app/orchestrators/ValidationOrchestrator.ts:57:27)
+      at Object.validateSection (src/app/orchestrators/ValidationOrchestrator.test.ts:83:35)
+
+(node:15472) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/app/orchestrators/MasterOrchestrator.test.ts
+PASS src/adapters/validation/ResearchContractAdapter.test.ts
+PASS src/app/orchestrators/FormStateOrchestrator.fsm.test.ts
+(node:20328) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/adapters/csv/csvService.integration.test.ts
+  ● Console
+
+    console.warn
+      [AUDIT] {"level":"error","eventName":"[ImportOrchestrator] Critical failure in CSV-parsing pipeline:","message":"Cannot read properties of null (reading 'trim')","timestamp":"2026-02-25T04:47:46.298Z","context":{"msg":"[ImportOrchestrator] Critical failure in CSV-parsing pipeline:","stack":"TypeError: Cannot read properties of null (reading 'trim')\n    at ImportOrchestrator.trim [as parseAndEnrichCsv] (C:\\Users\\manas\\huishoudApp\\src\\app\\orchestrators\\ImportOrchestrator.ts:114:16)\n    at ImportOrchestrator.parseAndEnrichCsv [as processCsvImport] (C:\\Users\\manas\\huishoudApp\\src\\app\\orchestrators\\ImportOrchestrator.ts:79:33)\n    at Object.processCsvImport (C:\\Users\\manas\\huishoudApp\\src\\adapters\\csv\\csvService.integration.test.ts:202:35)\n    at Promise.finally.completed (C:\\Users\\manas\\huishoudApp\\node_modules\\jest-circus\\build\\jestAdapterInit.js:1557:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (C:\\Users\\manas\\huishoudApp\\node_modules\\jest-circus\\build\\jestAdapterInit.js:1497:10)\n    at _callCircusTest (C:\\Users\\manas\\huishoudApp\\node_modules\\jest-circus\\build\\jestAdapterInit.js:1007:40)\n    at _runTest (C:\\Users\\manas\\huishoudApp\\node_modules\\jest-circus\\build\\jestAdapterInit.js:947:3)\n    at C:\\Users\\manas\\huishoudApp\\node_modules\\jest-circus\\build\\jestAdapterInit.js:849:7\n    at _runTestsForDescribeBlock (C:\\Users\\manas\\huishoudApp\\node_modules\\jest-circus\\build\\jestAdapterInit.js:862:11)\n    at _runTestsForDescribeBlock (C:\\Users\\manas\\huishoudApp\\node_modules\\jest-circus\\build\\jestAdapterInit.js:857:11)\n    at _runTestsForDescribeBlock (C:\\Users\\manas\\huishoudApp\\node_modules\\jest-circus\\build\\jestAdapterInit.js:857:11)\n    at run (C:\\Users\\manas\\huishoudApp\\node_modules\\jest-circus\\build\\jestAdapterInit.js:761:3)\n    at runAndTransformResultsToJestFormat (C:\\Users\\manas\\huishoudApp\\node_modules\\jest-circus\\build\\jestAdapterInit.js:1918:21)"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as error] (src/adapters/audit/AuditLoggerAdapter.ts:169:17)
+      at ImportOrchestrator.error [as processCsvImport] (src/app/orchestrators/ImportOrchestrator.ts:97:14)
+      at Object.processCsvImport (src/adapters/csv/csvService.integration.test.ts:202:35)
+
+(node:9716) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/domain/research/PrivacyAirlock.test.ts
+PASS src/CoreSanity.test.tsx
+(node:24076) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:2272) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/app/orchestrators/ValueOrchestrator.test.ts
+PASS src/ui/sections/FinancialSummary.test.tsx
+PASS src/app/orchestrators/FormStateOrchestrator.test.ts
+PASS src/Setuphousehold.contract.test.ts
+PASS src/ui/providers/FormStateProvider.test.tsx
+(node:23944) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/ui/providers/ThemeProvider.test.tsx
+PASS src/app/workflows/csvUploadWorkflow.test.ts
+PASS src/domain/registry/PrimitiveRegistry.test.ts
+(node:10688) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:25920) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:5128) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/app/context/WizardContext.test.tsx
+PASS src/adapters/validation/schemas.test.ts
+PASS src/domain/registry/StyleRegistry.test.ts
+PASS src/ui/selectors/householdSelectors.test.ts
+PASS src/app/context/useStableOrchestrator.test.ts
+PASS src/app/orchestrators/managers/DataManager.test.ts
+(node:23284) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/adapters/validation/LegacyStateAdapter.test.ts
+PASS src/app/orchestrators/factory/ScreenViewModelFactory.test.ts
+PASS src/app/orchestrators/managers/UIManager.test.ts
+PASS src/app/hooks/useTransactionHistory.test.ts
+  ● Console
+
+    console.warn
+      [AUDIT] {"level":"info","eventName":"INFO","message":"INFO","timestamp":"2026-02-25T04:47:46.920Z","context":{"event":"transaction_push","type":"INIT","pointer":0,"adr":"ADR-12","version":"2025-01-A"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as log] (src/adapters/audit/AuditLoggerAdapter.ts:217:17)
+      at StatefulTransactionAdapter.log [as push] (src/adapters/transaction/stateful.ts:48:17)
+      at new push (src/adapters/transaction/stateful.ts:35:10)
+      at src/app/hooks/useTransactionHistory.ts:30:11
+      at initialStateInitializer (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3436:24)
+      at mountStateImpl (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3457:22)
+      at Object.mountState [as useState] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13120:18)
+      at useState (node_modules/react/cjs/react.development.js:1221:34)
+      at useTransactionHistory (src/app/hooks/useTransactionHistory.ts:29:29)
+      at src/app/hooks/useTransactionHistory.test.ts:40:64
+      at hookToRender (node_modules/@testing-library/react-native/src/render-hook.tsx:46:26)
+      at Object.Component [as react-stack-bottom-frame] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13976:20)
+      at callComponentInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2866:22)
+      at renderWithHooks (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:6006:19)
+      at updateFunctionComponent (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:7474:18)
+      at callback (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:1574:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10972:22)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10816:41)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10797:11)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10349:13)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2094:7)
+      at callback (node_modules/react/cjs/react.development.js:566:34)
+      at flushActQueue (node_modules/react/cjs/react.development.js:859:10)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/app/hooks/useTransactionHistory.test.ts:40:36)
+
+    console.warn
+      [AUDIT] {"level":"info","eventName":"INFO","message":"INFO","timestamp":"2026-02-25T04:47:47.224Z","context":{"event":"transaction_push","type":"INIT","pointer":0,"adr":"ADR-12","version":"2025-01-A"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as log] (src/adapters/audit/AuditLoggerAdapter.ts:217:17)
+      at StatefulTransactionAdapter.log [as push] (src/adapters/transaction/stateful.ts:48:17)
+      at new push (src/adapters/transaction/stateful.ts:35:10)
+      at src/app/hooks/useTransactionHistory.ts:30:11
+      at initialStateInitializer (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3436:24)
+      at mountStateImpl (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3457:22)
+      at Object.mountState [as useState] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13120:18)
+      at useState (node_modules/react/cjs/react.development.js:1221:34)
+      at useTransactionHistory (src/app/hooks/useTransactionHistory.ts:29:29)
+      at src/app/hooks/useTransactionHistory.test.ts:46:64
+      at hookToRender (node_modules/@testing-library/react-native/src/render-hook.tsx:46:26)
+      at Object.Component [as react-stack-bottom-frame] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13976:20)
+      at callComponentInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2866:22)
+      at renderWithHooks (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:6006:19)
+      at updateFunctionComponent (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:7474:18)
+      at callback (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:1574:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10972:22)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10816:41)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10797:11)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10349:13)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2094:7)
+      at callback (node_modules/react/cjs/react.development.js:566:34)
+      at flushActQueue (node_modules/react/cjs/react.development.js:859:10)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/app/hooks/useTransactionHistory.test.ts:46:36)
+
+    console.warn
+      [AUDIT] {"level":"info","eventName":"INFO","message":"INFO","timestamp":"2026-02-25T04:47:47.303Z","context":{"event":"transaction_push","type":"INIT","pointer":0,"adr":"ADR-12","version":"2025-01-A"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as log] (src/adapters/audit/AuditLoggerAdapter.ts:217:17)
+      at StatefulTransactionAdapter.log [as push] (src/adapters/transaction/stateful.ts:48:17)
+      at new push (src/adapters/transaction/stateful.ts:35:10)
+      at src/app/hooks/useTransactionHistory.ts:30:11
+      at initialStateInitializer (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3436:24)
+      at mountStateImpl (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3457:22)
+      at Object.mountState [as useState] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13120:18)
+      at useState (node_modules/react/cjs/react.development.js:1221:34)
+      at useTransactionHistory (src/app/hooks/useTransactionHistory.ts:29:29)
+      at src/app/hooks/useTransactionHistory.test.ts:56:64
+      at hookToRender (node_modules/@testing-library/react-native/src/render-hook.tsx:46:26)
+      at Object.Component [as react-stack-bottom-frame] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13976:20)
+      at callComponentInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2866:22)
+      at renderWithHooks (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:6006:19)
+      at updateFunctionComponent (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:7474:18)
+      at callback (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:1574:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10972:22)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10816:41)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10797:11)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10349:13)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2094:7)
+      at callback (node_modules/react/cjs/react.development.js:566:34)
+      at flushActQueue (node_modules/react/cjs/react.development.js:859:10)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/app/hooks/useTransactionHistory.test.ts:56:36)
+
+    console.warn
+      [AUDIT] {"level":"info","eventName":"INFO","message":"INFO","timestamp":"2026-02-25T04:47:47.333Z","context":{"event":"transaction_push","type":"INIT","pointer":0,"adr":"ADR-12","version":"2025-01-A"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as log] (src/adapters/audit/AuditLoggerAdapter.ts:217:17)
+      at StatefulTransactionAdapter.log [as push] (src/adapters/transaction/stateful.ts:48:17)
+      at new push (src/adapters/transaction/stateful.ts:35:10)
+      at src/app/hooks/useTransactionHistory.ts:30:11
+      at initialStateInitializer (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3436:24)
+      at mountStateImpl (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3457:22)
+      at Object.mountState [as useState] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13120:18)
+      at useState (node_modules/react/cjs/react.development.js:1221:34)
+      at useTransactionHistory (src/app/hooks/useTransactionHistory.ts:29:29)
+      at src/app/hooks/useTransactionHistory.test.ts:63:64
+      at hookToRender (node_modules/@testing-library/react-native/src/render-hook.tsx:46:26)
+      at Object.Component [as react-stack-bottom-frame] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13976:20)
+      at callComponentInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2866:22)
+      at renderWithHooks (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:6006:19)
+      at updateFunctionComponent (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:7474:18)
+      at callback (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:1574:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10972:22)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10816:41)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10797:11)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10349:13)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2094:7)
+      at callback (node_modules/react/cjs/react.development.js:566:34)
+      at flushActQueue (node_modules/react/cjs/react.development.js:859:10)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/app/hooks/useTransactionHistory.test.ts:63:36)
+
+    console.warn
+      [AUDIT] {"level":"info","eventName":"INFO","message":"INFO","timestamp":"2026-02-25T04:47:47.337Z","context":{"event":"transaction_push","type":"INIT","pointer":0,"adr":"ADR-12","version":"2025-01-A"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as log] (src/adapters/audit/AuditLoggerAdapter.ts:217:17)
+      at StatefulTransactionAdapter.log [as push] (src/adapters/transaction/stateful.ts:48:17)
+      at new push (src/adapters/transaction/stateful.ts:35:10)
+      at src/app/hooks/useTransactionHistory.ts:30:11
+      at initialStateInitializer (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3436:24)
+      at mountStateImpl (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3457:22)
+      at Object.mountState [as useState] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13120:18)
+      at useState (node_modules/react/cjs/react.development.js:1221:34)
+      at useTransactionHistory (src/app/hooks/useTransactionHistory.ts:29:29)
+      at src/app/hooks/useTransactionHistory.test.ts:70:64
+      at hookToRender (node_modules/@testing-library/react-native/src/render-hook.tsx:46:26)
+      at Object.Component [as react-stack-bottom-frame] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13976:20)
+      at callComponentInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2866:22)
+      at renderWithHooks (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:6006:19)
+      at updateFunctionComponent (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:7474:18)
+      at callback (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:1574:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10972:22)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10816:41)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10797:11)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10349:13)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2094:7)
+      at callback (node_modules/react/cjs/react.development.js:566:34)
+      at flushActQueue (node_modules/react/cjs/react.development.js:859:10)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/app/hooks/useTransactionHistory.test.ts:70:36)
+
+    console.warn
+      [AUDIT] {"level":"warning","eventName":"WARN","message":"WARN","timestamp":"2026-02-25T04:47:47.342Z","context":{"event":"transaction_update_failed","error":"[\n  {\n    \"expected\": \"int\",\n    \"format\": \"safeint\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"amount\"\n    ],\n    \"message\": \"Bedrag moet in hele centen (integers) zijn\"\n  }\n]"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as log] (src/adapters/audit/AuditLoggerAdapter.ts:217:17)
+      at Object.log [as updateTransaction] (src/app/hooks/useTransactionHistory.ts:42:19)
+      at updateTransaction (src/app/hooks/useTransactionHistory.test.ts:72:24)
+      at callback (node_modules/react/cjs/react.development.js:789:22)
+      at Object.<anonymous> (src/app/hooks/useTransactionHistory.test.ts:71:10)
+
+    console.warn
+      [AUDIT] {"level":"info","eventName":"INFO","message":"INFO","timestamp":"2026-02-25T04:47:47.381Z","context":{"event":"transaction_push","type":"INIT","pointer":0,"adr":"ADR-12","version":"2025-01-A"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as log] (src/adapters/audit/AuditLoggerAdapter.ts:217:17)
+      at StatefulTransactionAdapter.log [as push] (src/adapters/transaction/stateful.ts:48:17)
+      at new push (src/adapters/transaction/stateful.ts:35:10)
+      at src/app/hooks/useTransactionHistory.ts:30:11
+      at initialStateInitializer (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3436:24)
+      at mountStateImpl (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3457:22)
+      at Object.mountState [as useState] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13120:18)
+      at useState (node_modules/react/cjs/react.development.js:1221:34)
+      at useTransactionHistory (src/app/hooks/useTransactionHistory.ts:29:29)
+      at src/app/hooks/useTransactionHistory.test.ts:78:64
+      at hookToRender (node_modules/@testing-library/react-native/src/render-hook.tsx:46:26)
+      at Object.Component [as react-stack-bottom-frame] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13976:20)
+      at callComponentInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2866:22)
+      at renderWithHooks (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:6006:19)
+      at updateFunctionComponent (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:7474:18)
+      at callback (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:1574:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10972:22)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10816:41)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10797:11)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10349:13)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2094:7)
+      at callback (node_modules/react/cjs/react.development.js:566:34)
+      at flushActQueue (node_modules/react/cjs/react.development.js:859:10)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/app/hooks/useTransactionHistory.test.ts:78:36)
+
+    console.warn
+      [AUDIT] {"level":"warning","eventName":"WARN","message":"WARN","timestamp":"2026-02-25T04:47:47.384Z","context":{"event":"transaction_update_failed","error":"[\n  {\n    \"expected\": \"int\",\n    \"format\": \"safeint\",\n    \"code\": \"invalid_type\",\n    \"path\": [\n      \"amount\"\n    ],\n    \"message\": \"Bedrag moet in hele centen (integers) zijn\"\n  }\n]"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as log] (src/adapters/audit/AuditLoggerAdapter.ts:217:17)
+      at Object.log [as updateTransaction] (src/app/hooks/useTransactionHistory.ts:42:19)
+      at updateTransaction (src/app/hooks/useTransactionHistory.test.ts:82:24)
+      at callback (node_modules/react/cjs/react.development.js:789:22)
+      at Object.<anonymous> (src/app/hooks/useTransactionHistory.test.ts:81:10)
+
+    console.warn
+      [AUDIT] {"level":"info","eventName":"INFO","message":"INFO","timestamp":"2026-02-25T04:47:47.386Z","context":{"event":"transaction_push","type":"USER_UPDATE","pointer":1,"adr":"ADR-12","version":"2025-01-A"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as log] (src/adapters/audit/AuditLoggerAdapter.ts:217:17)
+      at StatefulTransactionAdapter.log [as push] (src/adapters/transaction/stateful.ts:48:17)
+      at push (src/app/hooks/transactionActions.ts:22:11)
+      at Object.updateTransaction (src/app/hooks/useTransactionHistory.ts:36:26)
+      at updateTransaction (src/app/hooks/useTransactionHistory.test.ts:88:24)
+      at callback (node_modules/react/cjs/react.development.js:789:22)
+      at Object.<anonymous> (src/app/hooks/useTransactionHistory.test.ts:87:10)
+
+    console.warn
+      [AUDIT] {"level":"info","eventName":"INFO","message":"INFO","timestamp":"2026-02-25T04:47:47.415Z","context":{"event":"transaction_push","type":"INIT","pointer":0,"adr":"ADR-12","version":"2025-01-A"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as log] (src/adapters/audit/AuditLoggerAdapter.ts:217:17)
+      at StatefulTransactionAdapter.log [as push] (src/adapters/transaction/stateful.ts:48:17)
+      at new push (src/adapters/transaction/stateful.ts:35:10)
+      at src/app/hooks/useTransactionHistory.ts:30:11
+      at initialStateInitializer (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3436:24)
+      at mountStateImpl (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3457:22)
+      at Object.mountState [as useState] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13120:18)
+      at useState (node_modules/react/cjs/react.development.js:1221:34)
+      at useTransactionHistory (src/app/hooks/useTransactionHistory.ts:29:29)
+      at src/app/hooks/useTransactionHistory.test.ts:96:64
+      at hookToRender (node_modules/@testing-library/react-native/src/render-hook.tsx:46:26)
+      at Object.Component [as react-stack-bottom-frame] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13976:20)
+      at callComponentInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2866:22)
+      at renderWithHooks (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:6006:19)
+      at updateFunctionComponent (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:7474:18)
+      at callback (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:1574:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10972:22)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10816:41)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10797:11)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10349:13)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2094:7)
+      at callback (node_modules/react/cjs/react.development.js:566:34)
+      at flushActQueue (node_modules/react/cjs/react.development.js:859:10)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/app/hooks/useTransactionHistory.test.ts:96:36)
+
+    console.warn
+      [AUDIT] {"level":"info","eventName":"INFO","message":"INFO","timestamp":"2026-02-25T04:47:47.436Z","context":{"event":"transaction_push","type":"INIT","pointer":0,"adr":"ADR-12","version":"2025-01-A"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as log] (src/adapters/audit/AuditLoggerAdapter.ts:217:17)
+      at StatefulTransactionAdapter.log [as push] (src/adapters/transaction/stateful.ts:48:17)
+      at new push (src/adapters/transaction/stateful.ts:35:10)
+      at src/app/hooks/useTransactionHistory.ts:30:11
+      at initialStateInitializer (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3436:24)
+      at mountStateImpl (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3457:22)
+      at Object.mountState [as useState] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13120:18)
+      at useState (node_modules/react/cjs/react.development.js:1221:34)
+      at useTransactionHistory (src/app/hooks/useTransactionHistory.ts:29:29)
+      at src/app/hooks/useTransactionHistory.test.ts:105:64
+      at hookToRender (node_modules/@testing-library/react-native/src/render-hook.tsx:46:26)
+      at Object.Component [as react-stack-bottom-frame] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13976:20)
+      at callComponentInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2866:22)
+      at renderWithHooks (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:6006:19)
+      at updateFunctionComponent (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:7474:18)
+      at callback (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:1574:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10972:22)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10816:41)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10797:11)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10349:13)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2094:7)
+      at callback (node_modules/react/cjs/react.development.js:566:34)
+      at flushActQueue (node_modules/react/cjs/react.development.js:859:10)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/app/hooks/useTransactionHistory.test.ts:105:36)
+
+    console.warn
+      [AUDIT] {"level":"info","eventName":"INFO","message":"INFO","timestamp":"2026-02-25T04:47:47.442Z","context":{"event":"transaction_push","type":"INIT","pointer":0,"adr":"ADR-12","version":"2025-01-A"}}
+
+    [0m [90m  99 |[39m       context[33m:[39m event[33m.[39mcontext[33m,[39m
+     [90m 100 |[39m     })[33m;[39m
+    [31m[1m>[22m[39m[90m 101 |[39m     console[33m.[39mwarn([32m'[AUDIT]'[39m[33m,[39m payload)[33m;[39m
+     [90m     |[39m             [31m[1m^[22m[39m
+     [90m 102 |[39m   }
+     [90m 103 |[39m
+     [90m 104 |[39m   [36mprivate[39m routeToUI(event[33m:[39m [33mAuditEvent[39m)[33m:[39m [36mvoid[39m {[0m
+
+      at AuditLoggerAdapter.warn [as routeToConsole] (src/adapters/audit/AuditLoggerAdapter.ts:101:13)
+      at AuditLoggerAdapter.routeToConsole [as logEvent] (src/adapters/audit/AuditLoggerAdapter.ts:55:10)
+      at Object.logEvent [as log] (src/adapters/audit/AuditLoggerAdapter.ts:217:17)
+      at StatefulTransactionAdapter.log [as push] (src/adapters/transaction/stateful.ts:48:17)
+      at new push (src/adapters/transaction/stateful.ts:35:10)
+      at src/app/hooks/useTransactionHistory.ts:30:11
+      at initialStateInitializer (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3436:24)
+      at mountStateImpl (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:3457:22)
+      at Object.mountState [as useState] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13120:18)
+      at useState (node_modules/react/cjs/react.development.js:1221:34)
+      at useTransactionHistory (src/app/hooks/useTransactionHistory.ts:29:29)
+      at src/app/hooks/useTransactionHistory.test.ts:117:45
+      at hookToRender (node_modules/@testing-library/react-native/src/render-hook.tsx:46:26)
+      at Object.Component [as react-stack-bottom-frame] (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:13976:20)
+      at callComponentInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2866:22)
+      at renderWithHooks (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:6006:19)
+      at updateFunctionComponent (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:7474:18)
+      at callback (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:1574:13)
+      at runWithFiberInDEV (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10972:22)
+      at performUnitOfWork (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10816:41)
+      at workLoopSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10797:11)
+      at renderRootSync (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:10349:13)
+      at performWorkOnRoot (node_modules/react-test-renderer/cjs/react-test-renderer.development.js:2094:7)
+      at callback (node_modules/react/cjs/react.development.js:566:34)
+      at flushActQueue (node_modules/react/cjs/react.development.js:859:10)
+      at actImplementation (node_modules/@testing-library/react-native/src/act.ts:30:25)
+      at renderWithAct (node_modules/@testing-library/react-native/src/render-act.ts:13:11)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:69:33)
+      at renderInternal (node_modules/@testing-library/react-native/src/render.tsx:44:10)
+      at renderHook (node_modules/@testing-library/react-native/src/render-hook.tsx:55:58)
+      at Object.<anonymous> (src/app/hooks/useTransactionHistory.test.ts:117:17)
+
+PASS src/app/context/formContext.test.tsx
+PASS src/adapters/validation/validateAtBoundary.test.ts
+PASS src/adapters/csv/csvAdapter.test.ts
+PASS src/app/orchestrators/managers/NavigationManager.test.ts
+PASS src/domain/helpers/DateHydrator.test.ts
+PASS src/adapters/audit/AuditLoggerAdapter.test.ts
+PASS src/app/orchestrators/factory/TransactionHistoryVMFactory.test.ts
+PASS src/app/orchestrators/ORCH-VP-001.test.ts
+PASS src/app/orchestrators/ORCH-SW-001.test.ts
+PASS src/ui/entries/entry.helpers.test.ts
+PASS src/domain/rules/conditions.test.ts
+PASS src/domain/finance/BankFormatDetector.test.ts
+PASS src/app/orchestrators/NavigationOrchestrator.test.ts
+PASS src/domain/rules/ageBoundaryRules.test.ts
+PASS src/app/orchestrators/managers/ValidationManager.test.ts
+PASS src/app/orchestrators/factory/StyleFactory.test.ts
+PASS src/app/orchestrators/managers/BusinessManager.test.ts
+PASS src/domain/registry/EntryRegistry.test.ts
+  ● Console
+
+    console.warn
+      Constraint 'nettoSalaris' wordt hergebruikt door: nettoSalaris
+
+    [0m [90m 343 |[39m       [36mif[39m (constraintsKeys[33m.[39mhas(entry[33m.[39mconstraintsKey)) {
+     [90m 344 |[39m         [90m// Alleen waarschuwen, niet falen - constraints mogen hergebruikt worden[39m
+    [31m[1m>[22m[39m[90m 345 |[39m         console[33m.[39mwarn([32m`Constraint '${entry.constraintsKey}' wordt hergebruikt door: ${key}`[39m)[33m;[39m
+     [90m     |[39m                 [31m[1m^[22m[39m
+     [90m 346 |[39m       }
+     [90m 347 |[39m       constraintsKeys[33m.[39madd(entry[33m.[39mconstraintsKey)[33m;[39m
+     [90m 348 |[39m     }[0m
+
+      at warn (src/domain/registry/EntryRegistry.test.ts:345:17)
+          at Array.forEach (<anonymous>)
+      at Object.forEach (src/domain/registry/EntryRegistry.test.ts:340:30)
+
+PASS src/ui/providers/MasterProvider.test.tsx
+(node:22096) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/ui/styles/useAppStyles.test.ts
+PASS src/domain/constants/labelResolver.test.ts
+PASS src/domain/validation/dateValidators.edgecases.test.ts
+PASS src/app/orchestrators/managers/ValueManager.test.ts
+PASS src/domain/constants/LayoutTokens.test.ts
+PASS src/domain/helpers/numbers.test.ts
+PASS src/utils/objects.test.ts
+PASS src/domain/finance/CsvAnalysisService.test.ts
+PASS src/adapters/system/FilePickerAdapter.test.ts
+PASS src/app/hooks/transactionActions.test.ts
+PASS src/app/workflows/DailyTransactionWorkflow.test.ts
+PASS src/domain/rules/fieldVisibility.test.ts
+PASS src/utils/csvHelper.test.ts
+PASS src/services/migrationService.test.ts
+PASS src/domain/finance/StatementIntakePipeline.test.ts
+PASS src/domain/rules/ageRules.test.ts
+PASS src/domain/rules/calculateRules.test.ts
+PASS src/domain/constants/Tokens.test.ts
+PASS src/adapters/transaction/stateful.test.ts
+PASS src/domain/registry/SectionRegistry.test.ts
+PASS src/domain/registry/BaseRegistry.test.ts
+PASS src/app/orchestrators/ResearchOrchestrator.test.ts
+PASS src/ui/selectors/financialSelectors.test.ts
+PASS src/app/orchestrators/factory/CsvAnalysisFeedbackVMFactory.test.ts
+PASS src/domain/rules/financeRules.test.ts
+PASS src/domain/rules/aowRules.test.ts
+PASS src/domain/constants/datakeys.test.ts
+PASS src/services/householdAlign.test.ts
+PASS src/domain/services/csv_Baseline.test.ts
+PASS src/app/orchestrators/VisibilityOrchestrator.test.ts
+PASS src/domain/constants/labels.test.ts
+PASS src/kernel/finance/mappers.test.ts
+PASS src/app/state/formReducer.test.ts
+PASS src/domain/__tests__/BT-04I_precision.test.ts
+PASS src/domain/rules/householdRules.test.ts
+PASS src/domain/helpers/TimeProvider.test.ts
+PASS src/domain/rules/financeRules.KernelMap.test.ts
+PASS src/adapters/StateWriter/StateWriterAdapter.test.ts
+PASS src/domain/rules/typeGuards.test.ts
+PASS src/domain/helpers/frequency.test.ts
+PASS src/utils/strings.test.ts
+PASS src/domain/rules/derivedValues.test.ts
+PASS src/domain/constants/uxTokens.test.ts
+PASS src/domain/registry/OptionsRegistry.test.ts
+PASS src/app/orchestrators/managers/ThemeManager.test.ts
+PASS src/domain/services/csvProcessor.test.ts
+PASS src/app/orchestrators/FinancialOrchestrator.test.ts
+PASS src/domain/constants/Colors.test.ts
+PASS src/domain/registry/ScreenRegistry.test.ts
+PASS src/domain/__tests__/household.test.ts
+PASS src/domain/constants/uiSections.test.ts
+PASS src/domain/rules/fieldConstraints.test.ts
+PASS src/app/state/initialFormState.test.ts
+PASS src/domain/rules/dataFilters.test.ts
+PASS src/utils/ping.test.ts
+PASS src/ui/entries/entry.mappers.test.ts
+
+Oops! Something went wrong! :(
+
+ESLint: 9.39.3
+
+No files matching the pattern "[error," were found.
+Please check for typing mistakes in the pattern.
+
+(node:22040) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+PASS src/ui-decoupling.integrity.test.ts (6.266 s)
+----------------------------------|---------|----------|---------|---------|-----------------------
+File                              | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s     
+----------------------------------|---------|----------|---------|---------|-----------------------
+All files                         |   71.06 |    66.55 |   69.95 |   71.44 |                       
+ src                              |       0 |      100 |       0 |       0 |                       
+  App.tsx                         |       0 |      100 |       0 |       0 | 24-37                 
+ src/adapters/StateWriter         |   92.85 |    80.95 |     100 |   93.22 |                       
+  StateWriterAdapter.ts           |   92.85 |    80.95 |     100 |   93.22 | 152-164               
+ src/adapters/audit               |   90.27 |    93.22 |   80.95 |   89.85 |                       
+  AuditLoggerAdapter.ts           |   90.27 |    93.22 |   80.95 |   89.85 | 60-62,106,144,214,231 
+ src/adapters/csv                 |     100 |    83.33 |     100 |     100 |                       
+  csvAdapter.ts                   |     100 |    83.33 |     100 |     100 | 36                    
+ src/adapters/system              |   44.23 |     42.5 |   42.85 |      44 |                       
+  FilePickerAdapter.ts            |   85.71 |    76.19 |     100 |   85.71 | 115-117               
+  PersistenceAdapter.ts           |   16.12 |     5.26 |      20 |   13.79 | 49-90,110-159         
+ src/adapters/transaction         |   96.77 |    85.71 |   88.88 |   96.77 |                       
+  stateful.ts                     |   96.77 |    85.71 |   88.88 |   96.77 | 92                    
+ src/adapters/validation          |   97.75 |    83.33 |     100 |   98.78 |                       
+  LegacyStateAdapter.ts           |   92.85 |       75 |     100 |     100 | 32                    
+  ResearchContractAdapter.ts      |     100 |      100 |     100 |     100 |                       
+  formStateSchema.ts              |     100 |       80 |     100 |     100 | 42-43                 
+  validateAtBoundary.ts           |   96.29 |       90 |     100 |   96.29 | 115                   
+ src/app/context                  |     100 |      100 |     100 |     100 |                       
+  FormContext.tsx                 |     100 |      100 |     100 |     100 |                       
+  WizardContext.tsx               |     100 |      100 |     100 |     100 |                       
+  useStableOrchestrator.ts        |     100 |      100 |     100 |     100 |                       
+ src/app/hooks                    |    92.3 |    71.42 |     100 |     100 |                       
+  transactionActions.ts           |     100 |      100 |     100 |     100 |                       
+  useTransactionHistory.ts        |   90.47 |    68.42 |     100 |     100 | 40-58                 
+ src/app/orchestrators            |   88.73 |    78.52 |   91.48 |   91.41 |                       
+  FinancialOrchestrator.ts        |     100 |      100 |     100 |     100 |                       
+  FormStateOrchestrator.ts        |   73.33 |    56.25 |   66.66 |    87.5 | 63,74-75              
+  ImportOrchestrator.ts           |   98.46 |    85.71 |     100 |   98.43 | 239                   
+  MasterOrchestrator.ts           |     100 |      100 |     100 |     100 |                       
+  NavigationOrchestrator.ts       |   94.44 |    95.83 |   86.66 |   94.44 | 86-87                 
+  ResearchOrchestrator.ts         |   96.42 |    85.71 |    90.9 |   96.42 | 164                   
+  UIOrchestrator.ts               |     100 |      100 |     100 |     100 |                       
+  ValidationOrchestrator.ts       |   43.24 |    27.77 |      75 |      50 | 65-70,88-99,131-137   
+  ValueOrchestrator.ts            |     100 |      100 |     100 |     100 |                       
+  VisibilityOrchestrator.ts       |     100 |     87.5 |     100 |     100 | 64                    
+ src/app/orchestrators/factory    |     100 |    94.11 |     100 |     100 |                       
+  CsvAnalysisFeedbackVMFactory.ts |     100 |      100 |     100 |     100 |                       
+  ScreenViewModelFactory.ts       |     100 |       75 |     100 |     100 | 62-85                 
+  StyleFactory.ts                 |     100 |      100 |     100 |     100 |                       
+  TransactionHistoryVMFactory.ts  |     100 |      100 |     100 |     100 |                       
+ src/app/orchestrators/interfaces |       0 |        0 |       0 |       0 |                       
+  IBusinessOrchestrator.ts        |       0 |        0 |       0 |       0 |                       
+  IDataOrchestrator.ts            |       0 |        0 |       0 |       0 |                       
+  INavigationOrchestrator.ts      |       0 |        0 |       0 |       0 |                       
+  IThemeOrchestrator.ts           |       0 |        0 |       0 |       0 |                       
+  IUIOrchestrator.ts              |       0 |        0 |       0 |       0 |                       
+  IValidationOrchestrator.ts      |       0 |        0 |       0 |       0 |                       
+  IValueOrchestrator.ts           |       0 |        0 |       0 |       0 |                       
+ src/app/orchestrators/managers   |   97.82 |    89.23 |     100 |   97.77 |                       
+  BusinessManager.ts              |     100 |      100 |     100 |     100 |                       
+  DataManager.ts                  |     100 |      100 |     100 |     100 |                       
+  NavigationManager.ts            |   94.73 |    78.12 |     100 |   94.73 | 60,66                 
+  ThemeManager.ts                 |     100 |      100 |     100 |     100 |                       
+  UIManager.ts                    |     100 |      100 |     100 |     100 |                       
+  ValidationManager.ts            |     100 |      100 |     100 |     100 |                       
+  ValueManager.ts                 |     100 |      100 |     100 |     100 |                       
+ src/app/orchestrators/types      |       0 |        0 |       0 |       0 |                       
+  csvUpload.types.ts              |       0 |        0 |       0 |       0 | 474-533               
+  render.types.ts                 |       0 |        0 |       0 |       0 |                       
+ src/app/state                    |   30.76 |    23.52 |   33.33 |   32.43 |                       
+  formReducer.ts                  |   28.94 |    23.52 |   33.33 |   30.55 | 49,54-57,61,81-132    
+  initialFormState.ts             |     100 |      100 |     100 |     100 |                       
+ src/app/types                    |       0 |        0 |       0 |       0 |                       
+  MasterOrchestratorAPI.ts        |       0 |        0 |       0 |       0 |                       
+ src/app/workflows                |     100 |    88.46 |     100 |     100 |                       
+  DailyTransactionWorkflow.ts     |     100 |    95.45 |     100 |     100 | 104                   
+  csvUploadWorkflow.ts            |     100 |    83.33 |     100 |     100 | 62-63,88,128,221      
+ src/config                       |      20 |      100 |     100 |      20 |                       
+  WizStrings.ts                   |     100 |      100 |     100 |     100 |                       
+  features.ts                     |       0 |      100 |     100 |       0 | 9-14                  
+ src/core/types                   |     100 |      100 |     100 |     100 |                       
+  base.ts                         |       0 |        0 |       0 |       0 |                       
+  core.ts                         |       0 |        0 |       0 |       0 |                       
+  research.ts                     |     100 |      100 |     100 |     100 |                       
+ src/domain/constants             |   93.93 |    53.33 |     100 |     100 |                       
+  Colors.ts                       |     100 |      100 |     100 |     100 |                       
+  LayoutTokens.ts                 |     100 |      100 |     100 |     100 |                       
+  Tokens.ts                       |     100 |      100 |     100 |     100 |                       
+  businessRules.ts                |     100 |      100 |     100 |     100 |                       
+  datakeys.ts                     |     100 |      100 |     100 |     100 |                       
+  labelResolver.ts                |   81.81 |    53.33 |     100 |     100 | 13-17                 
+  labels.ts                       |     100 |      100 |     100 |     100 |                       
+  uiSections.ts                   |     100 |      100 |     100 |     100 |                       
+  uxTokens.ts                     |     100 |      100 |     100 |     100 |                       
+ src/domain/finance               |   89.74 |    83.63 |   80.76 |   92.75 |                       
+  BankFormatDetector.ts           |     100 |      100 |     100 |     100 |                       
+  CsvAnalysisService.ts           |   79.48 |    74.28 |   68.75 |   84.37 | 138-142               
+  StatementIntakePipeline.ts      |     100 |      100 |     100 |     100 |                       
+ src/domain/helpers               |   97.95 |    90.54 |     100 |   98.92 |                       
+  DateHydrator.ts                 |   96.55 |    83.78 |     100 |   98.14 | 129                   
+  TimeProvider.ts                 |       0 |        0 |       0 |       0 |                       
+  frequency.ts                    |     100 |      100 |     100 |     100 |                       
+  numbers.ts                      |     100 |    96.77 |     100 |     100 | 15                    
+ src/domain/interfaces            |       0 |        0 |       0 |       0 |                       
+  StateWriter.ts                  |       0 |        0 |       0 |       0 |                       
+  ValueProvider.ts                |       0 |        0 |       0 |       0 |                       
+ src/domain/registry              |   88.37 |      100 |      75 |   88.37 |                       
+  BaseRegistry.ts                 |       0 |        0 |       0 |       0 |                       
+  EntryRegistry.ts                |     100 |      100 |     100 |     100 |                       
+  OptionsRegistry.ts              |    62.5 |      100 |       0 |    62.5 | 136-144               
+  PrimitiveRegistry.ts            |     100 |      100 |     100 |     100 |                       
+  ScreenRegistry.ts               |     100 |      100 |     100 |     100 |                       
+  SectionRegistry.ts              |     100 |      100 |     100 |     100 |                       
+  StyleRegistry.ts                |      50 |      100 |       0 |      50 | 100-105               
+ src/domain/research              |   90.41 |    86.41 |   93.75 |   95.31 |                       
+  PrivacyAirlock.ts               |   90.41 |    86.41 |   93.75 |   95.31 | 84,115-116            
+ src/domain/rules                 |   90.22 |    82.03 |   97.05 |   92.19 |                       
+  ageBoundaryRules.ts             |     100 |      100 |     100 |     100 |                       
+  ageRules.ts                     |   94.44 |    93.33 |     100 |   94.44 | 19                    
+  aowRules.ts                     |     100 |      100 |     100 |     100 |                       
+  calculateRules.ts               |     100 |    95.23 |     100 |     100 | 67                    
+  conditions.ts                   |     100 |      100 |     100 |     100 |                       
+  dataFilters.ts                  |     100 |      100 |     100 |     100 |                       
+  derivedValues.ts                |     100 |      100 |     100 |     100 |                       
+  fieldConstraints.ts             |   27.77 |        0 |   33.33 |   27.77 | 523-546               
+  fieldVisibility.ts              |    88.4 |       75 |     100 |   96.77 | 216,243               
+  financeRules.ts                 |     100 |      100 |     100 |     100 |                       
+  householdRules.ts               |     100 |      100 |     100 |     100 |                       
+  typeGuards.ts                   |     100 |      100 |     100 |     100 |                       
+ src/domain/services              |   94.44 |    96.55 |     100 |   94.44 |                       
+  csvProcessor.ts                 |   94.44 |    96.55 |     100 |   94.44 | 67                    
+ src/domain/styles/primitives     |   76.66 |       50 |   79.31 |   76.66 |                       
+  Alerts.ts                       |     100 |      100 |     100 |     100 |                       
+  Buttons.ts                      |     100 |       50 |     100 |     100 | 51                    
+  Cards.ts                        |     100 |      100 |     100 |     100 |                       
+  Checkboxes.ts                   |     100 |      100 |     100 |     100 |                       
+  Chips.ts                        |     100 |      100 |     100 |     100 |                       
+  Containers.ts                   |     100 |      100 |     100 |     100 |                       
+  Fields.ts                       |       0 |      100 |       0 |       0 | 16-108                
+  Header.ts                       |     100 |      100 |     100 |     100 |                       
+  Helpers.ts                      |     100 |      100 |     100 |     100 |                       
+  Layout.ts                       |     100 |      100 |     100 |     100 |                       
+  Toggles.ts                      |     100 |      100 |     100 |     100 |                       
+  Typography.ts                   |     100 |      100 |     100 |     100 |                       
+  placeholderStyles.ts            |       0 |      100 |     100 |       0 | 4                     
+ src/domain/styles/sections       |     100 |      100 |     100 |     100 |                       
+  Dashboard.ts                    |     100 |      100 |     100 |     100 |                       
+  Summary.ts                      |     100 |      100 |     100 |     100 |                       
+ src/domain/validation            |   95.45 |    93.75 |     100 |   95.45 |                       
+  dateValidators.ts               |   95.45 |    93.75 |     100 |   95.45 | 56                    
+ src/infrastructure/clock         |       0 |      100 |       0 |       0 |                       
+  LocalNoonClock.ts               |       0 |      100 |       0 |       0 | 6-18                  
+  LocalNoonClockPort.ts           |       0 |        0 |       0 |       0 |                       
+ src/kernel/finance               |     100 |      100 |     100 |     100 |                       
+  mappers.ts                      |     100 |      100 |     100 |     100 |                       
+ src/services                     |   55.03 |       50 |   58.33 |   52.89 |                       
+  householdAlign.ts               |     100 |    83.33 |     100 |     100 | 60-61                 
+  migrationService.ts             |   97.56 |    91.37 |     100 |   97.36 | 112                   
+  storageShim.ts                  |   16.12 |        0 |       0 |   16.66 | 23-71,81-84           
+  transactionService.ts           |       0 |        0 |       0 |       0 | 36-153                
+ src/state/schemas                |       0 |      100 |     100 |       0 |                       
+  zInitialTemplate.ts             |       0 |      100 |     100 |       0 | 16-49                 
+ src/state/schemas/sections       |     100 |      100 |     100 |     100 |                       
+  validationMessages.ts           |     100 |      100 |     100 |     100 |                       
+ src/test-utils/assertions        |       0 |      100 |       0 |       0 |                       
+  migrationAssertions.ts          |       0 |      100 |       0 |       0 | 5-19                  
+ src/test-utils/factories         |   27.77 |     6.45 |   31.25 |   27.27 |                       
+  MockIdProvider.ts               |       0 |      100 |       0 |       0 | 4-17                  
+  csvFactory.ts                   |      80 |      100 |      75 |      80 | 9                     
+  financialVmFactory.ts           |       0 |        0 |       0 |       0 | 4-5                   
+  memberFactory.ts                |       0 |        0 |       0 |       0 | 14-61                 
+  researchProcessorFactory.ts     |       0 |      100 |       0 |       0 | 3                     
+  stateFactory.ts                 |      60 |    22.22 |   66.66 |   55.55 | 56-79                 
+ src/test-utils/perf              |       0 |        0 |       0 |       0 |                       
+  measure.ts                      |       0 |        0 |       0 |       0 | 7-18                  
+ src/test-utils/render            |   13.15 |        0 |       0 |   13.88 |                       
+  providers.tsx                   |      15 |        0 |       0 |   16.66 | 10,35-100             
+  renderers.tsx                   |   11.11 |        0 |       0 |   11.11 | 26-48,57-80,85-87     
+ src/test-utils/utils             |       0 |        0 |       0 |       0 |                       
+  name.ts                         |       0 |        0 |       0 |       0 | 6-17                  
+ src/types                        |       0 |        0 |       0 |       0 |                       
+  navigation.ts                   |       0 |        0 |       0 |       0 |                       
+ src/ui/entries                   |   56.84 |    42.85 |   64.28 |   51.19 |                       
+  DynamicEntry.tsx                |       0 |        0 |       0 |       0 | 30-62                 
+  entries.components.tsx          |       0 |        0 |       0 |       0 | 28-149                
+  entries.tsx                     |       0 |        0 |       0 |       0 |                       
+  entry.helpers.ts                |     100 |      100 |     100 |     100 |                       
+  entry.mappers.ts                |     100 |      100 |     100 |     100 |                       
+ src/ui/navigation                |       0 |        0 |       0 |       0 |                       
+  MainNavigator.tsx               |       0 |      100 |       0 |       0 | 15-19                 
+  NavigationFooter.tsx            |       0 |        0 |       0 |       0 | 30-74                 
+ src/ui/primitives                |       0 |        0 |       0 |       0 |                       
+  primitives.tsx                  |       0 |        0 |       0 |       0 | 72-185                
+ src/ui/providers                 |   59.32 |    52.63 |   57.89 |      62 |                       
+  FormStateProvider.tsx           |   88.88 |    72.72 |     100 |   91.66 | 71,98                 
+  MasterProvider.tsx              |     100 |      100 |     100 |     100 |                       
+  ThemeProvider.tsx               |    4.54 |        0 |       0 |    5.55 | 27-59                 
+ src/ui/renderers                 |       0 |        0 |       0 |       0 |                       
+  Renderer.tsx                    |       0 |        0 |       0 |       0 | 24-74                 
+ src/ui/screens                   |       0 |        0 |       0 |       0 |                       
+  UniversalScreen.tsx             |       0 |        0 |       0 |       0 | 26-47                 
+  screens.tsx                     |       0 |        0 |       0 |       0 | 43-170                
+ src/ui/screens/Daily             |       0 |        0 |       0 |       0 |                       
+  TransactionHistoryContainer.tsx |       0 |        0 |       0 |       0 | 35-112                
+ src/ui/screens/Options           |       0 |      100 |       0 |       0 |                       
+  OptionsScreen.tsx               |       0 |      100 |       0 |       0 | 24-28                 
+ src/ui/screens/Reset             |       0 |      100 |       0 |       0 |                       
+  ResetScreen.tsx                 |       0 |      100 |       0 |       0 | 23-49                 
+ src/ui/screens/Settings          |       0 |        0 |       0 |       0 |                       
+  SettingsScreen.tsx              |       0 |        0 |       0 |       0 | 22-48                 
+ src/ui/screens/Wizard            |       0 |      100 |       0 |       0 |                       
+  CriticalErrorScreen.tsx         |       0 |      100 |       0 |       0 | 14-16                 
+  LandingScreen.tsx               |       0 |      100 |       0 |       0 | 17-23                 
+  SplashScreen.tsx                |       0 |      100 |       0 |       0 | 12-15                 
+  WelcomeWizard.tsx               |       0 |      100 |       0 |       0 | 12-15                 
+ src/ui/screens/actions           |       0 |      100 |       0 |       0 |                       
+  DailyInputActionFooter.tsx      |       0 |      100 |       0 |       0 | 16-22                 
+ src/ui/screens/csv               |       0 |        0 |       0 |       0 |                       
+  CsvUploadContainer.tsx          |       0 |        0 |       0 |       0 | 24-76                 
+  CsvUploadScreen.tsx             |       0 |        0 |       0 |       0 | 23-26                 
+ src/ui/sections                  |    6.02 |        0 |    7.14 |    6.25 |                       
+  CsvAnalysisFeedback.tsx         |       0 |        0 |       0 |       0 | 44-211                
+  FinancialSummary.tsx            |     100 |      100 |     100 |     100 |                       
+  TransactionHistoryContainer.tsx |       0 |        0 |       0 |       0 | 28-164                
+  sections.tsx                    |       0 |        0 |       0 |       0 | 27-74                 
+ src/ui/selectors                 |    90.9 |       80 |     100 |    90.9 |                       
+  financialSelectors.ts           |     100 |      100 |     100 |     100 |                       
+  householdSelectors.ts           |   88.88 |       75 |     100 |   88.88 | 27                    
+ src/ui/styles                    |   69.23 |       50 |      50 |   69.23 |                       
+  PlatformStyles.ts               |     100 |       50 |     100 |     100 | 22-49                 
+  UiPrimitiveStyles.ts            |       0 |      100 |       0 |       0 | 15-26                 
+  useAppStyles.ts                 |   64.28 |       50 |      50 |   64.28 | 50,87-90              
+ src/ui/types                     |       0 |        0 |       0 |       0 |                       
+  viewModels.ts                   |       0 |        0 |       0 |       0 |                       
+ src/utils                        |   95.45 |    85.29 |     100 |    97.5 |                       
+  csvHelper.ts                    |     100 |    92.85 |     100 |     100 | 30                    
+  objects.ts                      |    87.5 |    76.47 |     100 |   93.33 | 41                    
+  ping.ts                         |     100 |      100 |     100 |     100 |                       
+  strings.ts                      |     100 |      100 |     100 |     100 |                       
+----------------------------------|---------|----------|---------|---------|-----------------------
+
+=============================== Coverage summary ===============================
+Statements   : 71.06% ( 1690/2378 )
+Branches     : 66.55% ( 967/1453 )
+Functions    : 69.95% ( 503/719 )
+Lines        : 71.44% ( 1584/2217 )
+================================================================================
+Jest: "global" coverage threshold for branches (70%) not met: 66.55%
+Jest: "global" coverage threshold for functions (70%) not met: 69.95%
+
+Test Suites: 103 passed, 103 total
+Tests:       3 skipped, 1231 passed, 1234 total
+Snapshots:   4 passed, 4 total
+Time:        26.044 s
+Ran all test suites.

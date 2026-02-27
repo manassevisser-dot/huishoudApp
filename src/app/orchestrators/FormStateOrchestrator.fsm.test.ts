@@ -1,25 +1,27 @@
+// src/app/orchestrators/FormStateOrchestrator.fsm.test.ts
 /**
  * TEST: FSM Enforcement (CU-P2-01)
  * Doel: Valideer dat alle state-wijzigingen via dispatch/reducer gaan.
- * Geen directe mutaties toegestaan.
+ *
+ * Patroon: stateRef-closure met echte formReducer.
+ * - FormStateOrchestrator bezit geen .state property — vergelijking via captured ref.
+ * - Directe dispatch met FIELD_CHANGED bestaat niet in reducer → updateField() gebruiken.
+ * - Geen side-effects buiten de closure.
  */
 import { FormStateOrchestrator } from '@app/orchestrators/FormStateOrchestrator';
+import { formReducer, type FormAction } from '@app/state/formReducer';
 import { initialFormState } from '@app/state/initialFormState';
+import type { FormState } from '@core/types/core';
 
-// 🔥 FIX: type van initialFormState automatisch afleiden
-type InitialFormState = typeof initialFormState;
+// ─── Setup ────────────────────────────────────────────────────────────────────
 
 describe('FSM Enforcement', () => {
-  let initialState: InitialFormState;
+  let stateRef: FormState;
   let orchestrator: FormStateOrchestrator;
 
   beforeEach(() => {
-    initialState = {
-      ...initialFormState,                 // behoud volledige vorm
-      schemaVersion: '1.0',
-      activeStep: 'setup',
-      currentScreenId: 'screen1',
-      isValid: true,
+    stateRef = {
+      ...initialFormState,
       data: {
         ...initialFormState.data,
         setup: {
@@ -29,22 +31,23 @@ describe('FSM Enforcement', () => {
           autoCount: 'Geen',
           heeftHuisdieren: false,
         },
-        household: {
-          members: [],
-        },
+        household: { members: [] },
         finance: {
           income: { items: [] },
           expenses: { items: [] },
         },
       },
-      meta: {
-        lastModified: new Date().toISOString(),
-        version: 1,
-      },
     };
 
-    orchestrator = new FormStateOrchestrator(() => initialState, () => {});
+    const getState = () => stateRef;
+    const dispatch = (action: FormAction) => {
+      stateRef = formReducer(stateRef, action);
+    };
+
+    orchestrator = new FormStateOrchestrator(getState, dispatch);
   });
+
+  // ─── Tests ─────────────────────────────────────────────────────────────────
 
   it('moet state ongewijzigd laten bij leesoperatie (getValue)', () => {
     const before = orchestrator.getValue('aantalMensen');
@@ -53,49 +56,30 @@ describe('FSM Enforcement', () => {
   });
 
   it('moet state immutabel updaten via dispatch (aantalMensen)', () => {
-    const originalStateRef = (orchestrator as any).state;
+    const originalRef = stateRef;
 
-    (orchestrator as any).dispatch({
-      type: 'FIELD_CHANGED',
-      fieldId: 'aantalMensen',
-      value: 3,
-    });
+    orchestrator.updateField('aantalMensen', 3);
 
-    const newStateRef = (orchestrator as any).state;
-    const updatedValue = orchestrator.getValue('aantalMensen');
-
-    expect(newStateRef).not.toBe(originalStateRef);
-    expect(updatedValue).toBe(3);
+    // formReducer retourneert een nieuw object → stateRef is vervangen
+    expect(stateRef).not.toBe(originalRef);
+    expect(orchestrator.getValue('aantalMensen')).toBe(3);
   });
 
   it('moet pad-resolutie via façade gebruiken (autoCount)', () => {
-    const originalStateRef = (orchestrator as any).state;
+    const originalRef = stateRef;
 
-    (orchestrator as any).dispatch({
-      type: 'FIELD_CHANGED',
-      fieldId: 'autoCount',
-      value: 'Twee',
-    });
+    orchestrator.updateField('autoCount', 'Twee');
 
-    const newStateRef = (orchestrator as any).state;
-    const updatedValue = orchestrator.getValue('autoCount');
-
-    expect(newStateRef).not.toBe(originalStateRef);
-    expect(updatedValue).toBe('Twee');
+    expect(stateRef).not.toBe(originalRef);
+    expect(orchestrator.getValue('autoCount')).toBe('Twee');
   });
 
   it('moet fail-closed bij onbekend fieldId', () => {
-    const originalStateRef = (orchestrator as any).state;
+    const originalRef = stateRef;
 
-    (orchestrator as any).dispatch({
-      type: 'FIELD_CHANGED',
-      fieldId: 'onbekendVeld',
-      value: 'test',
-    });
+    // Onbekend veld → StateWriterAdapter dispatcht niets → stateRef ongewijzigd
+    orchestrator.updateField('onbekendVeld_xyz', 'test');
 
-    const newStateRef = (orchestrator as any).state;
-
-    // State mag niet veranderen
-    expect(newStateRef).toBe(originalStateRef);
+    expect(stateRef).toBe(originalRef);
   });
 });

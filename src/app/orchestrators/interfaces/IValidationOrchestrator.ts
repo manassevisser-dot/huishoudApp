@@ -1,10 +1,9 @@
 // src/app/orchestrators/interfaces/IValidationOrchestrator.ts
 /**
- * @file_intent Definieert het contract voor de validatie-logica die de integriteit van gebruikersinvoer bewaakt op veld-, sectie- en systeemgrens-niveau.
- * @repo_architecture Mobile Industry (MI) - Validation Orchestration Layer.
- * @term_definition ValidationSeverity = De gradatie van een validatiefout, variërend van blokkerende 'errors' tot adviserende 'info'. SectionValidationResult = Een geaggregeerd rapport dat aangeeft of een volledige UI-sectie voldoet aan de gestelde domeinregels.
- * @contract Fungeert als de centrale interface voor de UI om te bepalen of navigatie toegestaan is (via validateSection) en om real-time feedback aan de gebruiker te geven (via validateField). Het dwingt een consistente foutstructuur af voor de gehele applicatie.
- * @ai_instruction Deze orchestrator dient als de 'consumer' van de BoundaryValidation adapters. Gebruik `validateAtBoundary` voor strikte type-checking bij invoer en `validateSection` voor complexe business-rules die meerdere velden beslaan voordat een stap in de wizard wordt afgerond.
+ * Contract voor validatie-orchestratie: veld-, sectie- en grensvalidatie.
+ *
+ * @module app/orchestrators/interfaces
+ * @see {@link ./README.md | Interfaces — Details}
  */
 
 export type ValidationSeverity = 'error' | 'warning' | 'info';
@@ -22,10 +21,30 @@ export interface SectionValidationResult {
 }
 
 export interface IValidationOrchestrator {
-
+  /**
+   * Valideert alle velden van een sectie en retourneert een geaggregeerd rapport.
+   *
+   * @param sectionId - ID van de te valideren sectie
+   * @param formData  - Huidige veldwaarden van de sectie
+   * @returns `SectionValidationResult` met `isValid`, `errorFields` en `errors`
+   */
   validateSection(sectionId: string, formData: Record<string, unknown>): SectionValidationResult;
 
+  /**
+   * Valideert één veld en retourneert een foutmelding of `null`.
+   *
+   * @param fieldId - Te valideren veld
+   * @param value   - Huidige invoerwaarde
+   * @returns Foutmelding als validatie faalt, anders `null`
+   */
   validateField(fieldId: string, value: unknown): string | null;
 
+  /**
+   * Valideert op de systeem-grens (strikte type-check via `validateAtBoundary` adapter).
+   *
+   * @param fieldId - Te valideren veld
+   * @param value   - Invoerwaarde aan de systeemgrens
+   * @returns Foutmelding als de waarde de grens niet passeert, anders `null`
+   */
   validateAtBoundary(fieldId: string, value: unknown): string | null;
 }

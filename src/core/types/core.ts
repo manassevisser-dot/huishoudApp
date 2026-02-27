@@ -1,39 +1,100 @@
 // src/core/types/core.ts
+
 /**
- * @file_intent Aggregeert en exporteert de centrale domein-types van de applicatie, en biedt utility types voor diepe data-manipulatie.
- * @repo_architecture Mobile Industry (MI) - Core Type Definition Layer.
- * @term_definition ElementOf<T> = Een inferentie-utility die het type van een enkel item uit een array extraheert. DeepPartial<T> = Een recursief type dat alle eigenschappen (en sub-eigenschappen) van een object optioneel maakt, cruciaal voor state-patches.
- * @contract Fungeert als de publieke API voor de datastructuur van de applicatie. Het verbindt de door Zod gegenereerde schema-types uit de adapter-laag met de rest van de codebase, waardoor type-safety in orchestrators en reducers wordt gegarandeerd.
- * @ai_instruction Gebruik de afgeleide types zoals `IncomeItem` en `ExpenseItem` bij het mappen van lijsten in de UI om directe afhankelijkheid van de diepe `FormState` structuur te verminderen. Gebruik `DeepPartial` specifiek voor de payload van acties die de state gedeeltelijk bijwerken.
+ * Publieke type-API van de applicatie: re-exporteert Zod-afgeleide types
+ * uit de adapter-laag en definieert convenience-aliassen voor diep geneste
+ * `FormState`-secties.
+ *
+ * @module core/types
+ * @see {@link ./README.md | Core Types — Details}
+ * @see {@link ../../adapters/validation/formStateSchema.ts | FormStateSchema — bron van truth}
+ *
+ * @remarks
+ * Dit bestand is het **enige importpunt** voor FormState-afgeleide types buiten
+ * de adapter-laag. Importeer nooit direct uit `formStateSchema` in orchestrators of UI.
  */
-import { 
-  FormState, 
-  Member, 
-  Auto,  
+
+import {
+  FormState,
+  Member,
+  Auto,
   DataSection,
-  CsvImportState,        
+  CsvImportState,
   CsvAnalysisResult,
+  TransactionRecord,
+  TransactionHistory,
 } from '@adapters/validation/formStateSchema';
 
-export type { 
-  FormState, 
-  Member, 
-  Auto, 
-  DataSection, 
-  CsvImportState, 
-  CsvAnalysisResult 
+/**
+ * Re-exports van Zod-afgeleide types.
+ * De definities leven in `formStateSchema.ts`; hier worden ze publiek gemaakt.
+ */
+export type {
+  /** Volledige applicatie-state, afgeleid uit `FormStateSchema`. */
+  FormState,
+  /** Één huishoudlid, afgeleid uit `MemberSchema`. */
+  Member,
+  /** Één voertuig, afgeleid uit `AutoSchema`. */
+  Auto,
+  /** Union van de vier data-secties: `'setup' | 'household' | 'finance' | 'latestTransaction'`. */
+  DataSection,
+  /** State van een CSV-import, inclusief transacties en metadata. */
+  CsvImportState,
+  /** Resultaat van een CSV-analyse: discrepantie-vlaggen en periode-samenvatting. */
+  CsvAnalysisResult,
+  /** Eén opgeslagen transactie in de undo-stack (`amountCents`, ISO-datum). */
+  TransactionRecord,
+  /** Past/present/future-stack voor undo/redo van transacties. */
+  TransactionHistory,
 };
 
+/** Interne utility: extraheert het element-type uit een (readonly) array. */
 type ElementOf<T> = T extends readonly (infer U)[] ? U : never;
 
-export type SetupData = FormState['data']['setup'];
-export type Household = FormState['data']['household'];
-export type Finance   = FormState['data']['finance'];
+// ─── Convenience-aliassen voor diep geneste FormState-secties ────────────────
+
+/** Huishoud-configuratie: aantal mensen, woningtype, huisdieren, etc. */
+export type SetupData    = FormState['data']['setup'];
+
+/** Huishoud-samenstelling: members-array en toeslag-bedragen. */
+export type Household    = FormState['data']['household'];
+
+/** Financiën: income + expenses als item-lijsten met totalen. */
+export type Finance      = FormState['data']['finance'];
+
+/** CSV-import state, optioneel aanwezig in `FormState.data`. */
 export type CsvImportData = FormState['data']['csvImport'];
+
+/** Alias voor `CsvAnalysisResult` — het berekende ViewModel voor het analyse-scherm. */
 export type CsvAnalysisVM = CsvAnalysisResult;
+
+/**
+ * Eén item uit `Finance.income.items`.
+ *
+ * @example
+ * function renderIncome(item: IncomeItem) { ... }
+ */
 export type IncomeItem  = ElementOf<NonNullable<Finance['income']['items']>>;
+
+/**
+ * Eén item uit `Finance.expenses.items`.
+ *
+ * @example
+ * function renderExpense(item: ExpenseItem) { ... }
+ */
 export type ExpenseItem = ElementOf<NonNullable<Finance['expenses']['items']>>;
 
+// ─── Utility types ────────────────────────────────────────────────────────────
+
+/**
+ * Maakt alle eigenschappen van `T` recursief optioneel.
+ * Gebruik dit voor partiële state-updates in reducer-payloads.
+ *
+ * @typeParam T - Het type waarvan een partiële versie nodig is
+ *
+ * @example
+ * function patchSetup(patch: DeepPartial<SetupData>): void { ... }
+ */
 export type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends (infer U)[]
     ? DeepPartial<U>[]

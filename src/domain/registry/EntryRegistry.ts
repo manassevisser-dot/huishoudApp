@@ -1,10 +1,12 @@
 // src/domain/registry/EntryRegistry.ts
 /**
- * @file_intent Centraal register dat UI-configuraties (Entries) koppelt aan state-keys (fieldIds).
- * @repo_architecture Mobile Industry (MI) - De 'Bridge'-laag. Zet abstracte domein-data om naar concrete UI-definities.
- * @term_definition EntryDefinition = UI-configuratie (label, primitive, rules). Key = De fieldId in de state.
- * @contract Elke entry MOET een primitiveType hebben en verwijst via zijn key naar een veld in de database/state.
- * @ai_instruction Dit is de UI-laag van het domein. Gebruik 'entry' voor UI-zaken. De keys in ENTRY_REGISTRY zijn 'fieldIds'.
+ * Centraal register dat UI-configuraties (`EntryDefinition`) koppelt aan state-keys (`fieldId`).
+ *
+ * @module domain/registry
+ * @see {@link ./README.md | EntryRegistry — Details}
+ *
+ * @remarks
+ * Elke entry vereist een `primitiveType`. Keys in `ENTRY_REGISTRY` zijn `fieldId`s in de FormState.
  */
 
 import { PRIMITIVE_TYPES, PrimitiveType } from './PrimitiveRegistry';
@@ -30,8 +32,12 @@ export interface EntryDefinition {
   constraintsKey?: string;
   isDerived?: boolean;
   defaultValue?: unknown;
-  fieldId?: string
+  fieldId?: string;
   options?: readonly string[];
+  /** Alleen voor ACTION primitives: de scherm-ID waarnaar genavigeerd wordt. */
+  navigationTarget?: string;
+  /** Alleen voor ACTION primitives: het reducer-command dat ge-dispatched wordt (bijv. 'UNDO'). */
+  commandTarget?: string;
 }
 
 export const ENTRY_REGISTRY: Record<string, EntryDefinition> = {
@@ -81,14 +87,14 @@ export const ENTRY_REGISTRY: Record<string, EntryDefinition> = {
     defaultValue: 'Huur',
   },
   postcode: {
-    primitiveType: PRIMITIVE_TYPES.NUMBER,
+    primitiveType: PRIMITIVE_TYPES.TEXT,
     labelToken: 'LABEL_POSTCODE',
-    placeholderToken: '1234',
-    visibilityRuleName: 'showPostcode',
+    placeholderToken: '1234AB',
+    // Geen visibilityRuleName: altijd zichtbaar, required
     constraintsKey: 'postcode',
   },
 
-  // ==================== MEMBER ENTRYS ====================
+  // ==================== MEMBER ENTRIES ====================
   naam: {
     primitiveType: PRIMITIVE_TYPES.TEXT,
     labelToken: 'LABEL_NAME',
@@ -111,7 +117,7 @@ export const ENTRY_REGISTRY: Record<string, EntryDefinition> = {
     optionsKey: 'gender',
   },
 
-  // ==================== INCOME ENTRYS ====================
+  // ==================== INCOME ENTRIES ====================
   incomeCategory: {
     primitiveType: PRIMITIVE_TYPES.CHIP_GROUP_MULTIPLE,
     labelToken: 'LABEL_INCOME_CATS',
@@ -271,6 +277,69 @@ export const ENTRY_REGISTRY: Record<string, EntryDefinition> = {
     constraintsKey: 'telefoon',
   },
 
+  // ==================== LANDING ACTIES ====================
+  // navigationTarget 'WIZARD' → MasterOrchestrator.navigateTo() → navigation.startWizard()
+  // navigationTarget 'DASHBOARD' → navigation.goToDashboard()
+  // Beide altijd zichtbaar (geen visibilityRuleName): isAction=true bypass in UIOrchestrator.
+  startWizard: {
+    primitiveType: PRIMITIVE_TYPES.ACTION,
+    labelToken: 'startWizard',
+    navigationTarget: 'WIZARD',
+  },
+  goToDashboard: {
+    primitiveType: PRIMITIVE_TYPES.ACTION,
+    labelToken: 'goToDashboard',
+    navigationTarget: 'DASHBOARD',
+  },
+
+  // ==================== OPTIONS NAVIGATIE ====================
+  goToSettings: {
+    primitiveType: PRIMITIVE_TYPES.ACTION,
+    labelToken: 'goToSettings',
+    navigationTarget: 'SETTINGS',
+  },
+  goToCsvUpload: {
+    primitiveType: PRIMITIVE_TYPES.ACTION,
+    labelToken: 'goToCsvUpload',
+    navigationTarget: 'CSV_UPLOAD',
+  },
+  goToReset: {
+    primitiveType: PRIMITIVE_TYPES.ACTION,
+    labelToken: 'goToReset',
+    navigationTarget: 'RESET',
+  },
+
+  // ==================== UNDO SCHERM ACTIES ====================
+  undoAction: {
+    primitiveType: PRIMITIVE_TYPES.ACTION,
+    labelToken: 'undoAction',
+    commandTarget: 'UNDO',
+  },
+  redoAction: {
+    primitiveType: PRIMITIVE_TYPES.ACTION,
+    labelToken: 'redoAction',
+    commandTarget: 'REDO',
+  },
+  clearAllAction: {
+    primitiveType: PRIMITIVE_TYPES.ACTION,
+    labelToken: 'clearAllAction',
+    commandTarget: 'CLEAR_ALL',
+  },
+
+  // ==================== SETTINGS ====================
+  darkModeToggle: {
+    primitiveType: PRIMITIVE_TYPES.TOGGLE,
+    labelToken: 'darkModeLabel',
+    /**
+     * constraintsKey 'theme' koppelt aan de valueResolver in MasterOrchestrator.
+     * fso.getValue('theme') wordt nooit aangeroepen — de valueResolver onderschept.
+     * De onChange-callback stuurt true/false naar MasterOrchestrator.updateField('theme', value),
+     * dat wordt doorgestuurd naar SettingsWorkflow (niet naar validatiepipeline).
+     */
+    constraintsKey: 'theme',
+    options: ['light', 'dark'] as const,
+  },
+
   // ==================== DAILY TRANSACTION INPUT ====================
   dailyTransactionDate: {
     primitiveType: PRIMITIVE_TYPES.DATE,
@@ -303,6 +372,13 @@ export const ENTRY_REGISTRY: Record<string, EntryDefinition> = {
     constraintsKey: 'latestPaymentMethod',
   },
 };
+/**
+ * Bepaalt het FormState-veld-ID voor een entry: `constraintsKey` heeft prioriteit boven `entryId`.
+ *
+ * @param entryId - Sleutel in `ENTRY_REGISTRY`
+ * @param entry   - Bijbehorende `EntryDefinition`
+ * @returns Het te gebruiken `fieldId` voor FormState-toegang
+ */
 export function resolveFieldId(
   entryId: string,
   entry: EntryDefinition
@@ -315,6 +391,12 @@ export function resolveFieldId(
   return entryId;
 }
 
+/**
+ * Runtime lookup-service voor `EntryDefinition` op basis van `entryId`.
+ *
+ * @example
+ * const def = EntryRegistry.getDefinition('nettoSalaris');
+ */
 export const EntryRegistry: IBaseRegistry<string, EntryDefinition> = {
   // Gebruik ternary om de 'always true' object-waarschuwing te voorkomen
   getDefinition: (key: string) => (key in ENTRY_REGISTRY) ? ENTRY_REGISTRY[key] : null, 

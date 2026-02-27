@@ -1,54 +1,61 @@
+// src/app/orchestrators/ORCH-SW-001.test.ts
+/**
+ * TEST: ORCH-SW-001 — updateField schrijft correct naar FormState
+ *
+ * Patroon: echte reducer-koppeling via stateRef-closure.
+ * mockDispatch (jest.fn) updatet de state niet — vervangen door formReducer.
+ */
 import { FormStateOrchestrator } from './FormStateOrchestrator';
+import { formReducer, type FormAction } from '@app/state/formReducer';
+import { initialFormState } from '@app/state/initialFormState';
+import type { FormState } from '@core/types/core';
 
-describe('ORCH-SW-001: updateField(fieldId, value)', () => {
-  
-  // Helper om basis state te maken
-  const createMockState = (setupOverrides = {}) => ({
-    schemaVersion: 1,
+// ─── Helper: stateRef-closure met echte reducer ───────────────────────────────
+
+const createOrchestrator = (setupOverrides: Partial<FormState['data']['setup']> = {}) => {
+  let stateRef: FormState = {
+    ...initialFormState,
     data: {
+      ...initialFormState.data,
       setup: {
-        aantalMensen: 0,
-        aantalVolwassen: 1,
-        autoCount: 'Geen' as const,
-        heeftHuisdieren: false,
+        ...initialFormState.data.setup,
         ...setupOverrides,
       },
-      members: [],
-      household: {},
-      finance: { income: [], expenses: [] },
     },
-  });
-  
+  };
+
+  const getState = () => stateRef;
+  const dispatch = (action: FormAction) => {
+    stateRef = formReducer(stateRef, action);
+  };
+
+  return new FormStateOrchestrator(getState, dispatch);
+};
+
+// ─── Tests ────────────────────────────────────────────────────────────────────
+
+describe('ORCH-SW-001: updateField(fieldId, value)', () => {
   test('updates aantalMensen correctly', () => {
-    const mockDispatch = jest.fn();
-    const mockState = createMockState();
-    const orchestrator = new FormStateOrchestrator(() => mockState as any, mockDispatch);
-    
+    const orchestrator = createOrchestrator({ aantalMensen: 0 });
+
     orchestrator.updateField('aantalMensen', 5);
-    
-    const result = orchestrator.getValue('aantalMensen');
-    expect(result).toBe(5);
+
+    expect(orchestrator.getValue('aantalMensen')).toBe(5);
   });
 
   test('updates autoCount correctly', () => {
-    const mockDispatch = jest.fn();
-    const mockState = createMockState();
-    const orchestrator = new FormStateOrchestrator(() => mockState as any, mockDispatch);
-    
+    const orchestrator = createOrchestrator({ autoCount: 'Geen' });
+
     orchestrator.updateField('autoCount', 'Twee');
-    
-    const result = orchestrator.getValue('autoCount');
-    expect(result).toBe('Twee');
+
+    expect(orchestrator.getValue('autoCount')).toBe('Twee');
   });
 
   test('updates heeftHuisdieren correctly', () => {
-    const mockState = createMockState({ heeftHuisdieren: true });
-    const mockDispatch = jest.fn();
-    const orchestrator = new FormStateOrchestrator(() => mockState as any, mockDispatch);
-    
+    const orchestrator = createOrchestrator({ heeftHuisdieren: true });
+
     orchestrator.updateField('heeftHuisdieren', false);
-    
-    const result = orchestrator.getValue('heeftHuisdieren');
-    expect(result).toBe(false);
+
+    expect(orchestrator.getValue('heeftHuisdieren')).toBe(false);
   });
 });

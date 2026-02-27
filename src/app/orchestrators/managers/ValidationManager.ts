@@ -9,37 +9,29 @@
 
 import { validateAtBoundary } from '@adapters/validation/validateAtBoundary';
 import { SectionValidationResult, ValidationError } from "../interfaces/IValidationOrchestrator";
-import { UI_SECTIONS } from '@domain/constants/uiSections';
-
-// Sterke interne typing voor configuratie
-type UISectionEntry = string | { fieldId: string };
-type UISection = { fields: ReadonlyArray<UISectionEntry> };
-
-const UI_SECTIONS_MAP: Record<string, UISection> =
-  UI_SECTIONS as unknown as Record<string, UISection>;
+import { getConstraint } from '@domain/rules/fieldConstraints';
 
 export class ValidationManager {
 
-  public validateSection(
-    sectionId: string,
-    formData: Record<string, unknown>
+  /**
+   * Valideert een pre-resolved set fieldIds tegen een platte value-map.
+   *
+   * Wordt uitsluitend aangeroepen vanuit ValidationOrchestrator.validateSection(),
+   * die de registry-keten (ScreenRegistry → SectionRegistry → EntryRegistry)
+   * en de fso.getValue()-resolutie al heeft afgehandeld.
+   *
+   * @param fieldIds     - Gefilterde lijst: geen LABEL/ACTION/derived entries.
+   * @param resolvedValues - Platte map { fieldId: waarde } opgehaald via fso.getValue().
+   */
+  public validateFields(
+    fieldIds: string[],
+    resolvedValues: Record<string, unknown>,
   ): SectionValidationResult {
-
-    const sectionCfg = UI_SECTIONS_MAP[sectionId];
-    const fields = Array.isArray(sectionCfg?.fields) ? sectionCfg.fields : [];
-
-    const fieldIds: string[] = fields
-  .map((f: UISectionEntry): string => {
-    if (typeof f === 'string') return f;
-    return f.fieldId; // TypeScript weet nu dat f de interface { fieldId: string } is
-  })
-  .filter((fid): fid is string => typeof fid === 'string' && fid.length > 0);
-
     const errorFields: string[] = [];
     const errors: Record<string, ValidationError> = {};
 
     for (const fieldId of fieldIds) {
-      const value = formData[fieldId];
+      const value = resolvedValues[fieldId];
       const msg = this.validateField(fieldId, value);
 
       if (typeof msg === 'string' && msg.length > 0) {
@@ -51,22 +43,31 @@ export class ValidationManager {
     return {
       isValid: errorFields.length === 0,
       errorFields,
-      errors
+      errors,
     };
   }
 
   public validateField(fieldId: string, value: unknown): string | null {
-    // 1. Verplicht-check
-    if (value === undefined || value === null || value === '') {
-      return 'Dit veld is verplicht';
+    const constraint = getConstraint(fieldId);
+    const isRequired = constraint?.required === true;
+    const isEmpty = value === undefined || value === null || value === '';
+
+    // 1. Required-check: alleen blokkeren als de constraint het expliciet vereist
+    if (isRequired && isEmpty) {
+      // Gebruik het custom message uit de constraint als het er is
+      return constraint?.message ?? 'Dit veld is verplicht';
     }
 
-    // 2. Zod boundary validator (echte regels)
+    // 2. Optioneel veld zonder waarde: geen verdere validatie nodig
+    if (isEmpty) return null;
+
+    // 3. Zod boundary validator: type- en patroon-check
     const result = validateAtBoundary(fieldId, value);
     return result.success ? null : result.error;
   }
+
   public shouldValidateAtBoundary(fieldId: string): boolean {
-    const fieldsWithLiveValidation = ['email', 'password', 'amountCents'];
+    const fieldsWithLiveValidation = ['email', 'password', 'amountCents', 'postcode'];
     return fieldsWithLiveValidation.includes(fieldId);
   }
 }

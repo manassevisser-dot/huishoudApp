@@ -81,7 +81,10 @@ export const SECTION_REGISTRY: Record<string, SectionDefinition> = {
     id: 'LANDING_ACTIONS_CARD',
     labelToken: 'SECTION_LANDING',
     layout: 'card',
-    fieldIds: [], // stub: LandingScreen is nog handmatig
+    // startWizard → EntryRegistry (ACTION, navigationTarget='WIZARD') → startWizard() → WIZARD_SETUP_HOUSEHOLD
+    // goToDashboard → EntryRegistry (ACTION, navigationTarget='DASHBOARD') → goToDashboard()
+    // Volgorde = visuele volgorde: primair (Aanmelden) vóór secundair (Inloggen).
+    fieldIds: ['startWizard', 'goToDashboard'],
   },
   DASHBOARD_OVERVIEW_CARD: {
     id: 'DASHBOARD_OVERVIEW_CARD',
@@ -111,7 +114,7 @@ export const SECTION_REGISTRY: Record<string, SectionDefinition> = {
     id: 'GLOBAL_OPTIONS_LIST',
     labelToken: 'SECTION_OPTIONS',
     layout: 'list',
-    fieldIds: [], // stub: OptionsScreen is nog handmatig
+    fieldIds: ['goToSettings', 'goToCsvUpload', 'goToReset'],
   },
   USER_PROFILE_CARD: {
     id: 'USER_PROFILE_CARD',
@@ -123,7 +126,7 @@ export const SECTION_REGISTRY: Record<string, SectionDefinition> = {
     id: 'APP_PREFERENCES_SECTION',
     labelToken: 'SECTION_PREFERENCES',
     layout: 'list',
-    fieldIds: [], // stub
+    fieldIds: ['darkModeToggle'],
   },
   CSV_DROPZONE_CARD: {
     id: 'CSV_DROPZONE_CARD',
@@ -154,6 +157,21 @@ export const SECTION_REGISTRY: Record<string, SectionDefinition> = {
     labelToken: 'SECTION_ERROR',
     layout: 'card',
     fieldIds: [], // stub
+  },
+  // ─── UNDO scherm [Fase 7] ───────────────────────────────────────────────────
+  // TRANSACTION_HISTORY_LIST: geen fieldIds — rendert via TransactionHistoryContainer.
+  // TRANSACTION_ACTIONS_CARD: 3 ACTION entries (commandTarget → reducer dispatch).
+  TRANSACTION_HISTORY_LIST: {
+    id: 'TRANSACTION_HISTORY_LIST',
+    labelToken: 'SECTION_TRANSACTION_HISTORY',
+    layout: 'list',
+    fieldIds: [], // rendert via TransactionHistoryContainer (niet via EntryRegistry)
+  },
+  TRANSACTION_ACTIONS_CARD: {
+    id: 'TRANSACTION_ACTIONS_CARD',
+    labelToken: 'SECTION_TRANSACTION_ACTIONS',
+    layout: 'list',
+    fieldIds: ['undoAction', 'redoAction', 'clearAllAction'],
   },
 };
 

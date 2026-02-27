@@ -109,7 +109,7 @@ export const ScreenViewModelFactory = {
       throw new Error(`Primitive type '${primitiveType}' not registered`);
     }
 
-    // NB: we evalueren niets — alleen dóórgeven wat later nodig is
+    // NB: we evalueren niets — alleen doorgeven wat later nodig is
     return {
       entryId,
       labelToken: entryDef.labelToken,

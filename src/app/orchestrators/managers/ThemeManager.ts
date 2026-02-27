@@ -26,14 +26,15 @@ export class ThemeManager implements IThemeOrchestrator {
 
   /**
    * Slaat op, update de cache en informeert de listener (de UI).
+   * ⚠️ Listener wordt vóór await aangeroepen: React-state update is synchroon,
+   *   opslag is async. Zo ziet de UI de wijziging direct, zonder te wachten op I/O.
    */
   public async setTheme(theme: Theme): Promise<void> {
     this._currentTheme = theme;
-    await saveTheme(theme);
-    
     if (this._listener !== null && this._listener !== undefined) {
-      this._listener(theme);
+      this._listener(theme);  // ← vóór await: direct re-render, geen flash
     }
+    await saveTheme(theme);
   }
 
   /**

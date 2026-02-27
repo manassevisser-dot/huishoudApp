@@ -1,8 +1,8 @@
 /**
- * @file_intent Fungeert als dynamische render-bridge voor renderklare ViewModels.
+ * @file_intent Fungeert als dynamische render-bridge voor render-klare ViewModels.
  * @repo_architecture UI Layer - Dynamic Renderer / View-ViewModel Bridge.
  * @term_definition
- *   - `RenderEntryVM`: Renderklaar entry-model met root `primitiveType`.
+ *   - `RenderEntryVM`: Render-klaar entry-model met root `primitiveType`.
  *   - `PrimitiveRenderable`: Minimaal object met `primitiveType` voor primitive fallback.
  * @contract De renderer accepteert renderklare modellen en gebruikt geen unsafe casts.
  */

@@ -1,0 +1,280 @@
+# Derde splitsingsplan: MasterOrchestrator naar gespecialiseerde orchestrators
+
+## Inleiding
+De huidige `MasterOrchestrator` is een God Object met ~220 regels productie-logica, verantwoordelijk voor:
+- UI-rendering (buildRenderScreen)
+- Veldupdates en validatie
+- CSV-import workflow
+- Dagelijkse transactie workflow
+- Business state recompute
+- Navigatie-delegatie
+
+Dit plan splitst de MasterOrchestrator op in **vijf gespecialiseerde orchestrators**, waarbij de Master een dunne façade wordt. Het plan combineert de sterke punten van de twee eerdere voorstellen en sluit aan bij de bestaande cluster-architectuur (domain, app).
+
+## Doel
+- MasterOrchestrator wordt een façade zonder eigen logica (~40-50 regels).
+- Elke gespecialiseerde orchestrator heeft één duidelijke verantwoordelijkheid.
+- Geen breaking changes voor consumers (de publieke API blijft identiek).
+- Maximale testbaarheid en onderhoudbaarheid.
+
+## Voorgestelde bestandsstructuur
+```
+src/app/orchestrators/
+├── MasterOrchestrator.ts                 ← façade
+├── workflows/
+│   ├── ScreenOrchestrator.ts             ← UI-rendering + visibility
+│   ├── FieldOrchestrator.ts               ← veldupdates, sectievalidatie, canNavigateNext
+│   ├── BusinessStateOrchestrator.ts       ← herberekenen business state (financial summary)
+│   ├── ImportWorkflowOrchestrator.ts      ← CSV-import workflow (gebruikt ACL via DataManager)
+│   └── DailyTransactionWorkflowOrchestrator.ts ← dagelijkse transactie workflow
+└── types/
+    └── render.types.ts                    ← (optioneel) types gedeeld met UI
+```
+
+## Gedetailleerde beschrijving van elke orchestrator
+
+### 1. ScreenOrchestrator
+**Verantwoordelijkheid:**  
+Omzetten van `StyledScreenVM` naar `RenderScreenVM` (render-ready data voor UI). Bevat alle mapping-logica en evaluatie van zichtbaarheid.
+
+**Publieke API:**
+```typescript
+class ScreenOrchestrator {
+  constructor(
+    private readonly ui: IUIOrchestrator,
+    private readonly fso: FormStateOrchestrator,
+    private readonly visibility: IVisibilityEvaluator,
+    private readonly onFieldChange: (fieldId: string, value: unknown) => void, // callback naar FieldOrchestrator
+  ) {}
+
+  buildRenderScreen(screenId: string): RenderScreenVM;
+  isVisible(ruleName: string, memberId?: string): boolean; // delegatie naar visibility
+}
+```
+
+**Verhuisde code uit MasterOrchestrator:**
+- `buildRenderScreen`, `toRenderScreen`, `toRenderSection`, `toRenderEntry`
+- `evaluateVisibility`
+- Type-definities `RenderScreenVM`, `RenderSectionVM`, `RenderEntryVM` (worden geëxporteerd)
+
+**Aandachtspunt:**  
+De `onChange` in `toRenderEntry` gebruikt de meegegeven `onFieldChange`-callback, die in de MasterOrchestrator naar `FieldOrchestrator.updateField` verwijst. Zo blijft de koppeling los.
+
+### 2. FieldOrchestrator
+**Verantwoordelijkheid:**  
+Afhandelen van veldupdates (met boundary-validatie), valideren van hele secties, en bepalen of naar volgende sectie genavigeerd mag worden.
+
+**Publieke API:**
+```typescript
+class FieldOrchestrator {
+  constructor(
+    private readonly fso: FormStateOrchestrator,
+    private readonly validation: IValidationOrchestrator,
+    private readonly visibility: IVisibilityEvaluator, // voor eventueel gebruik (nu niet nodig)
+    private readonly business: BusinessStateOrchestrator, // voor recompute na update
+  ) {}
+
+  updateField(fieldId: string, value: unknown): void;
+  validateSection(sectionId: string): SectionValidationResult;
+  canNavigateNext(sectionId: string): boolean; // gebaseerd op validateSection
+}
+```
+
+**Verhuisde code uit MasterOrchestrator:**
+- `updateField` (zonder `recomputeBusinessState` – die wordt via `business` aangeroepen)
+- `validateSection`
+- `canNavigateNext` (wordt hier geïmplementeerd)
+
+**Waarom apart?**  
+Deze methoden vormen een logische eenheid rond veld- en sectie-interactie. Ze worden ook gebruikt door andere workflows (bijv. na import moet niet opnieuw gevalideerd worden).
+
+### 3. BusinessStateOrchestrator
+**Verantwoordelijkheid:**  
+Herberekenen van de business viewmodel (financial summary) en dispatchen van `UPDATE_VIEWMODEL`. Wordt door meerdere workflows gebruikt.
+
+**Publieke API:**
+```typescript
+class BusinessStateOrchestrator {
+  constructor(
+    private readonly fso: FormStateOrchestrator,
+    private readonly business: IBusinessOrchestrator,
+  ) {}
+
+  recompute(): void;
+}
+```
+
+**Verhuisde code uit MasterOrchestrator:**
+- `recomputeBusinessState`
+
+**Waarom apart?**  
+Vermijdt code-duplicatie in `FieldOrchestrator`, `ImportWorkflowOrchestrator` en `DailyTransactionWorkflowOrchestrator`. Maakt deze orchestrators eenvoudiger en meer SRP.
+
+### 4. ImportWorkflowOrchestrator
+**Verantwoordelijkheid:**  
+Orkestreren van de volledige CSV-import:
+1. State ophalen
+2. DataManager (ACL) aanroepen voor parsing
+3. ResearchOrchestrator aanroepen voor verrijking
+4. State updaten via FSO
+5. Business state herberekenen
+6. Loggen
+
+**Publieke API:**
+```typescript
+class ImportWorkflowOrchestrator {
+  constructor(
+    private readonly fso: FormStateOrchestrator,
+    private readonly data: DataManager,               // bevat ACL (processCsvImport)
+    private readonly research: ResearchOrchestrator,
+    private readonly business: BusinessStateOrchestrator,
+  ) {}
+
+  async execute(csvText: string): Promise<void>;
+}
+```
+
+**Verhuisde code uit MasterOrchestrator:**
+- `handleCsvImport` (wordt `execute`)
+- `dispatchImportData`
+- `logImportCompletion`
+
+**Opmerking:**  
+De ACL (Anti-Corruption Layer) zit al in `DataManager.processCsvImport`. Deze orchestrator gebruikt die en voegt alleen de workflow-stappen toe.
+
+### 5. DailyTransactionWorkflowOrchestrator
+**Verantwoordelijkheid:**  
+Valideren, opslaan en resetten van een dagelijkse transactie.
+
+**Publieke API:**
+```typescript
+class DailyTransactionWorkflowOrchestrator {
+  constructor(
+    private readonly fso: FormStateOrchestrator,
+    private readonly business: BusinessStateOrchestrator,
+  ) {}
+
+  execute(): boolean; // true als succesvol opgeslagen
+}
+```
+
+**Verhuisde code uit MasterOrchestrator:**
+- `saveDailyTransaction` (wordt `execute`)
+- `buildExpenseItemForTransaction`
+- `persistTransactionAndReset`
+
+**Afhankelijkheid:**  
+Gebruikt `computePhoenixSummary` (pure domeinfunctie) – wordt direct geïmporteerd.
+
+## De nieuwe MasterOrchestrator (façade)
+
+Na splitsing wordt `MasterOrchestrator` een dunne façade die alle publieke methoden van de oude klasse aanbiedt door ze te delegeren naar de juiste orchestrators.
+
+```typescript
+export class MasterOrchestrator implements MasterOrchestratorAPI {
+  public readonly theme: IThemeOrchestrator;
+  public readonly navigation: INavigationOrchestrator;
+  public readonly ui: IUIOrchestrator;
+
+  private readonly screen: ScreenOrchestrator;
+  private readonly fields: FieldOrchestrator;
+  private readonly business: BusinessStateOrchestrator;
+  private readonly importWorkflow: ImportWorkflowOrchestrator;
+  private readonly dailyWorkflow: DailyTransactionWorkflowOrchestrator;
+
+  constructor(
+    private readonly fso: FormStateOrchestrator,
+    private readonly domain: DomainCluster,
+    private readonly app: AppCluster,
+  ) {
+    // Exposeer app-onderdelen voor directe toegang (bestaande publieke properties)
+    this.theme = this.app.theme;
+    this.navigation = this.app.navigation;
+    this.ui = this.app.ui;
+
+    // Instantieer orchestrators met onderlinge afhankelijkheden
+    this.business = new BusinessStateOrchestrator(this.fso, this.domain.business);
+    this.fields = new FieldOrchestrator(this.fso, this.domain.validation, this.domain.visibility, this.business);
+    this.screen = new ScreenOrchestrator(
+      this.app.ui,
+      this.fso,
+      this.domain.visibility,
+      (fieldId, value) => this.fields.updateField(fieldId, value), // callback
+    );
+    this.importWorkflow = new ImportWorkflowOrchestrator(
+      this.fso,
+      this.domain.data,
+      this.domain.research,
+      this.business,
+    );
+    this.dailyWorkflow = new DailyTransactionWorkflowOrchestrator(this.fso, this.business);
+  }
+
+  // === UI-rendering ===
+  buildRenderScreen(screenId: string): RenderScreenVM {
+    return this.screen.buildRenderScreen(screenId);
+  }
+
+  // === Visibility (publiek) ===
+  isVisible(ruleName: string, memberId?: string): boolean {
+    return this.screen.isVisible(ruleName, memberId);
+  }
+
+  // === Veldupdates ===
+  updateField(fieldId: string, value: unknown): void {
+    this.fields.updateField(fieldId, value);
+  }
+
+  // === Navigatie (delegatie naar app.navigation) ===
+  onNavigateBack(): void {
+    this.app.navigation.navigateBack();
+  }
+
+  onNavigateNext(): void {
+    this.app.navigation.navigateNext();
+  }
+
+  canNavigateNext(sectionId: string): boolean {
+    return this.fields.canNavigateNext(sectionId);
+  }
+
+  // === Workflows ===
+  async handleCsvImport(csvText: string): Promise<void> {
+    await this.importWorkflow.execute(csvText);
+  }
+
+  saveDailyTransaction(): boolean {
+    return this.dailyWorkflow.execute();
+  }
+}
+```
+
+**Geschatte omvang:** ~50 regels (exclusief boilerplate).
+
+## Publieke API stabiliteit
+- Alle publieke methoden van `MasterOrchestratorAPI` blijven bestaan met exact dezelfde signaturen.
+- De types `RenderScreenVM`, `RenderSectionVM`, `RenderEntryVM` worden nu geëxporteerd vanuit `ScreenOrchestrator` (of een gedeeld types-bestand). De MasterOrchestrator re-exporteert ze om breaking changes te voorkomen.
+- Consumers (zoals `UniversalScreen`) merken niets van de interne herstructurering.
+
+## Risico's en mitigaties
+
+| Risico | Mitigatie |
+|--------|-----------|
+| **Circulaire afhankelijkheden** via callbacks | De callback in `ScreenOrchestrator` is een functie, geen orchestrator-injectie. Geen module-cirkel. |
+| **Type-definities niet meer op dezelfde plek** | Types worden verplaatst naar `ScreenOrchestrator.ts` en opnieuw geëxporteerd door `MasterOrchestrator`. |
+| **Tests moeten worden aangepast** | Oude tests voor `MasterOrchestrator` worden kleiner; nieuwe unit-tests per orchestrator worden geschreven. Dit is een gewenste verbetering. |
+| **Vergeten van `recomputeBusinessState` in een workflow** | Door `BusinessStateOrchestrator` centraal te gebruiken, is de kans kleiner. Alle workflows die state wijzigen, moeten `business.recompute()` aanroepen. |
+| **Prestaties door extra aanroepen** | Verwaarloosbaar; alle orchestrators zijn lichtgewicht en delegeren alleen. |
+
+## Volgorde van implementatie
+1. **BusinessStateOrchestrator** – klein, wordt door anderen gebruikt.
+2. **ScreenOrchestrator** – meest onafhankelijk, kan als eerste worden gebouwd en getest.
+3. **FieldOrchestrator** – afhankelijk van BusinessStateOrchestrator.
+4. **DailyTransactionWorkflowOrchestrator** – afhankelijk van BusinessStateOrchestrator.
+5. **ImportWorkflowOrchestrator** – afhankelijk van DataManager, ResearchOrchestrator en BusinessStateOrchestrator.
+6. **MasterOrchestrator** opschonen – vervang interne logica door delegatie naar nieuwe orchestrators.
+
+Tijdens de implementatie kunnen we stap voor stap te werk gaan: per orchestrator de code uit de Master verplaatsen, tests schrijven, en pas aan het einde de Master herschrijven. Zo blijft de applicatie altijd werkend.
+
+## Conclusie
+Dit derde plan leidt tot een schone, modulaire MasterOrchestrator met vijf gespecialiseerde collega's. Het respecteert de bestaande architectuur, behoudt volledige backward compatibility, en maakt de codebase aanzienlijk onderhoudbaarder.

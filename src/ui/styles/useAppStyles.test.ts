@@ -2,7 +2,14 @@ import { getAppStyles } from './useAppStyles';
 
 jest.mock('react-native', () => ({
   StyleSheet: { create: (obj: any) => obj },
-  Platform: { select: (objs: any) => objs.ios || objs.default },
+  Platform: { 
+  select: <T>(objs: { ios?: T; default: T }): T => {
+    if ('ios' in objs) {
+      return objs.ios ?? objs.default;
+    }
+    return objs.default;
+  }
+},
 }));
 
 describe('Style System Integrity', () => {

@@ -22,7 +22,6 @@ const config: Config = {
   moduleNameMapper: {
 // @alias-start
       '^@state/schemas/sections/(.*)$': '<rootDir>/src/state/schemas/sections/$1',
-      '^@state/schemas/helpers/(.*)$': '<rootDir>/src/state/schemas/helpers/$1',
       '^@domain/validation/(.*)$': '<rootDir>/src/domain/validation/$1',
       '^@app/orchestrators/(.*)$': '<rootDir>/src/app/orchestrators/$1',
       '^@domain/constants/(.*)$': '<rootDir>/src/domain/constants/$1',
@@ -40,10 +39,11 @@ const config: Config = {
       '^@app/hooks/(.*)$': '<rootDir>/src/app/hooks/$1',
       '^@adapters/(.*)$': '<rootDir>/src/adapters/$1',
       '^@services/(.*)$': '<rootDir>/src/services/$1',
+      '^@test-utils/(.*)$': '<rootDir>/src/test-utils/$1',
       '^@kernel/(.*)$': '<rootDir>/src/kernel/$1',
       '^@domain/(.*)$': '<rootDir>/src/domain/$1',
-      '^@styles/(.*)$': '<rootDir>/src/ui/styles/$1',
       '^@config/(.*)$': '<rootDir>/src/config/$1',
+      '^@styles/(.*)$': '<rootDir>/src/domain/styles/$1',
       '^@utils/(.*)$': '<rootDir>/src/utils/$1',
       '^@state/(.*)$': '<rootDir>/src/state/$1',
       '^@core/(.*)$': '<rootDir>/src/core/$1',
@@ -72,9 +72,15 @@ const config: Config = {
       '|expo-constants' +
       '|expo-file-system' +
       '|expo-asset' +
-      '|@babel/runtime)/',
+      '|@babel/runtime' +
+      '|@react-native-async-storage/async-storage)/',
   ],
   
+
+  fakeTimers: {
+    enableGlobally: false, // false = opt-in per test via jest.useFakeTimers()
+    // true zou timer-afhankelijke async tests globaal breken
+  },
 
   clearMocks: true,
   restoreMocks: true,

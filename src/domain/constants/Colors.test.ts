@@ -49,6 +49,6 @@ describe('Theme and ColorScheme Types', () => {
     
     expect(lightScheme).toHaveProperty('primary');
     expect(lightScheme).toHaveProperty('background');
-    expect(lightScheme).toHaveProperty('text');
+    expect(lightScheme).toHaveProperty('textPrimary');
   });
 });

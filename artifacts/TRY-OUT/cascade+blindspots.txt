@@ -1,0 +1,407 @@
+Hier is een gedetailleerde vergelijking van de drie splitsingsplannen, gebaseerd op de aangeleverde documenten en de huidige staat van de `MasterOrchestrator.ts`.
+
+## 1. Executive Summary
+
+| Kenmerk | **Plan 1 (SPLITSINGPLAN.md)** | **Plan 2 (Splitsingplan2.txt)** | **Plan 3 (Splitisinsplan3.txt)** |
+| :--- | :--- | :--- | :--- |
+| **Focus** | Workflows vs. Services | 5 Sub-Orchestrators | 5 Gespecialiseerde Orchestrators (Gerefined) |
+| **Rol Master** | Façade + State Boundary (bevat nog logica) | Pure Façade (alleen delegatie) | Pure Façade + Composition Root (instantiatie) |
+| **Coupling** | Laag (via callbacks) | Medium (directe deps tussen orchestrators) | Medium (mix van callbacks & deps) |
+| **Complexiteit** | Laag (3 nieuwe bestanden) | Hoog (5 nieuwe bestanden + wiring) | Hoog (5 bestanden, maar duidelijker wiring) |
+| **ACL Focus** | Minder expliciet | Expliciet in ImportWorkflow | Expliciet in ImportWorkflow (via DataManager) |
+| **Risico** | Master blijft deels "God Object" | Over-engineering ("Orchestrator" overload) | Testbaarheid Master (door interne instantiatie) |
+
+---
+
+## 2. Analyse per Plan: Blinde Vlekken & Negatieve Gevolgen
+
+### Plan 1: Workflows & Services (SPLITSINGPLAN.md)
+*Dit plan kiest voor een pragmatische split in 'Services' (Render) en 'Workflows' (Import, Transaction).*
+
+**Blinde Vlekken:**
+1.  **Master is geen pure Façade:** De `MasterOrchestrator` houdt methoden als `updateField`, `validateSection` en `recomputeBusinessState`. Dit betekent dat de Master nog steeds kennis heeft van validatie-regels en business-logic flow. Hij is niet volledig ontdaan van verantwoordelijkheid.
+2.  **Callback-Complexiteit:** Het plan leunt zwaar op callbacks (`onFieldChange`, `onRecompute`) om circular dependencies te voorkomen. In een grote codebase kan dit leiden tot "callback hell" waar de data-flow moeilijk te traceren is.
+3.  **Naming Inconsistentie:** Het mengt termen als `Service` (RenderScreenService) en `Workflow` (CsvImportWorkflow). Dit kan verwarring scheppen over wat het verschil is in verantwoordelijkheid.
+
+**Negatieve Gevolgen:**
+*   **Testbaarheid:** Het testen van de `MasterOrchestrator` blijft complexer dan nodig omdat je nog steeds de logic van `updateField` (inclusief `validateAtBoundary`) moet mocken of testen binnen de Master.
+*   **Refactoring Risico:** Als de validatielogica verandert, moet je nog steeds in de `MasterOrchestrator` zijn, niet in een gespecialiseerde module. Dit ondermijnt het doel van Single Responsibility.
+
+### Plan 2: 5 Sub-Orchestrators (Splitsingplan2.txt)
+*Dit plan streeft naar maximale modulariteit door alles een "Orchestrator" te noemen en de Master volledig leeg te maken.*
+
+**Blinde Vlekken:**
+1.  **Dependency Chain:** Het plan stelt voor dat `FieldOrchestrator` afhankelijk is van `BusinessStateOrchestrator`. Dit creëert een ketting: als `BusinessState` verandert, moet `Field` ook getest worden. Dit verhoogt de coupling tussen de modules.
+2.  **Instantiatie Locatie:** Het plan suggereert dat de Master de sub-orchestrators instantieert (`new FieldOrchestrator(...)`), maar specificeert niet hoe dit getest wordt. De Master wordt hierdoor een "Composition Root", wat het mocken van de sub-orchestrators in unit-tests van de Master lastig maakt.
+3.  **ACL Implementatie:** Het plan zegt "ACL zit hier al in ImportOrchestrator", maar in de huidige `MasterOrchestrator.txt` zit de ACL-logica nog als TODO in `handleCsvImport` (via `DataManager`). Plan 2 gaat er van uit dat dit al geregeld is, wat een aanname is.
+
+**Negatieve Gevolgen:**
+*   **Over-engineering:** Voor een applicatie van deze omvang (huidige Master ~220 regels) kunnen 5 extra orchestrators voelen als bureaucratie. De "cost of abstraction" kan hoger zijn dan de winst in leesbaarheid.
+*   **Navigatie Leaks:** De Master exposeert nog steeds `public readonly navigation` en `ui`. Dit blijft een lek in de encapsulatie, ongeacht de split. Plan 2 lost dit niet op.
+
+### Plan 3: Gerefined Specialisatie (Splitisinsplan3.txt)
+*Dit plan is een evolutie van Plan 2, met meer aandacht voor callbacks en type-stabiliteit.*
+
+**Blinde Vlekken:**
+1.  **Constructor Wiring:** In het voorbeeld code wordt de wiring in de constructor van de Master gedaan (`this.fields = new FieldOrchestrator(...)`). Dit betekent dat je om de Master te testen, je *altijd* alle dependencies (fso, domain, app) moet aanleveren, zelfs als je alleen de `theme` property wilt testen. Het maakt de Master fragiel voor veranderingen in de dependencies van zijn kinderen.
+2.  **Callback Closure Risico:** De `ScreenOrchestrator` krijgt een callback `(fieldId, value) => this.fields.updateField(...)`. Als `this.fields` ooit vervangen wordt (bijv. in een hot-reload scenario of complexe test setup), kan de closure naar een verouderde instantie verwijzen (hoewel in TS classes dit meestal veilig is, is het een architecturaal 'code smell').
+3.  **Type Export Strategie:** Het plan stelt voor types te verplaatsen naar `ScreenOrchestrator` en te re-exporteren. Dit creëert een afhankelijkheid van de UI-types op de Screen-logic. Als de Screen-orchestrator verandert, kunnen UI-componenten onverwacht breken.
+
+**Negatieve Gevolgen:**
+*   **Moeilijker Debuggen:** Een fout in `updateField` komt nu uit `FieldOrchestrator`, maar wordt aangeroepen via een callback vanuit `ScreenOrchestrator` via de `Master`. De stack trace wordt dieper en minder intuïtief.
+*   **Bootstrapping Complexiteit:** Het opstarten van de applicatie wordt complexer omdat de Master nu verantwoordelijk is voor het correct construeren van 5 andere klassen met de juiste dependencies.
+
+---
+
+## 3. Algemene Blinde Vlekken (Geldt voor alle 3 de plannen)
+
+Gebaseerd op de analyse van `MasterOrchestrator.txt`:
+
+1.  **De `FormStateOrchestrator` (FSO) Bottleneck:**
+    *   **Probleem:** Alle 5 de nieuwe orchestrators in Plan 2 & 3, en de Services in Plan 1, zijn afhankelijk van `fso`.
+    *   **Gevolg:** De `fso` wordt een "God Dependency". Als de interface van `fso` verandert, moeten *alle* gesplitste bestanden aangepast worden. Dit verplaatst het single point of failure alleen maar.
+    *   **Mitigatie:** Overweeg om alleen de *noodzakelijke* interfaces van FSO door te geven (Interface Segregation Principle) in plaats van de hele `fso` instantie.
+
+2.  **Publieke Properties (`theme`, `navigation`, `ui`):**
+    *   **Probleem:** De huidige `MasterOrchestrator` exposeert `public readonly theme`, `navigation`, `ui`. Alle drie de plannen behouden dit.
+    *   **Gevolg:** Dit breekt encapsulatie. Consumers kunnen nu nog steeds direct bij de UI-orchestrator, wat de reden voor de Master als façade ondermijnt.
+    *   **Mitigatie:** Verberg deze properties en exposeer alleen de methoden die nodig zijn via de `MasterOrchestratorAPI`.
+
+3.  **Error Handling & Logging:**
+    *   **Probleem:** De huidige Master doet logging (`logger.info`, `logger.warn`). In de gesplitste plannen is niet duidelijk wie verantwoordelijk is voor logging.
+    *   **Gevolg:** Als `DailyTransactionWorkflow` faalt, logt die dan zelf? Of vangt de Master de error en logt die? Inconsistentie hierin maakt debugging in productie lastig.
+    *   **Mitigatie:** Definieer een strikt beleid: Workflows loggen technische fouten, Master logt business-events.
+
+4.  **Type Stabiliteit (`RenderScreenVM`):**
+    *   **Probleem:** De UI (bijv. `UniversalScreen`) importeert types waarschijnlijk nu vanuit `MasterOrchestrator`.
+    *   **Gevolg:** Als Plan 3 de types verplaatst naar `ScreenOrchestrator`, moet de import-path in de hele UI-laag veranderd worden, tenzij de Master ze perfect re-exporteert.
+    *   **Mitigatie:** Creëer een dedicated `@app/types/render.types.ts` bestand dat door niemand gemuteerd wordt, in plaats van types in een orchestrator te stoppen.
+
+5.  **ACL (Anti-Corruption Layer):**
+    *   **Probleem:** In `MasterOrchestrator.txt` staat een TODO over ACL bij CSV import.
+    *   **Gevolg:** Plan 1 negeert dit grotendeels. Plan 2 & 3 zeggen dat het in `DataManager` zit. Als `DataManager` geen echte ACL is (maar alleen parsing), lekt dirty data nog steeds naar de `ResearchOrchestrator`.
+    *   **Mitigatie:** Zorg dat de `ImportWorkflowOrchestrator` een expliciete mapper heeft, zoals in de TODO van de huidige code staat, en vertrouw niet blind op `DataManager`.
+
+---
+
+## 4. Conclusie & Advies
+
+**Winnaar: Plan 3 (Splitisinsplan3.txt)**
+Dit is het meest volwassen plan. Het combineert de duidelijke verantwoordelijkheden van Plan 2 met de pragmatische coupling-control van Plan 1 (via callbacks waar nodig). Het adresseert ook het type-export probleem het beste.
+
+**Echter, met de volgende correcties om de blinde vlekken te dichten:**
+
+1.  **Dependency Injection:** Maak de sub-orchestrators *injectable* in de Master constructor in plaats van ze daar te `new`-en.
+    *   *Nu:* `this.fields = new FieldOrchestrator(...)`
+    *   *Beter:* `constructor(..., private readonly fields: FieldOrchestrator, ...)`
+    *   *Waarom:* Maakt de Master triviaal om te testen (mock de fields) en verplaatst de wiring naar de bootstrap-laag (Composition Root).
+2.  **Types Extern:** Verplaats `RenderScreenVM` etc. naar een dedicated `types/` map, niet in `ScreenOrchestrator`.
+3.  **Encapsulatie:** Verwijder `public readonly navigation/ui/theme` uit de Master en forceer gebruik via methods, of accepteer dat de Master een "Facade met leaks" is en documenteer dit.
+4.  **Logging Strategie:** Spreek af dat Workflows geen `logger` direct aanroepen voor business events, maar errors throwen die de Master catcht en logt.
+
+**Negatief gevolg om te accepteren:**
+De complexiteit van de codebase gaat omhoog (meer bestanden, meer imports). Dit is de prijs voor onderhoudbaarheid. Zorg dat de CI/CD pipeline strict is op type-errors, want met meer bestanden neemt de kans op import-fouten toe.
+===
+# Cascade-rapport: Vergelijking splitsingplannen MasterOrchestrator
+
+_Datum: 23-02-2026 | Scope: src/_
+
+---
+
+## Vertrekpunt: wat raakt een splitsing?
+
+Onderzochte consumenten van MasterOrchestrator en zijn types:
+
+| Bestand | Koppeling |
+|---------|-----------|
+| `src/app/types/MasterOrchestratorAPI.ts` | Interface-contract — importeert `RenderScreenVM` direct uit MasterOrchestrator.ts |
+| `src/app/context/useStableOrchestrator.ts` | **Assemblagepunt** — instantieert en bedradt alle orchestrators, retourneert MasterOrchestrator |
+| `src/app/context/FormContext.tsx` | Consumeert `useStableOrchestrator`, exposeert orchestrator aan UI |
+| `src/app/orchestrators/MasterOrchestrator.test.ts` | 420+ regels tests — mockt DomainCluster + AppCluster direct |
+| Alle UI-screens via `useFormContext()` | Gebruiken `orchestrator.buildRenderScreen`, `updateField`, etc. |
+
+Kritieke observaties:
+1. `RenderScreenVM` is **geïmporteerd vanuit MasterOrchestrator.ts** in de API-interface. Verhuizing van dit type breekt de import-keten tenzij re-export plaatsvindt.
+2. `useStableOrchestrator` is de **enige assemblageplek** — wijzigingen in de constructor-signatuur van MasterOrchestrator vereisen aanpassing hier.
+3. De test-suite mockt de **DomainCluster en AppCluster** als losse objecten — niet de interne workflows. Dit heeft directe implicaties per plan.
+
+---
+
+## Plan 1 — `SPLITSINGPLAN.md` (3 workflows, callbacks)
+
+### Structuur
+```
+MasterOrchestrator.ts     ← façade (~70 regels)
+workflows/
+  RenderScreenService.ts
+  CsvImportWorkflow.ts
+  DailyTransactionWorkflow.ts
+```
+
+### Cascade — positief
+
+**useStableOrchestrator.ts: geen aanpassing nodig.**
+De constructor-signatuur van MasterOrchestrator blijft `(fso, DomainCluster, AppCluster)`. De workflows worden intern geïnstantieerd. Dit is de grootste winst van Plan 1.
+
+**MasterOrchestrator.test.ts: minimale aanpassing.**
+De bestaande tests mocken DomainCluster en AppCluster — precies het niveau dat Plan 1 bewaart. Tests voor `buildRenderScreen`, `updateField`, `handleCsvImport`, `saveDailyTransaction` blijven werken mits de publieke methoden delegeren. Enkel de interne mock-setup voor `computePhoenixSummary` en `EntryRegistry` moet mogelijk naar de workflow-test verhuizen.
+
+**MasterOrchestratorAPI.ts: geen aanpassing.**
+Publieke methoden ongewijzigd.
+
+**RenderScreenVM types: één aanpassing.**
+Types verhuizen naar `RenderScreenService.ts`, MasterOrchestrator re-exporteert ze. Eén regeltje toevoegen. Alle consumers onveranderd.
+
+### Cascade — negatief
+
+**`updateField`, `validateSection` en navigatie blijven in MasterOrchestrator.**
+Dit is een bewuste keuze maar architectureel impuur: de façade bevat dan nog steeds ~40 regels eigen logica (boundary-validatie, navigatie-delegatie, `recomputeBusinessState`). De "dunheid" is beperkter dan Plans 2/3 beloven.
+
+**Callbacks creëren impliciete koppeling.**
+`RenderScreenService` ontvangt `onFieldChange` als `(fieldId, value) => void`. Dit werkt, maar de callback is niet zichtbaar in de type-signatuur van de service. Bij refactoring of uitbreiding is de intent minder expliciet dan een directe dependency.
+
+**`recomputeBusinessState` blijft dubbel aanwezig** in MasterOrchestrator (na zowel `updateField` als workflow-afronding). Geen aparte encapsulatie — risico op vergeten bij toekomstige uitbreiding.
+
+### Samenvatting Plan 1
+
+| Aspect | Score |
+|--------|-------|
+| Wijzigingen in useStableOrchestrator | ✅ Geen |
+| Wijzigingen in bestaande tests | ✅ Minimaal |
+| Façade-dunheid na splitsing | ⚠️ ~70 regels (nog steeds logica) |
+| Type-veiligheid callbacks | ⚠️ Zwakker |
+| Implementatierisico | ✅ Laag |
+| Architecturele zuiverheid | ⚠️ Matig |
+
+---
+
+## Plan 2 — `Splitsingplan2.txt` (5 orchestrators, publiek properties)
+
+### Structuur
+```
+MasterOrchestrator.ts     ← façade (~30 regels)
+  screen: ScreenOrchestrator
+  fields: FieldOrchestrator
+  importWorkflow: ImportWorkflowOrchestrator
+  daily: DailyTransactionOrchestrator
+  business: BusinessStateOrchestrator
+```
+
+### Cascade — positief
+
+**MasterOrchestrator wordt écht dun (~30 regels).**
+Puur delegatie, geen eigen logica. Dit is het meest radicale resultaat en sluit het best aan bij het "God Object elimineren" doel.
+
+**`BusinessStateOrchestrator` centraliseert recompute.**
+Alle drie de workflows (`fields`, `importWorkflow`, `daily`) injecteren dezelfde instantie. Geen kans op vergeten aanroep. Positief domino-effect op onderhoudbaarheid.
+
+**`FieldOrchestrator` groepeert verwante logica.**
+`updateField`, `validateSection`, `canNavigateNext` horen inderdaad bij elkaar. Aparte testbaarheid is een voordeel.
+
+### Cascade — negatief
+
+**useStableOrchestrator.ts: significante aanpassing.**
+Plan 2 stelt de 5 sub-orchestrators voor als **publieke properties** van MasterOrchestrator (`master.screen`, `master.fields`, etc.). Dit betekent dat `useStableOrchestrator` of de consumers deze properties direct aanspreken — of de MasterOrchestrator intern de sub-orchestrators instantieert. Het plan is hier ambivalent: de getoonde constructor ontvangt de 5 sub-orchestrators als parameters, wat betekent dat `useStableOrchestrator.ts` ze ook moet instantiëren. Dit zijn **13+ nieuwe instantiaties** met correcte dependency-volgorde. Hoog risico op assemblagefout.
+
+**MasterOrchestratorAPI.ts moet worden uitgebreid of aangepast.**
+`MasterOrchestratorAPI` definieert nu alle methoden flat op het interface. Als de Master delegeert via properties, moeten de types kloppen. `canNavigateNext` zit nu op de Master — na Plan 2 zit het op `FieldOrchestrator`. De interface zelf hoeft niet te breken, maar de interne routing verandert.
+
+**MasterOrchestrator.test.ts: complete herschrijving nodig.**
+De huidige test mockt `domain.validation.validateSection` — dat gaat via de DomainCluster. Plan 2 introduceert een `FieldOrchestrator` die `validation` intern gebruikt. De test moet nu ofwel (a) de `FieldOrchestrator` zelf mocken als dependency, of (b) de interne `IValidationOrchestrator` dieper mocken. Beide vereisen een volledige testherstructurering van ~420 regels.
+
+**`isVisible` routing onduidelijk.**
+Plan 2 plaatst `isVisible` op `ScreenOrchestrator`, maar `FieldOrchestrator` heeft `visibility` ook als dependency. Dit creëert een dubbele route naar hetzelfde sub-systeem. Risico op inconsistentie.
+
+**Geen concrete bestandspaden of mappenstructuur opgegeven.**
+Plan 2 noemt geen `workflows/` map — de orchestrators zweven zonder locatie. Dit is een implementatierisico.
+
+### Samenvatting Plan 2
+
+| Aspect | Score |
+|--------|-------|
+| Wijzigingen in useStableOrchestrator | ❌ Groot (13+ nieuwe instantiaties) |
+| Wijzigingen in bestaande tests | ❌ Complete herschrijving |
+| Façade-dunheid na splitsing | ✅ ~30 regels |
+| Type-veiligheid | ✅ Sterk (geen callbacks) |
+| Implementatierisico | ❌ Hoog |
+| Architecturele zuiverheid | ✅ Hoog |
+
+---
+
+## Plan 3 — `Splitisinsplan3.txt` (5 orchestrators, intern geïnstantieerd)
+
+### Structuur
+```
+MasterOrchestrator.ts     ← façade (~50 regels)
+workflows/
+  ScreenOrchestrator.ts
+  FieldOrchestrator.ts
+  BusinessStateOrchestrator.ts
+  ImportWorkflowOrchestrator.ts
+  DailyTransactionWorkflowOrchestrator.ts
+```
+
+Plan 3 is inhoudelijk vrijwel identiek aan Plan 2, maar lost het grootste knelpunt op: **de sub-orchestrators worden intern geïnstantieerd door MasterOrchestrator**, niet extern ingeject. De constructor van de Master blijft `(fso, DomainCluster, AppCluster)`.
+
+### Cascade — positief (aanvullend op Plan 2)
+
+**useStableOrchestrator.ts: geen aanpassing nodig.**
+Zelfde als Plan 1 — de externe assemblageplek ziet niets van de interne structuurwijziging. Dit is de cruciale verbetering ten opzichte van Plan 2.
+
+**Bestandsstructuur expliciet (`workflows/` map).**
+Plan 3 geeft een concrete mappenstructuur met bestandsnamen. Lagere kans op interpretatieverschillen tijdens implementatie.
+
+**Implementatievolgorde expliciet gedefinieerd.**
+BusinessStateOrchestrator eerst (kleinste, geen deps) → ScreenOrchestrator → FieldOrchestrator → DailyTransaction → ImportWorkflow → Master opschonen. Dit minimaliseert de tijd dat de codebase in een "half-gesplitste" staat verkeert.
+
+**`RenderScreenVM` types worden re-geëxporteerd.**
+Plan 3 vermeldt expliciet dat MasterOrchestrator de types re-exporteert om consumers niet te breken. `MasterOrchestratorAPI.ts` hoeft niet aangepast.
+
+### Cascade — negatief
+
+**MasterOrchestrator.test.ts: deels herschrijven.**
+Net als Plan 2. Tests die `domain.business.prepareFinancialViewModel` direct verwachten te zien na `updateField`, moeten weten dat dit nu via `BusinessStateOrchestrator` loopt die intern door `FieldOrchestrator` wordt aangeroepen. De mock-setup wordt complexer voor integratietests.
+
+**Concrete oplossing:** de huidige MasterOrchestrator tests worden gesplitst:
+- `MasterOrchestrator.test.ts` wordt een dunne façade-test (~50 regels, test alleen delegatie)
+- Per workflow een eigen testbestand (de logica zit nu geïsoleerd en is beter testbaar)
+
+**`FieldOrchestrator` heeft `BusinessStateOrchestrator` als dependency.**
+Dit is een inwaartse dependency van één workflow op een andere. Architectureel acceptabel (BSO is een service, geen workflow), maar het vereist dat BSO als eerste wordt aangemaakt in de constructor.
+
+**`IValueOrchestrator.getValueModel` vs huidig gebruik.**
+De interface definieert `getValueModel` maar `MasterOrchestrator.test.ts` mockt `getValueViewModel`. Dit is een bestaande discrepantie (TSC-error) die Plan 3 erft maar niet veroorzaakt.
+
+### Samenvatting Plan 3
+
+| Aspect | Score |
+|--------|-------|
+| Wijzigingen in useStableOrchestrator | ✅ Geen |
+| Wijzigingen in bestaande tests | ⚠️ Deels (splitsing tests, niet herschrijving) |
+| Façade-dunheid na splitsing | ✅ ~50 regels |
+| Type-veiligheid | ✅ Sterk (geen callbacks) |
+| Implementatierisico | ✅ Laag-matig |
+| Architecturele zuiverheid | ✅ Hoog |
+
+---
+
+## Vergelijkingstabel
+
+| Criterium | Plan 1 | Plan 2 | Plan 3 |
+|-----------|--------|--------|--------|
+| useStableOrchestrator aanpassing | ✅ Geen | ❌ Groot | ✅ Geen |
+| MasterOrchestrator.test.ts | ✅ Minimaal | ❌ Volledig herschrijven | ⚠️ Splitsen |
+| MasterOrchestratorAPI aanpassing | ✅ Geen | ✅ Geen | ✅ Geen |
+| Constructor-signatuur stabiel | ✅ Ja | ❌ Nee | ✅ Ja |
+| Façade-dunheid | ⚠️ ~70 regels | ✅ ~30 regels | ✅ ~50 regels |
+| recomputeBusinessState encapsulatie | ❌ Geen | ✅ BSO | ✅ BSO |
+| Type-veiligheid callbacks | ⚠️ Zwak | ✅ Geen callbacks | ✅ Geen callbacks |
+| Implementatierisico | ✅ Laag | ❌ Hoog | ✅ Laag-matig |
+| Architecturele zuiverheid | ⚠️ Matig | ✅ Hoog | ✅ Hoog |
+| Expliciete bestandslocaties | ⚠️ Deels | ❌ Nee | ✅ Ja |
+
+---
+
+## Aanbeveling
+
+**Plan 3** wint op alle kritieke criteria. Het combineert de architecturele ambitie van Plan 2 met de pragmatische voordelen van Plan 1:
+
+- `useStableOrchestrator` blijft ongewijzigd (geen assemblageketen aanpassen)
+- Constructor-signatuur stabiel (geen breaking change voor FormContext)
+- Bestaande tests hoeven niet volledig herschreven te worden, alleen gesplitst
+- `BusinessStateOrchestrator` elimineert het `recomputeBusinessState` duplicatie-risico
+- Expliciete implementatievolgorde minimaliseert de tijd dat de codebase "half gesplitst" is
+
+**Plan 1** is acceptabel als tijdgebrek of risicomijding prevaleert. De callbacks zijn een technische schuld die later alsnog vraagt om herziening.
+
+**Plan 2** is af te raden in de huidige vorm: de externe instantiatie van alle 5 sub-orchestrators in `useStableOrchestrator` vergroot de assemblage-complexiteit zonder meerwaarde ten opzichte van Plan 3.
+
+====
+Bedankt voor het delen van het **CASCADE_RAPPORT.md**, Manasse. Dit document voegt een cruciale dimensie toe aan de vergelijking: de *praktische impact* op bestaande consumenten van de `MasterOrchestrator`. Hieronder integreer ik deze inzichten en scherp ik de analyse aan.
+
+---
+
+## 🔍 Wat het Cascade-Rapport Toevoegt
+
+Het rapport identificeert **vijf kritieke consumenten** die geraakt worden door een splitsing:
+
+| Consument | Rol | Risico bij breaking change |
+|-----------|-----|---------------------------|
+| `MasterOrchestratorAPI.ts` | Interface-contract | Hoog: breekt alle UI-screens |
+| `useStableOrchestrator.ts` | Enige assemblageplek | Hoog: constructor-wijzigingen vereisen her-assemblage |
+| `FormContext.tsx` | Exposeert orchestrator aan UI | Medium: indirect afhankelijk van assemblage |
+| `MasterOrchestrator.test.ts` | 420+ regels tests | Hoog: herschrijven = grote investering |
+| Alle UI-screens (`useFormContext`) | Gebruiken publieke API | Hoog: breaking changes = app-wide refactor |
+
+De kernobservatie: **`RenderScreenVM` wordt direct geïmporteerd vanuit `MasterOrchestrator.ts` in de API-interface**. Verhuizen van dit type breekt de import-keten, tenzij expliciet wordt gere-exporteerd.
+
+---
+
+## 📊 Herwaardering per Plan (met Cascade-Impact)
+
+### Plan 1: Workflows & Services
+**Cascade-voordeel:** ✅ Constructor-signatuur blijft `(fso, DomainCluster, AppCluster)` → `useStableOrchestrator.ts` hoeft niet aangepast.  
+**Cascade-nadeel:** ⚠️ Tests moeten wel licht aangepast worden voor interne mocks, maar geen volledige herschrijving.
+
+**Nieuw inzicht uit cascade-analyse:**  
+De "impure façade" (~70 regels logica) is eigenlijk een *pragmatische buffer*: omdat `updateField` en `validateSection` in de Master blijven, hoeven tests voor boundary-validatie niet verplaatst te worden. Dit verlaagt het migratierisico aanzienlijk.
+
+### Plan 2: 5 Sub-Orchestrators (extern geïnstantieerd)
+**Cascade-voordeel:** ✅ Architecturaal zuiver: Master wordt echt dun (~30 regels).  
+**Cascade-nadeel:** ❌ `useStableOrchestrator.ts` moet nu 5 sub-orchestrators instantiëren met correcte dependency-volgorde (13+ nieuwe instantiaties). Dit is een **hoog risico op assemblage-fouten**.
+
+**Nieuw inzicht uit cascade-analyse:**  
+De test-suite (`MasterOrchestrator.test.ts`) mockt momenteel `DomainCluster` en `AppCluster` als losse objecten. Plan 2 vereist dat tests nu óf de sub-orchestrators mocken, óf dieper in de dependency-chain mocken. Dit betekent een **complete herschrijving van ~420 regels tests** — een substantiële investering die niet onderschat mag worden.
+
+### Plan 3: 5 Gespecialiseerde Orchestrators (intern geïnstantieerd)
+**Cascade-voordeel:** ✅ Combineert het beste van beide: architecturale zuiverheid *én* stabiele constructor → `useStableOrchestrator.ts` blijft ongewijzigd.  
+**Cascade-nadeel:** ⚠️ Tests moeten gesplitst worden (façade-test + per-workflow tests), maar dit is een *gewenste* verbetering, geen puur negatief gevolg.
+
+**Nieuw inzicht uit cascade-analyse:**  
+Plan 3 specificeert expliciet dat `RenderScreenVM` en gerelateerde types worden **gere-exporteerd** door de MasterOrchestrator. Dit lost het type-import risico op zonder breaking changes voor UI-screens. Daarnaast definieert het een **concrete implementatievolgorde** (BusinessState → Screen → Field → Daily → Import → Master opschonen), wat de tijd dat de codebase "half gesplitst" is minimaliseert.
+
+---
+
+## 🎯 Definitieve Aanbeveling (Met Cascade-Context)
+
+**Plan 3 blijft de winnaar**, maar nu met extra overtuiging door de cascade-analyse:
+
+| Criterium | Plan 1 | Plan 2 | Plan 3 |
+|-----------|--------|--------|--------|
+| `useStableOrchestrator` aanpassing | ✅ Geen | ❌ Groot | ✅ Geen |
+| Test-herschrijving | ✅ Minimaal | ❌ Volledig | ⚠️ Splitsen (gewenst) |
+| Constructor stabiel | ✅ Ja | ❌ Nee | ✅ Ja |
+| Type-breaking risk | ⚠️ Re-export nodig | ⚠️ Re-export nodig | ✅ Expliciet geregeld |
+| Implementatievolgorde | ⚠️ Deels | ❌ Niet gespecificeerd | ✅ Expliciet gedefinieerd |
+
+**Waarom Plan 3 nu nog sterker overtuigt:**
+1.  **Geen assemblage-keten breken**: `useStableOrchestrator.ts` is de enige plek waar de applicatie gebootstrapt wordt. Plan 3 respecteert dit; Plan 2 niet.
+2.  **Test-strategie is realistisch**: In plaats van "hersschrijf alles" (Plan 2) of "negeer test-verbetering" (Plan 1), kiest Plan 3 voor een gefaseerde splitsing: eerst een dunne façade-test, daarna per workflow unit-tests. Dit sluit aan bij jouw voorkeur voor thoroughness (#26) en type-safety (#11).
+3.  **Type-stabiliteit is geborgd**: De expliciete re-export strategie voorkomt dat UI-screens onverwacht breken — een risico dat in Plan 1 en 2 onderbelicht bleef.
+
+---
+
+## ⚠️ Resterende Blinde Vlekken (Na Cascade-Analyse)
+
+Zelfs met het cascade-rapport blijven twee punten aandacht vragen:
+
+1.  **Logging-consistentie**: Geen van de plannen specificeert wie verantwoordelijk is voor `logger.info/warn/error` na de split.  
+    *Advies*: Documenteer dit in een `LOGGING_POLICY.md` voordat je begint met migreren.
+
+2.  **FSO als "God Dependency"**: Alle orchestrators blijven afhankelijk van `FormStateOrchestrator`.  
+    *Advies*: Overweeg op termijn het Interface Segregation Principle toe te passen: geef elke orchestrator alleen de methods van FSO die hij echt nodig heeft, via een minimale interface.
+
+---
+
+## 🚀 Volgende Stap (Als Je Kiest voor Plan 3)
+
+1.  **Maak eerst `types/render.types.ts`** en verplaats daar `RenderScreenVM` etc. naartoe. Update `MasterOrchestrator.ts` om deze te re-exporteren. *Dit isoleert het type-risico voordat je aan de logica begint.*
+2.  **Implementeer `BusinessStateOrchestrator`** als eerste (geen dependencies, klein, wordt door anderen gebruikt).
+3.  **Schrijf een dunne façade-test** voor `MasterOrchestrator` die alleen delegatie verifieert (~50 regels). Dit geeft veiligheid tijdens de migratie.
+4.  **Pas pas daarna `useStableOrchestrator.ts` aan** — maar alleen om de nieuwe interne wiring te accommoderen, niet om de constructor-signatuur te wijzigen.
+
+---
+
+> 💡 **Eerlijke check**: Ik neem aan dat de `DataManager.processCsvImport` inderdaad de ACL-functionaliteit bevat zoals beschreven in de TODO. Als dit *niet* het geval is, moet Plan 3 aangevuld worden met een expliciete mapper in `ImportWorkflowOrchestrator`. Wil je dat ik dit verifieer in de huidige `DataManager`-implementatie?
+
+Laat me weten of je akkoord bent met deze herwaardering, of dat je specifieke onderdelen verder wilt uitdiepen.

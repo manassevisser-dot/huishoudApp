@@ -1,12 +1,13 @@
 // src/app/types/MasterOrchestratorAPI.ts
 /**
- * @file_intent Het formele contract tussen de Business/Application logic en de React UI.
- * @repo_architecture Mobile Industry (MI) - Interface Definition Layer.
- * @term_definition Facade Pattern = Een vereenvoudigde interface voor een complex subsysteem van orchestrators.
- * @contract Exclusiviteit. De UI mag uitsluitend communiceren met methoden die in deze interface zijn gedefinieerd.
- * @ai_instruction Bij consolidatie van orchestrators moet deze interface stabiel blijven om de UI-laag te beschermen tegen breaking changes.
- * @changes [Fase 3+8] handleCsvImport(csvText: string) → handleCsvImport(params: CsvUploadParams).
- *   CsvUploadParams toegevoegd als geëxporteerd type zodat CsvUploadContainer het kan importeren.
+ * Publiek contract tussen de applicatielogica en de React UI.
+ *
+ * @module app/types
+ * @see {@link ../orchestrators/README.md | Orchestrators — Details}
+ *
+ * @remarks
+ * De UI communiceert **uitsluitend** via methoden in `MasterOrchestratorAPI`.
+ * `MasterOrchestrator` implementeert dit contract — consumers importeren nooit de concrete klasse.
  */
 import type { IThemeOrchestrator } from '@app/orchestrators/interfaces/IThemeOrchestrator';
 import type { IUIOrchestrator } from '@app/orchestrators/interfaces/IUIOrchestrator';
@@ -15,8 +16,7 @@ import type { RenderScreenVM } from '@app/orchestrators/MasterOrchestrator';
 import type { DutchBank } from '@app/orchestrators/types/csvUpload.types';
 
 /**
- * Parameters voor een CSV-import operatie.
- * Wordt opgebouwd door CsvUploadContainer na pickAndReadCsvFile().
+ * Parameters voor een CSV-import operatie, opgebouwd door `CsvUploadContainer` na `pickAndReadCsvFile()`.
  */
 export interface CsvUploadParams {
   /** Volledige CSV-tekst in UTF-8 */
@@ -57,4 +57,13 @@ export interface MasterOrchestratorAPI {
 
   saveDailyTransaction: () => boolean;
   buildRenderScreen: (screenId: string) => RenderScreenVM;
+
+  /**
+   * Voert een reset uit zonder bevestigingsdialoog — bevestiging is UI-verantwoordelijkheid
+   * (ResetConfirmationContainer via Alert.alert).
+   *
+   * @param type 'full'  → RESET_APP + PersistenceAdapter.clear() → navigeert naar LANDING.
+   * @param type 'setup' → RESET_SETUP → navigeert naar WIZARD_SETUP_HOUSEHOLD.
+   */
+  executeReset: (type: 'full' | 'setup') => void;
 }

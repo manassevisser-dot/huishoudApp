@@ -1,0 +1,41 @@
+private mapCsvToImportedTransaction(
+  row: CsvItem,
+  index: number,
+  importedAtIso: string,
+): ImportedTransaction | null {
+  // 1. Extractie & Validatie (Drop row als amount ongeldig is)
+  const rawAmount = parseFloat(String(row['amount'] || '0').replace(',', '.'));
+  if (!Number.isFinite(rawAmount) || rawAmount === 0) return null;
+
+  // 2. Normalisatie & Fallbacks
+  const flags: string[] = [];
+  const description = String(row['description'] || '').trim();
+  const dateStr = String(row['date'] || '');
+
+  if (!description) flags.push('missing_description');
+  if (!dateStr) flags.push('missing_date');
+
+  // 3. PII Stripping & Categorisatie (via bestaande dataProcessor)
+  const cleanDescription = this.dataProcessor.stripPII(description || 'Geen omschrijving');
+  const category = this.dataProcessor.categorize(cleanDescription) || 'Overig';
+
+  // 4. Deterministic Hash voor de 'Original' data (zie uitleg hieronder)
+  const rawDigest = this.generateDigest(`${dateStr}|${rawAmount}|${description}`);
+
+  return {
+    id: `csv_${rawDigest.slice(0, 16)}`,
+    fieldId: `csv_tx_${rawDigest.slice(0, 12)}_${index}`,
+    amount: rawAmount,
+    date: dateStr || importedAtIso.split('T')[0], // YYYY-MM-DD
+    description: cleanDescription,
+    category: category,
+    source: 'csv',
+    importMeta: {
+      rawDigest,
+      schemaVersion: 'csv-v1',
+      importedAt: importedAtIso,
+      columnMapVersion: 'v1',
+      flags: flags as any,
+    }
+  };
+}

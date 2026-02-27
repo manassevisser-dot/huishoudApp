@@ -11,7 +11,7 @@
 // src/ui/providers/ThemeProvider.tsx
 import * as React from 'react';
 import type { MasterOrchestratorAPI } from '@app/types/MasterOrchestratorAPI';
-import type { Theme } from '@domain/constants/Colors';
+import type { Theme } from '@ui/kernel';
 
 type ThemeContextType = {
   theme: Theme;
@@ -26,8 +26,11 @@ export function ThemeProvider(
 ) {
   const [theme, setThemeState] = React.useState<Theme>('light');
 
+  // Registreer als listener vóór loadTheme() zodat ThemeManager.setTheme()
+  // (getriggerd door SettingsWorkflow) direct deze component re-rendert.
   // Load via Master (app policy → infra)
   React.useEffect(() => {
+    master.theme.onThemeChange(setThemeState);  // ← registreer als listener
     let mounted = true;
     master.theme.loadTheme().then((t: Theme) => { if (mounted) setThemeState(t); });
     return () => { mounted = false; };

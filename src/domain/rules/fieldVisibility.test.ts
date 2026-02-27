@@ -72,18 +72,6 @@ describe('fieldVisibilityRules', () => {
     });
   });
 
-  describe('showPostcode', () => {
-    it('is true bij ≤1 volwassene', () => {
-      const ctx = createMockCtx({ aantalVolwassen: 1 });
-      expect(fieldVisibilityRules.showPostcode(ctx)).toBe(true);
-    });
-
-    it('is false bij >1 volwassene', () => {
-      const ctx = createMockCtx({ aantalVolwassen: 2 });
-      expect(fieldVisibilityRules.showPostcode(ctx)).toBe(false);
-    });
-  });
-
   describe('showHuurtoeslag', () => {
     it('is true bij woningType = "Huur"', () => {
       const ctx = createMockCtx({ woningType: 'Huur' });

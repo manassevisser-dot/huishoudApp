@@ -46,6 +46,20 @@ export const validationMessages = {
       hint: "Je kunt later altijd nog gegevens aanpassen in het dashboard."
     }
   },
+  criticalError: {
+    /** Weergegeven als schermbeschrijving boven de reset-knop. */
+    screenMessage:
+      'Er is een kritieke fout opgetreden in de data-integriteit. De app kan niet verder zonder een volledige reset.',
+    /** Alert-dialoog die verschijnt na klikken op de reset-knop. */
+    alert: {
+      title: 'Kritieke fout — volledige reset vereist',
+      message:
+        'De applicatiedata is beschadigd. Een volledige reset wist alle gegevens en brengt de app terug naar de beginstand. Dit kan niet ongedaan worden gemaakt.',
+      confirm: 'Ja, reset de app',
+      cancel: 'Annuleer',
+    },
+  },
+
     // ⬇️ NIEUW: top-level audit tokens
     csv_IMPORT_SUCCESS: 'csv-bestand succesvol verwerkt',
     csv_IMPORT_EMPTY: 'Geen transacties gevonden in het geüploade csv-bestand',

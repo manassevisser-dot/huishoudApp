@@ -25,6 +25,17 @@ const deadProp = {
     'Headers',
   ];
   
+  // Winter kan TextDecoder/TextEncoder overschrijven met een gebroken versie.
+  // Herstel ze expliciet vanuit Node built-ins (beschikbaar sinds Node 11).
+  // Dit moet VOOR de winterGlobals.forEach() staan zodat onze versie overleeft.
+  const { TextDecoder: NodeTextDecoder, TextEncoder: NodeTextEncoder } = require('util');
+  if (typeof global.TextDecoder === 'undefined' || global.TextDecoder !== NodeTextDecoder) {
+    global.TextDecoder = NodeTextDecoder;
+  }
+  if (typeof global.TextEncoder === 'undefined' || global.TextEncoder !== NodeTextEncoder) {
+    global.TextEncoder = NodeTextEncoder;
+  }
+  
   winterGlobals.forEach(prop => {
     Object.defineProperty(global, prop, deadProp);
     if (typeof window !== 'undefined') {

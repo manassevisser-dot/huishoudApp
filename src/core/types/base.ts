@@ -1,21 +1,50 @@
 // src/core/types/base.ts
+
 /**
- * @file_intent Definieert de fundamentele primitieve types en datastructuren voor veilige JSON-serialisatie en generieke objectmanipulatie binnen de core.
- * @repo_architecture Mobile Industry (MI) - Core Foundation Layer.
- * @term_definition JsonValue = Een recursieve type-definitie die alle geldige JSON-datastructuren omvat. AnyObject = Een flexibele utility type voor objecten waarbij de interne structuur op runtime-niveau nog onbekend is.
- * @contract Waarborgt dat data die door de orchestrators en adapters vloeit, compatibel is met standaard JSON-transfers (bijv. voor opslag in AsyncStorage of API-communicatie). Het dwingt type-safety af bij het parsen van ongestructureerde input naar bekende domeinmodellen.
- * @ai_instruction Gebruik `JsonValue` bij het definiëren van interfaces voor data-opslag en `AnyObject` voor tijdelijke transformaties in managers. Deze types vormen de basis voor de `FormState` en voorkomen het gebruik van het onveilige `any`.
+ * Fundamentele JSON-serialisatie types en generieke object-utilities.
+ *
+ * @module core/types
+ * @see {@link ./README.md | Core Types — Details}
+ *
+ * @remarks
+ * Gebruik deze types als veilig alternatief voor `any` bij ongestructureerde input
+ * (bijv. AsyncStorage-reads, externe API-responses) vóór parsing naar concrete domein-types.
  */
+
+/** Bladwaarden in een JSON-structuur: alles wat geen object of array is. */
 export type JsonPrimitive = string | number | boolean | null;
 
-export type JsonValue = 
-  | JsonPrimitive 
-  | JsonObject 
+/**
+ * Elke geldige JSON-waarde, inclusief geneste objecten en arrays.
+ * Veilig te serialiseren via `JSON.stringify` / `JSON.parse`.
+ *
+ * @example
+ * function parseConfig(raw: JsonValue): AppConfig { ... }
+ */
+export type JsonValue =
+  | JsonPrimitive
+  | JsonObject
   | JsonArray;
 
+/** Een JSON-object: string-sleutels met `JsonValue`-waarden. */
 export interface JsonObject {
   [key: string]: JsonValue;
 }
 
+/** Een JSON-array: geordende lijst van `JsonValue`-elementen. */
 export interface JsonArray extends Array<JsonValue> {}
-export type AnyObject = Record<string, unknown>; 
+
+/**
+ * Vrij object met `unknown` waarden — voor tijdelijke transformaties
+ * waarbij de interne structuur nog niet vaststaat.
+ *
+ * @remarks
+ * Gebruik dit type alleen aan grenzen (bijv. raw reducer-payloads, legacy API-responses).
+ * Zo snel mogelijk narrowen naar een concreet type.
+ *
+ * @example
+ * function toSetupData(raw: AnyObject): SetupData {
+ *   return SetupSchema.parse(raw);
+ * }
+ */
+export type AnyObject = Record<string, unknown>;

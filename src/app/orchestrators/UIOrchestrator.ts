@@ -27,6 +27,35 @@ import { resolveFieldId, EntryRegistry } from '@domain/registry/EntryRegistry';
 import { labelFromToken } from '@domain/constants/labelResolver';
 import type { RenderScreenVM, RenderSectionVM, RenderEntryVM } from './types/render.types';
 
+/**
+ * Parameters voor het mappen van UI-componenten.
+ * Geëxporteerd zodat MasterOrchestrator het type kan gebruiken als public API.
+ */
+export interface MappingContext {
+  fso: FormStateOrchestrator;
+  onFieldChange: (fieldId: string, value: unknown) => void;
+  onNavigate: (target: string) => void;
+  onCommand: (command: string) => void;
+  /**
+   * Escape hatch voor entries waarvan de waarde buiten FormState leeft.
+   * Sleutel = fieldId (bijv. 'theme'), waarde = synchrone getter-functie.
+   * Heeft prioriteit boven fso.getValue(). Wordt geïnjecteerd door MasterOrchestrator.
+   */
+  valueResolvers?: Record<string, () => unknown>;
+}
+
+/**
+ * Metadata over één entry die nodig is tijdens de mapping.
+ * Bundelt de 3 entry-specifieke booleans/strings zodat helpers ≤ 3 params houden.
+ */
+interface EntryMeta {
+  fieldId: string;
+  isAction: boolean;
+  isVisible: boolean;
+  navigationTarget: string;
+  commandTarget: string;
+}
+
 export class UIOrchestrator implements IUIOrchestrator {
   private readonly uiManager: UIManager;
 
@@ -57,14 +86,14 @@ export class UIOrchestrator implements IUIOrchestrator {
    * @param onFieldChange - Callback naar ValidationOrchestrator.updateAndValidate().
    *   Wordt gebonden als onChange in elke RenderEntryVM. Master geeft zijn eigen
    *   updateField() door als callback zodat er geen circulaire dep ontstaat.
+   * @param onNavigate - Callback voor navigatie bij acties.
    */
   public buildRenderScreen(
     screenId: string,
-    fso: FormStateOrchestrator,
-    onFieldChange: (fieldId: string, value: unknown) => void,
+    context: MappingContext,
   ): RenderScreenVM {
     const styled = this.buildScreen(screenId);
-    return this.mapToRenderScreen(styled, fso, onFieldChange);
+    return this.mapToRenderScreen(styled, context);
   }
 
   // ─── Visibility delegatie [Fase 4] ───────────────────────────────
@@ -77,8 +106,7 @@ export class UIOrchestrator implements IUIOrchestrator {
 
   private mapToRenderScreen(
     svm: StyledScreenVM,
-    fso: FormStateOrchestrator,
-    onFieldChange: (fieldId: string, value: unknown) => void,
+    context: MappingContext,
   ): RenderScreenVM {
     return {
       screenId: svm.screenId,
@@ -86,14 +114,15 @@ export class UIOrchestrator implements IUIOrchestrator {
       type: svm.type,
       style: svm.style,
       navigation: svm.navigation,
-      sections: svm.sections.map((s) => this.mapToRenderSection(s, fso, onFieldChange)),
+      sections: svm.sections.map((s) =>
+        this.mapToRenderSection(s, context)
+      ),
     };
   }
 
   private mapToRenderSection(
     section: StyledSectionVM,
-    fso: FormStateOrchestrator,
-    onFieldChange: (fieldId: string, value: unknown) => void,
+    context: MappingContext,
   ): RenderSectionVM {
     return {
       sectionId: section.sectionId,
@@ -101,14 +130,15 @@ export class UIOrchestrator implements IUIOrchestrator {
       layout: section.layout,
       uiModel: section.uiModel,
       style: section.style,
-      children: section.children.map((e) => this.mapToRenderEntry(e, fso, onFieldChange)),
+      children: section.children.map((e) =>
+        this.mapToRenderEntry(e, context)
+      ),
     };
   }
 
   private mapToRenderEntry(
     entry: StyledEntryVM,
-    fso: FormStateOrchestrator,
-    onFieldChange: (fieldId: string, value: unknown) => void,
+    context: MappingContext,
   ): RenderEntryVM {
     const entryDef = EntryRegistry.getDefinition(entry.entryId);
     if (entryDef === null) {
@@ -117,6 +147,10 @@ export class UIOrchestrator implements IUIOrchestrator {
 
     const fieldId = resolveFieldId(entry.entryId, entryDef);
     const isVisible = this.evaluateVisibility(entry.visibilityRuleName);
+    const isAction = entry.child.primitiveType === 'action';
+    const navigationTarget = this.resolveNavigationTarget(entryDef);
+    const commandTarget = this.resolveCommandTarget(entryDef);
+    const meta: EntryMeta = { fieldId, isAction, isVisible, navigationTarget, commandTarget };
 
     return {
       entryId: entry.entryId,
@@ -124,16 +158,61 @@ export class UIOrchestrator implements IUIOrchestrator {
       label: labelFromToken(entry.labelToken),
       placeholder: entry.placeholderToken,
       primitiveType: entry.child.primitiveType,
-      value: isVisible ? fso.getValue(fieldId) : undefined,
-      isVisible,
+      value: this.resolveEntryValue(meta, context),
+      isVisible: isAction === true ? true : isVisible,
       options: entry.options,
       optionsKey: entry.optionsKey,
       style: entry.style,
       childStyle: entry.child.style,
-      onChange: (newValue: unknown) => {
-        onFieldChange(fieldId, newValue);
-      },
+      onChange: this.resolveChangeHandler(meta, context),
     };
+  }
+
+  /**
+   * Leest navigationTarget type-safe uit EntryDefinition.
+   */
+  private resolveNavigationTarget(entryDef: { navigationTarget?: string }): string {
+    return entryDef.navigationTarget ?? '';
+  }
+
+  /**
+   * Leest commandTarget type-safe uit EntryDefinition.
+   * commandTarget heeft prioriteit over navigationTarget in resolveChangeHandler.
+   */
+  private resolveCommandTarget(entryDef: { commandTarget?: string }): string {
+    return entryDef.commandTarget ?? '';
+  }
+
+  /**
+   * Bepaalt de waarde voor een entry op basis van meta.
+   * Volgorde: ACTION/onzichtbaar → undefined, valueResolver → resolver(), anders → fso.getValue().
+   */
+  private resolveEntryValue(meta: EntryMeta, context: MappingContext): unknown {
+    if (meta.isAction === true || meta.isVisible === false) {
+      return undefined;
+    }
+    if (context.valueResolvers?.[meta.fieldId] !== undefined) {
+      return context.valueResolvers[meta.fieldId]();
+    }
+    return context.fso.getValue(meta.fieldId);
+  }
+
+  /**
+   * Creëert de change handler voor een entry.
+   * ACTION → navigatie-callback; overige → field-update callback.
+   */
+  private resolveChangeHandler(
+    meta: EntryMeta,
+    context: MappingContext,
+  ): (value: unknown) => void {
+    if (meta.isAction === true) {
+      // commandTarget heeft prioriteit (reducer-actie) boven navigationTarget
+      if (meta.commandTarget !== '') {
+        return () => { context.onCommand(meta.commandTarget); };
+      }
+      return () => { context.onNavigate(meta.navigationTarget); };
+    }
+    return (newValue: unknown) => { context.onFieldChange(meta.fieldId, newValue); };
   }
 
   /**

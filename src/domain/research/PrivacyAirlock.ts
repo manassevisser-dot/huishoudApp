@@ -4,10 +4,10 @@
  * @term_definition
  *   - `Privacy Airlock`: Een softwarecomponent die data-stromen controleert om te voorkomen dat Persoonlijk Identificeerbare Informatie (PII) lekt naar systemen waar het niet thuishoort.
  *   - `PII (Personally Identifiable Information)`: Gegevens die direct of indirect naar een individu kunnen leiden, zoals naam, e-mailadres, etc.
- *   - `Anonymization`: Het proces van het onomkeerbaar verwijderen of transformeren van PII uit een dataset.
+ *   - `Anonimisering`: Het proces van het onomkeerbaar verwijderen of transformeren van PII uit een dataset.
  *   - `Data Assertion`: Een defensieve programmeertechniek (`assertNoPIILeak`) die de integriteit en veiligheid van data garandeert door een programma te stoppen als aan een kritieke voorwaarde (bv. "mag geen PII bevatten") niet wordt voldaan.
  * @contract Dit bestand exporteert de `collectAndDistributeData` functie. Deze functie accepteert ruwe UI-data en retourneert twee objecten: `localMember` (voor intern gebruik, bevat nog PII) en `researchPayload` (volledig geanonimiseerd). De interne `assertNoPIILeak` functie garandeert contractueel dat het `researchPayload` object geen PII bevat voordat het wordt geretourneerd.
- * @ai_instruction Dit is een beveiligingskritisch bestand. Gebruik `collectAndDistributeData` als het *enige* toegangspunt om onderzoeksdata te genereren. Het `researchPayload` object is het enige dat veilig kan worden verzonden naar externe endpoints. Het `localMember` object mag *nooit* de applicatie verlaten. De PII-detectie en -assertions (`containsPII`, `assertNoPIILeak`) zijn de kern van de beveiliging; wijzig deze niet zonder een grondige security-review. Aangezien dit een WIP-bestand is, zijn extra validatie en testen vereist voor productiegebruik.
+ * @ai_instruction Dit bestand is kritiek voor de beveiliging. Gebruik `collectAndDistributeData` als het *enige* toegangspunt om onderzoeksdata te genereren. Het `researchPayload` object is het enige dat veilig kan worden verzonden naar externe endpoints. Het `localMember` object mag *nooit* de applicatie verlaten. De PII-detectie en -assertions (`containsPII`, `assertNoPIILeak`) zijn de kern van de beveiliging; wijzig deze niet zonder een grondige security-review. Aangezien dit een WIP-bestand is, zijn extra validatie en testen vereist voor productiegebruik.
  */
 
 //src/domain/research/PrivacyAirlock.WIP.ts
@@ -54,23 +54,32 @@ export function parseName(fullName = ''): { firstName: string; lastName: string 
 
 export function toMemberType(input?: string): MemberType {
   const t = (input ?? '').trim().toLowerCase();
+  
   const mapping: Record<string, MemberType> = {
+    adult: 'adult',
+    volwassene: 'adult',
+    kind: 'child',
+    child: 'child',
+    baby: 'child',
+    junior: 'child',
     puber: 'teenager',
     teenager: 'teenager',
     student: 'teenager',
     senior: 'senior',
     '65+': 'senior',
     pensionado: 'senior',
-    kind: 'child',
-    child: 'child',
-    baby: 'child',
-    junior: 'child',
   };
-  return mapping[t] ?? 'adult';
+  
+  // ✅ FIX: Gooi een fout bij ongeldige input!
+  if (!(t in mapping)) {
+    throw new Error(`Ongeldige memberType: '${input}'. MemberType moet worden afgeleid uit geboortedatum.`);
+  }
+  
+  return mapping[t];
 }
 
 /* =========================
- * ANONYMISERING & SECURITY
+ * ANONIMISERING & SECURITY
  * ========================= */
 
 
@@ -94,15 +103,35 @@ export function makeResearchId(localId: string): string {
 
 const PII_KEYWORDS = [
   'naam', 'name', 'voornaam', 'achternaam',
-  'e-mail', 'email', 'adres', 'telefoon', 'phone'
+  'e-mail', 'email', 'adres', 'telefoon', 'phone',
 ];
+
+/**
+ * Regex die een Nederlandse postcode met letters herkent (bijv. '1234AB' of '1234 AB').
+ * De letters maken een postcode herleidbaar tot straatniveau — dat is PII.
+ * Alleen de cijfers (wijkniveau) zijn toegestaan in research payloads.
+ */
+const POSTCODE_WITH_LETTERS_RE = /\b[1-9]\d{3}\s?[A-Z]{2}\b/;
+
+/**
+ * Transformeert een postcode naar wijkniveau voor research.
+ * '1234AB' → '1234'  |  '1234 AB' → '1234'  |  '' → ''
+ *
+ * Gebruik deze functie UITSLUITEND bij het bouwen van AnonymizedResearchPayload.
+ * Sla de waarde die niet gestript is nooit op buiten data.setup.
+ */
+export function extractWijkLevelResearch(postcode: string): string {
+  return postcode.replace(/[^0-9]/g, '').match(/^\d{4}/)?.[0] ?? '';
+}
 
 export function containsPII(value: unknown): boolean {
   if (value === null || value === undefined) return false;
   if (typeof value !== 'string') return false;
   const lower = value.toLowerCase();
-  return PII_KEYWORDS.some(keyword => lower.includes(keyword)) ||
-         /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(value);
+  const hasKeyword = PII_KEYWORDS.some(keyword => lower.includes(keyword));
+  const hasEmail   = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(value);
+  const hasFullPostcode = POSTCODE_WITH_LETTERS_RE.test(value); // '1234AB' = PII
+  return hasKeyword || hasEmail || hasFullPostcode;
 }
 
 export function assertNoPIILeak(obj: unknown): void {
@@ -111,7 +140,7 @@ export function assertNoPIILeak(obj: unknown): void {
   const checkDeep = (current: unknown) => {
     if (typeof current !== 'object' || current === null) return;
     
-    // We casten naar Record om door de keys te kunnen loopen
+    // We casten naar Record om door de keys te kunnen loop-en
     const entries = Object.entries(current as Record<string, unknown>);
     
     for (const [key, val] of entries) {

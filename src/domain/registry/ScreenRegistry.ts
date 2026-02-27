@@ -82,7 +82,14 @@ const SCREEN_REGISTRY: Record<string, ScreenDefinition> = {
     type: 'APP_STATIC',
     titleToken: 'screens.daily_input.title',
     sectionIds: ['EXPENSE_INPUT_CARD'],
-    previousScreenId: 'DASHBOARD', // Terug naar de basis
+    previousScreenId: 'DASHBOARD',
+  },
+  'UNDO': {
+    id: 'UNDO',
+    type: 'APP_STATIC',
+    titleToken: 'screens.undo.title',
+    sectionIds: ['TRANSACTION_HISTORY_LIST', 'TRANSACTION_ACTIONS_CARD'],
+    previousScreenId: 'DAILY_INPUT',
   },
   'OPTIONS': {
     id: 'OPTIONS',
@@ -136,3 +143,4 @@ export const ScreenRegistry: IBaseRegistry<string, ScreenDefinition> = {
 
   getAllKeys: () => Object.keys(SCREEN_REGISTRY),
 };
+export { SCREEN_REGISTRY };

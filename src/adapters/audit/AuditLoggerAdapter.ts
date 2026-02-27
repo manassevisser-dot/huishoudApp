@@ -1,15 +1,27 @@
 ﻿// src/adapters/audit/AuditLoggerAdapter.ts
+
 /**
- * @file_intent Centraal systeem voor event-logging, foutafhandeling en berichtvertaling.
- * @repo_architecture Mobile Industry (MI) - Infrastructure / Adapter Layer.
- * @term_definition Event-Routing = Het proces waarbij op basis van log-niveau (info/fatal) de bestemming (UI/Console/Mail) wordt bepaald.
- * @contract Biedt een stabiele Logger API. Vertaalt technische error-codes naar menselijke taal via 'validationMessages'.
- * @ai_instruction Bevat de kritieke 'translate' methode. Voeg hier GEEN UI-logica toe; gebruik subscribe/routeToUI voor koppeling met de app-shell.
+ * Centrale audit logging adapter voor applicatie-brede event logging.
+ *
+ * @module adapters/audit
+ * @see {@link ./README.md | AuditLoggerAdapter — Details}
+ *
+ * @example
+ * Logger.info('USER_LOGIN_SUCCESS', { userId: 123 });
+ * subscribeToAuditEvents((event) => { if (event.level === 'error') showToast(event.message); });
  */
+
 import { validationMessages } from '@state/schemas/sections/validationMessages';
 
+/** Log levels in oplopende ernst — `info` (geen UI) → `warning`/`error` (UI) → `fatal` (UI + alert). */
 export type AuditLevel = 'info' | 'warning' | 'error' | 'fatal';
 
+/**
+ * Gestandaardiseerd event object voor alle audit logging.
+ *
+ * @example
+ * { timestamp: '2024-01-15T10:30:00.000Z', level: 'error', eventName: 'VALIDATION_FAILED', message: '...' }
+ */
 export interface AuditEvent {
   timestamp: string;
   level: AuditLevel;
@@ -18,6 +30,7 @@ export interface AuditEvent {
   context?: Record<string, unknown>;
 }
 
+/** Input voor `logEvent` — `message` is optioneel en wordt via `validationMessages` vertaald. */
 export interface AuditEventInput {
   timestamp: string;
   level: AuditLevel;
@@ -28,6 +41,11 @@ export interface AuditEventInput {
 
 export type AuditListener = (event: AuditEvent) => void;
 
+/**
+ * Port interface voor audit logging (Hexagonal Architecture).
+ *
+ * @see {@link ./README.md | AuditLoggerAdapter — Details}
+ */
 export interface AuditLoggerPort {
   logEvent(event: AuditEventInput): void;
   getEventsByLevel(level: AuditLevel): AuditEvent[];
@@ -36,9 +54,13 @@ export interface AuditLoggerPort {
 
 const FATAL_EVENT_NAMES = new Set<string>(['SYSTEM_ERROR', 'VALIDATION_CRASH']);
 
+/**
+ * Concrete implementatie van `AuditLoggerPort` met routing naar console, UI en ticketing.
+ *
+ * @see {@link validationMessages} voor error code vertalingen
+ */
 class AuditLoggerAdapter implements AuditLoggerPort {
   private eventBuffer: AuditEvent[] = [];
-
   private listeners = new Set<AuditListener>();
 
   public logEvent(input: AuditEventInput): void {
@@ -71,6 +93,14 @@ class AuditLoggerAdapter implements AuditLoggerPort {
     this.eventBuffer = [];
   }
 
+  /**
+   * Normaliseer een event input naar een volledig AuditEvent
+   * @private
+   * @description
+   * 1. Vertaalt eventName naar menselijke tekst
+   * 2. Escaleert naar fatal indien nodig
+   * 3. Voegt originele code toe aan context
+   */
   private normalizeEvent(input: AuditEventInput): AuditEvent {
     const translatedMessage = this.translate(input.eventName);
     const shouldEscalate = FATAL_EVENT_NAMES.has(input.eventName);
@@ -107,10 +137,12 @@ class AuditLoggerAdapter implements AuditLoggerPort {
     });
   }
 
+  /** @private Alleen voor fatal events - stuurt alert naar ticketing systeem */
   private routeToTicketing(event: AuditEvent): void {
     console.error('!!! TICKETING/MAIL ALERT !!!', event);
   }
 
+  /** @private Vertaal technische error code via validationMessages */
   private translate(path: string): string | null {
     if (path.length === 0) {
       return null;
@@ -128,10 +160,20 @@ class AuditLoggerAdapter implements AuditLoggerPort {
   }
 }
 
+// ===== Helper functies =====
+
+/** @private Huidige tijd in ISO 8601 formaat */
 const toIsoNow = (): string => new Date().toISOString();
 
+/** @private Zet elke input om naar string voor eventName */
 const toEventName = (value: unknown): string => String(value);
 
+/**
+ * @private Zet string tokens om naar AuditLevel enum
+ * @example
+ * parseLevelToken('WARN') // returns 'warning'
+ * parseLevelToken('ERROR') // returns 'error'
+ */
 const parseLevelToken = (value: unknown): AuditLevel | null => {
   const token = String(value).toUpperCase();
   if (token === 'WARN' || token === 'WARNING') {
@@ -149,9 +191,35 @@ const parseLevelToken = (value: unknown): AuditLevel | null => {
   return null;
 };
 
+// ===== Exports =====
+
+/** @private Singleton instantie - gebruik Logger in plaats van direct */
 export const auditLogger = new AuditLoggerAdapter();
 
+/**
+ * Publieke API voor alle logging in de applicatie.
+ *
+ * @example
+ * Logger.info('USER_ACTION', { screen: 'Home' });
+ * Logger.error('API_TIMEOUT', error);
+ */
 export const Logger = {
+  /**
+   * Log een error met stack trace
+   * @param {string|Error} eventName - Error code of Error object
+   * @param {unknown} [err] - Optioneel Error object of context
+   * 
+   * @example
+   * // Met Error object
+   * try {
+   *   await saveData();
+   * } catch (error) {
+   *   Logger.error('SAVE_FAILED', error);
+   * }
+   * 
+   * // Met alleen context
+   * Logger.error('VALIDATION_ERROR', { field: 'email' });
+   */
   error: (eventName: string | Error, err?: unknown) => {
     const errorObj =
       err instanceof Error
@@ -179,6 +247,14 @@ export const Logger = {
     });
   },
 
+  /**
+   * Log een waarschuwing (toont UI notificatie)
+   * @param {string} eventName - Waarschuwingscode
+   * @param {Record<string, unknown>} [data] - Optionele context
+   * 
+   * @example
+   * Logger.warn('RATE_LIMIT_NEAR', { currentLoad: 85 });
+   */
   warn: (eventName: string, data?: Record<string, unknown>) => {
     auditLogger.logEvent({
       timestamp: toIsoNow(),
@@ -188,6 +264,14 @@ export const Logger = {
     });
   },
 
+  /**
+   * Log informatie (geen UI notificatie)
+   * @param {string} eventName - Informatie code
+   * @param {Record<string, unknown>} [data] - Optionele context
+   * 
+   * @example
+   * Logger.info('USER_REGISTERED', { userId: 456, method: 'google' });
+   */
   info: (eventName: string, data?: Record<string, unknown>) => {
     auditLogger.logEvent({
       timestamp: toIsoNow(),
@@ -197,6 +281,12 @@ export const Logger = {
     });
   },
 
+  /**
+   * @deprecated Gebruik specifieke methods (info/warn/error) voor betere type safety
+   * @see {@link Logger.info}
+   * @see {@link Logger.warn}
+   * @see {@link Logger.error}
+   */
   log: (first: unknown, second?: unknown) => {
     const parsedLevel = parseLevelToken(first);
     const level: AuditLevel = parsedLevel ?? 'info';
@@ -224,9 +314,27 @@ export const Logger = {
   },
 };
 
+/** @alias Logger */
 export const logger = Logger;
+/** @alias Logger */
 export const AuditLogger = Logger;
 
+/**
+ * Subscribe op audit events voor UI notificaties
+ * @param {AuditListener} listener - Callback voor nieuwe events
+ * @returns {() => void} Unsubscribe functie
+ * 
+ * @example
+ * // In app shell
+ * useEffect(() => {
+ *   const unsubscribe = subscribeToAuditEvents((event) => {
+ *     if (event.level === 'error') {
+ *       showErrorToast(event.message);
+ *     }
+ *   });
+ *   return unsubscribe;
+ * }, []);
+ */
 export const subscribeToAuditEvents = (listener: AuditListener): (() => void) => {
   return auditLogger.subscribe(listener);
 };

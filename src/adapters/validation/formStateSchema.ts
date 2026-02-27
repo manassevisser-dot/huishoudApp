@@ -88,6 +88,10 @@ export const SetupSchema = z.object({
   aantalVolwassen: buildNumber(R.aantalVolwassen),
   autoCount:       buildEnum(R.autoCount),
   woningType:      buildEnum(R.woningType),
+  // postcode: optioneel in schema (wizard vult progressief in).
+  // Regex-enforcement gebeurt uitsluitend via validateAtBoundary (FieldSchemas).
+  // canNavigateNext() blokkeert doorgaan zolang het veld leeg is.
+  postcode: z.string().optional(),
 
   // Optionele velden
   heeftHuisdieren: buildBoolean(R.heeftHuisdieren).optional(),
@@ -223,6 +227,37 @@ export const LatestTransactionSchema = z.object({
   latestPaymentMethod: z.string().optional(),
 }).passthrough();
 
+// ════════════════════════════════════════════════════════════════
+// TRANSACTION HISTORY SCHEMA — nieuw voor Fase 7 (Undo/Redo)
+// ════════════════════════════════════════════════════════════════
+
+/**
+ * Eén opgeslagen transactie in de undo-stack.
+ * amountCents: cent-gebaseerd (ADR-12, geen floating-point).
+ */
+export const TransactionRecordSchema = z.object({
+  id:           z.string(),
+  date:         z.string(),          // ISO date string
+  description:  z.string(),
+  amountCents:  z.number(),
+  currency:     z.string().default('EUR'),
+  category:     z.string().nullable().optional(),
+  paymentMethod: z.string().optional(),
+});
+
+/**
+ * Past/present/future stack voor undo/redo.
+ * present = null betekent: geen actieve transactie (leeg scherm).
+ */
+export const TransactionHistorySchema = z.object({
+  past:    z.array(TransactionRecordSchema),
+  present: TransactionRecordSchema.nullable(),
+  future:  z.array(TransactionRecordSchema),
+});
+
+export type TransactionRecord = z.infer<typeof TransactionRecordSchema>;
+export type TransactionHistory = z.infer<typeof TransactionHistorySchema>;
+
 /** 
  * csvUpload sectie
  */
@@ -288,6 +323,7 @@ export const FormStateSchema = z.object({
     finance:   FinanceSchema,
     latestTransaction: LatestTransactionSchema.optional(),
     csvImport:  CsvImportSchema,
+    transactionHistory: TransactionHistorySchema.optional(), // Fase 7: undo/redo stack
   }),
   viewModels: z.object({
     financialSummary: z.object({

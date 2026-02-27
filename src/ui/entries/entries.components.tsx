@@ -9,6 +9,7 @@ import {
   RadioOptionPrimitive,
   DatePrimitive,
   LabelPrimitive,
+  ButtonPrimitive,
 } from '@ui/primitives/primitives';
 import type {
   CurrencyViewModel,
@@ -20,8 +21,9 @@ import type {
   RadioViewModel,
   LabelViewModel,
   DateViewModel,
+  ActionViewModel,
   BasePrimitiveViewModel,
-} from '@domain/registry/PrimitiveRegistry';
+} from '@ui/kernel';
 
 const FieldWrapper = ({
   viewModel,
@@ -133,6 +135,14 @@ export const RadioEntry = memo(({ viewModel }: { viewModel: RadioViewModel }) =>
       ))}
     </View>
   </FieldWrapper>
+));
+
+export const ActionEntry = memo(({ viewModel }: { viewModel: ActionViewModel }) => (
+  <ButtonPrimitive
+    label={viewModel.label}
+    onPress={viewModel.onPress}
+    style={viewModel.containerStyle}
+  />
 ));
 
 export const LabelEntry = memo(({ viewModel }: { viewModel: LabelViewModel }) => (

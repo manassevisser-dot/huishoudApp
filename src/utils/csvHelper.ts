@@ -23,8 +23,6 @@ export const parseRawCsv = (text: string): Record<string, string>[] => {
   // 1. Schoon de tekst op (verwijder Byte Order Marks)
   const cleanText = text.replace(/^\uFEFF/, '').trim();
   const lines = cleanText.split(/\r?\n/);
-
-  // FIX: Magic number vervangen door constante
   if (lines.length < MIN_LINES_FOR_csv) return [];
 
   // 2. Detecteer de scheider op basis van de eerste regel
@@ -46,7 +44,6 @@ export const parseRawCsv = (text: string): Record<string, string>[] => {
     return headers.reduce(
       (obj, header, i) => {
         const rawValue = values[i];
-        // FIX: Expliciete check of de waarde bestaat en geen lege string is
         const val = (rawValue !== undefined && rawValue !== '') 
           ? rawValue.trim().replace(/"/g, '') 
           : '';

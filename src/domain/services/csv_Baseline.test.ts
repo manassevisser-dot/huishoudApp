@@ -22,6 +22,6 @@ describe('csv Baseline Snapshots', () => {
 
   it('moet NaN-safe zijn bij corrupte invoer', () => {
     const row = { Bedrag: 'FOUT', Omschrijving: 'Corrupt' };
-    expect(processor.processRow(row, keys).amount).toBe(0);
+    expect(processor.processRow(row, keys).amountEuros).toBe(0);
   });
 });

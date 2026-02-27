@@ -1,15 +1,35 @@
+// src/domain/constants/uxTokens.ts
+
 /**
- * @file_intent Definieert een set van semantische tokens die UI-elementen representeren (schermen, velden, etc.).
- * @repo_architecture Domain Layer - Constants.
- * @term_definition UX Token = Een abstracte, semantische sleutel (bv. `SCREENS.HOUSEHOLD_SETUP`) die een specifiek UI-onderdeel identificeert. Het is een verwijzing naar een label, niet de tekst zelf.
- * @contract Dit bestand exporteert `UX_TOKENS`, een `as const` object. Deze tokens dienen als de stabiele sleutels die in `UI_LABELS.ts` worden gemapt naar de daadwerkelijke, voor de gebruiker zichtbare tekst. Dit ontkoppelt de applicatielogica van de content.
- * @ai_instruction Wanneer een nieuw gelabeld UI-element nodig is, voeg hier een nieuw, beschrijvend token toe binnen de juiste categorie (`SCREENS`, `FIELDS`, etc.). Gebruik dit token vervolgens in de component en voeg de corresponderende tekst toe in `labels.ts`.
+ * Semantische tokens die UI-elementen identificeren, ontkoppeld van hun weergavetekst.
+ *
+ * @module domain/constants
+ * @see {@link ./README.md | Constants — Details}
+ *
+ * @remarks
+ * `UX_TOKENS` zijn stabiele, betekenisvolle sleutels. De bijbehorende
+ * Nederlandse tekst leeft in `labels.ts` (`UI_LABELS`).
+ *
+ * Workflow bij een nieuw gelabeld element:
+ * 1. Voeg een token toe in de juiste categorie hier.
+ * 2. Voeg de Nederlandse tekst toe in `UI_LABELS` in `labels.ts`.
+ */
+
+/**
+ * Alle semantische UX-tokens, gegroepeerd per categorie.
+ *
+ * @example
+ * const title = UI_LABELS[UX_TOKENS.SCREENS.HOUSEHOLD_SETUP]; // 'Huishouden Opzetten'
  */
 export const UX_TOKENS = {
-  WIZARD: 'WIZARD',
-  LANDING: 'LANDING',
+  /** Token voor de wizard-flow als geheel. */
+  WIZARD:    'WIZARD',
+  /** Token voor het welkomstscherm. */
+  LANDING:   'LANDING',
+  /** Token voor het dashboard. */
   DASHBOARD: 'DASHBOARD',
 
+  /** Scherm-titels. Waarden zijn de stabiele token-strings die `UI_LABELS` opzoekt. */
   SCREENS: {
     HOUSEHOLD_SETUP:   'setup_screen_title',
     HOUSEHOLD_DETAILS: 'household_screen_title',
@@ -17,6 +37,7 @@ export const UX_TOKENS = {
     FIXED_EXPENSES:    'fixed_expenses_screen_title',
   },
 
+  /** Veld-labels. Waarden zijn de stabiele token-strings die `UI_LABELS` opzoekt. */
   FIELDS: {
     AANTAL_MENSEN:      'LABEL_AANTAL_MENSEN',
     AANTAL_VOLWASSENEN: 'LABEL_AANTAL_VOLWASSENEN',
@@ -27,6 +48,6 @@ export const UX_TOKENS = {
     BRUTO_INCOME:       'LABEL_BRUTO_INKOMEN',
     INCOME_MEMBER:      'LABEL_INKOMEN_PER_LID',
     AUTO_INSURANCE:     'LABEL_AUTO_VERZEKERING',
-    CAR_REPEATER:       'LABEL_AUTO_FORMS'
-  }
+    CAR_REPEATER:       'LABEL_AUTO_FORMS',
+  },
 } as const;

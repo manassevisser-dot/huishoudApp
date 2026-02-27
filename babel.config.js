@@ -12,7 +12,6 @@ module.exports = function (api) {
           alias: {
 // @alias-start
           '@state/schemas/sections': './src/state/schemas/sections',
-          '@state/schemas/helpers': './src/state/schemas/helpers',
           '@domain/validation': './src/domain/validation',
           '@app/orchestrators': './src/app/orchestrators',
           '@domain/constants': './src/domain/constants',
@@ -33,8 +32,8 @@ module.exports = function (api) {
           '@test-utils': './src/test-utils',
           '@kernel': './src/kernel',
           '@domain': './src/domain',
-          '@styles': './src/ui/styles',
           '@config': './src/config',
+          '@styles': './src/domain/styles',
           '@utils': './src/utils',
           '@state': './src/state',
           '@core': './src/core',

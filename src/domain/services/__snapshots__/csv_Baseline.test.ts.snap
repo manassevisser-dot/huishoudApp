@@ -1,8 +1,8 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
-exports[`CSV Baseline Snapshots moet een valide rij correct omzetten naar centen (Baseline) 1`] = `
+exports[`csv Baseline Snapshots moet een valide rij correct omzetten naar centen (Baseline) 1`] = `
 {
-  "amount": -125050,
+  "amountEuros": -1250.5,
   "date": "2023-10-27",
   "description": "Huur",
   "original": {

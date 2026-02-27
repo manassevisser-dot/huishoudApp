@@ -167,15 +167,19 @@ cmd_all() {
     local m; m=$(echo "$json" | jq -r '.master')
     local t; t=$(echo "$json" | jq -r '.timestamp')
 
+    # Extra kwaliteitsdetails
+    local qs; qs=$(echo "$json" | jq -r '.quality.score // .stability')
+    local qb; qb=$(echo "$json" | jq -r '.quality.bonus // 0')
+
     # Display dashboard
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo "   📊 PHOENIX TRINITY SCORES"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "   🏛️  Audit:     ${a}%"
-    echo "   🧪  Coverage:  ${c}%"
-    echo "   🛡️  Stability: ${s}%"
-    echo "   ⏰  Time:      $(echo "$t" | cut -d'T' -f2 | cut -d'.' -f1)"
+    echo "   🏛️  Audit:      ${a}%"
+    echo "   🧪  Coverage:   ${c}%  (branch)"
+    echo "   🛡️  Stability:  ${s}%  (kwaliteitsscore ${qs}% incl. +${qb} bonus)"
+    echo "   ⏰  Time:       $(echo "$t" | cut -d'T' -f2 | cut -d'.' -f1)"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     
     # Quality gates
@@ -264,16 +268,33 @@ Trinity Scores:
             
             # 6. EOD Ritueel Scherm
             echo ""
+            # Extra kwaliteitsdetails uit het JSON-rapport
+            local quality_score; quality_score=$(echo "$json" | jq -r '.quality.score // .stability')
+            local q_cov;   q_cov=$(echo "$json"   | jq -r '.quality.components.testCoverage.detail // "-"')
+            local q_br;    q_br=$(echo "$json"    | jq -r '.quality.components.branchCoverage.detail // "-"')
+            local q_lint;  q_lint=$(echo "$json"  | jq -r '.quality.components.linting.detail // "-"')
+            local q_ts;    q_ts=$(echo "$json"    | jq -r '.quality.components.typeSafety.detail // "-"')
+            local q_docs;  q_docs=$(echo "$json"  | jq -r '.quality.components.documentation.detail // "-"')
+            local q_bonus; q_bonus=$(echo "$json" | jq -r '.quality.bonus // 0')
+
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "   🌅 PHOENIX — END OF DAY REPORT"
             echo "   📅 $(date '+%Y-%m-%d %H:%M:%S')"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "   🏆 MASTER GRADE: $m"
+            echo "   🏆 MASTER GRADE: $m   (kwaliteitsscore: ${quality_score}%)"
             echo ""
             echo "   📊 Trinity Scores:"
-            echo "      🏛️  Audit:     ${a}%"
-            echo "      🧪  Coverage:  ${c}%"
-            echo "      🛡️  Stability: ${s}%"
+            echo "      🏛️  Audit:      ${a}%"
+            echo "      🧪  Coverage:   ${c}%  (branch)"
+            echo "      🛡️  Stability:  ${s}%  (gewogen kwaliteit)"
+            echo ""
+            echo "   📋 Detailscores:"
+            echo "      Test Coverage   → $q_cov"
+            echo "      Branch Coverage → $q_br"
+            echo "      Linting         → $q_lint"
+            echo "      Type Safety     → $q_ts"
+            echo "      Documentatie    → $q_docs"
+            echo "      Bonus punten:   +${q_bonus}"
             echo ""
             echo "   ✅ Commit: $commit_hash"
             echo "   📝 Branch: $(git branch --show-current)"

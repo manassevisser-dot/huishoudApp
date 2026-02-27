@@ -1,202 +1,355 @@
 // src/app/state/formReducer.test.ts
-/**
- * @file_intent Unit tests voor de FormReducer – Pure State Mutator.
- * @contract Test alle FormAction types op correctheid, immutabiliteit en fail-closed gedrag.
- */
-
-// Override de gedeelde jest.setup mock die SUB_KEYS mist
-jest.mock('@domain/constants/datakeys', () => ({
-  DATA_KEYS: { SETUP: 'setup', HOUSEHOLD: 'household', FINANCE: 'finance', META: 'meta' },
-  SUB_KEYS: { MEMBERS: 'members', INCOME: 'income', EXPENSES: 'expenses', ITEMS: 'items' },
-}));
-
 import { formReducer, FormAction } from './formReducer';
 import { initialFormState } from './initialFormState';
+import type { FormState, TransactionRecord } from '@core/types/core';
 import { DATA_KEYS } from '@domain/constants/datakeys';
-import type { FormState } from '@core/types/core';
-
-// Helper om een schone state te maken per test
-const makeState = (overrides: Partial<FormState> = {}): FormState => ({
-  ...initialFormState,
-  ...overrides,
-});
-
 describe('formReducer', () => {
+  let state: FormState;
+
+  beforeEach(() => {
+    state = JSON.parse(JSON.stringify(initialFormState)); // Diepe copy
+  });
 
   describe('UPDATE_DATA', () => {
-    it('mergt nieuwe data immutabel in de state', () => {
-      const state = makeState();
+    it('should merge data payload into state', () => {
       const action: FormAction = {
         type: 'UPDATE_DATA',
-        payload: { [DATA_KEYS.SETUP]: { aantalMensen: 3 } },
+        payload: {
+          [DATA_KEYS.SETUP]: {
+            aantalMensen: 5,
+          },
+        },
       };
 
-      const next = formReducer(state, action);
+      const newState = formReducer(state, action);
 
-      expect(next.data[DATA_KEYS.SETUP].aantalMensen).toBe(3);
-      expect(next).not.toBe(state); // nieuw object
+      expect(newState.data[DATA_KEYS.SETUP].aantalMensen).toBe(5);
+      expect(newState.data[DATA_KEYS.SETUP].aantalVolwassen).toBe(1); // ongewijzigd
+      expect(newState.meta.lastModified).not.toBe(state.meta.lastModified);
     });
 
-    it('behoudt bestaande data-velden die niet worden geüpdatet', () => {
-      const state = makeState();
+    it('should handle nested updates', () => {
       const action: FormAction = {
         type: 'UPDATE_DATA',
-        payload: { [DATA_KEYS.SETUP]: { aantalMensen: 2 } },
+        payload: {
+          [DATA_KEYS.FINANCE]: {
+            income: {
+              items: [{ id: '1', amount: 1000 }],
+            },
+          },
+        },
       };
 
-      const next = formReducer(state, action);
+      const newState = formReducer(state, action);
 
-      expect(next.data[DATA_KEYS.SETUP].aantalVolwassen).toBe(state.data[DATA_KEYS.SETUP].aantalVolwassen);
-    });
-
-    it('muteert de originele state niet', () => {
-      const state = makeState();
-      const original = JSON.parse(JSON.stringify(state));
-      const action: FormAction = {
-        type: 'UPDATE_DATA',
-        payload: { [DATA_KEYS.SETUP]: { aantalMensen: 5 } },
-      };
-
-      formReducer(state, action);
-
-      expect(state.data[DATA_KEYS.SETUP].aantalMensen).toBe(original.data[DATA_KEYS.SETUP].aantalMensen);
-    });
-
-    it('update lastModified in meta', () => {
-      const state = makeState();
-      const before = state.meta.lastModified;
-
-      const action: FormAction = {
-        type: 'UPDATE_DATA',
-        payload: { [DATA_KEYS.SETUP]: { aantalMensen: 2 } },
-      };
-
-      const next = formReducer(state, action);
-
-      expect(next.meta.lastModified).toBeDefined();
-      // lastModified moet een geldige ISO string zijn
-      expect(() => new Date(next.meta.lastModified)).not.toThrow();
-    });
-  });
-
-  describe('SET_STEP', () => {
-    it('zet de activeStep correct', () => {
-      const state = makeState({ activeStep: 'LANDING' });
-      const action: FormAction = { type: 'SET_STEP', payload: 'DASHBOARD' };
-
-      const next = formReducer(state, action);
-
-      expect(next.activeStep).toBe('DASHBOARD');
-    });
-
-    it('muteert de rest van de state niet', () => {
-      const state = makeState();
-      const action: FormAction = { type: 'SET_STEP', payload: 'DASHBOARD' };
-
-      const next = formReducer(state, action);
-
-      expect(next.data).toEqual(state.data);
-    });
-  });
-
-  describe('SET_CURRENT_SCREEN_ID', () => {
-    it('zet de currentScreenId correct', () => {
-      const state = makeState({ currentScreenId: 'landing' });
-      const action: FormAction = { type: 'SET_CURRENT_SCREEN_ID', payload: 'WIZARD_STEP_2' };
-
-      const next = formReducer(state, action);
-
-      expect(next.currentScreenId).toBe('WIZARD_STEP_2');
+      expect(newState.data[DATA_KEYS.FINANCE].income.items).toHaveLength(1);
+      expect(newState.data[DATA_KEYS.FINANCE].expenses.items).toHaveLength(0); // ongewijzigd
     });
   });
 
   describe('UPDATE_VIEWMODEL', () => {
-    it('merged nieuwe viewModel data in bestaande viewModels', () => {
-      const state = makeState({ viewModels: { dashboard: { title: 'Oud' } } as any });
+    it('should merge viewModels payload', () => {
       const action: FormAction = {
         type: 'UPDATE_VIEWMODEL',
-        payload: { dashboard: { title: 'Nieuw' } } as any,
+        payload: {
+          financialSummary: {
+            totalIncomeDisplay: '€ 1.000',
+            totalExpensesDisplay: '€ 500',
+            netDisplay: '€ 500',
+          },
+        },
       };
 
-      const next = formReducer(state, action);
+      const newState = formReducer(state, action);
 
-      expect((next.viewModels as any).dashboard.title).toBe('Nieuw');
+      expect(newState.viewModels?.financialSummary).toBeDefined();
+      expect(newState.viewModels?.financialSummary?.totalIncomeDisplay).toBe('€ 1.000');
     });
 
-    it('initialiseert viewModels als het undefined is', () => {
-      const state = makeState({ viewModels: undefined });
+    it('should handle undefined existing viewModels', () => {
+      state.viewModels = undefined;
+      
       const action: FormAction = {
         type: 'UPDATE_VIEWMODEL',
-        payload: { dashboard: { title: 'Test' } } as any,
+        payload: { financialSummary: { totalIncomeDisplay: 'test', totalExpensesDisplay: 'test', netDisplay: 'test' } },
       };
 
-      const next = formReducer(state, action);
+      const newState = formReducer(state, action);
+      expect(newState.viewModels).toEqual({ 
+  financialSummary: { 
+    totalIncomeDisplay: 'test', 
+    totalExpensesDisplay: 'test', 
+    netDisplay: 'test' 
+  } 
+});
+    });
+  });
 
-      expect(next.viewModels).toBeDefined();
+  describe('UPDATE_CSV_IMPORT', () => {
+    it('should update csvImport state', () => {
+      const csvPayload = {
+        transactions: [],
+        importedAt: new Date().toISOString(),
+        period: { from: '2024-01-01', to: '2024-01-31' },
+        status: 'parsed' as const,
+        sourceBank: 'ING',
+        fileName: 'test.csv',
+        transactionCount: 10,
+      };
+
+      const action: FormAction = {
+        type: 'UPDATE_CSV_IMPORT',
+        payload: csvPayload,
+      };
+
+      const newState = formReducer(state, action);
+
+      expect(newState.data.csvImport).toEqual(csvPayload);
+    });
+  });
+
+  describe('SET_STEP', () => {
+    it('should update activeStep', () => {
+      const action: FormAction = {
+        type: 'SET_STEP',
+        payload: 'DASHBOARD',
+      };
+
+      const newState = formReducer(state, action);
+      expect(newState.activeStep).toBe('DASHBOARD');
+    });
+  });
+
+  describe('SET_CURRENT_SCREEN_ID', () => {
+    it('should update currentScreenId', () => {
+      const action: FormAction = {
+        type: 'SET_CURRENT_SCREEN_ID',
+        payload: 'dashboard',
+      };
+
+      const newState = formReducer(state, action);
+      expect(newState.currentScreenId).toBe('dashboard');
+    });
+  });
+
+  describe('PUSH_TRANSACTION', () => {
+    const transaction: TransactionRecord = {
+      id: '1',
+      date: '2024-01-15',
+      description: 'Test',
+      amountCents: 4250,
+      currency: 'EUR',
+      category: 'Boodschappen',
+      paymentMethod: 'pin',
+    };
+
+    it('should push first transaction', () => {
+      const action: FormAction = {
+        type: 'PUSH_TRANSACTION',
+        payload: transaction,
+      };
+
+      const newState = formReducer(state, action);
+
+      expect(newState.data.transactionHistory?.past).toEqual([]);
+      expect(newState.data.transactionHistory?.present).toEqual(transaction);
+      expect(newState.data.transactionHistory?.future).toEqual([]);
     });
 
-    it('behoudt bestaande viewModel keys die niet worden geüpdatet', () => {
-      const state = makeState({ viewModels: { dashboard: { title: 'Bewaar mij' }, options: { items: [] } } as any });
-      const action: FormAction = {
-        type: 'UPDATE_VIEWMODEL',
-        payload: { options: { items: [1] } } as any,
+    it('should move current present to past when pushing new transaction', () => {
+      // Eerste transactie
+      state = formReducer(state, { type: 'PUSH_TRANSACTION', payload: transaction });
+
+      // Tweede transactie
+      const transaction2: TransactionRecord = {
+        ...transaction,
+        id: '2',
+        description: 'Test 2',
       };
 
-      const next = formReducer(state, action);
+      const newState = formReducer(state, { type: 'PUSH_TRANSACTION', payload: transaction2 });
 
-      expect((next.viewModels as any).dashboard.title).toBe('Bewaar mij');
+      expect(newState.data.transactionHistory?.past).toHaveLength(1);
+      expect(newState.data.transactionHistory?.past[0]).toEqual(transaction);
+      expect(newState.data.transactionHistory?.present).toEqual(transaction2);
+    });
+
+    it('should handle undefined history', () => {
+      state.data.transactionHistory = undefined;
+      
+      const newState = formReducer(state, { type: 'PUSH_TRANSACTION', payload: transaction });
+      
+      expect(newState.data.transactionHistory).toBeDefined();
+      expect(newState.data.transactionHistory?.present).toEqual(transaction);
+    });
+  });
+
+  describe('UNDO_TRANSACTION', () => {
+    it('should undo to previous transaction', () => {
+      // Setup: twee transacties
+      const t1: TransactionRecord = { id: '1', date: '', description: '', amountCents: 100, category: '', currency: 'EUR' , paymentMethod: '' };
+      const t2: TransactionRecord = { id: '2', date: '', description: '', amountCents: 200, category: '', currency: 'EUR' , paymentMethod: '' };
+      
+      state = formReducer(state, { type: 'PUSH_TRANSACTION', payload: t1 });
+      state = formReducer(state, { type: 'PUSH_TRANSACTION', payload: t2 });
+
+      // Undo
+      const newState = formReducer(state, { type: 'UNDO_TRANSACTION' });
+
+      expect(newState.data.transactionHistory?.present).toEqual(t1);
+      expect(newState.data.transactionHistory?.past).toEqual([]);
+      expect(newState.data.transactionHistory?.future).toHaveLength(1);
+      expect(newState.data.transactionHistory?.future[0]).toEqual(t2);
+    });
+
+    it('should do nothing when no history', () => {
+      const newState = formReducer(state, { type: 'UNDO_TRANSACTION' });
+      expect(newState).toEqual(state);
+    });
+
+    it('should do nothing when past is empty', () => {
+      state = formReducer(state, { type: 'PUSH_TRANSACTION', payload: { id: '1', date: '', description: '', amountCents: 100, category: '', currency: 'EUR' , paymentMethod: '' } });
+      
+      const newState = formReducer(state, { type: 'UNDO_TRANSACTION' });
+      expect(newState).toEqual(state);
+    });
+  });
+
+  describe('REDO_TRANSACTION', () => {
+    it('should redo after undo', () => {
+      // Setup: twee transacties en undo
+      const t1: TransactionRecord = { id: '1', date: '', description: '', amountCents: 100, category: '', currency: 'EUR' , paymentMethod: '' };
+      const t2: TransactionRecord = { id: '2', date: '', description: '', amountCents: 200, category: '', currency: 'EUR' , paymentMethod: '' };
+      
+      state = formReducer(state, { type: 'PUSH_TRANSACTION', payload: t1 });
+      state = formReducer(state, { type: 'PUSH_TRANSACTION', payload: t2 });
+      state = formReducer(state, { type: 'UNDO_TRANSACTION' });
+
+      // Redo
+      const newState = formReducer(state, { type: 'REDO_TRANSACTION' });
+
+      expect(newState.data.transactionHistory?.present).toEqual(t2);
+      expect(newState.data.transactionHistory?.past).toHaveLength(1);
+      expect(newState.data.transactionHistory?.past[0]).toEqual(t1);
+      expect(newState.data.transactionHistory?.future).toEqual([]);
+    });
+
+    it('should do nothing when future is empty', () => {
+      state = formReducer(state, { type: 'PUSH_TRANSACTION', payload: { id: '1', date: '', description: '', amountCents: 100, category: '', currency: 'EUR' , paymentMethod: '' } });
+      
+      const newState = formReducer(state, { type: 'REDO_TRANSACTION' });
+      expect(newState).toEqual(state);
+    });
+  });
+
+  describe('CLEAR_TRANSACTIONS', () => {
+    it('should clear all transactions', () => {
+      // Setup: voeg transacties toe
+      state = formReducer(state, { type: 'PUSH_TRANSACTION', payload: { id: '1', date: '', description: '', amountCents: 100, category: '', currency: 'EUR' , paymentMethod: '' } });
+
+      // Clear
+      const newState = formReducer(state, { type: 'CLEAR_TRANSACTIONS' });
+
+      expect(newState.data.transactionHistory?.past).toEqual([]);
+      expect(newState.data.transactionHistory?.present).toBeNull();
+      expect(newState.data.transactionHistory?.future).toEqual([]);
     });
   });
 
   describe('RESET_APP', () => {
-    it('reset activeStep naar LANDING', () => {
-      const state = makeState({ activeStep: 'DASHBOARD' });
-      const action: FormAction = { type: 'RESET_APP' };
+    it('should reset to initial state', () => {
+      // Eerst wat wijzigingen aanbrengen
+      state = formReducer(state, { type: 'SET_STEP', payload: 'DASHBOARD' });
+      state = formReducer(state, { 
+        type: 'UPDATE_DATA', 
+        payload: { [DATA_KEYS.SETUP]: { aantalMensen: 5 } } 
+      });
 
-      const next = formReducer(state, action);
+      // Reset
+      const newState = formReducer(state, { type: 'RESET_APP' });
 
-      expect(next.activeStep).toBe('LANDING');
-    });
-
-    it('reset isValid naar true', () => {
-      const state = makeState({ isValid: false });
-      const action: FormAction = { type: 'RESET_APP' };
-
-      const next = formReducer(state, action);
-
-      expect(next.isValid).toBe(true);
-    });
-
-    it('reset setup data naar standaardwaarden', () => {
-      const state = makeState();
-      (state.data[DATA_KEYS.SETUP] as any).aantalMensen = 99;
-      const action: FormAction = { type: 'RESET_APP' };
-
-      const next = formReducer(state, action);
-
-      expect(next.data[DATA_KEYS.SETUP].aantalMensen).toBe(1);
-    });
-
-    it('reset household members naar lege array', () => {
-      const state = makeState();
-      (state.data[DATA_KEYS.HOUSEHOLD] as any).members = [{ entityId: 'mem_1' }];
-      const action: FormAction = { type: 'RESET_APP' };
-
-      const next = formReducer(state, action);
-
-      expect(next.data[DATA_KEYS.HOUSEHOLD].members).toEqual([]);
+      expect(newState.activeStep).toBe('LANDING');
+      expect(newState.currentScreenId).toBe('landing');
+      expect(newState.isValid).toBe(true);
+      expect(newState.data[DATA_KEYS.SETUP].aantalMensen).toBe(1);
+      expect(newState.viewModels).toEqual({});
     });
   });
 
-  describe('onbekende actie (fail-closed)', () => {
-    it('retourneert de bestaande state ongewijzigd voor onbekende acties', () => {
-      const state = makeState();
-      const action = { type: 'UNKNOWN_ACTION' } as unknown as FormAction;
+  describe('HYDRATE', () => {
+    it('should hydrate state with persisted data', () => {
+      const persistedData = {
+        data: {
+          [DATA_KEYS.SETUP]: {
+            aantalMensen: 3,
+            aantalVolwassen: 2,
+            autoCount: '1',
+            heeftHuisdieren: true,
+            woningType: 'Koop',
+            dob: '',
+          },
+          [DATA_KEYS.HOUSEHOLD]: { members: [], huurtoeslag: 0, zorgtoeslag: 0 },
+          [DATA_KEYS.FINANCE]: { income: { items: [], totalAmount: 0 }, expenses: { items: [], totalAmount: 0 } },
+          latestTransaction: {
+            latestTransactionDate: new Date().toISOString().split('T')[0],
+            latestTransactionAmount: 0,
+            latestTransactionCategory: null,
+            latestTransactionDescription: '',
+            latestPaymentMethod: 'pin',
+          },
+          [DATA_KEYS.CSV_IMPORT]: {
+            transactions: [],
+            importedAt: '',
+            period: null,
+            status: 'idle' as const,
+            sourceBank: undefined,
+            fileName: '',
+            transactionCount: 0,
+          },
+          transactionHistory: { past: [], present: null, future: [] },
+        },
+        meta: { lastModified: new Date().toISOString(), version: 2 },
+      };
 
-      const next = formReducer(state, action);
+      const action: FormAction = {
+        type: 'HYDRATE',
+        payload: persistedData,
+      };
 
-      expect(next).toBe(state); // zelfde referentie
+      const newState = formReducer(state, action);
+
+      expect(newState.data[DATA_KEYS.SETUP].aantalMensen).toBe(3);
+      expect(newState.activeStep).toBe('LANDING'); // Wordt gereset naar LANDING
+      expect(newState.currentScreenId).toBe('landing');
+      expect(newState.viewModels).toEqual({});
+      expect(newState.meta.version).toBe(2);
     });
   });
 
+  describe('default case', () => {
+    it('should return state unchanged for unknown action', () => {
+      const action = { type: 'UNKNOWN' } as any;
+      const newState = formReducer(state, action);
+      expect(newState).toBe(state);
+    });
+  });
+
+  describe('meta updates', () => {
+    it('should update lastModified on every action', () => {
+      const originalDate = state.meta.lastModified;
+      
+      // Wacht 1ms om timestamp verschil te garanderen
+      jest.useFakeTimers();
+      jest.advanceTimersByTime(1);
+
+      const newState = formReducer(state, { type: 'SET_STEP', payload: 'DASHBOARD' });
+
+      expect(newState.meta.lastModified).not.toBe(originalDate);
+      expect(new Date(newState.meta.lastModified).getTime()).toBeGreaterThan(
+        new Date(originalDate).getTime()
+      );
+
+      jest.useRealTimers();
+    });
+  });
 });

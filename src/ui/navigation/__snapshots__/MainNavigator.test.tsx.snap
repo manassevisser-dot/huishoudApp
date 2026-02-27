@@ -1,0 +1,3 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`MainNavigator JSDoc claims verification should have no UI of its own (only renders UniversalScreen) 1`] = `null`;

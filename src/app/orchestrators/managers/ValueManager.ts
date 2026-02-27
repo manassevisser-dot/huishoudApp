@@ -12,8 +12,8 @@ export class ValueManager implements IValueOrchestrator { // Voeg de 'implements
 
   // Jouw extra 'bulk' methode
   public getSnapshot(fieldIds: string[]): ValueViewModel[] {
-    return fieldIds
-      .map(id => this.getValueModel(id))
-      .filter((vm): vm is ValueViewModel => vm !== null);
-  }
+  return fieldIds
+    .map(id => this.getValueModel(id))
+    .filter((vm): vm is ValueViewModel => vm !== null && vm !== undefined);  // ← Filter ook undefined
+}
 }
