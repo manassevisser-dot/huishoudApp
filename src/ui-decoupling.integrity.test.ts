@@ -54,11 +54,22 @@ describe('UI Decoupling Integrity Guard (FPR-only)', () => {
     // @ui/kernel is de Anti-Corruption Layer (ACL) en het ENIGE toegestane
     // kruispunt van @domain naar UI. Alle andere UI-bestanden mogen NIET
     // rechtstreeks uit @domain importeren.
+    //
+    // Uitzondering: useAppStyles.ts is de geautoriseerde assemblagebrug die
+    // make…-functies uit @domain/styles samenvoegt tot één gecached stylesheet.
+    // Dit is by design — zie src/ui/styles/README.md.
     const result = execSync(
       `grep -r "from '@domain/" ${UI_ROOT} --include="*.ts" --include="*.tsx" --exclude-dir="kernel" --exclude="*.test.ts" --exclude="*.test.tsx" || true`,
       { encoding: 'utf-8' }
     );
-    expect(result.trim()).toBe('');
+
+    const violations = result
+      .split('\n')
+      .filter(line => line.trim() !== '')
+      .filter(line => !line.includes('useAppStyles.ts'))
+      .join('\n');
+
+    expect(violations.trim()).toBe('');
   });
 
   test('UI-RW-017: Geen dispatch calls met section/field in UI-laag', () => {

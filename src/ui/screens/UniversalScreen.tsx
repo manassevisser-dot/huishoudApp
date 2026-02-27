@@ -35,7 +35,16 @@ export const UniversalScreen = ({ screenId }: UniversalScreenProps) => {
   const master = useMaster();
   const insets = useSafeAreaInsets();
   const { Tokens, styles } = useAppStyles();
-  const screenVM = useMemo(() => master.buildRenderScreen(screenId), [screenId, master]) as RenderScreenVM | null;
+  console.log('🎯 UniversalScreen rendering with screenId:', screenId);
+  
+  // ALLEEN DIT STUK VERVANGEN
+  const screenVM = useMemo(() => {
+    console.log('📦 Calling master.buildRenderScreen with:', screenId);
+    const result = master.buildRenderScreen(screenId);
+    console.log('📦 Result:', result);
+    return result;
+  }, [screenId, master]) as RenderScreenVM | null;
+  
   const onSaveDailyTransaction = useMemo(() => buildSaveDailyTransactionHandler(master), [master]);
 
   if (screenVM === null) {
@@ -43,6 +52,8 @@ export const UniversalScreen = ({ screenId }: UniversalScreenProps) => {
   }
 
   const ScreenRenderer = resolveScreenRenderer(screenVM);
+console.log('🎨 ScreenRenderer:', ScreenRenderer ? 'Gevonden' : 'NIET gevonden');
+console.log('🎨 screenVM.type:', screenVM.type);
   const topPadding = insets.top + Tokens.Space.md;
 
   return (

@@ -87,9 +87,6 @@
       "@test-utils/*": [
         "src/test-utils/*"
       ],
-      "@test-utils": [
-        "src/test-utils/index.ts"
-      ],
       "@styles/*": [
     "src/domain/styles/*" 
   ],

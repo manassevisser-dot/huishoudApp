@@ -10,6 +10,7 @@
  */
 // src/App.tsx
 import React from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { FormStateProvider } from '@ui/providers/FormStateProvider';
 import { MasterProvider, useMaster } from '@ui/providers/MasterProvider';
 import { ThemeProvider } from '@ui/providers/ThemeProvider';
@@ -35,11 +36,13 @@ const AppContent = () => {
 
 const App = () => {
   return (
-    <FormStateProvider initialState={initialFormState}>
-      <MasterProvider>
-        <AppContent />
-      </MasterProvider>
-    </FormStateProvider>
+    <SafeAreaProvider>
+      <FormStateProvider initialState={initialFormState}>
+        <MasterProvider>
+          <AppContent />
+        </MasterProvider>
+      </FormStateProvider>
+    </SafeAreaProvider>
   );
 };
 

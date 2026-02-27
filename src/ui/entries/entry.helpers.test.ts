@@ -48,6 +48,42 @@ describe('entry helpers', () => {
       expect(toStyleRule(true)).toEqual({});
     });
 
+    it('should return empty style for string input without styles param', () => {
+      expect(toStyleRule('primitive:counter')).toEqual({});
+      expect(toStyleRule('entry:someId')).toEqual({});
+    });
+
+    it('should resolve string input via fallbackKey when styles param is provided', () => {
+      const mockStyles = {
+        inputContainer: { marginBottom: 16, width: '100%' },
+        entryLabel: { fontSize: 16, fontWeight: '600' },
+      } as any;
+
+      const result = toStyleRule('primitive:counter', mockStyles, 'inputContainer');
+      expect(result).toBe(mockStyles.inputContainer);
+    });
+
+    it('should return empty style when fallbackKey is missing from styles', () => {
+      const mockStyles = { inputContainer: { marginBottom: 16 } } as any;
+      // 'entryLabel' bestaat niet in deze mock
+      const result = toStyleRule('some-string', mockStyles, 'entryLabel' as any);
+      expect(result).toEqual({});
+    });
+
+    it('should return empty style when styles param is provided but fallbackKey is undefined', () => {
+      const mockStyles = { inputContainer: { marginBottom: 16 } } as any;
+      const result = toStyleRule('primitive:counter', mockStyles, undefined);
+      expect(result).toEqual({});
+    });
+
+    it('should prefer object input over fallbackKey when input is an object', () => {
+      const directStyle = { padding: 8 };
+      const mockStyles = { inputContainer: { marginBottom: 16 } } as any;
+      const result = toStyleRule(directStyle, mockStyles, 'inputContainer');
+      // object-input heeft altijd prioriteit
+      expect(result).toBe(directStyle);
+    });
+
     it('should return empty style for arrays', () => {
       expect(toStyleRule([1, 2, 3])).toEqual({});
     });

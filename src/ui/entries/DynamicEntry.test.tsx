@@ -58,6 +58,17 @@ jest.mock('@ui/primitives/primitives', () => ({
   }),
 }));
 
+jest.mock('@ui/styles/useAppStyles', () => ({
+  useAppStyles: jest.fn(() => ({
+    styles: {
+      inputContainer: { marginBottom: 16, width: '100%' },
+      entryLabel: { fontSize: 16, fontWeight: '600' },
+    },
+    colors: {},
+    Tokens: {},
+  })),
+}));
+
 jest.mock('./entry.mappers', () => ({
   toCurrencyViewModel: jest.fn((vm) => ({ ...vm, mapped: 'currency' })),
   toDateViewModel: jest.fn((vm) => ({ ...vm, mapped: 'date' })),
@@ -73,6 +84,11 @@ jest.mock('./entry.mappers', () => ({
 
 describe('DynamicEntry', () => {
   const mockOnChange = jest.fn();
+
+  const mockStyles = {
+    inputContainer: { marginBottom: 16, width: '100%' },
+    entryLabel: { fontSize: 16, fontWeight: '600' },
+  };
 
   const baseEntry: RenderEntryVM = {
     entryId: 'test-entry',
@@ -179,9 +195,9 @@ describe('DynamicEntry', () => {
 
         expect(getByTestId(testId)).toBeTruthy();
 
-        // Check dat de juiste mapper is aangeroepen
+        // Check dat de juiste mapper is aangeroepen met entry én styles
         const mapperMock = jest.requireMock('./entry.mappers')[mapper];
-        expect(mapperMock).toHaveBeenCalledWith(entry);
+        expect(mapperMock).toHaveBeenCalledWith(entry, mockStyles);
       });
     });
 
@@ -252,6 +268,7 @@ describe('DynamicEntry', () => {
           value: 'test value',
           extraProp: 'should-be-preserved',
         }),
+        expect.any(Object), // styles argument
       );
     });
   });

@@ -39,7 +39,6 @@ const config: Config = {
       '^@app/hooks/(.*)$': '<rootDir>/src/app/hooks/$1',
       '^@adapters/(.*)$': '<rootDir>/src/adapters/$1',
       '^@services/(.*)$': '<rootDir>/src/services/$1',
-      '^@test-utils/(.*)$': '<rootDir>/src/test-utils/$1',
       '^@kernel/(.*)$': '<rootDir>/src/kernel/$1',
       '^@domain/(.*)$': '<rootDir>/src/domain/$1',
       '^@config/(.*)$': '<rootDir>/src/config/$1',

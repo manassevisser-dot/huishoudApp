@@ -4,6 +4,15 @@ import { render } from '@testing-library/react-native';
 import App from './App';
 
 // Mock alle providers en navigators
+
+// SafeAreaProvider is toegevoegd als root wrapper in App.tsx (fase 1).
+// Zonder mock crasht de test omdat react-native-safe-area-context
+// native modules vereist die niet beschikbaar zijn in jsdom.
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaProvider: jest.fn(({ children }) => children),
+  useSafeAreaInsets: jest.fn(() => ({ top: 0, right: 0, bottom: 0, left: 0 })),
+}));
+
 jest.mock('@ui/providers/FormStateProvider', () => ({
   FormStateProvider: jest.fn(({ children }) => (
     <>{children}</>

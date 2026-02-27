@@ -29,7 +29,6 @@ module.exports = function (api) {
           '@app/hooks': './src/app/hooks',
           '@adapters': './src/adapters',
           '@services': './src/services',
-          '@test-utils': './src/test-utils',
           '@kernel': './src/kernel',
           '@domain': './src/domain',
           '@config': './src/config',

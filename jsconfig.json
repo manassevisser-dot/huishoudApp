@@ -30,7 +30,6 @@
       "@ui/*": ["src/ui/*"],
       "@config/*": ["src/config/*"],
       "@test-utils/*": ["src/test-utils/*"],
-      "@test-utils": ["src/test-utils/index.ts"],
       "@styles/*": ["src/domain/styles/*"],
       "@state/schemas/sections/*": ["src/state/schemas/sections/*"],
 // @alias-end   

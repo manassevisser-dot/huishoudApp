@@ -6,6 +6,16 @@ import { useMaster } from '@ui/providers/MasterProvider';
 import { pickAndReadCsvFile, ANNULERING_MESSAGE } from '@adapters/system/FilePickerAdapter';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 
+// Expo native modules — moeten voor de FilePickerAdapter auto-mock staan,
+// anders probeert Jest de onderliggende module te parsen en crasht het
+// omdat expo-document-picker niet in transformIgnorePatterns staat.
+jest.mock('expo-document-picker', () => ({
+  getDocumentAsync: jest.fn(),
+}));
+jest.mock('expo-file-system', () => ({
+  readAsStringAsync: jest.fn(),
+}));
+
 // Mock dependencies
 jest.mock('@ui/providers/MasterProvider');
 jest.mock('@adapters/system/FilePickerAdapter');

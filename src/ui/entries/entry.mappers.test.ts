@@ -15,13 +15,20 @@ import { PRIMITIVE_TYPES } from '@ui/kernel';
 import type { RenderEntryVM } from '@app/orchestrators/MasterOrchestrator';
 import * as helpers from './entry.helpers';
 
-// Mock helpers
+// Mock helpers — toStyleRule handelt nu 3 argumenten af:
+// object-input → spread + styled:true (bestaand gedrag, 3e arg genegeerd)
+// string/ander input → { resolved: fallbackKey } (zodat tests de juiste key kunnen verifiëren)
 jest.mock('./entry.helpers', () => ({
   getEmptyStyle: jest.fn().mockReturnValue({ empty: true }),
-  toStyleRule: jest.fn().mockImplementation((style) => ({ ...style, styled: true })),
-  toStringValue: jest.fn().mockImplementation((value) => value?.toString() ?? ''),
-  toNumberValue: jest.fn().mockImplementation((value) => Number(value) || 0),
-  toBooleanValue: jest.fn().mockImplementation((value) => Boolean(value)),
+  toStyleRule: jest.fn().mockImplementation((style, _styles, fallbackKey) => {
+    if (style !== null && typeof style === 'object' && !Array.isArray(style)) {
+      return { ...style, styled: true };
+    }
+    return { resolved: fallbackKey ?? 'empty' };
+  }),
+  toStringValue: jest.fn().mockImplementation((value) => (typeof value === 'string' ? value : '')),
+  toNumberValue: jest.fn().mockImplementation((value) => (typeof value === 'number' && Number.isFinite(value) ? value : 0)),
+  toBooleanValue: jest.fn().mockImplementation((value) => value === true),
   toBaseViewModel: jest.fn().mockImplementation((entry, type) => ({
     fieldId: entry.fieldId,
     entryId: entry.entryId,
@@ -31,7 +38,11 @@ jest.mock('./entry.helpers', () => ({
 }));
 
 describe('entry mappers', () => {
-  // Mock data
+  const mockStyles = {
+    inputContainer: { marginBottom: 16, width: '100%' },
+    entryLabel: { fontSize: 16, fontWeight: '600' },
+  } as any;
+
   const mockEntry: RenderEntryVM = {
     entryId: 'test-entry',
     fieldId: 'test-field',
@@ -68,12 +79,12 @@ describe('entry mappers', () => {
 
   describe('toCurrencyViewModel', () => {
     it('should map to CurrencyViewModel correctly', () => {
-      const result = toCurrencyViewModel(mockEntry);
+      const result = toCurrencyViewModel(mockEntry, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.CURRENCY);
       expect(helpers.toStringValue).toHaveBeenCalledWith(mockEntry.value);
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle);
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style);
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'inputContainer');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
 
       expect(result).toEqual({
         fieldId: 'test-field',
@@ -81,7 +92,7 @@ describe('entry mappers', () => {
         primitiveType: PRIMITIVE_TYPES.CURRENCY,
         isVisible: true,
         label: 'Test Label',
-        value: "test value",
+        value: 'test value',
         placeholder: 'Test Placeholder',
         containerStyle: { padding: 5, styled: true },
         labelStyle: { margin: 10, styled: true },
@@ -90,7 +101,7 @@ describe('entry mappers', () => {
     });
 
     it('should call onChange when onCurrencyChange is triggered', () => {
-      const result = toCurrencyViewModel(mockEntry);
+      const result = toCurrencyViewModel(mockEntry, mockStyles);
       result.onCurrencyChange('new value');
       expect(mockEntry.onChange).toHaveBeenCalledWith('new value');
     });
@@ -98,16 +109,19 @@ describe('entry mappers', () => {
 
   describe('toDateViewModel', () => {
     it('should map to DateViewModel correctly', () => {
-      const result = toDateViewModel(mockEntry);
+      const result = toDateViewModel(mockEntry, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.DATE);
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'inputContainer');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
+
       expect(result).toEqual({
         fieldId: 'test-field',
         entryId: 'test-entry',
         primitiveType: PRIMITIVE_TYPES.DATE,
         isVisible: true,
         label: 'Test Label',
-        value: "test value",
+        value: 'test value',
         containerStyle: { padding: 5, styled: true },
         labelStyle: { margin: 10, styled: true },
         onDateChange: expect.any(Function),
@@ -115,7 +129,7 @@ describe('entry mappers', () => {
     });
 
     it('should call onChange when onDateChange is triggered', () => {
-      const result = toDateViewModel(mockEntry);
+      const result = toDateViewModel(mockEntry, mockStyles);
       result.onDateChange('2024-01-01');
       expect(mockEntry.onChange).toHaveBeenCalledWith('2024-01-01');
     });
@@ -123,16 +137,19 @@ describe('entry mappers', () => {
 
   describe('toTextViewModel', () => {
     it('should map to TextViewModel correctly', () => {
-      const result = toTextViewModel(mockEntry);
+      const result = toTextViewModel(mockEntry, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.TEXT);
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'inputContainer');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
+
       expect(result).toEqual({
         fieldId: 'test-field',
         entryId: 'test-entry',
         primitiveType: PRIMITIVE_TYPES.TEXT,
         isVisible: true,
         label: 'Test Label',
-        value: "test value",
+        value: 'test value',
         placeholder: 'Test Placeholder',
         containerStyle: { padding: 5, styled: true },
         labelStyle: { margin: 10, styled: true },
@@ -141,7 +158,7 @@ describe('entry mappers', () => {
     });
 
     it('should call onChange when onTextChange is triggered', () => {
-      const result = toTextViewModel(mockEntry);
+      const result = toTextViewModel(mockEntry, mockStyles);
       result.onTextChange('new text');
       expect(mockEntry.onChange).toHaveBeenCalledWith('new text');
     });
@@ -149,16 +166,19 @@ describe('entry mappers', () => {
 
   describe('toNumberViewModel', () => {
     it('should map to NumberViewModel correctly', () => {
-      const result = toNumberViewModel(mockEntry);
+      const result = toNumberViewModel(mockEntry, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.NUMBER);
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'inputContainer');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
+
       expect(result).toEqual({
         fieldId: 'test-field',
         entryId: 'test-entry',
         primitiveType: PRIMITIVE_TYPES.NUMBER,
         isVisible: true,
         label: 'Test Label',
-        value: "test value",
+        value: 'test value',
         placeholder: 'Test Placeholder',
         containerStyle: { padding: 5, styled: true },
         labelStyle: { margin: 10, styled: true },
@@ -167,7 +187,7 @@ describe('entry mappers', () => {
     });
 
     it('should call onChange when onNumberChange is triggered', () => {
-      const result = toNumberViewModel(mockEntry);
+      const result = toNumberViewModel(mockEntry, mockStyles);
       result.onNumberChange('42');
       expect(mockEntry.onChange).toHaveBeenCalledWith('42');
     });
@@ -175,10 +195,13 @@ describe('entry mappers', () => {
 
   describe('toCounterViewModel', () => {
     it('should map to CounterViewModel correctly', () => {
-      const result = toCounterViewModel(mockEntryWithNumberValue);
+      const result = toCounterViewModel(mockEntryWithNumberValue, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntryWithNumberValue, PRIMITIVE_TYPES.COUNTER);
       expect(helpers.toNumberValue).toHaveBeenCalledWith(42);
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntryWithNumberValue.childStyle, mockStyles, 'inputContainer');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntryWithNumberValue.style, mockStyles, 'entryLabel');
+
       expect(result).toEqual({
         fieldId: 'test-field',
         entryId: 'test-entry',
@@ -194,12 +217,12 @@ describe('entry mappers', () => {
 
     it('should handle undefined value', () => {
       const entryWithUndefined = { ...mockEntry, value: undefined };
-      const result = toCounterViewModel(entryWithUndefined);
+      const result = toCounterViewModel(entryWithUndefined, mockStyles);
       expect(result.value).toBe(0);
     });
 
     it('should call onChange when onCounterChange is triggered', () => {
-      const result = toCounterViewModel(mockEntryWithNumberValue);
+      const result = toCounterViewModel(mockEntryWithNumberValue, mockStyles);
       result.onCounterChange(99);
       expect(mockEntry.onChange).toHaveBeenCalledWith(99);
     });
@@ -207,10 +230,13 @@ describe('entry mappers', () => {
 
   describe('toToggleViewModel', () => {
     it('should map to ToggleViewModel correctly', () => {
-      const result = toToggleViewModel(mockEntryWithBooleanValue);
+      const result = toToggleViewModel(mockEntryWithBooleanValue, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntryWithBooleanValue, PRIMITIVE_TYPES.TOGGLE);
       expect(helpers.toBooleanValue).toHaveBeenCalledWith(true);
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntryWithBooleanValue.childStyle, mockStyles, 'inputContainer');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntryWithBooleanValue.style, mockStyles, 'entryLabel');
+
       expect(result).toEqual({
         fieldId: 'test-field',
         entryId: 'test-entry',
@@ -228,12 +254,12 @@ describe('entry mappers', () => {
 
     it('should handle false value', () => {
       const entryWithFalse = { ...mockEntry, value: false };
-      const result = toToggleViewModel(entryWithFalse);
+      const result = toToggleViewModel(entryWithFalse, mockStyles);
       expect(result.value).toBe(false);
     });
 
     it('should call onChange when onToggle is triggered', () => {
-      const result = toToggleViewModel(mockEntryWithBooleanValue);
+      const result = toToggleViewModel(mockEntryWithBooleanValue, mockStyles);
       result.onToggle(false);
       expect(mockEntry.onChange).toHaveBeenCalledWith(false);
     });
@@ -241,18 +267,18 @@ describe('entry mappers', () => {
 
   describe('toChipGroupViewModel', () => {
     it('should map to ChipGroupViewModel correctly', () => {
-      const result = toChipGroupViewModel(mockEntry);
+      const result = toChipGroupViewModel(mockEntry, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.CHIP_GROUP);
       expect(helpers.toStringValue).toHaveBeenCalledWith('test value');
-      expect(helpers.getEmptyStyle).toHaveBeenCalled();
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style);
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle);
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'inputContainer');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'inputContainer');
 
       expect(result.label).toBe('Test Label');
       expect(result.chips).toHaveLength(3);
-      
-      // Check eerste chip
+
+      // Eerste chip — niet geselecteerd
       expect(result.chips[0]).toEqual({
         label: 'opt1',
         selected: false,
@@ -263,20 +289,20 @@ describe('entry mappers', () => {
         accessibilityState: { selected: false },
       });
 
-      // Check dat de geselecteerde chip klopt
+      // Geselecteerde chip
       const entryWithSelected = { ...mockEntry, value: 'opt2' };
-      const resultWithSelected = toChipGroupViewModel(entryWithSelected);
+      const resultWithSelected = toChipGroupViewModel(entryWithSelected, mockStyles);
       expect(resultWithSelected.chips[1].selected).toBe(true);
       expect(resultWithSelected.chips[1].accessibilityState).toEqual({ selected: true });
     });
 
     it('should handle empty options array', () => {
-      const result = toChipGroupViewModel(mockEntryWithoutOptions);
+      const result = toChipGroupViewModel(mockEntryWithoutOptions, mockStyles);
       expect(result.chips).toEqual([]);
     });
 
     it('should call onChange when chip is pressed', () => {
-      const result = toChipGroupViewModel(mockEntry);
+      const result = toChipGroupViewModel(mockEntry, mockStyles);
       result.chips[0].onPress();
       expect(mockEntry.onChange).toHaveBeenCalledWith('opt1');
     });
@@ -284,18 +310,17 @@ describe('entry mappers', () => {
 
   describe('toRadioViewModel', () => {
     it('should map to RadioViewModel correctly', () => {
-      const result = toRadioViewModel(mockEntry);
+      const result = toRadioViewModel(mockEntry, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.RADIO);
       expect(helpers.toStringValue).toHaveBeenCalledWith('test value');
-      expect(helpers.getEmptyStyle).toHaveBeenCalled();
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style);
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle);
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'inputContainer');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'inputContainer');
 
       expect(result.label).toBe('Test Label');
       expect(result.options).toHaveLength(3);
-      
-      // Check eerste optie
+
       expect(result.options[0]).toEqual({
         label: 'opt1',
         value: 'opt1',
@@ -303,19 +328,19 @@ describe('entry mappers', () => {
         onSelect: expect.any(Function),
       });
 
-      // Check dat de geselecteerde optie klopt
+      // Geselecteerde optie
       const entryWithSelected = { ...mockEntry, value: 'opt2' };
-      const resultWithSelected = toRadioViewModel(entryWithSelected);
+      const resultWithSelected = toRadioViewModel(entryWithSelected, mockStyles);
       expect(resultWithSelected.options[1].selected).toBe(true);
     });
 
     it('should handle empty options array', () => {
-      const result = toRadioViewModel(mockEntryWithoutOptions);
+      const result = toRadioViewModel(mockEntryWithoutOptions, mockStyles);
       expect(result.options).toEqual([]);
     });
 
     it('should call onChange when option is selected', () => {
-      const result = toRadioViewModel(mockEntry);
+      const result = toRadioViewModel(mockEntry, mockStyles);
       result.options[0].onSelect();
       expect(mockEntry.onChange).toHaveBeenCalledWith('opt1');
     });
@@ -323,10 +348,10 @@ describe('entry mappers', () => {
 
   describe('toActionViewModel', () => {
     it('should map to ActionViewModel correctly', () => {
-      const result = toActionViewModel(mockEntry);
+      const result = toActionViewModel(mockEntry, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.ACTION);
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style);
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'inputContainer');
 
       expect(result).toEqual({
         fieldId: 'test-field',
@@ -340,7 +365,7 @@ describe('entry mappers', () => {
     });
 
     it('should call onChange with null when onPress is triggered', () => {
-      const result = toActionViewModel(mockEntry);
+      const result = toActionViewModel(mockEntry, mockStyles);
       result.onPress();
       expect(mockEntry.onChange).toHaveBeenCalledWith(null);
     });
@@ -348,13 +373,13 @@ describe('entry mappers', () => {
 
   describe('toLabelViewModel', () => {
     it('should map to LabelViewModel correctly', () => {
-      const result = toLabelViewModel(mockEntry);
+      const result = toLabelViewModel(mockEntry, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.LABEL);
       expect(helpers.toStringValue).toHaveBeenCalledWith('test value');
-      expect(helpers.getEmptyStyle).toHaveBeenCalled();
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style);
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle);
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'inputContainer');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'entryLabel');
 
       expect(result).toEqual({
         fieldId: 'test-field',
@@ -364,14 +389,14 @@ describe('entry mappers', () => {
         label: 'Test Label',
         value: 'test value',
         containerStyle: { margin: 10, styled: true },
-        labelStyle: { empty: true },
+        labelStyle: { margin: 10, styled: true },
         valueStyle: { padding: 5, styled: true },
       });
     });
 
     it('should handle undefined value', () => {
       const entryWithUndefined = { ...mockEntry, value: undefined };
-      const result = toLabelViewModel(entryWithUndefined);
+      const result = toLabelViewModel(entryWithUndefined, mockStyles);
       expect(result.value).toBe('');
     });
   });
