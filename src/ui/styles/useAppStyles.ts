@@ -1,5 +1,5 @@
 /**
- * Assembleert en levert het volledige, gecachede stylesheet voor het actieve thema.
+ * Assembleert en levert het volledige, ge-cached stylesheet voor het actieve thema.
  *
  * @module ui/styles
  * @see {@link ./README.md | Styles — Details}
@@ -43,7 +43,7 @@ const styleCache: Partial<Record<Theme, ReturnType<typeof StyleSheet.create>>> =
  * Bouwt en cachet het volledige stylesheet voor een gegeven thema.
  *
  * @param theme - Het actieve thema (`'light'` of `'dark'`)
- * @returns Gecached `StyleSheet`-object met alle geassembleerde stijlen
+ * @returns Ge-cached `StyleSheet`-object met alle geassembleerde stijlen
  */
 export function getAppStyles(theme: Theme) {
   const cachedStyles = styleCache[theme];

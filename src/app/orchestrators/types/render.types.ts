@@ -8,7 +8,14 @@
  * @remarks
  * Bevat uitsluitend types — geen logica. Re-geëxporteerd door `MasterOrchestrator`
  * voor backward compatibility met bestaande consumers.
+ *
+ * `RenderEntryVM.styleIntent` is een doorgethread veld: het wordt één-op-één gekopieerd
+ * van `EntryDefinition.styleIntent` (domeinlaag) naar dit type (orchestratorlaag).
+ * De orchestrator voegt **geen logica toe** — hij geeft de intentie enkel door.
+ * De vertaling van intentie naar een concrete stijlsleutel vindt uitsluitend plaats
+ * in `entry.mappers.ts` (UI-laag), via `ACTION_STYLE_MAP`.
  */
+import type { StyleIntent } from '@domain/registry/EntryRegistry';
 
 /**
  * Volledig scherm-model, gereed voor directe UI-rendering.
@@ -53,5 +60,16 @@ export interface RenderEntryVM {
   optionsKey?: string;
   style?: unknown;
   childStyle?: unknown;
+  /**
+   * Semantische intentie voor ACTION primitives — doorgethread vanuit `EntryDefinition`.
+   *
+   * @remarks
+   * De orchestrator kopieert dit veld één-op-één; er wordt geen logica toegevoegd.
+   * Non-ACTION primitives laten dit veld weg (`undefined`).
+   *
+   * @see {@link StyleIntent} voor geldige waarden
+   * @see `ACTION_STYLE_MAP` in `entry.mappers.ts` voor de stijlvertaling
+   */
+  styleIntent?: StyleIntent;
   onChange: (value: unknown) => void;
 }

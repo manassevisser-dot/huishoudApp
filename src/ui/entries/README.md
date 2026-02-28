@@ -13,24 +13,27 @@ De `entries`-map bevat de volledige entry-renderingketen: van een ruwe `RenderEn
 - **Afhankelijkheidsrichting**: entries → `@ui/kernel` (types), `@ui/styles/useAppStyles`, `@app/orchestrators` (types only)
 
 ```
-RenderEntryVM  (van UIOrchestrator)
+RenderEntryVM  (van UIOrchestrator, incl. styleIntent)
       │
       ▼
 DynamicEntry.tsx          ← enige plek waar useAppStyles() wordt aangeroepen
       │  styles: AppStyles
       ▼
 entry.mappers.ts          ← pure functies, geen React-context
+  PRIMITIVE_STYLE_CONFIG   ← centrale fallback-config per primitiveType
+  ACTION_STYLE_MAP         ← StyleIntent → AppStyles-sleutel mapping
   toCurrencyViewModel(entry, styles)
   toCounterViewModel(entry, styles)
+  toActionViewModel(entry, styles)  ← leest styleIntent voor variant
   … (10 mappers totaal)
-      │  toStyleRule(entry.childStyle, styles, 'inputContainer')
+      │  resolveContainerStyle(entry, styles, config)
       ▼
 entry.helpers.ts          ← stateless primitives
-  toStyleRule / toStringValue / toNumberValue / toBaseViewModel
+  resolveContainerStyle / toStyleRule / toStringValue / toBaseViewModel
       │
       ▼
 entries.components.tsx    ← domme componenten, binden viewModel aan primitives
-  MoneyEntry / CounterEntry / … (10 totaal)
+  MoneyEntry / CounterEntry / ActionEntry (geen variantkennis) / … (10 totaal)
 ```
 
 ---
@@ -71,6 +74,7 @@ toXxxViewModel(entry: RenderEntryVM, styles: AppStyles): XxxViewModel
 | Helper | Signatuur | Beschrijving |
 |---|---|---|
 | `toStyleRule` | `(style, styles?, fallbackKey?) => PrimitiveStyleRule` | Resolvet style-input naar RN-stijlobject |
+| `resolveContainerStyle` | `(entry, styles, config) => PrimitiveStyleRule` | Centraal: leest bron en fallback uit `PrimitiveStyleConfig` |
 | `getEmptyStyle` | `() => PrimitiveStyleRule` | Gedeeld leeg object (singleton) |
 | `toStringValue` | `(value) => string` | Veilig casten naar string |
 | `toNumberValue` | `(value) => number` | Veilig casten naar number |
@@ -92,12 +96,26 @@ Mappers en helpers zijn pure functies — ze ontvangen `styles` als parameter. D
 2. String-input + `styles` + `fallbackKey` → `styles[fallbackKey]`
 3. Overige input → `{}`
 
+**`PRIMITIVE_STYLE_CONFIG` is de SSOT voor fallback-sleutels.**
+Elke mapper leest zijn stijlconfiguratie uit deze centrale tabel via `resolveContainerStyle`. Fallback-sleutels worden nooit direct in mapper-functies hardcoded. TypeScript dwingt af via `string & keyof AppStyles` dat de sleutel **werkelijk bestaat** — een ontbrekende sleutel geeft een compile-time fout.
+
+**`ACTION_STYLE_MAP` koppelt `StyleIntent` aan `AppStyles`-sleutels.**
+De mapper is de enige plek waar intentie (`'destructive'`) wordt vertaald naar een stijlsleutel (`'actionButtonDestructive'`). De `ButtonPrimitive`-component weet niet welke variant hij ontvangt.
+
 **Een nieuwe primitive toevoegen:**
 1. `PRIMITIVE_TYPES` uitbreiden in `PrimitiveRegistry`
 2. ViewModel-interface toevoegen aan `PrimitiveRegistry.ts`
-3. Mapper toevoegen in `entry.mappers.ts`
-4. Entry-component toevoegen in `entries.components.tsx`
-5. Case toevoegen in `DynamicEntry.tsx` switch-statement
+3. **Entry toevoegen in `PRIMITIVE_STYLE_CONFIG`** in `entry.mappers.ts`
+4. Mapper toevoegen in `entry.mappers.ts`
+5. Entry-component toevoegen in `entries.components.tsx`
+6. Case toevoegen in `DynamicEntry.tsx` switch-statement
+7. **Integratietest toevoegen** in `entry.style-resolution.integration.test.ts`
+
+**Een nieuwe ACTION-variant toevoegen:**
+1. `StyleIntent` uitbreiden in `EntryRegistry.ts`
+2. Stijl toevoegen aan `makePrimaryButtons` in `Buttons.ts`
+3. Sleutel toevoegen aan `ACTION_STYLE_MAP` in `entry.mappers.ts`
+4. Integratietest uitbreiden voor de nieuwe variant
 
 ---
 
@@ -110,25 +128,36 @@ Mappers en helpers zijn pure functies — ze ontvangen `styles` als parameter. D
 // Mapper direct aanroepen (in tests of andere contexts)
 const { styles } = useAppStyles();
 const vm = toCounterViewModel(renderEntryVM, styles);
-// vm.containerStyle is nu een echt RN-stijlobject
+// vm.containerStyle is nu een echt RN-stijlobject via resolveContainerStyle
 
 // toStyleRule gedrag
-toStyleRule({ margin: 8 }, styles, 'inputContainer')
-// → { margin: 8 }  (object-input heeft prioriteit)
+toStyleRule({ margin: 8 }, styles, 'entryContainer')
+// → { margin: 8 }  (object-input heeft prioriteit, fallback genegeerd)
 
-toStyleRule('primitive:counter', styles, 'inputContainer')
-// → styles.inputContainer  (string-input → fallback)
+toStyleRule('primitive:counter', styles, 'entryContainer')
+// → styles.entryContainer  (string-input → fallback opgezocht)
 
 toStyleRule('onbekend')
 // → {}  (geen styles-param → leeg)
+
+// ACTION-variant: destructive knop (goToReset, clearAllAction)
+const destructiveVm = toActionViewModel(
+  { ...entry, styleIntent: 'destructive' },
+  styles
+);
+// destructiveVm.containerStyle === styles.actionButtonDestructive
+// (error-kleur, waarschuwing voor onomkeerbare actie)
 ```
 
 ---
 
 ## 🔗 Gerelateerd
 
-- [`UIOrchestrator`](../../app/orchestrators/UIOrchestrator.ts) — produceert `RenderEntryVM`
-- [`render.types.ts`](../../app/orchestrators/types/render.types.ts) — type-definitie `RenderEntryVM`
+- [`UIOrchestrator`](../../app/orchestrators/UIOrchestrator.ts) — produceert `RenderEntryVM`, threadt `styleIntent` door
+- [`render.types.ts`](../../app/orchestrators/types/render.types.ts) — type-definitie `RenderEntryVM` incl. `styleIntent`
 - [`useAppStyles`](../styles/useAppStyles.ts) — levert het `AppStyles`-object
 - [`PrimitiveRegistry`](../../domain/registry/PrimitiveRegistry.ts) — ViewModel-typen en primitiveType-SSOT
 - [`StyleFactory`](../../app/orchestrators/factory/StyleFactory.ts) — identity-resolver die style-sleutels produceert
+- [`EntryRegistry`](../../domain/registry/EntryRegistry.ts) — `StyleIntent` type + `styleIntent` per entry
+- [`Buttons.ts`](../../domain/styles/primitives/Buttons.ts) — `actionButton*` stijldefinities
+- [`entry.style-resolution.integration.test.ts`](./entry.style-resolution.integration.test.ts) — integratietests voor fallback-sleutels

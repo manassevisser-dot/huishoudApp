@@ -10,6 +10,28 @@
  */
 
 import { PRIMITIVE_TYPES, PrimitiveType } from './PrimitiveRegistry';
+
+/**
+ * Semantische intentie voor de visuele weergave van een ACTION primitive.
+ *
+ * @remarks
+ * `StyleIntent` is een domein-concept: het beschrijft de **betekenis** van een actie
+ * ("dit is gevaarlijk", "dit is de primaire weg"), niet het uiterlijk. Het uiterlijk
+ * wordt bepaald door de UI-laag via `ACTION_STYLE_MAP` in `entry.mappers.ts`.
+ *
+ * Hierdoor kan het domein beslissen over intentie zonder te weten welke kleur
+ * "destructive" heeft in het huidige thema — een DDD-zuivere scheiding.
+ *
+ * | Waarde        | Betekenis                                    | Voorbeeld entries          |
+ * |---------------|----------------------------------------------|----------------------------|
+ * | `'primary'`   | Primaire actie, meest prominent              | `startWizard`              |
+ * | `'secondary'` | Ondersteunende actie, minder prominent       | `goToDashboard`            |
+ * | `'neutral'`   | Neutraal, geen sterke visuele lading         | `goToSettings`, `undoAction`|
+ * | `'destructive'`| Onomkeerbare of gevaarlijke actie           | `goToReset`, `clearAllAction`|
+ *
+ * @architectural_layer Domain — geëxporteerd naar UI via `RenderEntryVM.styleIntent`
+ */
+export type StyleIntent = 'primary' | 'secondary' | 'neutral' | 'destructive';
 import { IBaseRegistry } from './BaseRegistry';
 import type { VisibilityRuleName } from '@domain/rules/fieldVisibility';
 import {
@@ -38,6 +60,20 @@ export interface EntryDefinition {
   navigationTarget?: string;
   /** Alleen voor ACTION primitives: het reducer-command dat ge-dispatched wordt (bijv. 'UNDO'). */
   commandTarget?: string;
+  /**
+   * Semantische intentie voor de visuele weergave — uitsluitend relevant voor ACTION primitives.
+   *
+   * @remarks
+   * Bepaalt welke `AppStyles`-sleutel de UI-mapper kiest via `ACTION_STYLE_MAP`.
+   * Stel in op `'destructive'` voor onomkeerbare of gevaarlijke acties (reset, clear-all),
+   * `'secondary'` voor ondersteunende knoppen (bijv. inloggen naast aanmelden).
+   *
+   * Wanneer weggelaten valt de mapper terug op `'primary'` (standaard primaire knopstijl).
+   *
+   * @see {@link StyleIntent} voor alle geldige waarden en hun betekenis
+   * @see `ACTION_STYLE_MAP` in `entry.mappers.ts` voor de vertaling naar stijlsleutels
+   */
+  styleIntent?: StyleIntent;
 }
 
 export const ENTRY_REGISTRY: Record<string, EntryDefinition> = {
@@ -290,6 +326,7 @@ export const ENTRY_REGISTRY: Record<string, EntryDefinition> = {
     primitiveType: PRIMITIVE_TYPES.ACTION,
     labelToken: 'goToDashboard',
     navigationTarget: 'DASHBOARD',
+    styleIntent: 'secondary',
   },
 
   // ==================== OPTIONS NAVIGATIE ====================
@@ -307,6 +344,7 @@ export const ENTRY_REGISTRY: Record<string, EntryDefinition> = {
     primitiveType: PRIMITIVE_TYPES.ACTION,
     labelToken: 'goToReset',
     navigationTarget: 'RESET',
+    styleIntent: 'destructive',
   },
 
   // ==================== UNDO SCHERM ACTIES ====================
@@ -324,6 +362,7 @@ export const ENTRY_REGISTRY: Record<string, EntryDefinition> = {
     primitiveType: PRIMITIVE_TYPES.ACTION,
     labelToken: 'clearAllAction',
     commandTarget: 'CLEAR_ALL',
+    styleIntent: 'destructive',
   },
 
   // ==================== SETTINGS ====================

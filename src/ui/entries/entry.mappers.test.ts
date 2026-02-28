@@ -15,9 +15,10 @@ import { PRIMITIVE_TYPES } from '@ui/kernel';
 import type { RenderEntryVM } from '@app/orchestrators/MasterOrchestrator';
 import * as helpers from './entry.helpers';
 
-// Mock helpers — toStyleRule handelt nu 3 argumenten af:
-// object-input → spread + styled:true (bestaand gedrag, 3e arg genegeerd)
-// string/ander input → { resolved: fallbackKey } (zodat tests de juiste key kunnen verifiëren)
+// Mock helpers — toStyleRule en resolveContainerStyle worden gemockt:
+// object-input → spread + styled:true (object-pad, fallback genegeerd)
+// string/ander input → { resolved: fallbackKey }
+// resolveContainerStyle → delegeert aan toStyleRule-mock via de config
 jest.mock('./entry.helpers', () => ({
   getEmptyStyle: jest.fn().mockReturnValue({ empty: true }),
   toStyleRule: jest.fn().mockImplementation((style, _styles, fallbackKey) => {
@@ -25,6 +26,13 @@ jest.mock('./entry.helpers', () => ({
       return { ...style, styled: true };
     }
     return { resolved: fallbackKey ?? 'empty' };
+  }),
+  resolveContainerStyle: jest.fn().mockImplementation((entry, _styles, config) => {
+    const source = config.containerSource === 'childStyle' ? entry.childStyle : entry.style;
+    if (source !== null && typeof source === 'object' && !Array.isArray(source)) {
+      return { ...source, styled: true };
+    }
+    return { resolved: config.containerFallback ?? 'empty' };
   }),
   toStringValue: jest.fn().mockImplementation((value) => (typeof value === 'string' ? value : '')),
   toNumberValue: jest.fn().mockImplementation((value) => (typeof value === 'number' && Number.isFinite(value) ? value : 0)),
@@ -83,7 +91,12 @@ describe('entry mappers', () => {
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.CURRENCY);
       expect(helpers.toStringValue).toHaveBeenCalledWith(mockEntry.value);
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'inputContainer');
+      // resolveContainerStyle vervangt de directe toStyleRule-aanroep voor containerStyle
+      expect(helpers.resolveContainerStyle).toHaveBeenCalledWith(
+        mockEntry,
+        mockStyles,
+        expect.objectContaining({ containerSource: 'childStyle', containerFallback: 'entryContainer' })
+      );
       expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
 
       expect(result).toEqual({
@@ -94,7 +107,7 @@ describe('entry mappers', () => {
         label: 'Test Label',
         value: 'test value',
         placeholder: 'Test Placeholder',
-        containerStyle: { padding: 5, styled: true },
+        containerStyle: { padding: 5, styled: true }, // childStyle is object → spread
         labelStyle: { margin: 10, styled: true },
         onCurrencyChange: expect.any(Function),
       });
@@ -112,7 +125,10 @@ describe('entry mappers', () => {
       const result = toDateViewModel(mockEntry, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.DATE);
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'inputContainer');
+      expect(helpers.resolveContainerStyle).toHaveBeenCalledWith(
+        mockEntry, mockStyles,
+        expect.objectContaining({ containerSource: 'childStyle', containerFallback: 'entryContainer' })
+      );
       expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
 
       expect(result).toEqual({
@@ -140,7 +156,10 @@ describe('entry mappers', () => {
       const result = toTextViewModel(mockEntry, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.TEXT);
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'inputContainer');
+      expect(helpers.resolveContainerStyle).toHaveBeenCalledWith(
+        mockEntry, mockStyles,
+        expect.objectContaining({ containerSource: 'childStyle', containerFallback: 'entryContainer' })
+      );
       expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
 
       expect(result).toEqual({
@@ -169,7 +188,10 @@ describe('entry mappers', () => {
       const result = toNumberViewModel(mockEntry, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.NUMBER);
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'inputContainer');
+      expect(helpers.resolveContainerStyle).toHaveBeenCalledWith(
+        mockEntry, mockStyles,
+        expect.objectContaining({ containerSource: 'childStyle', containerFallback: 'entryContainer' })
+      );
       expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
 
       expect(result).toEqual({
@@ -199,7 +221,10 @@ describe('entry mappers', () => {
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntryWithNumberValue, PRIMITIVE_TYPES.COUNTER);
       expect(helpers.toNumberValue).toHaveBeenCalledWith(42);
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntryWithNumberValue.childStyle, mockStyles, 'inputContainer');
+      expect(helpers.resolveContainerStyle).toHaveBeenCalledWith(
+        mockEntryWithNumberValue, mockStyles,
+        expect.objectContaining({ containerSource: 'childStyle', containerFallback: 'entryContainer' })
+      );
       expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntryWithNumberValue.style, mockStyles, 'entryLabel');
 
       expect(result).toEqual({
@@ -234,7 +259,10 @@ describe('entry mappers', () => {
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntryWithBooleanValue, PRIMITIVE_TYPES.TOGGLE);
       expect(helpers.toBooleanValue).toHaveBeenCalledWith(true);
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntryWithBooleanValue.childStyle, mockStyles, 'inputContainer');
+      expect(helpers.resolveContainerStyle).toHaveBeenCalledWith(
+        mockEntryWithBooleanValue, mockStyles,
+        expect.objectContaining({ containerSource: 'childStyle', containerFallback: 'entryContainer' })
+      );
       expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntryWithBooleanValue.style, mockStyles, 'entryLabel');
 
       expect(result).toEqual({
@@ -271,9 +299,12 @@ describe('entry mappers', () => {
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.CHIP_GROUP);
       expect(helpers.toStringValue).toHaveBeenCalledWith('test value');
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'inputContainer');
+      expect(helpers.resolveContainerStyle).toHaveBeenCalledWith(
+        mockEntry, mockStyles,
+        expect.objectContaining({ containerSource: 'style', containerFallback: 'entryContainer' })
+      );
       expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'inputContainer');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'entryContainer');
 
       expect(result.label).toBe('Test Label');
       expect(result.chips).toHaveLength(3);
@@ -314,9 +345,12 @@ describe('entry mappers', () => {
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.RADIO);
       expect(helpers.toStringValue).toHaveBeenCalledWith('test value');
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'inputContainer');
+      expect(helpers.resolveContainerStyle).toHaveBeenCalledWith(
+        mockEntry, mockStyles,
+        expect.objectContaining({ containerSource: 'style', containerFallback: 'entryContainer' })
+      );
       expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'inputContainer');
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'entryContainer');
 
       expect(result.label).toBe('Test Label');
       expect(result.options).toHaveLength(3);
@@ -347,11 +381,13 @@ describe('entry mappers', () => {
   });
 
   describe('toActionViewModel', () => {
-    it('should map to ActionViewModel correctly', () => {
+    it('should map to ActionViewModel with primary intent (default)', () => {
       const result = toActionViewModel(mockEntry, mockStyles);
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.ACTION);
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'inputContainer');
+      // Geen styleIntent → valt terug op 'primary' → fallback 'actionButton'
+      // entry.childStyle is een object { padding: 5 } → spread + styled:true
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'actionButton');
 
       expect(result).toEqual({
         fieldId: 'test-field',
@@ -359,9 +395,27 @@ describe('entry mappers', () => {
         primitiveType: PRIMITIVE_TYPES.ACTION,
         isVisible: true,
         label: 'Test Label',
-        containerStyle: { margin: 10, styled: true },
+        containerStyle: { padding: 5, styled: true }, // childStyle is object → spread
         onPress: expect.any(Function),
       });
+    });
+
+    it('should use actionButtonDestructive for destructive intent', () => {
+      const destructiveEntry = { ...mockEntry, styleIntent: 'destructive' as const };
+      toActionViewModel(destructiveEntry, mockStyles);
+
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(
+        destructiveEntry.childStyle, mockStyles, 'actionButtonDestructive'
+      );
+    });
+
+    it('should use actionButtonSecondary for secondary intent', () => {
+      const secondaryEntry = { ...mockEntry, styleIntent: 'secondary' as const };
+      toActionViewModel(secondaryEntry, mockStyles);
+
+      expect(helpers.toStyleRule).toHaveBeenCalledWith(
+        secondaryEntry.childStyle, mockStyles, 'actionButtonSecondary'
+      );
     });
 
     it('should call onChange with null when onPress is triggered', () => {
@@ -377,7 +431,10 @@ describe('entry mappers', () => {
 
       expect(helpers.toBaseViewModel).toHaveBeenCalledWith(mockEntry, PRIMITIVE_TYPES.LABEL);
       expect(helpers.toStringValue).toHaveBeenCalledWith('test value');
-      expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'inputContainer');
+      expect(helpers.resolveContainerStyle).toHaveBeenCalledWith(
+        mockEntry, mockStyles,
+        expect.objectContaining({ containerSource: 'style', containerFallback: 'entryContainer' })
+      );
       expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.style, mockStyles, 'entryLabel');
       expect(helpers.toStyleRule).toHaveBeenCalledWith(mockEntry.childStyle, mockStyles, 'entryLabel');
 

@@ -94,9 +94,55 @@ Beide types delen de `ChipGroupViewModel`-shape. Het verschil zit uitsluitend in
 
 ---
 
+---
+
+## 🎨 StyleIntent — ACTION variant-architectuur
+
+### Wat is `StyleIntent`?
+
+`StyleIntent` is een domein-concept dat de **semantische betekenis** van een ACTION primitive vastlegt. Het beschrijft *wat de actie is* (gevaarlijk, primair, ondersteunend), niet *hoe hij eruitziet*.
+
+```typescript
+export type StyleIntent = 'primary' | 'secondary' | 'neutral' | 'destructive';
+```
+
+### Waarom in de domeinlaag?
+
+Het domein weet wat een actie betekent: `clearAllAction` is onomkeerbaar, `startWizard` is de primaire weg. Het domein weet **niet** welke kleur "destructive" heeft in het huidige thema — dat is UI-kennis.
+
+Deze scheiding is een DDD-grens:
+
+```
+Domein:       styleIntent: 'destructive'   ← wat de actie is
+Orchestrator: RenderEntryVM.styleIntent    ← één-op-één doorsturen, geen logica
+UI mapper:    ACTION_STYLE_MAP['destructive'] → 'actionButtonDestructive'   ← vertaling naar stijl
+```
+
+### Welke entries gebruiken `styleIntent`?
+
+| Entry | `styleIntent` | Reden |
+|---|---|---|
+| `startWizard` | *(ontbreekt = primary)* | Standaard primaire actie |
+| `goToDashboard` | `'secondary'` | Inloggen is minder prominent dan aanmelden |
+| `goToSettings` | *(ontbreekt = primary)* | Neutrale navigatie |
+| `goToCsvUpload` | *(ontbreekt = primary)* | Neutrale navigatie |
+| `goToReset` | `'destructive'` | Reset is onomkeerbaar |
+| `undoAction` | *(ontbreekt = primary)* | Reversibele actie |
+| `redoAction` | *(ontbreekt = primary)* | Reversibele actie |
+| `clearAllAction` | `'destructive'` | Verwijdert alle transacties |
+
+### Architecturale randvoorwaarden
+
+- **GEEN stijllogica in domein**: `EntryDefinition.styleIntent` is een string-label, nooit een kleur of stijlobject
+- **GEEN conditionele variantlogica in UI-componenten**: `ButtonPrimitive` consumeert één `containerStyle` zonder te weten welke variant
+- **Mapper is de enige vertaalplek**: `ACTION_STYLE_MAP` in `entry.mappers.ts` is de enige plek waar intentie wordt omgezet naar een `AppStyles`-sleutel
+
+---
+
 ## 🔗 Gerelateerd
 
 - [`TODO.md`](./TODO.md) — Refactorvoorstellen voor deze map
-- [`entry.mappers.ts`](../../ui/entries/entry.mappers.ts) — Converteert `RenderEntryVM` → `*ViewModel`
+- [`entry.mappers.ts`](../../ui/entries/entry.mappers.ts) — Converteert `RenderEntryVM` → `*ViewModel` en bevat `ACTION_STYLE_MAP`
 - [`entries.components.tsx`](../../ui/entries/entries.components.tsx) — React Native componenten per ViewModel
 - [`SCREEN_ARCHITECTURE.md`](../screens/SCREEN_ARCHITECTURE.md) — Volledige rendering-pipeline
+- [`Buttons.ts`](../styles/primitives/Buttons.ts) — `actionButton`, `actionButtonSecondary`, `actionButtonDestructive` stijldefinities

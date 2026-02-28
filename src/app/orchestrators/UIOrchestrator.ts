@@ -164,6 +164,10 @@ export class UIOrchestrator implements IUIOrchestrator {
       optionsKey: entry.optionsKey,
       style: entry.style,
       childStyle: entry.child.style,
+      // Één-op-één doorgeven vanuit EntryDefinition — geen logica, puur doorgeven.
+      // De vertaling van intent naar stijlsleutel vindt uitsluitend plaats in
+      // entry.mappers.ts (ACTION_STYLE_MAP). De orchestrator is intentie-transparant.
+      styleIntent: entryDef.styleIntent,
       onChange: this.resolveChangeHandler(meta, context),
     };
   }

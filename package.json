@@ -7,6 +7,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:regression": "jest src/__tests__/regression/ui-decoupling.integrity.test.ts",
+    "test:style": "jest src/ui/entries/entry.style-resolution.integration.test.ts --verbose",
     "UI-audit": "./phoenix-audit-v2.sh",
     "sync:aliases": "node scripts/sync-aliases/index.js",
     "cleanup:aliases": "node scripts/sync-aliases/cleanup-conflicts.js",

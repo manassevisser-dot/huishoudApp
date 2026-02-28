@@ -53,15 +53,11 @@ export const DynamicSection = memo(({
   titleStyle,
   containerStyle,
 }: DynamicSectionProps) => {
-  console.log('🔍 DynamicSection rendering:', title, 'children count:', children?.length);
-  console.log('🔍 children:', children);
-  
   const hasLabel = typeof title === 'string' && title.length > 0;
 
   const content = (
     <View>
       {children.map((entry: RenderEntryVM) => {
-        console.log('🔍 Rendering entry:', entry.entryId);
         return <DynamicEntry key={entry.entryId} entry={entry} />;
       })}
     </View>

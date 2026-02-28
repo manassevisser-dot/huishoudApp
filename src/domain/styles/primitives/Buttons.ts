@@ -46,17 +46,47 @@ function makePrimaryButtons(c: ColorScheme) {
       borderRadius: Radius.lg,
       marginLeft: Space.md,
     },
-    // Dit is de 'Disabled' staat uit de documentatie, vertaald naar jouw domein
-    buttonDisabled: {
-      backgroundColor: c.disabled !== "" ? c.disabled : '#ccc',
-      opacity: 0.5,
+  };
+}
+
+/**
+ * Standalone actie-knoppen voor ACTION primitives — drie varianten op basis van StyleIntent.
+ * Verschil met `button`: geen `marginLeft` (`button` is voor NavigationFooter-rijen).
+ */
+function makeActionButtons(c: ColorScheme) {
+  return {
+    /** Primary / neutral intent — brandkleur. */
+    actionButton: {
+      ...Layout.fullWidth,
+      ...Layout.centered,
+      backgroundColor: c.primary,
+      padding: Space.lg,
+      borderRadius: Radius.lg,
     },
-    buttonText: {
-      color: c.onPrimary,
-      fontSize: Type.lg,
-      fontWeight: '700' as const,
+    /** Secondary intent — minder prominent dan primary. */
+    actionButtonSecondary: {
+      ...Layout.fullWidth,
+      ...Layout.centered,
+      backgroundColor: c.secondary,
+      padding: Space.lg,
+      borderRadius: Radius.lg,
     },
-    buttonActive: { backgroundColor: c.primary },
+    /** Destructive intent — error-kleur als visuele waarschuwing voor onomkeerbare acties. */
+    actionButtonDestructive: {
+      ...Layout.fullWidth,
+      ...Layout.centered,
+      backgroundColor: c.error,
+      padding: Space.lg,
+      borderRadius: Radius.lg,
+    },
+  };
+}
+
+function makeButtonStates(c: ColorScheme) {
+  return {
+    buttonDisabled: { backgroundColor: c.disabled, opacity: 0.5 },
+    buttonText:     { color: c.onPrimary, fontSize: Type.lg, fontWeight: '700' as const },
+    buttonActive:   { backgroundColor: c.primary },
     buttonTextActive: { color: c.onPrimary, fontWeight: '700' as const },
   };
 }
@@ -65,6 +95,8 @@ export function makeButtons(c: ColorScheme) {
   return {
     ...makeButtonContainers(c),
     ...makePrimaryButtons(c),
+    ...makeActionButtons(c),
+    ...makeButtonStates(c),
     secondaryButton: {
       backgroundColor: c.secondary,
       marginLeft: 0,

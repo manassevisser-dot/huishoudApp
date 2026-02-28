@@ -1,18 +1,18 @@
 {
   "Envelope_Version": "Q-ENV-1.0",
-  "Artifact_ID": "PHOENIX-GATE-A-2026-02-27T17-00-34",
+  "Artifact_ID": "PHOENIX-GATE-A-2026-02-27T22-33-09",
   "Gate": "A",
   "Producing_Role": "Phoenix",
   "Status": "PENDING",
-  "Token_ID": "TOKEN-ID-PHOENIX-VERDICT-GO-980ceaf5",
+  "Token_ID": "TOKEN-ID-PHOENIX-VERDICT-GO-7172d16c",
   "Payload": {
     "phoenix_report": {
       "metadata": {
         "role": "Phoenix - Automated Code Quality Guardian",
         "version": "GEN4.0.0",
         "gate": "A",
-        "execution_time_ms": 11361,
-        "timestamp": "2026-02-27T17:00:34.852Z"
+        "execution_time_ms": 14222,
+        "timestamp": "2026-02-27T22:33:09.287Z"
       },
       "validators": {
         "alias_consistency": {
@@ -20,7 +20,7 @@
           "adr": "ADR-12",
           "blocking": true,
           "weight": 20,
-          "execution_time_ms": 2030,
+          "execution_time_ms": 2374,
           "message": "✅ Alias Consistency passed"
         },
         "forbidden_patterns": {
@@ -31,7 +31,7 @@
           ],
           "blocking": true,
           "weight": 25,
-          "execution_time_ms": 667,
+          "execution_time_ms": 736,
           "message": "✅ Forbidden Patterns passed"
         },
         "eslint_compliance": {
@@ -44,7 +44,7 @@
           ],
           "blocking": true,
           "weight": 25,
-          "execution_time_ms": 8664,
+          "execution_time_ms": 11112,
           "message": "✅ ESLint Compliance passed"
         }
       },
@@ -72,6 +72,6 @@
     "Previous_Gate": "0",
     "Locked": false,
     "Human_GO": "NOT_REQUIRED_FOR_GATE_A",
-    "Timestamp": "2026-02-27T17:00:34.852Z"
+    "Timestamp": "2026-02-27T22:33:09.287Z"
   }
 }

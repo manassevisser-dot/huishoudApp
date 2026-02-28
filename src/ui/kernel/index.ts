@@ -38,7 +38,7 @@ export { UI_SECTIONS } from '@domain/constants/uiSections';
 export { PRIMITIVE_TYPES } from '@domain/registry/PrimitiveRegistry';
 
 // ── Style-assembly (uitsluitend voor useAppStyles) ─────────────────────────
-// Thematiseerbare stijlregels uit de domeinlaag. Uitsluitend
+// Stijlregels uit de domeinlaag om Thema's te kunnen maken. Uitsluitend
 // useAppStyles.ts mag deze functies importeren — niet individuele componenten.
 export {
   makeLayout,
@@ -80,3 +80,12 @@ export type {
   DateViewModel,
   ActionViewModel,
 } from '@domain/registry/PrimitiveRegistry';
+
+/**
+ * Semantische intentie voor ACTION primitives.
+ * 
+ * @remarks
+ * Bepaalt de visuele variant van een actie-knop (primair, secundair, destructief).
+ * Wordt door de mapper vertaald naar de juiste stijlsleutel in AppStyles.
+ */
+export type { StyleIntent } from '@domain/registry/EntryRegistry';
