@@ -13,7 +13,13 @@ import type { CsvParseResult } from './types/csvUpload.types';
 // Mocks
 jest.mock('@domain/finance/StatementIntakePipeline');
 jest.mock('@adapters/csv/csvAdapter');
-jest.mock('@adapters/audit/AuditLoggerAdapter');
+jest.mock('@adapters/audit/AuditLoggerAdapter', () => ({
+  Logger: {
+    error: jest.fn(),
+    warning: jest.fn(),
+    info: jest.fn(),
+  },
+}));
 
 describe('ImportOrchestrator', () => {
   let orchestrator: ImportOrchestrator;
@@ -190,7 +196,8 @@ describe('ImportOrchestrator', () => {
       // Assert
       expect(result.status).toBe('error');
       if (result.status === 'error') {
-        expect(result.errorMessage).toBe('Fout bij verwerken van CSV');
+        // handleCsvError doet String(e) voor non-Error throws → geeft de string zelf terug
+        expect(result.errorMessage).toBe('String error');
       }
     });
   });

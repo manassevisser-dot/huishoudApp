@@ -74,38 +74,38 @@ export class ImportOrchestrator {
    * @param csvText - Ruwe CSV-tekst van de gebruiker (UTF-8).
    * @returns CsvParseResult — success met ParsedCsvTransaction[], empty of error.
    */
-  public processCsvImport(csvText: string): CsvParseResult {
-    try {
-      const transactions = this.parseAndEnrichCsv(csvText);
+  private handleCsvError(e: unknown): CsvParseResult {
+  const error = e instanceof Error ? e.message : String(e);
+  Logger.error('csv.parse.critical_failure', { 
+    error, 
+    stack: e instanceof Error ? e.stack : undefined,
+    originalError: e 
+  });
+  return {
+    status: 'error',
+    errorMessage: error !== '' ? error : 'Fout bij verwerken van CSV',
+    technicalDetails: { errorCode: 'PARSING_ERROR', originalError: e },
+  };
+}
 
-      if (transactions.length === 0) {
-        return {
-          status: 'empty',
-          message: 'Geen verwerkte transacties gevonden in het CSV-bestand.',
-        };
-      }
-
+public processCsvImport(csvText: string): CsvParseResult {
+  try {
+    const transactions = this.parseAndEnrichCsv(csvText);
+    if (transactions.length === 0) {
       return {
-        status: 'success',
-        transactions,
-        metadata: {
-          parsedCount: transactions.length,
-          skippedCount: 0, // TODO: bijhouden in parseAndEnrichCsv
-        },
-      };
-    } catch (e: unknown) {
-      Logger.error('[ImportOrchestrator] Critical failure in CSV-parsing pipeline:', e);
-      return {
-        status: 'error',
-        errorMessage: e instanceof Error ? e.message : 'Fout bij verwerken van CSV',
-        technicalDetails: {
-          errorCode: 'PARSING_ERROR',
-          originalError: e,
-        },
+        status: 'empty',
+        message: 'Geen verwerkte transacties gevonden in het CSV-bestand.',
       };
     }
+    return {
+      status: 'success',
+      transactions,
+      metadata: { parsedCount: transactions.length, skippedCount: 0 },
+    };
+  } catch (e: unknown) {
+    return this.handleCsvError(e);
   }
-
+}
   /* -------------------------------------------------------------------------- */
   /*                        CSV PARSING & ENRICHMENT                            */
   /* -------------------------------------------------------------------------- */

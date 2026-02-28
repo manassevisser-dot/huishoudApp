@@ -10,7 +10,7 @@
 
 import { DataManager } from './DataManager';
 import { ImportOrchestrator } from '@app/orchestrators/ImportOrchestrator';
-import { logger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import type { FormStateOrchestrator } from '@app/orchestrators/FormStateOrchestrator';
 import type { ResearchOrchestrator } from '@app/orchestrators/ResearchOrchestrator';
 import type { BusinessManager } from './BusinessManager';
@@ -58,9 +58,9 @@ describe('DataManager', () => {
     };
 
     // Mock logger
-    (logger.error as jest.Mock) = jest.fn();
-    (logger.warn as jest.Mock) = jest.fn();
-    (logger.info as jest.Mock) = jest.fn();
+    (Logger.error as jest.Mock) = jest.fn();
+    (Logger.warning as jest.Mock) = jest.fn();
+    (Logger.info as jest.Mock) = jest.fn();
 
     dataManager = new DataManager();
   });
@@ -93,8 +93,8 @@ describe('DataManager', () => {
       expect(mockBusiness.recompute).toHaveBeenCalledTimes(1);
       expect(mockBusiness.recompute).toHaveBeenCalledWith(mockFSO);
 
-      expect(logger.info).toHaveBeenCalledTimes(1);
-      expect(logger.info).toHaveBeenCalledWith('csv_parse_success_stub', {
+      expect(Logger.info).toHaveBeenCalledTimes(1);
+      expect(Logger.info).toHaveBeenCalledWith('csv_parse_success_stub', {
         orchestrator: 'data',
         action: 'executeImportWorkflow',
         count: 2,
@@ -124,7 +124,7 @@ describe('DataManager', () => {
       await dataManager.executeImportWorkflow(paramsWithoutBank, mockDeps);
 
       // Assert
-      expect(logger.info).toHaveBeenCalledWith('csv_parse_success_stub', {
+      expect(Logger.info).toHaveBeenCalledWith('csv_parse_success_stub', {
         orchestrator: 'data',
         action: 'executeImportWorkflow',
         count: 0,
@@ -156,13 +156,13 @@ describe('DataManager', () => {
 
       // Assert
       expect(mockBusiness.recompute).not.toHaveBeenCalled();
-      expect(logger.error).toHaveBeenCalledTimes(1);
-      expect(logger.error).toHaveBeenCalledWith('csv_parse_failed', {
+      expect(Logger.error).toHaveBeenCalledTimes(1);
+      expect(Logger.error).toHaveBeenCalledWith('csv_parse_failed', {
         orchestrator: 'data',
         action: 'executeImportWorkflow',
         error: 'Invalid CSV format',
       });
-      expect(logger.info).not.toHaveBeenCalled();
+      expect(Logger.info).not.toHaveBeenCalled();
     });
   });
 
@@ -184,13 +184,13 @@ describe('DataManager', () => {
 
       // Assert
       expect(mockBusiness.recompute).not.toHaveBeenCalled();
-      expect(logger.warn).toHaveBeenCalledTimes(1);
-      expect(logger.warn).toHaveBeenCalledWith('csv_parse_empty', {
+      expect(Logger.warning).toHaveBeenCalledTimes(1);
+      expect(Logger.warning).toHaveBeenCalledWith('csv_parse_empty', {
         orchestrator: 'data',
         action: 'executeImportWorkflow',
         fileName: mockParams.fileName,
       });
-      expect(logger.info).not.toHaveBeenCalled();
+      expect(Logger.info).not.toHaveBeenCalled();
     });
   });
 
@@ -216,7 +216,7 @@ describe('DataManager', () => {
 
       // Assert - we komen in het success pad
       expect(mockBusiness.recompute).toHaveBeenCalled();
-      expect(logger.info).toHaveBeenCalled();
+      expect(Logger.info).toHaveBeenCalled();
     });
 
     it('should return false for error result', async () => {
@@ -232,7 +232,7 @@ describe('DataManager', () => {
 
       // Assert - we komen in het error pad
       expect(mockBusiness.recompute).not.toHaveBeenCalled();
-      expect(logger.error).toHaveBeenCalled();
+      expect(Logger.error).toHaveBeenCalled();
     });
 
     it('should return false for empty result', async () => {
@@ -248,7 +248,7 @@ describe('DataManager', () => {
 
       // Assert - we komen in het empty pad
       expect(mockBusiness.recompute).not.toHaveBeenCalled();
-      expect(logger.warn).toHaveBeenCalled();
+      expect(Logger.warning).toHaveBeenCalled();
     });
   });
 
@@ -277,7 +277,7 @@ describe('DataManager', () => {
       await dataManager.executeImportWorkflow(paramsWithoutBank, mockDeps);
 
       // Assert
-      expect(logger.info).toHaveBeenCalledWith('csv_parse_success_stub', {
+      expect(Logger.info).toHaveBeenCalledWith('csv_parse_success_stub', {
         orchestrator: 'data',
         action: 'executeImportWorkflow',
         count: 1,
@@ -303,7 +303,7 @@ describe('DataManager', () => {
 
       // Assert
       expect(mockBusiness.recompute).toHaveBeenCalled(); // Nog steeds recompute
-      expect(logger.info).toHaveBeenCalledWith('csv_parse_success_stub', {
+      expect(Logger.info).toHaveBeenCalledWith('csv_parse_success_stub', {
         orchestrator: 'data',
         action: 'executeImportWorkflow',
         count: 0,

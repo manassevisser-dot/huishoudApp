@@ -1,0 +1,696 @@
+src/adapters/audit/AuditLoggerAdapter.test.ts-        '[AUDIT]',
+src/adapters/audit/AuditLoggerAdapter.test.ts-        expect.stringContaining('[1,2,3]')
+src/adapters/audit/AuditLoggerAdapter.test.ts-      );
+src/adapters/audit/AuditLoggerAdapter.test.ts-    });
+src/adapters/audit/AuditLoggerAdapter.test.ts-    test('getEventsByLevel filters by level', () => {
+src/adapters/audit/AuditLoggerAdapter.test.ts:      auditLogger.clearBuffer();
+src/adapters/audit/AuditLoggerAdapter.test.ts-      logger.info('info message');
+src/adapters/audit/AuditLoggerAdapter.test.ts-      logger.warn('warn message');
+src/adapters/audit/AuditLoggerAdapter.test.ts-      logger.error('error message');
+src/adapters/audit/AuditLoggerAdapter.test.ts-    
+src/adapters/audit/AuditLoggerAdapter.test.ts:      const warnings = auditLogger.getEventsByLevel('warning');
+src/adapters/audit/AuditLoggerAdapter.test.ts-      expect(warnings).toHaveLength(1);
+src/adapters/audit/AuditLoggerAdapter.test.ts-      expect(warnings[0].message).toBe('warn message');
+src/adapters/audit/AuditLoggerAdapter.test.ts-    });
+src/adapters/audit/AuditLoggerAdapter.test.ts-    
+src/adapters/audit/AuditLoggerAdapter.test.ts-    test('clearBuffer empties the event buffer', () => {
+src/adapters/audit/AuditLoggerAdapter.test.ts-      logger.info('something');
+src/adapters/audit/AuditLoggerAdapter.test.ts:      auditLogger.clearBuffer();
+src/adapters/audit/AuditLoggerAdapter.test.ts-    
+src/adapters/audit/AuditLoggerAdapter.test.ts:      const events = auditLogger.getEventsByLevel('info');
+src/adapters/audit/AuditLoggerAdapter.test.ts-      expect(events).toHaveLength(0);
+src/adapters/audit/AuditLoggerAdapter.test.ts-    });
+src/adapters/audit/AuditLoggerAdapter.test.ts-    test('routes SYSTEM_ERROR to ticketing and upgrades to fatal', () => {
+src/adapters/audit/AuditLoggerAdapter.test.ts-      const warnSpy = jest.spyOn(console, 'warn');
+src/adapters/audit/AuditLoggerAdapter.test.ts-      const errorSpy = jest.spyOn(console, 'error');
+--
+src/adapters/audit/AuditLoggerAdapter.ts- * @module adapters/audit
+src/adapters/audit/AuditLoggerAdapter.ts- * @see {@link ./README.md | AuditLoggerAdapter — Details}
+src/adapters/audit/AuditLoggerAdapter.ts- * @see {@link https://tools.ietf.org/html/rfc5424 | RFC 5424 - The Syslog Protocol}
+src/adapters/audit/AuditLoggerAdapter.ts- *
+src/adapters/audit/AuditLoggerAdapter.ts- * @example
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.notice('user.completed_wizard', { step: 'household' });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.critical('database.corruption_detected', { table: 'transactions' });
+src/adapters/audit/AuditLoggerAdapter.ts- */
+src/adapters/audit/AuditLoggerAdapter.ts-
+src/adapters/audit/AuditLoggerAdapter.ts-import { validationMessages } from '@state/schemas/sections/validationMessages';
+src/adapters/audit/AuditLoggerAdapter.ts-
+src/adapters/audit/AuditLoggerAdapter.ts-/**
+--
+src/adapters/audit/AuditLoggerAdapter.ts-/**
+src/adapters/audit/AuditLoggerAdapter.ts- * RFC 5424 Compliant Logger API
+src/adapters/audit/AuditLoggerAdapter.ts- * 
+src/adapters/audit/AuditLoggerAdapter.ts- * @example
+src/adapters/audit/AuditLoggerAdapter.ts- * // Level-specific methods
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.emergency('system.crash', { reason: 'OOM' });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.critical('database.corruption', { table: 'transactions' });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.error('validation.failed', { field: 'email', value: input });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.warning('rate.limit.near', { currentLoad: 85 });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.notice('user.completed_wizard', { step: 'household' });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.info('user.action', { screen: 'dashboard', action: 'click' });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.debug('render.performance', { durationMs: 42 });
+src/adapters/audit/AuditLoggerAdapter.ts- * 
+src/adapters/audit/AuditLoggerAdapter.ts- * // Met ADR referenties
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.notice('csv.import.completed', { rowCount: 150 }, { adr: 'ADR-13' });
+src/adapters/audit/AuditLoggerAdapter.ts- * 
+src/adapters/audit/AuditLoggerAdapter.ts- * // Met user context
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.error('payment.failed', { amount: 1250 }, { userId: 'anon_123' });
+src/adapters/audit/AuditLoggerAdapter.ts- */
+src/adapters/audit/AuditLoggerAdapter.ts-export const Logger = {
+src/adapters/audit/AuditLoggerAdapter.ts-  // RFC 5424 level methods
+src/adapters/audit/AuditLoggerAdapter.ts:  emergency: auditLogger.emergency.bind(auditLogger),
+src/adapters/audit/AuditLoggerAdapter.ts:  alert: auditLogger.alert.bind(auditLogger),
+src/adapters/audit/AuditLoggerAdapter.ts:  critical: auditLogger.critical.bind(auditLogger),
+src/adapters/audit/AuditLoggerAdapter.ts:  error: auditLogger.error.bind(auditLogger),
+src/adapters/audit/AuditLoggerAdapter.ts:  warning: auditLogger.warning.bind(auditLogger),
+src/adapters/audit/AuditLoggerAdapter.ts:  notice: auditLogger.notice.bind(auditLogger),
+src/adapters/audit/AuditLoggerAdapter.ts:  info: auditLogger.info.bind(auditLogger),
+src/adapters/audit/AuditLoggerAdapter.ts:  debug: auditLogger.debug.bind(auditLogger),
+src/adapters/audit/AuditLoggerAdapter.ts-  
+src/adapters/audit/AuditLoggerAdapter.ts-  // Generieke log method (voor compatibiliteit)
+src/adapters/audit/AuditLoggerAdapter.ts-  log: (level: Rfc5424Level | string, eventName: string, context?: Record<string, unknown>, options?: any) => {
+src/adapters/audit/AuditLoggerAdapter.ts-    const numericLevel = typeof level === 'string' ? toRfc5424Level(level) : level;
+src/adapters/audit/AuditLoggerAdapter.ts:    auditLogger.log(numericLevel, eventName, context, options);
+src/adapters/audit/AuditLoggerAdapter.ts-  },
+src/adapters/audit/AuditLoggerAdapter.ts-  
+src/adapters/audit/AuditLoggerAdapter.ts-  // Legacy methods (deprecated)
+src/adapters/audit/AuditLoggerAdapter.ts:  /** @deprecated Gebruik Logger.error() */
+src/adapters/audit/AuditLoggerAdapter.ts-  legacyError: (eventName: string, err?: unknown) => {
+src/adapters/audit/AuditLoggerAdapter.ts-    const context = err instanceof Error 
+src/adapters/audit/AuditLoggerAdapter.ts-      ? { message: err.message, stack: err.stack }
+src/adapters/audit/AuditLoggerAdapter.ts-      : { value: err };
+src/adapters/audit/AuditLoggerAdapter.ts:    auditLogger.error(eventName, context);
+src/adapters/audit/AuditLoggerAdapter.ts-  }
+src/adapters/audit/AuditLoggerAdapter.ts-};
+src/adapters/audit/AuditLoggerAdapter.ts-
+src/adapters/audit/AuditLoggerAdapter.ts-/** @alias Logger */
+src/adapters/audit/AuditLoggerAdapter.ts-export const logger = Logger;
+--
+src/adapters/audit/AuditLoggerAdapter.ts- *   });
+src/adapters/audit/AuditLoggerAdapter.ts- *   return unsubscribe;
+src/adapters/audit/AuditLoggerAdapter.ts- * }, []);
+src/adapters/audit/AuditLoggerAdapter.ts- */
+src/adapters/audit/AuditLoggerAdapter.ts-export const subscribeToAuditEvents = (listener: AuditListener): (() => void) => {
+src/adapters/audit/AuditLoggerAdapter.ts:  return auditLogger.subscribe(listener);
+src/adapters/audit/AuditLoggerAdapter.ts-};
+src/adapters/audit/AuditLoggerAdapter.ts-
+src/adapters/audit/AuditLoggerAdapter.ts-/**
+src/adapters/audit/AuditLoggerAdapter.ts- * Haal opgeslagen events op voor analyse
+src/adapters/audit/AuditLoggerAdapter.ts- * @param minLevel - Minimum RFC level (0-7, default 0)
+src/adapters/audit/AuditLoggerAdapter.ts- * @param maxLevel - Maximum RFC level (0-7, default 7)
+src/adapters/audit/AuditLoggerAdapter.ts- */
+src/adapters/audit/AuditLoggerAdapter.ts-export const getAuditEvents = (minLevel?: Rfc5424Level, maxLevel?: Rfc5424Level): AuditEvent[] => {
+src/adapters/audit/AuditLoggerAdapter.ts:  return auditLogger.getEvents(minLevel, maxLevel);
+src/adapters/audit/AuditLoggerAdapter.ts-};
+--
+src/adapters/audit/README.md-- **Dependencies**: `validationMessages` (foutvertaling) ← geen domein-logica
+src/adapters/audit/README.md-- **Singleton**: `auditLogger` (intern); consumenten gebruiken altijd `Logger`
+src/adapters/audit/README.md-
+src/adapters/audit/README.md-```
+src/adapters/audit/README.md-Component
+src/adapters/audit/README.md:  └── Logger.info / .warn / .error
+src/adapters/audit/README.md-        └── AuditLoggerAdapter.logEvent()
+src/adapters/audit/README.md-              ├── normalizeEvent()  ← vertaalt code + escaleert naar fatal
+src/adapters/audit/README.md-              ├── routeToConsole()  ← altijd
+src/adapters/audit/README.md-              ├── routeToUI()       ← warning / error / fatal
+src/adapters/audit/README.md-              └── routeToTicketing()← fatal only
+--
+src/adapters/audit/README.md-### Publieke exports
+src/adapters/audit/README.md-
+src/adapters/audit/README.md-| Export | Type | Beschrijving |
+src/adapters/audit/README.md-|---|---|---|
+src/adapters/audit/README.md-| `Logger` | namespace | Primaire API — gebruik altijd dit |
+src/adapters/audit/README.md:| `Logger.info(eventName, data?)` | method | Gebruikersacties, geen UI-notificatie |
+src/adapters/audit/README.md:| `Logger.warn(eventName, data?)` | method | Niet-kritieke waarschuwingen, toont UI |
+src/adapters/audit/README.md:| `Logger.error(eventName, err?)` | method | Herstelbare fouten met stack trace |
+src/adapters/audit/README.md:| `Logger.log(...)` | method | **@deprecated** — gebruik specifieke methoden |
+src/adapters/audit/README.md-| `subscribeToAuditEvents(listener)` | function | Registreert UI-listener; geeft unsubscribe terug |
+src/adapters/audit/README.md-| `AuditLevel` | type | `'info' \| 'warning' \| 'error' \| 'fatal'` |
+src/adapters/audit/README.md-| `AuditEvent` | interface | Genormaliseerd event-object |
+src/adapters/audit/README.md-| `AuditLoggerPort` | interface | Port-contract voor dependency injection |
+src/adapters/audit/README.md-| `auditLogger` | instance | Singleton — niet direct gebruiken |
+src/adapters/audit/README.md-
+src/adapters/audit/README.md-### Term-definities
+src/adapters/audit/README.md-
+src/adapters/audit/README.md-- **`AuditEvent`**: Genormaliseerd object met `timestamp`, `level`, `eventName`, `message` en optionele `context`. De SSOT voor alle log-output.
+src/adapters/audit/README.md-- **`normalizeEvent`**: Interne stap die event-codes vertaalt via `validationMessages`, fatale codes escaleert, en `originalCode` toevoegt aan context.
+src/adapters/audit/README.md:- **`eventBuffer`**: In-memory opslag van alle events — bruikbaar in tests via `auditLogger.getEventsByLevel()`.
+src/adapters/audit/README.md-
+src/adapters/audit/README.md----
+src/adapters/audit/README.md-
+src/adapters/audit/README.md-## 💡 Best Practices
+src/adapters/audit/README.md-
+src/adapters/audit/README.md-**Do's**
+src/adapters/audit/README.md:- Gebruik `Logger.error()` altijd met een `Error`-object voor stack traces
+src/adapters/audit/README.md:- Voeg altijd context toe: `Logger.info('USER_LOGIN', { userId: 123 })`
+src/adapters/audit/README.md-- Stel `subscribeToAuditEvents` in de app shell in (App.tsx) voor UI-notificaties
+src/adapters/audit/README.md:- Gebruik `auditLogger.clearBuffer()` in test `beforeEach`
+src/adapters/audit/README.md-
+src/adapters/audit/README.md-**Don'ts**
+src/adapters/audit/README.md-- Gebruik geen `console.log` direct (ESLint-grens)
+src/adapters/audit/README.md:- Gebruik `Logger.log()` niet in nieuwe code (legacy)
+src/adapters/audit/README.md-- Log geen gevoelige data (passwords, tokens) in `context`
+src/adapters/audit/README.md-- Gebruik `auditLogger` nooit direct buiten tests
+src/adapters/audit/README.md-
+src/adapters/audit/README.md----
+src/adapters/audit/README.md-
+src/adapters/audit/README.md-## 🧩 Voorbeelden
+src/adapters/audit/README.md-
+src/adapters/audit/README.md-```typescript
+src/adapters/audit/README.md-// Logging
+src/adapters/audit/README.md:Logger.info('USER_LOGIN_SUCCESS', { userId: 123, method: 'google' });
+src/adapters/audit/README.md:Logger.warn('RATE_LIMIT_NEAR', { currentLoad: 85 });
+src/adapters/audit/README.md:Logger.error('API_CALL_FAILED', error);
+src/adapters/audit/README.md-
+src/adapters/audit/README.md-// UI-notificaties instellen (App.tsx)
+src/adapters/audit/README.md-useEffect(() => {
+src/adapters/audit/README.md-  return subscribeToAuditEvents((event) => {
+src/adapters/audit/README.md-    if (event.level === 'error' || event.level === 'fatal') showErrorModal(event.message);
+--
+src/adapters/audit/README.md-  });
+src/adapters/audit/README.md-}, []);
+src/adapters/audit/README.md-
+src/adapters/audit/README.md-// Testen
+src/adapters/audit/README.md-import { auditLogger } from './AuditLoggerAdapter';
+src/adapters/audit/README.md:beforeEach(() => { auditLogger.clearBuffer(); });
+src/adapters/audit/README.md-test('logs error on failure', () => {
+src/adapters/audit/README.md:  Logger.error('VALIDATION_FAILED', new Error('invalid'));
+src/adapters/audit/README.md:  expect(auditLogger.getEventsByLevel('error')).toHaveLength(1);
+src/adapters/audit/README.md-});
+src/adapters/audit/README.md-```
+src/adapters/audit/README.md-
+src/adapters/audit/README.md----
+src/adapters/audit/README.md-
+--
+src/adapters/transaction/stateful.test.ts-describe('StatefulTransactionAdapter', () => {
+src/adapters/transaction/stateful.test.ts-  let adapter: StatefulTransactionAdapter;
+src/adapters/transaction/stateful.test.ts-  const initialState = { step: 'LANDING', data: {} };
+src/adapters/transaction/stateful.test.ts-
+src/adapters/transaction/stateful.test.ts-  beforeEach(() => {
+src/adapters/transaction/stateful.test.ts:    (AuditLogger.log as jest.Mock).mockClear();
+src/adapters/transaction/stateful.test.ts-    adapter = new StatefulTransactionAdapter(initialState);
+src/adapters/transaction/stateful.test.ts-  });
+src/adapters/transaction/stateful.test.ts-
+src/adapters/transaction/stateful.test.ts-  describe('constructor', () => {
+src/adapters/transaction/stateful.test.ts-    it('initialiseert history met INIT-state', () => {
+src/adapters/transaction/stateful.test.ts-      expect(adapter.getCurrentState()).toEqual(initialState);
+src/adapters/transaction/stateful.test.ts-    });
+src/adapters/transaction/stateful.test.ts-
+src/adapters/transaction/stateful.test.ts-    it('logt INIT-event bij aanmaken', () => {
+src/adapters/transaction/stateful.test.ts:      expect(AuditLogger.log).toHaveBeenCalledWith('INFO', expect.objectContaining({
+src/adapters/transaction/stateful.test.ts-        event: 'transaction_push',
+src/adapters/transaction/stateful.test.ts-        type: 'INIT',
+src/adapters/transaction/stateful.test.ts-      }));
+src/adapters/transaction/stateful.test.ts-    });
+src/adapters/transaction/stateful.test.ts-  });
+--
+src/adapters/transaction/stateful.test.ts-    it('voegt nieuwe state toe aan history', () => {
+src/adapters/transaction/stateful.test.ts-      const newState = { step: 'WIZARD', data: { aantalMensen: 3 } };
+src/adapters/transaction/stateful.test.ts-      adapter.push(newState, 'SET_STEP');
+src/adapters/transaction/stateful.test.ts-
+src/adapters/transaction/stateful.test.ts-      expect(adapter.getCurrentState()).toEqual(newState);
+src/adapters/transaction/stateful.test.ts:      expect(AuditLogger.log).toHaveBeenCalledWith('INFO', expect.objectContaining({
+src/adapters/transaction/stateful.test.ts-        event: 'transaction_push',
+src/adapters/transaction/stateful.test.ts-        type: 'SET_STEP',
+src/adapters/transaction/stateful.test.ts-      }));
+src/adapters/transaction/stateful.test.ts-    });
+src/adapters/transaction/stateful.test.ts-
+--
+src/adapters/transaction/stateful.test.ts-
+src/adapters/transaction/stateful.test.ts-      const undone = adapter.undo();
+src/adapters/transaction/stateful.test.ts-      expect(undone?.step).toBe('WIZARD');
+src/adapters/transaction/stateful.test.ts-      expect(adapter.getCurrentState()?.step).toBe('WIZARD');
+src/adapters/transaction/stateful.test.ts-
+src/adapters/transaction/stateful.test.ts:      expect(AuditLogger.log).toHaveBeenCalledWith('ACTION', {
+src/adapters/transaction/stateful.test.ts-        event: 'undo',
+src/adapters/transaction/stateful.test.ts-        pointer: 1,
+src/adapters/transaction/stateful.test.ts-      });
+src/adapters/transaction/stateful.test.ts-    });
+src/adapters/transaction/stateful.test.ts-
+--
+src/adapters/transaction/stateful.test.ts-
+src/adapters/transaction/stateful.test.ts-      const redone = adapter.redo();
+src/adapters/transaction/stateful.test.ts-      expect(redone?.step).toBe('INCOME');
+src/adapters/transaction/stateful.test.ts-      expect(adapter.getCurrentState()?.step).toBe('INCOME');
+src/adapters/transaction/stateful.test.ts-
+src/adapters/transaction/stateful.test.ts:      expect(AuditLogger.log).toHaveBeenCalledWith('ACTION', {
+src/adapters/transaction/stateful.test.ts-        event: 'redo',
+src/adapters/transaction/stateful.test.ts-        pointer: 2,
+src/adapters/transaction/stateful.test.ts-      });
+src/adapters/transaction/stateful.test.ts-    });
+src/adapters/transaction/stateful.test.ts-
+--
+src/adapters/transaction/stateful.ts-    if (this.pointer < this.history.length - 1) {
+src/adapters/transaction/stateful.ts-      this.history = this.history.slice(0, this.pointer + 1);
+src/adapters/transaction/stateful.ts-    }
+src/adapters/transaction/stateful.ts-    this.history.push(newState);
+src/adapters/transaction/stateful.ts-    this.pointer++;
+src/adapters/transaction/stateful.ts:    AuditLogger.log('INFO', {
+src/adapters/transaction/stateful.ts-      event: 'transaction_push',
+src/adapters/transaction/stateful.ts-      type: actionType,
+src/adapters/transaction/stateful.ts-      pointer: this.pointer,
+src/adapters/transaction/stateful.ts-      adr: 'ADR-12',
+src/adapters/transaction/stateful.ts-      version: this.VERSION
+--
+src/adapters/transaction/stateful.ts-   * if (vorigeState) { renderState(vorigeState); }
+src/adapters/transaction/stateful.ts-   */
+src/adapters/transaction/stateful.ts-  public undo(): TransactionState | null {
+src/adapters/transaction/stateful.ts-    if (this.pointer > 0) {
+src/adapters/transaction/stateful.ts-      this.pointer--;
+src/adapters/transaction/stateful.ts:      AuditLogger.log('ACTION', { event: 'undo', pointer: this.pointer });
+src/adapters/transaction/stateful.ts-      
+src/adapters/transaction/stateful.ts-      const state = this.history[this.pointer];
+src/adapters/transaction/stateful.ts-      return state !== undefined ? state : null;
+src/adapters/transaction/stateful.ts-    }
+src/adapters/transaction/stateful.ts-    return null;
+--
+src/adapters/transaction/stateful.ts-   * if (volgendeState) { renderState(volgendeState); }
+src/adapters/transaction/stateful.ts-   */
+src/adapters/transaction/stateful.ts-  public redo(): TransactionState | null {
+src/adapters/transaction/stateful.ts-    if (this.pointer < this.history.length - 1) {
+src/adapters/transaction/stateful.ts-      this.pointer++;
+src/adapters/transaction/stateful.ts:      AuditLogger.log('ACTION', { event: 'redo', pointer: this.pointer });
+src/adapters/transaction/stateful.ts-      
+src/adapters/transaction/stateful.ts-      const state = this.history[this.pointer];
+src/adapters/transaction/stateful.ts-      return state !== undefined ? state : null;
+src/adapters/transaction/stateful.ts-    }
+src/adapters/transaction/stateful.ts-    return null;
+--
+src/adapters/validation/validateAtBoundary.ts-  // Find schema for this field
+src/adapters/validation/validateAtBoundary.ts-  const schema = FieldSchemas[fieldId];
+src/adapters/validation/validateAtBoundary.ts-
+src/adapters/validation/validateAtBoundary.ts-  // If no schema exists, field is unknown - pass through with warning
+src/adapters/validation/validateAtBoundary.ts-  if (schema === undefined) {
+src/adapters/validation/validateAtBoundary.ts:    Logger.warn('BOUNDARY_NO_SCHEMA', { fieldId, value });
+src/adapters/validation/validateAtBoundary.ts-    return { success: true, data: value as T };
+src/adapters/validation/validateAtBoundary.ts-  }
+src/adapters/validation/validateAtBoundary.ts-
+src/adapters/validation/validateAtBoundary.ts-  // Validate with Zod schema
+src/adapters/validation/validateAtBoundary.ts-  try {
+--
+src/adapters/validation/validateAtBoundary.ts-  // Extract user-friendly error message from ZodError
+src/adapters/validation/validateAtBoundary.ts-  if (error instanceof ZodError) {
+src/adapters/validation/validateAtBoundary.ts-    const errorMessage = extractZodErrorMessage(error);
+src/adapters/validation/validateAtBoundary.ts-    
+src/adapters/validation/validateAtBoundary.ts-    // Log validation failure
+src/adapters/validation/validateAtBoundary.ts:    Logger.warn('BOUNDARY_VALIDATION_FAILED', {
+src/adapters/validation/validateAtBoundary.ts-      fieldId,
+src/adapters/validation/validateAtBoundary.ts-      value,
+src/adapters/validation/validateAtBoundary.ts-      error: errorMessage,
+src/adapters/validation/validateAtBoundary.ts-      issues: error.issues
+src/adapters/validation/validateAtBoundary.ts-    });
+src/adapters/validation/validateAtBoundary.ts-    
+src/adapters/validation/validateAtBoundary.ts-    return { success: false, error: errorMessage };
+src/adapters/validation/validateAtBoundary.ts-  }
+src/adapters/validation/validateAtBoundary.ts-
+src/adapters/validation/validateAtBoundary.ts-  // Unexpected error - route to ticketing
+src/adapters/validation/validateAtBoundary.ts:  Logger.error('BOUNDARY_UNEXPECTED_ERROR', {
+src/adapters/validation/validateAtBoundary.ts-    fieldId,
+src/adapters/validation/validateAtBoundary.ts-    value,
+src/adapters/validation/validateAtBoundary.ts-    error
+src/adapters/validation/validateAtBoundary.ts-  });
+src/adapters/validation/validateAtBoundary.ts-  
+--
+src/ADR_CLEANCODE/README.md-```
+src/ADR_CLEANCODE/README.md-
+src/ADR_CLEANCODE/README.md-### Audit log met ADR-referentie
+src/ADR_CLEANCODE/README.md-```typescript
+src/ADR_CLEANCODE/README.md-// ADR-12: Auditability
+src/ADR_CLEANCODE/README.md:AuditLogger.log('INFO', {
+src/ADR_CLEANCODE/README.md-  event: 'transaction_push',
+src/ADR_CLEANCODE/README.md-  adr: 'ADR-12',
+src/ADR_CLEANCODE/README.md-  version: '2025-01-A',
+src/ADR_CLEANCODE/README.md-  pointer: 3
+src/ADR_CLEANCODE/README.md-});
+--
+src/app/hooks/useTransactionHistory.ts-      setHasError(false);
+src/app/hooks/useTransactionHistory.ts-    } catch (err) {
+src/app/hooks/useTransactionHistory.ts-      // We checken op 'name' of 'message' ipv de klasse, om Zod-isolatie te bewaren
+src/app/hooks/useTransactionHistory.ts-      const isValidationError = err instanceof Error && (err.name === 'ZodError' || err.message.includes('validation'));
+src/app/hooks/useTransactionHistory.ts-      
+src/app/hooks/useTransactionHistory.ts:      AuditLogger.log(isValidationError ? 'WARN' : 'ERROR', {
+src/app/hooks/useTransactionHistory.ts-        event: 'transaction_update_failed',
+src/app/hooks/useTransactionHistory.ts-        error: err instanceof Error ? err.message : 'Unknown transaction error'
+src/app/hooks/useTransactionHistory.ts-      });
+src/app/hooks/useTransactionHistory.ts-      setHasError(true);
+src/app/hooks/useTransactionHistory.ts-    }
+--
+src/app/orchestrators/ImportOrchestrator.test.ts-      expect(result.status).toBe('error');
+src/app/orchestrators/ImportOrchestrator.test.ts-      if (result.status === 'error') {
+src/app/orchestrators/ImportOrchestrator.test.ts-        expect(result.errorMessage).toBe('Adapter failure');
+src/app/orchestrators/ImportOrchestrator.test.ts-        expect(result.technicalDetails?.errorCode).toBe('PARSING_ERROR');
+src/app/orchestrators/ImportOrchestrator.test.ts-      }
+src/app/orchestrators/ImportOrchestrator.test.ts:      expect(Logger.error).toHaveBeenCalled();
+src/app/orchestrators/ImportOrchestrator.test.ts-    });
+src/app/orchestrators/ImportOrchestrator.test.ts-
+src/app/orchestrators/ImportOrchestrator.test.ts-    it('should return error status with fallback message for non-Error throws', () => {
+src/app/orchestrators/ImportOrchestrator.test.ts-      // Arrange
+src/app/orchestrators/ImportOrchestrator.test.ts-      const mockCsv = 'invalid,csv';
+--
+src/app/orchestrators/ImportOrchestrator.ts-          parsedCount: transactions.length,
+src/app/orchestrators/ImportOrchestrator.ts-          skippedCount: 0, // TODO: bijhouden in parseAndEnrichCsv
+src/app/orchestrators/ImportOrchestrator.ts-        },
+src/app/orchestrators/ImportOrchestrator.ts-      };
+src/app/orchestrators/ImportOrchestrator.ts-    } catch (e: unknown) {
+src/app/orchestrators/ImportOrchestrator.ts:      Logger.error('[ImportOrchestrator] Critical failure in CSV-parsing pipeline:', e);
+src/app/orchestrators/ImportOrchestrator.ts-      return {
+src/app/orchestrators/ImportOrchestrator.ts-        status: 'error',
+src/app/orchestrators/ImportOrchestrator.ts-        errorMessage: e instanceof Error ? e.message : 'Fout bij verwerken van CSV',
+src/app/orchestrators/ImportOrchestrator.ts-        technicalDetails: {
+src/app/orchestrators/ImportOrchestrator.ts-          errorCode: 'PARSING_ERROR',
+--
+src/app/orchestrators/VisibilityOrchestrator.test.ts-
+src/app/orchestrators/VisibilityOrchestrator.test.ts-    it('logt een error bij onbekende ruleName', () => {
+src/app/orchestrators/VisibilityOrchestrator.test.ts-      const orchestrator = new VisibilityOrchestrator(makeFso());
+src/app/orchestrators/VisibilityOrchestrator.test.ts-      orchestrator.evaluate('BESTAAT_NIET');
+src/app/orchestrators/VisibilityOrchestrator.test.ts-
+src/app/orchestrators/VisibilityOrchestrator.test.ts:      expect(mockLogger.error).toHaveBeenCalledWith(
+src/app/orchestrators/VisibilityOrchestrator.test.ts-        'visibility_rule_missing_fail_closed',
+src/app/orchestrators/VisibilityOrchestrator.test.ts-        expect.objectContaining({ ruleName: 'BESTAAT_NIET', failClosed: true })
+src/app/orchestrators/VisibilityOrchestrator.test.ts-      );
+src/app/orchestrators/VisibilityOrchestrator.test.ts-    });
+src/app/orchestrators/VisibilityOrchestrator.test.ts-
+src/app/orchestrators/VisibilityOrchestrator.test.ts-    it('logt GEEN error bij lege string ruleName', () => {
+src/app/orchestrators/VisibilityOrchestrator.test.ts-      const orchestrator = new VisibilityOrchestrator(makeFso());
+src/app/orchestrators/VisibilityOrchestrator.test.ts-      orchestrator.evaluate('');
+src/app/orchestrators/VisibilityOrchestrator.test.ts-
+src/app/orchestrators/VisibilityOrchestrator.test.ts:      expect(mockLogger.error).not.toHaveBeenCalled();
+src/app/orchestrators/VisibilityOrchestrator.test.ts-    });
+src/app/orchestrators/VisibilityOrchestrator.test.ts-
+src/app/orchestrators/VisibilityOrchestrator.test.ts-    it('retourneert false bij lege string ruleName', () => {
+src/app/orchestrators/VisibilityOrchestrator.test.ts-      const orchestrator = new VisibilityOrchestrator(makeFso());
+src/app/orchestrators/VisibilityOrchestrator.test.ts-      expect(orchestrator.evaluate('')).toBe(false);
+--
+src/app/orchestrators/VisibilityOrchestrator.test.ts-
+src/app/orchestrators/VisibilityOrchestrator.test.ts-    it('logt een error als de regel een exception gooit', () => {
+src/app/orchestrators/VisibilityOrchestrator.test.ts-      const orchestrator = new VisibilityOrchestrator(makeFso());
+src/app/orchestrators/VisibilityOrchestrator.test.ts-      orchestrator.evaluate('throwingRule');
+src/app/orchestrators/VisibilityOrchestrator.test.ts-
+src/app/orchestrators/VisibilityOrchestrator.test.ts:      expect(mockLogger.error).toHaveBeenCalledWith(
+src/app/orchestrators/VisibilityOrchestrator.test.ts-        'visibility_rule_execution_failed',
+src/app/orchestrators/VisibilityOrchestrator.test.ts-        expect.objectContaining({ failClosed: true, error: 'Regel kapot!' })
+src/app/orchestrators/VisibilityOrchestrator.test.ts-      );
+src/app/orchestrators/VisibilityOrchestrator.test.ts-    });
+src/app/orchestrators/VisibilityOrchestrator.test.ts-
+--
+src/app/workflows/ResetWorkflow.test.ts-/**
+src/app/workflows/ResetWorkflow.test.ts- * Tests voor de ResetWorkflow + de gewijzigde onderdelen van het reset-pad.
+src/app/workflows/ResetWorkflow.test.ts- *
+src/app/workflows/ResetWorkflow.test.ts- * Dekt:
+src/app/workflows/ResetWorkflow.test.ts- *   1. ResetWorkflow — 'full': dispatcht RESET_APP + roept PersistenceAdapter.clear() aan
+src/app/workflows/ResetWorkflow.test.ts: *   2. ResetWorkflow — 'full': logt via Logger.info
+src/app/workflows/ResetWorkflow.test.ts- *   3. ResetWorkflow — 'setup': dispatcht RESET_SETUP
+src/app/workflows/ResetWorkflow.test.ts- *   4. ResetWorkflow — 'setup': roept PersistenceAdapter.clear() NIET aan
+src/app/workflows/ResetWorkflow.test.ts: *   5. ResetWorkflow — 'setup': logt via Logger.info
+src/app/workflows/ResetWorkflow.test.ts- *   6. formReducer RESET_APP — navigeert naar LANDING, wist alle data
+src/app/workflows/ResetWorkflow.test.ts- *   7. formReducer RESET_SETUP — navigeert naar WIZARD_SETUP_HOUSEHOLD
+src/app/workflows/ResetWorkflow.test.ts- *   8. formReducer RESET_SETUP — behoudt transactionHistory
+src/app/workflows/ResetWorkflow.test.ts- *   9. formReducer RESET_SETUP — behoudt csvImport
+src/app/workflows/ResetWorkflow.test.ts- *  10. formReducer RESET_SETUP — behoudt latestTransaction
+--
+src/app/workflows/ResetWorkflow.test.ts-    });
+src/app/workflows/ResetWorkflow.test.ts-
+src/app/workflows/ResetWorkflow.test.ts-    it('logt reset_completed met type "full"', () => {
+src/app/workflows/ResetWorkflow.test.ts-      workflow.execute('full', mockFso as never);
+src/app/workflows/ResetWorkflow.test.ts-
+src/app/workflows/ResetWorkflow.test.ts:      expect(Logger.info).toHaveBeenCalledWith('reset_completed', expect.objectContaining({
+src/app/workflows/ResetWorkflow.test.ts-        workflow: 'reset',
+src/app/workflows/ResetWorkflow.test.ts-        type: 'full',
+src/app/workflows/ResetWorkflow.test.ts-      }));
+src/app/workflows/ResetWorkflow.test.ts-    });
+src/app/workflows/ResetWorkflow.test.ts-  });
+--
+src/app/workflows/ResetWorkflow.test.ts-    });
+src/app/workflows/ResetWorkflow.test.ts-
+src/app/workflows/ResetWorkflow.test.ts-    it('logt reset_completed met type "setup"', () => {
+src/app/workflows/ResetWorkflow.test.ts-      workflow.execute('setup', mockFso as never);
+src/app/workflows/ResetWorkflow.test.ts-
+src/app/workflows/ResetWorkflow.test.ts:      expect(Logger.info).toHaveBeenCalledWith('reset_completed', expect.objectContaining({
+src/app/workflows/ResetWorkflow.test.ts-        workflow: 'reset',
+src/app/workflows/ResetWorkflow.test.ts-        type: 'setup',
+src/app/workflows/ResetWorkflow.test.ts-      }));
+src/app/workflows/ResetWorkflow.test.ts-    });
+src/app/workflows/ResetWorkflow.test.ts-  });
+--
+src/app/workflows/ResetWorkflow.ts- * @repo_architecture Mobile Industry (MI) - Workflow Layer.
+src/app/workflows/ResetWorkflow.ts- * @term_definition
+src/app/workflows/ResetWorkflow.ts- *   ResetType 'full'  = RESET_APP dispatch + PersistenceAdapter.clear() — alles weg, terug naar LANDING.
+src/app/workflows/ResetWorkflow.ts- *   ResetType 'setup' = RESET_SETUP dispatch — setup/household/finance leeg, transacties behouden.
+src/app/workflows/ResetWorkflow.ts- * @contract
+src/app/workflows/ResetWorkflow.ts: *   execute(type, fso) → dispatcht de juiste actie, logt via AuditLogger.
+src/app/workflows/ResetWorkflow.ts- *   'full': roept ook PersistenceAdapter.clear() aan (fire-and-forget) — fixet known bug in FormStateProvider.
+src/app/workflows/ResetWorkflow.ts- *   Retourneert void. Navigatie is impliciet via reducer (activeStep-mutatie).
+src/app/workflows/ResetWorkflow.ts- * @ai_instruction
+src/app/workflows/ResetWorkflow.ts- *   Alert.alert zit NIET hier — dat is UI-logica in ResetConfirmationContainer.
+src/app/workflows/ResetWorkflow.ts- *   De reducer (formReducer) is autoriteit over wat er gewist wordt en waarheen er genavigeerd wordt.
+--
+src/app/workflows/ResetWorkflow.ts-   *    bij herstart de "gewiste" data terug uit AsyncStorage.
+src/app/workflows/ResetWorkflow.ts-   */
+src/app/workflows/ResetWorkflow.ts-  private executeFullReset(fso: FormStateOrchestrator): void {
+src/app/workflows/ResetWorkflow.ts-    fso.dispatch({ type: 'RESET_APP' });
+src/app/workflows/ResetWorkflow.ts-    void PersistenceAdapter.clear();
+src/app/workflows/ResetWorkflow.ts:    Logger.info('reset_completed', {
+src/app/workflows/ResetWorkflow.ts-      workflow: 'reset',
+src/app/workflows/ResetWorkflow.ts-      type: 'full',
+src/app/workflows/ResetWorkflow.ts-    });
+src/app/workflows/ResetWorkflow.ts-  }
+src/app/workflows/ResetWorkflow.ts-
+--
+src/app/workflows/ResetWorkflow.ts-   * PersistenceAdapter.clear() wordt NIET aangeroepen — auto-save in FormStateProvider
+src/app/workflows/ResetWorkflow.ts-   * slaat de partieel gereset state vanzelf op.
+src/app/workflows/ResetWorkflow.ts-   */
+src/app/workflows/ResetWorkflow.ts-  private executeSetupReset(fso: FormStateOrchestrator): void {
+src/app/workflows/ResetWorkflow.ts-    fso.dispatch({ type: 'RESET_SETUP' });
+src/app/workflows/ResetWorkflow.ts:    Logger.info('reset_completed', {
+src/app/workflows/ResetWorkflow.ts-      workflow: 'reset',
+src/app/workflows/ResetWorkflow.ts-      type: 'setup',
+src/app/workflows/ResetWorkflow.ts-    });
+src/app/workflows/ResetWorkflow.ts-  }
+src/app/workflows/ResetWorkflow.ts-}
+--
+src/app/workflows/SettingsWorkflow.test.ts-      workflow.execute('theme', 'light', mockThemeManager);
+src/app/workflows/SettingsWorkflow.test.ts-
+src/app/workflows/SettingsWorkflow.test.ts-      expect(mockThemeManager.setTheme).toHaveBeenCalledWith('light');
+src/app/workflows/SettingsWorkflow.test.ts-    });
+src/app/workflows/SettingsWorkflow.test.ts-
+src/app/workflows/SettingsWorkflow.test.ts:    it('logt settings_changed via Logger.info', () => {
+src/app/workflows/SettingsWorkflow.test.ts-      workflow.execute('theme', true, mockThemeManager);
+src/app/workflows/SettingsWorkflow.test.ts-
+src/app/workflows/SettingsWorkflow.test.ts:      expect(Logger.info).toHaveBeenCalledWith('settings_changed', expect.objectContaining({
+src/app/workflows/SettingsWorkflow.test.ts-        workflow: 'settings',
+src/app/workflows/SettingsWorkflow.test.ts-        fieldId: 'theme',
+src/app/workflows/SettingsWorkflow.test.ts-      }));
+src/app/workflows/SettingsWorkflow.test.ts-    });
+src/app/workflows/SettingsWorkflow.test.ts-  });
+--
+src/app/workflows/SettingsWorkflow.test.ts-  describe('execute — ongeldige thema-waarde', () => {
+src/app/workflows/SettingsWorkflow.test.ts-    it('logt warning en roept setTheme NIET aan bij null', () => {
+src/app/workflows/SettingsWorkflow.test.ts-      workflow.execute('theme', null, mockThemeManager);
+src/app/workflows/SettingsWorkflow.test.ts-
+src/app/workflows/SettingsWorkflow.test.ts-      expect(mockThemeManager.setTheme).not.toHaveBeenCalled();
+src/app/workflows/SettingsWorkflow.test.ts:      expect(Logger.warn).toHaveBeenCalledWith(
+src/app/workflows/SettingsWorkflow.test.ts-        'settings_theme_invalid_value',
+src/app/workflows/SettingsWorkflow.test.ts-        expect.objectContaining({ workflow: 'settings' }),
+src/app/workflows/SettingsWorkflow.test.ts-      );
+src/app/workflows/SettingsWorkflow.test.ts-    });
+src/app/workflows/SettingsWorkflow.test.ts-
+src/app/workflows/SettingsWorkflow.test.ts-    it('logt warning en roept setTheme NIET aan bij een getal', () => {
+src/app/workflows/SettingsWorkflow.test.ts-      workflow.execute('theme', 42, mockThemeManager);
+src/app/workflows/SettingsWorkflow.test.ts-
+src/app/workflows/SettingsWorkflow.test.ts-      expect(mockThemeManager.setTheme).not.toHaveBeenCalled();
+src/app/workflows/SettingsWorkflow.test.ts:      expect(Logger.warn).toHaveBeenCalledTimes(1);
+src/app/workflows/SettingsWorkflow.test.ts-    });
+src/app/workflows/SettingsWorkflow.test.ts-  });
+src/app/workflows/SettingsWorkflow.test.ts-
+src/app/workflows/SettingsWorkflow.test.ts-  // ─── Groep 3: onbekend fieldId ──────────────────────────────────────────────
+src/app/workflows/SettingsWorkflow.test.ts-
+src/app/workflows/SettingsWorkflow.test.ts-  describe('execute — niet-theme fieldId', () => {
+src/app/workflows/SettingsWorkflow.test.ts-    it('logt settings_changed maar roept setTheme NIET aan', () => {
+src/app/workflows/SettingsWorkflow.test.ts-      workflow.execute('taal', 'nl', mockThemeManager);
+src/app/workflows/SettingsWorkflow.test.ts-
+src/app/workflows/SettingsWorkflow.test.ts:      expect(Logger.info).toHaveBeenCalledWith('settings_changed', expect.objectContaining({
+src/app/workflows/SettingsWorkflow.test.ts-        fieldId: 'taal',
+src/app/workflows/SettingsWorkflow.test.ts-      }));
+src/app/workflows/SettingsWorkflow.test.ts-      expect(mockThemeManager.setTheme).not.toHaveBeenCalled();
+src/app/workflows/SettingsWorkflow.test.ts-    });
+src/app/workflows/SettingsWorkflow.test.ts-  });
+--
+src/app/workflows/SettingsWorkflow.ts-  public execute(
+src/app/workflows/SettingsWorkflow.ts-    fieldId: string,
+src/app/workflows/SettingsWorkflow.ts-    value: unknown,
+src/app/workflows/SettingsWorkflow.ts-    themeManager: IThemeOrchestrator,
+src/app/workflows/SettingsWorkflow.ts-  ): void {
+src/app/workflows/SettingsWorkflow.ts:    Logger.info('settings_changed', {
+src/app/workflows/SettingsWorkflow.ts-      workflow: 'settings',
+src/app/workflows/SettingsWorkflow.ts-      fieldId,
+src/app/workflows/SettingsWorkflow.ts-      value: String(value),
+src/app/workflows/SettingsWorkflow.ts-    });
+src/app/workflows/SettingsWorkflow.ts-
+--
+src/app/workflows/SettingsWorkflow.ts-    if (value === true || value === 'dark') {
+src/app/workflows/SettingsWorkflow.ts-      theme = 'dark';
+src/app/workflows/SettingsWorkflow.ts-    } else if (value === false || value === 'light') {
+src/app/workflows/SettingsWorkflow.ts-      theme = 'light';
+src/app/workflows/SettingsWorkflow.ts-    } else {
+src/app/workflows/SettingsWorkflow.ts:      Logger.warn('settings_theme_invalid_value', {
+src/app/workflows/SettingsWorkflow.ts-        workflow: 'settings',
+src/app/workflows/SettingsWorkflow.ts-        receivedValue: String(value),
+src/app/workflows/SettingsWorkflow.ts-      });
+src/app/workflows/SettingsWorkflow.ts-      return;
+src/app/workflows/SettingsWorkflow.ts-    }
+--
+src/services/storageShim.test.ts-      (AsyncStorage.getItem as jest.Mock).mockResolvedValue('invalid-json');
+src/services/storageShim.test.ts-
+src/services/storageShim.test.ts-      const result = await StorageShim.loadState();
+src/services/storageShim.test.ts-
+src/services/storageShim.test.ts-      expect(result).toBeNull();
+src/services/storageShim.test.ts:      expect(AuditLogger.error).toHaveBeenCalledWith('STORAGE_LOAD_FAILURE', {
+src/services/storageShim.test.ts-        error: expect.any(Error),
+src/services/storageShim.test.ts-      });
+src/services/storageShim.test.ts-    });
+src/services/storageShim.test.ts-
+src/services/storageShim.test.ts-    it('should return null and log error on AsyncStorage failure', async () => {
+--
+src/services/storageShim.test.ts-      (AsyncStorage.getItem as jest.Mock).mockRejectedValue(error);
+src/services/storageShim.test.ts-
+src/services/storageShim.test.ts-      const result = await StorageShim.loadState();
+src/services/storageShim.test.ts-
+src/services/storageShim.test.ts-      expect(result).toBeNull();
+src/services/storageShim.test.ts:      expect(AuditLogger.error).toHaveBeenCalledWith('STORAGE_LOAD_FAILURE', {
+src/services/storageShim.test.ts-        error,
+src/services/storageShim.test.ts-      });
+src/services/storageShim.test.ts-    });
+src/services/storageShim.test.ts-  });
+src/services/storageShim.test.ts-
+--
+src/services/storageShim.test.ts-      const error = new Error('Save failed');
+src/services/storageShim.test.ts-      (AsyncStorage.setItem as jest.Mock).mockRejectedValue(error);
+src/services/storageShim.test.ts-
+src/services/storageShim.test.ts-      await StorageShim.saveState(mockFormState);
+src/services/storageShim.test.ts-
+src/services/storageShim.test.ts:      expect(AuditLogger.error).toHaveBeenCalledWith('STORAGE_SAVE_FAILURE', {
+src/services/storageShim.test.ts-        error,
+src/services/storageShim.test.ts-      });
+src/services/storageShim.test.ts-    });
+src/services/storageShim.test.ts-  });
+src/services/storageShim.test.ts-
+--
+src/services/storageShim.test.ts-      (AsyncStorage.getItem as jest.Mock).mockRejectedValue(error);
+src/services/storageShim.test.ts-
+src/services/storageShim.test.ts-      const result = await StorageShim.loadTheme();
+src/services/storageShim.test.ts-
+src/services/storageShim.test.ts-      expect(result).toBeNull();
+src/services/storageShim.test.ts:      expect(AuditLogger.error).toHaveBeenCalledWith('THEME_LOAD_FAILURE', {
+src/services/storageShim.test.ts-        error,
+src/services/storageShim.test.ts-      });
+src/services/storageShim.test.ts-    });
+src/services/storageShim.test.ts-  });
+src/services/storageShim.test.ts-
+--
+src/services/storageShim.test.ts-      const error = new Error('Save failed');
+src/services/storageShim.test.ts-      (AsyncStorage.setItem as jest.Mock).mockRejectedValue(error);
+src/services/storageShim.test.ts-
+src/services/storageShim.test.ts-      await StorageShim.saveTheme('light');
+src/services/storageShim.test.ts-
+src/services/storageShim.test.ts:      expect(AuditLogger.error).toHaveBeenCalledWith('THEME_SAVE_FAILURE', {
+src/services/storageShim.test.ts-        error,
+src/services/storageShim.test.ts-      });
+src/services/storageShim.test.ts-    });
+src/services/storageShim.test.ts-  });
+src/services/storageShim.test.ts-
+--
+src/services/storageShim.test.ts-      const error = new Error('Clear failed');
+src/services/storageShim.test.ts-      (AsyncStorage.removeItem as jest.Mock).mockRejectedValue(error);
+src/services/storageShim.test.ts-
+src/services/storageShim.test.ts-      await StorageShim.clearAll();
+src/services/storageShim.test.ts-
+src/services/storageShim.test.ts:      expect(AuditLogger.error).toHaveBeenCalledWith('STORAGE_CLEAR_FAILURE', {
+src/services/storageShim.test.ts-        error,
+src/services/storageShim.test.ts-      });
+src/services/storageShim.test.ts-    });
+src/services/storageShim.test.ts-  });
+src/services/storageShim.test.ts-
+--
+src/services/storageShim.ts-    if (envelope.version === ENVELOPE_VERSION) {
+src/services/storageShim.ts-      return envelope.state;
+src/services/storageShim.ts-    }
+src/services/storageShim.ts-    return null;
+src/services/storageShim.ts-  } catch (error) {
+src/services/storageShim.ts:    AuditLogger.error('STORAGE_LOAD_FAILURE', { error });
+src/services/storageShim.ts-    return null;
+src/services/storageShim.ts-  }
+src/services/storageShim.ts-}
+src/services/storageShim.ts-
+src/services/storageShim.ts-/**
+--
+src/services/storageShim.ts-  try {
+src/services/storageShim.ts-    const candidate: FormState = { ...state, schemaVersion: CURRENT_SCHEMA_VERSION };
+src/services/storageShim.ts-    const envelope = { version: ENVELOPE_VERSION, state: candidate };
+src/services/storageShim.ts-    await AsyncStorage.setItem(KEY, JSON.stringify(envelope));
+src/services/storageShim.ts-  } catch (error) {
+src/services/storageShim.ts:    AuditLogger.error('STORAGE_SAVE_FAILURE', { error });
+src/services/storageShim.ts-  }
+src/services/storageShim.ts-}
+src/services/storageShim.ts-
+src/services/storageShim.ts-/**
+src/services/storageShim.ts- * Thema laden (infra).
+--
+src/services/storageShim.ts-export async function loadTheme(): Promise<Theme | null> {
+src/services/storageShim.ts-  try {
+src/services/storageShim.ts-    const saved = await AsyncStorage.getItem(THEME_KEY);
+src/services/storageShim.ts-    return (saved === 'light' || saved === 'dark') ? (saved as Theme) : null;
+src/services/storageShim.ts-  } catch (error) {
+src/services/storageShim.ts:    AuditLogger.error('THEME_LOAD_FAILURE', { error });
+src/services/storageShim.ts-    return null;
+src/services/storageShim.ts-  }
+src/services/storageShim.ts-}
+src/services/storageShim.ts-
+src/services/storageShim.ts-/**
+--
+src/services/storageShim.ts- */
+src/services/storageShim.ts-export async function saveTheme(theme: Theme): Promise<void> {
+src/services/storageShim.ts-  try {
+src/services/storageShim.ts-    await AsyncStorage.setItem(THEME_KEY, theme);
+src/services/storageShim.ts-  } catch (error) {
+src/services/storageShim.ts:    AuditLogger.error('THEME_SAVE_FAILURE', { error });
+src/services/storageShim.ts-  }
+src/services/storageShim.ts-}
+src/services/storageShim.ts-
+src/services/storageShim.ts-export const StorageShim = {
+src/services/storageShim.ts-  loadState,
+--
+src/services/storageShim.ts-  saveTheme,
+src/services/storageShim.ts-  clearAll: async () => {
+src/services/storageShim.ts-    try {
+src/services/storageShim.ts-      await AsyncStorage.removeItem(KEY);
+src/services/storageShim.ts-    } catch (error) {
+src/services/storageShim.ts:      AuditLogger.error('STORAGE_CLEAR_FAILURE', { error });
+src/services/storageShim.ts-    }
+src/services/storageShim.ts-  }
+src/services/storageShim.ts-};
+src/services/storageShim.ts-
+src/services/storageShim.ts-export default StorageShim;
+--
+src/services/transactionService.test.ts-  describe('undoLastTransaction', () => {
+src/services/transactionService.test.ts-    it('should log warning and return null', async () => {
+src/services/transactionService.test.ts-      const result = await undoLastTransaction();
+src/services/transactionService.test.ts-
+src/services/transactionService.test.ts-      expect(result).toBeNull();
+src/services/transactionService.test.ts:      expect(Logger.warn).toHaveBeenCalledWith('Undo functionaliteit nog niet geïmplementeerd');
+src/services/transactionService.test.ts-    });
+src/services/transactionService.test.ts-  }); // ✅ Einde van describe('undoLastTransaction')
+src/services/transactionService.test.ts-
+src/services/transactionService.test.ts-  describe('clearAll', () => {
+src/services/transactionService.test.ts-    it('should call StorageShim.clearAll', async () => {
+--
+src/services/transactionService.ts-    },
+src/services/transactionService.ts-  };
+src/services/transactionService.ts-};
+src/services/transactionService.ts-
+src/services/transactionService.ts-export const undoLastTransaction = async () => {
+src/services/transactionService.ts:  Logger.warn('Undo functionaliteit nog niet geïmplementeerd');
+src/services/transactionService.ts-  return null;
+src/services/transactionService.ts-};
+src/services/transactionService.ts-
+src/services/transactionService.ts-export const TransactionService = {
+src/services/transactionService.ts-  migrate: migrateTransactionsToPhoenix,

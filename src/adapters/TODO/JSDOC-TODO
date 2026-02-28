@@ -1,0 +1,95 @@
+
+# JSDoc Header TODO
+
+De volgende bestanden moeten worden bijgewerkt om de nieuwe, beknopte JSDoc-template te volgen (te vinden in `src/TEMPLATES/TEMPLATE_JSDOC.md`). De oude tags zoals `@file_intent`, `@repo_architecture`, etc., moeten worden verwijderd en vervangen door de nieuwe standaard.
+
+**Belangrijk:** Voordat de JSDocs worden opgeschoond, moet de onderstaande informatie worden overgezet naar een centrale `README.md` in `src/adapters/` om contextverlies te voorkomen.
+
+---
+
+## 1. Actielijst (Opschonen)
+
+- [done] `src/adapters/csv/csvAdapter.ts`
+- [done] `src/adapters/StateWriter/StateWriterAdapter.ts`
+- [done] `src/adapters/system/FilePickerAdapter.ts`
+- [done] `src/adapters/system/PersistenceAdapter.ts`
+- [done] `src/adapters/transaction/stateful.ts`
+- [done] `src/adapters/validation/LegacyStateAdapter.ts`
+- [done] `src/adapters/validation/ResearchContractAdapter.ts`
+- [done] `src/adapters/validation/formStateSchema.ts`
+- [done] `src/adapters/validation/validateAtBoundary.ts`
+
+---
+
+## 2. Te Verplaatsen Informatie (voor README.md)
+
+Hieronder staat de informatie uit de oude JSDoc-headers die bewaard moet blijven.
+
+### Van `csvAdapter.ts`
+
+*   **Verantwoordelijkheid**: Vertaalt een ruwe CSV-string naar het interne domeinmodel van de applicatie (`CsvItem[]`).
+*   **Architectuur & Contract**: Dit is een I/O transformatie-adapter. Hij is verantwoordelijk voor kolomdetectie via regex-patronen en delegeert de verdere verwerking aan `csvProcessor`. De adapter garandeert non-nullable string outputs naar de processor.
+*   **Definitie**: `detectedKeys` is de term voor de mapping van CSV-kolomnamen (bijv. "Bedrag") naar domein-begrippen (bijv. `amount`).
+
+### Van `StateWriterAdapter.ts`
+
+*   **Verantwoordelijkheid**: Functioneert als een 'Traffic Controller' voor state-mutaties. Het is de enige plek die weet welke `fieldId` naar welk deel van de `FormState` (setup, household, finance) moet worden geschreven.
+*   **Architectuur & Contract**: Dit is een State Mutation Adapter. Het werkt via `updateField`-overloads voor type-veiligheid. Bij het toevoegen van nieuwe velden aan de applicatie, moeten de mappings in deze adapter mogelijk worden bijgewerkt.
+*   **Definitie**: `Dynamic Collection` is de term voor een array-gebaseerde datastructuur (zoals `income` of `expenses`) waar items via een `upsert`-operatie in worden bijgewerkt.
+
+### Van `FilePickerAdapter.ts`
+
+*   **Verantwoordelijkheid**: Faciliteert de interactie met het besturingssysteem voor het selecteren en inlezen van lokale bestanden.
+*   **Architectuur & Contract**: Een stateless bridge naar device-capabilities (Expo `DocumentPicker` en `FileSystem`). Retourneert een `CsvFileResult`-object (`{ text, fileName, detectedBank }`) of gooit een `Error` bij een gebruikers-annulering of bestandsfout.
+*   **Belangrijke Details**:
+    *   De functie voor bank-detectie (`detectBankFromCsv`) is een pure functie en is bewust gescheiden van de I/O-logica voor testbaarheid.
+    *   De `detectedBank` in het resultaat is een "best-effort" hint. `undefined` is een geldig resultaat.
+    *   Fase 3 Wijziging: Het return type is uitgebreid van `Promise<string>` naar `Promise<CsvFileResult>` om de bestandsnaam en gedetecteerde bank mee te geven.
+
+### Van `PersistenceAdapter.ts`
+
+*   **Verantwoordelijkheid**: Beheert het opslaan en laden van de applicatie-state van/naar `AsyncStorage`.
+*   **Architectuur & Contract**:
+    *   De adapter kent geen business logica, orchestrators of viewmodels.
+    *   `save(state)`: Serialiseert en slaat de *persistable* state op. Fouten worden gelogd, niet gegooid.
+    *   `load()`: Deserialiseert en valideert de state. Retourneert `null` bij een fout (bv. corruptie, schema-mismatch) en ruimt de corrupte data op.
+    *   `clear()`: Verwijdert de state.
+*   **Belangrijke Details**:
+    *   **Persistable State**: Er wordt een expliciete subset van de `FormState` opgeslagen (`PersistableFormState`). Vluchtige data zoals `viewModels`, navigatiestatus (`activeStep`), en validatiestatus (`isValid`) worden bewust *niet* opgeslagen.
+    *   **Migratie**: Het versienummer zit in de `STORAGE_KEY` zelf. Een schema-breuk leidt tot een nieuwe key, waardoor de app automatisch met een schone state start. Het `load()`-proces controleert ook een `schemaVersion` in het opgeslagen object als extra veiligheidsmaatregel.
+
+### Van `transaction/stateful.ts`
+
+*   **Verantwoordelijkheid**: Beheert de tijdlijn van applicatie-states (Undo/Redo) en voert rekenkundige verdelingen uit.
+*   **Architectuur & Contract**: Dit is een stateful wrapper rondom transactie-data die garandeert dat wijzigingen ongedaan gemaakt kunnen worden. Elke mutatie wordt gelogd via de AuditLogger (ADR-12). De geschiedenis is lineair; een `push`-actie op een oudere state wist de 'toekomstige' stack.
+*   **Definities**:
+    *   `pointer`: De huidige index in de geschiedenis-stack.
+    *   `allocateRemainder`: Algoritme om bedragen eerlijk te verdelen over termijnen zonder afrondingsverschillen.
+
+### Van `validation/LegacyStateAdapter.ts`
+
+*   **Verantwoordelijkheid**: Valideert en saneert data van oude versies of externe bronnen om runtime crashes te voorkomen.
+*   **Architectuur & Contract**: Functioneert als een Anti-Corruption Layer. Biedt een tolerante interface voor "legacy" data en garandeert een geldige (eventueel lege) `LegacyState`-output via `safeParse`.
+*   **Definitie**: `filteredArray`: Een robuuste validator die ongeldige array-items geruisloos verwijdert i.p.v. de hele parse te laten falen. Gebruik dit uitsluitend bij data-import of migratie.
+
+### Van `validation/ResearchContractAdapter.ts`
+
+*   **Verantwoordelijkheid**: Valideert en transformeert data voor onderzoeksdoeleinden.
+*   **Architectuur & Contract**: Vertaalt ruwe data naar strikte `Research`-types. Dwingt het gebruik van centen (integers) af voor geldbedragen (`MoneySchema`) en koppelt domein-regels (zoals leeftijdsgrenzen) aan de validatie. Integreert direct met `householdRules` voor status-bepaling.
+*   **Definities**:
+    *   `ResearchPayload`: Geanonimiseerde dataset voor externe analyse.
+    *   `SpecialStatus`: Vlag die aangeeft of een dossier extra onderzoek behoeft.
+
+### Van `validation/formStateSchema.ts`
+
+*   **Verantwoordelijkheid**: Genereert runtime validatie-schema's door domein-constraints (de Single Source of Truth) te vertalen naar Zod-schema's.
+*   **Architectuur & Contract**: Volgens ADR-01 is dit de *enige* plek in de codebase waar Zod wordt gebruikt. Het dient als de poortwachter voor data-integriteit. Wijzigingen moeten in de `FIELD_CONSTRAINTS_REGISTRY` (domein) beginnen, niet hier.
+*   **Definitie**: `build[Type]`: Specifieke Zod-builders die domein-regels omzetten naar uitvoerbare code. `FieldSchemas`: Een runtime lookup-tabel voor individuele veldvalidatie.
+
+### Van `validation/validateAtBoundary.ts`
+
+*   **Verantwoordelijkheid**: Dient als de primaire beveiligingsschil (Boundary) tussen de UI en de Domein-laag.
+*   **Architectuur & Contract**: Dwingt runtime type-safety af aan de grens van het systeem (ADR-01 & ADR-02). Geen enkele waarde mag de domein-state bereiken zonder door deze validatie-functies te gaan. De functies zijn puur en vertrouwen op `FieldSchemas`.
+*   **Definities**:
+    *   `ValidationResult`: Een gediscrimineerde union die ofwel gesaneerde data (`success: true`) of een expliciete foutmelding (`success: false`) teruggeeft.
+    *   `Normalization`: Het proces waarbij ruwe UI-input wordt omgezet naar het juiste type (bv. string naar number).

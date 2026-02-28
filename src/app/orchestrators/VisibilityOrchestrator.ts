@@ -9,7 +9,7 @@
 
 import { FormStateOrchestrator } from './FormStateOrchestrator';
 import { fieldVisibilityRules } from '@domain/rules/fieldVisibility';
-import { logger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 
 export type VisibilityParams = { memberId?: string };
 /**
@@ -38,7 +38,7 @@ export class VisibilityOrchestrator {
 
   if (rule === undefined || typeof rule !== 'function') {
     if (ruleName !== '') {
-      logger.error('visibility_rule_missing_fail_closed', {
+      Logger.error('visibility_rule_missing_fail_closed', {
         orchestrator: 'visibility',
         action: 'evaluate',
         ruleName,
@@ -57,7 +57,7 @@ private executeRule(rule: VisibilityRule, memberId?: string): boolean {
   try {
     return Boolean(rule(context, memberId));
   } catch (error) {
-    logger.error('visibility_rule_execution_failed', {
+    Logger.error('visibility_rule_execution_failed', {
       orchestrator: 'visibility',
       action: 'evaluate',
       failClosed: true,

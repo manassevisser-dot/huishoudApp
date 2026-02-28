@@ -1,0 +1,31 @@
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.notice('user.completed_wizard', { step: 'household' });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.critical('database.corruption_detected', { table: 'transactions' });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.emergency('system.crash', { reason: 'OOM' });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.critical('database.corruption', { table: 'transactions' });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.error('validation.failed', { field: 'email', value: input });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.warning('rate.limit.near', { currentLoad: 85 });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.notice('user.completed_wizard', { step: 'household' });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.info('user.action', { screen: 'dashboard', action: 'click' });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.debug('render.performance', { durationMs: 42 });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.notice('csv.import.completed', { rowCount: 150 }, { adr: 'ADR-13' });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.error('payment.failed', { amount: 1250 }, { userId: 'anon_123' });
+src/adapters/audit/README.md:- Voeg altijd context toe: `Logger.info('USER_LOGIN', { userId: 123 })`
+src/adapters/audit/README.md:Logger.info('USER_LOGIN_SUCCESS', { userId: 123, method: 'google' });
+src/adapters/audit/README.md:Logger.warn('RATE_LIMIT_NEAR', { currentLoad: 85 });
+src/adapters/transaction/stateful.ts:    AuditLogger.log('INFO', {
+src/adapters/transaction/stateful.ts:      AuditLogger.log('ACTION', { event: 'undo', pointer: this.pointer });
+src/adapters/transaction/stateful.ts:      AuditLogger.log('ACTION', { event: 'redo', pointer: this.pointer });
+src/adapters/validation/validateAtBoundary.ts:    Logger.warn('BOUNDARY_NO_SCHEMA', { fieldId, value });
+src/adapters/validation/validateAtBoundary.ts:    Logger.warn('BOUNDARY_VALIDATION_FAILED', {
+src/adapters/validation/validateAtBoundary.ts:  Logger.error('BOUNDARY_UNEXPECTED_ERROR', {
+src/ADR_CLEANCODE/README.md:AuditLogger.log('INFO', {
+src/app/hooks/useTransactionHistory.ts:      AuditLogger.log(isValidationError ? 'WARN' : 'ERROR', {
+src/app/workflows/ResetWorkflow.ts:    Logger.info('reset_completed', {
+src/app/workflows/ResetWorkflow.ts:    Logger.info('reset_completed', {
+src/app/workflows/SettingsWorkflow.ts:    Logger.info('settings_changed', {
+src/app/workflows/SettingsWorkflow.ts:      Logger.warn('settings_theme_invalid_value', {
+src/services/storageShim.ts:    AuditLogger.error('STORAGE_LOAD_FAILURE', { error });
+src/services/storageShim.ts:    AuditLogger.error('STORAGE_SAVE_FAILURE', { error });
+src/services/storageShim.ts:    AuditLogger.error('THEME_LOAD_FAILURE', { error });
+src/services/storageShim.ts:    AuditLogger.error('THEME_SAVE_FAILURE', { error });
+src/services/storageShim.ts:      AuditLogger.error('STORAGE_CLEAR_FAILURE', { error });

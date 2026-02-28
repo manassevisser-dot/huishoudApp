@@ -10,10 +10,10 @@ jest.mock('@domain/constants/datakeys', () => ({
 }));
 
 jest.mock('@adapters/audit/AuditLoggerAdapter', () => ({
-  logger: {
+  Logger: {
     error: jest.fn(),
     info: jest.fn(),
-    warn: jest.fn(),
+    warning: jest.fn(),
   },
 }));
 
@@ -36,10 +36,10 @@ jest.mock('@domain/rules/fieldVisibility', () => ({
 }));
 
 import { VisibilityOrchestrator } from './VisibilityOrchestrator';
-import { logger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import { fieldVisibilityRules } from '@domain/rules/fieldVisibility';
 
-const mockLogger = logger as jest.Mocked<typeof logger>;
+const mockLogger = Logger as jest.Mocked<typeof Logger>;
 
 // Minimale FSO stub: getValue geeft altijd een veilige default terug
 const makeFso = (values: Record<string, unknown> = {}) =>

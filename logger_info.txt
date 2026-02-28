@@ -1,0 +1,16 @@
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.info('user.action', { screen: 'dashboard', action: 'click' });
+src/adapters/audit/AuditLoggerAdapter.ts:  info: auditLogger.info.bind(auditLogger),
+src/adapters/audit/README.md:  └── Logger.info / .warn / .error
+src/adapters/audit/README.md:| `Logger.info(eventName, data?)` | method | Gebruikersacties, geen UI-notificatie |
+src/adapters/audit/README.md:- Voeg altijd context toe: `Logger.info('USER_LOGIN', { userId: 123 })`
+src/adapters/audit/README.md:Logger.info('USER_LOGIN_SUCCESS', { userId: 123, method: 'google' });
+src/app/workflows/ResetWorkflow.test.ts: *   2. ResetWorkflow — 'full': logt via Logger.info
+src/app/workflows/ResetWorkflow.test.ts: *   5. ResetWorkflow — 'setup': logt via Logger.info
+src/app/workflows/ResetWorkflow.test.ts:      expect(Logger.info).toHaveBeenCalledWith('reset_completed', expect.objectContaining({
+src/app/workflows/ResetWorkflow.test.ts:      expect(Logger.info).toHaveBeenCalledWith('reset_completed', expect.objectContaining({
+src/app/workflows/ResetWorkflow.ts:    Logger.info('reset_completed', {
+src/app/workflows/ResetWorkflow.ts:    Logger.info('reset_completed', {
+src/app/workflows/SettingsWorkflow.test.ts:    it('logt settings_changed via Logger.info', () => {
+src/app/workflows/SettingsWorkflow.test.ts:      expect(Logger.info).toHaveBeenCalledWith('settings_changed', expect.objectContaining({
+src/app/workflows/SettingsWorkflow.test.ts:      expect(Logger.info).toHaveBeenCalledWith('settings_changed', expect.objectContaining({
+src/app/workflows/SettingsWorkflow.ts:    Logger.info('settings_changed', {

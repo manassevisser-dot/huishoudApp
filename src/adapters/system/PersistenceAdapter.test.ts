@@ -1,7 +1,7 @@
 // src/adapters/system/PersistenceAdapter.test.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { save, load, clear } from './PersistenceAdapter';
-import { logger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import type { FormState } from '@core/types/core';
 import { initialFormState } from '@app/state/initialFormState';
 
@@ -14,9 +14,9 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 
 // Mock logger
 jest.mock('@adapters/audit/AuditLoggerAdapter', () => ({
-  logger: {
+  Logger: {
     info: jest.fn(),
-    warn: jest.fn(),
+    warning: jest.fn(),
   },
 }));
 
@@ -94,7 +94,7 @@ describe('PersistenceAdapter', () => {
   
   await save(mockState);
 
-  expect(logger.warn).toHaveBeenCalledWith('state_persist_failed', expect.objectContaining({
+  expect(Logger.warning).toHaveBeenCalledWith('state_persist_failed', expect.objectContaining({
     error: 'unknown',
   }));
 });
@@ -125,7 +125,7 @@ describe('PersistenceAdapter', () => {
       expect(savedData.data.finance.income.totalAmount).toBe(2500);
       
       // Controleer dat logger is aangeroepen
-      expect(logger.info).toHaveBeenCalledWith('state_persisted', expect.any(Object));
+      expect(Logger.info).toHaveBeenCalledWith('state_persisted', expect.any(Object));
     });
 
     it('should handle AsyncStorage errors gracefully', async () => {
@@ -134,7 +134,7 @@ describe('PersistenceAdapter', () => {
 
       await save(mockState);
 
-      expect(logger.warn).toHaveBeenCalledWith('state_persist_failed', expect.objectContaining({
+      expect(Logger.warning).toHaveBeenCalledWith('state_persist_failed', expect.objectContaining({
         error: 'Storage full',
       }));
     });
@@ -147,8 +147,8 @@ describe('PersistenceAdapter', () => {
       const result = await load();
 
       expect(result).toBeNull();
-      expect(logger.info).not.toHaveBeenCalled();
-      expect(logger.warn).not.toHaveBeenCalled();
+      expect(Logger.info).not.toHaveBeenCalled();
+      expect(Logger.warning).not.toHaveBeenCalled();
     });
 it('should handle load errors with non-Error objects', async () => {
   mockGetItem.mockRejectedValueOnce('String error'); // Geen Error object
@@ -156,7 +156,7 @@ it('should handle load errors with non-Error objects', async () => {
   const result = await load();
 
   expect(result).toBeNull();
-  expect(logger.warn).toHaveBeenCalledWith('hydration_failed', expect.objectContaining({
+  expect(Logger.warning).toHaveBeenCalledWith('hydration_failed', expect.objectContaining({
     error: 'unknown',
   }));
 });
@@ -177,7 +177,7 @@ it('should handle load errors with non-Error objects', async () => {
       const result = await load();
 
       expect(result).toEqual(persistableData);
-      expect(logger.info).toHaveBeenCalledWith('hydration_success', expect.any(Object));
+      expect(Logger.info).toHaveBeenCalledWith('hydration_success', expect.any(Object));
     });
 
     it('should handle corrupt JSON', async () => {
@@ -187,7 +187,7 @@ it('should handle load errors with non-Error objects', async () => {
 
       expect(result).toBeNull();
       expect(mockRemoveItem).toHaveBeenCalledWith(STORAGE_KEY);
-      expect(logger.warn).toHaveBeenCalledWith('hydration_failed', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('hydration_failed', expect.any(Object));
     });
 
     it('should reject invalid schema version', async () => {
@@ -203,7 +203,7 @@ it('should handle load errors with non-Error objects', async () => {
 
       expect(result).toBeNull();
       expect(mockRemoveItem).toHaveBeenCalledWith(STORAGE_KEY);
-      expect(logger.warn).toHaveBeenCalledWith('storage_corrupt', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('storage_corrupt', expect.any(Object));
     });
 
     it('should reject missing required fields', async () => {
@@ -229,7 +229,7 @@ it('should handle load errors with non-Error objects', async () => {
 
       expect(result).toBeNull();
       expect(mockRemoveItem).toHaveBeenCalledWith(STORAGE_KEY);
-      expect(logger.warn).toHaveBeenCalledWith('hydration_failed', expect.objectContaining({
+      expect(Logger.warning).toHaveBeenCalledWith('hydration_failed', expect.objectContaining({
         error: 'Failed to read',
       }));
     });
@@ -251,7 +251,7 @@ it('should handle load errors with non-Error objects', async () => {
 
   await clear();
 
-  expect(logger.warn).toHaveBeenCalledWith('storage_clear_failed', expect.objectContaining({
+  expect(Logger.warning).toHaveBeenCalledWith('storage_clear_failed', expect.objectContaining({
     error: 'unknown',
   }));
 });
@@ -259,7 +259,7 @@ it('should handle load errors with non-Error objects', async () => {
       await clear();
 
       expect(mockRemoveItem).toHaveBeenCalledWith(STORAGE_KEY);
-      expect(logger.info).toHaveBeenCalledWith('storage_cleared', expect.any(Object));
+      expect(Logger.info).toHaveBeenCalledWith('storage_cleared', expect.any(Object));
     });
 
     it('should handle errors during clear', async () => {
@@ -268,7 +268,7 @@ it('should handle load errors with non-Error objects', async () => {
 
       await clear();
 
-      expect(logger.warn).toHaveBeenCalledWith('storage_clear_failed', expect.objectContaining({
+      expect(Logger.warning).toHaveBeenCalledWith('storage_clear_failed', expect.objectContaining({
         error: 'Cannot clear',
       }));
     });

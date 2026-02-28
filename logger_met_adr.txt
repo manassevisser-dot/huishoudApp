@@ -1,0 +1,14 @@
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.debug('render.performance', { durationMs: 42 });
+src/adapters/audit/AuditLoggerAdapter.ts- * 
+src/adapters/audit/AuditLoggerAdapter.ts- * // Met ADR referenties
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.notice('csv.import.completed', { rowCount: 150 }, { adr: 'ADR-13' });
+src/adapters/audit/AuditLoggerAdapter.ts- * 
+src/adapters/audit/AuditLoggerAdapter.ts- * // Met user context
+--
+src/adapters/validation/validateAtBoundary.ts:  Logger.error('BOUNDARY_UNEXPECTED_ERROR', {
+--
+src/ADR_CLEANCODE/README.md-```typescript
+src/ADR_CLEANCODE/README.md-// ADR-12: Auditability
+src/ADR_CLEANCODE/README.md:AuditLogger.log('INFO', {
+--
+src/app/hooks/useTransactionHistory.ts-      const isValidationError = err instanceof Error && (err.name === 'ZodError' || err.message.includes('validation'));

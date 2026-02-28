@@ -33,8 +33,7 @@ import {
   
   jest.mock('@adapters/audit/AuditLoggerAdapter', () => ({
     Logger: {
-      // Gebruik nu de variabelen met de 'mock' prefix
-      warn: (...args: any[]) => mockWarnSpy(...args),
+      warning: (...args: any[]) => mockWarnSpy(...args),
       error: (...args: any[]) => mockErrorSpy(...args),
     },
   }));

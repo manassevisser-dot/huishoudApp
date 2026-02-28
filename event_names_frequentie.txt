@@ -1,0 +1,39 @@
+      3 src/adapters/audit/README.md:eventName
+      2 src/app/workflows/ResetWorkflow.ts:reset_completed
+      2 src/adapters/transaction/stateful.ts:ACTION
+      2 src/adapters/audit/README.md:
+      2 src/adapters/audit/AuditLoggerAdapter.ts:user.completed_wizard
+      1 src/services/transactionService.ts:Undo functionaliteit nog niet geïmplementeerd
+      1 src/services/storageShim.ts:THEME_SAVE_FAILURE
+      1 src/services/storageShim.ts:THEME_LOAD_FAILURE
+      1 src/services/storageShim.ts:STORAGE_SAVE_FAILURE
+      1 src/services/storageShim.ts:STORAGE_LOAD_FAILURE
+      1 src/services/storageShim.ts:STORAGE_CLEAR_FAILURE
+      1 src/app/workflows/SettingsWorkflow.ts:settings_theme_invalid_value
+      1 src/app/workflows/SettingsWorkflow.ts:settings_changed
+      1 src/app/orchestrators/ImportOrchestrator.ts:[ImportOrchestrator] Critical failure in CSV-parsing pipeline:
+      1 src/app/hooks/useTransactionHistory.ts:isValidationError ? WARN : ERROR
+      1 src/ADR_CLEANCODE/README.md:INFO
+      1 src/adapters/validation/validateAtBoundary.ts:BOUNDARY_VALIDATION_FAILED
+      1 src/adapters/validation/validateAtBoundary.ts:BOUNDARY_UNEXPECTED_ERROR
+      1 src/adapters/validation/validateAtBoundary.ts:BOUNDARY_NO_SCHEMA
+      1 src/adapters/transaction/stateful.ts:INFO
+      1 src/adapters/audit/README.md:VALIDATION_FAILED
+      1 src/adapters/audit/README.md:USER_LOGIN_SUCCESS
+      1 src/adapters/audit/README.md:USER_LOGIN
+      1 src/adapters/audit/README.md:RATE_LIMIT_NEAR
+      1 src/adapters/audit/README.md:API_CALL_FAILED
+      1 src/adapters/audit/README.md:...
+      1 src/adapters/audit/AuditLoggerAdapter.ts:validation.failed
+      1 src/adapters/audit/AuditLoggerAdapter.ts:user.action
+      1 src/adapters/audit/AuditLoggerAdapter.ts:system.crash
+      1 src/adapters/audit/AuditLoggerAdapter.ts:render.performance
+      1 src/adapters/audit/AuditLoggerAdapter.ts:rate.limit.near
+      1 src/adapters/audit/AuditLoggerAdapter.ts:payment.failed
+      1 src/adapters/audit/AuditLoggerAdapter.ts:numericLevel
+      1 src/adapters/audit/AuditLoggerAdapter.ts:listener
+      1 src/adapters/audit/AuditLoggerAdapter.ts:eventName
+      1 src/adapters/audit/AuditLoggerAdapter.ts:database.corruption_detected
+      1 src/adapters/audit/AuditLoggerAdapter.ts:database.corruption
+      1 src/adapters/audit/AuditLoggerAdapter.ts:csv.import.completed
+      1 src/adapters/audit/AuditLoggerAdapter.ts:

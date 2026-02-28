@@ -1,0 +1,4 @@
+src/adapters/audit/AuditLoggerAdapter.test.ts:      logger.log('ERROR');
+src/adapters/audit/AuditLoggerAdapter.test.ts:      logger.log('INIT', 'Initialization complete');
+src/adapters/audit/AuditLoggerAdapter.test.ts:      logger.log('UPDATE', { userId: 123, action: 'save' });
+src/adapters/audit/AuditLoggerAdapter.test.ts:      expect(logger.log).toBeInstanceOf(Function);

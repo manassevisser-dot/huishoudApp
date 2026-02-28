@@ -6,10 +6,10 @@ import { ScreenRegistry } from '@domain/registry/ScreenRegistry';
 // Mocks
 jest.mock('@domain/registry/ScreenRegistry');
 jest.mock('@adapters/audit/AuditLoggerAdapter', () => ({
-  logger: { warn: jest.fn() },
+  Logger: { warning: jest.fn() },
 }));
 
-import { logger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 
 const makeFso = (overrides = {}) => ({
   dispatch: jest.fn(),
@@ -62,7 +62,7 @@ describe('NavigationOrchestrator', () => {
       sut.navigateTo('UNKNOWN_SCREEN');
 
       expect(fso.dispatch).not.toHaveBeenCalled();
-      expect(logger.warn).toHaveBeenCalledWith('navigation_screen_not_found', expect.objectContaining({ screenId: 'UNKNOWN_SCREEN' }));
+      expect(Logger.warning).toHaveBeenCalledWith('navigation_screen_not_found', expect.objectContaining({ screenId: 'UNKNOWN_SCREEN' }));
     });
   });
 

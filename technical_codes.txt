@@ -1,0 +1,18 @@
+src/adapters/audit/README.md:- Voeg altijd context toe: `Logger.info('USER_LOGIN', { userId: 123 })`
+src/adapters/audit/README.md:Logger.info('USER_LOGIN_SUCCESS', { userId: 123, method: 'google' });
+src/adapters/audit/README.md:Logger.warn('RATE_LIMIT_NEAR', { currentLoad: 85 });
+src/adapters/audit/README.md:Logger.error('API_CALL_FAILED', error);
+src/adapters/audit/README.md:  Logger.error('VALIDATION_FAILED', new Error('invalid'));
+src/adapters/transaction/stateful.ts:    AuditLogger.log('INFO', {
+src/adapters/transaction/stateful.ts:      AuditLogger.log('ACTION', { event: 'undo', pointer: this.pointer });
+src/adapters/transaction/stateful.ts:      AuditLogger.log('ACTION', { event: 'redo', pointer: this.pointer });
+src/adapters/validation/validateAtBoundary.ts:    Logger.warn('BOUNDARY_NO_SCHEMA', { fieldId, value });
+src/adapters/validation/validateAtBoundary.ts:    Logger.warn('BOUNDARY_VALIDATION_FAILED', {
+src/adapters/validation/validateAtBoundary.ts:  Logger.error('BOUNDARY_UNEXPECTED_ERROR', {
+src/ADR_CLEANCODE/README.md:AuditLogger.log('INFO', {
+src/services/storageShim.ts:    AuditLogger.error('STORAGE_LOAD_FAILURE', { error });
+src/services/storageShim.ts:    AuditLogger.error('STORAGE_SAVE_FAILURE', { error });
+src/services/storageShim.ts:    AuditLogger.error('THEME_LOAD_FAILURE', { error });
+src/services/storageShim.ts:    AuditLogger.error('THEME_SAVE_FAILURE', { error });
+src/services/storageShim.ts:      AuditLogger.error('STORAGE_CLEAR_FAILURE', { error });
+src/services/transactionService.ts:  Logger.warn('Undo functionaliteit nog niet geïmplementeerd');

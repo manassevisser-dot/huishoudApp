@@ -19,7 +19,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { FormState } from '@core/types/core';
-import { logger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 
 // ─── Storage key ────────────────────────────────────────────────────────────
 // Versienummer in de key → bij schema-breuk is de oude key automatisch onleesbaar
@@ -81,13 +81,13 @@ export async function save(state: FormState): Promise<void> {
     const persistable = toPersistable(state);
     const json = JSON.stringify(persistable);
     await AsyncStorage.setItem(STORAGE_KEY, json);
-    logger.info('state_persisted', {
+    Logger.info('state_persisted', {
       adapter: 'persistence',
       action: 'save',
       lastModified: state.meta.lastModified,
     });
   } catch (error) {
-    logger.warn('state_persist_failed', {
+    Logger.warning('state_persist_failed', {
       adapter: 'persistence',
       action: 'save',
       error: error instanceof Error ? error.message : 'unknown',
@@ -111,7 +111,7 @@ async function cleanupCorruptStorage(): Promise<void> {
 
 // ─── Helper: log corrupte data en ruim op ───────────────────────
 async function handleInvalidState(parsed: unknown): Promise<null> {
-  logger.warn('storage_corrupt', {
+  Logger.warning('storage_corrupt', {
     adapter: 'persistence',
     action: 'load',
     reason: 'schema_mismatch_or_invalid_structure',
@@ -131,14 +131,14 @@ export async function load(): Promise<PersistableFormState | null> {
     const parsed: unknown = JSON.parse(json);
     if (!isPersistableFormState(parsed)) return await handleInvalidState(parsed);
 
-    logger.info('hydration_success', {
+    Logger.info('hydration_success', {
       adapter: 'persistence',
       action: 'load',
       lastModified: parsed.meta.lastModified,
     });
     return parsed;
   } catch (error) {
-    logger.warn('hydration_failed', {
+    Logger.warning('hydration_failed', {
       adapter: 'persistence',
       action: 'load',
       error: error instanceof Error ? error.message : 'unknown',
@@ -155,12 +155,12 @@ export async function load(): Promise<PersistableFormState | null> {
 export async function clear(): Promise<void> {
   try {
     await AsyncStorage.removeItem(STORAGE_KEY);
-    logger.info('storage_cleared', {
+    Logger.info('storage_cleared', {
       adapter: 'persistence',
       action: 'clear',
     });
   } catch (error) {
-    logger.warn('storage_clear_failed', {
+    Logger.warning('storage_clear_failed', {
       adapter: 'persistence',
       action: 'clear',
       error: error instanceof Error ? error.message : 'unknown',

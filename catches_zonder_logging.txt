@@ -1,0 +1,28 @@
+src/adapters/audit/AuditLoggerAdapter.ts:      } catch (e) {
+src/adapters/system/FilePickerAdapter.test.ts:      } catch (error: unknown) {
+src/adapters/system/FilePickerAdapter.test.ts:      } catch (error: unknown) {
+src/adapters/system/FilePickerAdapter.test.ts:      } catch (error: unknown) {
+src/adapters/system/FilePickerAdapter.test.ts:      } catch (error: unknown) {
+src/adapters/system/FilePickerAdapter.ts:  } catch (error: unknown) {
+src/adapters/system/PersistenceAdapter.ts:  } catch (error) {
+src/adapters/system/PersistenceAdapter.ts:  } catch {
+src/adapters/system/PersistenceAdapter.ts:  } catch (error) {
+src/adapters/system/PersistenceAdapter.ts:  } catch (error) {
+src/adapters/validation/LegacyStateAdapter.ts:  }, z.array(itemSchema)).catch([]);
+src/adapters/validation/validateAtBoundary.ts:  } catch (error) {
+src/app/hooks/useTransactionHistory.ts:    } catch (err) {
+src/app/orchestrators/ImportOrchestrator.ts:    } catch (e: unknown) {
+src/app/orchestrators/VisibilityOrchestrator.ts:  } catch (error) {
+src/app/workflows/csvUploadWorkflow.ts:    } catch (error) {
+src/app/workflows/csvUploadWorkflow.ts:    // business.recompute staat BUITEN de catch:
+src/app/workflows/csvUploadWorkflow.ts:    // Research: omsloten door try-catch — fouten hier mogen de import NIET afbreken.
+src/app/workflows/csvUploadWorkflow.ts:    // .catch() bestond niet op het return-type — vervangen door try-catch.
+src/app/workflows/csvUploadWorkflow.ts:    } catch (err: unknown) {
+src/app/workflows/csvUploadWorkflow.ts:    // business.recompute is verplaatst naar execute() buiten de try/catch
+src/services/storageShim.ts:  } catch (error) {
+src/services/storageShim.ts:  } catch (error) {
+src/services/storageShim.ts:  } catch (error) {
+src/services/storageShim.ts:  } catch (error) {
+src/services/storageShim.ts:    } catch (error) {
+src/test-utils/jest.setup.tsx:} catch {}
+src/ui/screens/csv/CsvUploadContainer.tsx:    } catch (e: unknown) {

@@ -5,15 +5,15 @@ import type { ImportOrchestrator } from '@app/orchestrators/ImportOrchestrator';
 import type { ResearchOrchestrator } from '@app/orchestrators/ResearchOrchestrator';
 import type { BusinessManager } from '@app/orchestrators/managers/BusinessManager';
 import { CsvAnalysisService } from '@domain/finance/CsvAnalysisService';
-import { logger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import type { ParsedCsvTransaction, CsvAnalysisResult } from '@app/orchestrators/types/csvUpload.types';
 
 // Mock dependencies
 jest.mock('@domain/finance/CsvAnalysisService');
 jest.mock('@adapters/audit/AuditLoggerAdapter', () => ({
-  logger: {
+  Logger: {
     error: jest.fn(),
-    warn: jest.fn(),
+    warning: jest.fn(),
     info: jest.fn(),
   },
 }));
@@ -163,7 +163,7 @@ describe('CsvUploadWorkflow', () => {
       // Check fase C
       expect(mockResearch.processAllData).toHaveBeenCalled();
       expect(mockBusiness.recompute).toHaveBeenCalledWith(mockFso);
-      expect(logger.info).toHaveBeenCalledWith('csv_import_completed', expect.any(Object));
+      expect(Logger.info).toHaveBeenCalledWith('csv_import_completed', expect.any(Object));
     });
 
     it('should handle empty CSV import', async () => {
@@ -181,7 +181,7 @@ describe('CsvUploadWorkflow', () => {
         outcome: 'failure',
         errorMessage: 'Geen transacties gevonden in het bestand',
       });
-      expect(logger.warn).toHaveBeenCalledWith('csv_parse_empty', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('csv_parse_empty', expect.any(Object));
       expect(mockFso.dispatch).not.toHaveBeenCalled();
     });
 
@@ -200,7 +200,7 @@ describe('CsvUploadWorkflow', () => {
         outcome: 'failure',
         errorMessage: 'Invalid CSV format',
       });
-      expect(logger.error).toHaveBeenCalledWith('csv_parse_error', expect.any(Object));
+      expect(Logger.error).toHaveBeenCalledWith('csv_parse_error', expect.any(Object));
     });
 
     it('should handle unexpected errors gracefully', async () => {
@@ -217,7 +217,7 @@ describe('CsvUploadWorkflow', () => {
         outcome: 'failure',
         errorMessage: 'Onverwachte fout tijdens import',
       });
-      expect(logger.error).toHaveBeenCalledWith('csv_workflow_failed', expect.any(Object));
+      expect(Logger.error).toHaveBeenCalledWith('csv_workflow_failed', expect.any(Object));
     });
   });
 
@@ -292,7 +292,7 @@ describe('CsvUploadWorkflow', () => {
       await workflow.execute(mockParams);
 
       // Assert
-      expect(logger.warn).toHaveBeenCalledWith('csv_discrepancy_found', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('csv_discrepancy_found', expect.any(Object));
     });
 
     it('should handle missing costs warning', async () => {
@@ -314,7 +314,7 @@ describe('CsvUploadWorkflow', () => {
       await workflow.execute(mockParams);
 
       // Assert
-      expect(logger.warn).toHaveBeenCalledWith('csv_missing_costs_detected', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('csv_missing_costs_detected', expect.any(Object));
     });
 
     it('should update status to analyzed', async () => {

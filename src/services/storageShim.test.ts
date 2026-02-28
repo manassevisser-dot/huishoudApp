@@ -1,6 +1,6 @@
 // src/services/storageShim.test.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import StorageShim from './storageShim';
 import type { FormState } from '@core/types/core';
 import type { Theme } from '@domain/constants/Colors';
@@ -13,7 +13,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 
 jest.mock('@adapters/audit/AuditLoggerAdapter', () => ({
-  AuditLogger: {
+  Logger: {
     error: jest.fn(),
   },
 }));
@@ -158,7 +158,7 @@ describe('StorageShim', () => {
       const result = await StorageShim.loadState();
 
       expect(result).toBeNull();
-      expect(AuditLogger.error).toHaveBeenCalledWith('STORAGE_LOAD_FAILURE', {
+      expect(Logger.error).toHaveBeenCalledWith('STORAGE_LOAD_FAILURE', {
         error: expect.any(Error),
       });
     });
@@ -170,7 +170,7 @@ describe('StorageShim', () => {
       const result = await StorageShim.loadState();
 
       expect(result).toBeNull();
-      expect(AuditLogger.error).toHaveBeenCalledWith('STORAGE_LOAD_FAILURE', {
+      expect(Logger.error).toHaveBeenCalledWith('STORAGE_LOAD_FAILURE', {
         error,
       });
     });
@@ -201,7 +201,7 @@ describe('StorageShim', () => {
 
       await StorageShim.saveState(mockFormState);
 
-      expect(AuditLogger.error).toHaveBeenCalledWith('STORAGE_SAVE_FAILURE', {
+      expect(Logger.error).toHaveBeenCalledWith('STORAGE_SAVE_FAILURE', {
         error,
       });
     });
@@ -248,7 +248,7 @@ describe('StorageShim', () => {
       const result = await StorageShim.loadTheme();
 
       expect(result).toBeNull();
-      expect(AuditLogger.error).toHaveBeenCalledWith('THEME_LOAD_FAILURE', {
+      expect(Logger.error).toHaveBeenCalledWith('THEME_LOAD_FAILURE', {
         error,
       });
     });
@@ -273,7 +273,7 @@ describe('StorageShim', () => {
 
       await StorageShim.saveTheme('light');
 
-      expect(AuditLogger.error).toHaveBeenCalledWith('THEME_SAVE_FAILURE', {
+      expect(Logger.error).toHaveBeenCalledWith('THEME_SAVE_FAILURE', {
         error,
       });
     });
@@ -292,7 +292,7 @@ describe('StorageShim', () => {
 
       await StorageShim.clearAll();
 
-      expect(AuditLogger.error).toHaveBeenCalledWith('STORAGE_CLEAR_FAILURE', {
+      expect(Logger.error).toHaveBeenCalledWith('STORAGE_CLEAR_FAILURE', {
         error,
       });
     });

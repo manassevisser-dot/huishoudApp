@@ -59,10 +59,10 @@ export function validateAtBoundary<T = unknown>(
   const schema = FieldSchemas[fieldId];
 
   // If no schema exists, field is unknown - pass through with warning
-  if (schema === undefined) {
-    Logger.warn('BOUNDARY_NO_SCHEMA', { fieldId, value });
-    return { success: true, data: value as T };
-  }
+if (schema === undefined) {
+  Logger.warning('BOUNDARY_NO_SCHEMA', { fieldId, value });  // warning ipv warn
+  return { success: true, data: value as T };
+}
 
   // Validate with Zod schema
   try {
@@ -86,7 +86,7 @@ function handleValidationError(
     const errorMessage = extractZodErrorMessage(error);
     
     // Log validation failure
-    Logger.warn('BOUNDARY_VALIDATION_FAILED', {
+    Logger.warning('BOUNDARY_VALIDATION_FAILED', {  // 👈 veranderd van warn naar warning
       fieldId,
       value,
       error: errorMessage,
@@ -95,7 +95,6 @@ function handleValidationError(
     
     return { success: false, error: errorMessage };
   }
-
   // Unexpected error - route to ticketing
   Logger.error('BOUNDARY_UNEXPECTED_ERROR', {
     fieldId,

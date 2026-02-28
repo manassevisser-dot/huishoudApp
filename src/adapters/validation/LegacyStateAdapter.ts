@@ -1,10 +1,12 @@
-// src/adapters/validation/LegacyValidator.ts
 /**
- * @file_intent Valideert en saneert inkomende data van oude versies of externe bronnen om runtime crashes te voorkomen.
- * @repo_architecture Mobile Industry (MI) - Anti-Corruption Layer (Adapter).
- * @term_definition filteredArray = Een robuuste validator die ongeldige array-items geruisloos verwijdert in plaats van de hele parse te laten falen.
- * @contract Biedt een tolerante interface voor "legacy" datastructuren. Garandeert een geldige LegacyState-output (eventueel leeg) door middel van safeParse, ongeacht hoe corrupt de input is.
- * @ai_instruction Gebruik dit bestand uitsluitend bij data-import of migratie-scenario's. De hier gedefinieerde schema's zijn losser dan de strikte ZodSchemas.ts om achterwaartse compatibiliteit te waarborgen.
+ * Tolerante validator voor legacy data structuren.
+ * 
+ * @module adapters/validation
+ * @see {@link ./README.md | Legacy Validator - Details}
+ * 
+ * @remarks
+ * - Gebruikt `filteredArray` om corrupte items te negeren i.p.v. hele parse te laten falen
+ * - Schema's zijn losser dan strikte validatie voor achterwaartse compatibiliteit
  */
 
 import { z } from 'zod';
@@ -25,13 +27,19 @@ const legacyItemSchema = z.object({
   amount: z.number().optional(),
 }).passthrough();
 
-
-// Helper om een array te valideren waarbij foute items geruisloos worden verwijderd
+/**
+ * Filtert array naar alleen valide items volgens gegeven schema.
+ * 
+ * @param itemSchema - Zod schema voor individuele items
+ * @returns Preprocessed array met alleen valide items
+ * 
+ * @example
+ * const validMembers = filteredArray(legacyMemberSchema)(malformedArray);
+ */
 const filteredArray = (itemSchema: z.ZodTypeAny) => 
-  z.preprocess((val): unknown[] => { // <--- Voeg : unknown[] return type toe
+  z.preprocess((val): unknown[] => { 
     if (!Array.isArray(val)) return [];
     
-    // Filter de items en cast het resultaat naar unknown[] voor ESLint
     return (val as unknown[]).filter((item) => {
       const p = itemSchema.safeParse(item);
       return p.success;
@@ -65,6 +73,17 @@ export type LegacyState = z.infer<typeof legacyStateSchema>;
 export type LegacyMember = z.infer<typeof legacyMemberSchema>;
 export type LegacyItem = z.infer<typeof legacyItemSchema>;
 export type ZodJsonPrimitive = z.infer<typeof ZodjsonPrimitive>;
+
+/**
+ * Parse en valideer legacy data naar gegarandeerd geldige structuur.
+ * 
+ * @param data - Onbekende input van legacy bron of externe import
+ * @returns Gegarandeerd geldige LegacyState (minimaal leeg object)
+ * 
+ * @example
+ * const state = LegacyValidator.parseState(incomingLegacyData);
+ * // state is altijd geldig, corrupte items zijn gefilterd
+ */
 export const LegacyValidator = {
   parseState: (data: unknown): LegacyState => {
     const result = legacyStateSchema.safeParse(data);

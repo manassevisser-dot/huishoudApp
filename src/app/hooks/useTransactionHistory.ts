@@ -7,7 +7,7 @@
  * @ai_instruction Deze hook initialiseert de adapter via een useState initializer (lazy init) om persistentie over re-renders te garanderen. Gebruik de 'undo' en 'redo' functies om door de historie te navigeren die in de adapter is opgeslagen.
  */
 import { useState } from 'react';
-import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import { executeUpdateAction } from './transactionActions';
 import { StatefulTransactionAdapter } from '@adapters/transaction/stateful';
 import { formatCurrency } from '@domain/helpers/numbers';
@@ -26,8 +26,8 @@ const getItemsFromState = (state: Record<string, unknown> | undefined | null): T
 };
 
 export const useTransactionHistory = (initialData: TransactionRecord[] = []) => {
-  const [adapter] = useState<StatefulTransactionAdapter>(
-    () => new StatefulTransactionAdapter({ items: initialData })
+  const [adapter] = useState(() =>
+    new StatefulTransactionAdapter({ items: initialData })
   );
   const [hasError, setHasError] = useState(false);
 
@@ -36,25 +36,23 @@ export const useTransactionHistory = (initialData: TransactionRecord[] = []) => 
       executeUpdateAction(adapter, inputValue, parts);
       setHasError(false);
     } catch (err) {
-      // We checken op 'name' of 'message' ipv de klasse, om Zod-isolatie te bewaren
-      const isValidationError = err instanceof Error && (err.name === 'ZodError' || err.message.includes('validation'));
-      
-      AuditLogger.log(isValidationError ? 'WARN' : 'ERROR', {
-        event: 'transaction_update_failed',
-        error: err instanceof Error ? err.message : 'Unknown transaction error'
-      });
+      const message = err instanceof Error ? err.message : 'Unknown transaction error';
+      const isValidation = err instanceof Error &&
+        (err.name === 'ZodError' || err.message.includes('validation'));
+      (isValidation ? Logger.warning : Logger.error)(
+        'transaction.update_failed', { error: message }
+      );
       setHasError(true);
     }
   };
 
   return {
-    transactions: getItemsFromState(adapter.getCurrentState() as Record<string, unknown>).map(tx => ({
-      ...tx,
-      displayAmount: formatCurrency(Number(tx.amount ?? 0)),
+    transactions: getItemsFromState(
+      adapter.getCurrentState() as Record<string, unknown>
+    ).map(tx => ({
+      ...tx, displayAmount: formatCurrency(Number(tx.amount ?? 0)),
     })),
     hasError,
     updateTransaction,
-    undo: (): void => { if (adapter.undo() !== null) setHasError(false); },
-    redo: (): void => { if (adapter.redo() !== null) setHasError(false); }
-  };
-};
+    undo: () => adapter.undo() !== null && setHasError(false),
+    redo: () => adapter.redo() !== null && setHasError(false), };};

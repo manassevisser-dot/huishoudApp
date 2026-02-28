@@ -1,0 +1,10 @@
+]633;E;for dir in adapters app core domain ui\x3b do   echo "=== $dir ==="\x3b   grep -r "Logger\\." src/$dir/ | wc -l\x3b done > logging_per_laag.txt;9181444b-c054-4061-8228-06bdeee3ac93]633;C=== adapters ===
+55
+=== app ===
+20
+=== core ===
+0
+=== domain ===
+0
+=== ui ===
+0

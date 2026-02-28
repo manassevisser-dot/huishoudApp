@@ -1,0 +1,1 @@
+bash: jest: command not found

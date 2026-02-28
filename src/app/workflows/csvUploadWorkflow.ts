@@ -28,7 +28,7 @@ import type {
   DutchBank,
 } from '@app/orchestrators/types/csvUpload.types';
 import { CsvAnalysisService } from '@domain/finance/CsvAnalysisService';
-import { logger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import type { FormAction } from '@app/state/formReducer';
 
 // ─── Lokaal input type ────────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ export class CsvUploadWorkflow {
       const analysisResult = this.runPhaseB(parseOutcome.transactions, params);
       result = this.runPhaseC(parseOutcome.transactions, analysisResult, params);
     } catch (error) {
-      logger.error('csv_workflow_failed', {
+      Logger.error('csv_workflow_failed', {
         workflow: 'csvUpload',
         error: error instanceof Error ? error.message : String(error),
       });
@@ -145,12 +145,12 @@ export class CsvUploadWorkflow {
     const parseResult = this.importOrch.processCsvImport(params.csvText);
 
     if (parseResult.status === 'empty') {
-      logger.warn('csv_parse_empty', { workflow: 'csvUpload', fileName: params.fileName });
+      Logger.warning('csv_parse_empty', { workflow: 'csvUpload', fileName: params.fileName });
       return { outcome: 'failure', errorMessage: 'Geen transacties gevonden in het bestand' };
     }
 
     if (parseResult.status === 'error') {
-      logger.error('csv_parse_error', { workflow: 'csvUpload', error: parseResult.errorMessage });
+      Logger.error('csv_parse_error', { workflow: 'csvUpload', error: parseResult.errorMessage });
       return { outcome: 'failure', errorMessage: parseResult.errorMessage };
     }
 
@@ -187,14 +187,14 @@ export class CsvUploadWorkflow {
     }
 
     if (analysis.isDiscrepancy) {
-      logger.warn('csv_discrepancy_found', {
+      Logger.warning('csv_discrepancy_found', {
         workflow: 'csvUpload',
         fileName: params.fileName,
         diff: analysis.setupComparison?.diffCents,
       });
     }
     if (analysis.hasMissingCosts) {
-      logger.warn('csv_missing_costs_detected', { workflow: 'csvUpload' });
+      Logger.warning('csv_missing_costs_detected', { workflow: 'csvUpload' });
     }
 
     return analysis;
@@ -219,7 +219,7 @@ export class CsvUploadWorkflow {
         state.data.setup,
       );
     } catch (err: unknown) {
-      logger.warn('csv_research_phase_error', {
+      Logger.warning('csv_research_phase_error', {
         workflow: 'csvUpload',
         error: err instanceof Error ? err.message : String(err),
       });
@@ -228,7 +228,7 @@ export class CsvUploadWorkflow {
     // business.recompute is verplaatst naar execute() buiten de try/catch
     // zodat programmeerfouten daar propageren in plaats van worden geslikt.
 
-    logger.info('csv_import_completed', {
+    Logger.info('csv_import_completed', {
       workflow: 'csvUpload',
       fileName: params.fileName,
       transactionCount: transactions.length,

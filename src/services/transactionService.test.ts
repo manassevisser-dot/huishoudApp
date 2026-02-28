@@ -15,7 +15,7 @@ jest.mock('@services/storageShim', () => ({
 
 jest.mock('@adapters/audit/AuditLoggerAdapter', () => ({
   Logger: {
-    warn: jest.fn(),
+    warning: jest.fn(),
     error: jest.fn(),
   },
 }));
@@ -354,7 +354,7 @@ describe('TransactionService', () => {
       const result = await undoLastTransaction();
 
       expect(result).toBeNull();
-      expect(Logger.warn).toHaveBeenCalledWith('Undo functionaliteit nog niet geïmplementeerd');
+      expect(Logger.warning).toHaveBeenCalledWith('Undo functionaliteit nog niet geïmplementeerd');
     });
   }); // ✅ Einde van describe('undoLastTransaction')
 

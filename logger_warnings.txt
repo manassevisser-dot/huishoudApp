@@ -1,0 +1,11 @@
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.warning('rate.limit.near', { currentLoad: 85 });
+src/adapters/audit/AuditLoggerAdapter.ts:  warning: auditLogger.warning.bind(auditLogger),
+src/adapters/audit/README.md:| `Logger.warn(eventName, data?)` | method | Niet-kritieke waarschuwingen, toont UI |
+src/adapters/audit/README.md:Logger.warn('RATE_LIMIT_NEAR', { currentLoad: 85 });
+src/adapters/validation/validateAtBoundary.ts:    Logger.warn('BOUNDARY_NO_SCHEMA', { fieldId, value });
+src/adapters/validation/validateAtBoundary.ts:    Logger.warn('BOUNDARY_VALIDATION_FAILED', {
+src/app/workflows/SettingsWorkflow.test.ts:      expect(Logger.warn).toHaveBeenCalledWith(
+src/app/workflows/SettingsWorkflow.test.ts:      expect(Logger.warn).toHaveBeenCalledTimes(1);
+src/app/workflows/SettingsWorkflow.ts:      Logger.warn('settings_theme_invalid_value', {
+src/services/transactionService.test.ts:      expect(Logger.warn).toHaveBeenCalledWith('Undo functionaliteit nog niet geïmplementeerd');
+src/services/transactionService.ts:  Logger.warn('Undo functionaliteit nog niet geïmplementeerd');

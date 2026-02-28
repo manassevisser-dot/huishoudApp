@@ -12,7 +12,7 @@ import type { INavigationOrchestrator } from './interfaces/INavigationOrchestrat
 import type { FormStateOrchestrator } from './FormStateOrchestrator';
 import type { NavigationManager } from './managers/NavigationManager';
 import type { IValidationOrchestrator } from './interfaces/IValidationOrchestrator';
-import { logger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 
 export class NavigationOrchestrator implements INavigationOrchestrator {
   constructor(
@@ -24,7 +24,7 @@ export class NavigationOrchestrator implements INavigationOrchestrator {
   public navigateTo(screenId: string): void {
     const definition = ScreenRegistry.getDefinition(screenId);
     if (definition === null) {
-      logger.warn('navigation_screen_not_found', {
+      Logger.warning('navigation_screen_not_found', {
         orchestrator: 'navigation',
         action: 'navigateTo',
         screenId,

@@ -58,7 +58,7 @@ export class SettingsWorkflow {
     } else if (value === false || value === 'light') {
       theme = 'light';
     } else {
-      Logger.warn('settings_theme_invalid_value', {
+      Logger.warning('settings_theme_invalid_value', {
         workflow: 'settings',
         receivedValue: String(value),
       });

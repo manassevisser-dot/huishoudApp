@@ -26,7 +26,7 @@ import { SectionRegistry } from '@domain/registry/SectionRegistry';
 jest.mock('@adapters/audit/AuditLoggerAdapter', () => ({
   Logger: {
     info: jest.fn(),
-    warn: jest.fn(),
+    warning: jest.fn(),
     error: jest.fn(),
   },
 }));
@@ -99,7 +99,7 @@ describe('SettingsWorkflow', () => {
       workflow.execute('theme', null, mockThemeManager);
 
       expect(mockThemeManager.setTheme).not.toHaveBeenCalled();
-      expect(Logger.warn).toHaveBeenCalledWith(
+      expect(Logger.warning).toHaveBeenCalledWith(
         'settings_theme_invalid_value',
         expect.objectContaining({ workflow: 'settings' }),
       );
@@ -109,7 +109,7 @@ describe('SettingsWorkflow', () => {
       workflow.execute('theme', 42, mockThemeManager);
 
       expect(mockThemeManager.setTheme).not.toHaveBeenCalled();
-      expect(Logger.warn).toHaveBeenCalledTimes(1);
+      expect(Logger.warning).toHaveBeenCalledTimes(1);
     });
   });
 

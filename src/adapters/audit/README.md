@@ -44,7 +44,7 @@ Component
 |---|---|---|
 | `Logger` | namespace | Primaire API — gebruik altijd dit |
 | `Logger.info(eventName, data?)` | method | Gebruikersacties, geen UI-notificatie |
-| `Logger.warn(eventName, data?)` | method | Niet-kritieke waarschuwingen, toont UI |
+| `Logger.warning(eventName, data?)` | method | Niet-kritieke waarschuwingen, toont UI |
 | `Logger.error(eventName, err?)` | method | Herstelbare fouten met stack trace |
 | `Logger.log(...)` | method | **@deprecated** — gebruik specifieke methoden |
 | `subscribeToAuditEvents(listener)` | function | Registreert UI-listener; geeft unsubscribe terug |
@@ -82,7 +82,7 @@ Component
 ```typescript
 // Logging
 Logger.info('USER_LOGIN_SUCCESS', { userId: 123, method: 'google' });
-Logger.warn('RATE_LIMIT_NEAR', { currentLoad: 85 });
+Logger.warning('RATE_LIMIT_NEAR', { currentLoad: 85 });
 Logger.error('API_CALL_FAILED', error);
 
 // UI-notificaties instellen (App.tsx)

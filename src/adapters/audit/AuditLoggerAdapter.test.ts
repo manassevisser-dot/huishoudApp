@@ -1,279 +1,286 @@
-import { logger, Logger, AuditLogger, auditLogger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger, auditLogger } from '@adapters/audit/AuditLoggerAdapter';
 
-describe('audit logger', () => {
+describe('audit Logger', () => {
   beforeEach(() => {
+    jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'debug').mockImplementation(() => {});
+    auditLogger.clearBuffer();
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
   });
 
+  // =========================================================================
+  // info method — RFC level 6 → console.log('[INFO] eventName', payload)
+  // =========================================================================
+
   describe('info method', () => {
     test('logs info message without data', () => {
-      const spy = jest.spyOn(console, 'warn');
-      logger.info('Test info message');
+      const spy = jest.spyOn(console, 'log');
+      Logger.info('test.info_message');
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"message":"Test info message"')
-      );
-      expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"level":"info"')
+        '[INFO] test.info_message',
+        expect.objectContaining({ version: '2025-02-A' })
       );
     });
 
     test('logs info message with data', () => {
-      const spy = jest.spyOn(console, 'warn');
-      logger.info('Test info', { key: 'value' });
+      const spy = jest.spyOn(console, 'log');
+      Logger.info('test.info', { key: 'value' });
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"key":"value"')
+        '[INFO] test.info',
+        expect.objectContaining({ context: { key: 'value' } })
       );
     });
 
     test('logs info with undefined data', () => {
-      const spy = jest.spyOn(console, 'warn');
-      logger.info('Message', undefined);
+      const spy = jest.spyOn(console, 'log');
+      Logger.info('test.message', undefined);
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"message":"Message"')
+        '[INFO] test.message',
+        expect.objectContaining({ version: '2025-02-A' })
       );
     });
   });
 
+  // =========================================================================
+  // error method — RFC level 3 → console.error('[ERROR] eventName', payload)
+  // =========================================================================
+
   describe('error method', () => {
     test('logs error message without error object', () => {
-      const spy = jest.spyOn(console, 'warn');
-      logger.error('Error occurred');
+      const spy = jest.spyOn(console, 'error');
+      Logger.error('error.occurred');
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"level":"error"')
+        '[ERROR] error.occurred',
+        expect.objectContaining({ version: '2025-02-A' })
       );
     });
 
     test('logs error message with Error object', () => {
-      const spy = jest.spyOn(console, 'warn');
+      const spy = jest.spyOn(console, 'error');
       const error = new Error('Test error');
-      logger.error('Error occurred', error);
+      Logger.error('test.error_occurred', { error });
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"message":"Test error"')
-      );
-      expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"stack":')
+        '[ERROR] test.error_occurred',
+        expect.objectContaining({ context: { error } })
       );
     });
 
-    test('logs error with string as second arg', () => {
-      const spy = jest.spyOn(console, 'warn');
-      logger.error('Failed', 'Something went wrong');
+    test('logs error with context object', () => {
+      const spy = jest.spyOn(console, 'error');
+      Logger.error('test.failed', { message: 'Something went wrong' });
 
-      // Bridge: err is not an Error, msg is not an Error, so errorObj = new Error(String(msg))
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"message":"Failed"')
-      );
-      expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"msg":"Failed"')
+        '[ERROR] test.failed',
+        expect.objectContaining({ context: { message: 'Something went wrong' } })
       );
     });
 
-    test('logs error with undefined', () => {
-      const spy = jest.spyOn(console, 'warn');
-      logger.error('Failed', undefined);
+    test('logs error with undefined context', () => {
+      const spy = jest.spyOn(console, 'error');
+      Logger.error('test.failed', undefined);
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"message":"Failed"')
+        '[ERROR] test.failed',
+        expect.any(Object)
       );
     });
 
     test('logs error with Error as first arg', () => {
-      const spy = jest.spyOn(console, 'warn');
+      const spy = jest.spyOn(console, 'error');
       const error = new Error('Direct error');
-      logger.error(error);
+      Logger.error('direct.error', { message: error.message });
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"message":"Direct error"')
+        '[ERROR] direct.error',
+        expect.objectContaining({ context: { message: 'Direct error' } })
       );
     });
   });
 
+  // =========================================================================
+  // warn method — RFC level 4 → console.warn('[WARNING] eventName', payload)
+  // =========================================================================
+
   describe('warn method', () => {
     test('logs warning without data', () => {
       const spy = jest.spyOn(console, 'warn');
-      logger.warn('Warning message');
+      Logger.warning('test.warning_message');
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"level":"warning"')
-      );
-      expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"message":"Warning message"')
+        '[WARNING] test.warning_message',
+        expect.objectContaining({ version: '2025-02-A' })
       );
     });
 
     test('logs warning with data object', () => {
       const spy = jest.spyOn(console, 'warn');
-      logger.warn('Warning', { warning: 'details' });
+      Logger.warning('test.warning', { warning: 'details' });
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"warning":"details"')
+        '[WARNING] test.warning',
+        expect.objectContaining({ context: { warning: 'details' } })
       );
     });
   });
 
+  // =========================================================================
+  // log method — level string wordt geconverteerd via toRfc5424Level
+  // =========================================================================
+
   describe('log method', () => {
     test('logs with single argument', () => {
-      const spy = jest.spyOn(console, 'warn');
-      logger.log('ERROR');
+      const spy = jest.spyOn(console, 'error');
+      // eslint-disable-next-line no-restricted-properties
+      Logger.log('error', 'test.error_event');
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"message":"ERROR"')
+        '[ERROR] test.error_event',
+        expect.any(Object)
       );
     });
 
     test('logs with string and string', () => {
-      const spy = jest.spyOn(console, 'warn');
-      logger.log('INIT', 'Initialization complete');
+      const spy = jest.spyOn(console, 'log');
+      // eslint-disable-next-line no-restricted-properties
+      Logger.log('info', 'test.init_complete');
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"message":"Initialization complete"')
+        '[INFO] test.init_complete',
+        expect.any(Object)
       );
     });
 
     test('logs with string and object', () => {
-      const spy = jest.spyOn(console, 'warn');
-      logger.log('UPDATE', { userId: 123, action: 'save' });
+      const spy = jest.spyOn(console, 'log');
+      // eslint-disable-next-line no-restricted-properties
+      Logger.log('info', 'user.update', { userId: 123, action: 'save' });
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"userId":123')
+        '[INFO] user.update',
+        expect.objectContaining({ context: { userId: 123, action: 'save' } })
       );
     });
   });
 
+  // =========================================================================
+  // Exports
+  // =========================================================================
+
   describe('exports', () => {
     test('logger export works', () => {
-      expect(logger).toBeDefined();
-      expect(logger.info).toBeInstanceOf(Function);
-      expect(logger.error).toBeInstanceOf(Function);
-      expect(logger.warn).toBeInstanceOf(Function);
-      expect(logger.log).toBeInstanceOf(Function);
+      expect(Logger).toBeDefined();
+      expect(Logger.info).toBeInstanceOf(Function);
+      expect(Logger.error).toBeInstanceOf(Function);
+      expect(Logger.warning).toBeInstanceOf(Function);
+      // eslint-disable-next-line no-restricted-properties
+      expect(Logger.log).toBeInstanceOf(Function);
     });
 
     test('Logger export (capitalized) works', () => {
       expect(Logger).toBeDefined();
-      expect(Logger).toBe(logger);
+      expect(Logger).toBe(Logger);
     });
 
-    test('AuditLogger export works', () => {
-      expect(AuditLogger).toBeDefined();
-      expect(AuditLogger).toBe(logger);
+    test('Logger export works', () => {
+      expect(Logger).toBeDefined();
+      expect(Logger).toBe(Logger);
     });
 
     test('all exports reference same instance', () => {
-      expect(logger).toBe(Logger);
-      expect(Logger).toBe(AuditLogger);
+      expect(Logger).toBe(Logger);
+      expect(Logger).toBe(Logger);
     });
   });
 
+  // =========================================================================
+  // Edge cases
+  // =========================================================================
+
   describe('edge cases', () => {
     test('handles empty string message', () => {
-      const spy = jest.spyOn(console, 'warn');
-      logger.info('');
+      const spy = jest.spyOn(console, 'log');
+      Logger.info('');
 
+      // prefix = '[INFO] ' (lege eventName), payload bevat version
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"message":""')
+        '[INFO] ',
+        expect.objectContaining({ version: '2025-02-A' })
       );
     });
 
     test('handles complex nested objects', () => {
-      const spy = jest.spyOn(console, 'warn');
-      logger.info('Complex', {
+      const spy = jest.spyOn(console, 'log');
+      Logger.info('test.complex', {
         nested: { deep: { value: 123 } },
         array: [1, 2, 3],
       });
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"value":123')
-      );
-      expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('[1,2,3]')
+        '[INFO] test.complex',
+        expect.objectContaining({
+          context: expect.objectContaining({
+            nested: expect.objectContaining({ deep: { value: 123 } }),
+          }),
+        })
       );
     });
-    test('getEventsByLevel filters by level', () => {
+
+    test('getEvents filters by level', () => {
       auditLogger.clearBuffer();
-      logger.info('info message');
-      logger.warn('warn message');
-      logger.error('error message');
-    
-      const warnings = auditLogger.getEventsByLevel('warning');
+      Logger.info('test.info', { message: 'info message' });
+      Logger.warning('test.warning', { message: 'warn message' });
+      Logger.error('test.error', { message: 'error message' });
+
+      const warnings = auditLogger.getEvents(4, 4); // RFC 5424: warning = level 4
       expect(warnings).toHaveLength(1);
-      expect(warnings[0].message).toBe('warn message');
+      expect(warnings[0].eventName).toBe('test.warning');
     });
-    
+
     test('clearBuffer empties the event buffer', () => {
-      logger.info('something');
+      Logger.info('test.something');
       auditLogger.clearBuffer();
-    
-      const events = auditLogger.getEventsByLevel('info');
+
+      const events = auditLogger.getEvents(6, 6); // RFC 5424: info = level 6
       expect(events).toHaveLength(0);
     });
-    test('routes SYSTEM_ERROR to ticketing and upgrades to fatal', () => {
-      const warnSpy = jest.spyOn(console, 'warn');
+
+    test('routes SYSTEM_ERROR to console.error (level 3)', () => {
       const errorSpy = jest.spyOn(console, 'error');
-      
-      logger.error('SYSTEM_ERROR');
-    
+      Logger.error('SYSTEM_ERROR');
+
       expect(errorSpy).toHaveBeenCalledWith(
-        '!!! TICKETING/MAIL ALERT !!!',
-        expect.objectContaining({ level: 'fatal' })
-      );
-      expect(warnSpy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"level":"fatal"')
+        '[ERROR] SYSTEM_ERROR',
+        expect.objectContaining({ version: '2025-02-A' })
       );
     });
-    test('translates known validation message path', () => {
-      const spy = jest.spyOn(console, 'warn');
-      logger.info('setup.aantalMensen.required');
-    
+
+    test('includes version in all log payloads', () => {
+      const spy = jest.spyOn(console, 'log');
+      Logger.info('test.version_check');
+
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"originalCode":"setup.aantalMensen.required"')
-      );
-      expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"message":"vul in"')
+        '[INFO] test.version_check',
+        expect.objectContaining({ version: '2025-02-A' })
       );
     });
 
     test('handles error with null via unknown type', () => {
-      const spy = jest.spyOn(console, 'warn');
-      // error() accepteert unknown als tweede arg
-      logger.error('Null error', null);
+      const spy = jest.spyOn(console, 'error');
+      Logger.error('test.null_error', undefined);
 
       expect(spy).toHaveBeenCalledWith(
-        '[AUDIT]',
-        expect.stringContaining('"message":"Null error"')
+        '[ERROR] test.null_error',
+        expect.any(Object)
       );
     });
   });

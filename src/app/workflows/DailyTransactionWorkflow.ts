@@ -18,7 +18,7 @@
  *   - persistTransactionAndReset()
  */
 
-import { logger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import { computePhoenixSummary } from '@domain/rules/calculateRules';
 import type { FormStateOrchestrator } from '@app/orchestrators/FormStateOrchestrator';
 import type { BusinessManager } from '@app/orchestrators/managers/BusinessManager';
@@ -49,7 +49,7 @@ export class DailyTransactionWorkflow {
     this.persistAndReset(expenseItem, fso);
     business.recompute(fso);
 
-    logger.info('transaction_saved', {
+    Logger.info('transaction_saved', {
       workflow: 'dailyTransaction',
       action: 'execute',
       fieldId: expenseItem.fieldId,
@@ -62,13 +62,13 @@ export class DailyTransactionWorkflow {
   ): tx is LatestTransaction & { latestTransactionCategory: string } {
     // Expliciete null-check
     if (tx === null || tx === undefined) {
-      logger.warn('transaction_form_not_initialized', { workflow: 'dailyTransaction' });
+      Logger.warning('transaction_form_not_initialized', { workflow: 'dailyTransaction' });
       return false;
     }
 
     // Expliciete checks voor elk veld
     if (typeof tx.latestTransactionAmount !== 'number' || tx.latestTransactionAmount <= 0) {
-      logger.warn('transaction_invalid_amount', { 
+      Logger.warning('transaction_invalid_amount', { 
         workflow: 'dailyTransaction', 
         amount: tx.latestTransactionAmount 
       });
@@ -76,7 +76,7 @@ export class DailyTransactionWorkflow {
     }
 
     if (typeof tx.latestTransactionCategory !== 'string' || tx.latestTransactionCategory === '') {
-      logger.warn('transaction_category_required', { workflow: 'dailyTransaction' });
+      Logger.warning('transaction_category_required', { workflow: 'dailyTransaction' });
       return false;
     }
 

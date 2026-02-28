@@ -1,14 +1,17 @@
 // src/adapters/transaction/stateful.test.ts
 
 import { StatefulTransactionAdapter } from './stateful';
-import { AuditLogger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 
 const getHistory = (a: any): any[] => a.history;
 
 // Mock de audit logger
 jest.mock('@adapters/audit/AuditLoggerAdapter', () => ({
-  AuditLogger: {
-    log: jest.fn(),
+  Logger: {
+    notice: jest.fn(),
+    info: jest.fn(),
+    warning: jest.fn(),
+    error: jest.fn(),
   },
 }));
 
@@ -19,7 +22,7 @@ describe('StatefulTransactionAdapter', () => {
   const initialState = { step: 'LANDING', data: {} };
 
   beforeEach(() => {
-    (AuditLogger.log as jest.Mock).mockClear();
+    (Logger.notice as jest.Mock).mockClear();
     adapter = new StatefulTransactionAdapter(initialState);
   });
 
@@ -29,10 +32,11 @@ describe('StatefulTransactionAdapter', () => {
     });
 
     it('logt INIT-event bij aanmaken', () => {
-      expect(AuditLogger.log).toHaveBeenCalledWith('INFO', expect.objectContaining({
-        event: 'transaction_push',
-        type: 'INIT',
-      }));
+      expect(Logger.info).toHaveBeenCalledWith(
+        'transaction.push',
+        expect.objectContaining({ type: 'INIT', pointer: 0 }),
+        expect.objectContaining({ adr: 'ADR-12', version: '2025-01-A' })
+      );
     });
   });
 
@@ -42,10 +46,11 @@ describe('StatefulTransactionAdapter', () => {
       adapter.push(newState, 'SET_STEP');
 
       expect(adapter.getCurrentState()).toEqual(newState);
-      expect(AuditLogger.log).toHaveBeenCalledWith('INFO', expect.objectContaining({
-        event: 'transaction_push',
-        type: 'SET_STEP',
-      }));
+      expect(Logger.info).toHaveBeenCalledWith(
+        'transaction.push',
+        expect.objectContaining({ type: 'SET_STEP' }),
+        expect.any(Object)
+      );
     });
 
     it('trunct history bij push na undo', () => {
@@ -76,8 +81,7 @@ expect(history.map(s => s.step)).toEqual(['LANDING', 'A', 'C']);
       expect(undone?.step).toBe('WIZARD');
       expect(adapter.getCurrentState()?.step).toBe('WIZARD');
 
-      expect(AuditLogger.log).toHaveBeenCalledWith('ACTION', {
-        event: 'undo',
+      expect(Logger.notice).toHaveBeenCalledWith('transaction.undo', {
         pointer: 1,
       });
     });
@@ -102,8 +106,7 @@ expect(history.map(s => s.step)).toEqual(['LANDING', 'A', 'C']);
       expect(redone?.step).toBe('INCOME');
       expect(adapter.getCurrentState()?.step).toBe('INCOME');
 
-      expect(AuditLogger.log).toHaveBeenCalledWith('ACTION', {
-        event: 'redo',
+      expect(Logger.notice).toHaveBeenCalledWith('transaction.redo', {
         pointer: 2,
       });
     });

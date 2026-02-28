@@ -1,0 +1,26 @@
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.error('validation.failed', { field: 'email', value: input });
+src/adapters/audit/AuditLoggerAdapter.ts: * Logger.error('payment.failed', { amount: 1250 }, { userId: 'anon_123' });
+src/adapters/audit/AuditLoggerAdapter.ts:  error: auditLogger.error.bind(auditLogger),
+src/adapters/audit/AuditLoggerAdapter.ts:  /** @deprecated Gebruik Logger.error() */
+src/adapters/audit/AuditLoggerAdapter.ts:    auditLogger.error(eventName, context);
+src/adapters/audit/README.md:| `Logger.error(eventName, err?)` | method | Herstelbare fouten met stack trace |
+src/adapters/audit/README.md:- Gebruik `Logger.error()` altijd met een `Error`-object voor stack traces
+src/adapters/audit/README.md:Logger.error('API_CALL_FAILED', error);
+src/adapters/audit/README.md:  Logger.error('VALIDATION_FAILED', new Error('invalid'));
+src/adapters/validation/validateAtBoundary.ts:  Logger.error('BOUNDARY_UNEXPECTED_ERROR', {
+src/app/orchestrators/ImportOrchestrator.test.ts:      expect(Logger.error).toHaveBeenCalled();
+src/app/orchestrators/ImportOrchestrator.ts:      Logger.error('[ImportOrchestrator] Critical failure in CSV-parsing pipeline:', e);
+src/app/orchestrators/VisibilityOrchestrator.test.ts:      expect(mockLogger.error).toHaveBeenCalledWith(
+src/app/orchestrators/VisibilityOrchestrator.test.ts:      expect(mockLogger.error).not.toHaveBeenCalled();
+src/app/orchestrators/VisibilityOrchestrator.test.ts:      expect(mockLogger.error).toHaveBeenCalledWith(
+src/services/storageShim.test.ts:      expect(AuditLogger.error).toHaveBeenCalledWith('STORAGE_LOAD_FAILURE', {
+src/services/storageShim.test.ts:      expect(AuditLogger.error).toHaveBeenCalledWith('STORAGE_LOAD_FAILURE', {
+src/services/storageShim.test.ts:      expect(AuditLogger.error).toHaveBeenCalledWith('STORAGE_SAVE_FAILURE', {
+src/services/storageShim.test.ts:      expect(AuditLogger.error).toHaveBeenCalledWith('THEME_LOAD_FAILURE', {
+src/services/storageShim.test.ts:      expect(AuditLogger.error).toHaveBeenCalledWith('THEME_SAVE_FAILURE', {
+src/services/storageShim.test.ts:      expect(AuditLogger.error).toHaveBeenCalledWith('STORAGE_CLEAR_FAILURE', {
+src/services/storageShim.ts:    AuditLogger.error('STORAGE_LOAD_FAILURE', { error });
+src/services/storageShim.ts:    AuditLogger.error('STORAGE_SAVE_FAILURE', { error });
+src/services/storageShim.ts:    AuditLogger.error('THEME_LOAD_FAILURE', { error });
+src/services/storageShim.ts:    AuditLogger.error('THEME_SAVE_FAILURE', { error });
+src/services/storageShim.ts:      AuditLogger.error('STORAGE_CLEAR_FAILURE', { error });

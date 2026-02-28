@@ -117,7 +117,7 @@ export const migrateTransactionsToPhoenix = async (oldState: Partial<LegacyState
 };
 
 export const undoLastTransaction = async () => {
-  Logger.warn('Undo functionaliteit nog niet geïmplementeerd');
+  Logger.warning('Undo functionaliteit nog niet geïmplementeerd');
   return null;
 };
 

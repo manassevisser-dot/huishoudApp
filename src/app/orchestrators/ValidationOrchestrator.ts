@@ -21,7 +21,7 @@ import type {
 import { ValidationManager } from './managers/ValidationManager';
 import { FormStateOrchestrator } from './FormStateOrchestrator';
 import { validateAtBoundary } from '@adapters/validation/validateAtBoundary';
-import { logger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import type { BusinessManager } from './managers/BusinessManager';
 import { ScreenRegistry } from '@domain/registry/ScreenRegistry';
 import { SectionRegistry } from '@domain/registry/SectionRegistry';
@@ -77,7 +77,7 @@ export class ValidationOrchestrator implements IValidationOrchestrator {
   private resolveValidatableFieldIds(screenId: string): string[] {
     const screen = ScreenRegistry.getDefinition(screenId);
     if (screen === null) {
-      logger.warn('validation_screen_not_found', {
+      Logger.warning('validation_screen_not_found', {
         orchestrator: 'validation',
         action: 'resolveValidatableFieldIds',
         screenId,
@@ -128,7 +128,7 @@ export class ValidationOrchestrator implements IValidationOrchestrator {
     const result = validateAtBoundary(fieldId, value);
 
     if (!result.success) {
-      logger.warn('field_update_validation_failed', {
+      Logger.warning('field_update_validation_failed', {
         orchestrator: 'validation',
         action: 'updateAndValidate',
         fieldId,

@@ -235,15 +235,76 @@ module.exports = [
   },
 
   // 7️⃣ ADR-12: Auditability (Formatting + Linting)
-  {
-    files: ['src/**/*.{ts,tsx,js,jsx}'],
-    rules: {
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
-      'no-debugger': 'error',
-      'prefer-const': 'error',
-      'no-var': 'error',
-    }
+ {
+  files: ['src/**/*.{ts,tsx,js,jsx}'],
+  rules: {
+    // Bestaande rules
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'no-debugger': 'error',
+    'prefer-const': 'error',
+    'no-var': 'error',
+    
+    // NIEUW: Verbied directe console calls (behalve in logger zelf)
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: 'CallExpression[callee.object.name="console"]',
+        message: 'Gebruik Logger in plaats van console.console.log',
+      },
+    ],
+    
+    // Verbied alert()
+    'no-restricted-globals': [
+      'error',
+      {
+        name: 'alert',
+        message: 'Gebruik Logger voor user-facing messages',
+      },
+    ],
+    
+    // Verbied oude AuditLogger imports
+    'no-restricted-imports': [
+      'error',
+      {
+        paths: [
+          {
+            name: '@adapters/audit/AuditLoggerAdapter',
+            importNames: ['AuditLogger', 'logger'],
+            message: 'Importeer Logger (hoofdletter) in plaats van AuditLogger/logger',
+          },
+        ],
+      },
+    ],
+    
+    // Verbied verkeerde Logger methods
+    'no-restricted-properties': [
+      'error',
+      {
+        object: 'Logger',
+        property: 'log',
+        message: 'Gebruik specifieke Logger method (error/warning/notice/info/debug) in plaats van Logger.log',
+      },
+      {
+        object: 'Logger',
+        property: 'warn',
+        message: 'Gebruik Logger.warning() (met -ing) in plaats van Logger.warn()',
+      },
+    ],
+    
+    // Optioneel: dwing correcte parameters af
+    '@typescript-eslint/no-unsafe-argument': 'error', // vangt verkeerde types af
   },
+},
+
+// Extra: specifiek voor test bestanden (meer flexibiliteit)
+{
+  files: ['src/**/*.test.{ts,tsx,js,jsx}'],
+  rules: {
+    // In tests mag je nog console.log gebruiken voor debugging
+    'no-console': 'off',
+    'no-restricted-syntax': 'off',
+  },
+},
 
   // 8️⃣ ADR-16: Magic Numbers (Gebruik constanten)
   {

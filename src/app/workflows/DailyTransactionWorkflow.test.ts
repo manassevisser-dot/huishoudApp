@@ -3,14 +3,14 @@ import { DailyTransactionWorkflow } from './DailyTransactionWorkflow';
 import type { FormStateOrchestrator } from '@app/orchestrators/FormStateOrchestrator';
 import type { BusinessManager } from '@app/orchestrators/managers/BusinessManager';
 import { computePhoenixSummary } from '@domain/rules/calculateRules';
-import { logger } from '@adapters/audit/AuditLoggerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 
 // Mock dependencies
 jest.mock('@domain/rules/calculateRules');
 jest.mock('@adapters/audit/AuditLoggerAdapter', () => ({
-  logger: {
+  Logger: {
     info: jest.fn(),
-    warn: jest.fn(),
+    warning: jest.fn(),
   },
 }));
 
@@ -108,7 +108,7 @@ describe('DailyTransactionWorkflow', () => {
       expect(mockBusiness.recompute).toHaveBeenCalledWith(mockFso);
 
       // Check logging
-      expect(logger.info).toHaveBeenCalledWith('transaction_saved', expect.any(Object));
+      expect(Logger.info).toHaveBeenCalledWith('transaction_saved', expect.any(Object));
     });
 
     it('should return false when transaction is undefined', () => {
@@ -120,7 +120,7 @@ describe('DailyTransactionWorkflow', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(logger.warn).toHaveBeenCalledWith('transaction_form_not_initialized', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('transaction_form_not_initialized', expect.any(Object));
       expect(mockFso.dispatch).not.toHaveBeenCalled();
       expect(mockBusiness.recompute).not.toHaveBeenCalled();
     });
@@ -134,7 +134,7 @@ describe('DailyTransactionWorkflow', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(logger.warn).toHaveBeenCalledWith('transaction_form_not_initialized', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('transaction_form_not_initialized', expect.any(Object));
     });
 
     it('should return false when amount is not a number', () => {
@@ -146,7 +146,7 @@ describe('DailyTransactionWorkflow', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(logger.warn).toHaveBeenCalledWith('transaction_invalid_amount', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('transaction_invalid_amount', expect.any(Object));
     });
 
     it('should return false when amount is zero', () => {
@@ -158,7 +158,7 @@ describe('DailyTransactionWorkflow', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(logger.warn).toHaveBeenCalledWith('transaction_invalid_amount', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('transaction_invalid_amount', expect.any(Object));
     });
 
     it('should return false when amount is negative', () => {
@@ -170,7 +170,7 @@ describe('DailyTransactionWorkflow', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(logger.warn).toHaveBeenCalledWith('transaction_invalid_amount', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('transaction_invalid_amount', expect.any(Object));
     });
 
     it('should return false when category is not a string', () => {
@@ -182,7 +182,7 @@ describe('DailyTransactionWorkflow', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(logger.warn).toHaveBeenCalledWith('transaction_category_required', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('transaction_category_required', expect.any(Object));
     });
 
     it('should return false when category is empty string', () => {
@@ -194,7 +194,7 @@ describe('DailyTransactionWorkflow', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(logger.warn).toHaveBeenCalledWith('transaction_category_required', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('transaction_category_required', expect.any(Object));
     });
 
     it('should handle missing description and payment method', () => {

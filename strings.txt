@@ -1,0 +1,589 @@
+# Log Teksten Report
+# Gegenereerd: 2026-02-28T15:19:59.977Z
+# Directory: C:\Users\manas\huishoudApp\src
+# Totaal bestanden geanalyseerd: 162
+# ================================================
+
+================================================
+📁 BESTAND: src\adapters\audit\AuditLoggerAdapter.ts
+================================================
+  Regel 23: 2024-01-15T10:30:00.000Z
+    → * { timestamp: '2024-01-15T10:30:00.000Z', level: 'error', eventName: 'VALIDATION_FAILED', message: '...' }
+
+  Regel 23: ...
+    → * { timestamp: '2024-01-15T10:30:00.000Z', level: 'error', eventName: 'VALIDATION_FAILED', message: '...' }
+
+  Regel 33: logEvent
+    → /** Input voor `logEvent` — `message` is optioneel en wordt via `validationMessages` vertaald. */
+
+  Regel 33: validationMessages
+    → /** Input voor `logEvent` — `message` is optioneel en wordt via `validationMessages` vertaald. */
+
+  Regel 131: [AUDIT]
+    → console.warn('[AUDIT]', payload);
+
+  Regel 142: !!! TICKETING/MAIL ALERT !!!
+    → console.error('!!! TICKETING/MAIL ALERT !!!', event);
+
+  Regel 203: Home
+    → * Logger.info('USER_ACTION', { screen: 'Home' });
+
+🔢 Totaal: 7 log teksten
+
+================================================
+📁 BESTAND: src\adapters\system\FilePickerAdapter.ts
+================================================
+  Regel 71: Geen bestand geselecteerd
+    → throw new Error('Geen bestand geselecteerd');
+
+  Regel 76: Bestandsdata is corrupt of ontbreekt
+    → throw new Error('Bestandsdata is corrupt of ontbreekt');
+
+  Regel 89: Onbekende fout bij lezen
+    → const message = error instanceof Error ? error.message : 'Onbekende fout bij lezen';
+
+🔢 Totaal: 3 log teksten
+
+================================================
+📁 BESTAND: src\adapters\system\PersistenceAdapter.ts
+================================================
+  Regel 84: state_persisted
+    → logger.info('state_persisted', {
+
+  Regel 90: state_persist_failed
+    → logger.warn('state_persist_failed', {
+
+  Regel 114: storage_corrupt
+    → logger.warn('storage_corrupt', {
+
+  Regel 134: hydration_success
+    → logger.info('hydration_success', {
+
+  Regel 141: hydration_failed
+    → logger.warn('hydration_failed', {
+
+  Regel 158: storage_cleared
+    → logger.info('storage_cleared', {
+
+  Regel 163: storage_clear_failed
+    → logger.warn('storage_clear_failed', {
+
+🔢 Totaal: 7 log teksten
+
+================================================
+📁 BESTAND: src\adapters\validation\ResearchContractAdapter.ts
+================================================
+  Regel 22: 'EUR'
+    → * @throws {ZodError} Als `amount` geen integer is of `currency` niet `'EUR'`
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\adapters\validation\validateAtBoundary.ts
+================================================
+  Regel 52: Waarde moet een getal zijn.
+    → * // → { success: false, error: 'Waarde moet een getal zijn.' }
+
+  Regel 106: Onverwachte validatie fout
+    → return { success: false, error: 'Onverwachte validatie fout' };
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\app\context\FormContext.tsx
+================================================
+  Regel 72: useFormContext must be used within FormProvider
+    → throw new Error('useFormContext must be used within FormProvider');
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\app\hooks\useTransactionHistory.ts
+================================================
+  Regel 40: ZodError
+    → const isValidationError = err instanceof Error && (err.name === 'ZodError' || err.message.includes('validation'));
+
+  Regel 44: Unknown transaction error
+    → error: err instanceof Error ? err.message : 'Unknown transaction error'
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\app\orchestrators\ImportOrchestrator.ts
+================================================
+  Regel 97: [ImportOrchestrator] Critical failure in CSV-parsing pipeline:
+    → Logger.error('[ImportOrchestrator] Critical failure in CSV-parsing pipeline:', e);
+
+  Regel 100: Fout bij verwerken van CSV
+    → errorMessage: e instanceof Error ? e.message : 'Fout bij verwerken van CSV',
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\app\orchestrators\NavigationOrchestrator.ts
+================================================
+  Regel 27: navigation_screen_not_found
+    → logger.warn('navigation_screen_not_found', {
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\app\orchestrators\ValidationOrchestrator.ts
+================================================
+  Regel 80: validation_screen_not_found
+    → logger.warn('validation_screen_not_found', {
+
+  Regel 131: field_update_validation_failed
+    → logger.warn('field_update_validation_failed', {
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\app\orchestrators\VisibilityOrchestrator.ts
+================================================
+  Regel 41: visibility_rule_missing_fail_closed
+    → logger.error('visibility_rule_missing_fail_closed', {
+
+  Regel 60: visibility_rule_execution_failed
+    → logger.error('visibility_rule_execution_failed', {
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\app\orchestrators\factory\CsvAnalysisFeedbackVMFactory.ts
+================================================
+  Regel 62: missingCosts
+    → items.push({ id: 'missingCosts', label: S.warningMissingCosts, colorRole: 'warning' });
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\app\orchestrators\interfaces\IValidationOrchestrator.ts
+================================================
+  Regel 29: SectionValidationResult
+    → * @returns `SectionValidationResult` met `isValid`, `errorFields` en `errors`
+
+  Regel 29: isValid
+    → * @returns `SectionValidationResult` met `isValid`, `errorFields` en `errors`
+
+  Regel 29: errorFields
+    → * @returns `SectionValidationResult` met `isValid`, `errorFields` en `errors`
+
+🔢 Totaal: 3 log teksten
+
+================================================
+📁 BESTAND: src\app\orchestrators\managers\DataManager.ts
+================================================
+  Regel 44: csv_parse_success_stub
+    → logger.info('csv_parse_success_stub', {
+
+  Regel 58: csv_parse_failed
+    → logger.error('csv_parse_failed', {
+
+  Regel 67: csv_parse_empty
+    → logger.warn('csv_parse_empty', {
+
+🔢 Totaal: 3 log teksten
+
+================================================
+📁 BESTAND: src\app\orchestrators\types\csvUpload.types.ts
+================================================
+  Regel 382: ResearchWarning
+    → * Hernoemd van 'ResearchWarning' om clash met ResearchOrchestrator te vermijden.
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\app\workflows\DailyTransactionWorkflow.ts
+================================================
+  Regel 52: transaction_saved
+    → logger.info('transaction_saved', {
+
+  Regel 65: transaction_form_not_initialized
+    → logger.warn('transaction_form_not_initialized', { workflow: 'dailyTransaction' });
+
+  Regel 65: dailyTransaction
+    → logger.warn('transaction_form_not_initialized', { workflow: 'dailyTransaction' });
+
+  Regel 71: transaction_invalid_amount
+    → logger.warn('transaction_invalid_amount', {
+
+  Regel 79: transaction_category_required
+    → logger.warn('transaction_category_required', { workflow: 'dailyTransaction' });
+
+  Regel 79: dailyTransaction
+    → logger.warn('transaction_category_required', { workflow: 'dailyTransaction' });
+
+🔢 Totaal: 6 log teksten
+
+================================================
+📁 BESTAND: src\app\workflows\ResetWorkflow.ts
+================================================
+  Regel 58: reset_completed
+    → Logger.info('reset_completed', {
+
+  Regel 72: reset_completed
+    → Logger.info('reset_completed', {
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\app\workflows\SettingsWorkflow.ts
+================================================
+  Regel 34: settings_changed
+    → Logger.info('settings_changed', {
+
+  Regel 61: settings_theme_invalid_value
+    → Logger.warn('settings_theme_invalid_value', {
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\app\workflows\csvUploadWorkflow.ts
+================================================
+  Regel 126: csv_workflow_failed
+    → logger.error('csv_workflow_failed', {
+
+  Regel 130: Onverwachte fout tijdens import
+    → return { outcome: 'failure', errorMessage: 'Onverwachte fout tijdens import' };
+
+  Regel 148: csv_parse_empty
+    → logger.warn('csv_parse_empty', { workflow: 'csvUpload', fileName: params.fileName });
+
+  Regel 148: csvUpload
+    → logger.warn('csv_parse_empty', { workflow: 'csvUpload', fileName: params.fileName });
+
+  Regel 149: Geen transacties gevonden in het bestand
+    → return { outcome: 'failure', errorMessage: 'Geen transacties gevonden in het bestand' };
+
+  Regel 153: csv_parse_error
+    → logger.error('csv_parse_error', { workflow: 'csvUpload', error: parseResult.errorMessage });
+
+  Regel 153: csvUpload
+    → logger.error('csv_parse_error', { workflow: 'csvUpload', error: parseResult.errorMessage });
+
+  Regel 190: csv_discrepancy_found
+    → logger.warn('csv_discrepancy_found', {
+
+  Regel 197: csv_missing_costs_detected
+    → logger.warn('csv_missing_costs_detected', { workflow: 'csvUpload' });
+
+  Regel 197: csvUpload
+    → logger.warn('csv_missing_costs_detected', { workflow: 'csvUpload' });
+
+  Regel 222: csv_research_phase_error
+    → logger.warn('csv_research_phase_error', {
+
+  Regel 231: csv_import_completed
+    → logger.info('csv_import_completed', {
+
+🔢 Totaal: 12 log teksten
+
+================================================
+📁 BESTAND: src\config\WizStrings.ts
+================================================
+  Regel 24: Er is een fout opgetreden
+    → error: 'Er is een fout opgetreden',
+
+  Regel 63: ⚠ Inkomen in CSV wijkt af van wizard-opgave
+    → warningDiscrepancy: '⚠ Inkomen in CSV wijkt af van wizard-opgave',
+
+  Regel 64: ⚠ Woonlasten gevonden die niet verwacht werden
+    → warningMissingCosts: '⚠ Woonlasten gevonden die niet verwacht werden',
+
+🔢 Totaal: 3 log teksten
+
+================================================
+📁 BESTAND: src\domain\constants\Colors.ts
+================================================
+  Regel 107: #FF3B30
+    → error:           '#FF3B30',
+
+  Regel 108: #FFFFFF
+    → onError:         '#FFFFFF',
+
+  Regel 109: #FF9500
+    → warning:         '#FF9500',
+
+  Regel 110: #FFFFFF
+    → onWarning:       '#FFFFFF',
+
+  Regel 133: #FF453A
+    → error:           '#FF453A',
+
+  Regel 134: #FFFFFF
+    → onError:         '#FFFFFF',
+
+  Regel 135: #FF9F0A
+    → warning:         '#FF9F0A',
+
+  Regel 136: #0F172A
+    → onWarning:       '#0F172A',
+
+🔢 Totaal: 8 log teksten
+
+================================================
+📁 BESTAND: src\domain\registry\PrimitiveRegistry.ts
+================================================
+  Regel 314: chip-group vereist opties
+    → *   throw new Error(`chip-group vereist opties`);
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\domain\registry\ScreenRegistry.ts
+================================================
+  Regel 132: screens.error.title
+    → titleToken: 'screens.error.title',
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\domain\research\PrivacyAirlock.ts
+================================================
+  Regel 5: Privacy Airlock
+    → *   - `Privacy Airlock`: Een softwarecomponent die data-stromen controleert om te voorkomen dat Persoonlijk Identificeerbare Informatie (PII) lekt naar systemen waar het niet thuishoort.
+
+  Regel 6: PII (Personally Identifiable Information)
+    → *   - `PII (Personally Identifiable Information)`: Gegevens die direct of indirect naar een individu kunnen leiden, zoals naam, e-mailadres, etc.
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\domain\rules\ageBoundaryRules.ts
+================================================
+  Regel 8: isWithinAgeBoundaries
+    → * @ai_instruction De `isWithinAgeBoundaries` functie wordt doorgaans aangeroepen door een **orchestrator** of een validatielaag in een *ontwikkel- of testbuild* van de applicatie. Wanneer een gebruiker een geboortedatum invoert, kan de orchestrator deze regel aanroepen om te valideren of de ingevoerde datum resulteert in een leeftijd die binnen de sandbox valt. Als dat niet het geval is, kan de orchestrator een foutmelding genereren en de UI-staat bijwerken om de gebruiker te informeren. Dit zorgt ervoor dat de testdata consistent blijft en voorkomt onrealistische scenario's tijdens de ontwikkeling.
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\domain\rules\aowRules.ts
+================================================
+  Regel 9: isAowEligible
+    → * @ai_instruction De `isAowEligible` functie wordt aangeroepen door een **orchestrator** om te bepalen of een persoon AOW-gerechtigd is. De orchestrator haalt de leeftijd van een persoon uit de state, roept deze domeinfunctie aan, en gebruikt het `boolean` resultaat om de UI-staat te bepalen (bv. het tonen of verbergen van AOW-gerelateerde informatie). Door de `CURRENT_AOW_AGE` als constante te exporteren, kan deze logica centraal beheerd en eenvoudig aangepast worden bij wetswijzigingen, terwijl de orchestrator en de UI ongewijzigd blijven.
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\domain\rules\calculateRules.ts
+================================================
+  Regel 5: Phoenix Calculator
+    → *   - `Phoenix Calculator`: Een berekeningsengine die ontworpen is om niet te falen (`fail-safe`). Het inspecteert de "vorm" van de input-data en past de juiste berekeningsstrategie toe. Als de data-structuur onbekend is, retourneert het een nul-resultaat in plaats van een error te gooien.
+
+  Regel 5: fail-safe
+    → *   - `Phoenix Calculator`: Een berekeningsengine die ontworpen is om niet te falen (`fail-safe`). Het inspecteert de "vorm" van de input-data en past de juiste berekeningsstrategie toe. Als de data-structuur onbekend is, retourneert het een nul-resultaat in plaats van een error te gooien.
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\domain\rules\conditions.ts
+================================================
+  Regel 6: Fail-safe
+    → *   - `Fail-safe`: Een ontwerpkeuze waarbij een functie een veilige, neutrale waarde retourneert (bv. `0` of `false`) wanneer het onverwachte of ongeldige input ontvangt, in plaats van een error te gooien.
+
+  Regel 30: unsafe-member-access
+    → * Dit voorkomt 'unknown' index errors en 'unsafe-member-access'.
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\domain\rules\dataFilters.ts
+================================================
+  Regel 8: Defensive Programming
+    → *   - `Defensive Programming`: Een programmeerstijl die anticipeert op onverwachte of ongeldige data. In dit bestand wordt expliciet gecontroleerd of `household` en `household.members` bestaan en het juiste type hebben voordat ze worden gebruikt, en wordt een veilige standaardwaarde (`[]`) teruggegeven om runtime-errors te voorkomen.
+
+  Regel 8: household.members
+    → *   - `Defensive Programming`: Een programmeerstijl die anticipeert op onverwachte of ongeldige data. In dit bestand wordt expliciet gecontroleerd of `household` en `household.members` bestaan en het juiste type hebben voordat ze worden gebruikt, en wordt een veilige standaardwaarde (`[]`) teruggegeven om runtime-errors te voorkomen.
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\domain\rules\fieldConstraints.ts
+================================================
+  Regel 548: nettoSalaris
+    → * getWarningMessage('nettoSalaris', 25000); // 'Dit lijkt een jaarbedrag - vul het maandbedrag in'
+
+  Regel 548: Dit lijkt een jaarbedrag - vul het maandbedrag in
+    → * getWarningMessage('nettoSalaris', 25000); // 'Dit lijkt een jaarbedrag - vul het maandbedrag in'
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\domain\rules\typeGuards.ts
+================================================
+  Regel 7: Fail-safe
+    → *   - `Fail-safe`: De `isNumeric` guard is een goed voorbeeld; het probeert een waarde te interpreteren, maar als dat niet veilig kan, retourneert het `false` in plaats van een `NaN` of een error te produceren.
+
+  Regel 7: isNumeric
+    → *   - `Fail-safe`: De `isNumeric` guard is een goed voorbeeld; het probeert een waarde te interpreteren, maar als dat niet veilig kan, retourneert het `false` in plaats van een `NaN` of een error te produceren.
+
+  Regel 7: NaN
+    → *   - `Fail-safe`: De `isNumeric` guard is een goed voorbeeld; het probeert een waarde te interpreteren, maar als dat niet veilig kan, retourneert het `false` in plaats van een `NaN` of een error te produceren.
+
+🔢 Totaal: 3 log teksten
+
+================================================
+📁 BESTAND: src\domain\styles\primitives\placeholderStyles.ts
+================================================
+  Regel 18: #ffebcc
+    → debugButton: { backgroundColor: '#ffebcc', height: 30 },
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\services\householdAlign.ts
+================================================
+  Regel 7: fieldId
+    → * @ai_instruction Deze functie is kritisch voor de stabiliteit van de wizard-schermen die per lid velden renderen. Zorg dat de `fieldId`-generatie uniek en consistent blijft om React key-errors en state-verlies te voorkomen.
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\services\transactionService.ts
+================================================
+  Regel 120: Undo functionaliteit nog niet geïmplementeerd
+    → Logger.warn('Undo functionaliteit nog niet geïmplementeerd');
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\state\schemas\sections\validationMessages.ts
+================================================
+  Regel 15: Let op: je nadert het maximum
+    → warning: "Let op: je nadert het maximum"
+
+  Regel 21: Let op: je nadert het maximum
+    → warning: "Let op: je nadert het maximum"
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\state\schemas\zInitialTemplate.ts
+================================================
+  Regel 5: FormState
+    → * @contract Dit bestand exporteert `INITIAL_FORM_STATE`, een constant object dat gegarandeerd een valide `FormState` is volgens `FormStateSchema`. Dit voorkomt runtime-errors door een ongeldige beginstaat.
+
+  Regel 5: FormStateSchema
+    → * @contract Dit bestand exporteert `INITIAL_FORM_STATE`, een constant object dat gegarandeerd een valide `FormState` is volgens `FormStateSchema`. Dit voorkomt runtime-errors door een ongeldige beginstaat.
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\ui\entries\entry.helpers.ts
+================================================
+  Regel 149: fieldId
+    → * @returns Basis-property-set met `fieldId`, `primitiveType`, `error: null`, `errorStyle: {}`
+
+  Regel 149: primitiveType
+    → * @returns Basis-property-set met `fieldId`, `primitiveType`, `error: null`, `errorStyle: {}`
+
+  Regel 149: error: null
+    → * @returns Basis-property-set met `fieldId`, `primitiveType`, `error: null`, `errorStyle: {}`
+
+  Regel 149: errorStyle: {}
+    → * @returns Basis-property-set met `fieldId`, `primitiveType`, `error: null`, `errorStyle: {}`
+
+🔢 Totaal: 4 log teksten
+
+================================================
+📁 BESTAND: src\ui\entries\entry.mappers.ts
+================================================
+  Regel 325: 'destructive'
+    → * | `'destructive'`| `'actionButtonDestructive'`| Error-kleur (rood)            |
+
+  Regel 325: 'actionButtonDestructive'
+    → * | `'destructive'`| `'actionButtonDestructive'`| Error-kleur (rood)            |
+
+🔢 Totaal: 2 log teksten
+
+================================================
+📁 BESTAND: src\ui\providers\FormStateProvider.tsx
+================================================
+  Regel 138: useFormState must be used within <FormStateProvider>
+    → throw new Error('useFormState must be used within <FormStateProvider>');
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\ui\providers\MasterProvider.tsx
+================================================
+  Regel 30: useMaster must be used within <MasterProvider>
+    → if (m === undefined) throw new Error('useMaster must be used within <MasterProvider>');
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\ui\providers\ThemeProvider.tsx
+================================================
+  Regel 61: useTheme must be used within <ThemeProvider>
+    → if (ctx === undefined) throw new Error('useTheme must be used within <ThemeProvider>');
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\ui\screens\CriticalError\CriticalErrorContainer.tsx
+================================================
+  Regel 73: critical-error-title
+    → testID="critical-error-title"
+
+  Regel 77: critical-error-message
+    → <Text style={styles.summaryDetail} testID="critical-error-message">
+
+  Regel 140: critical-error-container
+    → testID="critical-error-container"
+
+🔢 Totaal: 3 log teksten
+
+================================================
+📁 BESTAND: src\ui\screens\csv\CsvUploadContainer.tsx
+================================================
+  Regel 35: Onbekende fout bij importeren
+    → const message = error instanceof Error ? error.message : 'Onbekende fout bij importeren';
+
+  Regel 53: 600
+    → <Text style={{ color: colors.error, fontSize: 13, fontWeight: '600' }}>
+
+  Regel 81: error-banner
+    → {error !== null && <ErrorBanner message={error} colors={colors} Tokens={Tokens} testID="error-banner" />}
+
+🔢 Totaal: 3 log teksten
+
+================================================
+📁 BESTAND: src\ui\sections\FinancialSummary.tsx
+================================================
+  Regel 47: Totaal Uitgaven:
+    → <SummaryRow label="Totaal Uitgaven:" value={data.totalExpensesDisplay} valueColor={colors.error} styles={styles} />
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\ui\styles\UiPrimitiveStyles.ts
+================================================
+  Regel 3: PrimitiveStyleFactory
+    → * @repo_architecture UI Layer - Style Primitive (Composition). Dit bestand vormt een paar met de `PrimitiveStyleFactory` uit de `@domain`-laag. Terwijl `@domain` de *semantische* 'policy'-stijlen definieert (wat is 'primary', wat is 'error'?), levert dit bestand de puur visuele, agnostische 'composition'-stijlen. Dit scheidt de 'wat' van de 'hoe'.
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\ui\types\viewModels.ts
+================================================
+  Regel 103: textPrimary
+    → export type ColorRole = 'success' | 'error' | 'warning' | 'textPrimary';
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📁 BESTAND: src\utils\ping.ts
+================================================
+  Regel 3: no-op
+    → * @repo_architecture Utils Layer - Diagnostic / Health Check. Dit is een op zichzelf staande utility zonder afhankelijkheden. Het wordt vaak gebruikt voor debugging, in testscenario's, of als een "no-op" commando om de connectiviteit en responsiviteit van de applicatie-engine te valideren.
+
+🔢 Totaal: 1 log teksten
+
+================================================
+📊 SAMENVATTING:
+   Geanalyseerde bestanden: 162
+   Bestanden met log teksten: 47
+   Totaal log teksten: 114
+   Gemiddeld per bestand: 2.4
