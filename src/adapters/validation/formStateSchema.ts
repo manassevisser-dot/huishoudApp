@@ -1,10 +1,13 @@
 // src/adapters/validation/formStateSchema.ts
 /**
- * @file_intent Genereert runtime validatie-schema's door domein-constraints (SSOT) te vertalen naar Zod.
- * @repo_architecture Mobile Industry (MI) - Adapter Layer (Validation).
- * @term_definition build[Type] = Specifieke Zod-builders die domein-regels (min/max/regex) omzetten naar executable code. FieldSchemas = Een runtime lookup-tabel voor individuele veldvalidatie.
- * @contract ADR-01: Dit is de enige plek in de repository waar Zod wordt gebruikt. Dient als de poortwachter voor data-integriteit; elke input van buitenaf (FSO/File) móet door deze schemas.
- * @ai_instruction Wijzig nooit de schemas handmatig zonder dat de FIELD_CONSTRAINTS_REGISTRY in het domein is aangepast. Gebruik .passthrough() om compatibiliteit met legacy velden te behouden tijdens de transitie.
+ * Bevat de Zod-validatieschema's en afgeleide types voor de volledige form state.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
+ *
+ * @remarks
+ * - Deze adapter vertaalt constraints uit `FIELD_CONSTRAINTS_REGISTRY` naar runtime validatie.
+ * - Zod wordt uitsluitend binnen deze adapterlaag gebruikt (ADR-01).
  */
 
 import { z } from 'zod';
@@ -19,43 +22,49 @@ import type {
 } from '@domain/rules/fieldConstraints';
 
 /**
- * ADAPTER LAYER: Zod Schemas
- *
- * ⚠️ CRITICAL: Schemas are GENERATED from domain constraints (SSOT)
- * ⚠️ Domain constraints in fieldConstraints.ts remain the single source of truth
- * ⚠️ This file translates domain rules into Zod runtime validation
- *
- * ADR-01: Adapter layer is the ONLY place where Zod is used
+ * Registry-alias voor kortere en leesbare schema-definities.
  */
 
-// Shorthand voor leesbaarheid
+// Shorthand alias voor constraints uit de registry.
 const R = FIELD_CONSTRAINTS_REGISTRY;
 
-// ════════════════════════════════════════════════════════════════
-// TYPED SCHEMA BUILDERS — retourneren specifieke Zod-types
-// NOOIT z.ZodType<un_known>
-// ════════════════════════════════════════════════════════════════
+// Typed schema-builders die concrete Zod-typen teruggeven.
 
-/** Bouwt z.ZodNumber met min/max uit constraint */
+/**
+ * Bouwt een `z.number()` schema op basis van nummer-constraints.
+ *
+ * @param c - Constraint met optionele min/max grenzen.
+ * @returns Zod number schema met geconfigureerde grenzen.
+ */
 function buildNumber(c: NumberConstraint) {
   let s = z.number();
   if (c.min !== undefined) s = s.min(c.min);
   if (c.max !== undefined) s = s.max(c.max);
   return s;
-  // Return type: z.ZodNumber ✅ (niet z.ZodType<un_known>)
+  // Retourneert bewust een concreet number-schema.
 }
 
-/** Bouwt z.ZodString met optionele pattern uit constraint */
+/**
+ * Bouwt een `z.string()` schema met optionele regex-validatie.
+ *
+ * @param c - Constraint met optioneel pattern.
+ * @returns Zod string schema met eventueel regex-regel.
+ */
 function buildString(c: StringConstraint) {
   let s = z.string();
   if (c.pattern instanceof RegExp) {
     s = s.regex(c.pattern, { message: 'Ongeldig formaat' });
   }
   return s;
-  // Return type: z.ZodString ✅
+  // Retourneert bewust een concreet string-schema.
 }
 
-/** Bouwt z.ZodEnum uit constraint values */
+/**
+ * Bouwt een enum-schema op basis van toegestane stringwaarden.
+ *
+ * @param c - Constraint met lijst van toegestane enum-waarden.
+ * @returns Zod enum/literal/never schema afhankelijk van het aantal waarden.
+ */
 function buildEnum(c: EnumConstraint) {
   const v = c.values;
   /* istanbul ignore next */
@@ -66,53 +75,60 @@ function buildEnum(c: EnumConstraint) {
   return z.enum([first, second, ...rest] as [string, string, ...string[]]);
 }
 
-/** Bouwt z.ZodBoolean */
+/**
+ * Bouwt een `z.boolean()` schema op basis van een boolean-constraint.
+ *
+ * @param _c - Boolean-constraint (momenteel zonder extra regels).
+ * @returns Zod boolean schema.
+ */
 function buildBoolean(_c: BooleanConstraint) {
   return z.boolean();
-  // Return type: z.ZodBoolean ✅
+  // Retourneert bewust een concreet boolean-schema.
 }
 
-// ════════════════════════════════════════════════════════════════
-// SECTION SCHEMAS — expliciet gebouwd met typed builders
-// ════════════════════════════════════════════════════════════════
+// Section-schema's opgebouwd met typed builders.
 
 /**
- * Setup sectie — huishoudconfiguratie
+ * Valideert de setup-sectie van de huishoudconfiguratie.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
  *
  * Elke regel wijst direct naar de Registry constraint.
  * TypeScript leidt het type af uit de builder, niet uit `un_known`.
  */
 export const SetupSchema = z.object({
-  // Required velden (geen .optional())
+  // Verplichte velden.
   aantalMensen:    buildNumber(R.aantalMensen),
   aantalVolwassen: buildNumber(R.aantalVolwassen),
   autoCount:       buildEnum(R.autoCount),
   woningType:      buildEnum(R.woningType),
-  // postcode: optioneel in schema (wizard vult progressief in).
-  // Regex-enforcement gebeurt uitsluitend via validateAtBoundary (FieldSchemas).
-  // canNavigateNext() blokkeert doorgaan zolang het veld leeg is.
+  // Postcode blijft optioneel omdat de wizard dit veld progressief invult.
   postcode: z.string().optional(),
 
-  // Optionele velden
+  // Optionele velden.
   heeftHuisdieren: buildBoolean(R.heeftHuisdieren).optional(),
 }).passthrough();
-// passthrough: staat extra velden toe die nog niet in Registry staan
+// `passthrough` laat extra (legacy) velden toe.
 
 /**
- * Member-template — één huishoudlid
+ * Valideert één lid in de household members-lijst.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
  *
  * Gebouwd uit MEMBER_FIELD_KEYS.
  * Alle member-velden zijn optioneel (wizard vult ze stap voor stap in).
  */
 export const MemberSchema = z.object({
-  // ── Persoonlijk ──────────────────────────────────
+  // Persoonlijke gegevens.
   name:             buildString(R.name).optional(),
   age:              buildNumber(R.age).optional(),
   dob:              buildString(R.dob).optional(),
   gender:           buildEnum(R.gender).optional(),
   burgerlijkeStaat: buildEnum(R.burgerlijkeStaat).optional(),
 
-  // ── Inkomen ──────────────────────────────────────
+  // Inkomensvelden.
   nettoSalaris:        buildNumber(R.nettoSalaris).optional(),
   frequentie:          buildEnum(R.frequentie).optional(),
   vakantiegeldPerJaar: buildNumber(R.vakantiegeldPerJaar).optional(),
@@ -123,13 +139,16 @@ export const MemberSchema = z.object({
   reiskosten:          buildNumber(R.reiskosten).optional(),
   overigeInkomsten:    buildNumber(R.overigeInkomsten).optional(),
 
-  // ── Uitgaven per persoon ─────────────────────────
+  // Uitgaven per persoon.
   telefoon: buildNumber(R.telefoon).optional(),
   ov:       buildNumber(R.ov).optional(),
 }).passthrough();
 
 /**
- * Auto-template — één voertuig
+ * Valideert één auto-item binnen de uitgaven.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
  *
  * Gebouwd uit AUTO_FIELD_KEYS.
  */
@@ -143,17 +162,23 @@ export const AutoSchema = z.object({
 }).passthrough();
 
 /**
- * Household sectie — members array is nu GETYPT
+ * Valideert de household-sectie met getypte members-array.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
  */
 export const HouseholdSchema = z.object({
   members: z.array(MemberSchema),
 }).passthrough();
 
 /**
- * Income schema — household-level toeslagen + member income
+ * Valideert de income-sectie op huishoudniveau.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
  */
 export const IncomeSchema = z.object({
-  // Household-level toeslagen
+  // Huishoudelijke toeslagen en vermogen.
   huurtoeslag:        buildNumber(R.huurtoeslag).optional(),
   kindgebondenBudget: buildNumber(R.kindgebondenBudget).optional(),
   kinderopvangtoeslag:buildNumber(R.kinderopvangtoeslag).optional(),
@@ -161,16 +186,19 @@ export const IncomeSchema = z.object({
   heeftVermogen:      buildEnum(R.heeftVermogen).optional(),
   vermogenWaarde:     buildNumber(R.vermogenWaarde).optional(),
 
-  // Aggregatie
+  // Aggregatievelden.
   items: z.array(z.record(z.string(), z.unknown())).optional(),
   totalAmount: z.number().optional(),
 }).passthrough();
 
 /**
- * Expense schema — wonen, nuts, verzekeringen, abonnementen, auto
+ * Valideert de expense-sectie inclusief wonen, nuts en auto.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
  */
 export const ExpenseSchema = z.object({
-  // ── Wonen ────────────────────────────────────────
+  // Wonen.
   kaleHuur:            buildNumber(R.kaleHuur).optional(),
   servicekosten:       buildNumber(R.servicekosten).optional(),
   hypotheekBruto:      buildNumber(R.hypotheekBruto).optional(),
@@ -180,12 +208,12 @@ export const ExpenseSchema = z.object({
   kostgeld:            buildNumber(R.kostgeld).optional(),
   woonlasten:          buildNumber(R.woonlasten).optional(),
 
-  // ── Nuts ─────────────────────────────────────────
+  // Nutsvoorzieningen.
   energieGas:  buildNumber(R.energieGas).optional(),
   water:       buildNumber(R.water).optional(),
   bijdrageEGW: buildNumber(R.bijdrageEGW).optional(),
 
-  // ── Verzekeringen ────────────────────────────────
+  // Verzekeringen.
   ziektekostenPremie: buildNumber(R.ziektekostenPremie).optional(),
   aansprakelijkheid:  buildNumber(R.aansprakelijkheid).optional(),
   reis:               buildNumber(R.reis).optional(),
@@ -194,22 +222,25 @@ export const ExpenseSchema = z.object({
   rechtsbijstand:     buildNumber(R.rechtsbijstand).optional(),
   overlijdensrisico:  buildNumber(R.overlijdensrisico).optional(),
 
-  // ── Abonnementen ─────────────────────────────────
+  // Abonnementen.
   internetTv:   buildNumber(R.internetTv).optional(),
   sport:        buildNumber(R.sport).optional(),
   lezen:        buildNumber(R.lezen).optional(),
   contributie:  buildNumber(R.contributie).optional(),
 
-  // ── Auto's ───────────────────────────────────────
+  // Auto's.
   autos: z.array(AutoSchema).optional(),
 
-  // Aggregatie
+  // Aggregatievelden.
   items: z.array(z.record(z.string(), z.unknown())).optional(),
   totalAmount: z.number().optional(),
 }).passthrough();
 
 /**
- * Finance sectie — income + expenses, nu volledig getypt
+ * Valideert de finance-sectie met income en expenses.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
  */
 export const FinanceSchema = z.object({
   income:   IncomeSchema,
@@ -217,7 +248,10 @@ export const FinanceSchema = z.object({
 }).passthrough();
 
 /**
- * LatestTransaction sectie — temporary form state for daily transaction input
+ * Valideert tijdelijke gegevens van de laatste ingevoerde transactie.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
  */
 export const LatestTransactionSchema = z.object({
   latestTransactionDate: z.string().optional(),
@@ -227,17 +261,17 @@ export const LatestTransactionSchema = z.object({
   latestPaymentMethod: z.string().optional(),
 }).passthrough();
 
-// ════════════════════════════════════════════════════════════════
-// TRANSACTION HISTORY SCHEMA — nieuw voor Fase 7 (Undo/Redo)
-// ════════════════════════════════════════════════════════════════
+// Transaction history-schema's voor undo/redo.
 
 /**
- * Eén opgeslagen transactie in de undo-stack.
- * amountCents: cent-gebaseerd (ADR-12, geen floating-point).
+ * Valideert één opgeslagen transactie in de undo/redo-stack.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
  */
 export const TransactionRecordSchema = z.object({
   id:           z.string(),
-  date:         z.string(),          // ISO date string
+  date:         z.string(),          // ISO-datumstring.
   description:  z.string(),
   amountCents:  z.number(),
   currency:     z.string().default('EUR'),
@@ -246,8 +280,10 @@ export const TransactionRecordSchema = z.object({
 });
 
 /**
- * Past/present/future stack voor undo/redo.
- * present = null betekent: geen actieve transactie (leeg scherm).
+ * Valideert de past/present/future-structuur voor undo/redo.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
  */
 export const TransactionHistorySchema = z.object({
   past:    z.array(TransactionRecordSchema),
@@ -255,15 +291,24 @@ export const TransactionHistorySchema = z.object({
   future:  z.array(TransactionRecordSchema),
 });
 
+/**
+ * Afgeleid type van `TransactionRecordSchema`.
+ */
 export type TransactionRecord = z.infer<typeof TransactionRecordSchema>;
+/**
+ * Afgeleid type van `TransactionHistorySchema`.
+ */
 export type TransactionHistory = z.infer<typeof TransactionHistorySchema>;
 
-/** 
- * csvUpload sectie
+/**
+ * Valideert één geparste CSV-transactie.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
  */
 export const ParsedCsvTransactionSchema = z.object({
   id: z.string(),
-  date: z.string(),              // ISO string
+  date: z.string(),              // ISO-datumstring.
   description: z.string(),
   amountCents: z.number(),
   amount: z.number(),
@@ -272,25 +317,31 @@ export const ParsedCsvTransactionSchema = z.object({
   original: z.record(z.string(), z.unknown()),
 }).strict();
 
-// ════════════════════════════════════════════════════════════════
-// CSV IMPORT SCHEMA — nieuw voor Fase 5
-// ════════════════════════════════════════════════════════════════
+/**
+ * Valideert de csvImport-sectie met metadata en transacties.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
+ */
 export const CsvImportSchema = z.object({
-  transactions: z.array(ParsedCsvTransactionSchema),  // ← bestaat al (regel ~155)
-  importedAt: z.string(),                              // ISO string wanneer geïmporteerd
+  transactions: z.array(ParsedCsvTransactionSchema),  // Geparste transacties.
+  importedAt: z.string(),                              // ISO-string van importtijdstip.
   period: z.object({ 
     from: z.string(), 
     to: z.string() 
-  }).nullable(),                                       // Periode van de transacties
-  status: z.enum(['idle', 'parsed', 'analyzed']),      // Import-status
-  sourceBank: z.string().optional(),                   // Bijv. 'ING', 'Rabobank'
-  fileName: z.string(),                                // Originele bestandsnaam
-  transactionCount: z.number(),                        // Aantal transacties
+  }).nullable(),                                       // Optionele periode van transacties.
+  status: z.enum(['idle', 'parsed', 'analyzed']),      // Status van de import.
+  sourceBank: z.string().optional(),                   // Bronbank, bijvoorbeeld ING.
+  fileName: z.string(),                                // Originele bestandsnaam.
+  transactionCount: z.number(),                        // Totaal aantal transacties.
 }).optional();
 
-// CSV Analysis Result (voor viewModels.csvAnalysis — berekend, nooit in data)
-// Structuur gespiegeld aan CsvAnalysisResult in @app/orchestrators/types/csvUpload.types.ts
-// @sync: Houd in lijn met de canonieke interface in csvUpload.types.ts
+/**
+ * Valideert het analyse-resultaat van CSV-data in `viewModels.csvAnalysis`.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
+ */
 export const CsvAnalysisResultSchema = z.object({
   isDiscrepancy: z.boolean(),
   hasMissingCosts: z.boolean(),
@@ -308,9 +359,12 @@ export const CsvAnalysisResultSchema = z.object({
   }).nullable(),
 }).optional();
 
-// ════════════════════════════════════════════════════════════════
-// FORMSTATE SCHEMA — de complete state, volledig getypt
-// ════════════════════════════════════════════════════════════════
+/**
+ * Valideert de volledige persistente form state.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
+ */
 
 export const FormStateSchema = z.object({
   schemaVersion: z.literal('1.0'),
@@ -323,7 +377,7 @@ export const FormStateSchema = z.object({
     finance:   FinanceSchema,
     latestTransaction: LatestTransactionSchema.optional(),
     csvImport:  CsvImportSchema,
-    transactionHistory: TransactionHistorySchema.optional(), // Fase 7: undo/redo stack
+    transactionHistory: TransactionHistorySchema.optional(), // Optionele undo/redo-stack.
   }),
   viewModels: z.object({
     financialSummary: z.object({
@@ -339,43 +393,56 @@ export const FormStateSchema = z.object({
   }),
 });
 
-// ════════════════════════════════════════════════════════════════
-// AFGELEIDE TYPES — z.infer geeft nu ECHTE types
-// ════════════════════════════════════════════════════════════════
-
-/** Het volledige FormState type — afgeleid, niet handmatig */
-export type FormState = z.infer<typeof FormStateSchema>;
-
-/** Alias voor validatie-resultaat */
-export type ValidatedFormState = FormState;
-
-/** De vier data-secties */
-export type DataSection = 'setup' | 'household' | 'finance' | 'latestTransaction';
-
-/** Member type — afgeleid uit MemberSchema */
-export type Member = z.infer<typeof MemberSchema>;
-
-/** Auto type — afgeleid uit AutoSchema */
-export type Auto = z.infer<typeof AutoSchema>;
-
-/** LatestTransaction type — afgeleid uit LatestTransactionSchema */
-export type LatestTransaction = z.infer<typeof LatestTransactionSchema>;
-
-// ════════════════════════════════════════════════════════════════
-// AFGELEIDE TYPES — CSV Import
-// ════════════════════════════════════════════════════════════════
-/** CSV Import State — afgeleid uit schema */
-export type CsvImportState = z.infer<typeof CsvImportSchema>;
-
-/** CSV Analysis Result — afgeleid uit schema */
-export type CsvAnalysisResult = z.infer<typeof CsvAnalysisResultSchema>;
-
-// ════════════════════════════════════════════════════════════════
-// RUNTIME VALIDATION — voor dynamische veldvalidatie
-// ════════════════════════════════════════════════════════════════
+// Afgeleide types op basis van schema's.
 
 /**
- * Runtime schema-lookup per veld-ID.
+ * Volledige form state, afgeleid uit `FormStateSchema`.
+ */
+export type FormState = z.infer<typeof FormStateSchema>;
+
+/**
+ * Alias voor een gevalideerde form state.
+ */
+export type ValidatedFormState = FormState;
+
+/**
+ * Beschikbare data-secties binnen de form state.
+ */
+export type DataSection = 'setup' | 'household' | 'finance' | 'latestTransaction';
+
+/**
+ * Member type afgeleid uit `MemberSchema`.
+ */
+export type Member = z.infer<typeof MemberSchema>;
+
+/**
+ * Auto type afgeleid uit `AutoSchema`.
+ */
+export type Auto = z.infer<typeof AutoSchema>;
+
+/**
+ * LatestTransaction type afgeleid uit `LatestTransactionSchema`.
+ */
+export type LatestTransaction = z.infer<typeof LatestTransactionSchema>;
+
+// Afgeleide types voor CSV-import.
+/**
+ * CSV-importstatus afgeleid uit `CsvImportSchema`.
+ */
+export type CsvImportState = z.infer<typeof CsvImportSchema>;
+
+/**
+ * CSV-analyseresultaat afgeleid uit `CsvAnalysisResultSchema`.
+ */
+export type CsvAnalysisResult = z.infer<typeof CsvAnalysisResultSchema>;
+
+// Runtime-validatie voor dynamische veldcontrole.
+
+/**
+ * Bevat runtime schema-lookup per veld-ID.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
  *
  * ⚠️ Dit is een Record<string, ...> en verliest compile-time types.
  * ⚠️ Gebruik dit ALLEEN voor runtime validatie in orchestrators.
@@ -397,15 +464,14 @@ export const FieldSchemas: Record<string, z.ZodTypeAny> = Object.fromEntries(
 );
 
 /**
- * Valideer complete FormState
+ * Parse en valideert onbekende input naar een geldige `FormState`.
  *
- * @param input - Un_known input to validate
- * @returns Validated FormState met echte types
- * @throws ZodError if validation fails
- */
-/**
- * Valideer complete FormState.
- * De input is unknown omdat dit de grens van de adapter is (ADR-01).
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
+ *
+ * @param input - Onbekende input van buiten de adaptergrens.
+ * @returns Volledig gevalideerde `FormState`.
+ * @throws ZodError wanneer de input niet aan het schema voldoet.
  */
 export function parseFormState(input: unknown): FormState {
   return FormStateSchema.parse(input);
