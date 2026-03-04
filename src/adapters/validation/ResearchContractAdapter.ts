@@ -15,6 +15,10 @@ import { z } from 'zod';
 import type { AnonymizedResearchPayload, ResearchMember, Money, ResearchContract } from '@core/types/research';
 import { FIELD_CONSTRAINTS_REGISTRY as REG } from '@domain/rules/fieldConstraints';
 import { isSpecialInvestigationRequired } from '@domain/rules/householdRules';
+// Lokale fallback-string: SSOT staat in validationMessages.boundary.amountMustBeCents,
+// maar een directe import veroorzaakt een module-resolutie diamond via AuditLoggerAdapter.
+// Waarde is identiek — enkel hier gedupliceerd om de type-chain te doorbreken.
+const BOUNDARY_AMOUNT_MUST_BE_CENTS = 'Bedrag moet in hele centen (integers) zijn' as const;
 
 /**
  * Valideert een geldbedrag als geheel getal in centen en EUR-valuta.
@@ -25,7 +29,7 @@ import { isSpecialInvestigationRequired } from '@domain/rules/householdRules';
  * MoneySchema.parse({ amount: 1250, currency: 'EUR' });
  */
 export const MoneySchema = z.object({
-  amount: z.number().int({ message: "Bedrag moet in hele centen (integers) zijn" }),
+  amount: z.number().int({ message: BOUNDARY_AMOUNT_MUST_BE_CENTS }),
   currency: z.literal('EUR'),
 });
 

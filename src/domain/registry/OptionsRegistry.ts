@@ -7,8 +7,27 @@
  * @ai_instruction Wijzig alleen waarden als de backend/state deze ondersteunt. Gebruik 'as const' voor strikte type-safety.
  */
 export const GENERAL_OPTIONS = {
-isBoolean: ['Ja', 'Nee'] as const,
+  isBoolean: ['Ja', 'Nee'] as const,
 };
+
+/**
+ * BANK OPTIONS
+ *
+ * Ondersteunde banken voor CSV-import detectie.
+ * Bronbestand: src/app/orchestrators/types/csvUpload.types.ts
+ */
+export const BANK_OPTIONS = [
+  'ABN AMRO',
+  'SNS Bank',
+  'ASN Bank',
+  'de Volksbank',
+  'Triodos Bank',
+  'Nationale-Nederlanden Bank',
+  'NIBC Direct',
+  'Lloyds Bank',
+] as const;
+
+export type BankOption = (typeof BANK_OPTIONS)[number];
 /**
  * HOUSEHOLD OPTIONS
  * 

@@ -1,0 +1,2893 @@
+# GECOPIEERDE USER-FACING STRINGS
+# Datum: 2026-03-02T11:54:21.942Z
+# Totaal: 475
+# ================================================
+
+📁 "Audit listener failed"
+   → key: audit_listener_failed
+
+📁 "!!! TICKETING/MAIL ALERT !!!"
+   → key: ticketing_mail_alert
+
+📁 "EMERGENCY - Initiële volledige reset"
+   → key: emergency_initi_le_volledige_reset
+
+📁 "ALERT - Initiële recovery procedure"
+   → key: alert_initi_le_recovery_procedure
+
+📁 "s (float). Conversie naar centen gebeurt later. */
+  amountEuros: number;
+  /** De omschrijving van de transactie. */
+  description: string;
+  /** De datum van de transactie (ISO-string). */
+  date: string;
+  /** Het originele, onbewerkte rij-object uit de CSV. */
+  original: Record<string, string>;
+}
+
+export const csvAdapter = {
+  /**
+   * Vertaalt een ruwe CSV-string naar een array van CsvItems.
+   *
+   * @param rawCsv - De CSV-data als een enkele string.
+   * @returns Een array van CsvItem-objecten.
+   *
+   * @example
+   * const csvData = "
+   → key: s_float_conversie_naar_centen_gebeurt_later_amounteuros_number_de_omschrijving_van_de_transactie_description_string_de_datum_van_de_transactie_iso_string_date_string_het_originele_onbewerkte_rij_object_uit_de_csv_original_record_string_string_export_const_csvadapter_vertaalt_een_ruwe_csv_string_naar_een_array_van_csvitems_param_rawcsv_de_csv_data_als_een_enkele_string_returns_een_array_van_csvitem_objecten_example_const_csvdata
+
+📁 ";
+   * const items = csvAdapter.mapToInternalModel(csvData);
+   * console.log(items[0].amountEuros); // 10.5
+   */
+  mapToInternalModel: (rawCsv: string): CsvItem[] => {
+    const processor = new csvProcessor();
+    const rawRows = (parseRawCsv(rawCsv) ?? []) as Record<string, string>[];
+
+    return rawRows.map((row): CsvItem => {
+      const keys = Object.keys(row ?? {});
+
+      // Helper om de juiste kolomkop te vinden op basis van een regex-patroon.
+      const findKey = (pattern: RegExp): string => {
+        const found = keys.find((k) => pattern.test(k));
+        return found ?? "
+   → key: const_items_csvadapter_maptointernalmodel_csvdata_console_log_items_0_amounteuros_10_5_maptointernalmodel_rawcsv_string_csvitem_const_processor_new_csvprocessor_const_rawrows_parserawcsv_rawcsv_as_record_string_string_return_rawrows_map_row_csvitem_const_keys_object_keys_row_helper_om_de_juiste_kolomkop_te_vinden_op_basis_van_een_regex_patroon_const_findkey_pattern_regexp_string_const_found_keys_find_k_pattern_test_k_return_found
+
+📁 ";
+      };
+
+      // Detecteert de meest waarschijnlijke kolomkoppen voor essentiële velden.
+      const detectedKeys: csvKeys = {
+        amount: findKey(/bedrag|amount/i),
+        mutation: findKey(/Af.?Bij|Mutatie|tegenrekening/i),
+        description: findKey(/Naam|Omschrijving|Mededeling|Beschrijving/i),
+        date: findKey(/Datum|Boekdatum|date/i),
+      };
+
+      return processor.processRow(row, detectedKeys) as CsvItem;
+    });
+  },
+
+  /**
+   * Alias voor "
+   → key: detecteert_de_meest_waarschijnlijke_kolomkoppen_voor_essenti_le_velden_const_detectedkeys_csvkeys_amount_findkey_bedrag_amount_i_mutation_findkey_af_bij_mutatie_tegenrekening_i_description_findkey_naam_omschrijving_mededeling_beschrijving_i_date_findkey_datum_boekdatum_date_i_return_processor_processrow_row_detectedkeys_as_csvitem_alias_voor
+
+📁 " voor compatibiliteit met oudere code.
+   *
+   * @param rawCsv - De CSV-data als een enkele string.
+   * @returns Een array van CsvItem-objecten.
+   * @deprecated Gebruik "
+   → key: voor_compatibiliteit_met_oudere_code_param_rawcsv_de_csv_data_als_een_enkele_string_returns_een_array_van_csvitem_objecten_deprecated_gebruik
+
+📁 "s.
+ *   Bank-detectie-logica zit in BankFormatDetector.ts (testbaar, los van I/O).
+ *   CsvUploadContainer gebruikt detectedBank als hint voor ImportOrchestrator.
+ *   Om later MMKV of andere storage te gebruiken: alleen PersistenceAdapter.ts aanpassen.
+ * @changes [Fase 3] Return type uitgebreid van Promise<string> naar Promise<CsvFileResult>.
+ *   BankFormatDetector aangekoppeld voor automatische bank-herkenning.
+ *   fileName toegevoegd aan resultaat voor opslag in CsvImportStateSlice.
+ */
+import * as DocumentPicker from "
+   → key: s_bank_detectie_logica_zit_in_bankformatdetector_ts_testbaar_los_van_i_o_csvuploadcontainer_gebruikt_detectedbank_als_hint_voor_importorchestrator_om_later_mmkv_of_andere_storage_te_gebruiken_alleen_persistenceadapter_ts_aanpassen_changes_fase_3_return_type_uitgebreid_van_promise_string_naar_promise_csvfileresult_bankformatdetector_aangekoppeld_voor_automatische_bank_herkenning_filename_toegevoegd_aan_resultaat_voor_opslag_in_csvimportstateslice_import_as_documentpicker_from
+
+📁 ";
+import * as FileSystem from "
+   → key: import_as_filesystem_from
+
+📁 ";
+import type { DutchBank } from "
+   → key: import_type_dutchbank_from
+
+📁 ";
+import { detectBankFromCsv } from "
+   → key: import_detectbankfromcsv_from
+
+📁 ";
+import { Logger } from "
+   → key: import_logger_from
+
+📁 ";
+// ─── Resultaat type ────────────────────────────────────────────────────────────
+
+/**
+ * Het volledige resultaat van een bestandsselectie + lees-operatie.
+ */
+export interface CsvFileResult {
+  /** Volledige CSV-tekst in UTF-8 */
+  text: string;
+
+  /** Originele bestandsnaam inclusief extensie (bijv. "
+   → key: resultaat_type_het_volledige_resultaat_van_een_bestandsselectie_lees_operatie_export_interface_csvfileresult_volledige_csv_tekst_in_utf_8_text_string_originele_bestandsnaam_inclusief_extensie_bijv
+
+📁 ") */
+  fileName: string;
+
+  /**
+   * Automatisch gedetecteerde bank op basis van kolomnamen in de header.
+   * undefined als de bank niet herkend werd.
+   */
+  detectedBank: DutchBank;
+}
+
+// ─── Publieke API ──────────────────────────────────────────────────────────────
+
+/**
+ * Opent de OS-native file picker, leest het geselecteerde CSV-bestand,
+ * en detecteert automatisch de bank op basis van de headerregel.
+ *
+ * @throws Error met Nederlandse melding bij annulering of bestandsfouten.
+ * @returns CsvFileResult met tekst, bestandsnaam en optionele bank-hint.
+ */
+/** Annuleringsmelding — geëxporteerd zodat consumers annulering kunnen onderscheiden van echte fouten. */
+export const ANNULERING_MESSAGE = "
+   → key: filename_string_automatisch_gedetecteerde_bank_op_basis_van_kolomnamen_in_de_header_undefined_als_de_bank_niet_herkend_werd_detectedbank_dutchbank_publieke_api_opent_de_os_native_file_picker_leest_het_geselecteerde_csv_bestand_en_detecteert_automatisch_de_bank_op_basis_van_de_headerregel_throws_error_met_nederlandse_melding_bij_annulering_of_bestandsfouten_returns_csvfileresult_met_tekst_bestandsnaam_en_optionele_bank_hint_annuleringsmelding_ge_xporteerd_zodat_consumers_annulering_kunnen_onderscheiden_van_echte_fouten_export_const_annulering_message
+
+📁 ";
+
+export async function pickAndReadCsvFile(): Promise<CsvFileResult> {
+  const result = await DocumentPicker.getDocumentAsync({ type: ["
+   → key: export_async_function_pickandreadcsvfile_promise_csvfileresult_const_result_await_documentpicker_getdocumentasync_type
+
+📁 "], copyToCacheDirectory: true,  });
+
+  if (result.canceled === true) { throw new Error(ANNULERING_MESSAGE);}
+
+  if (result.assets === null || result.assets === undefined || result.assets.length === 0) {throw new Error("
+   → key: copytocachedirectory_true_if_result_canceled_true_throw_new_error_annulering_message_if_result_assets_null_result_assets_undefined_result_assets_length_0_throw_new_error
+
+📁 ");  }
+
+  const asset = result.assets[0];
+  if (asset === null || asset === undefined) { throw new Error("
+   → key: const_asset_result_assets_0_if_asset_null_asset_undefined_throw_new_error
+
+📁 ");}
+
+  let text: string;
+  try {
+    /**
+     * "
+   → key: let_text_string_try
+
+📁 " als string literal omzeilt de "
+   → key: als_string_literal_omzeilt_de
+
+📁 " TS-fout
+     * die optreedt bij gebruik van FileSystem.EncodingType.UTF8 in sommige Expo-versies.
+     */
+    text = await FileSystem.readAsStringAsync(asset.uri, {
+      encoding: "
+   → key: ts_fout_die_optreedt_bij_gebruik_van_filesystem_encodingtype_utf8_in_sommige_expo_versies_text_await_filesystem_readasstringasync_asset_uri_encoding
+
+📁 ",
+    });
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "
+   → key: catch_error_unknown_const_errormessage_error_instanceof_error_error_message
+
+📁 ";
+    Logger.error("
+   → key: logger_error
+
+📁 ", {
+  uri: asset.uri,
+  fileName: asset.name,
+  error: errorMessage,
+  // Audit-haak (verplicht)
+  adr: "
+   → key: uri_asset_uri_filename_asset_name_error_errormessage_audit_haak_verplicht_adr
+
+📁 ",
+  // Domain-context: waarom deze log?
+  related: ["
+   → key: domain_context_waarom_deze_log_related
+
+📁 "], // Input hardening + Storage guards
+  // Clean Code rationale
+  cleanCode: ["
+   → key: input_hardening_storage_guards_clean_code_rationale_cleancode
+
+📁 "], // Module SRP + commentaar alleen voor WHY
+  // Technische details (geen PII)
+  technicalDetails: { adapter: "
+   → key: module_srp_commentaar_alleen_voor_why_technische_details_geen_pii_technicaldetails_adapter
+
+📁 ", phase: "
+   → key: phase
+
+📁 " }
+});
+    throw new Error("
+   → key: throw_new_error
+
+📁 ");
+  }
+
+  // Bestandsnaam: gebruik asset.name indien beschikbaar, anders extraheer uit URI
+  const fileName = resolveFileName(asset);
+
+  // Bank-detectie: pure functie in domein-laag, testbaar los van I/O
+  const detectedBank = detectBankFromCsv(text);
+
+  return { text, fileName, detectedBank };
+}
+// ─── Private helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Extraheert de bestandsnaam uit de asset.
+ * Expo SDK 54 levert "
+   → key: bestandsnaam_gebruik_asset_name_indien_beschikbaar_anders_extraheer_uit_uri_const_filename_resolvefilename_asset_bank_detectie_pure_functie_in_domein_laag_testbaar_los_van_i_o_const_detectedbank_detectbankfromcsv_text_return_text_filename_detectedbank_private_helpers_extraheert_de_bestandsnaam_uit_de_asset_expo_sdk_54_levert
+
+📁 " op het asset-object.
+ * Fallback naar URI-segment als name ontbreekt.
+ */
+function resolveFileName(asset: { name?: string; uri: string }): string {
+  if (typeof asset.name === "
+   → key: op_het_asset_object_fallback_naar_uri_segment_als_name_ontbreekt_function_resolvefilename_asset_name_string_uri_string_string_if_typeof_asset_name
+
+📁 " && asset.name.trim().length > 0) {
+    return asset.name.trim();
+  }
+
+  // Fallback: laatste segment van de URI
+  const segments = asset.uri.split("
+   → key: asset_name_trim_length_0_return_asset_name_trim_fallback_laatste_segment_van_de_uri_const_segments_asset_uri_split
+
+📁 ");
+  const last = segments[segments.length - 1];
+  return typeof last === "
+   → key: const_last_segments_segments_length_1_return_typeof_last
+
+📁 " && last.length > 0 ? last : "
+   → key: last_length_0_last
+
+📁 "Undo geslaagd"
+   → key: undo_geslaagd
+
+📁 "s en afgeleide types voor de volledige form state.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
+ *
+ * @remarks
+ * - Deze adapter vertaalt constraints uit "
+   → key: s_en_afgeleide_types_voor_de_volledige_form_state_module_adapters_validation_formstateschema_see_link_readme_md_validation_layer_details_remarks_deze_adapter_vertaalt_constraints_uit
+
+📁 " naar runtime validatie.
+ * - Zod wordt uitsluitend binnen deze adapter-laag gebruikt (ADR-01).
+ */
+
+import { z } from "
+   → key: naar_runtime_validatie_zod_wordt_uitsluitend_binnen_deze_adapter_laag_gebruikt_adr_01_import_z_from
+
+📁 ";
+import {
+  FIELD_CONSTRAINTS_REGISTRY,
+} from "
+   → key: import_field_constraints_registry_from
+
+📁 ";
+import type {
+  NumberConstraint,
+  EnumConstraint,
+  StringConstraint,
+  BooleanConstraint,
+} from "
+   → key: import_type_numberconstraint_enumconstraint_stringconstraint_booleanconstraint_from
+
+📁 ";
+
+/**
+ * Registry-alias voor kortere en leesbare schema-definities.
+ */
+
+// Shorthand alias voor constraints uit de registry.
+const R = FIELD_CONSTRAINTS_REGISTRY;
+
+// Typed schema-builders die concrete Zod-typen teruggeven.
+
+/**
+ * Bouwt een "
+   → key: registry_alias_voor_kortere_en_leesbare_schema_definities_shorthand_alias_voor_constraints_uit_de_registry_const_r_field_constraints_registry_typed_schema_builders_die_concrete_zod_typen_teruggeven_bouwt_een
+
+📁 " schema op basis van nummer-constraints.
+ *
+ * @param c - Constraint met optionele min/max grenzen.
+ * @returns Zod number schema met geconfigureerde grenzen.
+ */
+function buildNumber(c: NumberConstraint) {
+  let s = z.number();
+  if (c.min !== undefined) s = s.min(c.min);
+  if (c.max !== undefined) s = s.max(c.max);
+  return s;
+  // Retourneert bewust een concreet number-schema.
+}
+
+/**
+ * Bouwt een "
+   → key: schema_op_basis_van_nummer_constraints_param_c_constraint_met_optionele_min_max_grenzen_returns_zod_number_schema_met_geconfigureerde_grenzen_function_buildnumber_c_numberconstraint_let_s_z_number_if_c_min_undefined_s_s_min_c_min_if_c_max_undefined_s_s_max_c_max_return_s_retourneert_bewust_een_concreet_number_schema_bouwt_een
+
+📁 " schema met optionele regex-validatie.
+ *
+ * @param c - Constraint met optioneel pattern.
+ * @returns Zod string schema met eventueel regex-regel.
+ */
+function buildString(c: StringConstraint) {
+  let s = z.string();
+  if (c.pattern instanceof RegExp) {
+    s = s.regex(c.pattern, { message: "
+   → key: schema_met_optionele_regex_validatie_param_c_constraint_met_optioneel_pattern_returns_zod_string_schema_met_eventueel_regex_regel_function_buildstring_c_stringconstraint_let_s_z_string_if_c_pattern_instanceof_regexp_s_s_regex_c_pattern_message
+
+📁 " });
+  }
+  return s;
+  // Retourneert bewust een concreet string-schema.
+}
+
+/**
+ * Bouwt een enum-schema op basis van toegestane string-waarden.
+ *
+ * @param c - Constraint met lijst van toegestane enum-waarden.
+ * @returns Zod enum/literal/never schema afhankelijk van het aantal waarden.
+ */
+function buildEnum(c: EnumConstraint) {
+  const v = c.values;
+  /* istanbul ignore next */
+  if (v.length === 0) return z.never();
+  /* istanbul ignore next */
+  if (v.length === 1) return z.literal(v[0]);
+  const [first, second, ...rest] = v;
+  return z.enum([first, second, ...rest] as [string, string, ...string[]]);
+}
+
+/**
+ * Bouwt een "
+   → key: return_s_retourneert_bewust_een_concreet_string_schema_bouwt_een_enum_schema_op_basis_van_toegestane_string_waarden_param_c_constraint_met_lijst_van_toegestane_enum_waarden_returns_zod_enum_literal_never_schema_afhankelijk_van_het_aantal_waarden_function_buildenum_c_enumconstraint_const_v_c_values_istanbul_ignore_next_if_v_length_0_return_z_never_istanbul_ignore_next_if_v_length_1_return_z_literal_v_0_const_first_second_rest_v_return_z_enum_first_second_rest_as_string_string_string_bouwt_een
+
+📁 " schema op basis van een boolean-constraint.
+ *
+ * @param _c - Boolean-constraint (momenteel zonder extra regels).
+ * @returns Zod boolean schema.
+ */
+function buildBoolean(_c: BooleanConstraint) {
+  return z.boolean();
+  // Retourneert bewust een concreet boolean-schema.
+}
+
+// Section-schema"
+   → key: schema_op_basis_van_een_boolean_constraint_param_c_boolean_constraint_momenteel_zonder_extra_regels_returns_zod_boolean_schema_function_buildboolean_c_booleanconstraint_return_z_boolean_retourneert_bewust_een_concreet_boolean_schema_section_schema
+
+📁 "s.
+  autos: z.array(AutoSchema).optional(),
+
+  // Aggregatievelden.
+  items: z.array(z.record(z.string(), z.unknown())).optional(),
+  totalAmount: z.number().optional(),
+}).passthrough();
+
+/**
+ * Valideert de finance-sectie met income en expenses.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
+ */
+export const FinanceSchema = z.object({
+  income:   IncomeSchema,
+  expenses: ExpenseSchema,
+}).passthrough();
+
+/**
+ * Valideert tijdelijke gegevens van de laatste ingevoerde transactie.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
+ */
+export const LatestTransactionSchema = z.object({
+  latestTransactionDate: z.string().optional(),
+  latestTransactionAmount: z.number().optional(),
+  latestTransactionCategory: z.string().nullable().optional(),
+  latestTransactionDescription: z.string().optional(),
+  latestPaymentMethod: z.string().optional(),
+}).passthrough();
+
+// Transaction history-schema"
+   → key: s_autos_z_array_autoschema_optional_aggregatievelden_items_z_array_z_record_z_string_z_unknown_optional_totalamount_z_number_optional_passthrough_valideert_de_finance_sectie_met_income_en_expenses_module_adapters_validation_formstateschema_see_link_readme_md_validation_layer_details_export_const_financeschema_z_object_income_incomeschema_expenses_expenseschema_passthrough_valideert_tijdelijke_gegevens_van_de_laatste_ingevoerde_transactie_module_adapters_validation_formstateschema_see_link_readme_md_validation_layer_details_export_const_latesttransactionschema_z_object_latesttransactiondate_z_string_optional_latesttransactionamount_z_number_optional_latesttransactioncategory_z_string_nullable_optional_latesttransactiondescription_z_string_optional_latestpaymentmethod_z_string_optional_passthrough_transaction_history_schema
+
+📁 "s.
+
+/**
+ * Volledige form state, afgeleid uit "
+   → key: s_volledige_form_state_afgeleid_uit
+
+📁 ".
+ */
+export type FormState = z.infer<typeof FormStateSchema>;
+
+/**
+ * Alias voor een gevalideerde form state.
+ */
+export type ValidatedFormState = FormState;
+
+/**
+ * Beschikbare data-secties binnen de form state.
+ */
+export type DataSection = "
+   → key: export_type_formstate_z_infer_typeof_formstateschema_alias_voor_een_gevalideerde_form_state_export_type_validatedformstate_formstate_beschikbare_data_secties_binnen_de_form_state_export_type_datasection
+
+📁 ";
+
+/**
+ * Member type afgeleid uit "
+   → key: member_type_afgeleid_uit
+
+📁 ".
+ */
+export type Member = z.infer<typeof MemberSchema>;
+
+/**
+ * Auto type afgeleid uit "
+   → key: export_type_member_z_infer_typeof_memberschema_auto_type_afgeleid_uit
+
+📁 ".
+ */
+export type Auto = z.infer<typeof AutoSchema>;
+
+/**
+ * LatestTransaction type afgeleid uit "
+   → key: export_type_auto_z_infer_typeof_autoschema_latesttransaction_type_afgeleid_uit
+
+📁 ".
+ */
+export type LatestTransaction = z.infer<typeof LatestTransactionSchema>;
+
+// Afgeleide types voor CSV-import.
+/**
+ * CSV-importstatus afgeleid uit "
+   → key: export_type_latesttransaction_z_infer_typeof_latesttransactionschema_afgeleide_types_voor_csv_import_csv_importstatus_afgeleid_uit
+
+📁 ".
+ */
+export type CsvImportState = z.infer<typeof CsvImportSchema>;
+
+/**
+ * CSV-analyseresultaat afgeleid uit "
+   → key: export_type_csvimportstate_z_infer_typeof_csvimportschema_csv_analyseresultaat_afgeleid_uit
+
+📁 ".
+ */
+export type CsvAnalysisResult = z.infer<typeof CsvAnalysisResultSchema>;
+
+// Runtime-validatie voor dynamische veldcontrole.
+
+/**
+ * Bevat runtime schema-lookup per veld-ID.
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
+ *
+ * ⚠️ Dit is een Record<string, ...> en verliest compile-time types.
+ * ⚠️ Gebruik dit ALLEEN voor runtime validatie in orchestrators.
+ * ⚠️ Voor compile-time types: gebruik FormState, Member, Auto types.
+ */
+export const FieldSchemas: Record<string, z.ZodTypeAny> = Object.fromEntries(
+  Object.entries(FIELD_CONSTRAINTS_REGISTRY).map(([fieldId, constraint]) => {
+    let s: z.ZodTypeAny;
+    switch (constraint.type) {
+      case "
+   → key: export_type_csvanalysisresult_z_infer_typeof_csvanalysisresultschema_runtime_validatie_voor_dynamische_veldcontrole_bevat_runtime_schema_lookup_per_veld_id_module_adapters_validation_formstateschema_see_link_readme_md_validation_layer_details_dit_is_een_record_string_en_verliest_compile_time_types_gebruik_dit_alleen_voor_runtime_validatie_in_orchestrators_voor_compile_time_types_gebruik_formstate_member_auto_types_export_const_fieldschemas_record_string_z_zodtypeany_object_fromentries_object_entries_field_constraints_registry_map_fieldid_constraint_let_s_z_zodtypeany_switch_constraint_type_case
+
+📁 ":  s = buildNumber(constraint); break;
+      case "
+   → key: s_buildnumber_constraint_break_case
+
+📁 ":  s = buildString(constraint); break;
+      case "
+   → key: s_buildstring_constraint_break_case
+
+📁 ":    s = buildEnum(constraint); break;
+      case "
+   → key: s_buildenum_constraint_break_case
+
+📁 ": s = buildBoolean(constraint); break;
+      /* istanbul ignore next */
+      default:        s = z.unknown();
+    }
+    return [fieldId, s];
+  })
+);
+
+/**
+ * Parse en valideert onbekende input naar een geldige "
+   → key: s_buildboolean_constraint_break_istanbul_ignore_next_default_s_z_unknown_return_fieldid_s_parse_en_valideert_onbekende_input_naar_een_geldige
+
+📁 ".
+ *
+ * @module adapters/validation/formStateSchema
+ * @see {@link ./README.md | Validation Layer - Details}
+ *
+ * @param input - Onbekende input van buiten de adapter-grens.
+ * @returns Volledig gevalideerde "
+   → key: module_adapters_validation_formstateschema_see_link_readme_md_validation_layer_details_param_input_onbekende_input_van_buiten_de_adapter_grens_returns_volledig_gevalideerde
+
+📁 "s zijn losser dan strikte validatie voor achterwaartse compatibiliteit
+ */
+
+import { z } from "
+   → key: s_zijn_losser_dan_strikte_validatie_voor_achterwaartse_compatibiliteit_import_z_from
+
+📁 "Bedrag moet in hele centen (integers) zijn"
+   → key: bedrag_moet_in_hele_centen_integers_zijn
+
+📁 "Waarde moet een getal zijn."
+   → key: waarde_moet_een_getal_zijn
+
+📁 "Onverwachte validatie fout"
+   → key: onverwachte_validatie_fout
+
+📁 "Validatie fout"
+   → key: validatie_fout
+
+📁 "Single Source of Truth"
+   → key: single_source_of_truth
+
+📁 "s.
+ */
+
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useMemo,
+  ReactNode,
+} from "
+   → key: s_import_react_createcontext_usecontext_usereducer_usememo_reactnode_from
+
+📁 ";
+
+import { formReducer, type FormAction } from "
+   → key: import_formreducer_type_formaction_from
+
+📁 ";
+import { useStableOrchestrator } from "
+   → key: import_usestableorchestrator_from
+
+📁 ";
+import type { FormState } from "
+   → key: import_type_formstate_from
+
+📁 ";
+import { initialFormState } from "
+   → key: import_initialformstate_from
+
+📁 ";
+
+/**
+ * FormContext - React State Integration
+ * * VERANTWOORDELIJKHEDEN:
+ * ✅ useReducer als Single Source of Truth
+ * ✅ Orchestrator instantiatie met getState + dispatch
+ * ✅ Orchestrator exposen via context
+ */
+
+interface FormContextType {
+  state: FormState;
+  dispatch: (action: FormAction) => void;
+  orchestrator: ReturnType<typeof useStableOrchestrator>;
+}
+
+export const FormContext = createContext<FormContextType | undefined>(undefined);
+
+interface FormProviderProps {
+  children: ReactNode;
+  initialState?: FormState;
+  mockDispatch?: (action: FormAction) => void;
+}
+
+export const FormProvider: React.FC<FormProviderProps> = ({
+  children,
+  initialState = initialFormState,
+  mockDispatch,
+}) => {
+  // 1) useReducer (SSOT)
+  const [state, reactDispatch] = useReducer(formReducer, initialState);
+
+  // 2) Mockable dispatch
+  const dispatch = useMemo(() => {
+    if (typeof mockDispatch === "
+   → key: formcontext_react_state_integration_verantwoordelijkheden_usereducer_als_single_source_of_truth_orchestrator_instantiatie_met_getstate_dispatch_orchestrator_exposen_via_context_interface_formcontexttype_state_formstate_dispatch_action_formaction_void_orchestrator_returntype_typeof_usestableorchestrator_export_const_formcontext_createcontext_formcontexttype_undefined_undefined_interface_formproviderprops_children_reactnode_initialstate_formstate_mockdispatch_action_formaction_void_export_const_formprovider_react_fc_formproviderprops_children_initialstate_initialformstate_mockdispatch_1_usereducer_ssot_const_state_reactdispatch_usereducer_formreducer_initialstate_2_mockable_dispatch_const_dispatch_usememo_if_typeof_mockdispatch
+
+📁 ") return mockDispatch;
+    return reactDispatch;
+  }, [mockDispatch]);
+
+  const orchestrator = useStableOrchestrator(state, dispatch);
+
+  const value = useMemo(
+    () => ({ state, dispatch, orchestrator }),
+    [state, dispatch, orchestrator]
+  );
+
+  return <FormContext.Provider value={value}>{children}</FormContext.Provider>;
+};
+
+export const useFormContext = () => {
+  const context = useContext(FormContext);
+  if (context === undefined) {
+    throw new Error("
+   → key: return_mockdispatch_return_reactdispatch_mockdispatch_const_orchestrator_usestableorchestrator_state_dispatch_const_value_usememo_state_dispatch_orchestrator_state_dispatch_orchestrator_return_formcontext_provider_value_value_children_formcontext_provider_export_const_useformcontext_const_context_usecontext_formcontext_if_context_undefined_throw_new_error
+
+📁 ");
+  }
+  return context;
+};
+
+export type { FormState } from "
+   → key: return_context_export_type_formstate_from
+
+📁 ";
+export type { FormAction } from "
+   → key: export_type_formaction_from
+
+📁 "Unknown transaction error"
+   → key: unknown_transaction_error
+
+📁 "lege staat"
+   → key: lege_staat
+
+📁 "Screen "
+   → key: screen
+
+📁 "Section "
+   → key: section
+
+📁 "Entry "
+   → key: entry
+
+📁 "Primitive type "
+   → key: primitive_type
+
+📁 " not registered"
+   → key: not_registered
+
+📁 ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}"
+   → key: minimumfractiondigits_2_maximumfractiondigits_2
+
+📁 "welk event leidt tot welke UX"
+   → key: welk_event_leidt_tot_welke_ux
+
+📁 "Geen omschrijving"
+   → key: geen_omschrijving
+
+📁 "Fout bij verwerken van CSV"
+   → key: fout_bij_verwerken_van_csv
+
+📁 "Geen verwerkte transacties gevonden in het CSV-bestand."
+   → key: geen_verwerkte_transacties_gevonden_in_het_csv_bestand
+
+📁 "s aanroept voor type- en businessrule validatie.
+ * @contract Berekent de validatiestatus op zowel veldniveau (real-time) als sectieniveau (form-submission). Het aggregeert individuele veldfouten naar een SectionValidationResult, wat essentieel is voor navigatie-guards in de wizard.
+ * @ai_instruction De methode "
+   → key: s_aanroept_voor_type_en_businessrule_validatie_contract_berekent_de_validatiestatus_op_zowel_veldniveau_real_time_als_sectieniveau_form_submission_het_aggregeert_individuele_veldfouten_naar_een_sectionvalidationresult_wat_essentieel_is_voor_navigatie_guards_in_de_wizard_ai_instruction_de_methode
+
+📁 " voert eerst een generieke "
+   → key: voert_eerst_een_generieke
+
+📁 " check uit alvorens de gespecialiseerde "
+   → key: check_uit_alvorens_de_gespecialiseerde
+
+📁 " aan te roepen. Gebruik "
+   → key: aan_te_roepen_gebruik
+
+📁 " om te bepalen of een veld "
+   → key: om_te_bepalen_of_een_veld
+
+📁 " feedback moet geven tijdens het typen.
+ */
+
+import { validateAtBoundary } from "
+   → key: feedback_moet_geven_tijdens_het_typen_import_validateatboundary_from
+
+📁 ";
+import { SectionValidationResult, ValidationError } from "
+   → key: import_sectionvalidationresult_validationerror_from
+
+📁 ";
+import { getConstraint } from "
+   → key: import_getconstraint_from
+
+📁 ";
+
+export class ValidationManager {
+
+  /**
+   * Valideert een pre-resolved set fieldIds tegen een platte value-map.
+   *
+   * Wordt uitsluitend aangeroepen vanuit ValidationOrchestrator.validateSection(),
+   * die de registry-keten (ScreenRegistry → SectionRegistry → EntryRegistry)
+   * en de fso.getValue()-resolutie al heeft afgehandeld.
+   *
+   * @param fieldIds     - Gefilterde lijst: geen LABEL/ACTION/derived entries.
+   * @param resolvedValues - Platte map { fieldId: waarde } opgehaald via fso.getValue().
+   */
+  public validateFields(
+    fieldIds: string[],
+    resolvedValues: Record<string, unknown>,
+  ): SectionValidationResult {
+    const errorFields: string[] = [];
+    const errors: Record<string, ValidationError> = {};
+
+    for (const fieldId of fieldIds) {
+      const value = resolvedValues[fieldId];
+      const msg = this.validateField(fieldId, value);
+
+      if (typeof msg === "
+   → key: export_class_validationmanager_valideert_een_pre_resolved_set_fieldids_tegen_een_platte_value_map_wordt_uitsluitend_aangeroepen_vanuit_validationorchestrator_validatesection_die_de_registry_keten_screenregistry_sectionregistry_entryregistry_en_de_fso_getvalue_resolutie_al_heeft_afgehandeld_param_fieldids_gefilterde_lijst_geen_label_action_derived_entries_param_resolvedvalues_platte_map_fieldid_waarde_opgehaald_via_fso_getvalue_public_validatefields_fieldids_string_resolvedvalues_record_string_unknown_sectionvalidationresult_const_errorfields_string_const_errors_record_string_validationerror_for_const_fieldid_of_fieldids_const_value_resolvedvalues_fieldid_const_msg_this_validatefield_fieldid_value_if_typeof_msg
+
+📁 " && msg.length > 0) {
+        errorFields.push(fieldId);
+        errors[fieldId] = { message: msg, severity: "
+   → key: msg_length_0_errorfields_push_fieldid_errors_fieldid_message_msg_severity
+
+📁 " };
+      }
+    }
+
+    return {
+      isValid: errorFields.length === 0,
+      errorFields,
+      errors,
+    };
+  }
+
+  public validateField(fieldId: string, value: unknown): string | null {
+    const constraint = getConstraint(fieldId);
+    const isRequired = constraint?.required === true;
+    const isEmpty = value === undefined || value === null || value === "
+   → key: return_isvalid_errorfields_length_0_errorfields_errors_public_validatefield_fieldid_string_value_unknown_string_null_const_constraint_getconstraint_fieldid_const_isrequired_constraint_required_true_const_isempty_value_undefined_value_null_value
+
+📁 ";
+
+    // 1. Required-check: alleen blokkeren als de constraint het expliciet vereist
+    if (isRequired && isEmpty) {
+      // Gebruik het custom message uit de constraint als het er is
+      return constraint?.message ?? "
+   → key: 1_required_check_alleen_blokkeren_als_de_constraint_het_expliciet_vereist_if_isrequired_isempty_gebruik_het_custom_message_uit_de_constraint_als_het_er_is_return_constraint_message
+
+📁 ";
+    }
+
+    // 2. Optioneel veld zonder waarde: geen verdere validatie nodig
+    if (isEmpty) return null;
+
+    // 3. Zod boundary validator: type- en patroon-check
+    const result = validateAtBoundary(fieldId, value);
+    return result.success ? null : result.error;
+  }
+
+  public shouldValidateAtBoundary(fieldId: string): boolean {
+    const fieldsWithLiveValidation = ["
+   → key: 2_optioneel_veld_zonder_waarde_geen_verdere_validatie_nodig_if_isempty_return_null_3_zod_boundary_validator_type_en_patroon_check_const_result_validateatboundary_fieldid_value_return_result_success_null_result_error_public_shouldvalidateatboundary_fieldid_string_boolean_const_fieldswithlivevalidation
+
+📁 "ABN AMRO"
+   → key: abn_amro
+
+📁 "SNS Bank"
+   → key: sns_bank
+
+📁 "ASN Bank"
+   → key: asn_bank
+
+📁 "de Volksbank"
+   → key: de_volksbank
+
+📁 "Triodos Bank"
+   → key: triodos_bank
+
+📁 "Nationale-Nederlanden Bank"
+   → key: nationale_nederlanden_bank
+
+📁 "NIBC Direct"
+   → key: nibc_direct
+
+📁 "Lloyds Bank"
+   → key: lloyds_bank
+
+📁 "s, punten of min-tekens bevatten) */
+  bedrag: string;
+
+  /** Omschrijving van de transactie (PII mogelijk aanwezig) */
+  omschrijving: string;
+
+  /** Categorie (bank-afhankelijk, vaak leeg) */
+  categorie?: string;
+
+  /** Betaalmethode (bank-afhankelijk) */
+  betaalmethode?: string;
+
+  /** Af/Bij mutatie-richting (ING: "
+   → key: s_punten_of_min_tekens_bevatten_bedrag_string_omschrijving_van_de_transactie_pii_mogelijk_aanwezig_omschrijving_string_categorie_bank_afhankelijk_vaak_leeg_categorie_string_betaalmethode_bank_afhankelijk_betaalmethode_string_af_bij_mutatie_richting_ing
+
+📁 ") */
+  afbij?: string;
+
+  /** Extra velden — afhankelijk van de bank */
+  [key: string]: string | undefined;
+}
+
+// ============================================================================
+// LAAG 2 — ADAPTER OUTPUT (ná csvAdapter.mapToInternalModel())
+// ============================================================================
+
+/**
+ * Output van "
+   → key: afbij_string_extra_velden_afhankelijk_van_de_bank_key_string_string_undefined_laag_2_adapter_output_n_csvadapter_maptointernalmodel_output_van
+
+📁 ".
+ * Kolomnamen zijn genormaliseerd naar Engels, bedrag is al een "
+   → key: kolomnamen_zijn_genormaliseerd_naar_engels_bedrag_is_al_een
+
+📁 ".
+ * PII is nog **niet** gestript — dat gebeurt in "
+   → key: pii_is_nog_niet_gestript_dat_gebeurt_in
+
+📁 ".
+ *
+ * @remarks Spiegelt exact "
+   → key: remarks_spiegelt_exact
+
+📁 " uit "
+   → key: uit
+
+📁 "; expliciete alias
+ * zodat de ACL-keten volledig getypt is.
+ */
+export interface AdapterCsvItem {
+  /** Bedrag in euro"
+   → key: expliciete_alias_zodat_de_acl_keten_volledig_getypt_is_export_interface_adaptercsvitem_bedrag_in_euro
+
+📁 "extends Record<string, unknown>"
+   → key: extends_record_string_unknown
+
+📁 "s (negatief = uitgave, positief = inkomst) */
+  amount: number;
+
+  /** Bedrag in centen (integer, geen floating-point fouten) */
+  amountCents: number;
+
+  /** Datum in YYYY-MM-DD formaat (genormaliseerd) */
+  date: string;
+
+  /** Omschrijving met PII gestript */
+  description: string;
+
+  /** Toegewezen categorie (fallback: "
+   → key: s_negatief_uitgave_positief_inkomst_amount_number_bedrag_in_centen_integer_geen_floating_point_fouten_amountcents_number_datum_in_yyyy_mm_dd_formaat_genormaliseerd_date_string_omschrijving_met_pii_gestript_description_string_toegewezen_categorie_fallback
+
+📁 ") */
+  category: string;
+
+  /** Of de transactie genegeerd moet worden bij berekeningen */
+  isIgnored: boolean;
+
+  /** Audit-metadata — gestructureerd, niet open */
+  original: CsvOriginalMetadata;
+}
+
+// ============================================================================
+// LAAG 4 — STATE SLICE (wat in FormState.data.csvImport staat)
+// ============================================================================
+
+/**
+ * De gedetecteerde periode van de geüploade transacties.
+ * Beide datums in YYYY-MM-DD formaat (ISO string, JSON-serialiseerbaar).
+ */
+export interface CsvImportPeriod {
+  /** Vroegste transactiedatum */
+  from: string;
+
+  /** Laatste transactiedatum */
+  to: string;
+}
+
+/**
+ * State-shape voor "
+   → key: category_string_of_de_transactie_genegeerd_moet_worden_bij_berekeningen_isignored_boolean_audit_metadata_gestructureerd_niet_open_original_csvoriginalmetadata_laag_4_state_slice_wat_in_formstate_data_csvimport_staat_de_gedetecteerde_periode_van_de_ge_ploade_transacties_beide_datums_in_yyyy_mm_dd_formaat_iso_string_json_serialiseerbaar_export_interface_csvimportperiod_vroegste_transactiedatum_from_string_laatste_transactiedatum_to_string_state_shape_voor
+
+📁 ".
+ *
+ * @remarks
+ * Alle datums zijn ISO strings — "
+   → key: remarks_alle_datums_zijn_iso_strings
+
+📁 "-objecten zijn niet JSON-serialiseerbaar
+ * en crashen state-persistence. Deze slice is gescheiden van
+ * "
+   → key: objecten_zijn_niet_json_serialiseerbaar_en_crashen_state_persistence_deze_slice_is_gescheiden_van
+
+📁 " (wizard-data).
+ */
+export interface CsvImportStateSlice {
+  /** Geparste en ACL-cleaned transacties */
+  transactions: ParsedCsvTransaction[];
+
+  /** ISO-timestamp van het moment van import */
+  importedAt: string;
+
+  /** Gedetecteerde periode op basis van transactiedatums (null als geen transacties) */
+  period: CsvImportPeriod | null;
+
+  /** Status van de import-flow */
+  status: "
+   → key: wizard_data_export_interface_csvimportstateslice_geparste_en_acl_cleaned_transacties_transactions_parsedcsvtransaction_iso_timestamp_van_het_moment_van_import_importedat_string_gedetecteerde_periode_op_basis_van_transactiedatums_null_als_geen_transacties_period_csvimportperiod_null_status_van_de_import_flow_status
+
+📁 ";
+
+  /** Gedetecteerde of opgegeven bank */
+  sourceBank: DutchBank;
+
+  /** Originele bestandsnaam */
+  fileName: string;
+
+  /** Totaal aantal transacties (redundant maar handig voor UI zonder array-lengte) */
+  transactionCount: number;
+}
+
+// ============================================================================
+// LAAG 5 — ANALYSE RESULTAAT (viewModels.csvAnalysis — berekend, nooit in data)
+// ============================================================================
+
+/**
+ * Resultaat van de vergelijkingsstap (reconcile CSV vs. wizard-setup).
+ *
+ * @remarks Hoort in "
+   → key: gedetecteerde_of_opgegeven_bank_sourcebank_dutchbank_originele_bestandsnaam_filename_string_totaal_aantal_transacties_redundant_maar_handig_voor_ui_zonder_array_lengte_transactioncount_number_laag_5_analyse_resultaat_viewmodels_csvanalysis_berekend_nooit_in_data_resultaat_van_de_vergelijkingsstap_reconcile_csv_vs_wizard_setup_remarks_hoort_in
+
+📁 ", niet in "
+   → key: niet_in
+
+📁 " — het is een berekend
+ * resultaat dat bij "
+   → key: het_is_een_berekend_resultaat_dat_bij
+
+📁 " wordt gewist samen met "
+   → key: wordt_gewist_samen_met
+
+📁 ".
+ */
+export interface CsvAnalysisResult {
+  /** Of er een significante afwijking is tussen csv-inkomen en wizard-inkomen */
+  isDiscrepancy: boolean;
+
+  /** Of er woonlasten-transacties zijn die niet verwacht werden */
+  hasMissingCosts: boolean;
+
+  /** Toelichting bij discrepantie (indien van toepassing) */
+  discrepancyDetails?: string;
+
+  /** Financiële samenvatting over de geïmporteerde periode */
+  periodSummary: {
+    totalIncomeCents: number;
+    totalExpensesCents: number;
+    balanceCents: number;
+    transactionCount: number;
+  };
+
+  /**
+   * Vergelijking tussen csv-inkomen en wizard-inkomen.
+   * null als er geen inkomens-transacties zijn gevonden in de csv.
+   */
+  setupComparison: {
+    /** Inkomen gevonden in csv (in centen) */
+    csvIncomeCents: number;
+    /** Inkomen opgegeven in wizard (in centen) */
+    setupIncomeCents: number;
+    /** Verschil: csv - setup (negatief = csv lager dan verwacht) */
+    diffCents: number;
+  } | null;
+}
+
+// ============================================================================
+// METADATA
+// ============================================================================
+
+/**
+ * Technische metadata over het geüploade CSV-bestand.
+ */
+export interface CsvSourceMetadata {
+  /** Originele bestandsnaam */
+  fileName: string;
+
+  /** Aantal rijen exclusief header */
+  rowCount: number;
+
+  /** Gedetecteerde kolomseparator */
+  separator: string;
+
+  /** Of het bestand een headerregel had */
+  hasHeader: boolean;
+
+  /** Bestand-Encoding */
+  encoding: string;
+
+  /** Gedetecteerde bank op basis van kolomnamen en structuur */
+  detectedBank?: DutchBank;
+}
+
+// ============================================================================
+// PARSE RESULTAAT (output van de ACL-stap)
+// ============================================================================
+
+/**
+ * Discriminated union van alle mogelijke parse-uitkomsten.
+ */
+export type CsvParseResult = CsvParseSuccess | CsvParseError | CsvParseEmpty;
+
+/**
+ * Succesvolle parse — transacties zijn ACL-cleaned en klaar voor state.
+ */
+export interface CsvParseSuccess {
+  status: "
+   → key: export_interface_csvanalysisresult_of_er_een_significante_afwijking_is_tussen_csv_inkomen_en_wizard_inkomen_isdiscrepancy_boolean_of_er_woonlasten_transacties_zijn_die_niet_verwacht_werden_hasmissingcosts_boolean_toelichting_bij_discrepantie_indien_van_toepassing_discrepancydetails_string_financi_le_samenvatting_over_de_ge_mporteerde_periode_periodsummary_totalincomecents_number_totalexpensescents_number_balancecents_number_transactioncount_number_vergelijking_tussen_csv_inkomen_en_wizard_inkomen_null_als_er_geen_inkomens_transacties_zijn_gevonden_in_de_csv_setupcomparison_inkomen_gevonden_in_csv_in_centen_csvincomecents_number_inkomen_opgegeven_in_wizard_in_centen_setupincomecents_number_verschil_csv_setup_negatief_csv_lager_dan_verwacht_diffcents_number_null_metadata_technische_metadata_over_het_ge_ploade_csv_bestand_export_interface_csvsourcemetadata_originele_bestandsnaam_filename_string_aantal_rijen_exclusief_header_rowcount_number_gedetecteerde_kolomseparator_separator_string_of_het_bestand_een_headerregel_had_hasheader_boolean_bestand_encoding_encoding_string_gedetecteerde_bank_op_basis_van_kolomnamen_en_structuur_detectedbank_dutchbank_parse_resultaat_output_van_de_acl_stap_discriminated_union_van_alle_mogelijke_parse_uitkomsten_export_type_csvparseresult_csvparsesuccess_csvparseerror_csvparseempty_succesvolle_parse_transacties_zijn_acl_cleaned_en_klaar_voor_state_export_interface_csvparsesuccess_status
+
+📁 ";
+
+  /** Volledig verwerkte transacties (ParsedCsvTransaction, niet Transaction uit core) */
+  transactions: ParsedCsvTransaction[];
+
+  /** Statistieken over de parse-run */
+  metadata: {
+    parsedCount: number;
+    skippedCount: number;
+    skippedRows?: Array<{
+      rowIndex: number;
+      reason: string;
+      rawData: string;
+    }>;
+  };
+}
+
+/**
+ * Onherstelbare parse-fout.
+ */
+export interface CsvParseError {
+  status: "
+   → key: volledig_verwerkte_transacties_parsedcsvtransaction_niet_transaction_uit_core_transactions_parsedcsvtransaction_statistieken_over_de_parse_run_metadata_parsedcount_number_skippedcount_number_skippedrows_array_rowindex_number_reason_string_rawdata_string_onherstelbare_parse_fout_export_interface_csvparseerror_status
+
+📁 ";
+  errorMessage: string;
+  technicalDetails?: {
+    errorCode: string;
+    rowIndex?: number;
+    originalError: unknown;
+  };
+  suggestion?: string;
+}
+
+/**
+ * Leeg bestand of geen parseerbare rijen.
+ */
+export interface CsvParseEmpty {
+  status: "
+   → key: errormessage_string_technicaldetails_errorcode_string_rowindex_number_originalerror_unknown_suggestion_string_leeg_bestand_of_geen_parseerbare_rijen_export_interface_csvparseempty_status
+
+📁 ";
+  message: string;
+}
+
+// ============================================================================
+// WORKFLOW TYPES
+// ============================================================================
+
+/**
+ * Fases van de import-workflow (voor voortgangsindicatie en logging).
+ */
+export type ImportPhase =
+  | "
+   → key: message_string_workflow_types_fases_van_de_import_workflow_voor_voortgangsindicatie_en_logging_export_type_importphase
+
+📁 "          // Nog niet gestart
+  | "
+   → key: nog_niet_gestart
+
+📁 "       // ACL: csv → ParsedCsvTransaction[]
+  | "
+   → key: acl_csv_parsedcsvtransaction
+
+📁 "   // Privacy-airlock via ResearchOrchestrator
+  | "
+   → key: privacy_airlock_via_researchorchestrator
+
+📁 "      // State-dispatch
+  | "
+   → key: state_dispatch
+
+📁 "     // Klaar
+  | "
+   → key: klaar
+
+📁 ";       // Mislukt met fout
+
+/**
+ * Eindresultaat van een import-run.
+ */
+export type ImportResult = ImportSuccess | ImportPartial | ImportFailure;
+
+export interface ImportSuccess {
+  outcome: "
+   → key: mislukt_met_fout_eindresultaat_van_een_import_run_export_type_importresult_importsuccess_importpartial_importfailure_export_interface_importsuccess_outcome
+
+📁 ";
+  processedCount: number;
+  /** Verwijst naar CsvAnalysisResult — niet naar de verwijderde ResearchFinanceSummary */
+  summary: CsvAnalysisResult;
+}
+
+export interface ImportPartial {
+  outcome: "
+   → key: processedcount_number_verwijst_naar_csvanalysisresult_niet_naar_de_verwijderde_researchfinancesummary_summary_csvanalysisresult_export_interface_importpartial_outcome
+
+📁 ";
+  processedCount: number;
+  skippedCount: number;
+  warnings: CsvImportWarning[];
+  summary: CsvAnalysisResult;
+}
+
+export interface ImportFailure {
+  outcome: "
+   → key: processedcount_number_skippedcount_number_warnings_csvimportwarning_summary_csvanalysisresult_export_interface_importfailure_outcome
+
+📁 ";
+  errorMessage: string;
+  technicalDetails?: Record<string, unknown>;
+}
+
+/**
+ * Waarschuwing tijdens de import-flow.
+ * Hernoemd van "
+   → key: errormessage_string_technicaldetails_record_string_unknown_waarschuwing_tijdens_de_import_flow_hernoemd_van
+
+📁 " om clash met ResearchOrchestrator te vermijden.
+ */
+export interface CsvImportWarning {
+  type: "
+   → key: om_clash_met_researchorchestrator_te_vermijden_export_interface_csvimportwarning_type
+
+📁 ";
+  transactionId?: string;
+  message: string;
+  suggestion?: string;
+}
+
+/**
+ * Gestructureerde import-fout met fase-informatie.
+ */
+export interface ImportError {
+  code: ImportErrorCode;
+  message: string;
+  phase: ImportPhase;
+  originalError?: unknown;
+}
+
+export type ImportErrorCode =
+  | "
+   → key: transactionid_string_message_string_suggestion_string_gestructureerde_import_fout_met_fase_informatie_export_interface_importerror_code_importerrorcode_message_string_phase_importphase_originalerror_unknown_export_type_importerrorcode
+
+📁 ";
+
+// ============================================================================
+// CONFIGURATIE
+// ============================================================================
+
+/**
+ * Opties voor de CSV-parseerstap.
+ */
+export interface CsvParseOptions {
+  separator?: string;
+  hasHeader?: boolean;
+  encoding?: string;
+  dateFormat?: "
+   → key: configuratie_opties_voor_de_csv_parseerstap_export_interface_csvparseoptions_separator_string_hasheader_boolean_encoding_string_dateformat
+
+📁 ";
+  decimalSeparator?: "
+   → key: decimalseparator
+
+📁 ";
+  maxRows?: number;
+  /** Hint voor kolomdetectie — elk bank heeft eigen kolomnamen */
+  bank?: DutchBank;
+}
+
+/**
+ * Opties voor de volledige import-workflow.
+ */
+export interface ImportWorkflowOptions {
+  autoRecompute?: boolean;
+  enableLogging?: boolean;
+  onProgress?: (phase: ImportPhase, progress: number) => void;
+}
+
+// ============================================================================
+// TYPE GUARDS
+// ============================================================================
+
+/**
+ * Check of obj een RawCsvItem is (typisch ING/Rabobank Dutch-header formaat).
+ *
+ * @note Checkt Nederlandse kolomnamen — dit is correct voor laag 1 (vóór adapter).
+ *   De adapter zet deze namen om naar Engels (amount, description, date).
+ *   Gebruik isAdapterCsvItem() voor de adapter-output (laag 2).
+ */
+export function isRawCsvItem(obj: unknown): obj is RawCsvItem {
+  if (typeof obj !== "
+   → key: maxrows_number_hint_voor_kolomdetectie_elk_bank_heeft_eigen_kolomnamen_bank_dutchbank_opties_voor_de_volledige_import_workflow_export_interface_importworkflowoptions_autorecompute_boolean_enablelogging_boolean_onprogress_phase_importphase_progress_number_void_type_guards_check_of_obj_een_rawcsvitem_is_typisch_ing_rabobank_dutch_header_formaat_note_checkt_nederlandse_kolomnamen_dit_is_correct_voor_laag_1_v_r_adapter_de_adapter_zet_deze_namen_om_naar_engels_amount_description_date_gebruik_isadaptercsvitem_voor_de_adapter_output_laag_2_export_function_israwcsvitem_obj_unknown_obj_is_rawcsvitem_if_typeof_obj
+
+📁 " || obj === null) return false;
+  const item = obj as Record<string, unknown>;
+  return (
+    typeof item["
+   → key: obj_null_return_false_const_item_obj_as_record_string_unknown_return_typeof_item
+
+📁 " &&
+    typeof item["
+   → key: typeof_item
+
+📁 "
+  );
+}
+
+/**
+ * Check of obj een AdapterCsvItem is (laag 2 — output van csvAdapter).
+ * Velden zijn Engelstalig en genormaliseerd.
+ */
+export function isAdapterCsvItem(obj: unknown): obj is AdapterCsvItem {
+  if (typeof obj !== "
+   → key: check_of_obj_een_adaptercsvitem_is_laag_2_output_van_csvadapter_velden_zijn_engelstalig_en_genormaliseerd_export_function_isadaptercsvitem_obj_unknown_obj_is_adaptercsvitem_if_typeof_obj
+
+📁 "
+  );
+}
+
+/**
+ * Check of obj een ParsedCsvTransaction is (laag 3 — ACL-output).
+ * Alle domeinvelden aanwezig, geen open index signature nodig.
+ */
+export function isParsedCsvTransaction(obj: unknown): obj is ParsedCsvTransaction {
+  if (typeof obj !== "
+   → key: check_of_obj_een_parsedcsvtransaction_is_laag_3_acl_output_alle_domeinvelden_aanwezig_geen_open_index_signature_nodig_export_function_isparsedcsvtransaction_obj_unknown_obj_is_parsedcsvtransaction_if_typeof_obj
+
+📁 "
+  );
+}
+
+/**
+ * Check of het parse-resultaat succesvol is.
+ */
+export function isCsvParseSuccess(result: CsvParseResult): result is CsvParseSuccess {
+  return result.status === "
+   → key: check_of_het_parse_resultaat_succesvol_is_export_function_iscsvparsesuccess_result_csvparseresult_result_is_csvparsesuccess_return_result_status
+
+📁 ";
+}
+
+/**
+ * Check of het parse-resultaat een fout bevat.
+ */
+export function isCsvParseError(result: CsvParseResult): result is CsvParseError {
+  return result.status === "
+   → key: check_of_het_parse_resultaat_een_fout_bevat_export_function_iscsvparseerror_result_csvparseresult_result_is_csvparseerror_return_result_status
+
+📁 ";
+}
+
+/**
+ * Check of het parse-resultaat leeg is.
+ */
+export function isCsvParseEmpty(result: CsvParseResult): result is CsvParseEmpty {
+  return result.status === "
+   → key: check_of_het_parse_resultaat_leeg_is_export_function_iscsvparseempty_result_csvparseresult_result_is_csvparseempty_return_result_status
+
+📁 "new UIManager()"
+   → key: new_uimanager
+
+📁 "new UIOrchestrator(visibility)"
+   → key: new_uiorchestrator_visibility
+
+📁 " not found in EntryRegistry"
+   → key: not_found_in_entryregistry
+
+📁 "Is deze sectie ok?"
+   → key: is_deze_sectie_ok
+
+📁 "Inkomensverschil gedetecteerd"
+   → key: inkomensverschil_gedetecteerd
+
+📁 "Woonlasten gevonden die niet verwacht werden"
+   → key: woonlasten_gevonden_die_niet_verwacht_werden
+
+📁 "Onverwachte fout tijdens import"
+   → key: onverwachte_fout_tijdens_import
+
+📁 "Geen transacties gevonden in het bestand"
+   → key: geen_transacties_gevonden_in_het_bestand
+
+📁 "Bij RESET_APP: PersistenceAdapter.clear() aanroepen"
+   → key: bij_reset_app_persistenceadapter_clear_aanroepen
+
+📁 "Provider Composition"
+   → key: provider_composition
+
+📁 "Composition Root"
+   → key: composition_root
+
+📁 "[key: string]: unknown"
+   → key: key_string_unknown
+
+📁 "s voor de ResearchValidator. */
+  amount:       number;
+  /** Originele CSV-kolommen als ruwe map — voor audit en herleidbaarheid. */
+  original:     Record<string, unknown>;
+}
+
+// ─── Ongevalideerde wizard-input ──────────────────────────────────────────────
+
+/**
+ * Ruwe UI-data zoals binnengekomen vanuit de wizard, vóór validatie en mapping.
+ *
+ * @remarks
+ * Dit type is de input van "
+   → key: s_voor_de_researchvalidator_amount_number_originele_csv_kolommen_als_ruwe_map_voor_audit_en_herleidbaarheid_original_record_string_unknown_ongevalideerde_wizard_input_ruwe_ui_data_zoals_binnengekomen_vanuit_de_wizard_v_r_validatie_en_mapping_remarks_dit_type_is_de_input_van
+
+📁 ".
+ * Het is bewust breed getypt met een index-signatuur om progressieve wizard-invulling
+ * op te vangen. Gebruik dit type **alleen** aan de ingang van de PrivacyAirlock;
+ * daarna altijd werken met "
+   → key: het_is_bewust_breed_getypt_met_een_index_signatuur_om_progressieve_wizard_invulling_op_te_vangen_gebruik_dit_type_alleen_aan_de_ingang_van_de_privacyairlock_daarna_altijd_werken_met
+
+📁 ".
+ */
+export interface RawUIData {
+  setup?:      Record<string, unknown>;
+  household?:  { members: unknown[] };
+  finance?:    Record<string, unknown>;
+  fullName?:   string;
+  firstName?:  string;
+  lastName?:   string;
+  memberType?: string;
+  type?:       string;
+  id?:         string;
+  fieldId?:    string;
+  age?:        number;
+  /** Nederlandse alias voor "
+   → key: export_interface_rawuidata_setup_record_string_unknown_household_members_unknown_finance_record_string_unknown_fullname_string_firstname_string_lastname_string_membertype_string_type_string_id_string_fieldid_string_age_number_nederlandse_alias_voor
+
+📁 ", afkomstig uit legacy wizard-velden. */
+  leeftijd?:   number;
+  amount?:     number;
+  category?:   string;
+  [key: string]: unknown;
+}
+
+// ─── Geanonimiseerde research-output ─────────────────────────────────────────
+
+/**
+ * Privacy-veilige payload voor statistisch onderzoek en externe opslag.
+ *
+ * @remarks
+ * Bevat **geen** PII: geen namen, geen e-mailadressen, geen volledige postcodes.
+ * "
+   → key: afkomstig_uit_legacy_wizard_velden_leeftijd_number_amount_number_category_string_key_string_unknown_geanonimiseerde_research_output_privacy_veilige_payload_voor_statistisch_onderzoek_en_externe_opslag_remarks_bevat_geen_pii_geen_namen_geen_e_mailadressen_geen_volledige_postcodes
+
+📁 " is een gehashte vervanging voor de lokale "
+   → key: is_een_gehashte_vervanging_voor_de_lokale
+
+📁 "
+ * (zie "
+   → key: zie
+
+📁 " verifieert dit contract vóór elke export.
+ */
+export interface AnonymizedResearchPayload {
+  /** Versie van dit payload-schema, voor backwards-compatibiliteit. */
+  version?:        string;
+  /** ISO 8601 tijdstempel van aanmaak. */
+  timestamp:       string;
+  anonymizedData?: Record<string, unknown>;
+  metadata?: {
+    source: "
+   → key: verifieert_dit_contract_v_r_elke_export_export_interface_anonymizedresearchpayload_versie_van_dit_payload_schema_voor_backwards_compatibiliteit_version_string_iso_8601_tijdstempel_van_aanmaak_timestamp_string_anonymizeddata_record_string_unknown_metadata_source
+
+📁 ";
+    os:     string;
+  };
+  /** Gehashte member-ID — herleidbaar noch naar naam noch naar apparaat. */
+  researchId?:  string;
+  memberType?:  MemberType;
+  age?:         number;
+  /** Bedrag in euro"
+   → key: os_string_gehashte_member_id_herleidbaar_noch_naar_naam_noch_naar_apparaat_researchid_string_membertype_membertype_age_number_bedrag_in_euro
+
+📁 "isDiscrepancy = true"
+   → key: isdiscrepancy_true
+
+📁 "s voor het light- en dark-thema van de applicatie.
+ *
+ * @module domain/constants
+ * @see {@link ./README.md | Constants — Details}
+ *
+ * @remarks
+ * "
+   → key: s_voor_het_light_en_dark_thema_van_de_applicatie_module_domain_constants_see_link_readme_md_constants_details_remarks
+
+📁 " is de **enige bron van waarheid** voor alle UI-kleuren.
+ * Gebruik nooit hardcoded hex-waarden in componenten of stijl-bestanden;
+ * verwijs altijd via "
+   → key: is_de_enige_bron_van_waarheid_voor_alle_ui_kleuren_gebruik_nooit_hardcoded_hex_waarden_in_componenten_of_stijl_bestanden_verwijs_altijd_via
+
+📁 ".
+ *
+ * Bij wijzigingen: zorg dat "
+   → key: bij_wijzigingen_zorg_dat
+
+📁 " beide volledig en synchroon blijven.
+ * Elke sleutel in "
+   → key: beide_volledig_en_synchroon_blijven_elke_sleutel_in
+
+📁 " moet in beide thema-objecten aanwezig zijn.
+ */
+
+/** Union van de twee ondersteunde UI-modi. */
+export type Theme = "
+   → key: moet_in_beide_thema_objecten_aanwezig_zijn_union_van_de_twee_ondersteunde_ui_modi_export_type_theme
+
+📁 ";
+
+/**
+ * Alle kleurrollen die in de applicatie worden gebruikt.
+ * Elke rol heeft een semantische naam — niet een kleurwaarde (bijv. "
+   → key: alle_kleurrollen_die_in_de_applicatie_worden_gebruikt_elke_rol_heeft_een_semantische_naam_niet_een_kleurwaarde_bijv
+
+📁 ", niet "
+   → key: niet
+
+📁 ").
+ */
+export interface ColorScheme {
+  /** Achtergrond van de schermen en modals. */
+  background:      string;
+  /** Achtergrond van kaarten, sheets en elevated elementen. */
+  surface:         string;
+  /** Achtergrond van invoervelden. */
+  inputBackground: string;
+
+  /** Primaire tekst — hoog contrast op "
+   → key: export_interface_colorscheme_achtergrond_van_de_schermen_en_modals_background_string_achtergrond_van_kaarten_sheets_en_elevated_elementen_surface_string_achtergrond_van_invoervelden_inputbackground_string_primaire_tekst_hoog_contrast_op
+
+📁 ". */
+  textPrimary:     string;
+  /** Secundaire tekst — metadatalabels, subtitels. */
+  textSecondary:   string;
+  /** Tertiaire tekst — placeholders, hints. */
+  textTertiary:    string;
+  /** Tekst op donkere of gekleurde achtergronden. */
+  inverseText:     string;
+
+  /** Standaard randen en dividers. */
+  border:          string;
+  /** Subtiele randen (bijna onzichtbaar op "
+   → key: textprimary_string_secundaire_tekst_metadatalabels_subtitels_textsecondary_string_tertiaire_tekst_placeholders_hints_texttertiary_string_tekst_op_donkere_of_gekleurde_achtergronden_inversetext_string_standaard_randen_en_dividers_border_string_subtiele_randen_bijna_onzichtbaar_op
+
+📁 "). */
+  borderSubtle:    string;
+
+  /** Primaire actiekleur (knoppen, links, focus-ring). */
+  primary:         string;
+  /** Tekst/icoon op een "
+   → key: bordersubtle_string_primaire_actiekleur_knoppen_links_focus_ring_primary_string_tekst_icoon_op_een
+
+📁 "-achtergrond. */
+  onPrimary:       string;
+  /** Secundaire actiekleur (chips, secundaire knoppen). */
+  secondary:       string;
+  /** Tekst/icoon op een "
+   → key: achtergrond_onprimary_string_secundaire_actiekleur_chips_secundaire_knoppen_secondary_string_tekst_icoon_op_een
+
+📁 "-achtergrond. */
+  onSecondary:     string;
+
+  /** Foutkleur voor validatiemeldingen en destructieve acties. */
+  error:           string;
+  /** Tekst/icoon op een "
+   → key: achtergrond_onsecondary_string_foutkleur_voor_validatiemeldingen_en_destructieve_acties_error_string_tekst_icoon_op_een
+
+📁 "-achtergrond. */
+  onError:         string;
+  /** Waarschuwingskleur voor niet-kritieke meldingen. */
+  warning:         string;
+  /** Tekst/icoon op een "
+   → key: achtergrond_onerror_string_waarschuwingskleur_voor_niet_kritieke_meldingen_warning_string_tekst_icoon_op_een
+
+📁 "-achtergrond. */
+  onWarning:       string;
+  /** Succeskleur voor bevestigingen en positieve feedback. */
+  success:         string;
+  /** Tekst/icoon op een "
+   → key: achtergrond_onwarning_string_succeskleur_voor_bevestigingen_en_positieve_feedback_success_string_tekst_icoon_op_een
+
+📁 "-achtergrond. */
+  onSuccess:       string;
+
+  /** Achtergrond van geselecteerde chips en radio-opties. */
+  selected:        string;
+  /** Tekst/icoon op een "
+   → key: achtergrond_onsuccess_string_achtergrond_van_geselecteerde_chips_en_radio_opties_selected_string_tekst_icoon_op_een
+
+📁 "-achtergrond. */
+  onSelected:      string;
+
+  /**
+   * Alias voor "
+   → key: achtergrond_onselected_string_alias_voor
+
+📁 " — behouden voor backwards-compatibiliteit.
+   * @deprecated Gebruik "
+   → key: behouden_voor_backwards_compatibiliteit_deprecated_gebruik
+
+📁 " voor nieuwe componenten.
+   */
+  card:            string;
+  /** Schaduwkleur (altijd zwart; opacity verschilt per component). */
+  shadow:          string;
+  /** Kleur voor uitgeschakelde elementen. */
+  disabled:        string;
+}
+
+/**
+ * Kleurenobject per thema — de SSOT voor alle UI-kleuren.
+ *
+ * @example
+ * const colors = Colors[theme]; // theme = "
+   → key: voor_nieuwe_componenten_card_string_schaduwkleur_altijd_zwart_opacity_verschilt_per_component_shadow_string_kleur_voor_uitgeschakelde_elementen_disabled_string_kleurenobject_per_thema_de_ssot_voor_alle_ui_kleuren_example_const_colors_colors_theme_theme
+
+📁 "
+ * style={{ backgroundColor: colors.surface }}
+ */
+export const Colors: Record<Theme, ColorScheme> = {
+  light: {
+    background:      "
+   → key: style_backgroundcolor_colors_surface_export_const_colors_record_theme_colorscheme_light_background
+
+📁 ",
+    surface:         "
+   → key: surface
+
+📁 ",
+    inputBackground: "
+   → key: inputbackground
+
+📁 ",
+    textPrimary:     "
+   → key: textprimary
+
+📁 ",
+    textSecondary:   "
+   → key: textsecondary
+
+📁 ",
+    textTertiary:    "
+   → key: texttertiary
+
+📁 ",
+    inverseText:     "
+   → key: inversetext
+
+📁 ",
+    border:          "
+   → key: border
+
+📁 ",
+    borderSubtle:    "
+   → key: bordersubtle
+
+📁 ",
+    primary:         "
+   → key: primary
+
+📁 ",
+    onPrimary:       "
+   → key: onprimary
+
+📁 ",
+    secondary:       "
+   → key: secondary
+
+📁 ",
+    onSecondary:     "
+   → key: onsecondary
+
+📁 ",
+    error:           "
+   → key: error
+
+📁 ",
+    onError:         "
+   → key: onerror
+
+📁 ",
+    warning:         "
+   → key: warning
+
+📁 ",
+    onWarning:       "
+   → key: onwarning
+
+📁 ",
+    success:         "
+   → key: success
+
+📁 ",
+    onSuccess:       "
+   → key: onsuccess
+
+📁 ",
+    selected:        "
+   → key: selected
+
+📁 ",
+    onSelected:      "
+   → key: onselected
+
+📁 ",
+    shadow:          "
+   → key: shadow
+
+📁 ",
+    card:            "
+   → key: card
+
+📁 ",
+    disabled:        "
+   → key: disabled
+
+📁 ",
+  },
+  dark: {
+    background:      "
+   → key: dark_background
+
+📁 "Huishouden Opzetten"
+   → key: huishouden_opzetten
+
+📁 "Inkomsten & Lasten"
+   → key: inkomsten_lasten
+
+📁 "Vaste lasten"
+   → key: vaste_lasten
+
+📁 "Aantal Auto"
+   → key: aantal_auto
+
+📁 ",
+  [UX_TOKENS.FIELDS.NAME]:      "
+   → key: ux_tokens_fields_name
+
+📁 ",
+};
+
+/**
+ * Shorthand-aliassen voor de drie macro-navigatie-labels.
+ *
+ * @remarks
+ * Legacy object — waarden zijn identiek aan "
+   → key: shorthand_aliassen_voor_de_drie_macro_navigatie_labels_remarks_legacy_object_waarden_zijn_identiek_aan
+
+📁 ".
+ * Zie TODO.md §2 voor het verwijderingsvoorstel.
+ *
+ * @deprecated Gebruik "
+   → key: zie_todo_md_2_voor_het_verwijderingsvoorstel_deprecated_gebruik
+
+📁 "typescript
+ * container: { ...Layout.rowBetweenCenter, padding: Space.lg }
+ * "
+   → key: typescript_container_layout_rowbetweencenter_padding_space_lg
+
+📁 "flex: 1"
+   → key: flex_1
+
+📁 "insets.bottom === 0"
+   → key: insets_bottom_0
+
+📁 "hitTarget: 44"
+   → key: hittarget_44
+
+📁 "magic strings"
+   → key: magic_strings
+
+📁 "as const"
+   → key: as_const
+
+📁 "keyof typeof UI_SECTIONS"
+   → key: keyof_typeof_ui_sections
+
+📁 "typeof UI_SECTIONS[keyof typeof UI_SECTIONS]"
+   → key: typeof_ui_sections_keyof_typeof_ui_sections
+
+📁 "Af Bij"
+   → key: af_bij
+
+📁 "naam / omschrijving"
+   → key: naam_omschrijving
+
+📁 "af bij"
+   → key: af_bij
+
+📁 "Tegenrekening naam"
+   → key: tegenrekening_naam
+
+📁 "tegenrekening naam"
+   → key: tegenrekening_naam
+
+📁 "Amount (EUR)"
+   → key: amount_eur
+
+📁 "amount (eur)"
+   → key: amount_eur
+
+📁 "Started Date"
+   → key: started_date
+
+📁 "Completed Date"
+   → key: completed_date
+
+📁 "started date"
+   → key: started_date
+
+📁 "completed date"
+   → key: completed_date
+
+📁 "paid out"
+   → key: paid_out
+
+📁 "Account number"
+   → key: account_number
+
+📁 "account number"
+   → key: account_number
+
+📁 "transaction type"
+   → key: transaction_type
+
+📁 "Datum;Naam / Omschrijving;Rekening;Tegenrekening;Af Bij;Bedrag"
+   → key: datum_naam_omschrijving_rekening_tegenrekening_af_bij_bedrag
+
+📁 "Gratis inwonend"
+   → key: gratis_inwonend
+
+📁 "Work In Progress"
+   → key: work_in_progress
+
+📁 "NL** [REDACTED]"
+   → key: nl_redacted
+
+📁 "ISO Date (YYYY-MM-DD)"
+   → key: iso_date_yyyy_mm_dd
+
+📁 "Local Noon"
+   → key: local_noon
+
+📁 "Date Hydration"
+   → key: date_hydration
+
+📁 "new Date(string)"
+   → key: new_date_string
+
+📁 "Cents (Integer)"
+   → key: cents_integer
+
+📁 "Parsing / Normalization"
+   → key: parsing_normalization
+
+📁 "Phoenix Parser"
+   → key: phoenix_parser
+
+📁 "het huidige moment"
+   → key: het_huidige_moment
+
+📁 "new Date()"
+   → key: new_date
+
+📁 "Dependency Injection (DI)"
+   → key: dependency_injection_di
+
+📁 "vandaag om 12:00 uur"
+   → key: vandaag_om_12_00_uur
+
+📁 "s (die een vaste, voorspelbare datum retourneren). Injecteer de "
+   → key: s_die_een_vaste_voorspelbare_datum_retourneren_injecteer_de
+
+📁 "barrel file"
+   → key: barrel_file
+
+📁 "import { ValueProvider, StateWriter } from "
+   → key: import_valueprovider_statewriter_from
+
+📁 "Presentation Layer"
+   → key: presentation_layer
+
+📁 "External Façade"
+   → key: external_fa_ade
+
+📁 "niet gevonden"
+   → key: niet_gevonden
+
+📁 "dit is gevaarlijk"
+   → key: dit_is_gevaarlijk
+
+📁 "dit is de primaire weg"
+   → key: dit_is_de_primaire_weg
+
+📁 "always true"
+   → key: always_true
+
+📁 "Fiscaal Partners"
+   → key: fiscaal_partners
+
+📁 "HBO Max"
+   → key: hbo_max
+
+📁 "NPO Start"
+   → key: npo_start
+
+📁 "YouTube Premium"
+   → key: youtube_premium
+
+📁 "value === true"
+   → key: value_true
+
+📁 "value === false"
+   → key: value_false
+
+📁 "chip-group vereist opties"
+   → key: chip_group_vereist_opties
+
+📁 "Privacy Airlock"
+   → key: privacy_airlock
+
+📁 "PII (Personally Identifiable Information)"
+   → key: pii_personally_identifiable_information
+
+📁 "Data Assertion"
+   → key: data_assertion
+
+📁 "mag geen PII bevatten"
+   → key: mag_geen_pii_bevatten
+
+📁 "Ongeldige memberType: "
+   → key: ongeldige_membertype
+
+📁 ". MemberType moet worden afgeleid uit geboortedatum."
+   → key: membertype_moet_worden_afgeleid_uit_geboortedatum
+
+📁 "SECURITY ALERT: Verboden veld "
+   → key: security_alert_verboden_veld
+
+📁 " in Research Payload."
+   → key: in_research_payload
+
+📁 "SECURITY ALERT: PII gedetecteerd in waarde van "
+   → key: security_alert_pii_gedetecteerd_in_waarde_van
+
+📁 "Age Sandbox"
+   → key: age_sandbox
+
+📁 "Boundary Check"
+   → key: boundary_check
+
+📁 "s tijdens de ontwikkeling.
+ */
+
+import { type TimeProvider } from "
+   → key: s_tijdens_de_ontwikkeling_import_type_timeprovider_from
+
+📁 ";
+import { calculateAge } from "
+   → key: import_calculateage_from
+
+📁 ";
+
+const MIN_AGE = 18;
+const MAX_AGE = 85;
+
+/**
+ * Functie voor de "
+   → key: const_min_age_18_const_max_age_85_functie_voor_de
+
+📁 "Business Rule"
+   → key: business_rule
+
+📁 "een persoon is minderjarig als hij/zij jonger is dan 18 jaar"
+   → key: een_persoon_is_minderjarig_als_hij_zij_jonger_is_dan_18_jaar
+
+📁 "s en randgevallen (zoals verjaardagen en schrikkeljaren) te simuleren en de correctheid van de regels te valideren.
+ */
+
+import { TimeProvider } from "
+   → key: s_en_randgevallen_zoals_verjaardagen_en_schrikkeljaren_te_simuleren_en_de_correctheid_van_de_regels_te_valideren_import_timeprovider_from
+
+📁 "AOW (Algemene Ouderdomswet)"
+   → key: aow_algemene_ouderdomswet
+
+📁 "Juridische Kernregel"
+   → key: juridische_kernregel
+
+📁 "Phoenix Calculator"
+   → key: phoenix_calculator
+
+📁 "Type Guard"
+   → key: type_guard
+
+📁 "Financial Totals"
+   → key: financial_totals
+
+📁 "{ totalIncomeCents, totalExpensesCents, netCents }"
+   → key: totalincomecents_totalexpensescents_netcents
+
+📁 "Cents-based Calculation"
+   → key: cents_based_calculation
+
+📁 "moet dit veld getoond worden?"
+   → key: moet_dit_veld_getoond_worden
+
+📁 "Conditional Rule"
+   → key: conditional_rule
+
+📁 "hasChildren(members, timeProvider)"
+   → key: haschildren_members_timeprovider
+
+📁 "Data Filter Rule"
+   → key: data_filter_rule
+
+📁 "Defensive Programming"
+   → key: defensive_programming
+
+📁 "as un_known"
+   → key: as_un_known
+
+📁 "Derived Value Rule"
+   → key: derived_value_rule
+
+📁 "totaal - deel"
+   → key: totaal_deel
+
+📁 "ADR-06 (Nullish Coalescing)"
+   → key: adr_06_nullish_coalescing
+
+📁 "Aantal kinderen = totaal mensen - volwassenen (minimum 0)"
+   → key: aantal_kinderen_totaal_mensen_volwassenen_minimum_0
+
+📁 "Voer een geldige postcode in (bijv. 1234AB)"
+   → key: voer_een_geldige_postcode_in_bijv_1234ab
+
+📁 "Dit lijkt een jaarbedrag - vul het maandbedrag in"
+   → key: dit_lijkt_een_jaarbedrag_vul_het_maandbedrag_in
+
+📁 "Let op: vermogen boven €1M kan invloed hebben op toeslagen"
+   → key: let_op_vermogen_boven_1m_kan_invloed_hebben_op_toeslagen
+
+📁 "heeft de gebruiker kinderen?"
+   → key: heeft_de_gebruiker_kinderen
+
+📁 "(context, memberId?) => boolean"
+   → key: context_memberid_boolean
+
+📁 "UI Hint"
+   → key: ui_hint
+
+📁 "zichtbaar of niet"
+   → key: zichtbaar_of_niet
+
+📁 "Data Transformation"
+   → key: data_transformation
+
+📁 "Adapter Pattern"
+   → key: adapter_pattern
+
+📁 "Household Status"
+   → key: household_status
+
+📁 "type guard"
+   → key: type_guard
+
+📁 "type predicate"
+   → key: type_predicate
+
+📁 "val is string | number"
+   → key: val_is_string_number
+
+📁 "type guards"
+   → key: type_guards
+
+📁 "s SEVERITY_TEXT lookup.
+ * @see PlatformStyles.SHADOW_MAP, StyleRegistry.ts, useAppStyles.ts
+ */
+import { Space, Radius, Type } from "
+   → key: s_severity_text_lookup_see_platformstyles_shadow_map_styleregistry_ts_useappstyles_ts_import_space_radius_type_from
+
+📁 ";
+import type { ColorScheme } from "
+   → key: import_type_colorscheme_from
+
+📁 ";
+import { Platform } from "
+   → key: import_platform_from
+
+📁 ";
+
+// ── Module-lokale constanten ──────────────────────────────────────────────────
+// Magic numbers buiten de functies zodat ESLint no-magic-numbers niet triggert.
+
+/** zIndex boven alle navigatie-lagen (RN standaard nav zIndex ≤ 100) */
+const TOAST_Z_INDEX    = 9999;
+
+/** Standaard line-height voor toast body tekst (Type.sm = 14 → ratio 1.43) */
+const TOAST_LINE_HEIGHT = 20;
+
+/** Standaard line-height voor modal body tekst (Type.md = 16 → ratio 1.5) */
+const MODAL_LINE_HEIGHT = 24;
+
+/** Semi-transparante overlay kleur voor critical modals */
+const MODAL_OVERLAY_COLOR = "
+   → key: module_lokale_constanten_magic_numbers_buiten_de_functies_zodat_eslint_no_magic_numbers_niet_triggert_zindex_boven_alle_navigatie_lagen_rn_standaard_nav_zindex_100_const_toast_z_index_9999_standaard_line_height_voor_toast_body_tekst_type_sm_14_ratio_1_43_const_toast_line_height_20_standaard_line_height_voor_modal_body_tekst_type_md_16_ratio_1_5_const_modal_line_height_24_semi_transparante_overlay_kleur_voor_critical_modals_const_modal_overlay_color
+
+📁 ";
+
+/** Hex-suffix voor 10% opacity (AA in hex = 170/255 ≈ 67%, 1A = 26/255 ≈ 10%) */
+const SEVERITY_OPACITY_HEX = "
+   → key: hex_suffix_voor_10_opacity_aa_in_hex_170_255_67_1a_26_255_10_const_severity_opacity_hex
+
+📁 ";
+
+// ── Private helpers ───────────────────────────────────────────────────────────
+
+function makeToastStackStyle() {
+  return {
+    // "
+   → key: private_helpers_function_maketoaststackstyle_return
+
+📁 " intentioneel 0 — FeedbackHost overschrijft met platform-specifieke waarde.
+    toastStack: {
+      position: "
+   → key: intentioneel_0_feedbackhost_overschrijft_met_platform_specifieke_waarde_toaststack_position
+
+📁 " as const,
+      top: Platform.select({ ios: 60, android: 40, default: 40 }),
+      left: Space.lg,
+      right: Space.lg,
+      zIndex: TOAST_Z_INDEX,
+      gap: Space.sm,
+      
+    },
+  } as const;
+}
+
+function makeToastBaseStyles(c: ColorScheme) {
+  return {
+    // Schaduw: "
+   → key: as_const_top_platform_select_ios_60_android_40_default_40_left_space_lg_right_space_lg_zindex_toast_z_index_gap_space_sm_as_const_function_maketoastbasestyles_c_colorscheme_return_schaduw
+
+📁 " → level1 gedeclareerd in PlatformStyles.SHADOW_MAP
+    toast: {
+      flexDirection: "
+   → key: level1_gedeclareerd_in_platformstyles_shadow_map_toast_flexdirection
+
+📁 " as const,
+      alignItems: "
+   → key: as_const_alignitems
+
+📁 " as const,
+      justifyContent: "
+   → key: as_const_justifycontent
+
+📁 " as const,
+      paddingHorizontal: Space.lg,
+      paddingVertical: Space.md,
+      borderRadius: Radius.md,
+      borderLeftWidth: 4,
+    },
+    // Severity-varianten: tekstkleur NIET hier — zie FeedbackHost SEVERITY_TEXT.
+    toastWarning:  { backgroundColor: "
+   → key: as_const_paddinghorizontal_space_lg_paddingvertical_space_md_borderradius_radius_md_borderleftwidth_4_severity_varianten_tekstkleur_niet_hier_zie_feedbackhost_severity_text_toastwarning_backgroundcolor
+
+📁 ", borderLeftColor: c.warning },
+    toastError:    { backgroundColor: "
+   → key: borderleftcolor_c_warning_toasterror_backgroundcolor
+
+📁 ",   borderLeftColor: c.error   },
+    toastCritical: { backgroundColor: "
+   → key: borderleftcolor_c_error_toastcritical_backgroundcolor
+
+📁 ",   borderLeftColor: c.error   },
+    toastText: {
+      flex: 1,
+      fontSize: Type.sm,
+      fontWeight: "
+   → key: borderleftcolor_c_error_toasttext_flex_1_fontsize_type_sm_fontweight
+
+📁 " as const,
+      lineHeight: TOAST_LINE_HEIGHT,
+    },
+    toastDismissButton: { marginLeft: Space.md, padding: Space.xs },
+    toastDismissText:   { fontSize: Type.sm, fontWeight: "
+   → key: as_const_lineheight_toast_line_height_toastdismissbutton_marginleft_space_md_padding_space_xs_toastdismisstext_fontsize_type_sm_fontweight
+
+📁 " as const },
+  } as const;
+}
+function makeModalStyles(c: ColorScheme) {
+  return {
+    modalOverlay: { flex: 1, backgroundColor: MODAL_OVERLAY_COLOR, justifyContent: "
+   → key: as_const_as_const_function_makemodalstyles_c_colorscheme_return_modaloverlay_flex_1_backgroundcolor_modal_overlay_color_justifycontent
+
+📁 ", alignItems: "
+   → key: alignitems
+
+📁 ", paddingHorizontal: Space.xl },
+    modalCard: { width: "
+   → key: paddinghorizontal_space_xl_modalcard_width
+
+📁 ", borderRadius: Radius.xl, padding: Space.xxl, backgroundColor: c.surface }, // shadow: level2 via SHADOW_MAP
+    modalHeader: { flexDirection: "
+   → key: borderradius_radius_xl_padding_space_xxl_backgroundcolor_c_surface_shadow_level2_via_shadow_map_modalheader_flexdirection
+
+📁 ", marginBottom: Space.md, gap: Space.sm },
+    modalIcon: { fontSize: Type.xl },
+    modalTitle: { fontSize: Type.lg, fontWeight: "
+   → key: marginbottom_space_md_gap_space_sm_modalicon_fontsize_type_xl_modaltitle_fontsize_type_lg_fontweight
+
+📁 ", flex: 1, color: c.error },
+    modalBody: { fontSize: Type.md, lineHeight: MODAL_LINE_HEIGHT, marginBottom: Space.xl, color: c.textPrimary },
+    recoveryButton: { paddingVertical: Space.md, paddingHorizontal: Space.lg, borderRadius: Radius.md, alignItems: "
+   → key: flex_1_color_c_error_modalbody_fontsize_type_md_lineheight_modal_line_height_marginbottom_space_xl_color_c_textprimary_recoverybutton_paddingvertical_space_md_paddinghorizontal_space_lg_borderradius_radius_md_alignitems
+
+📁 ", marginBottom: Space.sm, backgroundColor: c.error },
+    recoveryButtonText: { fontSize: Type.md, fontWeight: "
+   → key: marginbottom_space_sm_backgroundcolor_c_error_recoverybuttontext_fontsize_type_md_fontweight
+
+📁 ", color: c.onError },
+    dismissModalButton: { paddingVertical: Space.md, paddingHorizontal: Space.lg, borderRadius: Radius.md, borderWidth: 1, alignItems: "
+   → key: color_c_onerror_dismissmodalbutton_paddingvertical_space_md_paddinghorizontal_space_lg_borderradius_radius_md_borderwidth_1_alignitems
+
+📁 ", borderColor: c.border },
+    dismissModalText: { fontSize: Type.md, fontWeight: "
+   → key: bordercolor_c_border_dismissmodaltext_fontsize_type_md_fontweight
+
+📁 "faalt voor niet-DD-MM-YYYY patronen"
+   → key: faalt_voor_niet_dd_mm_yyyy_patronen
+
+📁 "s a specific type of time provider.
+ * @contract The "
+   → key: s_a_specific_type_of_time_provider_contract_the
+
+📁 " interface inherits all the methods from "
+   → key: interface_inherits_all_the_methods_from
+
+📁 ". Any adapter implementing this port must provide an implementation for all methods defined in "
+   → key: any_adapter_implementing_this_port_must_provide_an_implementation_for_all_methods_defined_in
+
+📁 ".
+ * @ai_instruction This is an interface definition. You should not modify this file unless you are changing the contract for the "
+   → key: ai_instruction_this_is_an_interface_definition_you_should_not_modify_this_file_unless_you_are_changing_the_contract_for_the
+
+📁 ". If you need to implement this port, create a new adapter class in the "
+   → key: if_you_need_to_implement_this_port_create_a_new_adapter_class_in_the
+
+📁 " layer that implements this interface.
+ */
+import { TimeProvider } from "
+   → key: layer_that_implements_this_interface_import_timeprovider_from
+
+📁 "single source of truth"
+   → key: single_source_of_truth
+
+📁 "MyScreen: { userId: string }"
+   → key: myscreen_userid_string
+
+📁 "keyof AppStyles"
+   → key: keyof_appstyles
+
+📁 "AppStyles = ReturnType<typeof StyleSheet.create>"
+   → key: appstyles_returntype_typeof_stylesheet_create
+
+📁 "string & keyof AppStyles"
+   → key: string_keyof_appstyles
+
+📁 "ReturnType<typeof StyleSheet.create>"
+   → key: returntype_typeof_stylesheet_create
+
+📁 "error: null"
+   → key: error_null
+
+📁 "errorStyle: {}"
+   → key: errorstyle
+
+📁 "styles: AppStyles"
+   → key: styles_appstyles
+
+📁 "s te kunnen maken. Uitsluitend
+// useAppStyles.ts mag deze functies importeren — niet individuele componenten.
+export {
+  makeLayout,
+  makeHeader,
+  makeButtons,
+  makeCards,
+  makeChips,
+  makeDashboard,
+  makeSummary,
+  makeTypography,
+  makeAlerts,
+  makeFeedback,
+  makeToggles,
+  makeCheckboxes,
+  makeHelpers,
+  makeContainers,
+} from "
+   → key: s_te_kunnen_maken_uitsluitend_useappstyles_ts_mag_deze_functies_importeren_niet_individuele_componenten_export_makelayout_makeheader_makebuttons_makecards_makechips_makedashboard_makesummary_maketypography_makealerts_makefeedback_maketoggles_makecheckboxes_makehelpers_makecontainers_from
+
+📁 ";
+
+// ── Types (enkel type-imports — geen runtime impact) ───────────────────────
+// TypeScript wist deze volledig bij compilatie. Ze zijn hier gegroepeerd
+// zodat UI-bestanden één stabiel import-pad hebben.
+export type { Theme, ColorScheme } from "
+   → key: types_enkel_type_imports_geen_runtime_impact_typescript_wist_deze_volledig_bij_compilatie_ze_zijn_hier_gegroepeerd_zodat_ui_bestanden_n_stabiel_import_pad_hebben_export_type_theme_colorscheme_from
+
+📁 ";
+
+export type {
+  PrimitiveType,
+  PrimitiveStyleRule,
+  BasePrimitiveViewModel,
+  PrimitiveViewModel,
+  PrimitiveMetadata,
+  CounterViewModel,
+  CurrencyViewModel,
+  TextViewModel,
+  NumberViewModel,
+  ChipViewModel,
+  ChipGroupViewModel,
+  RadioOptionViewModel,
+  RadioViewModel,
+  ToggleViewModel,
+  LabelViewModel,
+  DateViewModel,
+  ActionViewModel,
+} from "
+   → key: export_type_primitivetype_primitivestylerule_baseprimitiveviewmodel_primitiveviewmodel_primitivemetadata_counterviewmodel_currencyviewmodel_textviewmodel_numberviewmodel_chipviewmodel_chipgroupviewmodel_radiooptionviewmodel_radioviewmodel_toggleviewmodel_labelviewmodel_dateviewmodel_actionviewmodel_from
+
+📁 ";
+
+/**
+ * Semantische intentie voor ACTION primitives.
+ * 
+ * @remarks
+ * Bepaalt de visuele variant van een actie-knop (primair, secundair, destructief).
+ * Wordt door de mapper vertaald naar de juiste stijlsleutel in AppStyles.
+ */
+export type { StyleIntent } from "
+   → key: semantische_intentie_voor_action_primitives_remarks_bepaalt_de_visuele_variant_van_een_actie_knop_primair_secundair_destructief_wordt_door_de_mapper_vertaald_naar_de_juiste_stijlsleutel_in_appstyles_export_type_styleintent_from
+
+📁 "safe area"
+   → key: safe_area
+
+📁 "toast storm"
+   → key: toast_storm
+
+📁 "useAuditFeedback must be used within <FeedbackProvider>"
+   → key: useauditfeedback_must_be_used_within_feedbackprovider
+
+📁 "useFormState must be used within <FormStateProvider>"
+   → key: useformstate_must_be_used_within_formstateprovider
+
+📁 "const master = useMaster(); master.navigation.navigateNext();"
+   → key: const_master_usemaster_master_navigation_navigatenext
+
+📁 "useMaster must be used within <MasterProvider>"
+   → key: usemaster_must_be_used_within_masterprovider
+
+📁 "s definieert (bv. "
+   → key: s_definieert_bv
+
+📁 ": De consumer-hook die componenten toegang geeft tot het huidige thema ("
+   → key: de_consumer_hook_die_componenten_toegang_geeft_tot_het_huidige_thema
+
+📁 ") en de functies om het te wijzigen ("
+   → key: en_de_functies_om_het_te_wijzigen
+
+📁 ": Een verwijzing naar de "
+   → key: een_verwijzing_naar_de
+
+📁 "-orchestrator in de "
+   → key: orchestrator_in_de
+
+📁 "-laag. Deze wordt gebruikt voor het persisteren (opslaan en laden) van de themakeuze van de gebruiker.
+ * @contract Componenten binnen de "
+   → key: laag_deze_wordt_gebruikt_voor_het_persisteren_opslaan_en_laden_van_de_themakeuze_van_de_gebruiker_contract_componenten_binnen_de
+
+📁 " kunnen de "
+   → key: kunnen_de
+
+📁 "-hook gebruiken om het uiterlijk van de app aan te passen aan het actieve thema. De provider communiceert met de "
+   → key: hook_gebruiken_om_het_uiterlijk_van_de_app_aan_te_passen_aan_het_actieve_thema_de_provider_communiceert_met_de
+
+📁 "-orchestrator om de themakeuze persistent te maken over sessies heen.
+ * @ai_instruction Gebruik de "
+   → key: orchestrator_om_de_themakeuze_persistent_te_maken_over_sessies_heen_ai_instruction_gebruik_de
+
+📁 "-hook in elk component dat zich moet aanpassen aan het thema. Bijvoorbeeld: "
+   → key: hook_in_elk_component_dat_zich_moet_aanpassen_aan_het_thema_bijvoorbeeld
+
+📁 ". De logica voor het *opslaan* van de themakeuze is al afgehandeld via de "
+   → key: de_logica_voor_het_opslaan_van_de_themakeuze_is_al_afgehandeld_via_de
+
+📁 "-orchestrator. Dit bestand hoeft alleen te worden gewijzigd als je bijvoorbeeld meer thema"
+   → key: orchestrator_dit_bestand_hoeft_alleen_te_worden_gewijzigd_als_je_bijvoorbeeld_meer_thema
+
+📁 "useTheme must be used within <ThemeProvider>"
+   → key: usetheme_must_be_used_within_themeprovider
+
+📁 "Kritieke fout"
+   → key: kritieke_fout
+
+📁 "Onbekende fout bij importeren"
+   → key: onbekende_fout_bij_importeren
+
+📁 "Kies csv-bestand"
+   → key: kies_csv_bestand
+
+📁 "App herstellen"
+   → key: app_herstellen
+
+📁 "Instellingen herstellen"
+   → key: instellingen_herstellen
+
+📁 "Close notification"
+   → key: close_notification
+
+📁 "s aan hun specifieke renderer-component.
+ *   Renderers die afwijken van DefaultScreenRenderer (bijv. extra footer, eigen container)
+ *   worden hier geregistreerd via SCREEN_RENDERERS en SCREEN_TYPE_RENDERERS.
+ * @repo_architecture UI Layer - Screen Renderer Registry.
+ * @term_definition
+ *   DefaultScreenRenderer = Toont alleen SectionList (scroll + DynamicSection per sectie).
+ *   WizardScreenRenderer  = DefaultScreenRenderer + NavigationFooter onderaan.
+ *   ScreenRenderer        = React-component die ScreenRendererProps ontvangt.
+ * @ai_instruction
+ *   Voeg een nieuw scherm toe in SCREEN_RENDERERS als het:
+ *     - Een extra footer/actieknop nodig heeft (DailyInput-patroon)
+ *     - Volledig eigen UI heeft die niet via de ViewModel-pipeline loopt (bijv. CSV, CriticalError)
+ *   Schermen die puur via de ViewModel-pipeline renderen (wizard-stappen, Settings, Options)
+ *   hoeven hier NIET geregistreerd te worden — DefaultScreenRenderer of WizardScreenRenderer
+ *   pakt ze automatisch op via SectionRegistry + EntryRegistry.
+ *   LANDING valt door naar DefaultScreenRenderer (type "
+   → key: s_aan_hun_specifieke_renderer_component_renderers_die_afwijken_van_defaultscreenrenderer_bijv_extra_footer_eigen_container_worden_hier_geregistreerd_via_screen_renderers_en_screen_type_renderers_repo_architecture_ui_layer_screen_renderer_registry_term_definition_defaultscreenrenderer_toont_alleen_sectionlist_scroll_dynamicsection_per_sectie_wizardscreenrenderer_defaultscreenrenderer_navigationfooter_onderaan_screenrenderer_react_component_die_screenrendererprops_ontvangt_ai_instruction_voeg_een_nieuw_scherm_toe_in_screen_renderers_als_het_een_extra_footer_actieknop_nodig_heeft_dailyinput_patroon_volledig_eigen_ui_heeft_die_niet_via_de_viewmodel_pipeline_loopt_bijv_csv_criticalerror_schermen_die_puur_via_de_viewmodel_pipeline_renderen_wizard_stappen_settings_options_hoeven_hier_niet_geregistreerd_te_worden_defaultscreenrenderer_of_wizardscreenrenderer_pakt_ze_automatisch_op_via_sectionregistry_entryregistry_landing_valt_door_naar_defaultscreenrenderer_type
+
+📁 ", geen type-renderer).
+ * @changes [Fase 4]
+ *   CsvUploadScreenRenderer — delegeert volledig aan CsvUploadContainer (stateful container).
+ *   CsvAnalysisScreenRenderer — delegeert aan CsvAnalysisFeedbackContainer (VM via factory).
+ * @changes [Fase 6]
+ *   ACTION primitive toegevoegd: navigatieknoppen als gewone entries in SectionRegistry.
+ * @changes [Fase 7+]
+ *   OptionsScreenRenderer     — OPTIONS = SectionList + NavigationBackFooter.
+ *   SplashScreenRenderer      — SPLASH = ActivityIndicator + laadtekst (geen pipeline).
+ *   CriticalErrorScreenRenderer — CRITICAL_ERROR = CriticalErrorContainer (Alert + full reset).
+ *   LandingScreen.tsx, SplashScreen.tsx, CriticalErrorScreen.tsx kunnen worden verwijderd.
+ */
+import React from "
+   → key: geen_type_renderer_changes_fase_4_csvuploadscreenrenderer_delegeert_volledig_aan_csvuploadcontainer_stateful_container_csvanalysisscreenrenderer_delegeert_aan_csvanalysisfeedbackcontainer_vm_via_factory_changes_fase_6_action_primitive_toegevoegd_navigatieknoppen_als_gewone_entries_in_sectionregistry_changes_fase_7_optionsscreenrenderer_options_sectionlist_navigationbackfooter_splashscreenrenderer_splash_activityindicator_laadtekst_geen_pipeline_criticalerrorscreenrenderer_critical_error_criticalerrorcontainer_alert_full_reset_landingscreen_tsx_splashscreen_tsx_criticalerrorscreen_tsx_kunnen_worden_verwijderd_import_react_from
+
+📁 ";
+import { View, ScrollView, ActivityIndicator, Text } from "
+   → key: import_view_scrollview_activityindicator_text_from
+
+📁 ";
+import { useAppStyles } from "
+   → key: import_useappstyles_from
+
+📁 ";
+import { DynamicSection } from "
+   → key: import_dynamicsection_from
+
+📁 ";
+import { NavigationFooter, NavigationBackFooter } from "
+   → key: import_navigationfooter_navigationbackfooter_from
+
+📁 ";
+import { DailyInputActionFooter } from "
+   → key: import_dailyinputactionfooter_from
+
+📁 ";
+import { CsvUploadContainer } from "
+   → key: import_csvuploadcontainer_from
+
+📁 ";
+import { CsvAnalysisFeedbackContainer } from "
+   → key: import_csvanalysisfeedbackcontainer_from
+
+📁 ";
+import { TransactionHistoryContainer } from "
+   → key: import_transactionhistorycontainer_from
+
+📁 ";
+import { ResetConfirmationContainer } from "
+   → key: import_resetconfirmationcontainer_from
+
+📁 ";
+import { CriticalErrorContainer } from "
+   → key: import_criticalerrorcontainer_from
+
+📁 ";
+import { LogoSection } from "
+   → key: import_logosection_from
+
+📁 ";
+import type { RenderScreenVM } from "
+   → key: import_type_renderscreenvm_from
+
+📁 ";
+
+interface ScreenRendererProps {
+  screenVM: RenderScreenVM;
+  topPadding: number;
+  onSaveDailyTransaction: () => void;
+}
+
+// --- Gedeelde basis -----------------------------------------------------------
+
+const SectionList: React.FC<{ screenVM: RenderScreenVM; topPadding: number }> = ({
+  screenVM,
+  topPadding,
+}) => (
+  <ScrollView contentContainerStyle={{ paddingTop: topPadding }}>
+    {screenVM.sections.map((section) => (
+      <DynamicSection
+        key={section.sectionId}
+        sectionId={section.sectionId}
+        title={section.title}
+        layout={section.layout}
+        uiModel={section.uiModel}
+        children={section.children}
+      />
+    ))}
+  </ScrollView>
+);
+
+// --- Standaard renderers ------------------------------------------------------
+
+const DefaultScreenRenderer: React.FC<ScreenRendererProps> = ({ screenVM, topPadding }) => (
+  <SectionList screenVM={screenVM} topPadding={topPadding} />
+);
+
+const DailyInputScreenRenderer: React.FC<ScreenRendererProps> = ({
+  screenVM,
+  topPadding,
+  onSaveDailyTransaction,
+}) => (
+  <>
+    <SectionList screenVM={screenVM} topPadding={topPadding} />
+    <DailyInputActionFooter onSave={onSaveDailyTransaction} />
+  </>
+);
+
+const WizardScreenRenderer: React.FC<ScreenRendererProps> = ({ screenVM, topPadding }) => (
+  <>
+    <SectionList screenVM={screenVM} topPadding={topPadding} />
+    <NavigationFooter />
+  </>
+);
+
+// --- Splash renderer ----------------------------------------------------------
+// Toont een ActivityIndicator + laadtekst. SPLASH.sectionIds = [] — geen pipeline-sections.
+// DefaultScreenRenderer zou een lege ScrollView renderen zonder spinner: niet bruikbaar.
+// SplashContent scheidt hook-gebruik (useAppStyles) van de renderer-shell.
+// SplashScreen.tsx kan na deze registratie verwijderd worden.
+
+const SplashContent: React.FC = () => {
+  const { styles, colors } = useAppStyles();
+  return (
+    <View style={[styles.container, { justifyContent: "
+   → key: interface_screenrendererprops_screenvm_renderscreenvm_toppadding_number_onsavedailytransaction_void_gedeelde_basis_const_sectionlist_react_fc_screenvm_renderscreenvm_toppadding_number_screenvm_toppadding_scrollview_contentcontainerstyle_paddingtop_toppadding_screenvm_sections_map_section_dynamicsection_key_section_sectionid_sectionid_section_sectionid_title_section_title_layout_section_layout_uimodel_section_uimodel_children_section_children_scrollview_standaard_renderers_const_defaultscreenrenderer_react_fc_screenrendererprops_screenvm_toppadding_sectionlist_screenvm_screenvm_toppadding_toppadding_const_dailyinputscreenrenderer_react_fc_screenrendererprops_screenvm_toppadding_onsavedailytransaction_sectionlist_screenvm_screenvm_toppadding_toppadding_dailyinputactionfooter_onsave_onsavedailytransaction_const_wizardscreenrenderer_react_fc_screenrendererprops_screenvm_toppadding_sectionlist_screenvm_screenvm_toppadding_toppadding_navigationfooter_splash_renderer_toont_een_activityindicator_laadtekst_splash_sectionids_geen_pipeline_sections_defaultscreenrenderer_zou_een_lege_scrollview_renderen_zonder_spinner_niet_bruikbaar_splashcontent_scheidt_hook_gebruik_useappstyles_van_de_renderer_shell_splashscreen_tsx_kan_na_deze_registratie_verwijderd_worden_const_splashcontent_react_fc_const_styles_colors_useappstyles_return_view_style_styles_container_justifycontent
+
+📁 " }]}>
+      <ActivityIndicator size="
+   → key: activityindicator_size
+
+📁 " color={colors.primary} />
+      <Text style={styles.screenTitle}>Phoenix wordt geladen...</Text>
+    </View>
+  );
+};
+
+const SplashScreenRenderer: React.FC<ScreenRendererProps> = () => <SplashContent />;
+
+// --- Options renderer ---------------------------------------------------------
+// GLOBAL_OPTIONS_LIST-entries (goToSettings, goToCsvUpload, goToReset) renderen
+// via SectionList (ACTION-primitives in EntryRegistry).
+// NavigationBackFooter levert "
+   → key: color_colors_primary_text_style_styles_screentitle_phoenix_wordt_geladen_text_view_const_splashscreenrenderer_react_fc_screenrendererprops_splashcontent_options_renderer_global_options_list_entries_gotosettings_gotocsvupload_gotoreset_renderen_via_sectionlist_action_primitives_in_entryregistry_navigationbackfooter_levert
+
+📁 " via:
+//   navigation.navigateBack() → goBack() → ScreenRegistry[OPTIONS].previousScreenId = "
+   → key: via_navigation_navigateback_goback_screenregistry_options_previousscreenid
+
+📁 "
+// OptionsScreen.tsx kan na deze registratie verwijderd worden.
+
+const OptionsScreenRenderer: React.FC<ScreenRendererProps> = ({ screenVM, topPadding }) => (
+  <>
+    <SectionList screenVM={screenVM} topPadding={topPadding} />
+    <NavigationBackFooter />
+  </>
+);
+
+// --- CSV Upload renderer [Fase 4B/4C] -----------------------------------------
+// Delegeert volledig aan CsvUploadContainer (stateful: isUploading, error, navigatie).
+// SectionList wordt overgeslagen — CSV_DROPZONE_CARD heeft geen fieldIds.
+
+const CsvUploadScreenRenderer: React.FC<ScreenRendererProps> = ({ topPadding }) => (
+  <View style={{ flex: 1, paddingTop: topPadding }}>
+    <CsvUploadContainer />
+  </View>
+);
+
+// --- CSV Analyse renderer [Fase 6] --------------------------------------------
+// Delegeert aan CsvAnalysisFeedbackContainer (stateless: VM via factory).
+
+const CsvAnalysisScreenRenderer: React.FC<ScreenRendererProps> = ({ topPadding }) => (
+  <View style={{ flex: 1, paddingTop: topPadding }}>
+    <CsvAnalysisFeedbackContainer />
+  </View>
+);
+
+// --- Reset renderer -----------------------------------------------------------
+// Delegeert volledig aan ResetConfirmationContainer (Alert.alert + master.executeReset).
+// RESET_CONFIRMATION_CARD.fieldIds = [] — geen EntryRegistry-velden, container slaat de pipeline over.
+
+const ResetScreenRenderer: React.FC<ScreenRendererProps> = ({ topPadding }) => (
+  <View style={{ flex: 1, paddingTop: topPadding }}>
+    <ResetConfirmationContainer />
+  </View>
+);
+
+// --- Critical Error renderer --------------------------------------------------
+// Delegeert volledig aan CriticalErrorContainer (Alert.alert + master.executeReset("
+   → key: optionsscreen_tsx_kan_na_deze_registratie_verwijderd_worden_const_optionsscreenrenderer_react_fc_screenrendererprops_screenvm_toppadding_sectionlist_screenvm_screenvm_toppadding_toppadding_navigationbackfooter_csv_upload_renderer_fase_4b_4c_delegeert_volledig_aan_csvuploadcontainer_stateful_isuploading_error_navigatie_sectionlist_wordt_overgeslagen_csv_dropzone_card_heeft_geen_fieldids_const_csvuploadscreenrenderer_react_fc_screenrendererprops_toppadding_view_style_flex_1_paddingtop_toppadding_csvuploadcontainer_view_csv_analyse_renderer_fase_6_delegeert_aan_csvanalysisfeedbackcontainer_stateless_vm_via_factory_const_csvanalysisscreenrenderer_react_fc_screenrendererprops_toppadding_view_style_flex_1_paddingtop_toppadding_csvanalysisfeedbackcontainer_view_reset_renderer_delegeert_volledig_aan_resetconfirmationcontainer_alert_alert_master_executereset_reset_confirmation_card_fieldids_geen_entryregistry_velden_container_slaat_de_pipeline_over_const_resetscreenrenderer_react_fc_screenrendererprops_toppadding_view_style_flex_1_paddingtop_toppadding_resetconfirmationcontainer_view_critical_error_renderer_delegeert_volledig_aan_criticalerrorcontainer_alert_alert_master_executereset
+
+📁 ")).
+// ERROR_DIAGNOSTICS_CARD.fieldIds = [] — geen EntryRegistry-velden, container slaat de pipeline over.
+// Toont foutmelding (validationMessages.criticalError.screenMessage) + één reset-knop.
+// Geen "
+   → key: error_diagnostics_card_fieldids_geen_entryregistry_velden_container_slaat_de_pipeline_over_toont_foutmelding_validationmessages_criticalerror_screenmessage_n_reset_knop_geen
+
+📁 "-optie: bij een kritieke fout is een gedeeltelijke reset onveilig.
+// CriticalErrorScreen.tsx kan na deze registratie verwijderd worden.
+
+const CriticalErrorScreenRenderer: React.FC<ScreenRendererProps> = ({ topPadding }) => (
+  <View style={{ flex: 1, paddingTop: topPadding }}>
+    <CriticalErrorContainer />
+  </View>
+);
+
+// --- Landing renderer --------------------------------------------------------
+// LANDING heeft twee sections: LOGO_SECTION (layout="
+   → key: optie_bij_een_kritieke_fout_is_een_gedeeltelijke_reset_onveilig_criticalerrorscreen_tsx_kan_na_deze_registratie_verwijderd_worden_const_criticalerrorscreenrenderer_react_fc_screenrendererprops_toppadding_view_style_flex_1_paddingtop_toppadding_criticalerrorcontainer_view_landing_renderer_landing_heeft_twee_sections_logo_section_layout
+
+📁 ") + LANDING_ACTIONS_CARD.
+// DefaultScreenRenderer zou LOGO_SECTION overslaan (DynamicSection verwacht RenderEntryVM[],
+// maar logo heeft geen entries). LandingScreenRenderer splitst de sections:
+//   - layout="
+   → key: landing_actions_card_defaultscreenrenderer_zou_logo_section_overslaan_dynamicsection_verwacht_renderentryvm_maar_logo_heeft_geen_entries_landingscreenrenderer_splitst_de_sections_layout
+
+📁 " → LogoSection (gecentreerd, geen pipeline)
+//   - overige sections → DynamicSection (normale entry-pipeline)
+// Hierdoor is de landing-screen volledig registry-driven zonder pipeline-hacks.
+
+const LandingScreenRenderer: React.FC<ScreenRendererProps> = ({ screenVM, topPadding }) => (
+  <ScrollView contentContainerStyle={{ paddingTop: topPadding, flexGrow: 1, justifyContent: "
+   → key: logosection_gecentreerd_geen_pipeline_overige_sections_dynamicsection_normale_entry_pipeline_hierdoor_is_de_landing_screen_volledig_registry_driven_zonder_pipeline_hacks_const_landingscreenrenderer_react_fc_screenrendererprops_screenvm_toppadding_scrollview_contentcontainerstyle_paddingtop_toppadding_flexgrow_1_justifycontent
+
+📁 " }}>
+    {screenVM.sections.map((section) => {
+      if (section.layout === "
+   → key: screenvm_sections_map_section_if_section_layout
+
+📁 ") {
+        return <LogoSection key={section.sectionId} size="
+   → key: return_logosection_key_section_sectionid_size
+
+📁 " />;
+      }
+      return (
+        <DynamicSection
+          key={section.sectionId}
+          sectionId={section.sectionId}
+          title={section.title}
+          layout={section.layout}
+          uiModel={section.uiModel}
+          children={section.children}
+        />
+      );
+    })}
+  </ScrollView>
+);
+
+// --- Undo renderer [Fase 7] ---------------------------------------------------
+// TRANSACTION_HISTORY_LIST → TransactionHistoryContainer (Swipeable lijst, VM via factory).
+// TRANSACTION_ACTIONS_CARD → DynamicSection (ACTION entries via registry).
+
+const UndoScreenRenderer: React.FC<ScreenRendererProps> = ({ screenVM, topPadding }) => {
+  const historySection = screenVM.sections.find(
+    (s) => s.sectionId === "
+   → key: return_dynamicsection_key_section_sectionid_sectionid_section_sectionid_title_section_title_layout_section_layout_uimodel_section_uimodel_children_section_children_scrollview_undo_renderer_fase_7_transaction_history_list_transactionhistorycontainer_swipeable_lijst_vm_via_factory_transaction_actions_card_dynamicsection_action_entries_via_registry_const_undoscreenrenderer_react_fc_screenrendererprops_screenvm_toppadding_const_historysection_screenvm_sections_find_s_s_sectionid
+
+📁 "
+  );
+  const actionsSection = screenVM.sections.find(
+    (s) => s.sectionId === "
+   → key: const_actionssection_screenvm_sections_find_s_s_sectionid
+
+📁 "Totaal Inkomsten:"
+   → key: totaal_inkomsten
+
+📁 "Totaal Uitgaven:"
+   → key: totaal_uitgaven
+
+📁 "<LogoSection size="
+   → key: logosection_size
+
+📁 "Phoenix logo"
+   → key: phoenix_logo
+
+📁 "Verwijder transactie"
+   → key: verwijder_transactie
+
+📁 "Input Selector"
+   → key: input_selector
+
+📁 "{ adultCount: number }"
+   → key: adultcount_number
+
+📁 "Composition Styles"
+   → key: composition_styles
+
+📁 "Semantic Styles"
+   → key: semantic_styles
+
+📁 "{ styles, colors, Tokens }"
+   → key: styles_colors_tokens
+
+📁 "csv (Comma-Separated Values)"
+   → key: csv_comma_separated_values
+
+📁 "Byte Order Mark (BOM)"
+   → key: byte_order_mark_bom
+
+📁 "Header Row"
+   → key: header_row
+
+📁 "Pure Function"
+   → key: pure_function
+
+📁 "Record<string, string>[]"
+   → key: record_string_string
+
+📁 "));
+
+  // 4. Map de rijen naar objecten
+  return lines.slice(1).map((line) => {
+    const values = line.split(delimiter);
+    return headers.reduce(
+      (obj, header, i) => {
+        const rawValue = values[i];
+        const val = (rawValue !== undefined && rawValue !== "
+   → key: 4_map_de_rijen_naar_objecten_return_lines_slice_1_map_line_const_values_line_split_delimiter_return_headers_reduce_obj_header_i_const_rawvalue_values_i_const_val_rawvalue_undefined_rawvalue
+
+📁 ") 
+          ? rawValue.trim().replace(/"
+   → key: rawvalue_trim_replace
+
+📁 "Barrel File"
+   → key: barrel_file
+
+📁 "export * from "
+   → key: export_from
+
+📁 "Facade Pattern"
+   → key: facade_pattern
+
+📁 "import { parseRawCsv } from "
+   → key: import_parserawcsv_from
+
+📁 "shallow merge"
+   → key: shallow_merge
+
+📁 "s waar je zeker moet weten dat je met een echt object te maken hebt en niet met een array of "
+   → key: s_waar_je_zeker_moet_weten_dat_je_met_een_echt_object_te_maken_hebt_en_niet_met_een_array_of
+
+📁 ".
+ */
+// src/utils/objects.ts
+
+/**
+ * Helper type for deep partial objects
+ */
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+/**
+ * Type guard for objects (not arrays, not null)
+ */
+const isObject = (val: unknown): val is Record<string, unknown> => 
+  val !== null && typeof val === "
+   → key: src_utils_objects_ts_helper_type_for_deep_partial_objects_type_deeppartial_t_p_in_keyof_t_t_p_extends_object_deeppartial_t_p_t_p_type_guard_for_objects_not_arrays_not_null_const_isobject_val_unknown_val_is_record_string_unknown_val_null_typeof_val
+
+📁 "health check"
+   → key: health_check
+
+📁 "smoke test"
+   → key: smoke_test
+
+📁 "s, of als een "
+   → key: s_of_als_een
+
+📁 " commando om de connectiviteit en responsiviteit van de applicatie-engine te valideren.
+ * @term_definition
+ *   - "
+   → key: commando_om_de_connectiviteit_en_responsiviteit_van_de_applicatie_engine_te_valideren_term_definition
+
+📁 ": Een signaal dat wordt uitgestuurd om te controleren of een systeem bereikbaar is.
+ *   - "
+   → key: een_signaal_dat_wordt_uitgestuurd_om_te_controleren_of_een_systeem_bereikbaar_is
+
+📁 ": De verwachte, bevestigende reactie op een "
+   → key: de_verwachte_bevestigende_reactie_op_een
+
+📁 ", wat aangeeft dat het systeem leeft.
+ *   - "
+   → key: wat_aangeeft_dat_het_systeem_leeft
+
+📁 ": Een mechanisme om te bepalen of een systeem of component correct functioneert. De "
+   → key: een_mechanisme_om_te_bepalen_of_een_systeem_of_component_correct_functioneert_de
+
+📁 "-functie is de meest basale vorm hiervan.
+ *   - "
+   → key: functie_is_de_meest_basale_vorm_hiervan
+
+📁 ": Een type dat hint naar een mogelijke integratie in een groter state management framework (met de codenaam "
+   → key: een_type_dat_hint_naar_een_mogelijke_integratie_in_een_groter_state_management_framework_met_de_codenaam
+
+📁 "). Hoewel de state momenteel niet wordt gebruikt, is de functie ontworpen om compatibel te zijn met de structuur van dit framework.
+ * @contract De "
+   → key: hoewel_de_state_momenteel_niet_wordt_gebruikt_is_de_functie_ontworpen_om_compatibel_te_zijn_met_de_structuur_van_dit_framework_contract_de
+
+📁 "-functie accepteert een optioneel "
+   → key: functie_accepteert_een_optioneel
+
+📁 "-argument, dat het momenteel negeert. De functie retourneert *altijd* de string-literal "
+   → key: argument_dat_het_momenteel_negeert_de_functie_retourneert_altijd_de_string_literal
+
+📁 ". Het heeft geen neveneffecten en is een pure functie in zijn huidige vorm.
+ * @ai_instruction Gebruik de "
+   → key: het_heeft_geen_neveneffecten_en_is_een_pure_functie_in_zijn_huidige_vorm_ai_instruction_gebruik_de
+
+📁 "-functie als een snelle en eenvoudige manier om te bevestigen dat het systeem draait. Het is perfect voor een "
+   → key: functie_als_een_snelle_en_eenvoudige_manier_om_te_bevestigen_dat_het_systeem_draait_het_is_perfect_voor_een
+
+📁 "-knop in een debug-menu of als een eerste stap in een end-to-end test om de basisconnectiviteit te garanderen. Houd deze functie simpel; zijn waarde ligt juist in zijn eenvoud. Voor complexere diagnostiek, creëer een nieuwe, specifiekere health-check-functie.
+ */
+// src/utils/ping.ts
+type MinimalPhoenixState = { data?: { setup?: Record<string, unknown> } };
+
+export const ping = (_state?: MinimalPhoenixState): "
+   → key: knop_in_een_debug_menu_of_als_een_eerste_stap_in_een_end_to_end_test_om_de_basisconnectiviteit_te_garanderen_houd_deze_functie_simpel_zijn_waarde_ligt_juist_in_zijn_eenvoud_voor_complexere_diagnostiek_cre_er_een_nieuwe_specifiekere_health_check_functie_src_utils_ping_ts_type_minimalphoenixstate_data_setup_record_string_unknown_export_const_ping_state_minimalphoenixstate
+
+📁 " => {
+  // eventueel validation of logging; nu gewoon health check:
+  return "
+   → key: eventueel_validation_of_logging_nu_gewoon_health_check_return
+
+📁 "s) te verwijderen, de lengte te limiteren en witruimte consistent te maken.
+ * @repo_architecture Utils Layer - String Manipulation. Dit is een op zichzelf staande, pure functie zonder afhankelijkheden van andere applicatielagen. Het is een generieke utility die overal kan worden ingezet waar betrouwbare string-formattering vereist is.
+ * @term_definition
+ *   - "
+   → key: s_te_verwijderen_de_lengte_te_limiteren_en_witruimte_consistent_te_maken_repo_architecture_utils_layer_string_manipulation_dit_is_een_op_zichzelf_staande_pure_functie_zonder_afhankelijkheden_van_andere_applicatielagen_het_is_een_generieke_utility_die_overal_kan_worden_ingezet_waar_betrouwbare_string_formattering_vereist_is_term_definition
+
+📁 ": Het proces van het "
+   → key: het_proces_van_het
+
+📁 " van een input-string door ongewenste of potentieel problematische karakters te verwijderen.
+ *   - "
+   → key: van_een_input_string_door_ongewenste_of_potentieel_problematische_karakters_te_verwijderen
+
+📁 ": Het proces van het omzetten van een string naar een standaard, canonieke vorm. In dit geval verwijst het specifiek naar het consolideren van meerdere witruimte-tekens naar één enkele spatie.
+ *   - "
+   → key: het_proces_van_het_omzetten_van_een_string_naar_een_standaard_canonieke_vorm_in_dit_geval_verwijst_het_specifiek_naar_het_consolideren_van_meerdere_witruimte_tekens_naar_n_enkele_spatie
+
+📁 ": De techniek die wordt gebruikt om karakters te verwijderen. "
+   → key: de_techniek_die_wordt_gebruikt_om_karakters_te_verwijderen
+
+📁 " gebruikt een regular expression om alleen een specifieke set van ASCII en Latijnse karakters toe te staan, waardoor de rest wordt gefilterd.
+ * @contract De "
+   → key: gebruikt_een_regular_expression_om_alleen_een_specifieke_set_van_ascii_en_latijnse_karakters_toe_te_staan_waardoor_de_rest_wordt_gefilterd_contract_de
+
+📁 " functie accepteert een "
+   → key: functie_accepteert_een
+
+📁 " als eerste argument en een optionele "
+   → key: als_eerste_argument_en_een_optionele
+
+📁 " (getal, standaard 25) als tweede. De functie retourneert altijd een "
+   → key: getal_standaard_25_als_tweede_de_functie_retourneert_altijd_een
+
+📁 ". Het proces is als volgt: 1. Input die geen string is, wordt als een lege string behandeld. 2. Alle karakters die niet binnen de ASCII- en Latin-1 Supplement-range vallen, worden verwijderd. 3. De string wordt ingekort tot de "
+   → key: het_proces_is_als_volgt_1_input_die_geen_string_is_wordt_als_een_lege_string_behandeld_2_alle_karakters_die_niet_binnen_de_ascii_en_latin_1_supplement_range_vallen_worden_verwijderd_3_de_string_wordt_ingekort_tot_de
+
+📁 " lengte. 4. Opeenvolgende witruimte-tekens worden vervangen door één spatie. 5. De resulterende string wordt getrimd (witruimte aan begin/eind verwijderd).
+ * @ai_instruction Gebruik de "
+   → key: lengte_4_opeenvolgende_witruimte_tekens_worden_vervangen_door_n_spatie_5_de_resulterende_string_wordt_getrimd_witruimte_aan_begin_eind_verwijderd_ai_instruction_gebruik_de
+
+📁 " functie wanneer je door gebruikers ingevoerde tekst (zoals een naam, titel of korte beschrijving) moet weergeven en je zeker wilt zijn van een nette, consistente opmaak zonder onverwachte tekens. Bijvoorbeeld: "
+   → key: functie_wanneer_je_door_gebruikers_ingevoerde_tekst_zoals_een_naam_titel_of_korte_beschrijving_moet_weergeven_en_je_zeker_wilt_zijn_van_een_nette_consistente_opmaak_zonder_onverwachte_tekens_bijvoorbeeld
+
+📁 ". Dit is een formattering- en sanitizing-tool, niet bedoeld als primaire bescherming tegen security-aanvallen zoals XSS.
+ */
+/**
+ * strings.ts
+ * cleanName:
+ * - verwijdert emoji/rare tekens (ASCII behoud)
+ * - normaliseert whitespace (meerdere spaties -> 1)
+ * - trimt begin/einde
+ * - limiteert lengte (default 25)
+ */
+export function cleanName(input: string | undefined | null, max: number = 25): string {
+  const raw = typeof input === "
+   → key: dit_is_een_formattering_en_sanitizing_tool_niet_bedoeld_als_primaire_bescherming_tegen_security_aanvallen_zoals_xss_strings_ts_cleanname_verwijdert_emoji_rare_tekens_ascii_behoud_normaliseert_whitespace_meerdere_spaties_1_trimt_begin_einde_limiteert_lengte_default_25_export_function_cleanname_input_string_undefined_null_max_number_25_string_const_raw_typeof_input
+
+📁 " ? input : "
+   → key: input
+
+📁 ";
+
+  // Filter: behoud alleen letters, cijfers en standaard leestekens (geen emoji)
+  const noEmoji = raw.replace(/[^\x20-\x7E\u00C0-\u00FF]/g, "
+   → key: filter_behoud_alleen_letters_cijfers_en_standaard_leestekens_geen_emoji_const_noemoji_raw_replace_x20_x7e_u00c0_u00ff_g
+
+📁 ");
+
+  // Limiteer lengte en schoon whitespace op
+  return noEmoji.slice(0, max).replace(/\s+/g, "
+   → key: limiteer_lengte_en_schoon_whitespace_op_return_noemoji_slice_0_max_replace_s_g
+

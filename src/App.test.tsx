@@ -1,3 +1,4 @@
+
 // src/App.test.tsx
 import React from 'react';
 import { render } from '@testing-library/react-native';
@@ -30,6 +31,9 @@ jest.mock('@ui/providers/MasterProvider', () => ({
 
 jest.mock('@ui/providers/ThemeProvider', () => ({
   ThemeProvider: jest.fn(({ children }) => <>{children}</>),
+  // useTheme wordt aangeroepen door useAppStyles in FeedbackHost.
+  // Zonder deze stub crasht de render met "useTheme is not a function".
+  useTheme: jest.fn(() => ({ theme: 'light' })),
 }));
 
 

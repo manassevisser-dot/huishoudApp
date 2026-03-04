@@ -20,6 +20,10 @@ import type {
   StringConstraint,
   BooleanConstraint,
 } from '@domain/rules/fieldConstraints';
+// Lokale fallback-string: SSOT staat in validationMessages.boundary.invalidFormat,
+// maar een directe import veroorzaakt een module-resolutie diamond via AuditLoggerAdapter.
+// Waarde is identiek — enkel hier gedupliceerd om de type-chain te doorbreken.
+const BOUNDARY_INVALID_FORMAT = 'Ongeldig formaat' as const;
 
 /**
  * Registry-alias voor kortere en leesbare schema-definities.
@@ -53,7 +57,7 @@ function buildNumber(c: NumberConstraint) {
 function buildString(c: StringConstraint) {
   let s = z.string();
   if (c.pattern instanceof RegExp) {
-    s = s.regex(c.pattern, { message: 'Ongeldig formaat' });
+    s = s.regex(c.pattern, { message: BOUNDARY_INVALID_FORMAT });
   }
   return s;
   // Retourneert bewust een concreet string-schema.

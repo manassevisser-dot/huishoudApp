@@ -10,6 +10,13 @@
 import { ZodError } from 'zod';
 import { FieldSchemas } from './formStateSchema';
 import { Logger } from '@adapters/audit/AuditLoggerAdapter';
+// Lokale fallback-strings: SSOT staat in validationMessages.boundary,
+// maar een directe import veroorzaakt een module-resolutie diamond via AuditLoggerAdapter.
+// Waarden zijn identiek — enkel hier gedupliceerd om de type-chain te doorbreken.
+const BOUNDARY_FALLBACK = {
+  unexpectedValidationError: 'Onverwachte validatie fout',
+  validationError: 'Validatie fout',
+} as const;
 
 /**
  * ADAPTER LAYER: Boundary Validation
@@ -60,7 +67,7 @@ export function validateAtBoundary<T = unknown>(
 
   // If no schema exists, field is unknown - pass through with warning
 if (schema === undefined) {
-  Logger.warning('BOUNDARY_NO_SCHEMA', { fieldId, value });  // warning ipv warn
+  Logger.warning('BOUNDARY_NO_SCHEMA', { fieldId, value }, { adr: ["ADR-06","ADR-02"] });  // warning ipv warn
   return { success: true, data: value as T };
 }
 
@@ -102,7 +109,7 @@ function handleValidationError(
     error
   });
   
-  return { success: false, error: 'Onverwachte validatie fout' };
+  return { success: false, error: BOUNDARY_FALLBACK.unexpectedValidationError };
 }
 
 /**
@@ -111,7 +118,7 @@ function handleValidationError(
 function extractZodErrorMessage(zodError: ZodError): string {
   const firstIssue = zodError.issues[0];
   if (firstIssue === undefined) {
-    return 'Validatie fout';
+    return BOUNDARY_FALLBACK.validationError;
   }
   return firstIssue.message;
 }

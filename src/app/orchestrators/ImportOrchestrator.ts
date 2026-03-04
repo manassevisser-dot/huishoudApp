@@ -28,6 +28,9 @@ import {
 } from '@adapters/csv/csvAdapter';
 import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import { toCents } from '@domain/helpers/numbers';
+import WizStrings from '@config/WizStrings';
+
+const WI = WizStrings.import;
 
 /* -------------------------------------------------------------------------- */
 /*                               MODULE CONSTANTS                              */
@@ -35,7 +38,7 @@ import { toCents } from '@domain/helpers/numbers';
 
 type ImportFlag = 'missing_date' | 'missing_description' | 'fallback_category';
 
-const IMPORT_FALLBACK_DESCRIPTION = 'Geen omschrijving';
+const IMPORT_FALLBACK_DESCRIPTION = WizStrings.undo.noDescription;
 const IMPORT_FALLBACK_CATEGORY = 'Overig';
 const IMPORT_SCHEMA_VERSION = 'csv-v1';
 const IMPORT_COLUMN_MAP_VERSION = 'v1';
@@ -83,7 +86,7 @@ export class ImportOrchestrator {
   });
   return {
     status: 'error',
-    errorMessage: error !== '' ? error : 'Fout bij verwerken van CSV',
+    errorMessage: error !== '' ? error : WI.csvProcessError,
     technicalDetails: { errorCode: 'PARSING_ERROR', originalError: e },
   };
 }
@@ -94,7 +97,7 @@ public processCsvImport(csvText: string): CsvParseResult {
     if (transactions.length === 0) {
       return {
         status: 'empty',
-        message: 'Geen verwerkte transacties gevonden in het CSV-bestand.',
+        message: WI.noTransactionsProcessed,
       };
     }
     return {

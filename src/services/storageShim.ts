@@ -30,7 +30,7 @@ async function loadState(): Promise<FormState | null> {
     }
     return null;
   } catch (error) {
-    Logger.error('STORAGE_LOAD_FAILURE', { error });
+    Logger.error('STORAGE_LOAD_FAILURE', { error }, { adr: ["ADR-10","ADR-12","ADR-17"] });
     return null;
   }
 }
@@ -44,7 +44,7 @@ async function saveState(state: FormState): Promise<void> {
     const envelope = { version: ENVELOPE_VERSION, state: candidate };
     await AsyncStorage.setItem(KEY, JSON.stringify(envelope));
   } catch (error) {
-    Logger.error('STORAGE_SAVE_FAILURE', { error });
+    Logger.error('STORAGE_SAVE_FAILURE', { error }, { adr: ["ADR-10","ADR-12","ADR-17"] });
   }
 }
 
@@ -56,7 +56,7 @@ export async function loadTheme(): Promise<Theme | null> {
     const saved = await AsyncStorage.getItem(THEME_KEY);
     return (saved === 'light' || saved === 'dark') ? (saved as Theme) : null;
   } catch (error) {
-    Logger.error('THEME_LOAD_FAILURE', { error });
+    Logger.error('THEME_LOAD_FAILURE', { error }, { adr: ["ADR-10","ADR-12"] });
     return null;
   }
 }
@@ -68,7 +68,7 @@ export async function saveTheme(theme: Theme): Promise<void> {
   try {
     await AsyncStorage.setItem(THEME_KEY, theme);
   } catch (error) {
-    Logger.error('THEME_SAVE_FAILURE', { error });
+    Logger.error('THEME_SAVE_FAILURE', { error }, { adr: ["ADR-10","ADR-12"] });
   }
 }
 
@@ -81,7 +81,7 @@ export const StorageShim = {
     try {
       await AsyncStorage.removeItem(KEY);
     } catch (error) {
-      Logger.error('STORAGE_CLEAR_FAILURE', { error });
+      Logger.error('STORAGE_CLEAR_FAILURE', { error }, { adr: ["ADR-10","ADR-12","ADR-17"] });
     }
   }
 };

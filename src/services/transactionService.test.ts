@@ -354,7 +354,13 @@ describe('TransactionService', () => {
       const result = await undoLastTransaction();
 
       expect(result).toBeNull();
-      expect(Logger.warning).toHaveBeenCalledWith('Undo functionaliteit nog niet geïmplementeerd');
+      expect(Logger.warning).toHaveBeenCalledWith(
+        'feature.undo_not_implemented',
+        expect.objectContaining({
+          module: 'transactionService',
+          adr: 'ADR-08',
+        })
+      );
     });
   }); // ✅ Einde van describe('undoLastTransaction')
 

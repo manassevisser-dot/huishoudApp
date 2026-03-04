@@ -9,6 +9,14 @@ jest.mock('react-native/Libraries/Utilities/Platform', () => ({
   select: (objs: any) => objs.ios,
 }));
 
+// I18nManager: ook mocken voor het geval andere modules het gebruiken.
+jest.mock('react-native/Libraries/ReactNative/I18nManager', () => ({
+  isRTL: false,
+  doLeftAndRightSwapInRTL: true,
+  localeIdentifier: 'en_US',
+  getConstants: () => ({ isRTL: false, doLeftAndRightSwapInRTL: true, localeIdentifier: 'en_US' }),
+}));
+
 try {
   jest.mock('react-native/Libraries/Animated/NativeAnimatedHelper');
 } catch {}

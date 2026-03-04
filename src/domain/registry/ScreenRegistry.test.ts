@@ -152,7 +152,7 @@ describe('ScreenRegistry', () => {
   describe('Screen sections', () => {
     it('should have correct sectionIds for each screen', () => {
       // Check specific screens have expected sections
-      expect(SCREEN_REGISTRY.LANDING.sectionIds).toEqual(['LANDING_ACTIONS_CARD']);
+      expect(SCREEN_REGISTRY.LANDING.sectionIds).toEqual(['LOGO_SECTION','LANDING_ACTIONS_CARD']);
       
       expect(SCREEN_REGISTRY.WIZARD_SETUP_HOUSEHOLD.sectionIds).toEqual(['householdSetup']);
       expect(SCREEN_REGISTRY.WIZARD_DETAILS_HOUSEHOLD.sectionIds).toEqual(['householdDetails']);

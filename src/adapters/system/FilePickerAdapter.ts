@@ -24,7 +24,10 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import type { DutchBank } from '@app/orchestrators/types/csvUpload.types';
 import { detectBankFromCsv } from '@domain/finance/BankFormatDetector';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
+import WizStrings from '@config/WizStrings';
 
+const FP = WizStrings.filePicker;
 // ─── Resultaat type ────────────────────────────────────────────────────────────
 
 /**
@@ -54,27 +57,17 @@ export interface CsvFileResult {
  * @returns CsvFileResult met tekst, bestandsnaam en optionele bank-hint.
  */
 /** Annuleringsmelding — geëxporteerd zodat consumers annulering kunnen onderscheiden van echte fouten. */
-export const ANNULERING_MESSAGE = 'Bestand selecteren geannuleerd';
+export const ANNULERING_MESSAGE = FP.cancelled;
 
 export async function pickAndReadCsvFile(): Promise<CsvFileResult> {
-  const result = await DocumentPicker.getDocumentAsync({
-    // Array van mime-types voor maximale compatibiliteit (bank-afhankelijk)
-    type: ['text/comma-separated-values', 'text/plain'],
-    copyToCacheDirectory: true,
-  });
+  const result = await DocumentPicker.getDocumentAsync({ type: ['text/comma-separated-values', 'text/plain'], copyToCacheDirectory: true,  });
 
-  if (result.canceled === true) {
-    throw new Error(ANNULERING_MESSAGE);
-  }
+  if (result.canceled === true) { throw new Error(ANNULERING_MESSAGE); }
 
-  if (result.assets === null || result.assets === undefined || result.assets.length === 0) {
-    throw new Error('Geen bestand geselecteerd');
-  }
+  if (result.assets === null || result.assets === undefined || result.assets.length === 0) { throw new Error(FP.noneSelected); }
 
   const asset = result.assets[0];
-  if (asset === null || asset === undefined) {
-    throw new Error('Bestandsdata is corrupt of ontbreekt');
-  }
+  if (asset === null || asset === undefined) { throw new Error(FP.dataCorrupt); }
 
   let text: string;
   try {
@@ -86,8 +79,21 @@ export async function pickAndReadCsvFile(): Promise<CsvFileResult> {
       encoding: 'utf8',
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Onbekende fout bij lezen';
-    throw new Error(`FilePickerAdapter: ${message}`);
+    const errorMessage = error instanceof Error ? error.message : FP.unknownReadError;
+    Logger.error('file.read_failed', {
+  uri: asset.uri,
+  fileName: asset.name,
+  error: errorMessage,
+  // Audit-haak (verplicht)
+  adr: 'ADR-12',
+  // Domain-context: waarom deze log?
+  related: ['ADR-06', 'ADR-10'], // Input hardening + Storage guards
+  // Clean Code rationale
+  cleanCode: ['S-01', 'R-03'], // Module SRP + commentaar alleen voor WHY
+  // Technische details (geen PII)
+  technicalDetails: { adapter: 'FilePickerAdapter', phase: 'boundary' }
+});
+    throw new Error(`FilePickerAdapter: ${errorMessage}`);
   }
 
   // Bestandsnaam: gebruik asset.name indien beschikbaar, anders extraheer uit URI
@@ -98,7 +104,6 @@ export async function pickAndReadCsvFile(): Promise<CsvFileResult> {
 
   return { text, fileName, detectedBank };
 }
-
 // ─── Private helpers ───────────────────────────────────────────────────────────
 
 /**

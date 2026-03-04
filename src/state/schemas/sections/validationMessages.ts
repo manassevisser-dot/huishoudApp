@@ -1,68 +1,67 @@
 /**
- * @file_intent Gecentraliseerde repository voor user-facing validatie- en bevestigingsberichten.
- * @repo_architecture State Layer - Validation Schemas.
- * @term_definition Validation Message = Een gebruiksvriendelijke string die uitlegt waarom input ongeldig is of om bevestiging vraagt voor een destructieve actie.
- * @contract Dit bestand exporteert een genest object `validationMessages`. De structuur van dit object moet de structuur van de data die het valideert weerspiegelen om de duidelijkheid te bewaren.
- * @ai_instruction Houd bij het toevoegen of wijzigen van berichten de taal beknopt en helder voor de eindgebruiker. Gebruik consistente terminologie. Groepeer berichten per onderdeel van de staat waar ze betrekking op hebben (bijv. `setup`, `dateOfBirth`).
+ * @file_intent Gecentraliseerde repository voor **veld-specifieke validatie- en warning-berichten**. 
+ *              Bevat géén algemene UI-strings, critical errors of module-specifieke berichten (zie WizStrings).
+ * @repo_architecture State Layer - Validation Schemas (User-facing messages only).
+ * @term_definition Validation Message = Een gebruiksvriendelijke string die uitlegt waarom een specifieke input ongeldig is, 
+ *                   een warning geeft bij ongewone waarden, of om bevestiging vraagt voor een veld-specifieke actie.
+ * @contract 
+ *   - Exporteert een genest object `validationMessages` waarvan de structuur de domein-data weerspiegelt (bijv. `setup.personal`, `financial.income`).
+ *   - Bevat ALLEEN berichten die direct gekoppeld zijn aan veld-validatie (error/warning/success states).
+ *   - Bevat GEEN: critical system errors, reset-bevestigingen, CSV-feedback, of algemene UI-labels → deze leven in `WizStrings`.
+ *   - Berichten zijn altijd functies of strings die contextuele parameters accepteren (bijv. `(value) => \`Te hoog: ${value}\``).
+ * @separation_of_concerns 
+ *   - Dit bestand = validatie-logic gekoppeld aan domein-constraints.
+ *   - `WizStrings` = algemene UI-teksten, module-specifieke feedback, en niet-validatie gerelateerde messages.
+ *   - Bij twijfel: hoort dit bericht bij een validatieregel uit een schema? → hier. Is het algemene UI-feedback? → WizStrings.
+ * @ai_instruction 
+ *   - Houd berichten beknopt, actiegericht en in consistente terminologie (bijv. altijd "vul in" i.p.v. mix van "voer in"/"vul in").
+ *   - Groepeer per domein-entiteit (bijv. `dateOfBirth`, `nettoSalaris`), niet per UI-component.
+ *   - Gebruik parameters voor dynamische waarden: `({min, max}) => \`Alleen tussen ${min} en ${max}\``.
+ *   - Voeg geen nieuwe message-types toe zonder eerst te checken of ze niet beter in WizStrings passen.
  */
 // src/state/schemas/sections/validationMessages.ts
+// ✅ Scope verduidelijkt: alleen veld-validatie messages
+// ❌ VERWIJDERD: criticalError → WizStrings.critical
+// ❌ VERWIJDERD: reset → WizStrings.reset  
+// ❌ VERWIJDERD: csv_* → WizStrings.csv
+// 💡 TOEGEVOEGD: @separation_of_concerns voor duidelijke architectuur-bewaking
+
 export const validationMessages = {
-  setup: {
-    aantalMensen: {
-      required: "vul in",
-      min: "Minimaal 1 persoon vereist",
-      max: "Maximaal 10 personen toegestaan",
-      warning: "Let op: je nadert het maximum"
-    },
-    aantalVolwassen: {
-      required: "vul in",
-      min: "Minimaal 1 volwassene vereist",
-      max: "Maximaal 7 volwassenen toegestaan",
-      warning: "Let op: je nadert het maximum"
-    }
-  },
-  dateOfBirth: {
-    required: "Geboortedatum is verplicht",
-    invalidType: "Geboortedatum moet tekst zijn",
-    invalidFormat: "Gebruik formaat DD-MM-YYYY",
-    invalidDate: "Ongeldige datum",
-    minor: "Je moet minimaal 18 jaar oud zijn"
-  },
-  reset: {
-    wipe: {
-      title: "Alles wissen",
-      message:
-        "Weet je zeker dat je alle gegevens wilt verwijderen? Dit omvat setup, transacties en instellingen. Deze actie kan niet ongedaan worden gemaakt.",
-      confirm: "Ja, wis alles",
-      cancel: "Annuleer",
-      hint: "Na het wissen start de app opnieuw met een lege omgeving."
-    },
-    wizardOnly: {
-      title: "Setup opnieuw starten",
-      message:
-        "De setup‑wizard wordt teruggezet naar lege velden. Je transacties en overige instellingen blijven behouden.",
-      confirm: "Setup opnieuw starten",
-      cancel: "Annuleer",
-      hint: "Je kunt later altijd nog gegevens aanpassen in het dashboard."
-    }
-  },
-  criticalError: {
-    /** Weergegeven als schermbeschrijving boven de reset-knop. */
-    screenMessage:
-      'Er is een kritieke fout opgetreden in de data-integriteit. De app kan niet verder zonder een volledige reset.',
-    /** Alert-dialoog die verschijnt na klikken op de reset-knop. */
-    alert: {
-      title: 'Kritieke fout — volledige reset vereist',
-      message:
-        'De applicatiedata is beschadigd. Een volledige reset wist alle gegevens en brengt de app terug naar de beginstand. Dit kan niet ongedaan worden gemaakt.',
-      confirm: 'Ja, reset de app',
-      cancel: 'Annuleer',
-    },
+  // ✅ ALLEEN tokens (geen UI-teksten meer!)
+  boundary: {
+    invalidFormat: 'boundary.invalidFormat',
+    required: 'boundary.required',
+    mustBeNumber: 'boundary.mustBeNumber',
+    unexpectedValidationError: 'boundary.unexpectedValidationError',
+    validationError: 'boundary.validationError',
+    amountMustBeCents: 'boundary.amountMustBeCents',
+    yearlyAmountHint: 'boundary.yearlyAmountHint',
+    wealthTaxWarning: 'boundary.wealthTaxWarning',
+    invalidPostalCode: 'boundary.invalidPostalCode',
   },
 
-    // ⬇️ NIEUW: top-level audit tokens
-    csv_IMPORT_SUCCESS: 'csv-bestand succesvol verwerkt',
-    csv_IMPORT_EMPTY: 'Geen transacties gevonden in het geüploade csv-bestand',
-    csv_IMPORT_FAILED: 'Er is een fout opgetreden tijdens het verwerken van het csv-bestand',
-    csv_IMPORT_DISCREPANCY_FOUND: 'Er zijn afwijkingen gevonden in de geïmporteerde financiële data'
+  // ✅ setup/dateOfBirth blijven (validatie, geen UI)
+  setup: {
+    aantalMensen: {
+      required: 'setup.aantalMensen.required',
+      min: 'setup.aantalMensen.min',
+      max: 'setup.aantalMensen.max',
+      warning: 'setup.aantalMensen.warning',
+    },
+    aantalVolwassen: {
+      required: 'setup.aantalVolwassen.required',
+      min: 'setup.aantalVolwassen.min',
+      max: 'setup.aantalVolwassen.max',
+      warning: 'setup.aantalVolwassen.warning',
+    },
+  },
+  dateOfBirth: {
+    required: 'dateOfBirth.required',
+    invalidType: 'dateOfBirth.invalidType',
+    invalidFormat: 'dateOfBirth.invalidFormat',
+    invalidDate: 'dateOfBirth.invalidDate',
+    minor: 'dateOfBirth.minor',
+  },
+
+
 };

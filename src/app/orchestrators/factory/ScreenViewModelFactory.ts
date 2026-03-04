@@ -25,7 +25,7 @@ export interface ScreenViewModel {
 export interface SectionViewModel {
   sectionId: string;
   titleToken: string; // afkomstig van Section.labelToken
-  layout: 'list' | 'grid' | 'card' | 'stepper';
+  layout: 'list' | 'grid' | 'card' | 'stepper' | 'isLogo';
   uiModel?: 'numericWrapper' | 'collapsible' | 'swipeable' | 'readonly';
   children: EntryViewModel[];
 }

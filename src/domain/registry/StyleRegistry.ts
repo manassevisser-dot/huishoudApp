@@ -9,6 +9,7 @@
 
 // ── Factory re-exports ───────────────────────────────────────
 export { makeAlerts,      type AlertStyles }      from '@domain/styles/primitives/Alerts';
+export { makeFeedback,    type FeedbackStyles }    from '@domain/styles/primitives/Feedback';
 export { makeButtons,     type ButtonStyles }     from '@domain/styles/primitives/Buttons';
 export { makeCards,       type CardsStyles }      from '@domain/styles/primitives/Cards';
 export { makeCheckboxes,  type CheckboxStyles }   from '@domain/styles/primitives/Checkboxes';
@@ -24,6 +25,7 @@ export { makeTypography,  type TypographyStyles } from '@domain/styles/primitive
 
 // ── Afgeleide key-unions (voor type-safe lookups) ────────────
 import type { makeAlerts }     from '@domain/styles/primitives/Alerts';
+import type { makeFeedback }   from '@domain/styles/primitives/Feedback';
 import type { makeButtons }    from '@domain/styles/primitives/Buttons';
 import type { makeCards }      from '@domain/styles/primitives/Cards';
 import type { makeCheckboxes } from '@domain/styles/primitives/Checkboxes';
@@ -38,6 +40,7 @@ import type { makeToggles }    from '@domain/styles/primitives/Toggles';
 import type { makeTypography } from '@domain/styles/primitives/Typography';
 
 export type AlertsKeys     = keyof ReturnType<typeof makeAlerts>;
+export type FeedbackKeys   = keyof ReturnType<typeof makeFeedback>;
 export type ButtonsKeys    = keyof ReturnType<typeof makeButtons>;
 export type CardsKeys      = keyof ReturnType<typeof makeCards>;
 export type CheckboxesKeys = keyof ReturnType<typeof makeCheckboxes>;
@@ -54,6 +57,7 @@ export type TypographyKeys = keyof ReturnType<typeof makeTypography>;
 // ── Module-naam SSOT ─────────────────────────────────────────
 export const STYLE_MODULES = {
   ALERTS:      'Alerts',
+  FEEDBACK:    'Feedback',
   BUTTONS:     'Buttons',
   CARDS:       'Cards',
   CHECKBOXES:  'Checkboxes',
@@ -73,6 +77,7 @@ export type StyleModuleName = typeof STYLE_MODULES[keyof typeof STYLE_MODULES];
 // ── Key-per-module interface (voor registry lookups) ─────────
 export interface IStyleRegistry {
   [STYLE_MODULES.ALERTS]:      AlertsKeys;
+  [STYLE_MODULES.FEEDBACK]:    FeedbackKeys;
   [STYLE_MODULES.BUTTONS]:     ButtonsKeys;
   [STYLE_MODULES.CARDS]:       CardsKeys;
   [STYLE_MODULES.CHECKBOXES]:  CheckboxesKeys;

@@ -6,7 +6,7 @@ import { CriticalErrorContainer } from './CriticalErrorContainer';
 import { useMaster } from '@ui/providers/MasterProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStyles } from '@ui/styles/useAppStyles';
-import { validationMessages } from '@state/schemas/sections/validationMessages';
+import WizStrings from '@config/WizStrings';
 
 // Mocks
 jest.mock('@ui/providers/MasterProvider', () => ({
@@ -21,14 +21,19 @@ jest.mock('@ui/styles/useAppStyles', () => ({
   useAppStyles: jest.fn(),
 }));
 
-jest.mock('@state/schemas/sections/validationMessages', () => ({
-  validationMessages: {
-    criticalError: {
-      screenMessage: 'Er is een onherstelbare fout opgetreden. De applicatie moet opnieuw worden gestart.',
+jest.mock('@config/WizStrings', () => ({
+  __esModule: true,
+  default: {
+    feedback: {
+      criticalError: 'Kritieke fout',
+      resetApplication: 'Reset Applicatie',
+    },
+    critical: {
+      screenMessage: 'Er is een kritieke fout opgetreden in de data-integriteit. De app kan niet verder zonder een volledige reset.',
       alert: {
-        title: 'Kritieke fout',
-        message: 'Weet u zeker dat u de applicatie volledig wilt resetten?',
-        confirm: 'Reset',
+        title: 'Kritieke fout — volledige reset vereist',
+        message: 'De applicatiedata is beschadigd. Een volledige reset wist alle gegevens en brengt de app terug naar de beginstand. Dit kan niet ongedaan worden gemaakt.',
+        confirm: 'Ja, reset de app',
         cancel: 'Annuleer',
       },
     },
@@ -85,24 +90,24 @@ describe('CriticalErrorContainer', () => {
     expect(getByTestId('btn-critical-reset')).toBeTruthy();
   });
 
-  it('should display correct error title and message from validationMessages', () => {
-    const { getByTestId } = render(<CriticalErrorContainer />);
-    
-    const titleElement = getByTestId('critical-error-title');
-    const messageElement = getByTestId('critical-error-message');
-    
-    expect(titleElement.props.children).toBe('Kritieke fout');
-    expect(messageElement.props.children).toBe(
-      'Er is een onherstelbare fout opgetreden. De applicatie moet opnieuw worden gestart.'
-    );
-  });
+it('should display correct error title and message from WizStrings', () => {
+  const { getByTestId } = render(<CriticalErrorContainer />);
+  
+  const titleElement = getByTestId('critical-error-title');
+  const messageElement = getByTestId('critical-error-message');
+  
+  expect(titleElement.props.children).toBe('Kritieke fout');
+  expect(messageElement.props.children).toBe(
+    'Er is een kritieke fout opgetreden in de data-integriteit. De app kan niet verder zonder een volledige reset.'  // ✅ Juiste message
+  );
+});
 
   it('should display reset button with correct label', () => {
-    const { getByTestId } = render(<CriticalErrorContainer />);
-    
-    const button = getByTestId('btn-critical-reset');
-    expect(button.props.accessibilityLabel).toBe('Reset');
-  });
+  const { getByTestId } = render(<CriticalErrorContainer />);
+  
+  const button = getByTestId('btn-critical-reset');
+  expect(button.props.accessibilityLabel).toBe('Ja, reset de app');  // ✅ Juiste label
+});
 
  it('should apply correct styles from useAppStyles', () => {
   const { getByTestId } = render(<CriticalErrorContainer />);
@@ -121,26 +126,26 @@ describe('CriticalErrorContainer', () => {
 
   describe('reset flow', () => {
     it('should show Alert with correct messages when reset button is pressed', () => {
-      const { getByTestId } = render(<CriticalErrorContainer />);
-      
-      const button = getByTestId('btn-critical-reset');
-      fireEvent.press(button);
-      
-      expect(Alert.alert).toHaveBeenCalledWith(
-        validationMessages.criticalError.alert.title,
-        validationMessages.criticalError.alert.message,
-        expect.arrayContaining([
-          expect.objectContaining({
-            text: validationMessages.criticalError.alert.cancel,
-            style: 'cancel',
-          }),
-          expect.objectContaining({
-            text: validationMessages.criticalError.alert.confirm,
-            style: 'destructive',
-          }),
-        ])
-      );
-    });
+  const { getByTestId } = render(<CriticalErrorContainer />);
+  
+  const button = getByTestId('btn-critical-reset');
+  fireEvent.press(button);
+  
+  expect(Alert.alert).toHaveBeenCalledWith(
+    WizStrings.critical.alert.title,
+    WizStrings.critical.alert.message, 
+    expect.arrayContaining([
+      expect.objectContaining({
+        text: WizStrings.critical.alert.cancel,
+        style: 'cancel',
+      }),
+      expect.objectContaining({
+        text: WizStrings.critical.alert.confirm,
+        style: 'destructive',
+      }),
+    ])
+  );
+});
 
     it('should call master.executeReset with "full" when confirm is pressed', () => {
       const { getByTestId } = render(<CriticalErrorContainer />);
@@ -223,7 +228,7 @@ describe('CriticalErrorContainer', () => {
   });
 
   describe('JSDoc claims verification', () => {
-    it('should use validationMessages as SSOT for all texts', () => {
+    it('should use WizStrings as SSOT for all texts', () => {
       render(<CriticalErrorContainer />);
       
       // Check dat er geen hardcoded strings zijn
@@ -233,9 +238,9 @@ describe('CriticalErrorContainer', () => {
       const message = getByTestId('critical-error-message');
       const button = getByTestId('btn-critical-reset');
       
-      expect(title.props.children).toBe(validationMessages.criticalError.screenMessage ? 'Kritieke fout' : validationMessages.criticalError.screenMessage);
-      expect(message.props.children).toBe(validationMessages.criticalError.screenMessage);
-      expect(button.props.accessibilityLabel).toBe(validationMessages.criticalError.alert.confirm);
+      expect(title.props.children).toBe(WizStrings.critical.screenMessage ? 'Kritieke fout' : WizStrings.critical.screenMessage);
+      expect(message.props.children).toBe(WizStrings.critical.screenMessage);
+      expect(button.props.accessibilityLabel).toBe(WizStrings.critical.alert.confirm);
     });
 
     it('should not offer setup reset (only full reset)', () => {
@@ -282,7 +287,7 @@ describe('CriticalErrorContainer', () => {
       
       expect(button.props.accessibilityRole).toBe('button');
       expect(button.props.accessibilityLabel).toBe(
-        validationMessages.criticalError.alert.confirm
+        WizStrings.critical.alert.confirm
       );
     });
   });

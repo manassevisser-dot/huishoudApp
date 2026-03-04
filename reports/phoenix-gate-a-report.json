@@ -1,18 +1,18 @@
 {
   "Envelope_Version": "Q-ENV-1.0",
-  "Artifact_ID": "PHOENIX-GATE-A-2026-02-28T12-29-08",
+  "Artifact_ID": "PHOENIX-GATE-A-2026-03-04T09-34-57",
   "Gate": "A",
   "Producing_Role": "Phoenix",
   "Status": "PENDING",
-  "Token_ID": "TOKEN-ID-PHOENIX-VERDICT-GO-ec6d1761",
+  "Token_ID": "TOKEN-ID-PHOENIX-VERDICT-STOP-d3691664",
   "Payload": {
     "phoenix_report": {
       "metadata": {
         "role": "Phoenix - Automated Code Quality Guardian",
         "version": "GEN4.0.0",
         "gate": "A",
-        "execution_time_ms": 10673,
-        "timestamp": "2026-02-28T12:29:08.242Z"
+        "execution_time_ms": 10438,
+        "timestamp": "2026-03-04T09:34:57.781Z"
       },
       "validators": {
         "alias_consistency": {
@@ -20,7 +20,7 @@
           "adr": "ADR-12",
           "blocking": true,
           "weight": 20,
-          "execution_time_ms": 1980,
+          "execution_time_ms": 568,
           "message": "✅ Alias Consistency passed"
         },
         "forbidden_patterns": {
@@ -31,11 +31,11 @@
           ],
           "blocking": true,
           "weight": 25,
-          "execution_time_ms": 651,
+          "execution_time_ms": 178,
           "message": "✅ Forbidden Patterns passed"
         },
         "eslint_compliance": {
-          "verdict": "PASS",
+          "verdict": "FAIL",
           "adr": [
             "ADR-01",
             "ADR-02",
@@ -44,8 +44,9 @@
           ],
           "blocking": true,
           "weight": 25,
-          "execution_time_ms": 8042,
-          "message": "✅ ESLint Compliance passed"
+          "execution_time_ms": 9692,
+          "message": "❌ ESLint Compliance failed",
+          "details": "\n> lint\n> eslint . --ext .ts,.tsx\n\n\nC:\\Users\\manas\\huishoudApp\\copy-user-strings-to-wiz.ts\n  18:22  error  Parsing error: Unexpected token :\n\n✖ 1 problem (1 error, 0 warnings)\n\n"
         }
       },
       "adr_coverage": {
@@ -57,13 +58,40 @@
           "ADR-11",
           "ADR-12"
         ],
-        "violations": [],
+        "violations": [
+          {
+            "adr_id": "ADR-01",
+            "validator": "ESLint Compliance",
+            "severity": "BLOCKING",
+            "message": "❌ ESLint Compliance failed"
+          },
+          {
+            "adr_id": "ADR-02",
+            "validator": "ESLint Compliance",
+            "severity": "BLOCKING",
+            "message": "❌ ESLint Compliance failed"
+          },
+          {
+            "adr_id": "ADR-05",
+            "validator": "ESLint Compliance",
+            "severity": "BLOCKING",
+            "message": "❌ ESLint Compliance failed"
+          },
+          {
+            "adr_id": "ADR-12",
+            "validator": "ESLint Compliance",
+            "severity": "BLOCKING",
+            "message": "❌ ESLint Compliance failed"
+          }
+        ],
         "warnings": []
       },
       "verdict": {
-        "status": "GO",
-        "gate_a_passed": true,
-        "blocking_issues": [],
+        "status": "STOP",
+        "gate_a_passed": false,
+        "blocking_issues": [
+          "ESLint Compliance: ❌ ESLint Compliance failed"
+        ],
         "advisory_warnings": []
       }
     }
@@ -72,6 +100,6 @@
     "Previous_Gate": "0",
     "Locked": false,
     "Human_GO": "NOT_REQUIRED_FOR_GATE_A",
-    "Timestamp": "2026-02-28T12:29:08.242Z"
+    "Timestamp": "2026-03-04T09:34:57.781Z"
   }
 }

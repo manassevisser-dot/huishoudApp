@@ -11,6 +11,9 @@
 import * as React from 'react';
 import { View, Text, ColorValue } from 'react-native';
 import { useAppStyles, AppStyles } from '@ui/styles/useAppStyles';
+import WizStrings from '@config/WizStrings';
+
+const S = WizStrings.financialSummary;
 /**
  * TODO: Replace logic in SectionRegistry AND sections.tsx for DashBoardScreen
  */
@@ -41,13 +44,13 @@ export const FinancialSummary: React.FC<{ data: FinancialSummaryData }> = ({ dat
 
   return (
     <View style={styles.summaryDetail}>
-      <Text style={styles.screenTitle}>Financieel Overzicht</Text>
+      <Text style={styles.screenTitle}>{S.title}</Text>
 
-      <SummaryRow label="Totaal Inkomsten:" value={data.totalIncomeDisplay} valueColor={colors.success} styles={styles} />
-      <SummaryRow label="Totaal Uitgaven:" value={data.totalExpensesDisplay} valueColor={colors.error} styles={styles} />
+      <SummaryRow label={S.totalIncome} value={data.totalIncomeDisplay} valueColor={colors.success} styles={styles} />
+      <SummaryRow label={S.totalExpenses} value={data.totalExpensesDisplay} valueColor={colors.error} styles={styles} />
 
       <View style={styles.summaryRowTotal}>
-        <Text style={styles.summaryLabelBold}>Netto resultaat:</Text>
+        <Text style={styles.summaryLabelBold}>{S.netResult}</Text>
         <Text style={styles.summaryValueBold}>{data.netDisplay}</Text>
       </View>
 

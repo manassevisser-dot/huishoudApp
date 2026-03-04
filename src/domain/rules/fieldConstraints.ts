@@ -11,6 +11,7 @@
 
 // src/domain/rules/fieldConstraints.ts
 import { GENERAL_OPTIONS, HOUSEHOLD_OPTIONS, FINANCE_OPTIONS } from '@domain/registry/OptionsRegistry';
+import WizStrings from '@config/WizStrings';
 
 // ════════════════════════════════════════════════════════════════
 // DISCRIMINATED CONSTRAINT TYPES
@@ -117,11 +118,10 @@ export const FIELD_CONSTRAINTS_REGISTRY = {
   },
 
   postcode: {
-    type: 'string',
-    required: true,
-    pattern: /^[1-9]\d{3}[A-Z]{2}$/,
-    message: 'Voer een geldige postcode in (bijv. 1234AB)',
-  },
+  type: 'string',
+  pattern: /^[1-9][0-9]{3}[A-Z]{2}$/,
+  message: WizStrings.warnings.postcode.invalid,
+},
   
   // ── HOUSEHOLD VELDEN (Member-templates) ──────────────────────
   
@@ -555,12 +555,16 @@ export function getWarningMessage(fieldId: string, value: number): string | null
   const constraint = getConstraint(fieldId);
   const threshold = constraint?.type === 'number' ? constraint.warn : undefined;
 
-  if (fieldId === 'nettoSalaris' && value > 20000) {
-    return 'Dit lijkt een jaarbedrag - vul het maandbedrag in';
+if (fieldId === 'nettoSalaris' && value > 20000) {
+    return WizStrings.warnings.nettoSalaris.yearlyAmount;
   }
+  
   if (fieldId === 'vermogenWaarde' && value > 1000000) {
-    return 'Let op: vermogen boven €1M kan invloed hebben op toeslagen';
+    return WizStrings.warnings.vermogenWaarde.wealthTax;
   }
 
-  return `Waarde is ongewoon hoog (>${threshold})`;
+  if (threshold === undefined) {
+  return WizStrings.warnings.generic.highValue.replace('%s', '?');
+}
+return WizStrings.warnings.generic.highValue.replace('%s', threshold.toString());
 }

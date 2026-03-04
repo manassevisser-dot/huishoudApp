@@ -38,6 +38,7 @@ import { CsvAnalysisFeedbackContainer } from '@ui/sections/CsvAnalysisFeedback';
 import { TransactionHistoryContainer } from '@ui/sections/TransactionHistoryContainer';
 import { ResetConfirmationContainer } from '@ui/screens/Reset/ResetConfirmationContainer';
 import { CriticalErrorContainer } from '@ui/screens/CriticalError/CriticalErrorContainer';
+import { LogoSection } from '@ui/sections/LogoSection';
 import type { RenderScreenVM } from '@app/orchestrators/MasterOrchestrator';
 
 interface ScreenRendererProps {
@@ -72,11 +73,7 @@ const DefaultScreenRenderer: React.FC<ScreenRendererProps> = ({ screenVM, topPad
   <SectionList screenVM={screenVM} topPadding={topPadding} />
 );
 
-const DailyInputScreenRenderer: React.FC<ScreenRendererProps> = ({
-  screenVM,
-  topPadding,
-  onSaveDailyTransaction,
-}) => (
+const DailyInputScreenRenderer: React.FC<ScreenRendererProps> = ({screenVM, topPadding, onSaveDailyTransaction,}) => (
   <>
     <SectionList screenVM={screenVM} topPadding={topPadding} />
     <DailyInputActionFooter onSave={onSaveDailyTransaction} />
@@ -164,17 +161,39 @@ const CriticalErrorScreenRenderer: React.FC<ScreenRendererProps> = ({ topPadding
   </View>
 );
 
+// --- Landing renderer --------------------------------------------------------
+// LANDING heeft twee sections: LOGO_SECTION (layout='isLogo') + LANDING_ACTIONS_CARD.
+// DefaultScreenRenderer zou LOGO_SECTION overslaan (DynamicSection verwacht RenderEntryVM[],
+// maar logo heeft geen entries). LandingScreenRenderer splitst de sections:
+//   - layout='isLogo' → LogoSection (gecentreerd, geen pipeline)
+//   - overige sections → DynamicSection (normale entry-pipeline)
+// Hierdoor is de landing-screen volledig registry-driven zonder pipeline-hacks.
+
+const LandingScreenRenderer: React.FC<ScreenRendererProps> = ({ screenVM, topPadding }) => (
+  <ScrollView contentContainerStyle={{ paddingTop: topPadding, flexGrow: 1, justifyContent: 'center' }}>
+    {screenVM.sections.map((section) => {
+      if (section.layout === 'isLogo') {return <LogoSection key={section.sectionId} size="large" />;}
+      return (
+        <DynamicSection
+          key={section.sectionId}
+          sectionId={section.sectionId}
+          title={section.title}
+          layout={section.layout}
+          uiModel={section.uiModel}
+          children={section.children}
+        />
+      );
+    })}
+  </ScrollView>
+);
+
 // --- Undo renderer [Fase 7] ---------------------------------------------------
 // TRANSACTION_HISTORY_LIST → TransactionHistoryContainer (Swipeable lijst, VM via factory).
 // TRANSACTION_ACTIONS_CARD → DynamicSection (ACTION entries via registry).
 
 const UndoScreenRenderer: React.FC<ScreenRendererProps> = ({ screenVM, topPadding }) => {
-  const historySection = screenVM.sections.find(
-    (s) => s.sectionId === 'TRANSACTION_HISTORY_LIST'
-  );
-  const actionsSection = screenVM.sections.find(
-    (s) => s.sectionId === 'TRANSACTION_ACTIONS_CARD'
-  );
+  const historySection = screenVM.sections.find((s) => s.sectionId === 'TRANSACTION_HISTORY_LIST');
+  const actionsSection = screenVM.sections.find((s) => s.sectionId === 'TRANSACTION_ACTIONS_CARD');
 
   return (
     <View style={{ flex: 1, paddingTop: topPadding }}>
@@ -203,6 +222,7 @@ type ScreenRenderer = React.ComponentType<ScreenRendererProps>;
 
 const SCREEN_RENDERERS: Record<string, ScreenRenderer> = {
   SPLASH:          SplashScreenRenderer,
+  LANDING:         LandingScreenRenderer,
   DAILY_INPUT:     DailyInputScreenRenderer,
   OPTIONS:         OptionsScreenRenderer,
   CSV_UPLOAD:      CsvUploadScreenRenderer,
@@ -212,9 +232,7 @@ const SCREEN_RENDERERS: Record<string, ScreenRenderer> = {
   CRITICAL_ERROR:  CriticalErrorScreenRenderer,
 };
 
-const SCREEN_TYPE_RENDERERS: Record<string, ScreenRenderer> = {
-  WIZARD: WizardScreenRenderer,
-};
+const SCREEN_TYPE_RENDERERS: Record<string, ScreenRenderer> = {WIZARD: WizardScreenRenderer,};
 
 // --- Resolver -----------------------------------------------------------------
 

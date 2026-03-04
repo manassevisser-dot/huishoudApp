@@ -17,6 +17,8 @@ import { ThemeProvider } from '@ui/providers/ThemeProvider';
 
 import MainNavigator from '@ui/navigation/MainNavigator';
 import { initialFormState } from '@app/state/initialFormState';
+import { FeedbackProvider } from '@ui/providers/FeedbackProvider';
+import { FeedbackHost } from '@ui/screens/feedback/FeedbackHost';
 
 /**
  * AppContent zorgt ervoor dat we de MasterOrchestrator uit de MasterProvider 
@@ -27,9 +29,11 @@ const AppContent = () => {
 
   return (
     <ThemeProvider master={master}>
-      
+      <FeedbackProvider master={master}>
+        {/* FeedbackHost staat buiten MainNavigator zodat toasts schermtransities overleven */}
+        <FeedbackHost />
         <MainNavigator />
-     
+      </FeedbackProvider>
     </ThemeProvider>
   );
 };

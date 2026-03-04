@@ -19,6 +19,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { useFormState } from '@ui/providers/FormStateProvider';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 import { TransactionHistoryVMFactory } from '@app/orchestrators/factory/TransactionHistoryVMFactory';
+import WizStrings from '@config/WizStrings';
 import type { TransactionHistoryVM, TransactionItemVM } from '@app/orchestrators/factory/TransactionHistoryVMFactory';
 import type { FormState } from '@core/types/core';
 
@@ -42,7 +43,7 @@ const DeleteAction = memo(({ onPress, testID }: DeleteActionProps & { testID?: s
       style={[styles.button, styles.deleteButton, { justifyContent: 'center', paddingHorizontal: 20 }]}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel="Verwijder transactie"
+      accessibilityLabel={WizStrings.undo.deleteTransaction}
     >
       <Text style={styles.buttonText}>🗑</Text>
     </TouchableOpacity>

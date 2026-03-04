@@ -13,7 +13,7 @@ export interface SectionDefinition {
   id: string;
   labelToken: string;
   fieldIds: string[];
-  layout: 'list' | 'grid' | 'card' | 'stepper';
+  layout: 'list' | 'grid' | 'card' | 'stepper' | 'isLogo';
   uiModel?: 'numericWrapper' | 'collapsible' | 'swipeable' | 'readonly';
 }
 
@@ -77,6 +77,14 @@ export const SECTION_REGISTRY: Record<string, SectionDefinition> = {
   // fieldIds worden ingevuld bij UniversalScreen-migratie per scherm.
   // Tot die tijd renderen deze schermen via hun eigen hardcoded components.
   // ══════════════════════════════════════════════════════════════
+  LOGO_SECTION: {
+    id: 'LOGO_SECTION',
+    labelToken: 'SECTION_LOGO',
+    layout: 'isLogo',
+    // fieldIds is leeg: logo is een statische visuele resource, geen entry-pipeline.
+    // Rendering wordt afgehandeld door LogoSection in screens.tsx via layout-discriminant.
+    fieldIds: [],
+  },
   LANDING_ACTIONS_CARD: {
     id: 'LANDING_ACTIONS_CARD',
     labelToken: 'SECTION_LANDING',

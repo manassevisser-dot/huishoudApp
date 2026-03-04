@@ -69,6 +69,68 @@ const deadProp = {
   
     RN.NativeModules.RNOSModule = RN.NativeModules.RNOSModule || {};
   
+    // AccessibilityInfo stub — is undefined in de jest-expo preset omdat
+    // het een native module is zonder test-implementatie.
+    // announceForAccessibility wordt als jest.fn() aangeboden zodat tests
+    // kunnen controleren of het aangeroepen wordt (WCAG 2.1 SC 4.1.3).
+    RN.AccessibilityInfo = {
+      ...(RN.AccessibilityInfo || {}),
+      announceForAccessibility: jest.fn(),
+    };
+
+    // Modal stub — react-native/index.js definieert Modal als lazy getter die
+    // bij eerste gebruik de echte Modal.js laadt. Modal.js leest Platform.OS
+    // bij module-evaluatie (regel 42). In jsdom is Platform via requireActual
+    // geladen maar de intern geneste require-keten in mockComponent gebruikt
+    // jest.requireActual, waarmee onze jest.mock('react-native/Libraries/Modal/Modal')
+    // volledig omzeild wordt. Oplossing: de lazy getter op het RN-object zelf
+    // overschrijven met Object.defineProperty, zodat elke consumer (incl.
+    // mockComponent) altijd onze stub terugkrijgt.
+    //
+    // De stub rendert children wanneer visible=true en behoudt testID en
+    // accessibilityViewIsModal voor assertions.
+    const MockModal = function MockModal(props) {
+      if (!props.visible) return null;
+      // Gebruik require('react') ipv import om hoisting-problemen te vermijden.
+    
+      const React = require('react');
+      // RN.View is beschikbaar via requireActual en crasht niet op Platform.OS.
+      return React.createElement(
+        RN.View,
+        { testID: props.testID, accessibilityViewIsModal: props.accessibilityViewIsModal },
+        props.children,
+      );
+    };
+    MockModal.displayName = 'Modal';
+
+    // Platform stub — RN.Platform kan undefined zijn als de lazy getter in de
+    // react-native index cached is vóór de react-native/Libraries/Utilities/Platform
+    // mock in jest.setup.tsx registreert. Door Platform hier expliciet te setten
+    // op het RN-object zelf werkt Platform.select() altijd, ook in modules die
+    // indirect via useAppStyles -> Feedback.ts -> Platform.select() lopen.
+    Object.defineProperty(RN, 'Platform', {
+      get: () => ({
+        OS: 'ios',
+        select: (spec) => {
+          if (spec && 'ios' in spec) return spec.ios;
+          if (spec && 'default' in spec) return spec.default;
+          return undefined;
+        },
+        isPad: false,
+        isTVOS: false,
+        isTV: false,
+        Version: 0,
+      }),
+      configurable: true,
+      enumerable: true,
+    });
+
+    Object.defineProperty(RN, 'Modal', {
+      get: () => MockModal,
+      configurable: true,
+      enumerable: true,
+    });
+
     return RN;
   });
   

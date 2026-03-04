@@ -1,22 +1,32 @@
 /**
- * @file_intent Centraliseert en abstraheert platform-specifieke stijlverschillen, met een primaire focus op de rendering van schaduws voor iOS en Android. Het biedt een systeem om declaratief aan te geven *dat* een component een schaduw moet hebben, zonder dat de aanroeper hoeft te weten *hoe* die schaduw op elk platform wordt geïmplementeerd.
- * @repo_architecture UI Layer - Style Abstraction. Dit bestand is een fundamenteel onderdeel van het styling-systeem. Het bevindt zich onder de `useAppStyles`-hook en levert de low-level, platform-bewuste implementatiedetails, specifiek voor schaduws. Het is een directe dependency van de hoofd-style-assembler (`useAppStyles`).
- * @term_definition
- *   - `Platform.select`: Een React Native API om platform-specifieke waarden te definiëren. Dit bestand capsuleert het gebruik hiervan voor stijlen.
- *   - `ShadowLevel`: Een abstractie ('level1', 'level2', 'level3'), gedefinieerd in de `Tokens`, die verschillende schaduw-intensiteiten representeert, los van de implementatie.
- *   - `SHADOW_MAP`: De "Single Source of Truth". Deze mapping koppelt een semantische stijl-key (bijv. 'card') aan een specifieke `ShadowLevel`.
- *   - `getPlatformShadow`: De functie die een `ShadowLevel` vertaalt naar concrete iOS (`shadow...`) of Android (`elevation`) stijl-property's.
- *   - `applyShadows`: Een utility-functie die de gegenereerde platform-specifieke schaduws injecteert in het hoofd-stylesheet-object.
- * @contract 1. `getPlatformShadow` ontvangt een kleurschema en een `ShadowLevel` en retourneert een platform-specifiek stijl-object. 2. `SHADOW_MAP` definieert welke semantische stijl-keys een schaduw krijgen. 3. `applyShadows` ontvangt het complete, maar schaduwloze, stylesheet en het kleurschema. Het itereert over `SHADOW_MAP` en voegt de juiste schaduw-stijlen toe aan de corresponderende styles, en retourneert het nieuwe, complete stylesheet.
- * @ai_instruction Om een component een schaduw te geven, pas je niet de stijl van het component direct aan. In plaats daarvan voeg je een entry toe aan de `SHADOW_MAP` in dit bestand. Om bijvoorbeeld een nieuwe `mijnNieuweStijl` een `level1` schaduw te geven, voeg je `'mijnNieuweStijl': 'level1'` toe aan `SHADOW_MAP`. De `useAppStyles`-hook regelt de rest. Je hoeft `getPlatformShadow` alleen te bewerken als je het uiterlijk van de schaduw-levels zelf wilt aanpassen.
+ * Abstraheert platform-specifieke schaduw-implementaties voor iOS en Android.
+ * 
+ * @module ui/styles
+ * @see {@link ./README.md | PlatformStyles - Details}
+ * 
+ * @remarks
+ * - Gebruikt `Platform.select` om declaratieve shadow-levels te mappen naar native props
+ * - `SHADOW_MAP` is de SSOT voor welke styles een schaduw krijgen
  */
 import { Platform, ViewStyle, TextStyle, ImageStyle } from 'react-native';
 import { Tokens } from '@ui/kernel';
 import type { ColorScheme } from '@ui/kernel';
 
-export type AnyStyle = ViewStyle | TextStyle | ImageStyle  
+export type AnyStyle = ViewStyle | TextStyle | ImageStyle;
 export type ShadowLevel = 'level1' | 'level2' | 'level3';
 
+/**
+ * Genereert platform-specifieke schaduw-props voor een gegeven level.
+ * 
+ * @param c - Actief kleurschema (voor shadowColor)
+ * @param level - Schaduw-intensiteit ('level1' | 'level2' | 'level3')
+ * @returns Platform-specifiek stijl-object met shadow-props
+ * 
+ * @example
+ * const shadow = getPlatformShadow(colors, 'level1');
+ * // iOS: { shadowColor, shadowOffset, ... }
+ * // Android: { elevation: 2 }
+ */
 export function getPlatformShadow(c: ColorScheme, level: ShadowLevel) {
   const sh = Tokens.Shadows[level];
   return Platform.select({
@@ -31,26 +41,46 @@ export function getPlatformShadow(c: ColorScheme, level: ShadowLevel) {
   }) ?? {};
 }
 
+/**
+ * Mapping van semantische style-keys naar schaduw-levels.
+ * 
+ * @remarks
+ * - Voeg hier nieuwe entries toe om een style een schaduw te geven
+ * - Wijzig niet de values tenzij het visuele design van levels verandert
+ */
 export const SHADOW_MAP: Record<string, ShadowLevel> = {
   button:        'level2',
   headerBar:     'level1',
   card:          'level1',
   dashboardCard: 'level3',
+  toast:         'level1',
+  modalCard:     'level2',
 } as const;
 
+/**
+ * Injecteert platform-specifieke schaduwen in een geassembleerd stylesheet.
+ * 
+ * @param assembled - Stylesheet zonder schaduwen (pure tokens)
+ * @param c - Actief kleurschema
+ * @returns Nieuw stylesheet met schaduwen toegevoegd op keys uit `SHADOW_MAP`
+ * 
+ * @example
+ * const withShadows = applyShadows(assembledStyles, colors);
+ * // { card: { backgroundColor: '#fff', shadowColor: '#000', ... } }
+ */
 export function applyShadows(
   assembled: Record<string, AnyStyle>,
   c: ColorScheme,
 ): Record<string, AnyStyle> {
-  const result = { ...assembled };
+  const result: Record<string, AnyStyle> = { ...assembled };
 
   for (const [key, level] of Object.entries(SHADOW_MAP)) {
     const baseStyle = result[key];
     if (baseStyle !== undefined) {
       result[key] = { 
-        ...(baseStyle as ViewStyle), 
+        ...baseStyle, 
         ...getPlatformShadow(c, level) 
-      } as AnyStyle;
+      };
     }
   }
 

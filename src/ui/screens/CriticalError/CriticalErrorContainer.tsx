@@ -32,7 +32,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMaster } from '@ui/providers/MasterProvider';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 import { Tokens } from '@ui/kernel';
-import { validationMessages } from '@state/schemas/sections/validationMessages';
+
+import WizStrings from '@config/WizStrings';
 
 // --- Alert-wrapper -----------------------------------------------------------
 // Alert.alert heeft in sommige RN type-definities een overloaded/any signatuur.
@@ -104,7 +105,7 @@ const ResetButton: React.FC<ResetButtonProps> = ({ onPress, label }) => {
       accessibilityRole="button"
       accessibilityLabel={label}
     >
-      <Text style={styles.buttonText}>Reset Applicatie</Text>
+      <Text style={styles.buttonText}>{WizStrings.feedback.resetApplication}</Text>
     </TouchableOpacity>
   );
 };
@@ -112,8 +113,7 @@ function useCriticalErrorReset(): () => void {
   const master = useMaster();
 
   return React.useCallback((): void => {
-    const { title, message, confirm, cancel } =
-      validationMessages.criticalError.alert;
+    const { title, message, confirm, cancel } = WizStrings.critical.alert;
 
     showConfirmAlert(title, message, [
       { text: cancel, style: 'cancel' },
@@ -140,13 +140,13 @@ export const CriticalErrorContainer: React.FC = () => {
       testID="critical-error-container"
     >
       <CriticalErrorCard
-        title="Kritieke fout"
-        message={validationMessages.criticalError.screenMessage}
+        title={WizStrings.feedback.criticalError}
+        message={WizStrings.critical.screenMessage}
       />
 
       <ResetButton
         onPress={handleResetPress}
-        label={validationMessages.criticalError.alert.confirm}
+        label={WizStrings.critical.alert.confirm}
       />
     </View>
   );

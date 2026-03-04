@@ -6,9 +6,10 @@ import { ResetConfirmationContainer } from './ResetConfirmationContainer';
 import { useMaster } from '@ui/providers/MasterProvider';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStyles } from '@ui/styles/useAppStyles';
-import { validationMessages } from '@state/schemas/sections/validationMessages';
+// ✅ FIX 1: Named import (matcht met component + mock)
+import { WizStrings } from '@config/WizStrings';
 
-// Mocks voor dependencies (zonder Alert te mocken)
+// ── Mocks ───────────────────────────────────────────────────────────────────
 jest.mock('@ui/providers/MasterProvider', () => ({
   useMaster: jest.fn(),
 }));
@@ -21,37 +22,34 @@ jest.mock('@ui/styles/useAppStyles', () => ({
   useAppStyles: jest.fn(),
 }));
 
-jest.mock('@state/schemas/sections/validationMessages', () => ({
-  validationMessages: {
+// ✅ FIX 2: Mock-structuur voor named export (geen __esModule/default nodig)
+jest.mock('@config/WizStrings', () => ({
+  WizStrings: {
     reset: {
       wipe: {
-        title: 'Alle gegevens wissen',
-        message: 'Weet u zeker dat u ALLE gegevens wilt wissen? Dit kan niet ongedaan worden gemaakt.',
-        confirm: 'Wissen',
+        title: 'Alles wissen',
+        message: 'Weet je zeker dat je alle gegevens wilt verwijderen? Dit omvat setup, transacties en instellingen. Deze actie kan niet ongedaan worden gemaakt.',
+        confirm: 'Ja, wis alles',
         cancel: 'Annuleer',
-        hint: 'Hiermee worden ALLE ingevoerde gegevens permanent verwijderd. U begint helemaal opnieuw.',
+        hint: 'Na het wissen start de app opnieuw met een lege omgeving.',
       },
       wizardOnly: {
-        title: 'Wizard opnieuw starten',
-        message: 'Weet u zeker dat u de wizard opnieuw wilt starten? Uw eerdere antwoorden blijven behouden.',
-        confirm: 'Herstart',
+        title: 'Setup opnieuw starten',
+        message: 'De setup‑wizard wordt teruggezet naar lege velden. Je transacties en overige instellingen blijven behouden.',
+        confirm: 'Setup opnieuw starten',
         cancel: 'Annuleer',
-        hint: 'Hiermee gaat u terug naar het begin van de wizard. Uw gegevens blijven bewaard.',
+        hint: 'Je kunt later altijd nog gegevens aanpassen in het dashboard.',
       },
     },
   },
 }));
 
+// ── Tests ───────────────────────────────────────────────────────────────────
 describe('ResetConfirmationContainer', () => {
   let alertSpy: jest.SpyInstance;
-
-  const mockInsets = {
-    top: 50,
-    bottom: 20,
-    left: 0,
-    right: 0,
-  };
-
+  
+  const mockInsets = { top: 50, bottom: 20, left: 0, right: 0 };
+  
   const mockStyles = {
     container: { flex: 1, backgroundColor: 'white' },
     screenContainer: { flex: 1 },
@@ -63,22 +61,13 @@ describe('ResetConfirmationContainer', () => {
     button: { padding: 12, borderRadius: 8 },
     buttonText: { fontSize: 16, color: 'white' },
   };
-
-  const mockColors = {
-    error: '#FF0000',
-    primary: '#007AFF',
-  };
-
-  const mockMaster = {
-    executeReset: jest.fn(),
-  };
+  
+  const mockColors = { error: '#FF0000', primary: '#007AFF' };
+  const mockMaster = { executeReset: jest.fn() };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
-    // ✅ Gebruik spyOn in plaats van mock
     alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(jest.fn());
-    
     (useMaster as jest.Mock).mockReturnValue(mockMaster);
     (useSafeAreaInsets as jest.Mock).mockReturnValue(mockInsets);
     (useAppStyles as jest.Mock).mockReturnValue({
@@ -93,7 +82,6 @@ describe('ResetConfirmationContainer', () => {
 
   it('should render correctly', () => {
     const { getByTestId } = render(<ResetConfirmationContainer />);
-    
     expect(getByTestId('reset-confirmation-container')).toBeTruthy();
     expect(getByTestId('btn-wissen')).toBeTruthy();
     expect(getByTestId('btn-herstel')).toBeTruthy();
@@ -103,30 +91,29 @@ describe('ResetConfirmationContainer', () => {
     const { getByText, queryAllByText } = render(<ResetConfirmationContainer />);
     
     expect(getByText('Reset Opties')).toBeTruthy();
-    // Gebruik queryAllByText en check dat er minstens één is
     expect(queryAllByText('WISSEN').length).toBeGreaterThan(0);
     expect(queryAllByText('HERSTEL').length).toBeGreaterThan(0);
-    expect(getByText(validationMessages.reset.wipe.hint)).toBeTruthy();
-    expect(getByText(validationMessages.reset.wizardOnly.hint)).toBeTruthy();
+    
+    // ✅ Nu werkt dit omdat WizStrings.reset correct gemockt is
+    expect(getByText(WizStrings.reset.wipe.hint)).toBeTruthy();
+    expect(getByText(WizStrings.reset.wizardOnly.hint)).toBeTruthy();
   });
 
   describe('Wissen (full reset) flow', () => {
     it('should show alert with correct messages when WISSEN button is pressed', () => {
       const { getByTestId } = render(<ResetConfirmationContainer />);
-      
-      const wissenButton = getByTestId('btn-wissen');
-      fireEvent.press(wissenButton);
-      
+      fireEvent.press(getByTestId('btn-wissen'));
+
       expect(alertSpy).toHaveBeenCalledWith(
-        validationMessages.reset.wipe.title,
-        validationMessages.reset.wipe.message,
+        WizStrings.reset.wipe.title,
+        WizStrings.reset.wipe.message,
         expect.arrayContaining([
           expect.objectContaining({
-            text: validationMessages.reset.wipe.cancel,
+            text: WizStrings.reset.wipe.cancel,
             style: 'cancel',
           }),
           expect.objectContaining({
-            text: validationMessages.reset.wipe.confirm,
+            text: WizStrings.reset.wipe.confirm,
             style: 'destructive',
             onPress: expect.any(Function),
           }),
@@ -136,10 +123,8 @@ describe('ResetConfirmationContainer', () => {
 
     it('should call master.executeReset with "full" when confirm is pressed', () => {
       const { getByTestId } = render(<ResetConfirmationContainer />);
-      
-      const wissenButton = getByTestId('btn-wissen');
-      fireEvent.press(wissenButton);
-      
+      fireEvent.press(getByTestId('btn-wissen'));
+
       const alertCall = alertSpy.mock.calls[0];
       const buttons = alertCall[2];
       const confirmButton = buttons.find((b: any) => b.style === 'destructive');
@@ -152,15 +137,13 @@ describe('ResetConfirmationContainer', () => {
 
     it('should not call executeReset when cancel is pressed', () => {
       const { getByTestId } = render(<ResetConfirmationContainer />);
-      
-      const wissenButton = getByTestId('btn-wissen');
-      fireEvent.press(wissenButton);
-      
+      fireEvent.press(getByTestId('btn-wissen'));
+
       const alertCall = alertSpy.mock.calls[0];
       const buttons = alertCall[2];
       const cancelButton = buttons.find((b: any) => b.style === 'cancel');
       
-      if (cancelButton.onPress) cancelButton.onPress();
+      if (cancelButton?.onPress) cancelButton.onPress();
       
       expect(mockMaster.executeReset).not.toHaveBeenCalled();
     });
@@ -169,20 +152,18 @@ describe('ResetConfirmationContainer', () => {
   describe('Herstel (setup reset) flow', () => {
     it('should show alert with correct messages when HERSTEL button is pressed', () => {
       const { getByTestId } = render(<ResetConfirmationContainer />);
-      
-      const herstelButton = getByTestId('btn-herstel');
-      fireEvent.press(herstelButton);
-      
+      fireEvent.press(getByTestId('btn-herstel'));
+
       expect(alertSpy).toHaveBeenCalledWith(
-        validationMessages.reset.wizardOnly.title,
-        validationMessages.reset.wizardOnly.message,
+        WizStrings.reset.wizardOnly.title,
+        WizStrings.reset.wizardOnly.message,
         expect.arrayContaining([
           expect.objectContaining({
-            text: validationMessages.reset.wizardOnly.cancel,
+            text: WizStrings.reset.wizardOnly.cancel,
             style: 'cancel',
           }),
           expect.objectContaining({
-            text: validationMessages.reset.wizardOnly.confirm,
+            text: WizStrings.reset.wizardOnly.confirm,
             onPress: expect.any(Function),
           }),
         ])
@@ -191,13 +172,14 @@ describe('ResetConfirmationContainer', () => {
 
     it('should call master.executeReset with "setup" when confirm is pressed', () => {
       const { getByTestId } = render(<ResetConfirmationContainer />);
-      
-      const herstelButton = getByTestId('btn-herstel');
-      fireEvent.press(herstelButton);
-      
+      fireEvent.press(getByTestId('btn-herstel'));
+
       const alertCall = alertSpy.mock.calls[0];
       const buttons = alertCall[2];
-      const confirmButton = buttons.find((b: any) => b.text === validationMessages.reset.wizardOnly.confirm);
+      // ✅ FIX: Zoek op text i.p.v. style voor wizardOnly (geen 'destructive' style)
+      const confirmButton = buttons.find(
+        (b: any) => b.text === WizStrings.reset.wizardOnly.confirm
+      );
       
       confirmButton.onPress();
       
@@ -207,15 +189,13 @@ describe('ResetConfirmationContainer', () => {
 
     it('should not call executeReset when cancel is pressed', () => {
       const { getByTestId } = render(<ResetConfirmationContainer />);
-      
-      const herstelButton = getByTestId('btn-herstel');
-      fireEvent.press(herstelButton);
-      
+      fireEvent.press(getByTestId('btn-herstel'));
+
       const alertCall = alertSpy.mock.calls[0];
       const buttons = alertCall[2];
       const cancelButton = buttons.find((b: any) => b.style === 'cancel');
       
-      if (cancelButton.onPress) cancelButton.onPress();
+      if (cancelButton?.onPress) cancelButton.onPress();
       
       expect(mockMaster.executeReset).not.toHaveBeenCalled();
     });
@@ -224,45 +204,34 @@ describe('ResetConfirmationContainer', () => {
   describe('styling and layout', () => {
     it('should apply correct styles to buttons based on type', () => {
       const { getByTestId } = render(<ResetConfirmationContainer />);
-      
       const wissenButton = getByTestId('btn-wissen');
       const herstelButton = getByTestId('btn-herstel');
-      
-      // Wissen button zou error kleur moeten hebben (style is object, geen array)
+
       expect(wissenButton.props.style).toEqual(
-        expect.objectContaining({
-          backgroundColor: mockColors.error,
-        })
+        expect.objectContaining({ backgroundColor: mockColors.error })
       );
-      
-      // Herstel button zou primary kleur moeten hebben
       expect(herstelButton.props.style).toEqual(
-        expect.objectContaining({
-          backgroundColor: mockColors.primary,
-        })
+        expect.objectContaining({ backgroundColor: mockColors.primary })
       );
     });
 
-it('should apply correct bottom padding based on insets', () => {
-  const { UNSAFE_getByType } = render(<ResetConfirmationContainer />);
-  
-  const scrollView = UNSAFE_getByType(ScrollView);
-  
-  // contentContainerStyle is een array van styles
-  expect(scrollView.props.contentContainerStyle).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({
-        paddingBottom: 120 + mockInsets.bottom,
-      }),
-    ])
-  );
-});
+    it('should apply correct bottom padding based on insets', () => {
+      const { UNSAFE_getByType } = render(<ResetConfirmationContainer />);
+      const scrollView = UNSAFE_getByType(ScrollView);
+
+      expect(scrollView.props.contentContainerStyle).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            paddingBottom: 120 + mockInsets.bottom,
+          }),
+        ])
+      );
+    });
   });
 
   describe('accessibility', () => {
     it('should have correct testIDs for buttons', () => {
       const { getByTestId } = render(<ResetConfirmationContainer />);
-      
       expect(() => getByTestId('btn-wissen')).not.toThrow();
       expect(() => getByTestId('btn-herstel')).not.toThrow();
     });
@@ -272,45 +241,33 @@ it('should apply correct bottom padding based on insets', () => {
     it('should memoize callbacks to prevent unnecessary re-renders', () => {
       const { rerender, getByTestId } = render(<ResetConfirmationContainer />);
       
-      // Eerste render
       expect(useMaster).toHaveBeenCalledTimes(1);
-      
-      // Re-render
       rerender(<ResetConfirmationContainer />);
       expect(useMaster).toHaveBeenCalledTimes(2);
       
-      // Check dat callbacks werken
-      const wissenButton = getByTestId('btn-wissen');
-      fireEvent.press(wissenButton);
-      
+      fireEvent.press(getByTestId('btn-wissen'));
       expect(alertSpy).toHaveBeenCalled();
     });
   });
 
   describe('JSDoc claims verification', () => {
-    it('should use validationMessages as SSOT for all texts', () => {
+    it('should use WizStrings as SSOT for all texts', () => {
       const { getByText } = render(<ResetConfirmationContainer />);
-      
-      expect(getByText(validationMessages.reset.wipe.hint)).toBeTruthy();
-      expect(getByText(validationMessages.reset.wizardOnly.hint)).toBeTruthy();
+      expect(getByText(WizStrings.reset.wipe.hint)).toBeTruthy();
+      expect(getByText(WizStrings.reset.wizardOnly.hint)).toBeTruthy();
     });
 
     it('should isolate Alert.alert calls behind showConfirmAlert wrapper', () => {
       const { getByTestId } = render(<ResetConfirmationContainer />);
-      
-      const wissenButton = getByTestId('btn-wissen');
-      fireEvent.press(wissenButton);
+      fireEvent.press(getByTestId('btn-wissen'));
       
       expect(alertSpy).toHaveBeenCalled();
-      
-      // De wrapper gebruikt de juiste signature
       const alertCall = alertSpy.mock.calls[0];
       expect(alertCall).toHaveLength(3); // title, message, buttons
     });
 
     it('should not contain any hardcoded navigation calls', () => {
       render(<ResetConfirmationContainer />);
-      
       expect(mockMaster.executeReset).not.toHaveBeenCalled();
     });
   });

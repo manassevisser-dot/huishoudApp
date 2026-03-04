@@ -6,6 +6,8 @@ import type { MasterOrchestratorAPI } from '@app/types/MasterOrchestratorAPI';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 import { CsvUploadScreen } from './CsvUploadScreen';
 import { pickAndReadCsvFile, ANNULERING_MESSAGE } from '@adapters/system/FilePickerAdapter';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';
+
 
 // ─── Types voor ErrorBanner ─────────────────────────────────────
 type AppColors = ReturnType<typeof useAppStyles>['colors'];
@@ -33,8 +35,19 @@ function handleImportError(
   setError: (error: string | null) => void,
 ): void {
   const message = error instanceof Error ? error.message : 'Onbekende fout bij importeren';
+  
+  // Log alle errors behalve annuleringen
   if (message !== ANNULERING_MESSAGE) {
+    Logger.error('csv.upload_failed', {
+      screen: 'CsvUploadContainer',
+      error: message
+    }, { adr: ['ADR-06', 'ADR-12'] });
     setError(message);
+  } else {
+    // Optioneel: debug log voor annuleringen (niet naar UI)
+    Logger.debug('csv.upload_cancelled', {
+      screen: 'CsvUploadContainer'
+    });
   }
 }
 

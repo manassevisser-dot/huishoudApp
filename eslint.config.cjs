@@ -38,6 +38,9 @@ module.exports = [
       '_trash/',              // ← NIEUW: Prullenbak voor verwijderde code
       '**/_trash/**',         // ← NIEUW: Prullenbak in subfolders
       '**/__backups__/**',       // ← NIEUW: Backup folders overal
+      '*.txt',
+      'copy-user-strings-to-wiz.ts',  // ✅ Voeg dit toe
+      'collect-user-strings.ts',    // ✅ Voeg dit toe
     ],
   },
 
@@ -377,7 +380,32 @@ module.exports = [
     },
   },
   
-  // 🚧 DateField: Complex component needing refactor
+  // 🎯 useAppStyles: Type-assembly boundary — spreadt meerdere make*-functies samen
+  // no-unsafe-assignment is hier structureel onvermijdbaar: de re-export keten van
+  // make* functies levert intersection-types die TypeScript niet kan verifieren via
+  // StyleSheet.create(). Runtime is correct; de cast via applyShadows() is de bewuste grens.
+  {
+    files: ['**/useAppStyles.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off', // Type-assembly boundary — zie @remarks
+      '@typescript-eslint/no-unsafe-call':       'off', // Idem — make* via re-export keten
+    },
+  },
+
+// 🚧 AuditLoggerAdapter: De logger zelf — mag console gebruiken en heeft structureel 4 params nodig
+  {
+    files: ['**/AuditLoggerAdapter.ts'],
+    rules: {
+      'no-restricted-syntax':    'off', // Adapter IS de logger — mag console.* aanroepen
+      'no-console':              'off', // Idem — alle log-levels vereisen console.error/warn/log/debug
+      'no-magic-numbers':        'off', // RFC 5424 levels (0-7) zijn inherent numeriek; benoemde constanten zijn uitzondering
+      'max-params':              'off', // log() en createEvent() hebben structureel 4 params (RFC 5424 contract)
+      'max-lines-per-function':  'off', // routeToConsole() switch is inherent lang
+      'complexity':              'off', // Routing-logica heeft inherent hoge complexiteit
+    },
+  },
+
+// 🚧 DateField: Complex component needing refactor
   {
     files: ['**/DateField.tsx'],
     rules: {

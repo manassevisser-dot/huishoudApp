@@ -1,0 +1,776 @@
+# 📋 USER-FACING STRINGS TE MIGREREN
+# Datum: 2026-03-02T12:08:41.003Z
+# Totaal: 223
+# ================================================
+
+
+📁 src/App.tsx
+   2 strings
+   --------------------------------------------------
+   Regel 5    : "Provider Composition"
+   Regel 6    : "Composition Root"
+
+📁 src/adapters/audit/AuditLoggerAdapter.ts
+   4 strings
+   --------------------------------------------------
+   Regel 316  : "Audit listener failed"
+   Regel 324  : "!!! TICKETING/MAIL ALERT !!!"
+   Regel 337  : "EMERGENCY - Initiële volledige reset"
+   Regel 341  : "ALERT - Initiële recovery procedure"
+
+📁 src/adapters/system/FilePickerAdapter.ts
+   5 strings
+   --------------------------------------------------
+   Regel 57   : "Bestand selecteren geannuleerd"
+   Regel 64   : "Geen bestand geselecteerd"
+   Regel 67   : "Bestandsdata is corrupt of ontbreekt"
+   Regel 72   : "does not exist"
+   Regel 79   : "Onbekende fout bij lezen"
+
+📁 src/adapters/transaction/stateful.ts
+   1 strings
+   --------------------------------------------------
+   Regel 175  : "Undo geslaagd"
+
+📁 src/adapters/validation/ResearchContractAdapter.ts
+   1 strings
+   --------------------------------------------------
+   Regel 28   : "Bedrag moet in hele centen (integers) zijn"
+
+📁 src/adapters/validation/formStateSchema.ts
+   1 strings
+   --------------------------------------------------
+   Regel 56   : "Ongeldig formaat"
+
+📁 src/adapters/validation/validateAtBoundary.ts
+   3 strings
+   --------------------------------------------------
+   Regel 52   : "Waarde moet een getal zijn."
+   Regel 105  : "Onverwachte validatie fout"
+   Regel 114  : "Validatie fout"
+
+📁 src/app/context/FormContext.tsx
+   2 strings
+   --------------------------------------------------
+   Regel 6    : "Single Source of Truth"
+   Regel 72   : "useFormContext must be used within FormProvider"
+
+📁 src/app/hooks/useTransactionHistory.ts
+   1 strings
+   --------------------------------------------------
+   Regel 39   : "Unknown transaction error"
+
+📁 src/app/orchestrators/FeedbackOrchestrator.ts
+   1 strings
+   --------------------------------------------------
+   Regel 7    : "welk event leidt tot welke UX"
+
+📁 src/app/orchestrators/ImportOrchestrator.ts
+   3 strings
+   --------------------------------------------------
+   Regel 38   : "Geen omschrijving"
+   Regel 86   : "Fout bij verwerken van CSV"
+   Regel 97   : "Geen verwerkte transacties gevonden in het CSV-bestand."
+
+📁 src/app/orchestrators/UIOrchestrator.ts
+   3 strings
+   --------------------------------------------------
+   Regel 65   : "new UIManager()"
+   Regel 66   : "new UIOrchestrator(visibility)"
+   Regel 145  : "not found in EntryRegistry"
+
+📁 src/app/orchestrators/ValidationOrchestrator.ts
+   1 strings
+   --------------------------------------------------
+   Regel 8    : "Is deze sectie ok?"
+
+📁 src/app/orchestrators/factory/CsvAnalysisFeedbackVMFactory.ts
+   1 strings
+   --------------------------------------------------
+   Regel 17   : "lege staat"
+
+📁 src/app/orchestrators/factory/ScreenViewModelFactory.ts
+   2 strings
+   --------------------------------------------------
+   Regel 109  : "Primitive type"
+   Regel 109  : "not registered"
+
+📁 src/app/orchestrators/factory/TransactionHistoryVMFactory.ts
+   1 strings
+   --------------------------------------------------
+   Regel 59   : ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}"
+
+📁 src/app/orchestrators/managers/ValidationManager.ts
+   1 strings
+   --------------------------------------------------
+   Regel 58   : "Dit veld is verplicht"
+
+📁 src/app/orchestrators/types/csvUpload.types.ts
+   8 strings
+   --------------------------------------------------
+   Regel 27   : "ABN AMRO"
+   Regel 29   : "SNS Bank"
+   Regel 30   : "ASN Bank"
+   Regel 32   : "de Volksbank"
+   Regel 33   : "Triodos Bank"
+   Regel 38   : "Nationale-Nederlanden Bank"
+   Regel 39   : "NIBC Direct"
+   Regel 40   : "Lloyds Bank"
+
+📁 src/app/workflows/ResetWorkflow.ts
+   1 strings
+   --------------------------------------------------
+   Regel 17   : "Bij RESET_APP: PersistenceAdapter.clear() aanroepen"
+
+📁 src/app/workflows/csvUploadWorkflow.ts
+   4 strings
+   --------------------------------------------------
+   Regel 88   : "Inkomensverschil gedetecteerd"
+   Regel 95   : "Woonlasten gevonden die niet verwacht werden"
+   Regel 130  : "Onverwachte fout tijdens import"
+   Regel 149  : "Geen transacties gevonden in het bestand"
+
+📁 src/core/types/research.ts
+   1 strings
+   --------------------------------------------------
+   Regel 105  : "[key: string]: unknown"
+
+📁 src/domain/constants/LayoutTokens.ts
+   2 strings
+   --------------------------------------------------
+   Regel 37   : "flex: 1"
+   Regel 83   : "insets.bottom === 0"
+
+📁 src/domain/constants/Tokens.ts
+   1 strings
+   --------------------------------------------------
+   Regel 69   : "hitTarget: 44"
+
+📁 src/domain/constants/businessRules.ts
+   1 strings
+   --------------------------------------------------
+   Regel 18   : "isDiscrepancy = true"
+
+📁 src/domain/constants/labels.ts
+   5 strings
+   --------------------------------------------------
+   Regel 25   : "Huishouden Opzetten"
+   Regel 34   : "Huishouden Opzetten"
+   Regel 36   : "Inkomsten & Lasten"
+   Regel 37   : "Vaste lasten"
+   Regel 40   : "Aantal Auto"
+
+📁 src/domain/constants/uiSections.ts
+   2 strings
+   --------------------------------------------------
+   Regel 10   : "magic strings"
+   Regel 19   : "as const"
+
+📁 src/domain/constants/uxTokens.ts
+   1 strings
+   --------------------------------------------------
+   Regel 22   : "Huishouden Opzetten"
+
+📁 src/domain/finance/BankFormatDetector.ts
+   22 strings
+   --------------------------------------------------
+   Regel 27   : "Af Bij"
+   Regel 29   : "naam / omschrijving"
+   Regel 29   : "af bij"
+   Regel 37   : "Af Bij"
+   Regel 38   : "ABN AMRO"
+   Regel 39   : "naam / omschrijving"
+   Regel 43   : "SNS Bank"
+   Regel 47   : "Tegenrekening naam"
+   Regel 48   : "Triodos Bank"
+   Regel 49   : "tegenrekening naam"
+   Regel 52   : "Amount (EUR)"
+   Regel 54   : "amount (eur)"
+   Regel 57   : "Started Date"
+   Regel 57   : "Completed Date"
+   Regel 59   : "started date"
+   Regel 59   : "completed date"
+   Regel 59   : "paid out"
+   Regel 62   : "Account number"
+   Regel 64   : "account number"
+   Regel 64   : "transaction type"
+   Regel 73   : "ASN Bank"
+   Regel 87   : "Datum;Naam / Omschrijving;Rekening;Tegenrekening;Af Bij;Bedrag"
+
+📁 src/domain/finance/CsvAnalysisService.ts
+   1 strings
+   --------------------------------------------------
+   Regel 67   : "Gratis inwonend"
+
+📁 src/domain/finance/StatementIntakePipeline.ts
+   2 strings
+   --------------------------------------------------
+   Regel 6    : "Work In Progress"
+   Regel 35   : "NL** [REDACTED]"
+
+📁 src/domain/helpers/DateHydrator.ts
+   4 strings
+   --------------------------------------------------
+   Regel 5    : "ISO Date (YYYY-MM-DD)"
+   Regel 6    : "Local Noon"
+   Regel 7    : "Date Hydration"
+   Regel 9    : "new Date(string)"
+
+📁 src/domain/helpers/TimeProvider.ts
+   7 strings
+   --------------------------------------------------
+   Regel 2    : "Local Noon"
+   Regel 5    : "het huidige moment"
+   Regel 5    : "new Date()"
+   Regel 6    : "Dependency Injection (DI)"
+   Regel 7    : "Local Noon"
+   Regel 8    : "vandaag om 12:00 uur"
+   Regel 9    : "s (die een vaste, voorspelbare datum retourneren). Injecteer de"
+
+📁 src/domain/helpers/numbers.ts
+   3 strings
+   --------------------------------------------------
+   Regel 5    : "Cents (Integer)"
+   Regel 6    : "Parsing / Normalization"
+   Regel 7    : "Phoenix Parser"
+
+📁 src/domain/interfaces/StateWriter.ts
+   1 strings
+   --------------------------------------------------
+   Regel 8    : "Presentation Layer"
+
+📁 src/domain/interfaces/ValueProvider.ts
+   2 strings
+   --------------------------------------------------
+   Regel 6    : "External Façade"
+   Regel 8    : "Presentation Layer"
+
+📁 src/domain/interfaces/index.ts
+   2 strings
+   --------------------------------------------------
+   Regel 4    : "barrel file"
+   Regel 5    : "import { ValueProvider, StateWriter } from"
+
+📁 src/domain/registry/BaseRegistry.ts
+   1 strings
+   --------------------------------------------------
+   Regel 19   : "niet gevonden"
+
+📁 src/domain/registry/EntryRegistry.ts
+   3 strings
+   --------------------------------------------------
+   Regel 19   : "dit is gevaarlijk"
+   Regel 19   : "dit is de primaire weg"
+   Regel 440  : "always true"
+
+📁 src/domain/registry/OptionsRegistry.ts
+   5 strings
+   --------------------------------------------------
+   Regel 7    : "as const"
+   Regel 23   : "Fiscaal Partners"
+   Regel 66   : "HBO Max"
+   Regel 67   : "NPO Start"
+   Regel 69   : "YouTube Premium"
+
+📁 src/domain/registry/PrimitiveRegistry.ts
+   4 strings
+   --------------------------------------------------
+   Regel 32   : "as const"
+   Regel 99   : "value === true"
+   Regel 101  : "value === false"
+   Regel 314  : "chip-group vereist opties"
+
+📁 src/domain/research/PrivacyAirlock.ts
+   12 strings
+   --------------------------------------------------
+   Regel 2    : "Privacy Airlock"
+   Regel 5    : "Privacy Airlock"
+   Regel 6    : "PII (Personally Identifiable Information)"
+   Regel 8    : "Data Assertion"
+   Regel 8    : "mag geen PII bevatten"
+   Regel 75   : "Ongeldige memberType:"
+   Regel 75   : ". MemberType moet worden afgeleid uit geboortedatum."
+   Regel 110  : "1234 AB"
+   Regel 118  : "1234 AB"
+   Regel 149  : "SECURITY ALERT: Verboden veld"
+   Regel 149  : "in Research Payload."
+   Regel 152  : "SECURITY ALERT: PII gedetecteerd in waarde van"
+
+📁 src/domain/rules/ageBoundaryRules.ts
+   2 strings
+   --------------------------------------------------
+   Regel 5    : "Age Sandbox"
+   Regel 6    : "Boundary Check"
+
+📁 src/domain/rules/ageRules.ts
+   2 strings
+   --------------------------------------------------
+   Regel 5    : "Business Rule"
+   Regel 5    : "een persoon is minderjarig als hij/zij jonger is dan 18 jaar"
+
+📁 src/domain/rules/aowRules.ts
+   2 strings
+   --------------------------------------------------
+   Regel 5    : "AOW (Algemene Ouderdomswet)"
+   Regel 6    : "Juridische Kernregel"
+
+📁 src/domain/rules/calculateRules.ts
+   5 strings
+   --------------------------------------------------
+   Regel 5    : "Phoenix Calculator"
+   Regel 6    : "Type Guard"
+   Regel 7    : "Financial Totals"
+   Regel 7    : "{ totalIncomeCents, totalExpensesCents, netCents }"
+   Regel 8    : "Cents-based Calculation"
+
+📁 src/domain/rules/conditions.ts
+   3 strings
+   --------------------------------------------------
+   Regel 2    : "moet dit veld getoond worden?"
+   Regel 5    : "Conditional Rule"
+   Regel 8    : "hasChildren(members, timeProvider)"
+
+📁 src/domain/rules/dataFilters.ts
+   3 strings
+   --------------------------------------------------
+   Regel 5    : "Data Filter Rule"
+   Regel 8    : "Defensive Programming"
+   Regel 27   : "as un_known"
+
+📁 src/domain/rules/derivedValues.ts
+   4 strings
+   --------------------------------------------------
+   Regel 5    : "Derived Value Rule"
+   Regel 5    : "totaal - deel"
+   Regel 7    : "ADR-06 (Nullish Coalescing)"
+   Regel 17   : "Aantal kinderen = totaal mensen - volwassenen (minimum 0)"
+
+📁 src/domain/rules/fieldConstraints.ts
+   4 strings
+   --------------------------------------------------
+   Regel 123  : "Voer een geldige postcode in (bijv. 1234AB)"
+   Regel 548  : "Dit lijkt een jaarbedrag - vul het maandbedrag in"
+   Regel 559  : "Dit lijkt een jaarbedrag - vul het maandbedrag in"
+   Regel 562  : "Let op: vermogen boven €1M kan invloed hebben op toeslagen"
+
+📁 src/domain/rules/fieldVisibility.ts
+   3 strings
+   --------------------------------------------------
+   Regel 2    : "heeft de gebruiker kinderen?"
+   Regel 8    : "UI Hint"
+   Regel 230  : "zichtbaar of niet"
+
+📁 src/domain/rules/financeRules.ts
+   2 strings
+   --------------------------------------------------
+   Regel 5    : "Data Transformation"
+   Regel 6    : "Adapter Pattern"
+
+📁 src/domain/rules/householdRules.ts
+   1 strings
+   --------------------------------------------------
+   Regel 6    : "Household Status"
+
+📁 src/domain/rules/typeGuards.ts
+   6 strings
+   --------------------------------------------------
+   Regel 2    : "type guard"
+   Regel 5    : "Type Guard"
+   Regel 5    : "type predicate"
+   Regel 5    : "val is string | number"
+   Regel 6    : "Defensive Programming"
+   Regel 11   : "type guards"
+
+📁 src/domain/services/csvProcessor.ts
+   1 strings
+   --------------------------------------------------
+   Regel 33   : "Geen omschrijving"
+
+📁 src/domain/validation/dateValidators.ts
+   1 strings
+   --------------------------------------------------
+   Regel 20   : "faalt voor niet-DD-MM-YYYY patronen"
+
+📁 src/types/navigation.ts
+   2 strings
+   --------------------------------------------------
+   Regel 3    : "single source of truth"
+   Regel 10   : "MyScreen: { userId: string }"
+
+📁 src/ui/entries/entry.helpers.ts
+   2 strings
+   --------------------------------------------------
+   Regel 149  : "error: null"
+   Regel 149  : "errorStyle: {}"
+
+📁 src/ui/entries/entry.mappers.ts
+   1 strings
+   --------------------------------------------------
+   Regel 8    : "styles: AppStyles"
+
+📁 src/ui/navigation/MainNavigator.tsx
+   1 strings
+   --------------------------------------------------
+   Regel 5    : "single source of truth"
+
+📁 src/ui/navigation/NavigationFooter.tsx
+   1 strings
+   --------------------------------------------------
+   Regel 9    : "safe area"
+
+📁 src/ui/providers/FeedbackProvider.tsx
+   2 strings
+   --------------------------------------------------
+   Regel 10   : "toast storm"
+   Regel 98   : "useAuditFeedback must be used within <FeedbackProvider>"
+
+📁 src/ui/providers/FormStateProvider.tsx
+   2 strings
+   --------------------------------------------------
+   Regel 2    : "Single Source of Truth"
+   Regel 138  : "useFormState must be used within <FormStateProvider>"
+
+📁 src/ui/providers/MasterProvider.tsx
+   2 strings
+   --------------------------------------------------
+   Regel 9    : "const master = useMaster(); master.navigation.navigateNext();"
+   Regel 30   : "useMaster must be used within <MasterProvider>"
+
+📁 src/ui/providers/ThemeProvider.tsx
+   4 strings
+   --------------------------------------------------
+   Regel 5    : "s definieert (bv."
+   Regel 9    : "const { theme } = useTheme(); const color = theme ==="
+   Regel 9    : "s wilt toevoegen. De daadwerkelijke stijl-waarden (kleuren, etc.) voor elk thema worden beheerd in"
+   Regel 61   : "useTheme must be used within <ThemeProvider>"
+
+📁 src/ui/screens/CriticalError/CriticalErrorContainer.tsx
+   1 strings
+   --------------------------------------------------
+   Regel 143  : "Kritieke fout"
+
+📁 src/ui/screens/csv/CsvUploadContainer.tsx
+   1 strings
+   --------------------------------------------------
+   Regel 37   : "Onbekende fout bij importeren"
+
+📁 src/ui/screens/csv/CsvUploadScreen.tsx
+   1 strings
+   --------------------------------------------------
+   Regel 34   : "Kies csv-bestand"
+
+📁 src/ui/screens/feedback/FeedbackHost.tsx
+   3 strings
+   --------------------------------------------------
+   Regel 40   : "App herstellen"
+   Regel 41   : "Instellingen herstellen"
+   Regel 81   : "Close notification"
+
+📁 src/ui/sections/FinancialSummary.tsx
+   2 strings
+   --------------------------------------------------
+   Regel 46   : "Totaal Inkomsten:"
+   Regel 47   : "Totaal Uitgaven:"
+
+📁 src/ui/sections/LogoSection.tsx
+   2 strings
+   --------------------------------------------------
+   Regel 15   : "<LogoSection size="
+   Regel 41   : "Phoenix logo"
+
+📁 src/ui/sections/TransactionHistoryContainer.tsx
+   1 strings
+   --------------------------------------------------
+   Regel 45   : "Verwijder transactie"
+
+📁 src/ui/selectors/financialSelectors.ts
+   1 strings
+   --------------------------------------------------
+   Regel 6    : "single source of truth"
+
+📁 src/ui/selectors/householdSelectors.ts
+   2 strings
+   --------------------------------------------------
+   Regel 8    : "Input Selector"
+   Regel 10   : "{ adultCount: number }"
+
+📁 src/ui/styles/UiPrimitiveStyles.ts
+   2 strings
+   --------------------------------------------------
+   Regel 5    : "Composition Styles"
+   Regel 6    : "Semantic Styles"
+
+📁 src/ui/styles/useAppStyles.ts
+   2 strings
+   --------------------------------------------------
+   Regel 95   : "{ styles, colors, Tokens }"
+   Regel 106  : "as const"
+
+📁 src/utils/csvHelper.ts
+   5 strings
+   --------------------------------------------------
+   Regel 5    : "csv (Comma-Separated Values)"
+   Regel 7    : "Byte Order Mark (BOM)"
+   Regel 8    : "Header Row"
+   Regel 9    : "Pure Function"
+   Regel 10   : "Record<string, string>[]"
+
+📁 src/utils/index.ts
+   5 strings
+   --------------------------------------------------
+   Regel 5    : "Barrel File"
+   Regel 6    : "export * from"
+   Regel 7    : "Facade Pattern"
+   Regel 10   : "import { parseRawCsv } from"
+   Regel 10   : "export * from"
+
+📁 src/utils/objects.ts
+   4 strings
+   --------------------------------------------------
+   Regel 5    : "shallow merge"
+   Regel 5    : "{...a, ...b}"
+   Regel 6    : "Type Guard"
+   Regel 9    : "s waar je zeker moet weten dat je met een echt object te maken hebt en niet met een array of"
+
+📁 src/utils/ping.ts
+   4 strings
+   --------------------------------------------------
+   Regel 2    : "health check"
+   Regel 2    : "smoke test"
+   Regel 3    : "s, of als een"
+   Regel 7    : "Health Check"
+
+📁 src/utils/strings.ts
+   3 strings
+   --------------------------------------------------
+   Regel 7    : "Character Filtering"
+   Regel 8    : "string | undefined | null"
+   Regel 9    : "const displayName = cleanName(user.inputName, 30);"
+
+
+# 📋 PLAKLIJST (alleen de strings)
+# ================================================
+
+"Audit listener failed"
+"!!! TICKETING/MAIL ALERT !!!"
+"EMERGENCY - Initiële volledige reset"
+"ALERT - Initiële recovery procedure"
+"Bestand selecteren geannuleerd"
+"Geen bestand geselecteerd"
+"Bestandsdata is corrupt of ontbreekt"
+"does not exist"
+"Onbekende fout bij lezen"
+"Undo geslaagd"
+"Ongeldig formaat"
+"Bedrag moet in hele centen (integers) zijn"
+"Waarde moet een getal zijn."
+"Onverwachte validatie fout"
+"Validatie fout"
+"Single Source of Truth"
+"useFormContext must be used within FormProvider"
+"Unknown transaction error"
+"lege staat"
+"Primitive type"
+"not registered"
+", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}"
+"welk event leidt tot welke UX"
+"Geen omschrijving"
+"Fout bij verwerken van CSV"
+"Geen verwerkte transacties gevonden in het CSV-bestand."
+"Dit veld is verplicht"
+"ABN AMRO"
+"SNS Bank"
+"ASN Bank"
+"de Volksbank"
+"Triodos Bank"
+"Nationale-Nederlanden Bank"
+"NIBC Direct"
+"Lloyds Bank"
+"new UIManager()"
+"new UIOrchestrator(visibility)"
+"not found in EntryRegistry"
+"Is deze sectie ok?"
+"Inkomensverschil gedetecteerd"
+"Woonlasten gevonden die niet verwacht werden"
+"Onverwachte fout tijdens import"
+"Geen transacties gevonden in het bestand"
+"Bij RESET_APP: PersistenceAdapter.clear() aanroepen"
+"Provider Composition"
+"Composition Root"
+"[key: string]: unknown"
+"isDiscrepancy = true"
+"Huishouden Opzetten"
+"Huishouden Opzetten"
+"Inkomsten & Lasten"
+"Vaste lasten"
+"Aantal Auto"
+"flex: 1"
+"insets.bottom === 0"
+"hitTarget: 44"
+"magic strings"
+"as const"
+"Huishouden Opzetten"
+"Af Bij"
+"naam / omschrijving"
+"af bij"
+"Af Bij"
+"ABN AMRO"
+"naam / omschrijving"
+"SNS Bank"
+"Tegenrekening naam"
+"Triodos Bank"
+"tegenrekening naam"
+"Amount (EUR)"
+"amount (eur)"
+"Started Date"
+"Completed Date"
+"started date"
+"completed date"
+"paid out"
+"Account number"
+"account number"
+"transaction type"
+"ASN Bank"
+"Datum;Naam / Omschrijving;Rekening;Tegenrekening;Af Bij;Bedrag"
+"Gratis inwonend"
+"Work In Progress"
+"NL** [REDACTED]"
+"ISO Date (YYYY-MM-DD)"
+"Local Noon"
+"Date Hydration"
+"new Date(string)"
+"Cents (Integer)"
+"Parsing / Normalization"
+"Phoenix Parser"
+"Local Noon"
+"het huidige moment"
+"new Date()"
+"Dependency Injection (DI)"
+"Local Noon"
+"vandaag om 12:00 uur"
+"s (die een vaste, voorspelbare datum retourneren). Injecteer de"
+"barrel file"
+"import { ValueProvider, StateWriter } from"
+"Presentation Layer"
+"External Façade"
+"Presentation Layer"
+"niet gevonden"
+"dit is gevaarlijk"
+"dit is de primaire weg"
+"always true"
+"as const"
+"Fiscaal Partners"
+"HBO Max"
+"NPO Start"
+"YouTube Premium"
+"as const"
+"value === true"
+"value === false"
+"chip-group vereist opties"
+"Privacy Airlock"
+"Privacy Airlock"
+"PII (Personally Identifiable Information)"
+"Data Assertion"
+"mag geen PII bevatten"
+"Ongeldige memberType:"
+". MemberType moet worden afgeleid uit geboortedatum."
+"1234 AB"
+"1234 AB"
+"SECURITY ALERT: Verboden veld"
+"in Research Payload."
+"SECURITY ALERT: PII gedetecteerd in waarde van"
+"Age Sandbox"
+"Boundary Check"
+"Business Rule"
+"een persoon is minderjarig als hij/zij jonger is dan 18 jaar"
+"AOW (Algemene Ouderdomswet)"
+"Juridische Kernregel"
+"Phoenix Calculator"
+"Type Guard"
+"Financial Totals"
+"{ totalIncomeCents, totalExpensesCents, netCents }"
+"Cents-based Calculation"
+"moet dit veld getoond worden?"
+"Conditional Rule"
+"hasChildren(members, timeProvider)"
+"Data Filter Rule"
+"Defensive Programming"
+"as un_known"
+"Derived Value Rule"
+"totaal - deel"
+"ADR-06 (Nullish Coalescing)"
+"Aantal kinderen = totaal mensen - volwassenen (minimum 0)"
+"Voer een geldige postcode in (bijv. 1234AB)"
+"Dit lijkt een jaarbedrag - vul het maandbedrag in"
+"Dit lijkt een jaarbedrag - vul het maandbedrag in"
+"Let op: vermogen boven €1M kan invloed hebben op toeslagen"
+"heeft de gebruiker kinderen?"
+"UI Hint"
+"zichtbaar of niet"
+"Data Transformation"
+"Adapter Pattern"
+"Household Status"
+"type guard"
+"Type Guard"
+"type predicate"
+"val is string | number"
+"Defensive Programming"
+"type guards"
+"Geen omschrijving"
+"faalt voor niet-DD-MM-YYYY patronen"
+"single source of truth"
+"MyScreen: { userId: string }"
+"error: null"
+"errorStyle: {}"
+"styles: AppStyles"
+"single source of truth"
+"safe area"
+"toast storm"
+"useAuditFeedback must be used within <FeedbackProvider>"
+"Single Source of Truth"
+"useFormState must be used within <FormStateProvider>"
+"const master = useMaster(); master.navigation.navigateNext();"
+"useMaster must be used within <MasterProvider>"
+"s definieert (bv."
+"const { theme } = useTheme(); const color = theme ==="
+"s wilt toevoegen. De daadwerkelijke stijl-waarden (kleuren, etc.) voor elk thema worden beheerd in"
+"useTheme must be used within <ThemeProvider>"
+"Kritieke fout"
+"Onbekende fout bij importeren"
+"Kies csv-bestand"
+"App herstellen"
+"Instellingen herstellen"
+"Close notification"
+"Totaal Inkomsten:"
+"Totaal Uitgaven:"
+"<LogoSection size="
+"Phoenix logo"
+"Verwijder transactie"
+"single source of truth"
+"Input Selector"
+"{ adultCount: number }"
+"Composition Styles"
+"Semantic Styles"
+"{ styles, colors, Tokens }"
+"as const"
+"csv (Comma-Separated Values)"
+"Byte Order Mark (BOM)"
+"Header Row"
+"Pure Function"
+"Record<string, string>[]"
+"Barrel File"
+"export * from"
+"Facade Pattern"
+"import { parseRawCsv } from"
+"export * from"
+"shallow merge"
+"{...a, ...b}"
+"Type Guard"
+"s waar je zeker moet weten dat je met een echt object te maken hebt en niet met een array of"
+"health check"
+"smoke test"
+"s, of als een"
+"Health Check"
+"Character Filtering"
+"string | undefined | null"
+"const displayName = cleanName(user.inputName, 30);"

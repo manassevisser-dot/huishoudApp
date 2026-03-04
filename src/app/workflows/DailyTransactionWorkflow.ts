@@ -62,21 +62,21 @@ export class DailyTransactionWorkflow {
   ): tx is LatestTransaction & { latestTransactionCategory: string } {
     // Expliciete null-check
     if (tx === null || tx === undefined) {
-      Logger.warning('transaction_form_not_initialized', { workflow: 'dailyTransaction' });
+      Logger.warning('transaction_form_not_initialized', { workflow: 'dailyTransaction' }, { adr: ["ADR-08","ADR-12","ADR-17"] });
       return false;
     }
 
     // Expliciete checks voor elk veld
-    if (typeof tx.latestTransactionAmount !== 'number' || tx.latestTransactionAmount <= 0) {
-      Logger.warning('transaction_invalid_amount', { 
-        workflow: 'dailyTransaction', 
-        amount: tx.latestTransactionAmount 
-      });
-      return false;
-    }
+   if (typeof tx.latestTransactionAmount !== 'number' || tx.latestTransactionAmount <= 0) {
+  Logger.warning('transaction_invalid_amount', 
+    { amount: tx.latestTransactionAmount, workflow: 'dailyTransaction' }, 
+    { adr: ['ADR-05', 'ADR-02', 'ADR-06'] }
+  );
+  return false;
+}
 
     if (typeof tx.latestTransactionCategory !== 'string' || tx.latestTransactionCategory === '') {
-      Logger.warning('transaction_category_required', { workflow: 'dailyTransaction' });
+      Logger.warning('transaction_category_required', { workflow: 'dailyTransaction' }, { adr: ["ADR-08","ADR-02","ADR-06"] });
       return false;
     }
 

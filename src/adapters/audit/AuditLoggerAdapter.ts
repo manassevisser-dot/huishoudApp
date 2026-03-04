@@ -1,5 +1,5 @@
 ﻿// src/adapters/audit/AuditLoggerAdapter.ts
-/* eslint-disable */
+
 /**
  * Centrale audit logging adapter voor applicatie-brede event logging.
  * Volledig RFC 5424 compliant met 8 log levels.
@@ -13,7 +13,9 @@
  * Logger.critical('database.corruption_detected', { table: 'transactions' });
  */
 
-import { validationMessages } from '@state/schemas/sections/validationMessages';
+import WizStrings from '@config/WizStrings';
+
+const A = WizStrings.audit;
 
 /**
  * RFC 5424 log levels met bijbehorende ernst (0 = hoogste, 7 = laagste)
@@ -43,12 +45,11 @@ export const RFC_5424_NAMES: Record<Rfc5424Level, string> = {
   7: 'DEBUG'
 };
 
-type ValidationMessages = typeof validationMessages;
-type FlattenedMessages = {
-  [K in keyof ValidationMessages]: ValidationMessages[K] extends string 
-    ? ValidationMessages[K]
-    : never;
-};
+/**
+ * Type alias voor de options parameter van alle convenience methods.
+ * Identiek aan de Omit in AuditLoggerPort, maar beknopter op aanroepsite.
+ */
+type LogOptions = Omit<AuditEventInput, 'eventName' | 'level' | 'context'>;
 
 /** Mapping van oude AuditLevel naar RFC 5424 voor backward compatibility */
 const LEGACY_LEVEL_MAP: Record<string, Rfc5424Level> = {
@@ -168,35 +169,35 @@ class AuditLoggerAdapter implements AuditLoggerPort {
   }
 
   // Convenience methods voor elk RFC 5424 level
-  public emergency(eventName: string, context?: Record<string, unknown>, options?: any): void {
+  public emergency(eventName: string, context?: Record<string, unknown>, options?: LogOptions): void {
     this.log(0, eventName, context, options);
   }
 
-  public alert(eventName: string, context?: Record<string, unknown>, options?: any): void {
+  public alert(eventName: string, context?: Record<string, unknown>, options?: LogOptions): void {
     this.log(1, eventName, context, options);
   }
 
-  public critical(eventName: string, context?: Record<string, unknown>, options?: any): void {
+  public critical(eventName: string, context?: Record<string, unknown>, options?: LogOptions): void {
     this.log(2, eventName, context, options);
   }
 
-  public error(eventName: string, context?: Record<string, unknown>, options?: any): void {
+  public error(eventName: string, context?: Record<string, unknown>, options?: LogOptions): void {
     this.log(3, eventName, context, options);
   }
 
-  public warning(eventName: string, context?: Record<string, unknown>, options?: any): void {
+  public warning(eventName: string, context?: Record<string, unknown>, options?: LogOptions): void {
     this.log(4, eventName, context, options);
   }
 
-  public notice(eventName: string, context?: Record<string, unknown>, options?: any): void {
+  public notice(eventName: string, context?: Record<string, unknown>, options?: LogOptions): void {
     this.log(5, eventName, context, options);
   }
 
-  public info(eventName: string, context?: Record<string, unknown>, options?: any): void {
+  public info(eventName: string, context?: Record<string, unknown>, options?: LogOptions): void {
     this.log(6, eventName, context, options);
   }
 
-  public debug(eventName: string, context?: Record<string, unknown>, options?: any): void {
+  public debug(eventName: string, context?: Record<string, unknown>, options?: LogOptions): void {
     this.log(7, eventName, context, options);
   }
 
@@ -314,7 +315,7 @@ class AuditLoggerAdapter implements AuditLoggerPort {
       try {
         listener(event);
       } catch (e) {
-        console.error('Audit listener failed', e);
+        console.error(A.listenerFailed, e);
       }
     });
   }
@@ -322,7 +323,7 @@ class AuditLoggerAdapter implements AuditLoggerPort {
   private routeToTicketing(event: AuditEvent): void {
     // Integreer met Sentry/Bugsnag/etc.
     if (event.level <= 2) {
-      console.error('!!! TICKETING/MAIL ALERT !!!', {
+      console.error(A.ticketingAlert, {
         level: RFC_5424_NAMES[event.level],
         event: event.eventName,
         message: event.message,
@@ -335,11 +336,11 @@ class AuditLoggerAdapter implements AuditLoggerPort {
     // Bij emergency/alert: probeer app te resetten of recovery
     if (event.level === 0) {
       // Forceer volledige reset
-      console.error('EMERGENCY - Initiële volledige reset');
+      console.error(A.emergencyReset);
       // dispatch({ type: 'EMERGENCY_RESET' });
     } else if (event.level === 1) {
       // Probeer graceful recovery
-      console.error('ALERT - Initiële recovery procedure');
+      console.error(A.alertRecovery);
       // dispatch({ type: 'ATTEMPT_RECOVERY' });
     }
   }
@@ -348,27 +349,34 @@ class AuditLoggerAdapter implements AuditLoggerPort {
    * Vertaal eventName naar user-facing message via validationMessages
    * Ondersteunt zowel dot.notatie als SCREAMING_SNAKE
    */
-  private translate(eventName: string): string | undefined {
-  if (!eventName) return undefined;
+ private translate(eventName: string): string | undefined {
+  // ✅ Expliciete lege string check
+  if (eventName === undefined || eventName === null || eventName.length === 0) {
+  return undefined;
+}
 
-  // Probeer directe match (voor event names zonder dots)
-  const directMatch = validationMessages[eventName as keyof typeof validationMessages];
-  if (typeof directMatch === 'string') return directMatch;
-
-  // Probeer dot-notatie (event.name → event.name)
-  const keys = eventName.split('.');
-  let result: unknown = validationMessages;
+  // 1. Probeer eerst in WizStrings (voor UI-teksten)
+  const wizResult = this.lookupInWizStrings(eventName);
+  if (wizResult !== undefined && wizResult !== null) return wizResult;
   
-  for (const key of keys) {
-    if (result && typeof result === 'object' && key in result) {
-      result = (result as Record<string, unknown>)[key];
-    } else {
-      result = undefined;
-      break;
-    }
+  // 2. Fallback naar token zelf
+  return undefined;
+}
+private lookupInWizStrings(token: string): string | undefined {
+  const parts = token.split('.');
+  
+  // ✅ Type-safe zonder 'any'
+  let current: unknown = WizStrings;
+  
+  for (const part of parts) {
+    if (current === null || current === undefined) return undefined;
+    if (typeof current !== 'object') return undefined;
+    if (!(part in current)) return undefined;
+    
+    current = (current as Record<string, unknown>)[part];
   }
   
-  return typeof result === 'string' ? result : undefined;
+  return typeof current === 'string' ? current : undefined;
 }
 }
 
@@ -419,7 +427,7 @@ export const Logger = {
   debug: auditLogger.debug.bind(auditLogger),
   
   // Generieke log method (voor compatibiliteit)
-  log: (level: Rfc5424Level | string, eventName: string, context?: Record<string, unknown>, options?: any) => {
+  log: (level: Rfc5424Level | string, eventName: string, context?: Record<string, unknown>, options?: LogOptions) => {
     const numericLevel = typeof level === 'string' ? toRfc5424Level(level) : level;
     auditLogger.log(numericLevel, eventName, context, options);
   },

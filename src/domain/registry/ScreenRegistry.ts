@@ -32,7 +32,9 @@ const SCREEN_REGISTRY: Record<string, ScreenDefinition> = {
     id: 'LANDING',
     type: 'AUTH',
     titleToken: 'screens.landing.title',
-    sectionIds: ['LANDING_ACTIONS_CARD'],
+    // LOGO_SECTION eerst: logo gecentreerd, daarna knoppen.
+    // LandingScreenRenderer herkent layout='isLogo' en rendert LogoSection (geen entry-pipeline).
+    sectionIds: ['LOGO_SECTION', 'LANDING_ACTIONS_CARD'],
     nextScreenId: 'WIZARD_SETUP_HOUSEHOLD',
   },
 

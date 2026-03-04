@@ -117,7 +117,13 @@ export const migrateTransactionsToPhoenix = async (oldState: Partial<LegacyState
 };
 
 export const undoLastTransaction = async () => {
-  Logger.warning('Undo functionaliteit nog niet geïmplementeerd');
+  // ADR-08: FSM — undo is een state transition, nog niet geïmplementeerd (ADR-17: accepted risk)
+  Logger.warning('feature.undo_not_implemented', {
+    module: 'transactionService',
+    adr: 'ADR-08',
+    related: ['ADR-12', 'ADR-17'],
+    cleanCode: ['R-03'],
+  });
   return null;
 };
 

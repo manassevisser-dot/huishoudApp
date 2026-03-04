@@ -31,11 +31,15 @@ describe('StatefulTransactionAdapter', () => {
       expect(adapter.getCurrentState()).toEqual(initialState);
     });
 
-    it('logt INIT-event bij aanmaken', () => {
+    it('logt INIT-entry via Logger.info', () => {
+      // Frisse adapter — beforeEach heeft Logger.info al gecleard en adapter hergemaakt.
       expect(Logger.info).toHaveBeenCalledWith(
         'transaction.push',
         expect.objectContaining({ type: 'INIT', pointer: 0 }),
-        expect.objectContaining({ adr: 'ADR-12', version: '2025-01-A' })
+        expect.objectContaining({
+          adr: 'ADR-12',
+          message: expect.stringContaining('2025-01-A'),
+        })
       );
     });
   });

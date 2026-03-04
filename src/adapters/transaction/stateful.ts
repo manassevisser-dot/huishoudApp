@@ -78,12 +78,8 @@ export class StatefulTransactionAdapter {
   pointer: this.pointer
 }, { 
   adr: 'ADR-12',
-  version: this.VERSION 
+  message: `version: ${this.VERSION}`,
 });
-
-// Voor undo/redo
-Logger.notice('transaction.undo', { pointer: this.pointer });
-Logger.notice('transaction.redo', { pointer: this.pointer });
   }
 
   /**

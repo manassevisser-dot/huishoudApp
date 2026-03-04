@@ -158,22 +158,18 @@ describe('StorageShim', () => {
       const result = await StorageShim.loadState();
 
       expect(result).toBeNull();
-      expect(Logger.error).toHaveBeenCalledWith('STORAGE_LOAD_FAILURE', {
-        error: expect.any(Error),
-      });
+     expect(Logger.error).toHaveBeenCalledWith('STORAGE_LOAD_FAILURE', { error: expect.any(Error) }, expect.anything());
     });
 
     it('should return null and log error on AsyncStorage failure', async () => {
-      const error = new Error('Storage error');
-      (AsyncStorage.getItem as jest.Mock).mockRejectedValue(error);
-
-      const result = await StorageShim.loadState();
-
-      expect(result).toBeNull();
-      expect(Logger.error).toHaveBeenCalledWith('STORAGE_LOAD_FAILURE', {
-        error,
-      });
-    });
+  const error = new Error('Storage error');
+  (AsyncStorage.getItem as jest.Mock).mockRejectedValue(error);
+  
+  const result = await StorageShim.loadState();
+  
+  expect(result).toBeNull();
+  expect(Logger.error).toHaveBeenCalledWith('STORAGE_LOAD_FAILURE', { error }, expect.anything());
+});
   });
 
   describe('saveState', () => {
@@ -201,9 +197,7 @@ describe('StorageShim', () => {
 
       await StorageShim.saveState(mockFormState);
 
-      expect(Logger.error).toHaveBeenCalledWith('STORAGE_SAVE_FAILURE', {
-        error,
-      });
+      expect(Logger.error).toHaveBeenCalledWith('STORAGE_SAVE_FAILURE', { error }, expect.anything());
     });
   });
 
@@ -248,9 +242,7 @@ describe('StorageShim', () => {
       const result = await StorageShim.loadTheme();
 
       expect(result).toBeNull();
-      expect(Logger.error).toHaveBeenCalledWith('THEME_LOAD_FAILURE', {
-        error,
-      });
+      expect(Logger.error).toHaveBeenCalledWith('THEME_LOAD_FAILURE', { error }, expect.anything());
     });
   });
 
@@ -273,9 +265,7 @@ describe('StorageShim', () => {
 
       await StorageShim.saveTheme('light');
 
-      expect(Logger.error).toHaveBeenCalledWith('THEME_SAVE_FAILURE', {
-        error,
-      });
+      expect(Logger.error).toHaveBeenCalledWith('THEME_SAVE_FAILURE', { error }, expect.anything());
     });
   });
 
@@ -292,12 +282,9 @@ describe('StorageShim', () => {
 
       await StorageShim.clearAll();
 
-      expect(Logger.error).toHaveBeenCalledWith('STORAGE_CLEAR_FAILURE', {
-        error,
-      });
-    });
+      expect(Logger.error).toHaveBeenCalledWith('STORAGE_CLEAR_FAILURE', { error }, expect.anything());
   });
-
+  });
   describe('integration scenarios', () => {
     it('should successfully save and load state', async () => {
       // Mock save

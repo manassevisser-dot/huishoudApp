@@ -40,7 +40,7 @@ import {
   
   describe('STYLE_MODULES', () => {
     test('bevat alle 13 module-namen', () => {
-      expect(Object.keys(STYLE_MODULES)).toHaveLength(13);
+      expect(Object.keys(STYLE_MODULES)).toHaveLength(14);
     });
   
     test('keys matchen met verwachte modules', () => {

@@ -9,18 +9,18 @@
  *   executeReset('setup') → alleen wizard wissen → reducer navigeert naar WIZARD_SETUP_HOUSEHOLD.
  * @contract
  *   Rendert twee kaarten met beschrijvingstekst en bevestigingsknop.
- *   Alert-teksten komen uit validationMessages.reset — SSOT, geen hardcoded strings.
+ *   Alert-teksten komen uit WizStrings.reset — SSOT, geen hardcoded strings.
  *   Kleuren en spacing komen uit useAppStyles() (colors) en Tokens — geen magic numbers of hex-literals.
  *   Na bevestiging: master.executeReset() → reducer muteert activeStep → MainNavigator toont nieuw scherm.
  *   Geen expliciete navigatie-aanroep nodig: de reducer handelt dat af.
  * @ai_instruction
  *   Voeg hier GEEN businesslogica toe. Alles wat na de bevestiging gebeurt zit in ResetWorkflow.
  *   Alert.alert mag NIET in orchestrators of workflows — dat is een UI-import.
- *   Teksten wijzigen? → validationMessages.reset (SSOT), niet hier.
+ *   Teksten wijzigen? → WizStrings.reset (SSOT), niet hier.
  *   Kleuren wijzigen? → Colors.ts (SSOT via useAppStyles), niet hier.
  *   showConfirmAlert() is de enige plek waar Alert.alert wordt aangeroepen — ESLint-grens.
  * @see ResetWorkflow — voert de daadwerkelijke dispatch + PersistenceAdapter.clear() uit
- * @see validationMessages.reset — levert alle bevestiging- en beschrijvingsteksten
+ * @see WizStrings.reset — levert alle bevestiging- en beschrijvingsteksten
  * @see Colors.ts / Tokens.ts — kleuren en spacing via useAppStyles()
  * @see CsvUploadContainer — het referentiepatroon voor deze container-stijl
  * @replaces ResetScreen.tsx — mag verwijderd worden zodra dit component in productie is
@@ -31,7 +31,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMaster } from '@ui/providers/MasterProvider';
 import { useAppStyles } from '@ui/styles/useAppStyles';
 import { Tokens } from '@ui/kernel';
-import { validationMessages } from '@state/schemas/sections/validationMessages';
+import {WizStrings} from '@config/WizStrings';
 
 // ─── Constanten ───────────────────────────────────────────────────────────────
 
@@ -75,7 +75,7 @@ const WissenKaart: React.FC<WissenKaartProps> = ({ onConfirm }) => {
   const { styles, colors } = useAppStyles();
 
   const handleWissen = React.useCallback(() => {
-    const { title, message, confirm, cancel } = validationMessages.reset.wipe;
+    const { title, message, confirm, cancel } = WizStrings.reset.wipe;
     showConfirmAlert(title, message, [
       { text: cancel, style: 'cancel' },
       { text: confirm, style: 'destructive', onPress: onConfirm },
@@ -85,7 +85,7 @@ const WissenKaart: React.FC<WissenKaartProps> = ({ onConfirm }) => {
   return (
     <View style={[styles.dashboardCard, { marginBottom: Tokens.Space.xxl }]}>
       <Text style={[styles.entryLabel, { marginBottom: Tokens.Space.sm }]}>WISSEN</Text>
-      <Text style={styles.summaryDetail}>{validationMessages.reset.wipe.hint}</Text>
+      <Text style={styles.summaryDetail}>{WizStrings.reset.wipe.hint}</Text>
       <TouchableOpacity
         testID="btn-wissen"
         style={[styles.button, { backgroundColor: colors.error, marginTop: Tokens.Space.lg, marginLeft: 0 }]}
@@ -109,7 +109,7 @@ const HerstelKaart: React.FC<HerstelKaartProps> = ({ onConfirm }) => {
   const { styles, colors } = useAppStyles();
 
   const handleHerstel = React.useCallback(() => {
-    const { title, message, confirm, cancel } = validationMessages.reset.wizardOnly;
+    const { title, message, confirm, cancel } = WizStrings.reset.wizardOnly;
     showConfirmAlert(title, message, [
       { text: cancel, style: 'cancel' },
       { text: confirm, onPress: onConfirm },
@@ -119,7 +119,7 @@ const HerstelKaart: React.FC<HerstelKaartProps> = ({ onConfirm }) => {
   return (
     <View style={[styles.dashboardCard, { marginBottom: Tokens.Space.xxl }]}>
       <Text style={[styles.entryLabel, { marginBottom: Tokens.Space.sm }]}>HERSTEL</Text>
-      <Text style={styles.summaryDetail}>{validationMessages.reset.wizardOnly.hint}</Text>
+      <Text style={styles.summaryDetail}>{WizStrings.reset.wizardOnly.hint}</Text>
       <TouchableOpacity
         testID="btn-herstel"
         style={[styles.button, { backgroundColor: colors.primary, marginTop: Tokens.Space.lg, marginLeft: 0 }]}

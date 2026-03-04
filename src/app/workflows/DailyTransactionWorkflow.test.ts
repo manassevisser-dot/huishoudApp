@@ -64,7 +64,7 @@ describe('DailyTransactionWorkflow', () => {
     workflow = new DailyTransactionWorkflow();
   });
 
-  describe('execute', () => {
+describe('execute', () => {
     it('should successfully save a valid transaction', () => {
       // Act
       const result = workflow.execute(mockFso, mockBusiness);
@@ -120,7 +120,7 @@ describe('DailyTransactionWorkflow', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(Logger.warning).toHaveBeenCalledWith('transaction_form_not_initialized', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('transaction_form_not_initialized', expect.any(Object), expect.anything())
       expect(mockFso.dispatch).not.toHaveBeenCalled();
       expect(mockBusiness.recompute).not.toHaveBeenCalled();
     });
@@ -134,20 +134,25 @@ describe('DailyTransactionWorkflow', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(Logger.warning).toHaveBeenCalledWith('transaction_form_not_initialized', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('transaction_form_not_initialized', expect.any(Object), expect.anything());
     });
 
     it('should return false when amount is not a number', () => {
-      // Arrange
-      mockState.data.latestTransaction.latestTransactionAmount = 'invalid' as any;
+  // Arrange
+  mockState.data.latestTransaction.latestTransactionAmount = 'invalid' as any;
 
-      // Act
-      const result = workflow.execute(mockFso, mockBusiness);
+  // Act
+  const result = workflow.execute(mockFso, mockBusiness);
 
-      // Assert
-      expect(result).toBe(false);
-      expect(Logger.warning).toHaveBeenCalledWith('transaction_invalid_amount', expect.any(Object));
-    });
+  // Assert
+  expect(result).toBe(false);
+ console.log('Calls:', (Logger.warning as jest.Mock).mock.calls);
+expect(Logger.warning).toHaveBeenCalledWith(
+  'transaction_invalid_amount',
+  { amount: 'invalid', workflow: 'dailyTransaction' },
+  expect.objectContaining({ adr: expect.arrayContaining(['ADR-05', 'ADR-02', 'ADR-06']) })
+);
+});
 
     it('should return false when amount is zero', () => {
       // Arrange
@@ -158,8 +163,12 @@ describe('DailyTransactionWorkflow', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(Logger.warning).toHaveBeenCalledWith('transaction_invalid_amount', expect.any(Object));
-    });
+     expect(Logger.warning).toHaveBeenCalledWith(
+  'transaction_invalid_amount',
+  { amount: 0, workflow: 'dailyTransaction' },
+  expect.objectContaining({ adr: expect.arrayContaining(['ADR-05', 'ADR-02', 'ADR-06']) })
+	);
+	});
 
     it('should return false when amount is negative', () => {
       // Arrange
@@ -170,8 +179,12 @@ describe('DailyTransactionWorkflow', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(Logger.warning).toHaveBeenCalledWith('transaction_invalid_amount', expect.any(Object));
-    });
+      expect(Logger.warning).toHaveBeenCalledWith(
+		'transaction_invalid_amount',
+		{ amount: -10, workflow: 'dailyTransaction' },
+		expect.objectContaining({ adr: expect.arrayContaining(['ADR-05', 'ADR-02', 'ADR-06']) })
+		);
+		});
 
     it('should return false when category is not a string', () => {
       // Arrange
@@ -182,7 +195,7 @@ describe('DailyTransactionWorkflow', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(Logger.warning).toHaveBeenCalledWith('transaction_category_required', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('transaction_category_required', expect.any(Object), expect.anything());
     });
 
     it('should return false when category is empty string', () => {
@@ -194,9 +207,8 @@ describe('DailyTransactionWorkflow', () => {
 
       // Assert
       expect(result).toBe(false);
-      expect(Logger.warning).toHaveBeenCalledWith('transaction_category_required', expect.any(Object));
-    });
-
+     expect(Logger.warning).toHaveBeenCalledWith('transaction_category_required', expect.any(Object), expect.anything());
+	});
     it('should handle missing description and payment method', () => {
       // Arrange
       mockState.data.latestTransaction = {
@@ -280,9 +292,9 @@ describe('DailyTransactionWorkflow', () => {
       } else {
         fail('Expected UPDATE_DATA action with payload');
       }
-    });
+		});
 
-    it('should calculate totalAmount using computePhoenixSummary', () => {
+		it('should calculate totalAmount using computePhoenixSummary', () => {
       // Arrange
       (computePhoenixSummary as jest.Mock).mockReturnValue({
         totalExpensesCents: 5000,
@@ -300,11 +312,11 @@ describe('DailyTransactionWorkflow', () => {
       } else {
         fail('Expected UPDATE_DATA action with payload');
       }
-    });
-  });
-
-  describe('buildExpenseItem', () => {
-    it('should generate unique fieldId based on timestamp', () => {
+		});
+		});
+ 
+			describe('buildExpenseItem', () => {
+		it('should generate unique fieldId based on timestamp', () => {
       // Mock Date.now voor voorspelbare test
       const mockNow = 1234567890;
       jest.spyOn(Date, 'now').mockReturnValue(mockNow);
@@ -322,8 +334,8 @@ describe('DailyTransactionWorkflow', () => {
 
       jest.restoreAllMocks();
     });
+  
   });
-
   describe('persistAndReset', () => {
     it('should reset latestTransaction to default values', () => {
       // Arrange

@@ -30,6 +30,9 @@ import type {
 import { CsvAnalysisService } from '@domain/finance/CsvAnalysisService';
 import { Logger } from '@adapters/audit/AuditLoggerAdapter';
 import type { FormAction } from '@app/state/formReducer';
+import WizStrings from '@config/WizStrings';
+
+const WI = WizStrings.import;
 
 // ─── Lokaal input type ────────────────────────────────────────────────────────
 // CsvUploadParams NIET geïmporteerd uit MasterOrchestratorAPI — circulaire dep.
@@ -85,14 +88,14 @@ function buildWarnings(analysis: CsvAnalysisResult): CsvImportWarning[] {
   if (analysis.isDiscrepancy) {
     warnings.push({
       type: 'ambiguous',
-      message: analysis.discrepancyDetails ?? 'Inkomensverschil gedetecteerd',
+      message: analysis.discrepancyDetails ?? WI.incomeDiscrepancy,
     });
   }
 
   if (analysis.hasMissingCosts) {
     warnings.push({
       type: 'unmatched',
-      message: 'Woonlasten gevonden die niet verwacht werden',
+      message: WI.unexpectedHousingCosts,
     });
   }
 
@@ -127,7 +130,7 @@ export class CsvUploadWorkflow {
         workflow: 'csvUpload',
         error: error instanceof Error ? error.message : String(error),
       });
-      return { outcome: 'failure', errorMessage: 'Onverwachte fout tijdens import' };
+      return { outcome: 'failure', errorMessage: WI.unexpectedError };
     }
 
     // business.recompute staat BUITEN de catch:
@@ -145,12 +148,12 @@ export class CsvUploadWorkflow {
     const parseResult = this.importOrch.processCsvImport(params.csvText);
 
     if (parseResult.status === 'empty') {
-      Logger.warning('csv_parse_empty', { workflow: 'csvUpload', fileName: params.fileName });
-      return { outcome: 'failure', errorMessage: 'Geen transacties gevonden in het bestand' };
+      Logger.warning('csv_parse_empty', { workflow: 'csvUpload', fileName: params.fileName }, { adr: ["ADR-06","ADR-12","ADR-17"] });
+      return { outcome: 'failure', errorMessage: WI.noTransactionsFound };
     }
 
     if (parseResult.status === 'error') {
-      Logger.error('csv_parse_error', { workflow: 'csvUpload', error: parseResult.errorMessage });
+      Logger.error('csv_parse_error', { workflow: 'csvUpload', error: parseResult.errorMessage }, { adr: ["ADR-06","ADR-12","ADR-17"] });
       return { outcome: 'failure', errorMessage: parseResult.errorMessage };
     }
 
@@ -194,7 +197,7 @@ export class CsvUploadWorkflow {
       });
     }
     if (analysis.hasMissingCosts) {
-      Logger.warning('csv_missing_costs_detected', { workflow: 'csvUpload' });
+      Logger.warning('csv_missing_costs_detected', { workflow: 'csvUpload' }, { adr: ["ADR-13","ADR-05","ADR-12"] });
     }
 
     return analysis;

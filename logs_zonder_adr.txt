@@ -1,0 +1,83 @@
+# Logger calls zonder ADR referentie
+# Totaal: 80
+# Bestand:regel:methode: snippet
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:23:info: Logger.info('test.info_message');
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:33:info: Logger.info('test.info', { key: 'value' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:43:info: Logger.info('test.message', undefined);
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:59:error: Logger.error('error.occurred');
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:70:error: Logger.error('test.error_occurred', { error });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:80:error: Logger.error('test.failed', { message: 'Something went wrong' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:90:error: Logger.error('test.failed', undefined);
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:101:error: Logger.error('direct.error', { message: error.message });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:117:warning: Logger.warning('test.warning_message');
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:127:warning: Logger.warning('test.warning', { warning: 'details' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:144:log: Logger.log('error', 'test.error_event');
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:155:log: Logger.log('info', 'test.init_complete');
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:166:log: Logger.log('info', 'user.update', { userId: 123, action: 'save' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:212:info: Logger.info('');
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:223:info: Logger.info('test.complex', {
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:240:info: Logger.info('test.info', { message: 'info message' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:241:warning: Logger.warning('test.warning', { message: 'warn message' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:242:error: Logger.error('test.error', { message: 'error message' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:250:info: Logger.info('test.something');
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:259:error: Logger.error('SYSTEM_ERROR');
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:269:info: Logger.info('test.version_check');
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.test.ts:279:error: Logger.error('test.null_error', undefined);
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.ts:12:notice: * Logger.notice('user.completed_wizard', { step: 'household' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.ts:13:critical: * Logger.critical('database.corruption_detected', { table: 'transactions' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.ts:396:emergency: * Logger.emergency('system.crash', { reason: 'OOM' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.ts:397:critical: * Logger.critical('database.corruption', { table: 'transactions' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.ts:398:error: * Logger.error('validation.failed', { field: 'email', value: input });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.ts:399:warning: * Logger.warning('rate.limit.near', { currentLoad: 85 });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.ts:400:notice: * Logger.notice('user.completed_wizard', { step: 'household' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.ts:401:info: * Logger.info('user.action', { screen: 'dashboard', action: 'click' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.ts:402:debug: * Logger.debug('render.performance', { durationMs: 42 });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.ts:408:error: * Logger.error('payment.failed', { amount: 1250 }, { userId: 'anon_123' });
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.ts:424:log: auditLogger.log(numericLevel, eventName, context, options);
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.ts:428:error: /** @deprecated Gebruik Logger.error() */
+C:\Users\manas\huishoudApp\src/adapters/audit/AuditLoggerAdapter.ts:433:error: auditLogger.error(eventName, context);
+C:\Users\manas\huishoudApp\src/adapters/system/PersistenceAdapter.ts:84:info: Logger.info('state_persisted', {
+C:\Users\manas\huishoudApp\src/adapters/system/PersistenceAdapter.ts:90:warning: Logger.warning('state_persist_failed', {
+C:\Users\manas\huishoudApp\src/adapters/system/PersistenceAdapter.ts:114:warning: Logger.warning('storage_corrupt', {
+C:\Users\manas\huishoudApp\src/adapters/system/PersistenceAdapter.ts:134:info: Logger.info('hydration_success', {
+C:\Users\manas\huishoudApp\src/adapters/system/PersistenceAdapter.ts:141:warning: Logger.warning('hydration_failed', {
+C:\Users\manas\huishoudApp\src/adapters/system/PersistenceAdapter.ts:158:info: Logger.info('storage_cleared', {
+C:\Users\manas\huishoudApp\src/adapters/system/PersistenceAdapter.ts:163:warning: Logger.warning('storage_clear_failed', {
+C:\Users\manas\huishoudApp\src/adapters/transaction/stateful.ts:76:info: Logger.info('transaction.push', {
+C:\Users\manas\huishoudApp\src/adapters/transaction/stateful.ts:85:notice: Logger.notice('transaction.undo', { pointer: this.pointer });
+C:\Users\manas\huishoudApp\src/adapters/transaction/stateful.ts:86:notice: Logger.notice('transaction.redo', { pointer: this.pointer });
+C:\Users\manas\huishoudApp\src/adapters/transaction/stateful.ts:101:notice: Logger.notice('transaction.undo', { pointer: this.pointer });  // ✅
+C:\Users\manas\huishoudApp\src/adapters/transaction/stateful.ts:121:notice: Logger.notice('transaction.redo', { pointer: this.pointer });  // ✅
+C:\Users\manas\huishoudApp\src/adapters/validation/validateAtBoundary.ts:63:warning: Logger.warning('BOUNDARY_NO_SCHEMA', { fieldId, value });  // warning ipv warn
+C:\Users\manas\huishoudApp\src/adapters/validation/validateAtBoundary.ts:89:warning: Logger.warning('BOUNDARY_VALIDATION_FAILED', {  // 👈 veranderd van warn naar warning
+C:\Users\manas\huishoudApp\src/adapters/validation/validateAtBoundary.ts:99:error: Logger.error('BOUNDARY_UNEXPECTED_ERROR', {
+C:\Users\manas\huishoudApp\src/app/orchestrators/ImportOrchestrator.ts:79:error: Logger.error('csv.parse.critical_failure', {
+C:\Users\manas\huishoudApp\src/app/orchestrators/managers/DataManager.ts:44:info: Logger.info('csv_parse_success_stub', {
+C:\Users\manas\huishoudApp\src/app/orchestrators/managers/DataManager.ts:58:error: Logger.error('csv_parse_failed', {
+C:\Users\manas\huishoudApp\src/app/orchestrators/managers/DataManager.ts:67:warning: Logger.warning('csv_parse_empty', {
+C:\Users\manas\huishoudApp\src/app/orchestrators/NavigationOrchestrator.ts:27:warning: Logger.warning('navigation_screen_not_found', {
+C:\Users\manas\huishoudApp\src/app/orchestrators/ValidationOrchestrator.ts:80:warning: Logger.warning('validation_screen_not_found', {
+C:\Users\manas\huishoudApp\src/app/orchestrators/ValidationOrchestrator.ts:131:warning: Logger.warning('field_update_validation_failed', {
+C:\Users\manas\huishoudApp\src/app/orchestrators/VisibilityOrchestrator.ts:41:error: Logger.error('visibility_rule_missing_fail_closed', {
+C:\Users\manas\huishoudApp\src/app/orchestrators/VisibilityOrchestrator.ts:60:error: Logger.error('visibility_rule_execution_failed', {
+C:\Users\manas\huishoudApp\src/app/workflows/csvUploadWorkflow.ts:126:error: Logger.error('csv_workflow_failed', {
+C:\Users\manas\huishoudApp\src/app/workflows/csvUploadWorkflow.ts:148:warning: Logger.warning('csv_parse_empty', { workflow: 'csvUpload', fileName: params.fileName });
+C:\Users\manas\huishoudApp\src/app/workflows/csvUploadWorkflow.ts:153:error: Logger.error('csv_parse_error', { workflow: 'csvUpload', error: parseResult.errorMessage });
+C:\Users\manas\huishoudApp\src/app/workflows/csvUploadWorkflow.ts:190:warning: Logger.warning('csv_discrepancy_found', {
+C:\Users\manas\huishoudApp\src/app/workflows/csvUploadWorkflow.ts:197:warning: Logger.warning('csv_missing_costs_detected', { workflow: 'csvUpload' });
+C:\Users\manas\huishoudApp\src/app/workflows/csvUploadWorkflow.ts:222:warning: Logger.warning('csv_research_phase_error', {
+C:\Users\manas\huishoudApp\src/app/workflows/csvUploadWorkflow.ts:231:info: Logger.info('csv_import_completed', {
+C:\Users\manas\huishoudApp\src/app/workflows/DailyTransactionWorkflow.ts:52:info: Logger.info('transaction_saved', {
+C:\Users\manas\huishoudApp\src/app/workflows/DailyTransactionWorkflow.ts:65:warning: Logger.warning('transaction_form_not_initialized', { workflow: 'dailyTransaction' });
+C:\Users\manas\huishoudApp\src/app/workflows/DailyTransactionWorkflow.ts:71:warning: Logger.warning('transaction_invalid_amount', {
+C:\Users\manas\huishoudApp\src/app/workflows/DailyTransactionWorkflow.ts:79:warning: Logger.warning('transaction_category_required', { workflow: 'dailyTransaction' });
+C:\Users\manas\huishoudApp\src/app/workflows/ResetWorkflow.ts:58:info: Logger.info('reset_completed', {
+C:\Users\manas\huishoudApp\src/app/workflows/ResetWorkflow.ts:72:info: Logger.info('reset_completed', {
+C:\Users\manas\huishoudApp\src/app/workflows/SettingsWorkflow.ts:34:info: Logger.info('settings_changed', {
+C:\Users\manas\huishoudApp\src/app/workflows/SettingsWorkflow.ts:61:warning: Logger.warning('settings_theme_invalid_value', {
+C:\Users\manas\huishoudApp\src/services/storageShim.ts:33:error: Logger.error('STORAGE_LOAD_FAILURE', { error });
+C:\Users\manas\huishoudApp\src/services/storageShim.ts:47:error: Logger.error('STORAGE_SAVE_FAILURE', { error });
+C:\Users\manas\huishoudApp\src/services/storageShim.ts:59:error: Logger.error('THEME_LOAD_FAILURE', { error });
+C:\Users\manas\huishoudApp\src/services/storageShim.ts:71:error: Logger.error('THEME_SAVE_FAILURE', { error });
+C:\Users\manas\huishoudApp\src/services/storageShim.ts:84:error: Logger.error('STORAGE_CLEAR_FAILURE', { error });
+C:\Users\manas\huishoudApp\src/services/transactionService.ts:120:warning: Logger.warning('Undo functionaliteit nog niet geïmplementeerd');

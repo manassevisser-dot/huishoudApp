@@ -13,26 +13,25 @@
 
 import { execSync } from 'child_process';
 import path from 'path';
+import fs from 'fs'; // 👈 Nodig voor tijdelijk configbestand
 
 const UI_ROOT = path.resolve(__dirname, './ui');
 
 describe('UI Decoupling Integrity Guard (FPR-only)', () => {
   test('UI-DECOUPLE-001: Geen DATA_KEYS imports in UI-laag', () => {
-  const result = execSync(
-    // We voegen een extra exclude toe en zorgen dat grep alleen naar .ts/.tsx kijkt
-    `grep -r "DATA_KEYS" ${UI_ROOT} --include="*.ts" --include="*.tsx" --exclude="*.test.ts" --exclude="*.test.tsx" || true`,
-    { encoding: 'utf-8' }
-  );
+    const result = execSync(
+      `grep -r "DATA_KEYS" ${UI_ROOT} --include="*.ts" --include="*.tsx" --exclude="*.test.ts" --exclude="*.test.tsx" || true`,
+      { encoding: 'utf-8' }
+    );
 
-  // Filter de resultaten nog een keer met een simpele split/filter voor de zekerheid
-  const violations = result
-    .split('\n')
-    .filter(line => line.trim() !== '')
-    .filter(line => !line.includes('.test.ts') && !line.includes('.test.tsx'))
-    .join('\n');
+    const violations = result
+      .split('\n')
+      .filter(line => line.trim() !== '')
+      .filter(line => !line.includes('.test.ts') && !line.includes('.test.tsx'))
+      .join('\n');
 
-  expect(violations.trim()).toBe('');
-});
+    expect(violations.trim()).toBe('');
+  });
 
   test('UI-DECOUPLE-002: Geen SUB_KEYS imports in UI-laag', () => {
     const result = execSync(
@@ -81,14 +80,32 @@ describe('UI Decoupling Integrity Guard (FPR-only)', () => {
   });
 
   test('BT-01B-boundary-bans: ESLint no-restricted-imports compliant', () => {
-    // Door de output te controleren op een lege string, gebruik je de variabele 
-    // en dwing je af dat er geen linting errors zijn.
-    const result = execSync(
-      `npx eslint ${UI_ROOT} --rule '{"no-restricted-imports": ["error", {"patterns": ["@domain/*"]}]}' --quiet || true`,
-      { encoding: 'utf-8' }
-    );
-    
-    // Nu wordt 'result' gebruikt -> Eslint is blij.
-    expect(result.trim()).toBe('');
-  }, 30000); // <--- DEZE 30 SECONDEN IS CRUCIAAL
+    // 🔧 Oude aanpak met --rule was platformafhankelijk en gaf foutmeldingen op Windows.
+    // Nu gebruiken we een tijdelijk ESLint-configuratiebestand.
+    const tmpConfig = path.join(__dirname, 'tmp-eslintrc.json');
+
+    try {
+      // Schrijf de gewenste regels naar een tijdelijk bestand
+      fs.writeFileSync(tmpConfig, JSON.stringify({
+        rules: {
+          'no-restricted-imports': ['error', { patterns: ['@domain/*'] }]
+        }
+      }));
+
+      // Voer ESLint uit met het tijdelijke configbestand.
+      // De '|| true' zorgt dat de exit-code wordt genegeerd, zodat we de output kunnen inspecteren.
+      const result = execSync(
+        `npx eslint ${UI_ROOT} --no-eslintrc --config ${tmpConfig} --quiet || true`,
+        { encoding: 'utf-8', stdio: 'pipe' }
+      );
+
+      // Als ESLint overtredingen vindt, is de output niet leeg → test faalt.
+      expect(result.trim()).toBe('');
+    } finally {
+      // Ruim het tijdelijke bestand altijd op
+      if (fs.existsSync(tmpConfig)) {
+        fs.unlinkSync(tmpConfig);
+      }
+    }
+  }, 30000); // timeout blijft behouden
 });

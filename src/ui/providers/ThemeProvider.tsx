@@ -1,15 +1,7 @@
-/**
- * @file_intent Beheert het visuele thema (bijv. 'light' of 'dark') van de applicatie. Het laadt, beheert en distribueert de huidige thema-instelling en stelt functies beschikbaar om het thema te wijzigen.
- * @repo_architecture UI Layer - State Management / Theming. Deze provider isoleert de logica voor themabeheer en maakt deze beschikbaar voor de hele applicatie via een React Context.
- * @term_definition
- *   - `Theme`: Een type dat de mogelijke thema's definieert (bv. 'light' | 'dark').
- *   - `useTheme`: De consumer-hook die componenten toegang geeft tot het huidige thema (`theme`) en de functies om het te wijzigen (`setTheme`, `toggleTheme`).
- *   - `master.theme`: Een verwijzing naar de `theme`-orchestrator in de `master`-laag. Deze wordt gebruikt voor het persisteren (opslaan en laden) van de themakeuze van de gebruiker.
- * @contract Componenten binnen de `ThemeProvider` kunnen de `useTheme`-hook gebruiken om het uiterlijk van de app aan te passen aan het actieve thema. De provider communiceert met de `master`-orchestrator om de themakeuze persistent te maken over sessies heen.
- * @ai_instruction Gebruik de `useTheme`-hook in elk component dat zich moet aanpassen aan het thema. Bijvoorbeeld: `const { theme } = useTheme(); const color = theme === 'light' ? 'black' : 'white';`. De logica voor het *opslaan* van de themakeuze is al afgehandeld via de `master`-orchestrator. Dit bestand hoeft alleen te worden gewijzigd als je bijvoorbeeld meer thema's wilt toevoegen. De daadwerkelijke stijl-waarden (kleuren, etc.) voor elk thema worden beheerd in `ui/styles`.
- */
 // src/ui/providers/ThemeProvider.tsx
+
 import * as React from 'react';
+import { Logger } from '@adapters/audit/AuditLoggerAdapter';  // ✅ Import toevoegen
 import type { MasterOrchestratorAPI } from '@app/types/MasterOrchestratorAPI';
 import type { Theme } from '@ui/kernel';
 
@@ -26,34 +18,28 @@ export function ThemeProvider(
 ) {
   const [theme, setThemeState] = React.useState<Theme>('light');
 
-  // Registreer als listener vóór loadTheme() zodat ThemeManager.setTheme()
-  // (getriggerd door SettingsWorkflow) direct deze component re-rendert.
-  // Load via Master (app policy → infra)
+  const logThemeError = (event: string, ctx: Record<string, unknown>) => 
+    Logger.warning(event, { error: ctx.error instanceof Error ? ctx.error.message : String(ctx.error), ...ctx });
+
+  const persistTheme = React.useCallback((t: Theme) => 
+    master.theme.setTheme(t).catch(err => logThemeError('theme.save_failed', { theme: t, error: err })), 
+  [master]);
+
   React.useEffect(() => {
-    master.theme.onThemeChange(setThemeState);  // ← registreer als listener
+    master.theme.onThemeChange(setThemeState);
     let mounted = true;
-    master.theme.loadTheme().then((t: Theme) => { if (mounted) setThemeState(t); });
-    return () => { mounted = false; };
+    master.theme.loadTheme().then(t => { if (mounted) setThemeState(t); })
+      .catch(err => logThemeError('theme.load_failed', { defaultTheme: 'light', error: err }));
+    return () => { mounted = false; }; // ✅ Geen unsub?.() - onThemeChange returns void
   }, [master]);
 
-  const setTheme = React.useCallback((t: Theme) => {
-    setThemeState(t);
-    void master.theme.setTheme(t);
-  }, [master]);
+  // ✅ Alleen persistTheme in deps - master is al "gevangen" door persistTheme's useCallback
+  const setTheme = React.useCallback((t: Theme) => { setThemeState(t); persistTheme(t); }, [persistTheme]);
+  const toggleTheme = React.useCallback(() => 
+    setThemeState(prev => { const next = prev === 'light' ? 'dark' : 'light'; persistTheme(next); return next; }), 
+  [persistTheme]);
 
-  const toggleTheme = React.useCallback(() => {
-    setThemeState(prev => {
-      const next: Theme = prev === 'light' ? 'dark' : 'light';
-      void master.theme.setTheme(next);
-      return next;
-    });
-  }, [master]);
-
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme(): ThemeContextType {

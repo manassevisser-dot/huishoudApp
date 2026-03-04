@@ -14,7 +14,7 @@
 
 Dit is een bestaand ticket — ook gedocumenteerd als **TODO-2** in `SCREEN_ARCHITECTURE.md`.
 
-### Huidige opzoekolgorde
+### Huidige opzoekvolgorde
 
 ```
 wizard → dashboard → common → landing → options → undo → settings → fallback
@@ -24,7 +24,7 @@ wizard → dashboard → common → landing → options → undo → settings �
 
 ### Voorstel
 
-Voeg `csvAnalysis` toe aan de opzoekolgorde, vóór de fallback:
+Voeg `csvAnalysis` toe aan de opzoekvolgorde, vóór de fallback:
 
 ```typescript
 if (token in (WizStrings.csvAnalysis ?? {}))
@@ -175,4 +175,4 @@ Klein. Zoek-en-vervang; geen semantische wijziging omdat `card === surface`.
 3. **§3** — `UISectionValue` toevoegen (klein, additief)
 4. **§4** — `UX_TOKENS.FIELDS` audit (klein, afhankelijk van gebruik)
 5. **§6** — `Colors.card` verwijderen (klein, na audit)
-6. **§5** — Twee labelsystemen harmoniseren (middelgroot, langetermijn)
+6. **§5** — Twee labelsystemen harmoniseren (middelgroot, lange termijn)

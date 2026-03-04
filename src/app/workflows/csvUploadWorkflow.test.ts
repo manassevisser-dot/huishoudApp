@@ -181,7 +181,7 @@ describe('CsvUploadWorkflow', () => {
         outcome: 'failure',
         errorMessage: 'Geen transacties gevonden in het bestand',
       });
-      expect(Logger.warning).toHaveBeenCalledWith('csv_parse_empty', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('csv_parse_empty', expect.any(Object), expect.any(Object));
       expect(mockFso.dispatch).not.toHaveBeenCalled();
     });
 
@@ -200,7 +200,7 @@ describe('CsvUploadWorkflow', () => {
         outcome: 'failure',
         errorMessage: 'Invalid CSV format',
       });
-      expect(Logger.error).toHaveBeenCalledWith('csv_parse_error', expect.any(Object));
+      expect(Logger.error).toHaveBeenCalledWith('csv_parse_error', expect.any(Object), expect.any(Object));
     });
 
     it('should handle unexpected errors gracefully', async () => {
@@ -314,7 +314,7 @@ describe('CsvUploadWorkflow', () => {
       await workflow.execute(mockParams);
 
       // Assert
-      expect(Logger.warning).toHaveBeenCalledWith('csv_missing_costs_detected', expect.any(Object));
+      expect(Logger.warning).toHaveBeenCalledWith('csv_missing_costs_detected', expect.any(Object), expect.any(Object));
     });
 
     it('should update status to analyzed', async () => {

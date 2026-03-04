@@ -47,7 +47,7 @@ describe('SectionRegistry', () => {
     });
 
     it('should have valid layout types', () => {
-      const validLayouts = ['list', 'grid', 'card', 'stepper'];
+      const validLayouts = ['list', 'grid', 'card', 'stepper', 'isLogo'];
       const keys = SectionRegistry.getAllKeys();
 
       keys.forEach(key => {

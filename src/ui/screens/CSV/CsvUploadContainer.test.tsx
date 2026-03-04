@@ -94,19 +94,20 @@ describe('CsvUploadContainer', () => {
     // Check loading state
     expect(getByTestId('uploading-indicator')).toBeTruthy();
 
+    // Wacht tot de volledige async keten klaar is:
+    // pickAndReadCsvFile → handleCsvImport → goToCsvAnalysis → finally setIsUploading(false)
     await waitFor(() => {
-      expect(pickAndReadCsvFile).toHaveBeenCalledTimes(1);
+      expect(mockNavigateToCsvAnalysis).toHaveBeenCalledTimes(1);
     });
 
+    expect(pickAndReadCsvFile).toHaveBeenCalledTimes(1);
     expect(mockHandleCsvImport).toHaveBeenCalledWith({
       csvText: 'date,amount,description\n2024-01-01,42.50,Test',
       fileName: 'test.csv',
       bank: 'ING',
     });
 
-    expect(mockNavigateToCsvAnalysis).toHaveBeenCalledTimes(1);
-
-    // Loading state zou weg moeten zijn
+    // Loading state moet weg zijn (finally-blok is uitgevoerd)
     expect(queryByTestId('uploading-indicator')).toBeNull();
     expect(queryByTestId('error-banner')).toBeNull();
   });

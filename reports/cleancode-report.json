@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-02-28T12:29:25.293Z",
+  "timestamp": "2026-02-28T21:31:47.401Z",
   "final_score": 88.09523809523809,
   "total_weight": 21,
   "achieved_score": 18.5,
@@ -30,7 +30,7 @@
       "regel": "Coverage ≥ 80% kernel",
       "status": "PASS",
       "score": 100,
-      "message": "Coverage: 91.52% (≥ 80%)"
+      "message": "Coverage: 90.67% (≥ 80%)"
     },
     {
       "id": "R-01",

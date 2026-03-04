@@ -1,6 +1,7 @@
 // src/test-utils/render/providers.tsx
 import React from 'react';
 import { ThemeProvider } from '@ui/providers/ThemeProvider';
+import { FeedbackProvider } from '@ui/providers/FeedbackProvider';
 import { FormContext } from '@app/context/FormContext';
 import { FormState } from '@core/types/core';
 import type { MasterOrchestratorAPI } from '@app/types/MasterOrchestratorAPI';
@@ -99,9 +100,11 @@ export function Providers({ children, state, dispatch }: ProvidersProps) {
 
   return (
     <ThemeProvider master={orchestrator as any}>
-      <FormContext.Provider value={value as any}>
-        {children}
-      </FormContext.Provider>
+      <FeedbackProvider master={orchestrator as any}>
+        <FormContext.Provider value={value as any}>
+          {children}
+        </FormContext.Provider>
+      </FeedbackProvider>
     </ThemeProvider>
   );
 }

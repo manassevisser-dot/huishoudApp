@@ -156,7 +156,7 @@ describe('Screen Renderer Registry', () => {
     it('should handle LANDING screen (falls through to DefaultScreenRenderer)', () => {
       const vm = { ...mockScreenVM, screenId: 'LANDING', type: 'AUTH' };
       const Renderer = resolveScreenRenderer(vm);
-      expect(Renderer.name).toBe('DefaultScreenRenderer');
+      expect(Renderer.name).toBe('LandingScreenRenderer');
     });
   });
 
@@ -369,7 +369,7 @@ it('should pass topPadding to custom screen containers', () => {
     it('should have LANDING fall through to DefaultScreenRenderer (type AUTH)', () => {
       const vm = { ...mockScreenVM, screenId: 'LANDING', type: 'AUTH' };
       const Renderer = resolveScreenRenderer(vm);
-      expect(Renderer.name).toBe('DefaultScreenRenderer');
+      expect(Renderer.name).toBe('LandingScreenRenderer');
     });
   });
 });

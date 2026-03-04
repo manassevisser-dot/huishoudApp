@@ -14,6 +14,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { UI_SECTIONS } from '@ui/kernel';
 import { useAppStyles } from '@ui/styles/useAppStyles';
+import WizStrings from '@config/WizStrings';
 
 interface CsvUploadScreenProps {
   onPickFile: () => void;
@@ -36,7 +37,7 @@ export const CsvUploadScreen: React.FC<CsvUploadScreenProps> = ({ onPickFile, is
         {isUploading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Kies csv-bestand</Text>
+          <Text style={styles.buttonText}>{WizStrings.filePicker.chooseCsv}</Text>
         )}
       </TouchableOpacity>
     </View>

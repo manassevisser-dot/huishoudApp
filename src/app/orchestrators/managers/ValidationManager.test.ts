@@ -134,11 +134,11 @@ describe('ValidationManager', () => {
         mockConstraint.mockReturnValue(requiredConstraint());
       });
 
-      it('retourneert fout bij null, undefined of lege string', () => {
-        expect(mgr.validateField('postcode', null)).toBe('Dit veld is verplicht');
-        expect(mgr.validateField('postcode', undefined)).toBe('Dit veld is verplicht');
-        expect(mgr.validateField('postcode', '')).toBe('Dit veld is verplicht');
-      });
+      it('retourneert boundary.required token voor lege required velden', () => {
+  expect(mgr.validateField('postcode', null)).toBe('boundary.required');
+  expect(mgr.validateField('postcode', undefined)).toBe('boundary.required');
+  expect(mgr.validateField('postcode', '')).toBe('boundary.required');
+});
 
       it('gebruikt het custom message uit de constraint', () => {
         mockConstraint.mockReturnValue(

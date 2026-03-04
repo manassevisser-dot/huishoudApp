@@ -10,6 +10,9 @@
 import { validateAtBoundary } from '@adapters/validation/validateAtBoundary';
 import { SectionValidationResult, ValidationError } from "../interfaces/IValidationOrchestrator";
 import { getConstraint } from '@domain/rules/fieldConstraints';
+import { validationMessages } from '@state/schemas/sections/validationMessages';
+
+const B = validationMessages.boundary;
 
 export class ValidationManager {
 
@@ -55,7 +58,7 @@ export class ValidationManager {
     // 1. Required-check: alleen blokkeren als de constraint het expliciet vereist
     if (isRequired && isEmpty) {
       // Gebruik het custom message uit de constraint als het er is
-      return constraint?.message ?? 'Dit veld is verplicht';
+      return constraint?.message ?? B.required;
     }
 
     // 2. Optioneel veld zonder waarde: geen verdere validatie nodig

@@ -63,10 +63,7 @@ import {
         const payload = { x: 1 };
         const result = validateAtBoundary<typeof payload>('onbekendVeld', payload);
         expect(result).toEqual({ success: true, data: payload });
-        expect(mockWarnSpy).toHaveBeenCalledWith('BOUNDARY_NO_SCHEMA', {
-          fieldId: 'onbekendVeld',
-          value: payload,
-        });
+        expect(mockWarnSpy).toHaveBeenCalledWith('BOUNDARY_NO_SCHEMA', { fieldId: 'onbekendVeld', value: payload }, expect.anything());
         expect(mockErrorSpy).not.toHaveBeenCalled();
       });
   
@@ -134,10 +131,7 @@ import {
       it('onbekend veld: geeft originele waarde terug en logt warn', () => {
         const v = safeParseAtBoundary<any>('nietBekend', { a: 1 });
         expect(v).toEqual({ a: 1 });
-        expect(mockWarnSpy).toHaveBeenCalledWith('BOUNDARY_NO_SCHEMA', {
-          fieldId: 'nietBekend',
-          value: { a: 1 },
-        });
+        	expect(mockWarnSpy).toHaveBeenCalledWith('BOUNDARY_NO_SCHEMA', { fieldId: 'nietBekend', value: { a: 1 } }, expect.anything());
       });
     });
   });

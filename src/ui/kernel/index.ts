@@ -50,6 +50,7 @@ export {
   makeSummary,
   makeTypography,
   makeAlerts,
+  makeFeedback,
   makeToggles,
   makeCheckboxes,
   makeHelpers,

@@ -15,7 +15,7 @@
  */
 import { StyleSheet } from 'react-native';
 import { useTheme } from '@ui/providers/ThemeProvider';
-import { applyShadows, AnyStyle } from './PlatformStyles';
+import { applyShadows, type AnyStyle } from './PlatformStyles'; // ✅ AnyStyle geïmporteerd voor typing
 import {
   Colors,
   Tokens,
@@ -28,6 +28,7 @@ import {
   makeSummary,
   makeTypography,
   makeAlerts,
+  makeFeedback,
   makeToggles,
   makeCheckboxes,
   makeHelpers,
@@ -47,13 +48,15 @@ const styleCache: Partial<Record<Theme, ReturnType<typeof StyleSheet.create>>> =
  */
 export function getAppStyles(theme: Theme) {
   const cachedStyles = styleCache[theme];
-  if (cachedStyles !== undefined) {
-    return cachedStyles;
-  }
+  if (cachedStyles !== undefined) { return cachedStyles; }
 
   const c = Colors[theme];
 
   // 1. Assembleer alle domein-regels (pure tokens, geen platform-code)
+  // Type-inferentie is bewust niet expliciet — de re-export keten van make*
+  // functies levert intersection-types die niet 1-op-1 matchen met
+  // Record<string, AnyStyle>. De cast bij applyShadows() is de bewuste
+  // type-grens; runtime-gedrag is identiek.
   const assembled = {
     ...makeLayout(c),
     ...makeForms(c),
@@ -65,6 +68,7 @@ export function getAppStyles(theme: Theme) {
     ...makeSummary(c),
     ...makeTypography(c),
     ...makeAlerts(c),
+    ...makeFeedback(c),
     ...makeToggles(c),
     ...makeCheckboxes(c),
     ...makeHelpers(c),
@@ -74,7 +78,7 @@ export function getAppStyles(theme: Theme) {
   // 2. Pas platform-specifieke shadows toe (de enige RN-afhankelijke stap)
   const withShadows = applyShadows(
     assembled as unknown as Record<string, AnyStyle>,
-    c
+    c,
   );
 
   // 3. Maak StyleSheet (RN optimalisatie)
@@ -98,5 +102,7 @@ export function useAppStyles() {
   const { theme } = useTheme();
   const styles = getAppStyles(theme);
   const colors = Colors[theme];
-  return { styles, colors, Tokens };
+  
+  // ✅ 'as const' voorkomt unsafe-return door expliciete literal typing
+  return { styles, colors, Tokens } as const;
 }
